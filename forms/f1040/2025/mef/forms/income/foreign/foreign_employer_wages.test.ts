@@ -12,7 +12,7 @@ import { buildExecutionPlan } from "../../../../../../../core/runtime/planner.ts
 import { registry } from "../../../../registry.ts";
 import { buildMefXml } from "../../../builder.ts";
 import { buildPending } from "../../../execution/pending.ts";
-import { pdfReviewFixtures } from "../../../../pdf/review-fixtures.ts";
+import { pdfReviewFixtures } from "../../../../pdf/review_fixtures.ts";
 import { FilingStatus } from "../../../../../mef/header.ts";
 import { buildPdfBytes } from "../../../../pdf/builder.ts";
 import { fecRecord, wagesNotShownSchedule } from "./foreign_employer_wages.ts";

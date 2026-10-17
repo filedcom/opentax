@@ -1,8 +1,8 @@
 import { test } from "bun:test";
 import * as sys from "../../../../../../../scripts/support/sys.ts";
 import { assertEquals, assertRejects, assertThrows } from "@std/assert";
-import { pdfReviewFixtures } from "../../../../pdf/review-fixtures.ts";
-import { mixedCfLossHealthFixtures } from "../../../../pdf/reviews/general/composed-returns/review-mixed-cf-loss-health.fixture.ts";
+import { pdfReviewFixtures } from "../../../../pdf/review_fixtures.ts";
+import { mixedCfLossHealthFixtures } from "../../../../pdf/reviews/general/composed-returns/review_mixed_cf_loss_health.fixture.ts";
 import { f1040_2025 } from "../../../../index.ts";
 import { normalizeAllPending } from "../../../../return-processing/pending.ts";
 import { assertIndependentOwnerHealth } from "./form7206_independent_owner_source.ts";

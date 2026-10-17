@@ -9,11 +9,11 @@ import {
 } from "@std/assert";
 import { f1040_2025 } from "../../../../index.ts";
 import { normalizeAllPending } from "../../../../return-processing/pending.ts";
-import { pdfReviewFixtures } from "../../../../pdf/review-fixtures.ts";
+import { pdfReviewFixtures } from "../../../../pdf/review_fixtures.ts";
 import { form8995 } from "../../../../mef/forms/deductions/business/f8995/f8995.ts";
 import { irs1040Pdf } from "../../../../pdf/forms/general/return-assembly/f1040.ts";
 import { form8995Pdf } from "../../../../pdf/forms/deductions/business/f8995/f8995.ts";
-import { allocateSharedSeDeduction } from "../../../../../nodes/inputs/income/business/schedule_c/qbi-multiple.ts";
+import { allocateSharedSeDeduction } from "../../../../../nodes/inputs/income/business/schedule_c/qbi_multiple.ts";
 import { scheduleSELines } from "../../../../../nodes/intermediate/forms/taxes/self-employment/schedule_se/calculation.ts";
 import { CONFIG_BY_YEAR } from "../../../../../nodes/config/index.ts";
 import {

@@ -6,7 +6,7 @@ import { buildExecutionPlan } from "../../../../../../../core/runtime/planner.ts
 import { registry } from "../../../../registry.ts";
 import { buildPending } from "../../../../mef/execution/pending.ts";
 import { buildPdfBytes } from "../../../builder.ts";
-import { pdfReviewFixtures } from "../../../review-fixtures.ts";
+import { pdfReviewFixtures } from "../../../review_fixtures.ts";
 import { form8396Pdf } from "./f8396.ts";
 
 test("2025 Form 8396 PDF maps only the filed credit page", () => {

@@ -6,7 +6,7 @@ import { PDFDocument } from "pdf-lib";
 import { f1040_2025 } from "../../../../index.ts";
 import { extractFilerIdentity } from "../../../../../mef/filer.ts";
 import { buildPdfBytes } from "../../../../pdf/builder.ts";
-import { partialBeneficiaryMultipleInputs } from "../../../../pdf/reviews/taxes/retirement/form4972/review-4972-partial-multiple.fixture.ts";
+import { partialBeneficiaryMultipleInputs } from "../../../../pdf/reviews/taxes/retirement/form4972/review_4972_partial_multiple.fixture.ts";
 
 const dir = ".state/research/2026-10-06-form4972-beneficiary-multiple-partial";
 const xsd =

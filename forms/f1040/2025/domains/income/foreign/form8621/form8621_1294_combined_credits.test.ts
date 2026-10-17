@@ -6,8 +6,8 @@ import { f1040_2025 } from "../../../../index.ts";
 import { buildPending } from "../../../../mef/execution/pending.ts";
 import { extractFilerIdentity } from "../../../../../mef/filer.ts";
 import { buildPdfBytes } from "../../../../pdf/builder.ts";
-import { pdfReviewFixtures } from "../../../../pdf/review-fixtures.ts";
-import education from "../../../../pdf/reviews/general/composed-returns/review-8863-scholarship-source.json" with {
+import { pdfReviewFixtures } from "../../../../pdf/review_fixtures.ts";
+import education from "../../../../pdf/reviews/general/composed-returns/review_8863_scholarship_source.json" with {
   type: "json",
 };
 import { form8621QefSourceInputs } from "./form8621_qef.fixture.ts";

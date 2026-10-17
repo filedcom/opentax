@@ -1,7 +1,7 @@
 import { test } from "bun:test";
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import { f8854, inputSchema } from "../../../../../nodes/inputs/general/foreign/f8854/index.ts";
-import { assertAttachmentCoverage } from "../../../../return-processing/attachment-coverage.ts";
+import { assertAttachmentCoverage } from "../../../../return-processing/attachment_coverage.ts";
 import { form8854InitialCash } from "../../../../domains/general/foreign/form8854/form8854_initial.fixture.ts";
 import { form8992Filer } from "../../../../domains/income/foreign/form8992/form8992.fixture.ts";
 import { form8854 } from "../../../../mef/forms/general/foreign/f8854/f8854.ts";

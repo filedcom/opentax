@@ -2,7 +2,7 @@ import { z } from "zod";
 import { element, elements } from "../../../../../mef/xml.ts";
 import { FilingStatus } from "../../../../../mef/header.ts";
 import { inputSchema } from "../../../../../nodes/inputs/payments/installments/f9465/index.ts";
-import type { MefBuildContext } from "../../../form-descriptor.ts";
+import type { MefBuildContext } from "../../../form_descriptor.ts";
 
 const finalForm1040Schema = z.object({
   line37_amount_owed: z.number().refine(

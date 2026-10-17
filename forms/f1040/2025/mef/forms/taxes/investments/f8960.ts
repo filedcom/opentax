@@ -1,5 +1,5 @@
 import { element, elements } from "../../../../../mef/xml.ts";
-import type { MefFormDescriptor } from "../../../form-descriptor.ts";
+import type { MefFormDescriptor } from "../../../form_descriptor.ts";
 
 export interface Fields {
   line1_taxable_interest?: number | null;

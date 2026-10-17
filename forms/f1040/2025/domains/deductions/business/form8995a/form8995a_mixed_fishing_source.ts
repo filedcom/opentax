@@ -1,12 +1,12 @@
 import { isDeepStrictEqual } from "node:util";
 import type { Form8995AInput } from "../../../../../nodes/intermediate/forms/deductions/business/form8995a/index.ts";
-import { calculateMixedFishingQbi } from "../../../../../nodes/intermediate/forms/deductions/business/form8995a/mixed-fishing.ts";
+import { calculateMixedFishingQbi } from "../../../../../nodes/intermediate/forms/deductions/business/form8995a/mixed_fishing.ts";
 import {
   assertScheduleJSourceReturn,
   retainedFishingProfit,
 } from "../../../taxes/income-averaging/schedule-j/schedule_j_source_return.ts";
-import { assertMultiBusinessInvestmentSources } from "../../../../mef/forms/deductions/business/f8995/f8995-investment.ts";
-import { assertOwnedScheduleSE } from "../../../taxes/self-employment/schedule-se/schedule-se-owner-source.ts";
+import { assertMultiBusinessInvestmentSources } from "../../../../mef/forms/deductions/business/f8995/f8995_investment.ts";
+import { assertOwnedScheduleSE } from "../../../taxes/self-employment/schedule-se/schedule_se_owner_source.ts";
 
 /** Final source check shared by native and PDF for two distinct Part II rows. */
 export function assertMixedFishingQbiReturn(

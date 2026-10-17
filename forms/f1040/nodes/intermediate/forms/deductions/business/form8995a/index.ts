@@ -1,6 +1,6 @@
-import { mfsSstbFilingReviewSchema } from "../../../../../inputs/income/business/schedule_c/mfs-sstb-review.ts";
-import { reviewedLossWotcReductions } from "./loss-wotc.ts";
-import { lossSeSourceSchema, reviewedLossSeAllocations } from "./loss-se.ts";
+import { mfsSstbFilingReviewSchema } from "../../../../../inputs/income/business/schedule_c/mfs_sstb_review.ts";
+import { reviewedLossWotcReductions } from "./loss_wotc.ts";
+import { lossSeSourceSchema, reviewedLossSeAllocations } from "./loss_se.ts";
 import {
   independentPatronSourceSchema,
   replayIndependentPatronSources,
@@ -8,23 +8,23 @@ import {
 import {
   assertSingleFarmAmounts,
   singleFarmSourceSchema,
-} from "./single-farm-source.ts";
-import { assertProducingMiningZeroQbi } from "./producing-mining.ts";
-import { filedOwnedScheduleC } from "../../../../../owned-business-filing.ts";
+} from "./single_farm_source.ts";
+import { assertProducingMiningZeroQbi } from "./producing_mining.ts";
+import { filedOwnedScheduleC } from "../../../../../owned_business_filing.ts";
 import {
   qualifiedTipQbiSourceSchema,
   reviewedQualifiedTipExclusions,
-} from "../form8995/qualified-tips.ts";
-import { farmWotcSourceSchema } from "./farm-wotc-source.ts";
+} from "../form8995/qualified_tips.ts";
+import { farmWotcSourceSchema } from "./farm_wotc_source.ts";
 import {
   calculateMixedFishingQbi,
   mixedFishingQbiSourceSchema,
-} from "./mixed-fishing.ts";
-import { calculateFarmWotcLines } from "./farm-wotc.ts";
+} from "./mixed_fishing.ts";
+import { calculateFarmWotcLines } from "./farm_wotc.ts";
 import {
   ownedScheduleSE,
   ownerSourcesSchema,
-} from "../../../taxes/self-employment/schedule_se/owner-calculation.ts";
+} from "../../../taxes/self-employment/schedule_se/owner_calculation.ts";
 import {
   assertPatronFilingStatus,
   sourceSchema as patronBusinessSourceSchema,
@@ -33,7 +33,7 @@ import { patronSourceAmounts } from "../../../../../inputs/deductions/business/q
 import {
   qbiCapitalSourcesSchema,
   qbiCapitalTotal,
-} from "../qbi-capital-sources.ts";
+} from "../qbi_capital_sources.ts";
 import { z } from "zod";
 import {
   reviewedRpeAggregation,
@@ -58,7 +58,7 @@ import {
   computeNetProfit,
   itemSchema as scheduleCItemSchema,
 } from "../../../../../inputs/income/business/schedule_c/model.ts";
-import { reviewedWotcQbiWages } from "../../../../../inputs/income/business/schedule_c/qbi-wotc.ts";
+import { reviewedWotcQbiWages } from "../../../../../inputs/income/business/schedule_c/qbi_wotc.ts";
 import { scheduleSELines } from "../../../taxes/self-employment/schedule_se/calculation.ts";
 
 // ── TY2025 Constants ─────────────────────────────────────────────────────────

@@ -18,7 +18,7 @@ import {
   type ArrangementKind,
   form8941ArrangementInputs,
   form8941ArrangementSource,
-} from "../../../../2025/pdf/reviews/general/composed-returns/review-8941-arrangements.fixture.ts";
+} from "../../../../2025/pdf/reviews/general/composed-returns/review_8941_arrangements.fixture.ts";
 import {
   inputSchema as scheduleCSchema,
   projectScheduleCItems,

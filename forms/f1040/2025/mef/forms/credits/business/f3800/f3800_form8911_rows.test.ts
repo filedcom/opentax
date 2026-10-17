@@ -10,7 +10,7 @@ import {
 import { form3800NonpassiveCurrentDetailXml } from "./f3800_nonpassive_details.ts";
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import { FilingStatus } from "../../../../../../nodes/types.ts";
-import { calculatePropertyCredit } from "../../../../../../nodes/inputs/credits/business/f8911/property-credit.ts";
+import { calculatePropertyCredit } from "../../../../../../nodes/inputs/credits/business/f8911/property_credit.ts";
 import {
   form3800NonpassiveCreditUseRows,
   ZERO_FORM3800_PASSIVE_ACTIVITY,

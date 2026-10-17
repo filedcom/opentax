@@ -7,7 +7,7 @@ import {
   inputSchema,
   sectionBQualifiedItems,
 } from "../../../../../nodes/intermediate/forms/credits/individual/form5695/index.ts";
-import type { MefBuildContext, MefFormDescriptor } from "../../../form-descriptor.ts";
+import type { MefBuildContext, MefFormDescriptor } from "../../../form_descriptor.ts";
 import {
   additionalQmidLines,
   buildAdditionalQmidAttachment,

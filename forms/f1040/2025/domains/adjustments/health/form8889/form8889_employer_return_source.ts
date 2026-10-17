@@ -1,7 +1,7 @@
 import { Buffer } from "node:buffer";
 import { createHash } from "node:crypto";
 import { z } from "zod";
-import { employerReturnEvidenceSchema } from "../../../../../nodes/intermediate/forms/adjustments/health/form8889/employer-return-evidence-schema.ts";
+import { employerReturnEvidenceSchema } from "../../../../../nodes/intermediate/forms/adjustments/health/form8889/employer_return_evidence_schema.ts";
 import {
   Box12Code,
   inputSchema as w2InputSchema,

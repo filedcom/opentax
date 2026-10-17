@@ -1,14 +1,14 @@
-import { assertSettledParentTaxSource } from "../../../../../nodes/inputs/taxes/investments/f8615/dependent-source-review.ts";
+import { assertSettledParentTaxSource } from "../../../../../nodes/inputs/taxes/investments/f8615/dependent_source_review.ts";
 import {
   canonicalSource,
   dependentScholarshipEarned,
   dependentScholarshipReviewSchema,
-} from "../../../../../nodes/inputs/income/other/education_income/dependent-scholarship-review.ts";
+} from "../../../../../nodes/inputs/income/other/education_income/dependent_scholarship_review.ts";
 import {
   dependentSchema,
   educationDependentSourceEligible,
 } from "../../../../../nodes/inputs/general/filing/general/index.ts";
-import { assertEducationClaimantSources } from "../../../../../nodes/inputs/credits/individual/f8863/claimant-review.ts";
+import { assertEducationClaimantSources } from "../../../../../nodes/inputs/credits/individual/f8863/claimant_review.ts";
 import { assertEducationIncomeSource } from "../../../../../nodes/inputs/income/other/education_income/index.ts";
 import { element, elements } from "../../../../../mef/xml.ts";
 import {
@@ -19,7 +19,7 @@ import {
   form8863InstitutionWorkpapers,
   validateForm8863FilingSource,
 } from "../../../../../nodes/inputs/credits/individual/f8863/index.ts";
-import type { MefBuildContext, MefFormDescriptor } from "../../../form-descriptor.ts";
+import type { MefBuildContext, MefFormDescriptor } from "../../../form_descriptor.ts";
 
 export function assertForm8863FinalizedReturn(
   fields: F8863Input,

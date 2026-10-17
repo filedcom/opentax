@@ -1,7 +1,7 @@
 import { test } from "bun:test";
 import { assertEquals, assertRejects, assertThrows } from "@std/assert";
 import { PDFDocument } from "pdf-lib";
-import { pdfReviewFixtures } from "../../../review-fixtures.ts";
+import { pdfReviewFixtures } from "../../../review_fixtures.ts";
 import { form8874Pdf } from "./f8874.ts";
 import { withReviewedForm8874A } from "../../../../../nodes/inputs/credits/business/f8874/issuance_fixture.ts";
 

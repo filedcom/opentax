@@ -1,7 +1,7 @@
 import { FilingStatus } from "../../../../../mef/header.ts";
 import { element, elements } from "../../../../../mef/xml.ts";
 import { ForeignAssetType } from "../../../../../nodes/inputs/general/foreign/f8938/index.ts";
-import type { MefFormDescriptor } from "../../../form-descriptor.ts";
+import type { MefFormDescriptor } from "../../../form_descriptor.ts";
 import {
   isPartVAccount,
   projectForm8938,

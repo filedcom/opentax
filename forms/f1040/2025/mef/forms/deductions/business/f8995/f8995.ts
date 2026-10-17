@@ -1,7 +1,7 @@
 import type { inputSchema } from "../../../../../../nodes/intermediate/forms/deductions/business/form8995/index.ts";
-import type { MefFormDescriptor } from "../../../../form-descriptor.ts";
+import type { MefFormDescriptor } from "../../../../form_descriptor.ts";
 import { element, elements } from "../../../../../../mef/xml.ts";
-import { assertNoUnfiled8995Loss, assertPositive8995 } from "./f8995-route.ts";
+import { assertNoUnfiled8995Loss, assertPositive8995 } from "./f8995_route.ts";
 
 type Input = Partial<ReturnType<typeof inputSchema.parse>> & {
   qbi_deduction?: number | null;

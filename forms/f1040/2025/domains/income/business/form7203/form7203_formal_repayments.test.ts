@@ -6,8 +6,8 @@ import {
   ownedDebtSource,
 } from "./form7203_owned_debt.fixture.ts";
 import { inputSchema as k1Schema } from "../../../../../nodes/inputs/income/rental-passthrough/k1_s_corp/index.ts";
-import { reviewedNewFormalNotesSchema } from "../../../../../nodes/intermediate/forms/income/business/form7203/debt-note.ts";
-import { ownedCurrentDebtRecordsBaseSchema } from "../../../../../nodes/intermediate/forms/income/business/form7203/owned-current-source.ts";
+import { reviewedNewFormalNotesSchema } from "../../../../../nodes/intermediate/forms/income/business/form7203/debt_note.ts";
+import { ownedCurrentDebtRecordsBaseSchema } from "../../../../../nodes/intermediate/forms/income/business/form7203/owned_current_source.ts";
 import { f1040_2025 } from "../../../../index.ts";
 import { normalizeAllPending } from "../../../../return-processing/pending.ts";
 import { extractFilerIdentity } from "../../../../../mef/filer.ts";

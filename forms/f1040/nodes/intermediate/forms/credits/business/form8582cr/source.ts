@@ -3,7 +3,7 @@ import {
   form3800SpecifiedCreditLineSchema,
   form3800StandardCreditLineSchema,
   PassiveCreditReportingRoute,
-} from "./credit-route.ts";
+} from "./credit_route.ts";
 
 export enum PassiveCreditCategory {
   ActiveRental = "active_rental",

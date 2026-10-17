@@ -1,4 +1,4 @@
-import { mefBusinessNameLine1 } from "../../../../../../mef/business-name.ts";
+import { mefBusinessNameLine1 } from "../../../../../../mef/business_name.ts";
 import {
   AGGREGATION_DISCLOSURE_DESCRIPTION,
   AGGREGATION_DISCLOSURE_FILE,
@@ -20,16 +20,16 @@ import {
 import type {
   MefBuildContext,
   MefFormDescriptor,
-} from "../../../../form-descriptor.ts";
+} from "../../../../form_descriptor.ts";
 import { inputSchema as sCorpInputSchema } from "../../../../../../nodes/inputs/income/rental-passthrough/k1_s_corp/index.ts";
 import { currentSCorpRpeAggregation } from "../../../../../../nodes/inputs/deductions/business/k1_rpe_aggregation_source.ts";
 import { isDeepStrictEqual } from "node:util";
 import { aggregationOwner } from "../../../../../domains/deductions/business/form8995a/form8995a_aggregation_owner.ts";
-import { assertOwnedScheduleSE } from "../../../../../domains/taxes/self-employment/schedule-se/schedule-se-owner-source.ts";
+import { assertOwnedScheduleSE } from "../../../../../domains/taxes/self-employment/schedule-se/schedule_se_owner_source.ts";
 import {
   assertMultiBusinessInvestmentSources,
   assertMultiBusinessInvestmentTax,
-} from "../f8995/f8995-investment.ts";
+} from "../f8995/f8995_investment.ts";
 import { inputSchema as w2InputSchema } from "../../../../../../nodes/inputs/income/wages/w2/index.ts";
 
 /** Keep portfolio sources outside the business group, but in its income limit. */

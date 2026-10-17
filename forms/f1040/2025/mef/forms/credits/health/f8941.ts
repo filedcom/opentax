@@ -1,5 +1,5 @@
 import { element, elements } from "../../../../../mef/xml.ts";
-import type { MefFormDescriptor } from "../../../form-descriptor.ts";
+import type { MefFormDescriptor } from "../../../form_descriptor.ts";
 import { reconcileForm8941DocumentSource } from "./f8941_source.ts";
 
 /** TY2025 IRS8941.xsd order for the bounded direct employer route. */

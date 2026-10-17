@@ -1,6 +1,6 @@
 import { type PDFDocument, StandardFonts } from "pdf-lib";
 import type { z } from "zod";
-import { section179SummarySchema } from "../../../../../nodes/intermediate/forms/deductions/business/form4562/section179-inventory.ts";
+import { section179SummarySchema } from "../../../../../nodes/intermediate/forms/deductions/business/form4562/section179_inventory.ts";
 
 export function section179PdfFields(
   summary: z.infer<typeof section179SummarySchema>,

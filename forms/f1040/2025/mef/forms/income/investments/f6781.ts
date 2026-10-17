@@ -1,6 +1,6 @@
 import { element, elements } from "../../../../../mef/xml.ts";
 import { inputSchema } from "../../../../../nodes/intermediate/forms/income/investments/form6781/index.ts";
-import type { MefFormDescriptor } from "../../../form-descriptor.ts";
+import type { MefFormDescriptor } from "../../../form_descriptor.ts";
 
 type Input = Partial<typeof inputSchema._output> & Record<string, unknown>;
 

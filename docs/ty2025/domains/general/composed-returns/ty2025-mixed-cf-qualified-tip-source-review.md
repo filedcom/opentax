@@ -40,7 +40,7 @@ Serialized independent source views reject changed farm projection/profit/owner,
 
 Each of seven source packets passes public calculation, complete native XML with local TY2025v5.4 XSD and a flattened filled PDF. Source equations, owner splits, independent cap/phase-in formulas, zero filing behavior and both health copies are asserted. Broader same-owner C/F or several C/farm businesses, farm tip claims, optional farm methods, losses in this new tip branch, retirement/Marketplace combinations, outside-source authentication, ATS and parent completion remain open. Existing non-tip owner/farm/health branches are preserved and covered by compatibility.
 
-- Source fixture/test: `forms/f1040/2025/pdf/reviews/deductions/additional/mixed-cf-qualified-tip.fixture.ts` / `.test.ts`.
+- Source fixture/test: `forms/f1040/2025/pdf/reviews/deductions/additional/mixed_cf_qualified_tip.fixture.ts` / `.test.ts`.
 - Seven source/XML/PDF packets: `/tmp/opentax-mixed-cf-qualified-tip-evidence`.
 - Seven full-XSD/PDF positives plus source conflicts:10/0 (46s), `/tmp/opentax-mixed-cf-tip-source-final.log`.
 - Final strengthened per-employer worksheet and Tax Computation Worksheet gate:10/0 (43s), `/tmp/opentax-mixed-cf-tip-source-worksheet-final.log`.

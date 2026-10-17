@@ -1,7 +1,7 @@
 import type { Form8990Lines } from "../../../../../nodes/intermediate/forms/deductions/business/form8990/index.ts";
 import { reconcileForm8990Projection } from "../../../../domains/deductions/business/form8990/form8990_projection.ts";
 import { element, elements } from "../../../../../mef/xml.ts";
-import type { MefFormDescriptor } from "../../../form-descriptor.ts";
+import type { MefFormDescriptor } from "../../../form_descriptor.ts";
 
 type Input = Partial<Form8990Lines> & Record<string, unknown>;
 

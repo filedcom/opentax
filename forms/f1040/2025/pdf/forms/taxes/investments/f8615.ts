@@ -1,5 +1,5 @@
-import { assertReviewedDependentForm8615 } from "../../../../../nodes/inputs/taxes/investments/f8615/dependent-source-review.ts";
-import type { PdfFieldEntry, PdfFormDescriptor } from "../../../form-descriptor.ts";
+import { assertReviewedDependentForm8615 } from "../../../../../nodes/inputs/taxes/investments/f8615/dependent_source_review.ts";
+import type { PdfFieldEntry, PdfFormDescriptor } from "../../../form_descriptor.ts";
 
 // Verified against the 2025 Form 8615 AcroForm field tree. Numeric fields
 // f1_5 through f1_23 follow form lines 1 through 18 in reading order.

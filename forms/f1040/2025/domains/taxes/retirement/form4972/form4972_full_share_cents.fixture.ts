@@ -1,4 +1,4 @@
-import { multipleAnnuityInputs } from "../../../../pdf/reviews/taxes/retirement/form4972/review-4972-multiple-annuity.fixture.ts";
+import { multipleAnnuityInputs } from "../../../../pdf/reviews/taxes/retirement/form4972/review_4972_multiple_annuity.fixture.ts";
 export const fullShareCentCases = [
   ["single", 1, 0, true, true],
   ["three", 3, 0, true, true],

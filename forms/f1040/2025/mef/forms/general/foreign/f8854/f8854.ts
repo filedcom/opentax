@@ -2,7 +2,7 @@ import {
   assertForm8854FilingScope,
   inputSchema,
 } from "../../../../../../nodes/inputs/general/foreign/f8854/index.ts";
-import type { MefFormDescriptor } from "../../../../form-descriptor.ts";
+import type { MefFormDescriptor } from "../../../../form_descriptor.ts";
 import {
   buildForm8854InitialBundle,
   buildForm8854InitialDocument,

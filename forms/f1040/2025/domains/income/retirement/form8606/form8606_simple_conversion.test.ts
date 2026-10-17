@@ -4,7 +4,7 @@ import * as sys from "../../../../../../../scripts/support/sys.ts";
 import { assertEquals, assertRejects, assertThrows } from "@std/assert";
 import { createHash } from "node:crypto";
 import { PDFDocument } from "pdf-lib";
-import { reviewedRothOwnerInventory } from "../../../../../nodes/intermediate/forms/income/retirement/form8606/roth-inventory.ts";
+import { reviewedRothOwnerInventory } from "../../../../../nodes/intermediate/forms/income/retirement/form8606/roth_inventory.ts";
 import { f1040_2025 } from "../../../../index.ts";
 import { normalizeAllPending } from "../../../../return-processing/pending.ts";
 import { reconcileForm8606RothInventories } from "./form8606_roth_inventory_reconciliation.ts";

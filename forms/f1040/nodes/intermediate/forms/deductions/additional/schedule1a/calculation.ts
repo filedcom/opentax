@@ -2,18 +2,18 @@ import { z } from "zod";
 import {
   calculateSingleScheduleCForm7206,
   singleScheduleCPlanSchema,
-} from "../../../adjustments/health/form7206/single-source.ts";
+} from "../../../adjustments/health/form7206/single_source.ts";
 import {
   calculateIndependentOwnerHealth,
   independentOwnerHealthSourceSchema,
-} from "../../../adjustments/health/form7206/independent-owner.ts";
+} from "../../../adjustments/health/form7206/independent_owner.ts";
 import type { NodeContext } from "../../../../../../../../core/types/node-context.ts";
 import { FilingStatus } from "../../../../../types.ts";
 import {
   ownedScheduleSE,
   ownerSourcesSchema,
-} from "../../../taxes/self-employment/schedule_se/owner-calculation.ts";
-import { allocateSharedSeDeduction } from "../../../../../inputs/income/business/schedule_c/qbi-multiple.ts";
+} from "../../../taxes/self-employment/schedule_se/owner_calculation.ts";
+import { allocateSharedSeDeduction } from "../../../../../inputs/income/business/schedule_c/qbi_multiple.ts";
 import { CONFIG_BY_YEAR } from "../../../../../config/index.ts";
 
 const vehiclePurchaseDateSchema = z.string().regex(/^2025-\d{2}-\d{2}$/)

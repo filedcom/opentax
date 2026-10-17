@@ -1,5 +1,5 @@
 import { element, elements } from "../../../../../mef/xml.ts";
-import type { MefFormDescriptor } from "../../../form-descriptor.ts";
+import type { MefFormDescriptor } from "../../../form_descriptor.ts";
 import { scheduleAOtherTaxRows } from "../../../../domains/deductions/itemized/schedule-a/schedule_a_other_tax_source.ts";
 
 export const scheduleAOtherTaxStatement: MefFormDescriptor<

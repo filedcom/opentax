@@ -1,7 +1,7 @@
 import { element, elements } from "../../../../../mef/xml.ts";
 import type { Form8621Lines } from "../../../../../nodes/inputs/income/foreign/f8621/index.ts";
 import { calculateExcessEvents } from "../../../../../nodes/inputs/income/foreign/f8621/excess_distribution.ts";
-import type { MefFormDescriptor } from "../../../form-descriptor.ts";
+import type { MefFormDescriptor } from "../../../form_descriptor.ts";
 
 type Input = { items?: readonly Form8621Lines[] };
 

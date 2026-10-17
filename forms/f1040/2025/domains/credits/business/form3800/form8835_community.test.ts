@@ -16,12 +16,12 @@ import { extractFilerIdentity } from "../../../../../mef/filer.ts";
 import { buildPdfBytes, type PdfPageOrigin } from "../../../../pdf/builder.ts";
 import { form8835Pdf } from "../../../../pdf/forms/credits/business/f8835.ts";
 import { normalizeAllPending } from "../../../../return-processing/pending.ts";
-import { preparedSourceSha256 } from "../../../../return-processing/prepared-source.ts";
+import { preparedSourceSha256 } from "../../../../return-processing/prepared_source.ts";
 import {
   calculateForm8835,
   inputSchema,
 } from "../../../../../nodes/inputs/credits/business/f8835/index.ts";
-import { energyCommunityCapacity } from "../../../../../nodes/inputs/credits/business/f8835/energy-community-source.ts";
+import { energyCommunityCapacity } from "../../../../../nodes/inputs/credits/business/f8835/energy_community_source.ts";
 
 for (const c of communityCases) {
   test(`Form 8835 annual energy community complete return: ${c.id}`, async () => {

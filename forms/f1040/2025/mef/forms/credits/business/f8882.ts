@@ -1,5 +1,5 @@
 import { element, elements } from "../../../../../mef/xml.ts";
-import type { MefFormDescriptor } from "../../../form-descriptor.ts";
+import type { MefFormDescriptor } from "../../../form_descriptor.ts";
 import { reconcileForm8882DirectEmployer } from "./f8882_source.ts";
 
 /** TY2025 IRS8882.xsd direct-employer projection. */

@@ -1,4 +1,4 @@
-import type { PdfFieldEntry, PdfFormDescriptor } from "../../../form-descriptor.ts";
+import type { PdfFieldEntry, PdfFormDescriptor } from "../../../form_descriptor.ts";
 import { inputSchema } from "../../../../../nodes/inputs/credits/business/f8881/index.ts";
 import { reconcileForm8881DirectEmployer } from "../../../../mef/forms/credits/business/f8881.ts";
 import { assertForm3800FinalCreditJoin } from "../../../../domains/credits/business/form3800/form3800_final_credit_join.ts";

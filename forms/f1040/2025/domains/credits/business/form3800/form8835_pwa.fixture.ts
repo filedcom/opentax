@@ -9,13 +9,13 @@ import {
   form8835PwaDeclaration,
   form8835PwaDescription,
   type PwaSource,
-} from "../../../../../nodes/inputs/credits/business/f8835/pwa-source.ts";
+} from "../../../../../nodes/inputs/credits/business/f8835/pwa_source.ts";
 import {
   form8835PwaFields,
   pwaContinuationPrefix,
 } from "../../../../mef/forms/credits/business/f8835_pwa_statement.ts";
-import { loadPdfTemplate } from "../../../../pdf/support/template-cache.ts";
-import { sha256Hex } from "../../../../return-processing/prepared-source.ts";
+import { loadPdfTemplate } from "../../../../pdf/support/template_cache.ts";
+import { sha256Hex } from "../../../../return-processing/prepared_source.ts";
 
 export const pwaCases = [
   {

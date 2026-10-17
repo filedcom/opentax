@@ -4,7 +4,7 @@ import * as sys from "../../../../../../../scripts/support/sys.ts";
 import { assertEquals, assertRejects, assertStringIncludes } from "@std/assert";
 import { PDFDocument } from "pdf-lib";
 import { f1040_2025 } from "../../../../index.ts";
-import { form8826InterpreterInputs } from "../../../../pdf/reviews/credits/business/review-8826-interpreter.fixture.ts";
+import { form8826InterpreterInputs } from "../../../../pdf/reviews/credits/business/review_8826_interpreter.fixture.ts";
 import { extractFilerIdentity } from "../../../../../mef/filer.ts";
 import { normalizeAllPending } from "../../../../return-processing/pending.ts";
 import { buildPdfBytes } from "../../../../pdf/builder.ts";

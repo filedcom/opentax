@@ -6,7 +6,7 @@ import {
   assertThrows,
 } from "@std/assert";
 import { type FilerIdentity, FilingStatus } from "../../../../../mef/header.ts";
-import { ownedScheduleSE } from "../../../../../nodes/intermediate/forms/taxes/self-employment/schedule_se/owner-calculation.ts";
+import { ownedScheduleSE } from "../../../../../nodes/intermediate/forms/taxes/self-employment/schedule_se/owner_calculation.ts";
 import { scheduleSE as rawScheduleSE } from "./schedule_se.ts";
 
 const filer: FilerIdentity = {

@@ -11,7 +11,7 @@ import { form8995 } from "../../../../intermediate/forms/deductions/business/for
 import { form7206 } from "../../../../intermediate/forms/adjustments/health/form7206/index.ts";
 import type { NodeContext } from "../../../../../../../core/types/node-context.ts";
 import { CONFIG_BY_YEAR } from "../../../../config/index.ts";
-import { ownedSepSourceSchema } from "./owned-source.ts";
+import { ownedSepSourceSchema } from "./owned_source.ts";
 
 // TY2025 — Self-employed retirement plan deduction (IRC §404(a)(8), §408(k), §408(p), §401(k))
 // Flows to Schedule 1, Part II, Line 16.

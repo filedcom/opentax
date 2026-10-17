@@ -142,7 +142,7 @@ changes actual Form 8863 line 7 checkbox and refundable line 8.
   the child packet contains 16. All 72 pages were rendered with Poppler and
   inspected in four contact sheets; SE, Form 8863 restriction and Schedule 8812
   credit rows were also inspected at larger size.
-- Reproducible artifacts: run `form8863-self-employed.test.ts` with
+- Reproducible artifacts: run `form8863_self_employed.test.ts` with
   `--write-review-artifacts`. Actual public input JSON, complete XML and filled
   PDFs are under `/tmp/opentax-f8863-self-employed-evidence/`, including
   `mixed-child-credit-filled-return.pdf`. Existing claimant source fixtures were

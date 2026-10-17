@@ -2,7 +2,7 @@ import {
   calculateForm8396,
   qualifiedHomeAddressSchema,
 } from "../../../../../nodes/intermediate/forms/credits/individual/form8396/calculation.ts";
-import type { PdfFieldEntry, PdfFormDescriptor } from "../../../form-descriptor.ts";
+import type { PdfFieldEntry, PdfFormDescriptor } from "../../../form_descriptor.ts";
 import { sourceFromPending } from "../../../../mef/forms/credits/individual/f8396.ts";
 import { assertForm8396ReissueForm8828Join } from "../../../../mef/forms/credits/individual/f8396_reissue_join.ts";
 

@@ -1,4 +1,4 @@
-import type { PdfFieldEntry, PdfFormDescriptor } from "../../../form-descriptor.ts";
+import type { PdfFieldEntry, PdfFormDescriptor } from "../../../form_descriptor.ts";
 import { reconcileForm8888 } from "../../../../domains/payments/refund/form8888/form8888_reconciliation.ts";
 
 const page = "topmostSubform[0].Page1[0].";

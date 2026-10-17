@@ -8,7 +8,7 @@ import { element, elements } from "../../../../../../mef/xml.ts";
 import type {
   MefBuildContext,
   MefFormDescriptor,
-} from "../../../../form-descriptor.ts";
+} from "../../../../form_descriptor.ts";
 import {
   assertNoFiledForm8995,
   assertScheduleCLossFiler,

@@ -1,7 +1,7 @@
 import {
   assertBoundedProvisionalATI,
   type BoundedProvisionalATI,
-} from "./provisional-ati.ts";
+} from "./provisional_ati.ts";
 
 const calculatedLimitBrand = Symbol("Form8990CalculatedBoundedLimit");
 

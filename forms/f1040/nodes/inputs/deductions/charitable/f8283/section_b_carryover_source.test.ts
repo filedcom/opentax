@@ -1,6 +1,6 @@
 import { test } from "bun:test";
 import { assertEquals, assertRejects, assertThrows } from "@std/assert";
-import { sha256Hex } from "../../../../../2025/return-processing/prepared-source.ts";
+import { sha256Hex } from "../../../../../2025/return-processing/prepared_source.ts";
 import { FilingStatus } from "../../../../../mef/header.ts";
 import {
   inputSchema as scheduleAInputSchema,

@@ -1,5 +1,5 @@
 import { inputSchema } from "../../../../../../nodes/inputs/general/foreign/f8854/index.ts";
-import type { MefFormDescriptor } from "../../../../form-descriptor.ts";
+import type { MefFormDescriptor } from "../../../../form_descriptor.ts";
 import { buildForm8854NativeStatementContents } from "./f8854_initial.ts";
 import { annualInputSchema } from "../../../../../../nodes/inputs/general/foreign/f8854/annual.ts";
 import { buildForm8854AnnualNativeStatements } from "./f8854_annual.ts";

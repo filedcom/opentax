@@ -7,7 +7,7 @@ import { execute } from "../../../../../../../core/runtime/executor.ts";
 import { buildExecutionPlan } from "../../../../../../../core/runtime/planner.ts";
 import { registry } from "../../../../registry.ts";
 import { fillFormPdf } from "../../../builder.ts";
-import { pdfReviewFixtures } from "../../../review-fixtures.ts";
+import { pdfReviewFixtures } from "../../../review_fixtures.ts";
 import { scheduleDPdf } from "./schedule_d.ts";
 
 const trustLoss = pdfReviewFixtures.find((item) =>

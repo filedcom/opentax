@@ -4,7 +4,7 @@ import {
   type F4835Item,
   itemSchema,
 } from "../../../../../nodes/inputs/income/business/f4835/index.ts";
-import type { MefBuildContext, MefFormDescriptor } from "../../../form-descriptor.ts";
+import type { MefBuildContext, MefFormDescriptor } from "../../../form_descriptor.ts";
 import { farmAllowedLosses } from "./f4835_passive_loss.ts";
 import { inputSchema as scheduleFInputSchema } from "../../../../../nodes/intermediate/forms/income/business/schedule_f/index.ts";
 

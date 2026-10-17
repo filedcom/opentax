@@ -1,6 +1,6 @@
 import { element, elements } from "../../../../../mef/xml.ts";
 import type { Form8814Lines } from "../../../../../nodes/inputs/income/investments/f8814/index.ts";
-import type { MefBuildContext, MefFormDescriptor } from "../../../form-descriptor.ts";
+import type { MefBuildContext, MefFormDescriptor } from "../../../form_descriptor.ts";
 
 export const childTaxableInterestStatement: MefFormDescriptor<
   "child_taxable_interest_statement",

@@ -1,12 +1,12 @@
-import { intellectualPropertyReductionSchema } from "./intellectual-property-source.ts";
+import { intellectualPropertyReductionSchema } from "./intellectual_property_source.ts";
 import {
   calculateCharitableNaturalResource,
   charitableNaturalResourceSourceSchema,
-} from "./natural-resource-source.ts";
+} from "./natural_resource_source.ts";
 import {
   calculateCharitableDepreciation,
   charitableDepreciationSourceSchema,
-} from "./depreciation-source.ts";
+} from "./depreciation_source.ts";
 import { z } from "zod";
 import type {
   NodeOutput,
@@ -22,10 +22,10 @@ import type { NodeContext } from "../../../../../../../core/types/node-context.t
 import {
   form8283CarryoverEvidenceBaseSchema,
   form8283CarryoverEvidenceSchema,
-} from "./carryover-source.ts";
+} from "./carryover_source.ts";
 import { form8283SectionBCarryoverSourceSchema } from "./section_b_carryover_source.ts";
-import { FMVMethod } from "./fmv-method.ts";
-export { FMVMethod } from "./fmv-method.ts";
+import { FMVMethod } from "./fmv_method.ts";
+export { FMVMethod } from "./fmv_method.ts";
 
 export enum SectionBPropertyType {
   ArtUnder20000 = "art_under_20000",

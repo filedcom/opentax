@@ -4,7 +4,7 @@ import {
   inputSchema,
 } from "../../../../../nodes/inputs/income/business/f4835/index.ts";
 import { farmAllowedLosses } from "../../../../mef/forms/income/business/f4835_passive_loss.ts";
-import type { PdfFieldEntry, PdfFormDescriptor } from "../../../form-descriptor.ts";
+import type { PdfFieldEntry, PdfFormDescriptor } from "../../../form_descriptor.ts";
 import { StandardFonts } from "pdf-lib";
 
 // Checked against the TY2025 Form 4835 AcroForm field tree and printed lines.

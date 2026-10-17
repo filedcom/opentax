@@ -1,8 +1,8 @@
 import { PDFDocument } from "pdf-lib";
 import { communityFixture } from "./form8835_community.fixture.ts";
-import { form8835EarlyConstructionDeclaration } from "../../../../../nodes/inputs/credits/business/f8835/early-construction-source.ts";
+import { form8835EarlyConstructionDeclaration } from "../../../../../nodes/inputs/credits/business/f8835/early_construction_source.ts";
 import { domesticStatementFields } from "../../../../mef/forms/credits/business/f8835_domestic_statement.ts";
-import { sha256Hex } from "../../../../return-processing/prepared-source.ts";
+import { sha256Hex } from "../../../../return-processing/prepared_source.ts";
 
 export const communityBocCases = [
   {

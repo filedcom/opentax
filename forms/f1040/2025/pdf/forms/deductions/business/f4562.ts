@@ -3,7 +3,7 @@ import {
   section179PdfFields,
 } from "./f4562_section179.ts";
 import { appendBonusElectionStatements } from "./f4562_elections.ts";
-import { filedCurrentYearSchema } from "../../../../../nodes/intermediate/forms/deductions/business/form4562/current-year.ts";
+import { filedCurrentYearSchema } from "../../../../../nodes/intermediate/forms/deductions/business/form4562/current_year.ts";
 import {
   filedBonus4562Schema,
   filedBonusInventorySchema,
@@ -11,7 +11,7 @@ import {
 import type {
   PdfFieldEntry,
   PdfFormDescriptor,
-} from "../../../form-descriptor.ts";
+} from "../../../form_descriptor.ts";
 import { filedForm4562Schema } from "../../../../../nodes/intermediate/forms/deductions/business/form4562/index.ts";
 import { form4562 as form4562Mef } from "../../../../mef/forms/deductions/business/f4562.ts";
 

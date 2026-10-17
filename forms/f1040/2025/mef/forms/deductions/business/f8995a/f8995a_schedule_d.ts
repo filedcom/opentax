@@ -1,6 +1,6 @@
 import { normalizeAllPending } from "../../../../../return-processing/pending.ts";
 import { calculateIndependentPatronBusinesses } from "../../../../../../nodes/intermediate/forms/deductions/business/form8995a/index.ts";
-import { assertOwnedScheduleSE } from "../../../../../domains/taxes/self-employment/schedule-se/schedule-se-owner-source.ts";
+import { assertOwnedScheduleSE } from "../../../../../domains/taxes/self-employment/schedule-se/schedule_se_owner_source.ts";
 import { patronProprietorSsn } from "../../../../../domains/deductions/business/form8995a/form8995a_patron_reconciliation.ts";
 import { assertForm8995APatronReturn } from "../../../../../domains/deductions/business/form8995a/form8995a_patron_reconciliation.ts";
 import {
@@ -14,7 +14,7 @@ import { element, elements } from "../../../../../../mef/xml.ts";
 import type {
   MefBuildContext,
   MefFormDescriptor,
-} from "../../../../form-descriptor.ts";
+} from "../../../../form_descriptor.ts";
 import { validateOneBusiness } from "./f8995a.ts";
 
 type Input = Form8995AInput | readonly [];

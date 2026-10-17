@@ -6,8 +6,8 @@ import { itemSchema } from "../../../../../nodes/inputs/income/wages/f4852/index
 import {
   rothOwnerInventoryDocuments,
   rothOwnerInventorySchema,
-} from "../../../../../nodes/intermediate/forms/income/retirement/form8606/roth-inventory.ts";
-import { rothDistributionYearSchema } from "../../../../../nodes/intermediate/forms/income/retirement/form8606/roth-history.ts";
+} from "../../../../../nodes/intermediate/forms/income/retirement/form8606/roth_inventory.ts";
+import { rothDistributionYearSchema } from "../../../../../nodes/intermediate/forms/income/retirement/form8606/roth_history.ts";
 import {
   rothConversionCases,
   rothConversionReturnSource,

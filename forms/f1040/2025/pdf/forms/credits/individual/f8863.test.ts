@@ -4,7 +4,7 @@ import {
   educationDependentReview,
   educationGeneralReview,
   educationOwnershipReview,
-} from "../../../reviews/credits/individual/form8863-owner-review.fixture.ts";
+} from "../../../reviews/credits/individual/form8863_owner_review.fixture.ts";
 import { assertEquals, assertThrows } from "@std/assert";
 import { type FilerIdentity, FilingStatus } from "../../../../../mef/header.ts";
 import { FilingStatus as SourceFilingStatus } from "../../../../../nodes/types.ts";

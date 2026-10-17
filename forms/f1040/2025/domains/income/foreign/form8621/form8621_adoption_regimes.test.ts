@@ -5,7 +5,7 @@ import { createHash } from "node:crypto";
 import { f1040_2025 } from "../../../../index.ts";
 import { buildPending } from "../../../../mef/execution/pending.ts";
 import { buildPdfBytes, type PdfPageOrigin } from "../../../../pdf/builder.ts";
-import { pdfReviewFixtures } from "../../../../pdf/review-fixtures.ts";
+import { pdfReviewFixtures } from "../../../../pdf/review_fixtures.ts";
 import { PficRegime } from "../../../../../nodes/inputs/income/foreign/f8621/index.ts";
 import { ExcessEventKind } from "../../../../../nodes/inputs/income/foreign/f8621/excess_distribution.ts";
 import { form8621QefSourceInputs } from "./form8621_qef.fixture.ts";

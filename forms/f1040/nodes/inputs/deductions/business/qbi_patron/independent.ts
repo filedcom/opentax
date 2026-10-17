@@ -7,17 +7,17 @@ import {
 import {
   ownedScheduleSE,
   ownerSourcesSchema,
-} from "../../../../intermediate/forms/taxes/self-employment/schedule_se/owner-calculation.ts";
+} from "../../../../intermediate/forms/taxes/self-employment/schedule_se/owner_calculation.ts";
 import { independentReviewsSchema, sourceSchema } from "./schema.ts";
 import {
   calculateIndependentOwnerHealth,
   independentOwnerHealthSourceSchema,
-} from "../../../../intermediate/forms/adjustments/health/form7206/independent-owner.ts";
+} from "../../../../intermediate/forms/adjustments/health/form7206/independent_owner.ts";
 import { patronSourceAmounts } from "./calculation.ts";
 import {
   calculateOwnedSep,
   ownedSepSourceSchema,
-} from "../../../adjustments/retirement/sep_retirement/owned-source.ts";
+} from "../../../adjustments/retirement/sep_retirement/owned_source.ts";
 
 export const independentPatronSourceSchema = z.object({
   review: independentReviewsSchema,

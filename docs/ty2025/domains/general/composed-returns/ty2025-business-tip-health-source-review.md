@@ -55,7 +55,7 @@ The proofs use whole-dollar filed source operands, one actual ScheduleC per owne
 
 ## Evidence
 
-- Fixture/test: `forms/f1040/2025/pdf/reviews/deductions/additional/qualified-tip-health.fixture.ts` and `.test.ts`.
+- Fixture/test: `forms/f1040/2025/pdf/reviews/deductions/additional/qualified_tip_health.fixture.ts` and `.test.ts`.
 - Retained packets: `/tmp/opentax-qualified-tip-health-evidence`.
 - Eight health packet/XSD run: `/tmp/opentax-qualified-tip-health-focused-v1.log` (eight positive tests passed; four test-only overbroad descriptor expectations subsequently corrected).
 - Initial final full source gate:13/0, `/tmp/opentax-qualified-tip-health-focused-final.log`.

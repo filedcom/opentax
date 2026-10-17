@@ -2,7 +2,7 @@ import { z } from "zod";
 import {
   form3800SpecifiedCreditLineSchema,
   form3800StandardCreditLineSchema,
-} from "../../../../../../nodes/intermediate/forms/credits/business/form8582cr/credit-route.ts";
+} from "../../../../../../nodes/intermediate/forms/credits/business/form8582cr/credit_route.ts";
 import type {
   Form3800PassiveCreditRow,
   Form3800PassiveCreditVintage,

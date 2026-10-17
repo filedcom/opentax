@@ -6,7 +6,7 @@ import {
   IncomeCategory,
   priorYearCarryoverSchema,
 } from "../../../../../../nodes/intermediate/forms/credits/foreign/form_1116/index.ts";
-import type { MefFormDescriptor } from "../../../../form-descriptor.ts";
+import type { MefFormDescriptor } from "../../../../form_descriptor.ts";
 import { assertForm1116CarryoverSource } from "../../../../../domains/credits/foreign/form1116/form1116_carryover_source.ts";
 
 const currentYearExcessFieldsSchema = z.object({

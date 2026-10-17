@@ -1,6 +1,6 @@
 import { element, elements } from "../../../../../mef/xml.ts";
-import { assertScheduleDK1Source } from "../../../../domains/income/investments/schedule-d/schedule-d-k1-source.ts";
-import type { MefFormDescriptor } from "../../../form-descriptor.ts";
+import { assertScheduleDK1Source } from "../../../../domains/income/investments/schedule-d/schedule_d_k1_source.ts";
+import type { MefFormDescriptor } from "../../../form_descriptor.ts";
 import { inputSchema as trustK1InputSchema } from "../../../../../nodes/inputs/income/rental-passthrough/k1_trust/index.ts";
 import { inputSchema as partnershipK1InputSchema } from "../../../../../nodes/inputs/income/rental-passthrough/k1_partnership/index.ts";
 import { inputSchema as sCorpK1InputSchema } from "../../../../../nodes/inputs/income/rental-passthrough/k1_s_corp/index.ts";

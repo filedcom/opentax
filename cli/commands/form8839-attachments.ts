@@ -1,6 +1,6 @@
 import { lstat, readFile } from "node:fs/promises";
 import { join } from "node:path";
-import type { MefPdfAttachment } from "../../forms/f1040/2025/mef/form-descriptor.ts";
+import type { MefPdfAttachment } from "../../forms/f1040/2025/mef/form_descriptor.ts";
 import { parsePublicForm8839Source } from "../../forms/f1040/nodes/intermediate/forms/credits/individual/form8839/public_source.ts";
 
 /** Load the existing Form 8839 manifest from this return's attachment folder. */

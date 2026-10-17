@@ -1,5 +1,5 @@
 import { reconcileCurrentYearInventory } from "../../deductions/business/f4562_current_year.ts";
-import { assertConstructionReview } from "../../../../../nodes/inputs/credits/business/f8911/construction-review.ts";
+import { assertConstructionReview } from "../../../../../nodes/inputs/credits/business/f8911/construction_review.ts";
 import {
   reconcileBonus4562,
   reconcileBonusInventory,

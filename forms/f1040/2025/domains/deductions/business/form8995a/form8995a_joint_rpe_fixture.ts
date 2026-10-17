@@ -48,7 +48,7 @@ export async function jointRpeFixture(c: typeof jointRpeCases[number]) {
   const input = JSON.parse(
     await fs.readFile(
       new URL(
-        `./form8995a-rpe-${c.count}-business-source.json`,
+        `./form8995a_rpe_${c.count}_business_source.json`,
         import.meta.url,
       ), "utf8",
     ),

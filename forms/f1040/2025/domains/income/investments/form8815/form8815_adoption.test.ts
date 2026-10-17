@@ -7,11 +7,11 @@ import { f1040_2025 } from "../../../../index.ts";
 import { normalizeAllPending } from "../../../../return-processing/pending.ts";
 import { extractFilerIdentity } from "../../../../../mef/filer.ts";
 import { buildPdfBytes, type PdfPageOrigin } from "../../../../pdf/builder.ts";
-import { pdfReviewFixtures } from "../../../../pdf/review-fixtures.ts";
+import { pdfReviewFixtures } from "../../../../pdf/review_fixtures.ts";
 import {
   adoptionReviewAttachments,
   adoptionReviewSource,
-} from "../../../../pdf/reviews/general/composed-returns/review-8839.fixture.ts";
+} from "../../../../pdf/reviews/general/composed-returns/review_8839.fixture.ts";
 import { physicalPresenceFilingSchema } from "../../../../../nodes/intermediate/forms/income/foreign/form2555/calculation.ts";
 import { reconcilePublicForm8839Pending } from "../../../../../nodes/intermediate/forms/credits/individual/form8839/pending_reconciliation.ts";
 

@@ -7,7 +7,7 @@ import { buildPdfBytes } from "../../../../../2025/pdf/builder.ts";
 import { FilingStatus } from "../../../../../mef/header.ts";
 import { inputSchema } from "./ledger.ts";
 import { PDFDocument } from "pdf-lib";
-import { sha256Hex } from "../../../../../2025/return-processing/prepared-source.ts";
+import { sha256Hex } from "../../../../../2025/return-processing/prepared_source.ts";
 import { reviewForm8997HoldingOnlySource } from "./holding_only_source.ts";
 
 async function reviewedPdf(

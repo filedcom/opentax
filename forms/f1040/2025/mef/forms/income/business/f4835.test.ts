@@ -1,7 +1,7 @@
 import { test } from "bun:test";
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import { buildMefXml } from "../../../builder.ts";
-import { testFiler } from "../../../support/test-filer.ts";
+import { testFiler } from "../../../support/test_filer.ts";
 import { form4835 } from "./f4835.ts";
 import { scheduleE } from "../rental-passthrough/schedule_e.ts";
 

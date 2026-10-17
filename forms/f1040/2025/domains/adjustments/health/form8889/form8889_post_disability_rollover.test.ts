@@ -12,7 +12,7 @@ import {
 import { f1040_2025 } from "../../../../index.ts";
 import { form8889 } from "../../../../mef/forms/adjustments/health/f8889.ts";
 import { form8889Pdf } from "../../../../pdf/forms/adjustments/health/f8889.ts";
-import { pdfReviewFixtures } from "../../../../pdf/review-fixtures.ts";
+import { pdfReviewFixtures } from "../../../../pdf/review_fixtures.ts";
 
 const base = pdfReviewFixtures.find((item) => item.id === "single-w2-refund")!;
 

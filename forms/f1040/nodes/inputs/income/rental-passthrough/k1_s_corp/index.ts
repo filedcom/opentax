@@ -16,9 +16,9 @@ import {
 import {
   ownedDebtFamily,
   ownedDebtFamilyQbiLines,
-} from "../../../../intermediate/forms/income/business/form7203/owned-family.ts";
+} from "../../../../intermediate/forms/income/business/form7203/owned_family.ts";
 import { z } from "zod";
-import { ownedSCorpLossLines } from "../../../../intermediate/forms/deductions/business/form8995/owned-s-corp-loss.ts";
+import { ownedSCorpLossLines } from "../../../../intermediate/forms/deductions/business/form8995/owned_s_corp_loss.ts";
 import { ty2025IrsCountryCodeSchema } from "../../../../irs_country_code.ts";
 import {
   type Box10CodeJSource,
@@ -48,14 +48,14 @@ import {
   sCorpK3PassiveInterestSchema,
 } from "../../../../intermediate/forms/credits/foreign/form_1116/index.ts";
 import { form7203 } from "../../../../intermediate/forms/income/business/form7203/index.ts";
-import { reviewedStockLossLedgerSchema } from "../../../../intermediate/forms/income/business/form7203/stock-ledger.ts";
+import { reviewedStockLossLedgerSchema } from "../../../../intermediate/forms/income/business/form7203/stock_ledger.ts";
 import {
   actualCurrentDebtRepayments,
   reconcileCashCapitalAndNewNote,
   reconcileNewFormalNotes,
   reviewedForm7203DebtEvidenceSchema,
   totalCurrentDebtAdvances,
-} from "../../../../intermediate/forms/income/business/form7203/debt-note.ts";
+} from "../../../../intermediate/forms/income/business/form7203/debt_note.ts";
 import { form4797 } from "../../../../intermediate/forms/income/business/form4797/index.ts";
 import { rate_28_gain_worksheet } from "../../../../intermediate/worksheets/taxes/calculation/rate_28_gain_worksheet/index.ts";
 import { unrecaptured_1250_worksheet } from "../../../../intermediate/worksheets/taxes/calculation/unrecaptured_1250_worksheet/index.ts";

@@ -9,7 +9,7 @@ import { f1040_2025 } from "../../../../index.ts";
 import { extractFilerIdentity } from "../../../../../mef/filer.ts";
 import { buildPdfBytes, type PdfPageOrigin } from "../../../../pdf/builder.ts";
 import { form8835Pdf } from "../../../../pdf/forms/credits/business/f8835.ts";
-import { sha256Hex } from "../../../../return-processing/prepared-source.ts";
+import { sha256Hex } from "../../../../return-processing/prepared_source.ts";
 
 for (const c of earlyCases) {
   test(`Form 8835 reviewed early construction complete return: ${c.id}`, async () => {

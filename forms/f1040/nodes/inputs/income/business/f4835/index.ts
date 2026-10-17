@@ -1,7 +1,7 @@
 import {
   currentFarmRentalQbiSourceSchema,
   reconcileCurrentFarmRentalQbi,
-} from "./qbi-source.ts";
+} from "./qbi_source.ts";
 import { form8995 } from "../../../../intermediate/forms/deductions/business/form8995/index.ts";
 import { z } from "zod";
 import type { NodeResult } from "../../../../../../../core/types/tax-node.ts";

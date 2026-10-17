@@ -13,13 +13,13 @@ import {
 import { z } from "zod";
 import { assertPublicEmployeeContributionSources } from "./domains/credits/individual/form8880/form8880_employee_sources.ts";
 import { assertPublicSaverDistributionSources } from "./domains/credits/individual/form8880/form8880_distribution_sources.ts";
-import { preparePublicForm8886Return } from "./domains/general/filing/form8886/public-return.ts";
-import { assertPassiveSCorpLossCalculationInputs } from "./domains/income/business/passive-s-corp-loss-calculation.ts";
+import { preparePublicForm8886Return } from "./domains/general/filing/form8886/public_return.ts";
+import { assertPassiveSCorpLossCalculationInputs } from "./domains/income/business/passive_s_corp_loss_calculation.ts";
 import type { FormDefinition } from "../../../core/types/form-definition.ts";
 import type { ExecuteResult } from "../../../core/runtime/executor.ts";
 import type { FilerIdentity } from "../mef/header.ts";
 import { publicInputSchema as form8990PublicInputSchema } from "../nodes/intermediate/forms/deductions/business/form8990/index.ts";
-import { runBoundedForm8990TwoPass } from "../nodes/intermediate/forms/deductions/business/form8990/run-two-pass.ts";
+import { runBoundedForm8990TwoPass } from "../nodes/intermediate/forms/deductions/business/form8990/run_two_pass.ts";
 import { projectForm8990ForExport } from "./domains/deductions/business/form8990/form8990_projection.ts";
 import type { MefFormsPending } from "./mef/types.ts";
 import { F1040_2025_CONFIG } from "./config.ts";
@@ -28,8 +28,8 @@ import { registry } from "./registry.ts";
 import { buildMefBundle, buildMefXml } from "./mef/builder.ts";
 import { buildPending } from "./mef/execution/pending.ts";
 import { buildPdfBytes } from "./pdf/builder.ts";
-import { assertF1040FinalHeader } from "./domains/general/return-assembly/filer-source-reconciliation.ts";
-import { assertNoRepeatedBrokerSaleSources } from "./domains/income/investments/broker-sale-source-reconciliation.ts";
+import { assertF1040FinalHeader } from "./domains/general/return-assembly/filer_source_reconciliation.ts";
+import { assertNoRepeatedBrokerSaleSources } from "./domains/income/investments/broker_sale_source_reconciliation.ts";
 import { applyForm8621QefRefigure } from "./domains/income/foreign/form8621/form8621_1294_refigure.ts";
 import { executePreQefSourceReturn } from "./return-processing/staged_source_return.ts";
 

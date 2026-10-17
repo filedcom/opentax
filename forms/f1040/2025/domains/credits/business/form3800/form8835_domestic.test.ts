@@ -16,12 +16,12 @@ import { normalizeAllPending } from "../../../../return-processing/pending.ts";
 import {
   preparedSourceSha256,
   sha256Hex,
-} from "../../../../return-processing/prepared-source.ts";
+} from "../../../../return-processing/prepared_source.ts";
 import {
   calculateForm8835,
   inputSchema,
 } from "../../../../../nodes/inputs/credits/business/f8835/index.ts";
-import { domesticManufacturedCosts } from "../../../../../nodes/inputs/credits/business/f8835/domestic-source.ts";
+import { domesticManufacturedCosts } from "../../../../../nodes/inputs/credits/business/f8835/domestic_source.ts";
 
 for (const c of domesticCases) {
   test(`Form 8835 reviewed domestic content complete return: ${c.id}`, async () => {

@@ -3,7 +3,7 @@ import { assertEquals, assertThrows } from "@std/assert";
 import { BondType } from "../../../../../nodes/inputs/credits/individual/f8912/index.ts";
 import { form8912Pdf } from "./f8912.ts";
 import { fillFormPdf } from "../../../builder.ts";
-import { testFiler } from "../../../../mef/support/test-filer.ts";
+import { testFiler } from "../../../../mef/support/test_filer.ts";
 
 test("Form 8912 fills filer identity on each selected page", async () => {
   for (

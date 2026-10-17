@@ -1,9 +1,9 @@
 import { z } from "zod";
-import type { MefBuildContext } from "../../../../form-descriptor.ts";
-import { form8283CarryoverEvidenceSchema } from "../../../../../../nodes/inputs/deductions/charitable/f8283/carryover-source.ts";
+import type { MefBuildContext } from "../../../../form_descriptor.ts";
+import { form8283CarryoverEvidenceSchema } from "../../../../../../nodes/inputs/deductions/charitable/f8283/carryover_source.ts";
 
-export { form8283CarryoverEvidenceSchema } from "../../../../../../nodes/inputs/deductions/charitable/f8283/carryover-source.ts";
-export type { Form8283CarryoverEvidence } from "../../../../../../nodes/inputs/deductions/charitable/f8283/carryover-source.ts";
+export { form8283CarryoverEvidenceSchema } from "../../../../../../nodes/inputs/deductions/charitable/f8283/carryover_source.ts";
+export type { Form8283CarryoverEvidence } from "../../../../../../nodes/inputs/deductions/charitable/f8283/carryover_source.ts";
 
 const amount = z.number().int().nonnegative();
 

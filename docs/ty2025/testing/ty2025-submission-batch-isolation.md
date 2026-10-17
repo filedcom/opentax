@@ -7,7 +7,7 @@ returns with distinct synthetic taxpayers and4/5/6 door QMIDs. Each produces
 `AdditionalQMIDStatement.pdf`; the identical filename is valid inside separate
 submission ZIPs and must not cause cross-return substitution.
 
-The new checked-in `submission-batch-isolation.test.ts` exercises the public
+The new checked-in `submission_batch_isolation.test.ts` exercises the public
 graph, prepared bundle, generated attachment, submission archive and A2A
 container. Both forward and reversed submission order preserve exact inner ZIP
 bytes and request IDs. Each return retains its original XML, filer SSN and

@@ -8,16 +8,16 @@ import {
 } from "@std/assert";
 import { f1040_2025 } from "../../../../2025/index.ts";
 import { extractFilerIdentity } from "../../../../mef/filer.ts";
-import { form8941PartYearInputs } from "../../../../2025/pdf/reviews/general/composed-returns/review-8941-partyear.fixture.ts";
-import { form8941PartMonthInputs } from "../../../../2025/pdf/reviews/general/composed-returns/review-8941-partmonth.fixture.ts";
-import { form8941TierChangeInputs } from "../../../../2025/pdf/reviews/general/composed-returns/review-8941-tier-changes.fixture.ts";
-import { form8941FarmShopInputs } from "../../../../2025/pdf/reviews/general/composed-returns/review-8941-farm-shop.fixture.ts";
-import { form8941IndependentSpouseInputs } from "../../../../2025/pdf/reviews/general/composed-returns/review-8941-independent-spouses.fixture.ts";
+import { form8941PartYearInputs } from "../../../../2025/pdf/reviews/general/composed-returns/review_8941_partyear.fixture.ts";
+import { form8941PartMonthInputs } from "../../../../2025/pdf/reviews/general/composed-returns/review_8941_partmonth.fixture.ts";
+import { form8941TierChangeInputs } from "../../../../2025/pdf/reviews/general/composed-returns/review_8941_tier_changes.fixture.ts";
+import { form8941FarmShopInputs } from "../../../../2025/pdf/reviews/general/composed-returns/review_8941_farm_shop.fixture.ts";
+import { form8941IndependentSpouseInputs } from "../../../../2025/pdf/reviews/general/composed-returns/review_8941_independent_spouses.fixture.ts";
 import {
   calculateForm8941,
   independentSpouseForm8941,
 } from "../../../../nodes/inputs/credits/health/f8941/index.ts";
-import { form8941AveragePremiums } from "../../../../nodes/inputs/credits/health/f8941/average-premiums.ts";
+import { form8941AveragePremiums } from "../../../../nodes/inputs/credits/health/f8941/average_premiums.ts";
 import { multiplePlanWorksheet } from "../../../../nodes/inputs/credits/health/f8941/multiple_plans.ts";
 import { form8941Pdf } from "../../../../2025/pdf/forms/credits/health/f8941.ts";
 

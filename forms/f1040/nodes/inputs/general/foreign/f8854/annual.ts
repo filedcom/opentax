@@ -5,7 +5,7 @@ import {
   partISchema,
   taxStatus2025Schema,
 } from "./index.ts";
-import { ReportedFormCode } from "./section-c.ts";
+import { ReportedFormCode } from "./section_c.ts";
 
 const documentId = z.string().regex(/^[A-Za-z0-9:.\-]{1,30}$/);
 const dollars = z.number().int().nonnegative().refine(

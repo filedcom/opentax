@@ -18,7 +18,7 @@ import {
 import {
   inputSchema as miscInputSchema,
 } from "../../../../../nodes/inputs/income/business/f1099m/index.ts";
-import type { MefFormDescriptor } from "../../../form-descriptor.ts";
+import type { MefFormDescriptor } from "../../../form_descriptor.ts";
 
 type Fields = Partial<ReturnType<typeof inputSchema.parse>>;
 const digits = (value: string) => value.replace(/\D/g, "");

@@ -15,8 +15,8 @@ import { registry } from "../../../../registry.ts";
 import { buildMefXml } from "../../../../mef/builder.ts";
 import { buildPending } from "../../../../mef/execution/pending.ts";
 import { buildPdfBytes } from "../../../../pdf/builder.ts";
-import { pdfReviewFixtures } from "../../../../pdf/review-fixtures.ts";
-import { assert1099GUnemploymentSource } from "./f1099g-unemployment-reconciliation.ts";
+import { pdfReviewFixtures } from "../../../../pdf/review_fixtures.ts";
+import { assert1099GUnemploymentSource } from "./f1099g_unemployment_reconciliation.ts";
 
 const general = {
   filing_status: "single",

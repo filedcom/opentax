@@ -1,4 +1,4 @@
-import { pdfReviewFixtures } from "../../../../pdf/review-fixtures.ts";
+import { pdfReviewFixtures } from "../../../../pdf/review_fixtures.ts";
 
 export const patronStatusCases = (["hoh", "qss", "mfs"] as const).flatMap((
   status,

@@ -14,10 +14,10 @@ import { appendInput } from "../store/store.ts";
 import { f1040_2025 } from "../../forms/f1040/2025/index.ts";
 import { extractFilerIdentity } from "../../forms/f1040/mef/filer.ts";
 import { normalizeAllPending } from "../../forms/f1040/2025/return-processing/pending.ts";
-import { sha256Hex } from "../../forms/f1040/2025/return-processing/prepared-source.ts";
+import { sha256Hex } from "../../forms/f1040/2025/return-processing/prepared_source.ts";
 import { disclosureFixture } from "../../forms/f1040/2025/domains/general/filing/form8886/source.fixture.ts";
 import { ReturnSourceKind } from "../../forms/f1040/2025/domains/general/filing/form8886/source.ts";
-import { capitalReturnSourceSha256 } from "../../forms/f1040/2025/domains/general/filing/form8886/return-sources.ts";
+import { capitalReturnSourceSha256 } from "../../forms/f1040/2025/domains/general/filing/form8886/return_sources.ts";
 import {
   OtsaMethod,
   OtsaTiming,
@@ -25,7 +25,7 @@ import {
 import {
   prepareForm8886OtsaDeliveryRecord,
   prepareForm8886OtsaExport,
-} from "../../forms/f1040/2025/domains/general/filing/form8886/otsa-export.ts";
+} from "../../forms/f1040/2025/domains/general/filing/form8886/otsa_export.ts";
 
 async function fixture(subsequent = false) {
   const general = {

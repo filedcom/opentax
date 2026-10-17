@@ -1,8 +1,8 @@
 import { test } from "bun:test";
 import * as sys from "../../../../../../../scripts/support/sys.ts";
-import { independentHealthFamily } from "../../../../pdf/reviews/adjustments/health/form7206-independent-owner.fixture.ts";
+import { independentHealthFamily } from "../../../../pdf/reviews/adjustments/health/form7206_independent_owner.fixture.ts";
 import { assertEquals, assertRejects, assertThrows } from "@std/assert";
-import { pdfReviewFixtures } from "../../../../pdf/review-fixtures.ts";
+import { pdfReviewFixtures } from "../../../../pdf/review_fixtures.ts";
 import { f1040_2025 } from "../../../../index.ts";
 import { normalizeAllPending } from "../../../../return-processing/pending.ts";
 import { assertIndependentOwnerHealth } from "./form7206_independent_owner_source.ts";

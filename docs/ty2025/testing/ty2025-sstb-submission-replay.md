@@ -71,5 +71,5 @@ public calculation-error route recorded as future161. Counts replace the earlier
 Reproduce the focused check with:
 
 ```sh
-deno test -A forms/f1040/2025/mef/submissions/submission-sstb-replay.test.ts
+deno test -A forms/f1040/2025/mef/submissions/submission_sstb_replay.test.ts
 ```

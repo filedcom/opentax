@@ -1,9 +1,9 @@
-import { assertOwnedScheduleSE } from "../../../../domains/taxes/self-employment/schedule-se/schedule-se-owner-source.ts";
-import type { PdfFieldEntry, PdfFormDescriptor } from "../../../form-descriptor.ts";
+import { assertOwnedScheduleSE } from "../../../../domains/taxes/self-employment/schedule-se/schedule_se_owner_source.ts";
+import type { PdfFieldEntry, PdfFormDescriptor } from "../../../form_descriptor.ts";
 import { scheduleSELines } from "../../../../../nodes/intermediate/forms/taxes/self-employment/schedule_se/calculation.ts";
 import { CONFIG_BY_YEAR } from "../../../../../nodes/config/index.ts";
 import { FilingStatus } from "../../../../../nodes/types.ts";
-import { scheduleSeSpouseProprietor } from "../../../../domains/taxes/self-employment/schedule-se/schedule-se-proprietor.ts";
+import { scheduleSeSpouseProprietor } from "../../../../domains/taxes/self-employment/schedule-se/schedule_se_proprietor.ts";
 
 // IRS Schedule SE (2025) AcroForm field names.
 // Verified layout from https://www.irs.gov/pub/irs-prior/f1040sse--2025.pdf

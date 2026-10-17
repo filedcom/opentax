@@ -6,8 +6,8 @@ import { registry } from "../../../registry.ts";
 import { buildPending } from "../../../mef/execution/pending.ts";
 import { buildMefXml } from "../../../mef/builder.ts";
 import { buildPdfBytes } from "../../../pdf/builder.ts";
-import { pdfReviewFixtures } from "../../../pdf/review-fixtures.ts";
-import { assertSchedule1Form8621Source } from "./schedule1-form8621-source.ts";
+import { pdfReviewFixtures } from "../../../pdf/review_fixtures.ts";
+import { assertSchedule1Form8621Source } from "./schedule1_form8621_source.ts";
 import { f8621, itemSchema, PficRegime } from "../../../../nodes/inputs/income/foreign/f8621/index.ts";
 import { ExcessEventKind } from "../../../../nodes/inputs/income/foreign/f8621/excess_distribution.ts";
 

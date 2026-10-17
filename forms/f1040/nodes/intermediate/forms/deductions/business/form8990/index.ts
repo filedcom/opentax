@@ -18,10 +18,10 @@ import {
 import {
   assertFinalizedBoundedForm8990Return,
   type FinalizedBoundedForm8990Return,
-} from "./final-reconciliation.ts";
-import { priorFiledScheduleCSchema } from "./nonexempt-receipts.ts";
-import { receiptSchema } from "./provisional-ati.ts";
-import { businessInterestExpenseRecordSchema } from "./interest-expense.ts";
+} from "./final_reconciliation.ts";
+import { priorFiledScheduleCSchema } from "./nonexempt_receipts.ts";
+import { receiptSchema } from "./provisional_ati.ts";
+import { businessInterestExpenseRecordSchema } from "./interest_expense.ts";
 
 const amount = z.number().int().finite().nonnegative().max(999_999_999_999_999);
 

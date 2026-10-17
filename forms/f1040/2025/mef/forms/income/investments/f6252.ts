@@ -10,7 +10,7 @@ import {
   inputSchema,
   validatePriorYearForm6252Source,
 } from "../../../../../nodes/intermediate/forms/income/investments/form6252/index.ts";
-import type { MefBuildContext, MefFormDescriptor } from "../../../form-descriptor.ts";
+import type { MefBuildContext, MefFormDescriptor } from "../../../form_descriptor.ts";
 
 type Input = F6252Input;
 

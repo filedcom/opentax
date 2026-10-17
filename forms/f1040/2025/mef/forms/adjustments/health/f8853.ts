@@ -27,7 +27,7 @@ import {
 import type {
   MefBuildContext,
   MefFormDescriptor,
-} from "../../../form-descriptor.ts";
+} from "../../../form_descriptor.ts";
 
 type Input = Form8853Input | readonly [];
 

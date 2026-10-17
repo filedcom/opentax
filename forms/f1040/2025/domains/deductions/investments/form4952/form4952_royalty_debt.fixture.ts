@@ -1,4 +1,4 @@
-import { pdfReviewFixtures } from "../../../../pdf/review-fixtures.ts";
+import { pdfReviewFixtures } from "../../../../pdf/review_fixtures.ts";
 const base = pdfReviewFixtures.find((x) => x.id === "single-w2-refund")!.inputs;
 const royalty = {
   payer_name: "Patent Licensee",

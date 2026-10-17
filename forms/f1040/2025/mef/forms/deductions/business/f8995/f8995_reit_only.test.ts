@@ -3,7 +3,7 @@ import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import { execute } from "../../../../../../../../core/runtime/executor.ts";
 import { buildExecutionPlan } from "../../../../../../../../core/runtime/planner.ts";
 import { form8995Pdf } from "../../../../../pdf/forms/deductions/business/f8995/f8995.ts";
-import { pdfReviewFixtures } from "../../../../../pdf/review-fixtures.ts";
+import { pdfReviewFixtures } from "../../../../../pdf/review_fixtures.ts";
 import { registry } from "../../../../../registry.ts";
 import { buildMefXml } from "../../../../builder.ts";
 import { form8995 } from "./f8995.ts";

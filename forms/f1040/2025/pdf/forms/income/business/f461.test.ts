@@ -1,7 +1,7 @@
 import { test } from "bun:test";
 import { assertEquals, assertThrows } from "@std/assert";
 import { type FilerIdentity, FilingStatus } from "../../../../mef/types.ts";
-import { assertAttachmentCoverage } from "../../../../return-processing/attachment-coverage.ts";
+import { assertAttachmentCoverage } from "../../../../return-processing/attachment_coverage.ts";
 import { form461Pdf } from "./f461.ts";
 
 const filer: FilerIdentity = {

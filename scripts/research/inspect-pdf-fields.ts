@@ -16,7 +16,7 @@ import * as sys from "../support/sys.ts";
 import { PDFDocument } from "pdf-lib";
 import { join } from "node:path";
 import { ALL_PDF_FORMS } from "../../forms/f1040/2025/pdf/forms/index.ts";
-import type { PdfFormDescriptor } from "../../forms/f1040/2025/pdf/form-descriptor.ts";
+import type { PdfFormDescriptor } from "../../forms/f1040/2025/pdf/form_descriptor.ts";
 
 const DUMP_DIR =
   new URL("../../.state/research/ty2025-pdf-field-audit/", import.meta.url)

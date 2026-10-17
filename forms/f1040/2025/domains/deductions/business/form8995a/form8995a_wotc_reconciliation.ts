@@ -1,6 +1,6 @@
 import { assertLossWotcSources } from "./form8995a_loss_wotc_source.ts";
 import { assertQualifiedTipQbiSource } from "../form8995/form8995_qualified_tip_source.ts";
-import { assertOwnedScheduleSE } from "../../../taxes/self-employment/schedule-se/schedule-se-owner-source.ts";
+import { assertOwnedScheduleSE } from "../../../taxes/self-employment/schedule-se/schedule_se_owner_source.ts";
 import { inputSchema as w2Schema } from "../../../../../nodes/inputs/income/wages/w2/index.ts";
 import { isDeepStrictEqual } from "node:util";
 import {

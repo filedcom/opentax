@@ -5,7 +5,7 @@ import { f1040_2025 } from "../../../../index.ts";
 import { normalizeAllPending } from "../../../../return-processing/pending.ts";
 import { extractFilerIdentity } from "../../../../../mef/filer.ts";
 import { buildPdfBytes, type PdfPageOrigin } from "../../../../pdf/builder.ts";
-import { withSyntheticForm1098Copy } from "../../../../pdf/reviews/deductions/mortgage/review-1098-copy.fixture.ts";
+import { withSyntheticForm1098Copy } from "../../../../pdf/reviews/deductions/mortgage/review_1098_copy.fixture.ts";
 import { contractInventoryCases } from "./form6251_contract_inventory.fixture.ts";
 
 for (const entry of contractInventoryCases) {

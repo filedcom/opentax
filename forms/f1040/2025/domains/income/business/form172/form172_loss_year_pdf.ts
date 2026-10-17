@@ -5,7 +5,7 @@ import {
   TextAlignment,
 } from "pdf-lib";
 import type { SourceDocumentBytes } from "../../../../../../../core/runtime/source-documents.ts";
-import { sha256Hex } from "../../../../return-processing/prepared-source.ts";
+import { sha256Hex } from "../../../../return-processing/prepared_source.ts";
 import { stageForm172LossYearNativeDocument } from "./form172_loss_year_native.ts";
 
 export const FORM172_TEMPLATE_SHA256 =

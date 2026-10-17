@@ -1,4 +1,4 @@
-import { ownerIdentitySchema } from "../../../../intermediate/forms/taxes/self-employment/schedule_se/owner-calculation.ts";
+import { ownerIdentitySchema } from "../../../../intermediate/forms/taxes/self-employment/schedule_se/owner_calculation.ts";
 import {
   inputSchema as patronReviewSchema,
   patronW2Sources,

@@ -8,7 +8,7 @@ import {
   assertStringIncludes,
 } from "@std/assert";
 import { f1040_2025 } from "../../../../index.ts";
-import { pdfReviewFixtures } from "../../../../pdf/review-fixtures.ts";
+import { pdfReviewFixtures } from "../../../../pdf/review_fixtures.ts";
 import { normalizeAllPending } from "../../../../return-processing/pending.ts";
 import { buildPdfBytes } from "../../../../pdf/builder.ts";
 import { form8995aPdf } from "../../../../pdf/forms/deductions/business/f8995a.ts";

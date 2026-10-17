@@ -5,7 +5,7 @@ import {
   type Form3800PassiveTaxUseVintage,
   ZERO_FORM3800_PASSIVE_ACTIVITY,
 } from "../../../../../../nodes/inputs/credits/business/f3800/calculation.ts";
-import { PassiveCreditReportingRoute } from "../../../../../../nodes/intermediate/forms/credits/business/form8582cr/credit-route.ts";
+import { PassiveCreditReportingRoute } from "../../../../../../nodes/intermediate/forms/credits/business/form8582cr/credit_route.ts";
 import { PassiveCreditSourceOrigin } from "../../../../../../nodes/intermediate/forms/credits/business/form8582cr/source.ts";
 import { FilingStatus } from "../../../../../../nodes/types.ts";
 import type { Form3800DocumentParts } from "../../../../../mef/forms/credits/business/f3800/f3800_document.ts";

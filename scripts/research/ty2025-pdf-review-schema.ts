@@ -1,6 +1,6 @@
 import * as sys from "../support/sys.ts";
 import { basename, dirname, join } from "node:path";
-import { sha256Hex } from "../../forms/f1040/2025/return-processing/prepared-source.ts";
+import { sha256Hex } from "../../forms/f1040/2025/return-processing/prepared_source.ts";
 
 /** Reviewed local TY2025 v5.4 bytes; these are not IRS-issued digests. */
 export const REVIEW_RETURN1040_XSD_SHA256 =

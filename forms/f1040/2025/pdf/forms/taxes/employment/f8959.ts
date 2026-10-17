@@ -1,9 +1,9 @@
-import type { PdfFieldEntry, PdfFormDescriptor } from "../../../form-descriptor.ts";
+import type { PdfFieldEntry, PdfFormDescriptor } from "../../../form_descriptor.ts";
 import {
   assertForm8959Absent,
   assertForm8959Sources,
   hasForm8959Print,
-} from "../../../../domains/taxes/employment/form8959/form8959-source.ts";
+} from "../../../../domains/taxes/employment/form8959/form8959_source.ts";
 import { printFieldsSchema } from "../../../../../nodes/intermediate/forms/taxes/employment/form8959/index.ts";
 
 // IRS Form 8959 (2025) AcroForm field names.

@@ -1,13 +1,13 @@
 import {
   allocateCurrentPassiveForms,
   currentPassiveFormsSchema,
-} from "../../../../intermediate/forms/income/business/form8582/current-form-allocation.ts";
+} from "../../../../intermediate/forms/income/business/form8582/current_form_allocation.ts";
 import {
   currentPropertyAmounts,
   currentPropertyPassiveAmounts,
   currentPropertySourceSchema,
   reconcileCurrentPropertySource,
-} from "./current-property-source.ts";
+} from "./current_property_source.ts";
 import { z } from "zod";
 import type {
   NodeOutput,

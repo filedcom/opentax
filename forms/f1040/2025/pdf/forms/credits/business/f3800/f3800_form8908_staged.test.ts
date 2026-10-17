@@ -5,13 +5,13 @@ import {
 } from "../../../../../domains/credits/business/form8908/form8908_form7220_fixture.ts";
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import { FilingStatus } from "../../../../../../nodes/types.ts";
-import { assertAttachmentCoverage } from "../../../../../return-processing/attachment-coverage.ts";
+import { assertAttachmentCoverage } from "../../../../../return-processing/attachment_coverage.ts";
 import {
   form3800,
   prepareForm3800DocumentParts,
 } from "../../../../../mef/forms/credits/business/f3800/f3800.ts";
 import { form8908 } from "../../../../../mef/forms/credits/business/f8908.ts";
-import { testFiler } from "../../../../../mef/support/test-filer.ts";
+import { testFiler } from "../../../../../mef/support/test_filer.ts";
 import { form3800PartIIIFields } from "./f3800_fields.ts";
 import { form3800Pdf } from "./f3800.ts";
 

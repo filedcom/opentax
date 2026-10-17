@@ -9,7 +9,7 @@ import { AccountType } from "../../nodes/inputs/payments/refund/f8888/index.ts";
 import { buildMefXml } from "../../2025/mef/builder.ts";
 import { buildPending } from "../../2025/mef/execution/pending.ts";
 import { type FilerIdentity, FilingStatus } from "../../2025/mef/types.ts";
-import { assertAttachmentCoverage } from "../../2025/return-processing/attachment-coverage.ts";
+import { assertAttachmentCoverage } from "../../2025/return-processing/attachment_coverage.ts";
 
 const filer: FilerIdentity = {
   primarySSN: "111223333",

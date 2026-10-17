@@ -7,10 +7,10 @@ import {
   type Form8959PrintFields,
   inputSchema,
 } from "../../../../../nodes/intermediate/forms/taxes/employment/form8959/index.ts";
-import type { MefBuildContext } from "../../../form-descriptor.ts";
+import type { MefBuildContext } from "../../../form_descriptor.ts";
 import { form8959 } from "./f8959.ts";
 import { form8959Pdf } from "../../../../pdf/forms/taxes/employment/f8959.ts";
-import { assertForm8959Absent } from "../../../../domains/taxes/employment/form8959/form8959-source.ts";
+import { assertForm8959Absent } from "../../../../domains/taxes/employment/form8959/form8959_source.ts";
 
 const headerStatus: Readonly<Record<NodeStatus, HeaderStatus>> = {
   [NodeStatus.Single]: HeaderStatus.Single,

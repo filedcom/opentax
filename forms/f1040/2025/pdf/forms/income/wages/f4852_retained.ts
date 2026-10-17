@@ -1,7 +1,7 @@
 import {
   form4852IraMarginLabel,
   reviewedForm4852AccountType,
-} from "../../../../../nodes/inputs/income/wages/f4852/retirement-account.ts";
+} from "../../../../../nodes/inputs/income/wages/f4852/retirement_account.ts";
 import { addForm4852IraMargin } from "../../../../domains/income/wages/form4852/form4852_ira_margin.ts";
 import {
   effectiveTaxable,
@@ -9,7 +9,7 @@ import {
   itemSchema,
 } from "../../../../../nodes/inputs/income/wages/f4852/index.ts";
 import { FilingStatus } from "../../../../../mef/header.ts";
-import type { PdfFieldEntry, PdfFormDescriptor } from "../../../form-descriptor.ts";
+import type { PdfFieldEntry, PdfFormDescriptor } from "../../../form_descriptor.ts";
 
 // Taxpayer/ERO packet copy. Final rendering separately verifies the completed
 // official source PDF and retained workpaper bytes before producing this copy.

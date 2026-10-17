@@ -21,7 +21,7 @@ import {
   ownerBusinessSchema,
   ownerIdentitySchema,
   ownerWageSchema,
-} from "./owner-calculation.ts";
+} from "./owner_calculation.ts";
 
 // ─── Schema ───────────────────────────────────────────────────────────────────
 

@@ -8,9 +8,9 @@ import {
   type Form3800PassiveTaxUseVintage,
   ZERO_FORM3800_PASSIVE_ACTIVITY,
 } from "../../../../../../nodes/inputs/credits/business/f3800/calculation.ts";
-import type { Form3800CarryoverVintage } from "../../../../../../nodes/inputs/credits/business/f3800/carryover-ledger.ts";
+import type { Form3800CarryoverVintage } from "../../../../../../nodes/inputs/credits/business/f3800/carryover_ledger.ts";
 import { PassiveCreditSourceOrigin } from "../../../../../../nodes/intermediate/forms/credits/business/form8582cr/source.ts";
-import { PassiveCreditReportingRoute } from "../../../../../../nodes/intermediate/forms/credits/business/form8582cr/credit-route.ts";
+import { PassiveCreditReportingRoute } from "../../../../../../nodes/intermediate/forms/credits/business/form8582cr/credit_route.ts";
 import { FilingStatus } from "../../../../../../nodes/types.ts";
 import {
   buildForm3800CarryforwardRows,
@@ -23,9 +23,9 @@ import {
 import { joinForm3800DocumentParts } from "../../../../../mef/forms/credits/business/f3800/f3800_join.ts";
 import { buildForm3800PassiveRowXml } from "../../../../../mef/forms/credits/business/f3800/f3800_passive_rows.ts";
 import { form3800CarryforwardStatement } from "../../../../../mef/forms/credits/business/f3800/f3800_carryforward_statement.ts";
-import { documentId } from "../../../../../mef/identity/document-identity.ts";
+import { documentId } from "../../../../../mef/identity/document_identity.ts";
 import { fillFormPdf } from "../../../../builder.ts";
-import { pdfReviewFixtures } from "../../../../review-fixtures.ts";
+import { pdfReviewFixtures } from "../../../../review_fixtures.ts";
 import { form3800Pdf } from "./f3800.ts";
 import { form3800PartVIFields } from "./f3800_fields.ts";
 import {

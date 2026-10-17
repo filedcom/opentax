@@ -4,7 +4,7 @@ import { extractFilerIdentity } from "../../../../../mef/filer.ts";
 import { FilingStatus } from "../../../../../nodes/types.ts";
 import { f1040_2025 } from "../../../../index.ts";
 import { normalizeAllPending } from "../../../../return-processing/pending.ts";
-import { assertOtherFormsWithholding } from "../f8288/f8288-withholding-reconciliation.ts";
+import { assertOtherFormsWithholding } from "../f8288/f8288_withholding_reconciliation.ts";
 
 const general = {
   filing_status: FilingStatus.Single,

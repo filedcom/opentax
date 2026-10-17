@@ -4,7 +4,7 @@ import {
   inputSchema,
   isCoveredExpatriate,
 } from "../../../../../../nodes/inputs/general/foreign/f8854/index.ts";
-import { calculateSectionDDeferral } from "../../../../../../nodes/inputs/general/foreign/f8854/section-d.ts";
+import { calculateSectionDDeferral } from "../../../../../../nodes/inputs/general/foreign/f8854/section_d.ts";
 
 /** IRS8854 Part II Section D in 2025v5.4 XSD order. */
 export function buildForm8854SectionD(rawInput: F8854Input): string {

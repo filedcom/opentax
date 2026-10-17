@@ -1,13 +1,13 @@
-import { assertCurrentProductionAllocationSource } from "../../../../../../nodes/inputs/credits/business/f3800/production-allocation.ts";
+import { assertCurrentProductionAllocationSource } from "../../../../../../nodes/inputs/credits/business/f3800/production_allocation.ts";
 import {
   assertCurrentOrphanAllocationSource,
   reconcileCurrentOrphanAllocation,
-} from "../../../../../../nodes/inputs/credits/business/f3800/current-allocation.ts";
+} from "../../../../../../nodes/inputs/credits/business/f3800/current_allocation.ts";
 import { StandardFonts } from "pdf-lib";
 import type {
   PdfFieldEntry,
   PdfFormDescriptor,
-} from "../../../../form-descriptor.ts";
+} from "../../../../form_descriptor.ts";
 import { assertForm3800FinalCreditJoin } from "../../../../../domains/credits/business/form3800/form3800_final_credit_join.ts";
 import { reconcileFiledForm8582CROrdinary } from "../../../../../domains/credits/business/form8582cr/form8582cr_filed_ordinary.ts";
 import {

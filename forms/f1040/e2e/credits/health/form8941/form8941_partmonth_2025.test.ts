@@ -16,7 +16,7 @@ import { buildPdfBytes } from "../../../../2025/pdf/builder.ts";
 import {
   form8941PartMonthInputs,
   form8941PartMonthSource,
-} from "../../../../2025/pdf/reviews/general/composed-returns/review-8941-partmonth.fixture.ts";
+} from "../../../../2025/pdf/reviews/general/composed-returns/review_8941_partmonth.fixture.ts";
 import { calculateForm8941, inputSchema } from "../../../../nodes/inputs/credits/health/f8941/index.ts";
 import { multiplePlanWorksheet } from "../../../../nodes/inputs/credits/health/f8941/multiple_plans.ts";
 import {

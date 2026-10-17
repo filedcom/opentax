@@ -5,7 +5,7 @@ import {
   unpaidLiability,
 } from "../../../../../nodes/inputs/taxes/foreign/f965/index.ts";
 import { reconcileForm965aSchedule2 } from "../../../../mef/forms/taxes/foreign/f965a.ts";
-import type { PdfFieldEntry, PdfFormDescriptor } from "../../../form-descriptor.ts";
+import type { PdfFieldEntry, PdfFormDescriptor } from "../../../form_descriptor.ts";
 
 // January 2021 Form 965-A, the IRS revision applicable to TY2025. The first
 // four Part I and II rows are preprinted for inclusion years 2017-2020. This

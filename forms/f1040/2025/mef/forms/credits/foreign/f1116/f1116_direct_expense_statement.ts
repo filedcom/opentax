@@ -1,6 +1,6 @@
 import { element, elements } from "../../../../../../mef/xml.ts";
 import { categorySummarySchema } from "../../../../../../nodes/intermediate/forms/credits/foreign/form_1116/index.ts";
-import type { MefFormDescriptor } from "../../../../form-descriptor.ts";
+import type { MefFormDescriptor } from "../../../../form_descriptor.ts";
 import { sourceGroups } from "./f1116.ts";
 
 // ReturnData1040.xsd places these statements after Form 1116, so they are

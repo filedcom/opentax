@@ -3,7 +3,7 @@ import {
   inputSchema as f1099rInputSchema,
   iraDistributionExplanation,
 } from "../../../../../nodes/inputs/income/retirement/f1099r/index.ts";
-import type { MefFormDescriptor } from "../../../form-descriptor.ts";
+import type { MefFormDescriptor } from "../../../form_descriptor.ts";
 
 /** TY2025 ReturnData1040 permits one statement linked from line 4c(1). */
 export const iraDistributionStatement: MefFormDescriptor<

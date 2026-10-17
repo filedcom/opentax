@@ -3,7 +3,7 @@ import {
   type F8611Item,
   inputSchema,
 } from "../../../../../nodes/inputs/taxes/credit-recapture/f8611/index.ts";
-import { issuedPartnershipRecaptures } from "../../../../../nodes/inputs/taxes/credit-recapture/f8611/partnership-source.ts";
+import { issuedPartnershipRecaptures } from "../../../../../nodes/inputs/taxes/credit-recapture/f8611/partnership_source.ts";
 import type { FilerIdentity } from "../../../../../mef/header.ts";
 export function assertForm8611IssuerSources(
   items: readonly F8611Item[],

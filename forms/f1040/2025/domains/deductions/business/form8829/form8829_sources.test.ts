@@ -8,7 +8,7 @@ import {
 import { f1040_2025 } from "../../../../index.ts";
 import { extractFilerIdentity } from "../../../../../mef/filer.ts";
 import { buildPdfBytes, type PdfPageOrigin } from "../../../../pdf/builder.ts";
-import { preparedSourceSha256 } from "../../../../return-processing/prepared-source.ts";
+import { preparedSourceSha256 } from "../../../../return-processing/prepared_source.ts";
 
 // The original business-loss case is retained in the fixture and discovery
 // evidence; its existing Form8995 loss-carryforward boundary stays deferred.

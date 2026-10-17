@@ -1,24 +1,24 @@
-import { DistributionCode } from "./distribution-code.ts";
-export { DistributionCode } from "./distribution-code.ts";
-import { sumSourceMoney } from "../../../../intermediate/forms/taxes/retirement/form4972/source-rounding.ts";
+import { DistributionCode } from "./distribution_code.ts";
+export { DistributionCode } from "./distribution_code.ts";
+import { sumSourceMoney } from "../../../../intermediate/forms/taxes/retirement/form4972/source_rounding.ts";
 import {
   participantInventorySchema,
   reconcileParticipantIssuedInventory,
-} from "../../../../intermediate/forms/taxes/retirement/form4972/participant-inventory.ts";
+} from "../../../../intermediate/forms/taxes/retirement/form4972/participant_inventory.ts";
 import {
   isSourceMoney,
   sameSourceMoney,
-} from "../../../../intermediate/forms/taxes/retirement/form4972/source-rounding.ts";
+} from "../../../../intermediate/forms/taxes/retirement/form4972/source_rounding.ts";
 
 import {
   iraRecharacterizationReviewSchema,
   reviewedIraRecharacterization,
 } from "../../../../intermediate/forms/income/retirement/form8606/recharacterization.ts";
-import { reconcileRothOwnerInventoryCopies, rothOwnerInventorySchema } from "../../../../intermediate/forms/income/retirement/form8606/roth-inventory.ts";
+import { reconcileRothOwnerInventoryCopies, rothOwnerInventorySchema } from "../../../../intermediate/forms/income/retirement/form8606/roth_inventory.ts";
 import {
   reviewedRothActivity,
   rothActivityReviewSchema,
-} from "../../../../intermediate/forms/income/retirement/form8606/roth-activity.ts";
+} from "../../../../intermediate/forms/income/retirement/form8606/roth_activity.ts";
 import { z } from "zod";
 import type {
   NodeOutput,

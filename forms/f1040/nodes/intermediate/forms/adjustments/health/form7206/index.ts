@@ -2,20 +2,20 @@ import {
   calculateIndependentOwnerHealth,
   independentOwnerHealthSourceSchema,
   reconcileIndependentOwnerHealthGraph,
-} from "./independent-owner.ts";
-import { ownerSourcesSchema } from "../../../taxes/self-employment/schedule_se/owner-calculation.ts";
+} from "./independent_owner.ts";
+import { ownerSourcesSchema } from "../../../taxes/self-employment/schedule_se/owner_calculation.ts";
 import {
   calculateSingleScheduleCForm7206,
   money,
   type SingleScheduleCPlan,
   singleScheduleCPlanSchema,
-} from "./single-source.ts";
+} from "./single_source.ts";
 export {
   calculateSingleScheduleCForm7206,
   form7206LinesSchema,
   singleScheduleCPlanSchema,
-} from "./single-source.ts";
-export type { Form7206Lines, SingleScheduleCPlan } from "./single-source.ts";
+} from "./single_source.ts";
+export type { Form7206Lines, SingleScheduleCPlan } from "./single_source.ts";
 import { z } from "zod";
 import type {
   NodeOutput,
@@ -39,7 +39,7 @@ import {
 import {
   calculateOwnedSep,
   ownedSepSourceSchema,
-} from "../../../../../inputs/adjustments/retirement/sep_retirement/owned-source.ts";
+} from "../../../../../inputs/adjustments/retirement/sep_retirement/owned_source.ts";
 
 export const inputSchema = z.object({
   single_schedule_c_plan: singleScheduleCPlanSchema.optional(),

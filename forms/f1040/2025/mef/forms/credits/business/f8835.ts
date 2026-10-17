@@ -1,22 +1,22 @@
 import {
   assertForm8835TransferSource,
   form8835TransferDescription,
-} from "../../../../../nodes/inputs/credits/business/f8835/transfer-source.ts";
+} from "../../../../../nodes/inputs/credits/business/f8835/transfer_source.ts";
 import {
   assertForm8835PwaSource,
   form8835PwaDescription,
-} from "../../../../../nodes/inputs/credits/business/f8835/pwa-source.ts";
-import { assertForm8835EnergyCommunitySource } from "../../../../../nodes/inputs/credits/business/f8835/energy-community-source.ts";
+} from "../../../../../nodes/inputs/credits/business/f8835/pwa_source.ts";
+import { assertForm8835EnergyCommunitySource } from "../../../../../nodes/inputs/credits/business/f8835/energy_community_source.ts";
 import {
   assertForm8835DomesticSource,
   form8835DomesticDescription,
-} from "../../../../../nodes/inputs/credits/business/f8835/domestic-source.ts";
-import { assertForm8835EarlyConstructionSource } from "../../../../../nodes/inputs/credits/business/f8835/early-construction-source.ts";
+} from "../../../../../nodes/inputs/credits/business/f8835/domestic_source.ts";
+import { assertForm8835EarlyConstructionSource } from "../../../../../nodes/inputs/credits/business/f8835/early_construction_source.ts";
 import {
   assertForm8835SmallFacilitySource,
   form8835IncreaseDescription,
-} from "../../../../../nodes/inputs/credits/business/f8835/increase-source.ts";
-import { assertForm8835BondSource } from "../../../../../nodes/inputs/credits/business/f8835/bond-source.ts";
+} from "../../../../../nodes/inputs/credits/business/f8835/increase_source.ts";
+import { assertForm8835BondSource } from "../../../../../nodes/inputs/credits/business/f8835/bond_source.ts";
 import { element, elements } from "../../../../../mef/xml.ts";
 import {
   calculateForm8835,
@@ -27,7 +27,7 @@ import {
 import type {
   MefBuildContext,
   MefFormDescriptor,
-} from "../../../form-descriptor.ts";
+} from "../../../form_descriptor.ts";
 
 type Input =
   & Partial<ReturnType<typeof inputSchema.parse>>

@@ -6,7 +6,7 @@ import { buildExecutionPlan } from "../../../../../../../core/runtime/planner.ts
 import { buildMefXml } from "../../../../mef/builder.ts";
 import { buildPending } from "../../../../mef/execution/pending.ts";
 import { buildPdfBytes } from "../../../../pdf/builder.ts";
-import { pdfReviewFixtures } from "../../../../pdf/review-fixtures.ts";
+import { pdfReviewFixtures } from "../../../../pdf/review_fixtures.ts";
 import { registry } from "../../../../registry.ts";
 
 const fixture = pdfReviewFixtures.find((item) =>

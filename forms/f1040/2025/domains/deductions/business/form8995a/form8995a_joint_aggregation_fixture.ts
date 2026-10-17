@@ -1,5 +1,5 @@
-import { ownedAggregationElectionFixture } from "../../../../pdf/reviews/general/composed-returns/review-8995a-aggregation-election.fixture.ts";
-import { pdfReviewFixtures } from "../../../../pdf/review-fixtures.ts";
+import { ownedAggregationElectionFixture } from "../../../../pdf/reviews/general/composed-returns/review_8995a_aggregation_election.fixture.ts";
+import { pdfReviewFixtures } from "../../../../pdf/review_fixtures.ts";
 type Row = Record<string, any>;
 export const jointAggregationCases = [
   {

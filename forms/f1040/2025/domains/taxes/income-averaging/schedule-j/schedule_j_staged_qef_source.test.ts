@@ -8,7 +8,7 @@ import { PficRegime } from "../../../../../nodes/inputs/income/foreign/f8621/ind
 import { f1040_2025 } from "../../../../index.ts";
 import { buildPending } from "../../../../mef/execution/pending.ts";
 import { buildPdfBytes, type PdfPageOrigin } from "../../../../pdf/builder.ts";
-import { pdfReviewFixtures } from "../../../../pdf/review-fixtures.ts";
+import { pdfReviewFixtures } from "../../../../pdf/review_fixtures.ts";
 import { executeScheduleJSourceReturn } from "./schedule_j_source_return.ts";
 import {
   preferentialAmtCases,

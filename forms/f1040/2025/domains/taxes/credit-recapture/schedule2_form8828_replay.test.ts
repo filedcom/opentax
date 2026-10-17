@@ -3,7 +3,7 @@ import { assertRejects } from "@std/assert";
 import { FilingStatus } from "../../../../mef/header.ts";
 import { buildMefBundle } from "../../../mef/builder.ts";
 import { buildPdfBytes } from "../../../pdf/builder.ts";
-import { assertSchedule2Form8828Tax } from "./schedule2-form8828-reconciliation.ts";
+import { assertSchedule2Form8828Tax } from "./schedule2_form8828_reconciliation.ts";
 
 const filer = {
   primarySSN: "123456789",

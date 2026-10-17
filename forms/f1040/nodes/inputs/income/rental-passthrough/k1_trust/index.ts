@@ -19,7 +19,7 @@ import { f3468 } from "../../../credits/business/f3468/index.ts";
 import {
   reconcileTrustPartVStatement,
   trustPartVStatementSchema,
-} from "../../../credits/business/f3468/trust-part-v-source.ts";
+} from "../../../credits/business/f3468/trust_part_v_source.ts";
 import { form8582cr } from "../../../../intermediate/forms/credits/business/form8582cr/index.ts";
 import { disabledAccessLimit } from "../../../../intermediate/forms/credits/business/disabled_access_limit/index.ts";
 import {

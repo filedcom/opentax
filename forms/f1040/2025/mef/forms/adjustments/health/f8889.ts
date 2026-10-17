@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { element, elements } from "../../../../../mef/xml.ts";
-import type { MefBuildContext, MefFormDescriptor } from "../../../form-descriptor.ts";
+import type { MefBuildContext, MefFormDescriptor } from "../../../form_descriptor.ts";
 import { inputSchema as form8889SourceSchema } from "../../../../../nodes/intermediate/forms/adjustments/health/form8889/index.ts";
 import {
   reconcileCode2Form8889,

@@ -1,6 +1,6 @@
 import { test } from "bun:test";
 import { assert, assertEquals, assertRejects, assertThrows } from "@std/assert";
-import { sha256Hex } from "../../../../return-processing/prepared-source.ts";
+import { sha256Hex } from "../../../../return-processing/prepared_source.ts";
 import {
   calculateForm2210BoxEPage1,
   type Form2210BoxEInput,

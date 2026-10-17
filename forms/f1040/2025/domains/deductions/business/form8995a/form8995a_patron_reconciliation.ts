@@ -2,7 +2,7 @@ import { additionalMedicareTax } from "../../../../../nodes/intermediate/forms/t
 import {
   assertMultiBusinessInvestmentSources,
   assertMultiBusinessInvestmentTax,
-} from "../../../../mef/forms/deductions/business/f8995/f8995-investment.ts";
+} from "../../../../mef/forms/deductions/business/f8995/f8995_investment.ts";
 import { assertIndependentPatronReturn } from "./form8995a_independent_patron_reconciliation.ts";
 import {
   type FilerIdentity,

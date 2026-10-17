@@ -4,7 +4,7 @@ import * as sys from "../../../../../../../scripts/support/sys.ts";
 import { qualifiedRothSource } from "./form4852_qualified_roth.fixture.ts";
 import { annualRecharacterizationSource } from "./form4852_recharacterization.fixture.ts";
 import { assertForm4852RetainedEvidence } from "./form4852_retained_evidence.ts";
-import { multipleNuaInputs } from "../../../../pdf/reviews/taxes/retirement/form4972/review-4972-multiple-nua.fixture.ts";
+import { multipleNuaInputs } from "../../../../pdf/reviews/taxes/retirement/form4972/review_4972_multiple_nua.fixture.ts";
 import { extractFilerIdentity } from "../../../../../mef/filer.ts";
 import { assertEquals, assertRejects, assertStringIncludes } from "@std/assert";
 import { PDFCheckBox, PDFDocument, PDFTextField } from "pdf-lib";

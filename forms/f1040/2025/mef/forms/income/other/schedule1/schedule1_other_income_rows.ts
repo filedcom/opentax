@@ -1,6 +1,6 @@
 import { box11CodeJSourceSchema } from "../../../../../../nodes/inputs/income/rental-passthrough/k1_partnership/box11_code_j.ts";
-import { rtaaSourceSchema } from "../../../../../../nodes/inputs/income/other/f1099g/rtaa-source.ts";
-import { taxableGrantSourceSchema } from "../../../../../../nodes/inputs/income/other/f1099g/grant-source.ts";
+import { rtaaSourceSchema } from "../../../../../../nodes/inputs/income/other/f1099g/rtaa_source.ts";
+import { taxableGrantSourceSchema } from "../../../../../../nodes/inputs/income/other/f1099g/grant_source.ts";
 import { box10CodeJSourceSchema } from "../../../../../../nodes/inputs/income/rental-passthrough/k1_s_corp/box10_code_j.ts";
 
 export interface Schedule1OtherIncomeRow {

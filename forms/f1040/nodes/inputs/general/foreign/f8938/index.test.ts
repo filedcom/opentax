@@ -9,7 +9,7 @@ import {
 import {
   form8938AbroadEligibilityFixture,
   form8938UsEligibilityFixture,
-} from "./eligibility-fixture.ts";
+} from "./eligibility_fixture.ts";
 
 function asset(overrides: Record<string, unknown> = {}) {
   return {

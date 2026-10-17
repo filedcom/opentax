@@ -8,7 +8,7 @@ import {
 import type {
   MefBuildContext,
   MefPdfAttachment,
-} from "../../../form-descriptor.ts";
+} from "../../../form_descriptor.ts";
 
 export function reconcileDistributionGroups(
   raw: unknown,

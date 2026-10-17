@@ -3,7 +3,7 @@ import {
   alternativeCompensationSourcingSchema,
   categorySummarySchema,
 } from "../../../../../../nodes/intermediate/forms/credits/foreign/form_1116/index.ts";
-import type { MefFormDescriptor } from "../../../../form-descriptor.ts";
+import type { MefFormDescriptor } from "../../../../form_descriptor.ts";
 import {
   assertAlternativeCompensationSources,
 } from "./f1116_alternative_compensation_source.ts";

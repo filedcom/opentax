@@ -1,4 +1,4 @@
-import { DistributionCode } from "../../../../../inputs/income/retirement/f1099r/distribution-code.ts";
+import { DistributionCode } from "../../../../../inputs/income/retirement/f1099r/distribution_code.ts";
 import { z } from "zod";
 
 export enum SaverDistributionTreatment {

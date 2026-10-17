@@ -7,10 +7,10 @@ import {
 import {
   assertForm8835TransferSource,
   form8835TransferDescription,
-} from "../../../../../nodes/inputs/credits/business/f8835/transfer-source.ts";
-import type { MefPdfAttachment } from "../../../form-descriptor.ts";
+} from "../../../../../nodes/inputs/credits/business/f8835/transfer_source.ts";
+import type { MefPdfAttachment } from "../../../form_descriptor.ts";
 import type { FilerIdentity } from "../../../../../mef/header.ts";
-import { sha256Hex } from "../../../../return-processing/prepared-source.ts";
+import { sha256Hex } from "../../../../return-processing/prepared_source.ts";
 
 export const transferUnrelatedDeclaration =
   "The eligible taxpayer and members of its controlled group are not related to the transferee taxpayer or members of its controlled group under sections 267(b) or 707(b)(1).";

@@ -1,4 +1,4 @@
-import { form8826InterpreterInputs } from "../../../../pdf/reviews/credits/business/review-8826-interpreter.fixture.ts";
+import { form8826InterpreterInputs } from "../../../../pdf/reviews/credits/business/review_8826_interpreter.fixture.ts";
 
 export const disabledAccessInventoryCases = [
   { id: "mixed-two", credits: [100, 200], receipts: 80000 },

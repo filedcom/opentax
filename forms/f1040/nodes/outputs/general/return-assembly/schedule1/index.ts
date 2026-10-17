@@ -15,8 +15,8 @@ import type { NodeContext } from "../../../../../../../core/types/node-context.t
 import { box11CodeJSourceSchema } from "../../../../inputs/income/rental-passthrough/k1_partnership/box11_code_j.ts";
 import { box11CodeESourceSchema } from "../../../../inputs/income/rental-passthrough/k1_partnership/box11_code_e.ts";
 import { box11CodeKSourceSchema } from "../../../../inputs/income/rental-passthrough/k1_partnership/box11_code_k.ts";
-import { rtaaSourceSchema } from "../../../../inputs/income/other/f1099g/rtaa-source.ts";
-import { taxableGrantSourceSchema } from "../../../../inputs/income/other/f1099g/grant-source.ts";
+import { rtaaSourceSchema } from "../../../../inputs/income/other/f1099g/rtaa_source.ts";
+import { taxableGrantSourceSchema } from "../../../../inputs/income/other/f1099g/grant_source.ts";
 import { box10CodeJSourceSchema } from "../../../../inputs/income/rental-passthrough/k1_s_corp/box10_code_j.ts";
 
 // Schedule 1 Output Node — Additional Income and Adjustments Assembly

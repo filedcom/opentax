@@ -10,7 +10,7 @@ import {
 import type {
   MefBuildContext,
   MefFormDescriptor,
-} from "../../../form-descriptor.ts";
+} from "../../../form_descriptor.ts";
 
 type Input = Partial<F8911Input> & Record<string, unknown>;
 

@@ -1,4 +1,4 @@
-import type { PdfFormDescriptor } from "../../../form-descriptor.ts";
+import type { PdfFormDescriptor } from "../../../form_descriptor.ts";
 import { inputSchema } from "../../../../../nodes/inputs/adjustments/employment/f2106/index.ts";
 import {
   projectStagedForm2106Pdf,

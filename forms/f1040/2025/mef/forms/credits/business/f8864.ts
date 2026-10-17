@@ -1,5 +1,5 @@
 import { element, elements } from "../../../../../mef/xml.ts";
-import type { MefFormDescriptor } from "../../../form-descriptor.ts";
+import type { MefFormDescriptor } from "../../../form_descriptor.ts";
 import { reconcileForm8864DocumentSource } from "../../../../domains/credits/business/form8864/form8864_source.ts";
 
 /** Bounded TY2025 direct producer tags from cached v5.4 IRS8864.xsd. */

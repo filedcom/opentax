@@ -1,4 +1,4 @@
-import { reconcileHealthPolicyRecords } from "../../../../../nodes/intermediate/forms/adjustments/health/form7206/policy-records.ts";
+import { reconcileHealthPolicyRecords } from "../../../../../nodes/intermediate/forms/adjustments/health/form7206/policy_records.ts";
 import {
   assertIndependentOwnerHealth,
   assertOwnedSepContext,
@@ -25,10 +25,10 @@ import { element, elements } from "../../../../../mef/xml.ts";
 import type {
   MefBuildContext,
   MefFormDescriptor,
-} from "../../../form-descriptor.ts";
+} from "../../../form_descriptor.ts";
 import { assertForm7206SpouseCoverage } from "../../../../domains/adjustments/health/form7206/form7206_spouse_coverage.ts";
 import { TS } from "../../../../../nodes/types.ts";
-import { assertScheduleCReceiptSourceIdentity } from "../../../../domains/general/return-assembly/filer-source-reconciliation.ts";
+import { assertScheduleCReceiptSourceIdentity } from "../../../../domains/general/return-assembly/filer_source_reconciliation.ts";
 
 type Input = Partial<
   Form7206Lines & {

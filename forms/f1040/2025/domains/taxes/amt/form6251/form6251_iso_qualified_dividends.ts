@@ -4,8 +4,8 @@ import {
   assertForm8814CalculatedLines,
   type Form8814Lines,
 } from "../../../../../nodes/inputs/income/investments/f8814/index.ts";
-import { assertDirectCapitalGainDistributionSource } from "../../../income/investments/line7a-source-reconciliation.ts";
-import { assertCapitalSaleSourceRows } from "../../../income/investments/broker-sale-source-reconciliation.ts";
+import { assertDirectCapitalGainDistributionSource } from "../../../income/investments/line7a_source_reconciliation.ts";
+import { assertCapitalSaleSourceRows } from "../../../income/investments/broker_sale_source_reconciliation.ts";
 import { reconcileForm4952ScheduleJChildDividend } from "../../../deductions/investments/form4952/form4952_schedulej_child_reconciliation.ts";
 
 /** Reconcile bounded Form 6251 Part III dividends to retained 1099-DIV payers. */

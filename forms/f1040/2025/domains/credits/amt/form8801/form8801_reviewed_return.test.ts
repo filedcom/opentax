@@ -2,7 +2,7 @@ import { test } from "bun:test";
 import { assertEquals, assertRejects } from "@std/assert";
 import { stageForm8801ReviewedReturnCalculation } from "./form8801_reviewed_return.ts";
 import { fixture, packageFacts } from "./form8801_reviewed_return.fixture.ts";
-import { sha256Hex } from "../../../../return-processing/prepared-source.ts";
+import { sha256Hex } from "../../../../return-processing/prepared_source.ts";
 import { f8801 } from "../../../../../nodes/inputs/credits/amt/f8801/index.ts";
 
 test("Form 8801 reviewed bytes join to computed public tax and zero-AMT line 9", async () => {

@@ -6,7 +6,7 @@ import {
   type Form8919Calculation,
   inputSchema,
 } from "../../../../../nodes/intermediate/forms/taxes/employment/form8919/index.ts";
-import type { PdfFieldEntry, PdfFormDescriptor } from "../../../form-descriptor.ts";
+import type { PdfFieldEntry, PdfFormDescriptor } from "../../../form_descriptor.ts";
 
 const page1 = "topmostSubform[0].Page1[0].";
 const text = (domainKey: string, pdfField: string): PdfFieldEntry => ({

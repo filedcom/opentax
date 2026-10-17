@@ -9,7 +9,7 @@ import { normalizeAllPending } from "../../../../return-processing/pending.ts";
 import { buildPdfBytes, type PdfPageOrigin } from "../../../../pdf/builder.ts";
 import { rothCases, rothReturnSource } from "./form4852_roth.fixture.ts";
 import { assertForm4852RetainedEvidence } from "./form4852_retained_evidence.ts";
-import { reviewedRothActivity } from "../../../../../nodes/intermediate/forms/income/retirement/form8606/roth-activity.ts";
+import { reviewedRothActivity } from "../../../../../nodes/intermediate/forms/income/retirement/form8606/roth_activity.ts";
 
 const root = ".state/research/form4852-roth-source-checkbox-corrected";
 const schema =

@@ -6,7 +6,7 @@ import { appendForm8815Institutions } from "./f8815_institutions.ts";
 import type {
   PdfFieldEntry,
   PdfFormDescriptor,
-} from "../../../form-descriptor.ts";
+} from "../../../form_descriptor.ts";
 import {
   calculateForm8815,
   inputSchema,

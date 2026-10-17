@@ -7,7 +7,7 @@ import {
   form8801PdfFieldForLine,
   stageForm8801PdfDocument,
 } from "./form8801_staged_pdf.ts";
-import { assertAttachmentCoverage } from "../../../../return-processing/attachment-coverage.ts";
+import { assertAttachmentCoverage } from "../../../../return-processing/attachment_coverage.ts";
 
 const templatePath = new URL(
   "../../../../../../../.state/research/board-execution-2026-10-07/form8801-pdf-20261008-v1/canonical.pdf",

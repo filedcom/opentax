@@ -2,7 +2,7 @@ import { test } from "bun:test";
 import * as fs from "node:fs/promises";
 import * as sys from "../../../../../../../../scripts/support/sys.ts";
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
-import { PassiveCreditReportingRoute } from "../../../../../../nodes/intermediate/forms/credits/business/form8582cr/credit-route.ts";
+import { PassiveCreditReportingRoute } from "../../../../../../nodes/intermediate/forms/credits/business/form8582cr/credit_route.ts";
 import { PassiveCreditSourceOrigin } from "../../../../../../nodes/intermediate/forms/credits/business/form8582cr/source.ts";
 import type { Form3800PassiveTaxUseVintage } from "../../../../../../nodes/inputs/credits/business/f3800/calculation.ts";
 import {

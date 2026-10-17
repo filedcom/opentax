@@ -1,7 +1,7 @@
 import { reconcileRoyaltyDebtReturn } from "../../../../domains/deductions/investments/form4952/form4952_royalty_debt_reconciliation.ts";
-import { currentLossFilingProjection } from "../../../../domains/income/business/current-loss-filing-projection.ts";
-import { mefBusinessNameLine1 } from "../../../../../mef/business-name.ts";
-import { currentPropertyPassiveAmounts } from "../../../../../nodes/inputs/income/rental-passthrough/schedule_e/current-property-source.ts";
+import { currentLossFilingProjection } from "../../../../domains/income/business/current_loss_filing_projection.ts";
+import { mefBusinessNameLine1 } from "../../../../../mef/business_name.ts";
+import { currentPropertyPassiveAmounts } from "../../../../../nodes/inputs/income/rental-passthrough/schedule_e/current_property_source.ts";
 import { assertCurrentPassivePropertyReturn } from "../../../../domains/income/business/current_passive_property_source.ts";
 import { element, elements } from "../../../../../mef/xml.ts";
 import {
@@ -14,8 +14,8 @@ import {
   qualifiedEntireDispositionGain,
   qualifiedEntireDispositionLoss,
 } from "../../../../../nodes/inputs/income/rental-passthrough/schedule_e/index.ts";
-import type { MefFormDescriptor } from "../../../form-descriptor.ts";
-import type { MefBuildContext } from "../../../form-descriptor.ts";
+import type { MefFormDescriptor } from "../../../form_descriptor.ts";
+import type { MefBuildContext } from "../../../form_descriptor.ts";
 import {
   allocatePassiveActivityLosses,
   inputSchema as form8582InputSchema,
@@ -38,7 +38,7 @@ import {
   passivePropertySaleSchema,
   samePassiveSale,
 } from "../../../../../nodes/intermediate/forms/income/business/form4797/index.ts";
-import { scheduleEK1Part2Rows } from "../../../../domains/income/rental-passthrough/schedule-e/schedule-e-k1-part2.ts";
+import { scheduleEK1Part2Rows } from "../../../../domains/income/rental-passthrough/schedule-e/schedule_e_k1_part2.ts";
 import { buildScheduleEType8Statement } from "./schedule_e_type8_statement.ts";
 import { assertSingleFilerActiveEntireLoss } from "../../../../domains/income/business/form8582/form8582_active_entire_loss.ts";
 

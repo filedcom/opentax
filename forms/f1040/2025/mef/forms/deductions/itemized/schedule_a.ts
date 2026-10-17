@@ -13,7 +13,7 @@ import { assertRefinancePointsSource } from "../../../../../nodes/inputs/deducti
 import type {
   MefBuildContext,
   MefFormDescriptor,
-} from "../../../form-descriptor.ts";
+} from "../../../form_descriptor.ts";
 import {
   assertElectedSectionAReconciled,
   assertElectedSectionBReconciled,

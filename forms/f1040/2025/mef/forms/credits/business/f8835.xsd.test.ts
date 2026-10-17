@@ -4,7 +4,7 @@ import * as sys from "../../../../../../../scripts/support/sys.ts";
 import { assertEquals, assertStringIncludes } from "@std/assert";
 import { EnergyType } from "../../../../../nodes/inputs/credits/business/f8835/index.ts";
 import { buildMefXml } from "../../../builder.ts";
-import { testFiler } from "../../../support/test-filer.ts";
+import { testFiler } from "../../../support/test_filer.ts";
 
 const XSD_PATH = new URL(
   "../../../../../../../.state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd",

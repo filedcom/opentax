@@ -6,7 +6,7 @@ import {
   assertThrows,
 } from "@std/assert";
 import { type FilerIdentity, FilingStatus } from "../../../../../mef/header.ts";
-import type { MefBuildContext } from "../../../../mef/form-descriptor.ts";
+import type { MefBuildContext } from "../../../../mef/form_descriptor.ts";
 import {
   CoverageType,
   form8889 as form8889Node,
@@ -15,7 +15,7 @@ import {
 import { form8889 } from "../../../../mef/forms/adjustments/health/f8889.ts";
 import { form8889Pdf } from "../../../../pdf/forms/adjustments/health/f8889.ts";
 import { f1040_2025 } from "../../../../index.ts";
-import { pdfReviewFixtures } from "../../../../pdf/review-fixtures.ts";
+import { pdfReviewFixtures } from "../../../../pdf/review_fixtures.ts";
 
 type Form8889Owner = Extract<
   Parameters<typeof form8889.build>[0],

@@ -2,7 +2,7 @@ import { z } from "zod";
 import { element, elements } from "../../../../../mef/xml.ts";
 import { inputSchema } from "../../../../../nodes/inputs/payments/refund/f8888/index.ts";
 import { reconcileForm8888 } from "../../../../domains/payments/refund/form8888/form8888_reconciliation.ts";
-import type { MefBuildContext, MefFormDescriptor } from "../../../form-descriptor.ts";
+import type { MefBuildContext, MefFormDescriptor } from "../../../form_descriptor.ts";
 
 type Input = z.input<typeof inputSchema> | readonly [];
 

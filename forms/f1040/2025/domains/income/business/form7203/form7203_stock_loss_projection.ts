@@ -1,27 +1,27 @@
-import { notePrincipalRepaid } from "../../../../../nodes/intermediate/forms/income/business/form7203/repayment-inventory.ts";
+import { notePrincipalRepaid } from "../../../../../nodes/intermediate/forms/income/business/form7203/repayment_inventory.ts";
 import {
   allocateDebtInventory,
   allocateThreeDebtReductions,
   allocateTwoDebtReductions,
-} from "../../../../../nodes/intermediate/forms/income/business/form7203/debt-allocation.ts";
+} from "../../../../../nodes/intermediate/forms/income/business/form7203/debt_allocation.ts";
 import { isDeepStrictEqual } from "node:util";
 import { FilingStatus } from "../../../../../mef/header.ts";
 import {
   ownedDebtFamily,
   ownedDebtFamilyQbiLines,
-} from "../../../../../nodes/intermediate/forms/income/business/form7203/owned-family.ts";
-import { ownedSCorpLossLines } from "../../../../../nodes/intermediate/forms/deductions/business/form8995/owned-s-corp-loss.ts";
+} from "../../../../../nodes/intermediate/forms/income/business/form7203/owned_family.ts";
+import { ownedSCorpLossLines } from "../../../../../nodes/intermediate/forms/deductions/business/form8995/owned_s_corp_loss.ts";
 import { z } from "zod";
 import type { FilerIdentity } from "../../../../../mef/header.ts";
 import { inputSchema as k1SCorpInputSchema } from "../../../../../nodes/inputs/income/rental-passthrough/k1_s_corp/index.ts";
 import { inputSchema as form7203InputSchema } from "../../../../../nodes/intermediate/forms/income/business/form7203/index.ts";
-import { reviewedStockLossLedgerSchema } from "../../../../../nodes/intermediate/forms/income/business/form7203/stock-ledger.ts";
+import { reviewedStockLossLedgerSchema } from "../../../../../nodes/intermediate/forms/income/business/form7203/stock_ledger.ts";
 import {
   reconcileCashCapitalAndNewNote,
   reconcileNewFormalNotes,
   sumPrincipalRepayments,
   totalCurrentDebtAdvances,
-} from "../../../../../nodes/intermediate/forms/income/business/form7203/debt-note.ts";
+} from "../../../../../nodes/intermediate/forms/income/business/form7203/debt_note.ts";
 
 const pendingRecordSchema = z.record(z.string(), z.unknown());
 

@@ -4,6 +4,6 @@ Read tax files in the same seven return sections across source nodes, calculatio
 
 | Area | Contents |
 | --- | --- |
-| [current-loss-original-form-review.test.ts](current-loss-original-form-review.test.ts) | 1 files |
-| [current-loss-original-form-review.ts](current-loss-original-form-review.ts) | 1 files |
+| [current_loss_original_form_review.test.ts](current_loss_original_form_review.test.ts) | 1 files |
+| [current_loss_original_form_review.ts](current_loss_original_form_review.ts) | 1 files |
 | [generated_pdf_determinism.test.ts](generated_pdf_determinism.test.ts) | 1 files |

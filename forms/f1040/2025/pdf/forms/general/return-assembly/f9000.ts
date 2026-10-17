@@ -1,4 +1,4 @@
-import type { PdfFieldEntry, PdfFormDescriptor } from "../../../form-descriptor.ts";
+import type { PdfFieldEntry, PdfFormDescriptor } from "../../../form_descriptor.ts";
 import { inputSchema } from "../../../../../nodes/inputs/general/filing/f9000/index.ts";
 import { buildForm9000, form9000Identity } from "../../../../mef/forms/general/return-assembly/f9000.ts";
 

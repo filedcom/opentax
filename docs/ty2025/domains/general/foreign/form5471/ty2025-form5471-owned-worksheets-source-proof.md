@@ -65,10 +65,10 @@ The command is:
 
 ```sh
 PATH=/tmp/opentax-poppler-env/bin:/Users/atul/.deno/bin:$PATH deno test -A \
-  forms/f1040/nodes/inputs/general/foreign/f5471/worksheet-source.test.ts \
-  forms/f1040/2025/return-processing/attachment-coverage.test.ts \
+  forms/f1040/nodes/inputs/general/foreign/f5471/worksheet_source.test.ts \
+  forms/f1040/2025/return-processing/attachment_coverage.test.ts \
   forms/f1040/nodes/inputs/general/foreign/f5471/index.test.ts \
-  forms/f1040/2025/mef/identity/document-identity.test.ts \
+  forms/f1040/2025/mef/identity/document_identity.test.ts \
   forms/f1040/2025/mef/forms/f5471*test.ts \
   forms/f1040/2025/mef/forms/income/foreign/f8992.test.ts \
   forms/f1040/2025/pdf/forms/f5471*test.ts \

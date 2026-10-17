@@ -4,10 +4,10 @@ import {
   type F8854AnnualInput,
 } from "../../../../../../nodes/inputs/general/foreign/f8854/annual.ts";
 import { validateAnnualForm8854Filing } from "../../../../../../nodes/inputs/general/foreign/f8854/annual_node.ts";
-import { reconcileAnnualForm8854Form8949Properties } from "../../../../../../nodes/inputs/general/foreign/f8854/reconcile-annual-capital.ts";
+import { reconcileAnnualForm8854Form8949Properties } from "../../../../../../nodes/inputs/general/foreign/f8854/reconcile_annual_capital.ts";
 import { buildForm8854PartIFields } from "./f8854_part_i.ts";
 import { eligibleWaiver, trustWaiver } from "./f8854_section_c.ts";
-import type { MefFormDescriptor } from "../../../../form-descriptor.ts";
+import type { MefFormDescriptor } from "../../../../form_descriptor.ts";
 
 /** Annual item-level waiver statements in ReturnData1040.xsd order. */
 export function buildForm8854AnnualNativeStatements(

@@ -4,7 +4,7 @@ import {
   inputSchema,
 } from "../../../../../nodes/inputs/credits/business/f8881/index.ts";
 import { inputSchema as scheduleCInputSchema } from "../../../../../nodes/inputs/income/business/schedule_c/model.ts";
-import type { MefFormDescriptor } from "../../../form-descriptor.ts";
+import type { MefFormDescriptor } from "../../../form_descriptor.ts";
 
 export function reconcileForm8881Credit(
   sourceRaw: unknown,

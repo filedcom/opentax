@@ -1,4 +1,4 @@
-import type { MefBuildContext } from "../../../form-descriptor.ts";
+import type { MefBuildContext } from "../../../form_descriptor.ts";
 import { disabledAccessLimit } from "../../../../../nodes/intermediate/forms/credits/business/disabled_access_limit/index.ts";
 import {
   inputSchema as form8582crInputSchema,

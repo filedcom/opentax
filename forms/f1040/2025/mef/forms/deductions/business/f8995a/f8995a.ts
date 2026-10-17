@@ -1,23 +1,23 @@
 import { assertLossWotcSources } from "../../../../../domains/deductions/business/form8995a/form8995a_loss_wotc_source.ts";
 import { scheduleSELines } from "../../../../../../nodes/intermediate/forms/taxes/self-employment/schedule_se/calculation.ts";
-import { assertOwnedScheduleSE } from "../../../../../domains/taxes/self-employment/schedule-se/schedule-se-owner-source.ts";
+import { assertOwnedScheduleSE } from "../../../../../domains/taxes/self-employment/schedule-se/schedule_se_owner_source.ts";
 import type { FilerIdentity } from "../../../../../../mef/header.ts";
-import { mefBusinessNameLine1 } from "../../../../../../mef/business-name.ts";
+import { mefBusinessNameLine1 } from "../../../../../../mef/business_name.ts";
 import { calculateIndependentPatronBusinesses } from "../../../../../../nodes/intermediate/forms/deductions/business/form8995a/index.ts";
 import { patronProprietorSsn } from "../../../../../domains/deductions/business/form8995a/form8995a_patron_reconciliation.ts";
-import { assertProducingMiningZeroQbi } from "../../../../../../nodes/intermediate/forms/deductions/business/form8995a/producing-mining.ts";
+import { assertProducingMiningZeroQbi } from "../../../../../../nodes/intermediate/forms/deductions/business/form8995a/producing_mining.ts";
 import { assertProducingMiningZeroQbiReturn } from "../../../../../domains/deductions/business/form8995a/form8995a_producing_mining_source.ts";
 import { assertQualifiedTipQbiSource } from "../../../../../domains/deductions/business/form8995/form8995_qualified_tip_source.ts";
 import { assertFarmWotcReturn } from "../../../../../domains/deductions/business/form8995/form8995_farm_wotc_reconciliation.ts";
 import { assertMixedFishingQbiReturn } from "../../../../../domains/deductions/business/form8995a/form8995a_mixed_fishing_source.ts";
-import { calculateFarmWotcLines } from "../../../../../../nodes/intermediate/forms/deductions/business/form8995a/farm-wotc.ts";
-import { assertSstbScheduleCSource } from "./f8995a-sstb-source.ts";
+import { calculateFarmWotcLines } from "../../../../../../nodes/intermediate/forms/deductions/business/form8995a/farm_wotc.ts";
+import { assertSstbScheduleCSource } from "./f8995a_sstb_source.ts";
 import { assertForm8995APatronReturn } from "../../../../../domains/deductions/business/form8995a/form8995a_patron_reconciliation.ts";
 import { inputSchema as w2InputSchema } from "../../../../../../nodes/inputs/income/wages/w2/index.ts";
 import {
   assertMultiBusinessInvestmentSources,
   assertMultiBusinessInvestmentTax,
-} from "../f8995/f8995-investment.ts";
+} from "../f8995/f8995_investment.ts";
 import { z } from "zod";
 import { element, elements } from "../../../../../../mef/xml.ts";
 import { FilingStatus as HeaderFilingStatus } from "../../../../../../mef/header.ts";
@@ -41,10 +41,10 @@ import {
 import type {
   MefBuildContext,
   MefFormDescriptor,
-} from "../../../../form-descriptor.ts";
+} from "../../../../form_descriptor.ts";
 import { assertScheduleBAggregationJoin } from "./f8995a_schedule_b.ts";
 import { assertZeroReductionScheduleAReturn } from "./f8995a_schedule_a.ts";
-import { qualifiedReitDividends } from "../f8995/f8995-route.ts";
+import { qualifiedReitDividends } from "../f8995/f8995_route.ts";
 import { assertForm8995AWotcReturn } from "../../../../../domains/deductions/business/form8995a/form8995a_wotc_reconciliation.ts";
 
 type Input = Form8995AInput | readonly [];

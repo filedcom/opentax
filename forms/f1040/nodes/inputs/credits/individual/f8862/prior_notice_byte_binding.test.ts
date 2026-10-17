@@ -1,7 +1,7 @@
 import { test } from "bun:test";
 import { assertRejects } from "@std/assert";
 import { PDFDocument } from "pdf-lib";
-import { sha256Hex } from "../../../../../2025/return-processing/prepared-source.ts";
+import { sha256Hex } from "../../../../../2025/return-processing/prepared_source.ts";
 import { bindForm8862PriorNoticeCopies } from "./prior_notice_byte_binding.ts";
 
 const fields = {

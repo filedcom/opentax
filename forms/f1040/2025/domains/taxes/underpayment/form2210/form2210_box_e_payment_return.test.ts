@@ -16,9 +16,9 @@ import {
 } from "./form2210_box_e_payment_return.ts";
 import { f1040_2025 } from "../../../../index.ts";
 import { normalizeAllPending } from "../../../../return-processing/pending.ts";
-import { sha256Hex } from "../../../../return-processing/prepared-source.ts";
+import { sha256Hex } from "../../../../return-processing/prepared_source.ts";
 import { passiveK1Inputs } from "../../../credits/earned-income/eic/eic_passive_k1.fixture.ts";
-import { assertAttachmentCoverage } from "../../../../return-processing/attachment-coverage.ts";
+import { assertAttachmentCoverage } from "../../../../return-processing/attachment_coverage.ts";
 
 function priorXml(ssn: string, agi: number, tax: number) {
   return new TextEncoder().encode(

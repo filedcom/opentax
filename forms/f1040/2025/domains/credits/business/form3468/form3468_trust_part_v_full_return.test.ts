@@ -8,9 +8,9 @@ import {
 import { f1040_2025 } from "../../../../index.ts";
 import { inputSchema as f3468InputSchema } from "../../../../../nodes/inputs/credits/business/f3468/index.ts";
 import { inputSchema as f3800InputSchema } from "../../../../../nodes/inputs/credits/business/f3800/index.ts";
-import { trustK1PartVFixture } from "../../../../../nodes/inputs/credits/business/f3468/trust-part-v.fixture.ts";
+import { trustK1PartVFixture } from "../../../../../nodes/inputs/credits/business/f3468/trust_part_v.fixture.ts";
 import { normalizeAllPending } from "../../../../return-processing/pending.ts";
-import { pdfReviewFixtures } from "../../../../pdf/review-fixtures.ts";
+import { pdfReviewFixtures } from "../../../../pdf/review_fixtures.ts";
 import { form3468Pdf } from "../../../../pdf/forms/credits/business/f3468.ts";
 
 const fixture = pdfReviewFixtures.find((item) =>

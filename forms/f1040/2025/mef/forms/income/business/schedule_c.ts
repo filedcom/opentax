@@ -1,9 +1,9 @@
 import { assertCharitableDepreciationReturn } from "../../deductions/charitable/f8283/f8283_depreciation_return.ts";
 import { assertFarmWotcReturn } from "../../../../domains/deductions/business/form8995/form8995_farm_wotc_reconciliation.ts";
-import { filedOwnedScheduleC } from "../../../../../nodes/owned-business-filing.ts";
+import { filedOwnedScheduleC } from "../../../../../nodes/owned_business_filing.ts";
 import { patronFiledBusinessLines } from "../../../../../nodes/inputs/deductions/business/qbi_patron/calculation.ts";
 import { reconcileForm8941DocumentSource } from "../../credits/health/f8941_source.ts";
-import { roundSignedQbiDollars } from "../../../../../nodes/inputs/income/business/schedule_c/qbi-multiple.ts";
+import { roundSignedQbiDollars } from "../../../../../nodes/inputs/income/business/schedule_c/qbi_multiple.ts";
 import { element, elements } from "../../../../../mef/xml.ts";
 import { z } from "zod";
 import { CONFIG_BY_YEAR } from "../../../../../nodes/config/index.ts";
@@ -26,7 +26,7 @@ import {
   calculateRentedHomeForm8829,
   rentedHomeSourceSchema,
 } from "../../../../../nodes/intermediate/forms/deductions/business/form_8829/index.ts";
-import type { MefBuildContext, MefFormDescriptor } from "../../../form-descriptor.ts";
+import type { MefBuildContext, MefFormDescriptor } from "../../../form_descriptor.ts";
 import { TS } from "../../../../../nodes/types.ts";
 import { FilingStatus } from "../../../../../mef/header.ts";
 import {

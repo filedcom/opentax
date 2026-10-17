@@ -1,4 +1,4 @@
-import { roundWholeDollars } from "../shared/whole-dollars.ts";
+import { roundWholeDollars } from "../shared/whole_dollars.ts";
 export function escapeXml(value: string): string {
   for (const char of value) {
     const codePoint = char.codePointAt(0)!;

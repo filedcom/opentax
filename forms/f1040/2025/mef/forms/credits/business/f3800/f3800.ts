@@ -1,11 +1,11 @@
 import {
   assertCurrentProductionAllocationSource,
   reconcileCurrentProductionAllocation,
-} from "../../../../../../nodes/inputs/credits/business/f3800/production-allocation.ts";
+} from "../../../../../../nodes/inputs/credits/business/f3800/production_allocation.ts";
 import {
   assertCurrentOrphanAllocationSource,
   reconcileCurrentOrphanAllocation,
-} from "../../../../../../nodes/inputs/credits/business/f3800/current-allocation.ts";
+} from "../../../../../../nodes/inputs/credits/business/f3800/current_allocation.ts";
 import { z } from "zod";
 import { assertForm3800FinalCreditJoin } from "../../../../../domains/credits/business/form3800/form3800_final_credit_join.ts";
 import {
@@ -19,7 +19,7 @@ import {
   inputSchema as f3800InputSchema,
   reconcileForm3800NonpassiveCarryforwards,
 } from "../../../../../../nodes/inputs/credits/business/f3800/index.ts";
-import { allocateDisabledAccessLine1eCredits } from "../../../../../../nodes/inputs/credits/business/f3800/disabled-access.ts";
+import { allocateDisabledAccessLine1eCredits } from "../../../../../../nodes/inputs/credits/business/f3800/disabled_access.ts";
 import {
   calculateForm8582CR,
   inputSchema as f8582crInputSchema,
@@ -56,7 +56,7 @@ import { FilingStatus as MefFilingStatus } from "../../../../../../mef/header.ts
 import type {
   MefBuildContext,
   MefFormDescriptor,
-} from "../../../../form-descriptor.ts";
+} from "../../../../form_descriptor.ts";
 import {
   buildIRS3800Document,
   type Form3800DocumentParts,

@@ -3,7 +3,7 @@ import {
   assertDistinctRequiredServiceSources,
   requiredServiceScholarshipAmount,
   requiredServiceScholarshipSchema,
-} from "./required-service-scholarship.ts";
+} from "./required_service_scholarship.ts";
 import { z } from "zod";
 const common = {
   student_ssn: z.string().regex(/^\d{3}-?\d{2}-?\d{4}$/),

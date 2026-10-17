@@ -1,4 +1,4 @@
-import type { PdfFieldEntry, PdfFormDescriptor } from "../../../form-descriptor.ts";
+import type { PdfFieldEntry, PdfFormDescriptor } from "../../../form_descriptor.ts";
 import { inputSchema } from "../../../../../nodes/inputs/payments/installments/f9465/index.ts";
 import { buildAttachedForm9465 } from "../../../../mef/forms/payments/installments/f9465_attached.ts";
 

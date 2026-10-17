@@ -3,7 +3,7 @@ import {
   computeGrossIncome,
   inputSchema,
 } from "../../../../../nodes/intermediate/forms/income/business/schedule_f/index.ts";
-import type { MefFormDescriptor } from "../../../form-descriptor.ts";
+import type { MefFormDescriptor } from "../../../form_descriptor.ts";
 
 export const cccLoanAccrualStatement: MefFormDescriptor<
   "ccc_loan_accrual_statement",

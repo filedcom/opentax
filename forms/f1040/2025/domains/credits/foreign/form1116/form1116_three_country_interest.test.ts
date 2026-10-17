@@ -15,7 +15,7 @@ import { form1116ScheduleBPdf } from "../../../../pdf/forms/credits/foreign/f111
 import { buildMefBundle } from "../../../../mef/builder.ts";
 import { buildPending } from "../../../../mef/execution/pending.ts";
 import { buildPdfBytes, type PdfPageOrigin } from "../../../../pdf/builder.ts";
-import { pdfReviewFixtures } from "../../../../pdf/review-fixtures.ts";
+import { pdfReviewFixtures } from "../../../../pdf/review_fixtures.ts";
 import { FilingStatus } from "../../../../../nodes/types.ts";
 import { inputSchema as f1099intInputSchema } from "../../../../../nodes/inputs/income/investments/f1099int/index.ts";
 

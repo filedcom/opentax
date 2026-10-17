@@ -7,7 +7,7 @@ import { registry } from "../../../../registry.ts";
 import { buildMefBundle } from "../../../../mef/builder.ts";
 import { buildPending } from "../../../../mef/execution/pending.ts";
 import { buildPdfBytes } from "../../../builder.ts";
-import { pdfReviewFixtures } from "../../../review-fixtures.ts";
+import { pdfReviewFixtures } from "../../../review_fixtures.ts";
 
 const fixture = pdfReviewFixtures.find((item) =>
   item.id === "single-alternating-policies-all-covered-slcsp-corrections"

@@ -1,9 +1,9 @@
 import { assertFarmWotcReturn } from "../../../../domains/deductions/business/form8995/form8995_farm_wotc_reconciliation.ts";
-import { filedOwnedScheduleC } from "../../../../../nodes/owned-business-filing.ts";
+import { filedOwnedScheduleC } from "../../../../../nodes/owned_business_filing.ts";
 import { patronFiledBusinessLines } from "../../../../../nodes/inputs/deductions/business/qbi_patron/calculation.ts";
 import { reconcileForm8941DocumentSource } from "../../../../mef/forms/credits/health/f8941_source.ts";
-import { roundSignedQbiDollars } from "../../../../../nodes/inputs/income/business/schedule_c/qbi-multiple.ts";
-import type { PdfFieldEntry, PdfFormDescriptor } from "../../../form-descriptor.ts";
+import { roundSignedQbiDollars } from "../../../../../nodes/inputs/income/business/schedule_c/qbi_multiple.ts";
+import type { PdfFieldEntry, PdfFormDescriptor } from "../../../form_descriptor.ts";
 import { CONFIG_BY_YEAR } from "../../../../../nodes/config/index.ts";
 import { FilingStatus, filingStatusSchema, TS } from "../../../../../nodes/types.ts";
 import { FilingStatus as MefFilingStatus } from "../../../../../mef/header.ts";
@@ -23,7 +23,7 @@ import {
   wotcReductionsByBusiness,
 } from "../../../../../nodes/inputs/income/business/schedule_c/model.ts";
 import { assertCurrentYearSection481aMatches } from "../../../../../nodes/inputs/income/business/f3115/index.ts";
-import { appendExpenseStatement } from "../../../support/expense-statement.ts";
+import { appendExpenseStatement } from "../../../support/expense_statement.ts";
 import { inputSchema as form8826InputSchema } from "../../../../../nodes/inputs/credits/business/f8826/index.ts";
 import { reconcileForm8826SelfSource } from "../../../../mef/forms/credits/business/f8826_source.ts";
 import {

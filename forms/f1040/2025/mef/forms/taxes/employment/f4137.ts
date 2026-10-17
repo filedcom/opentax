@@ -8,7 +8,7 @@ import {
   calculateForm4137,
   inputSchema,
 } from "../../../../../nodes/intermediate/forms/taxes/employment/form4137/index.ts";
-import type { MefFormDescriptor } from "../../../form-descriptor.ts";
+import type { MefFormDescriptor } from "../../../form_descriptor.ts";
 
 type Fields = Partial<ReturnType<typeof inputSchema.parse>>;
 

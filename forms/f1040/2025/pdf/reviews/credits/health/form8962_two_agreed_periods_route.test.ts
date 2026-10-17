@@ -8,7 +8,7 @@ import { buildMefBundle } from "../../../../mef/builder.ts";
 import { buildPending } from "../../../../mef/execution/pending.ts";
 import { buildPdfBytes } from "../../../builder.ts";
 import { form8962Pdf } from "../../../forms/credits/health/f8962.ts";
-import { pdfReviewFixtures } from "../../../review-fixtures.ts";
+import { pdfReviewFixtures } from "../../../review_fixtures.ts";
 
 const fixture = pdfReviewFixtures.find((item) =>
   item.id === "single-situation4-two-agreed-percentages"

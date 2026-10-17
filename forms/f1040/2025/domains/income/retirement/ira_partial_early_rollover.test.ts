@@ -15,7 +15,7 @@ import { buildPending } from "../../../mef/execution/pending.ts";
 import { buildPdfBytes } from "../../../pdf/builder.ts";
 import { irs1040Pdf } from "../../../pdf/forms/general/return-assembly/f1040.ts";
 import { form5329Pdf } from "../../../pdf/forms/taxes/retirement/f5329.ts";
-import { pdfReviewFixtures } from "../../../pdf/review-fixtures.ts";
+import { pdfReviewFixtures } from "../../../pdf/review_fixtures.ts";
 
 const base = pdfReviewFixtures.find((fixture) =>
   fixture.id === "single-ira-rollover"

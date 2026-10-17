@@ -7,7 +7,7 @@ import {
   Form8978Source,
   inputSchema,
 } from "../../../../../nodes/inputs/taxes/passthrough/f8978/index.ts";
-import type { MefBuildContext, MefFormDescriptor } from "../../../form-descriptor.ts";
+import type { MefBuildContext, MefFormDescriptor } from "../../../form_descriptor.ts";
 import {
   buildForm8978Statements,
   statementFileName,

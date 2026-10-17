@@ -4,7 +4,7 @@ import { scheduleEPdf } from "./schedule_e.ts";
 import { scheduleE } from "../../../../mef/forms/income/rental-passthrough/schedule_e.ts";
 import { inputSchema as scheduleEInputSchema } from "../../../../../nodes/inputs/income/rental-passthrough/schedule_e/index.ts";
 import { fillFormPdf } from "../../../builder.ts";
-import { testFiler } from "../../../../mef/support/test-filer.ts";
+import { testFiler } from "../../../../mef/support/test_filer.ts";
 
 test("Schedule E fills filer identity on the retained Part I or Part II page", async () => {
   const filer = {

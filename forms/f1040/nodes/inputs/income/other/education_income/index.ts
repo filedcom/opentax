@@ -1,7 +1,7 @@
 import { educationCents } from "./money.ts";
 import {
   requiredServiceScholarshipAmount,
-} from "./required-service-scholarship.ts";
+} from "./required_service_scholarship.ts";
 import { z } from "zod";
 import {
   type NodeResult,
@@ -24,7 +24,7 @@ import {
   itemSchema,
   scholarshipIncomeTotal,
 } from "./sources.ts";
-import { assertDependentScholarshipReturn } from "./dependent-scholarship-review.ts";
+import { assertDependentScholarshipReturn } from "./dependent_scholarship_review.ts";
 export const inputSchema = z.object({ education_incomes: z.array(itemSchema) });
 export function assertEducationIncomeSource(
   pending: Readonly<Record<string, unknown>> | undefined,

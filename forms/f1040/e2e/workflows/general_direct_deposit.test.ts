@@ -3,7 +3,7 @@ import { assertEquals, assertThrows } from "@std/assert";
 import { buildExecutionPlan } from "../../../../core/runtime/planner.ts";
 import { execute } from "../../../../core/runtime/executor.ts";
 import { registry } from "../../2025/registry.ts";
-import { assertGeneral1040DepositSource } from "../../2025/domains/general/return-assembly/filer-source-reconciliation.ts";
+import { assertGeneral1040DepositSource } from "../../2025/domains/general/return-assembly/filer_source_reconciliation.ts";
 import { extractFilerIdentity } from "../../mef/filer.ts";
 import { AccountType } from "../../mef/header.ts";
 import { inputSchema as generalInputSchema } from "../../nodes/inputs/general/filing/general/index.ts";

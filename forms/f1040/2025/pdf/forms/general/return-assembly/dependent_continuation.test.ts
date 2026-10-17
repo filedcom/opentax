@@ -2,7 +2,7 @@ import { test } from "bun:test";
 import { assertEquals } from "@std/assert";
 import { PDFDocument } from "pdf-lib";
 import { appendDependentContinuation } from "./dependent_continuation.ts";
-import { pdfReviewFixtures } from "../../../review-fixtures.ts";
+import { pdfReviewFixtures } from "../../../review_fixtures.ts";
 
 test("Form 1040 dependent continuation paginates every extra row", async () => {
   const fixture = pdfReviewFixtures.find((item) =>

@@ -54,7 +54,7 @@ changed to improve this percentage. The original
 ## Reproduce
 
 ```sh
-deno run -A forms/f1040/e2e/ats/ty2025-check-ledger.ts /tmp/ats-check-ledger.json
+deno run -A forms/f1040/e2e/ats/ty2025_check_ledger.ts /tmp/ats-check-ledger.json
 deno test -A forms/f1040/e2e/ats
 ```
 

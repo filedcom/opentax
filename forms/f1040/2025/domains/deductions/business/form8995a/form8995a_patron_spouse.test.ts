@@ -7,11 +7,11 @@ import {
   assertRejects,
   assertStringIncludes,
 } from "@std/assert";
-import { pdfReviewFixtures } from "../../../../pdf/review-fixtures.ts";
+import { pdfReviewFixtures } from "../../../../pdf/review_fixtures.ts";
 import {
   patronSpouseW2,
   spouseOwnedPatronFixture,
-} from "../../../../pdf/reviews/general/composed-returns/review-8995a-patron-joint.fixture.ts";
+} from "../../../../pdf/reviews/general/composed-returns/review_8995a_patron_joint.fixture.ts";
 import { f1040_2025 } from "../../../../index.ts";
 import { buildPending } from "../../../../mef/execution/pending.ts";
 import { buildMefBundle } from "../../../../mef/builder.ts";

@@ -11,7 +11,7 @@ import {
   partialLedger,
   priorBalanceLedger,
   spouseLedger,
-} from "../../../../2025/pdf/reviews/general/composed-returns/review-8853-medicare.fixture.ts";
+} from "../../../../2025/pdf/reviews/general/composed-returns/review_8853_medicare.fixture.ts";
 import {
   assertEquals,
   assertExists,

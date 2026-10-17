@@ -5,7 +5,7 @@ import { buildPdfBytes, type PdfPageOrigin } from "../../../../pdf/builder.ts";
 import { assertSingleFarmQbiReturn } from "../../../deductions/business/form8995a/form8995a_single_farm_reconciliation.ts";
 import { assertEquals, assertRejects, assertThrows } from "@std/assert";
 import { f1040_2025 } from "../../../../index.ts";
-import { pdfReviewFixtures } from "../../../../pdf/review-fixtures.ts";
+import { pdfReviewFixtures } from "../../../../pdf/review_fixtures.ts";
 import {
   preferentialAmtCases,
   preferentialAmtInputs,

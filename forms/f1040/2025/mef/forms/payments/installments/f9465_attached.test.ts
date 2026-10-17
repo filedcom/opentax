@@ -1,9 +1,9 @@
 import { test } from "bun:test";
 import { assertStringIncludes, assertThrows } from "@std/assert";
 import { inputSchema } from "../../../../../nodes/inputs/payments/installments/f9465/index.ts";
-import { testFiler } from "../../../support/test-filer.ts";
+import { testFiler } from "../../../support/test_filer.ts";
 import { buildAttachedForm9465 } from "./f9465_attached.ts";
-import { assertAttachmentCoverage } from "../../../../return-processing/attachment-coverage.ts";
+import { assertAttachmentCoverage } from "../../../../return-processing/attachment_coverage.ts";
 
 const source = {
   filing_mode: "attached_2025_1040",

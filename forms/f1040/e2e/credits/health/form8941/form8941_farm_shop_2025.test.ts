@@ -17,8 +17,8 @@ import { buildPdfBytes } from "../../../../2025/pdf/builder.ts";
 import {
   form8941FarmShopInputs,
   form8941FarmShopWotcInputs,
-} from "../../../../2025/pdf/reviews/general/composed-returns/review-8941-farm-shop.fixture.ts";
-import { pdfReviewFixtures } from "../../../../2025/pdf/review-fixtures.ts";
+} from "../../../../2025/pdf/reviews/general/composed-returns/review_8941_farm_shop.fixture.ts";
+import { pdfReviewFixtures } from "../../../../2025/pdf/review_fixtures.ts";
 import { calculateForm8941 } from "../../../../nodes/inputs/credits/health/f8941/index.ts";
 import {
   inputSchema as farmSchema,

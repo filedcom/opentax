@@ -1,4 +1,4 @@
-import type { PdfFieldEntry, PdfFormDescriptor } from "../../../form-descriptor.ts";
+import type { PdfFieldEntry, PdfFormDescriptor } from "../../../form_descriptor.ts";
 import { StandardFonts } from "pdf-lib";
 import { inputSchema, type W2GItem } from "../../../../../nodes/inputs/income/gambling/w2g/index.ts";
 import { assertWithheldW2GSource } from "../../../../mef/forms/income/other/w2g.ts";

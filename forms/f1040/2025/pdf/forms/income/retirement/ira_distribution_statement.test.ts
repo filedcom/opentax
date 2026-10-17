@@ -4,7 +4,7 @@ import * as sys from "../../../../../../../scripts/support/sys.ts";
 import { assertEquals, assertStringIncludes } from "@std/assert";
 import { PDFDocument } from "pdf-lib";
 import { inputSchema as f1099rInputSchema } from "../../../../../nodes/inputs/income/retirement/f1099r/index.ts";
-import { pdfReviewFixtures } from "../../../review-fixtures.ts";
+import { pdfReviewFixtures } from "../../../review_fixtures.ts";
 import { appendIraDistributionStatement } from "./ira_distribution_statement.ts";
 
 test("IRA frozen-deposit explanation prints on the PDF statement", async () => {

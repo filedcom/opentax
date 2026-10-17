@@ -2,12 +2,12 @@ import { test } from "bun:test";
 import { assertEquals, assertMatch, assertThrows } from "@std/assert";
 import { AccountType, buildReturnHeader } from "../../../../../mef/header.ts";
 import { irs1040Pdf } from "./f1040.ts";
-import { pdfReviewFixtures } from "../../../review-fixtures.ts";
+import { pdfReviewFixtures } from "../../../review_fixtures.ts";
 import { extractFilerIdentity } from "../../../../../mef/filer.ts";
 import {
   assertF1040FinalHeader,
   assertGeneral1040HeaderSource,
-} from "../../../../domains/general/return-assembly/filer-source-reconciliation.ts";
+} from "../../../../domains/general/return-assembly/filer_source_reconciliation.ts";
 
 // ---------------------------------------------------------------------------
 // Descriptor structure

@@ -4,7 +4,7 @@ import {
   Form8978Source,
   inputSchema,
 } from "../../../../../nodes/inputs/taxes/passthrough/f8978/index.ts";
-import type { MefFormDescriptor } from "../../../form-descriptor.ts";
+import type { MefFormDescriptor } from "../../../form_descriptor.ts";
 
 type Adjustment = ReturnType<
   typeof inputSchema.parse

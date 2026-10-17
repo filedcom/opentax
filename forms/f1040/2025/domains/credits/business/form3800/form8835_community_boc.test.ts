@@ -16,7 +16,7 @@ import { extractFilerIdentity } from "../../../../../mef/filer.ts";
 import { buildPdfBytes, type PdfPageOrigin } from "../../../../pdf/builder.ts";
 import { form8835Pdf } from "../../../../pdf/forms/credits/business/f8835.ts";
 import { normalizeAllPending } from "../../../../return-processing/pending.ts";
-import { preparedSourceSha256 } from "../../../../return-processing/prepared-source.ts";
+import { preparedSourceSha256 } from "../../../../return-processing/prepared_source.ts";
 import {
   calculateForm8835,
   inputSchema,

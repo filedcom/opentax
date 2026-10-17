@@ -8,7 +8,7 @@ import {
   inputSchema,
   unpaidLiability,
 } from "../../../../../nodes/inputs/taxes/foreign/f965/index.ts";
-import type { MefBuildContext, MefFormDescriptor } from "../../../form-descriptor.ts";
+import type { MefBuildContext, MefFormDescriptor } from "../../../form_descriptor.ts";
 
 const PAID_TAGS = [
   "PaidYear1Amt",

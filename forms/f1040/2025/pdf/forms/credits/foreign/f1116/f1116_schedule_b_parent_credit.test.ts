@@ -3,7 +3,7 @@ import { assertEquals, assertThrows } from "@std/assert";
 import { buildExecutionPlan } from "../../../../../../../../core/runtime/planner.ts";
 import { execute } from "../../../../../../../../core/runtime/executor.ts";
 import { registry } from "../../../../../registry.ts";
-import { pdfReviewFixtures } from "../../../../review-fixtures.ts";
+import { pdfReviewFixtures } from "../../../../review_fixtures.ts";
 import { form1116ScheduleBPdf } from "./f1116_schedule_b.ts";
 import {
   form1116ScheduleB,

@@ -1,5 +1,5 @@
 import { element, elements } from "../../../../../mef/xml.ts";
-import type { MefFormDescriptor } from "../../../form-descriptor.ts";
+import type { MefFormDescriptor } from "../../../form_descriptor.ts";
 import { scheduleBFilingRequired } from "../../../../../nodes/intermediate/aggregation/income/investments/schedule_b/schedule_b_filing.ts";
 import { isTy2025IrsCountryCode } from "../../../../../nodes/irs_country_code.ts";
 import {

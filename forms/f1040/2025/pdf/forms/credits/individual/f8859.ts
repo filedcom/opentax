@@ -3,7 +3,7 @@ import {
   inputSchema,
   totalCarryforward,
 } from "../../../../../nodes/inputs/credits/individual/f8859/index.ts";
-import type { PdfFormDescriptor } from "../../../form-descriptor.ts";
+import type { PdfFormDescriptor } from "../../../form_descriptor.ts";
 
 // TY2025 IRS Form 8859 AcroForm: lines 1-4 and its printed limit worksheet.
 const page = "topmostSubform[0].Page1[0]";

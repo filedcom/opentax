@@ -1,6 +1,6 @@
 import { isDeepStrictEqual } from "node:util";
 import type { Form8995AInput } from "../../../../../nodes/intermediate/forms/deductions/business/form8995a/index.ts";
-import { reviewedLossWotcReductions } from "../../../../../nodes/intermediate/forms/deductions/business/form8995a/loss-wotc.ts";
+import { reviewedLossWotcReductions } from "../../../../../nodes/intermediate/forms/deductions/business/form8995a/loss_wotc.ts";
 import {
   inputSchema as scheduleCInputSchema,
   wotcReductionsByBusiness,

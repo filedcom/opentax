@@ -1,7 +1,7 @@
 import {
   scheduleJCurrentYearTax,
   scheduleJTaxSourceSchema,
-} from "../../../../../nodes/intermediate/forms/taxes/income-averaging/schedule_j_calculation/tax-source.ts";
+} from "../../../../../nodes/intermediate/forms/taxes/income-averaging/schedule_j_calculation/tax_source.ts";
 import {
   AMT_EXEMPTION_2025,
   AMT_PHASE_OUT_START_2025,

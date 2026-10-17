@@ -9,7 +9,7 @@ import { extractFilerIdentity } from "../../../../../mef/filer.ts";
 import { buildPdfBytes, type PdfPageOrigin } from "../../../../pdf/builder.ts";
 import { normalizeAllPending } from "../../../../return-processing/pending.ts";
 import { assertScheduleJSourceReturn } from "./schedule_j_source_return.ts";
-import { calculateMixedFishingQbi } from "../../../../../nodes/intermediate/forms/deductions/business/form8995a/mixed-fishing.ts";
+import { calculateMixedFishingQbi } from "../../../../../nodes/intermediate/forms/deductions/business/form8995a/mixed_fishing.ts";
 
 const evidenceDir = process.env.SCHEDULE_J_JOINT_ADVANCED_EVIDENCE_DIR ??
   ".state/research/schedulej-joint-advanced-oct6/packets";

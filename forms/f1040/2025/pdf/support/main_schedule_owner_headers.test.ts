@@ -11,7 +11,7 @@ import { join } from "node:path";
 import { fillFormPdf } from "../builder.ts";
 import { extractFilerIdentity } from "../../../mef/filer.ts";
 import { returnHeaderNameLine1 } from "../../../mef/header.ts";
-import { assertF1040FinalHeader } from "../../domains/general/return-assembly/filer-source-reconciliation.ts";
+import { assertF1040FinalHeader } from "../../domains/general/return-assembly/filer_source_reconciliation.ts";
 import { schedule1Pdf } from "../forms/general/return-assembly/schedule1/schedule1.ts";
 import { schedule1aPdf } from "../forms/deductions/additional/schedule1a/schedule1a.ts";
 import { schedule2Pdf } from "../forms/taxes/other/schedule2.ts";

@@ -6,7 +6,7 @@ import { disclosureSchema, type Form8886Disclosure } from "./source.ts";
 import {
   form8886FinalDocumentsSchema,
   validateForm8886NativeBinding,
-} from "./native-binding.ts";
+} from "./native_binding.ts";
 
 export enum OtsaMethod {
   Mail = "mail",

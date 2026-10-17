@@ -104,7 +104,7 @@ Run from the isolated checkout with
 ```sh
 deno test -A forms/f1040/2025/domains/income/business/form7203/form7203_owned_debt_source.test.ts
 
-deno test -A forms/f1040/nodes/inputs/income/rental-passthrough/k1_s_corp/index.test.ts forms/f1040/nodes/intermediate/forms/income/business/form7203/debt-note.test.ts forms/f1040/nodes/intermediate/forms/income/business/form7203/index.test.ts forms/f1040/nodes/intermediate/forms/deductions/business/form8995/index.test.ts forms/f1040/2025/domains/income/business/form7203/form7203_capital_and_debt.test.ts forms/f1040/2025/mef/forms/income/business/f7203_stock_loss.test.ts forms/f1040/2025/pdf/forms/income/business/f7203_stock_loss.test.ts forms/f1040/2025/mef/forms/deductions/business/f8995/f8995.test.ts forms/f1040/2025/mef/forms/deductions/business/f8995/f8995_reit_only.test.ts forms/f1040/2025/domains/deductions/business/form8995/form8995_zero_source.test.ts
+deno test -A forms/f1040/nodes/inputs/income/rental-passthrough/k1_s_corp/index.test.ts forms/f1040/nodes/intermediate/forms/income/business/form7203/debt_note.test.ts forms/f1040/nodes/intermediate/forms/income/business/form7203/index.test.ts forms/f1040/nodes/intermediate/forms/deductions/business/form8995/index.test.ts forms/f1040/2025/domains/income/business/form7203/form7203_capital_and_debt.test.ts forms/f1040/2025/mef/forms/income/business/f7203_stock_loss.test.ts forms/f1040/2025/pdf/forms/income/business/f7203_stock_loss.test.ts forms/f1040/2025/mef/forms/deductions/business/f8995/f8995.test.ts forms/f1040/2025/mef/forms/deductions/business/f8995/f8995_reit_only.test.ts forms/f1040/2025/domains/deductions/business/form8995/form8995_zero_source.test.ts
 ```
 
 `FORM7203_OWNED_DEBT_EVIDENCE_DIR` optionally writes the four packets to a new

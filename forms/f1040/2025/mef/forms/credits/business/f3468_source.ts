@@ -3,7 +3,7 @@ import { inputSchema as f3468InputSchema } from "../../../../../nodes/inputs/cre
 import {
   reconcileTrustPartVStatement,
   type TrustPartVStatement,
-} from "../../../../../nodes/inputs/credits/business/f3468/trust-part-v-source.ts";
+} from "../../../../../nodes/inputs/credits/business/f3468/trust_part_v_source.ts";
 
 export type FiledTrustPartVClaim = {
   readonly source_type: "trust";

@@ -1,6 +1,6 @@
 import { element, elements } from "../../../../../mef/xml.ts";
 import { reconcileIraRecharacterizations } from "../../../../domains/income/retirement/form8606/form8606_recharacterization_source.ts";
-import type { MefFormDescriptor } from "../../../form-descriptor.ts";
+import type { MefFormDescriptor } from "../../../form_descriptor.ts";
 export const iraRecharacterizationStatement: MefFormDescriptor<
   "ira_recharacterization_statement",
   unknown,

@@ -14,7 +14,7 @@ import { form8995a } from "../../../../mef/forms/deductions/business/f8995a/f899
 import { form8995aScheduleC } from "../../../../mef/forms/deductions/business/f8995a/f8995a_schedule_c.ts";
 import { form8995aPdf } from "../../../../pdf/forms/deductions/business/f8995a.ts";
 import { form8995aScheduleCPdf } from "../../../../pdf/forms/deductions/business/f8995a_schedule_c.ts";
-import { pdfReviewFixtures } from "../../../../pdf/review-fixtures.ts";
+import { pdfReviewFixtures } from "../../../../pdf/review_fixtures.ts";
 import { inputSchema as form8995aInputSchema } from "../../../../../nodes/intermediate/forms/deductions/business/form8995a/index.ts";
 
 const gain = {

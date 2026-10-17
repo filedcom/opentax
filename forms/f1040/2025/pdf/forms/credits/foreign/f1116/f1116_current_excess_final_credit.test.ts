@@ -4,7 +4,7 @@ import { buildExecutionPlan } from "../../../../../../../../core/runtime/planner
 import { execute } from "../../../../../../../../core/runtime/executor.ts";
 import { registry } from "../../../../../registry.ts";
 import { form1116 as form1116Mef } from "../../../../../mef/forms/credits/foreign/f1116/f1116.ts";
-import { pdfReviewFixtures } from "../../../../review-fixtures.ts";
+import { pdfReviewFixtures } from "../../../../review_fixtures.ts";
 import { form1116Pdf } from "./f1116.ts";
 import { categorySummarySchema } from "../../../../../../nodes/intermediate/forms/credits/foreign/form_1116/index.ts";
 

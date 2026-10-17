@@ -1,5 +1,5 @@
 import { StandardFonts } from "pdf-lib";
-import type { PdfFieldEntry, PdfFormDescriptor } from "../../../form-descriptor.ts";
+import type { PdfFieldEntry, PdfFormDescriptor } from "../../../form_descriptor.ts";
 import {
   type Form8978Lines,
   Form8978Source,

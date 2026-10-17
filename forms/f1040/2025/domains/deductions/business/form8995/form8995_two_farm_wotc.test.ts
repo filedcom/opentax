@@ -1,7 +1,7 @@
 import { test } from "bun:test";
 import * as sys from "../../../../../../../scripts/support/sys.ts";
 import { assertEquals, assertRejects, assertThrows } from "@std/assert";
-import { pdfReviewFixtures } from "../../../../pdf/review-fixtures.ts";
+import { pdfReviewFixtures } from "../../../../pdf/review_fixtures.ts";
 import { f1040_2025 } from "../../../../index.ts";
 import { normalizeAllPending } from "../../../../return-processing/pending.ts";
 import { assertFarmWotcReturn } from "./form8995_farm_wotc_reconciliation.ts";
@@ -9,7 +9,7 @@ import {
   calculateForm5884,
   inputSchema as creditSchema,
 } from "../../../../../nodes/inputs/credits/business/f5884/index.ts";
-import { calculateFarmWotcLines } from "../../../../../nodes/intermediate/forms/deductions/business/form8995a/farm-wotc.ts";
+import { calculateFarmWotcLines } from "../../../../../nodes/intermediate/forms/deductions/business/form8995a/farm_wotc.ts";
 import { inputSchema as parentSchema } from "../../../../../nodes/intermediate/forms/deductions/business/form8995a/index.ts";
 import { scheduleF } from "../../../../mef/forms/income/business/schedule_f.ts";
 import { scheduleFPdf } from "../../../../pdf/forms/income/business/schedule_f.ts";

@@ -1,5 +1,5 @@
 import { test } from "bun:test";
-import { withHealthPolicyRecords } from "./policy-records.fixture.ts";
+import { withHealthPolicyRecords } from "./policy_records.fixture.ts";
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import { TS } from "../../../../../types.ts";
 import { FilingStatus } from "../../../../../../mef/header.ts";

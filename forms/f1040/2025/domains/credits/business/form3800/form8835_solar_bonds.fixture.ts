@@ -1,7 +1,7 @@
 import { PDFDocument } from "pdf-lib";
 import { solarFixture } from "./form8835_solar.fixture.ts";
 import { bondFields } from "./form3800_bonds.fixture.ts";
-import { sha256Hex } from "../../../../return-processing/prepared-source.ts";
+import { sha256Hex } from "../../../../return-processing/prepared_source.ts";
 
 export const solarBondCases = [
   {

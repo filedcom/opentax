@@ -6,7 +6,7 @@ import {
   assertThrows,
 } from "@std/assert";
 import { f1040_2025 } from "../../../../index.ts";
-import { pdfReviewFixtures } from "../../../../pdf/review-fixtures.ts";
+import { pdfReviewFixtures } from "../../../../pdf/review_fixtures.ts";
 import { normalizeAllPending } from "../../../../return-processing/pending.ts";
 import { buildPdfBytes } from "../../../../pdf/builder.ts";
 import { form461 as native } from "../../../../mef/forms/income/business/f461.ts";

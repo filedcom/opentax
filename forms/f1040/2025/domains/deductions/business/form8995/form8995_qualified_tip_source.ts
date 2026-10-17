@@ -7,7 +7,7 @@ import {
 import {
   reviewedQualifiedTipExclusions,
   tipSourceCanonical,
-} from "../../../../../nodes/intermediate/forms/deductions/business/form8995/qualified-tips.ts";
+} from "../../../../../nodes/intermediate/forms/deductions/business/form8995/qualified_tips.ts";
 /** Bind the QBI adjustment to the separately reconciled actual Schedule1A sources. */
 export function assertQualifiedTipQbiSource(
   fields: Record<string, unknown>,

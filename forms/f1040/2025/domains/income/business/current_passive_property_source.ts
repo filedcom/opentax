@@ -1,12 +1,12 @@
-import { currentLossFilingProjection } from "./current-loss-filing-projection.ts";
+import { currentLossFilingProjection } from "./current_loss_filing_projection.ts";
 import { isDeepStrictEqual } from "node:util";
 import { inputSchema as scheduleSchema } from "../../../../nodes/inputs/income/rental-passthrough/schedule_e/index.ts";
 import {
   currentPropertyAmounts,
   reconcileCurrentPropertySource,
-} from "../../../../nodes/inputs/income/rental-passthrough/schedule_e/current-property-source.ts";
+} from "../../../../nodes/inputs/income/rental-passthrough/schedule_e/current_property_source.ts";
 import { form8582 } from "../../../mef/forms/income/business/f8582/f8582.ts";
-import { assertCurrentPropertyQbi } from "../../../mef/forms/deductions/business/f8995/f8995-current-property.ts";
+import { assertCurrentPropertyQbi } from "../../../mef/forms/deductions/business/f8995/f8995_current_property.ts";
 export function assertCurrentPassivePropertyReturn(
   fields: Record<string, unknown>,
   pending: Readonly<Record<string, unknown>> | undefined,

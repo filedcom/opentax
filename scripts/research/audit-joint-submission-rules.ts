@@ -2,7 +2,7 @@ import * as fs from "node:fs/promises";
 import { createReturnContext } from "../../core/validation/context.ts";
 import { evaluateRules } from "../../core/validation/engine.ts";
 import { ruleFormPrefix } from "../../core/validation/rule-builder.ts";
-import { FIELD_REGISTRY } from "../../forms/f1040/validation/field-registry.ts";
+import { FIELD_REGISTRY } from "../../forms/f1040/validation/field_registry.ts";
 import { ALL_RULES } from "../../forms/f1040/validation/rules/index.ts";
 import {
   emittedValidationScope,

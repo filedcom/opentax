@@ -3,7 +3,7 @@ import {
   calculateForm5884,
   inputSchema,
 } from "../../../../../nodes/inputs/credits/business/f5884/index.ts";
-import type { MefFormDescriptor } from "../../../form-descriptor.ts";
+import type { MefFormDescriptor } from "../../../form_descriptor.ts";
 
 export const form5884ControlledGroupStatement: MefFormDescriptor<
   "f5884_controlled_group_statement",

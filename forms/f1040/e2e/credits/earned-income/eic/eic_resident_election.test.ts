@@ -13,7 +13,7 @@ import { buildExecutionPlan } from "../../../../../../core/runtime/planner.ts";
 import { registry } from "../../../../2025/registry.ts";
 import { buildMefBundle, buildMefXml } from "../../../../2025/mef/builder.ts";
 import { buildPending } from "../../../../2025/mef/execution/pending.ts";
-import { sha256Hex } from "../../../../2025/return-processing/prepared-source.ts";
+import { sha256Hex } from "../../../../2025/return-processing/prepared_source.ts";
 import { irs1040Pdf } from "../../../../2025/pdf/forms/general/return-assembly/f1040.ts";
 import { fillFormPdf } from "../../../../2025/pdf/builder.ts";
 import { extractFilerIdentity } from "../../../../mef/filer.ts";

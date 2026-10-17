@@ -8,9 +8,9 @@ import {
 import { f1040_2025 } from "../../../../index.ts";
 import { extractFilerIdentity } from "../../../../../mef/filer.ts";
 import { buildPdfBytes, type PdfPageOrigin } from "../../../../pdf/builder.ts";
-import { buildCurrentYearCarryforwardLedger } from "../../../../../nodes/intermediate/forms/credits/business/form8582cr/carryforward-ledger.ts";
+import { buildCurrentYearCarryforwardLedger } from "../../../../../nodes/intermediate/forms/credits/business/form8582cr/carryforward_ledger.ts";
 import { inputSchema as form8582crInputSchema } from "../../../../../nodes/intermediate/forms/credits/business/form8582cr/index.ts";
-import { preparedSourceSha256 } from "../../../../return-processing/prepared-source.ts";
+import { preparedSourceSha256 } from "../../../../return-processing/prepared_source.ts";
 import { scheduleEPdf } from "../../../../pdf/forms/income/rental-passthrough/schedule_e.ts";
 
 for (const c of separateIncomeCases) {

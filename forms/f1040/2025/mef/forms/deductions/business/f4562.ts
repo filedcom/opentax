@@ -1,9 +1,9 @@
 import { section179PartIXml } from "./f4562_section179.ts";
-import type { section179SummarySchema } from "../../../../../nodes/intermediate/forms/deductions/business/form4562/section179-inventory.ts";
+import type { section179SummarySchema } from "../../../../../nodes/intermediate/forms/deductions/business/form4562/section179_inventory.ts";
 import type {
   currentYearActivitySchema,
   filedCurrentYearSchema,
-} from "../../../../../nodes/intermediate/forms/deductions/business/form4562/current-year.ts";
+} from "../../../../../nodes/intermediate/forms/deductions/business/form4562/current_year.ts";
 import { reconcileCurrentYearInventory } from "./f4562_current_year.ts";
 import type {
   bonusActivitySchema,
@@ -25,7 +25,7 @@ import { inputSchema as w2InputSchema } from "../../../../../nodes/inputs/income
 import type {
   MefBuildContext,
   MefFormDescriptor,
-} from "../../../form-descriptor.ts";
+} from "../../../form_descriptor.ts";
 
 type Fields = z.infer<typeof filedForm4562Schema>;
 type Input =

@@ -1,11 +1,11 @@
-import { calculateBalanceSheet } from "../../../../../nodes/inputs/general/foreign/f8854/balance-sheet.ts";
+import { calculateBalanceSheet } from "../../../../../nodes/inputs/general/foreign/f8854/balance_sheet.ts";
 import {
   assertForm8854FilingScope,
   inputSchema,
   isCoveredExpatriate,
   sectionAExceptionAnswers,
 } from "../../../../../nodes/inputs/general/foreign/f8854/index.ts";
-import type { PdfFieldEntry, PdfFormDescriptor } from "../../../form-descriptor.ts";
+import type { PdfFieldEntry, PdfFormDescriptor } from "../../../form_descriptor.ts";
 
 // TY2025 initial statement for a noncovered former citizen with cash only.
 // All five Section A tax amounts remain tied to prior filed-return records.

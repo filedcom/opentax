@@ -16,7 +16,7 @@ import { buildPdfBytes } from "../../../../2025/pdf/builder.ts";
 import {
   form8941SpouseWorkerInputs,
   form8941WorkerInputs,
-} from "../../../../2025/pdf/reviews/general/composed-returns/review-8941-workers.fixture.ts";
+} from "../../../../2025/pdf/reviews/general/composed-returns/review_8941_workers.fixture.ts";
 import { extractFilerIdentity } from "../../../../mef/filer.ts";
 import { calculateForm8941 } from "../../../../nodes/inputs/credits/health/f8941/index.ts";
 import {

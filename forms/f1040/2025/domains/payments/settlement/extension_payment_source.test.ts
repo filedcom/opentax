@@ -8,7 +8,7 @@ import {
 import { extractFilerIdentity } from "../../../../mef/filer.ts";
 import { FilingStatus } from "../../../../nodes/types.ts";
 import { f1040_2025 } from "../../../index.ts";
-import { assertExtensionPaymentSource } from "./extension-payment-reconciliation.ts";
+import { assertExtensionPaymentSource } from "./extension_payment_reconciliation.ts";
 import { normalizeAllPending } from "../../../return-processing/pending.ts";
 
 const general = {

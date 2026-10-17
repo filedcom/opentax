@@ -6,7 +6,7 @@ import {
   reconcileForm8801CarryRecord,
   stageForm8801CarryRecord,
 } from "./form8801_carry_record.ts";
-import { sha256Hex } from "../../../../return-processing/prepared-source.ts";
+import { sha256Hex } from "../../../../return-processing/prepared_source.ts";
 const priorXml =
   '<Return xmlns="http://www.irs.gov/efile"><ReturnHeader><TaxYr>2024</TaxYr><TaxPeriodBeginDt>2024-01-01</TaxPeriodBeginDt><TaxPeriodEndDt>2024-12-31</TaxPeriodEndDt><ReturnTypeCd>1040</ReturnTypeCd><Filer><PrimarySSN>111223333</PrimarySSN></Filer></ReturnHeader><ReturnData><IRS1040 documentId="Prior1040"><IndividualReturnFilingStatusCd>1</IndividualReturnFilingStatusCd></IRS1040><IRS6251 documentId="Prior6251"><AGIOrAGILessDeductionAmt>100000</AGIOrAGILessDeductionAmt><ScheduleATaxesAmt>20000</ScheduleATaxesAmt><TotalRefundReceivedAmt>0</TotalRefundReceivedAmt><InvestmentInterestAmt>0</InvestmentInterestAmt><DepletionAmt>0</DepletionAmt><NetOperatingLossDeductionAmt>0</NetOperatingLossDeductionAmt><ExemptPrivateActivityBondsAmt>0</ExemptPrivateActivityBondsAmt><Section1202ExclusionAmt>0</Section1202ExclusionAmt><AdjustedRegularTaxAmt>8000</AdjustedRegularTaxAmt><AlternativeMinimumTaxAmt>5000</AlternativeMinimumTaxAmt></IRS6251><IRS8801 documentId="Prior8801"><AMTCrCarryforwardToNextYearAmt>1000</AMTCrCarryforwardToNextYearAmt></IRS8801></ReturnData></Return>';
 async function prior() {

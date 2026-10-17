@@ -1,4 +1,4 @@
-import { currentLossFilingProjection } from "../../../../domains/income/business/current-loss-filing-projection.ts";
+import { currentLossFilingProjection } from "../../../../domains/income/business/current_loss_filing_projection.ts";
 import {
   calculateForm4835AtRiskNet,
   inputSchema as form4835InputSchema,
@@ -8,7 +8,7 @@ import {
   inputSchema as form8582InputSchema,
   passiveLossLimit,
 } from "../../../../../nodes/intermediate/forms/income/business/form8582/index.ts";
-import type { MefBuildContext } from "../../../form-descriptor.ts";
+import type { MefBuildContext } from "../../../form_descriptor.ts";
 import { form8582 } from "./f8582/f8582.ts";
 
 /** Form 4835 line 34c amounts proved by the same Form 8582 activity allocation. */

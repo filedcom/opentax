@@ -7,7 +7,7 @@ import type {
 import { output, TaxNode } from "../../../../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../../../../core/types/output-nodes.ts";
 import { f3800, f8826CreditEntrySchema } from "../../../../../inputs/credits/business/f3800/index.ts";
-import { allocateMixedDisabledAccessCredits } from "../../../../../inputs/credits/business/f3800/disabled-access.ts";
+import { allocateMixedDisabledAccessCredits } from "../../../../../inputs/credits/business/f3800/disabled_access.ts";
 import {
   form8582cr,
   inputSchema as form8582crInputSchema,

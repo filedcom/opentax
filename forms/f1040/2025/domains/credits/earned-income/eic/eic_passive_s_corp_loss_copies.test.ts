@@ -13,7 +13,7 @@ import {
   passiveSCorpJointLossReturnInputs,
   passiveSCorpLossReturnInputs,
 } from "./eic_passive_s_corp_loss.fixture.ts";
-import { projectPassiveSCorpLossCopies } from "../../../income/business/passive-s-corp-loss-copies.ts";
+import { projectPassiveSCorpLossCopies } from "../../../income/business/passive_s_corp_loss_copies.ts";
 import { form8582 } from "../../../../mef/forms/income/business/f8582/f8582.ts";
 import { scheduleE } from "../../../../mef/forms/income/rental-passthrough/schedule_e.ts";
 import { scheduleEPdf } from "../../../../pdf/forms/income/rental-passthrough/schedule_e.ts";

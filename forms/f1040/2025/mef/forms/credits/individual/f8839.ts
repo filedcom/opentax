@@ -2,7 +2,7 @@ import { inputSchema } from "../../../../../nodes/intermediate/forms/credits/ind
 import { projectStagedForm8839Documents } from "../../../../../nodes/intermediate/forms/credits/individual/form8839/staged_documents.ts";
 import { parsePublicForm8839Source } from "../../../../../nodes/intermediate/forms/credits/individual/form8839/public_source.ts";
 import { f1040 } from "../../../../../nodes/outputs/general/return-assembly/f1040/index.ts";
-import type { MefFormDescriptor } from "../../../form-descriptor.ts";
+import type { MefFormDescriptor } from "../../../form_descriptor.ts";
 
 type Input = unknown;
 

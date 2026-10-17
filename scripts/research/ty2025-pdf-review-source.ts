@@ -1,5 +1,5 @@
 import type { FilerIdentity } from "../../forms/f1040/mef/header.ts";
-import type { PdfReviewFixture } from "../../forms/f1040/2025/pdf/review-fixtures.ts";
+import type { PdfReviewFixture } from "../../forms/f1040/2025/pdf/review_fixtures.ts";
 
 /** Fixed header time for synthetic review artifacts, not production exports. */
 export const REVIEW_RETURN_TIMESTAMP = "2025-12-31T12:00:00Z";

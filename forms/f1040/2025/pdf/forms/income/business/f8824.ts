@@ -1,4 +1,4 @@
-import type { PdfFieldEntry, PdfFormDescriptor } from "../../../form-descriptor.ts";
+import type { PdfFieldEntry, PdfFormDescriptor } from "../../../form_descriptor.ts";
 import {
   calculateLikeKindExchange,
 } from "../../../../../nodes/intermediate/forms/income/business/form8824/calculation.ts";

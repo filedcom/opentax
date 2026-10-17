@@ -1,7 +1,7 @@
 import { test } from "bun:test";
 import * as fs from "node:fs/promises";
 import * as sys from "../../../../../../../scripts/support/sys.ts";
-import { multipleScheduleCInputs } from "../../../../pdf/reviews/general/composed-returns/review-8995-multiple.fixture.ts";
+import { multipleScheduleCInputs } from "../../../../pdf/reviews/general/composed-returns/review_8995_multiple.fixture.ts";
 import {
   assert,
   assertEquals,
@@ -10,7 +10,7 @@ import {
 } from "@std/assert";
 import { f1040_2025 } from "../../../../index.ts";
 import { normalizeAllPending } from "../../../../return-processing/pending.ts";
-import { pdfReviewFixtures } from "../../../../pdf/review-fixtures.ts";
+import { pdfReviewFixtures } from "../../../../pdf/review_fixtures.ts";
 import { form8995 } from "../../../../mef/forms/deductions/business/f8995/f8995.ts";
 import { scheduleCPdf } from "../../../../pdf/forms/income/business/schedule_c.ts";
 import { form8995Pdf } from "../../../../pdf/forms/deductions/business/f8995/f8995.ts";

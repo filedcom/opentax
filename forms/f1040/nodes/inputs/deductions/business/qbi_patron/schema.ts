@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { itemSchema as patrSchema } from "../../../income/business/f1099patr/schema.ts";
-import { mfsSstbFilingReviewSchema } from "../../../income/business/schedule_c/mfs-sstb-review.ts";
+import { mfsSstbFilingReviewSchema } from "../../../income/business/schedule_c/mfs_sstb_review.ts";
 
 const date = z.string().regex(/^\d{4}-\d{2}-\d{2}$/).refine((value) => {
   const parsed = new Date(`${value}T00:00:00Z`);

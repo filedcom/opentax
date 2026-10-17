@@ -3,7 +3,7 @@ import * as fs from "node:fs/promises";
 import * as sys from "../../../../../../../scripts/support/sys.ts";
 import { assertEquals, assertRejects, assertThrows } from "@std/assert";
 import { PDFDocument, PDFTextField } from "pdf-lib";
-import { sha256Hex } from "../../../../return-processing/prepared-source.ts";
+import { sha256Hex } from "../../../../return-processing/prepared_source.ts";
 import {
   form172PdfPartIField,
   stageForm172LossYearPdfDocument,

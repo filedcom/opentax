@@ -1,10 +1,10 @@
-import { notePrincipalRepaid } from "./repayment-inventory.ts";
+import { notePrincipalRepaid } from "./repayment_inventory.ts";
 import {
   firstYearPassiveSCorpLossStages,
   passiveSCorpLossBundleSchema,
 } from "../../../../../inputs/income/rental-passthrough/k1_s_corp_passive_loss_source.ts";
-import { additionalPrincipalRepayments } from "./debt-allocation.ts";
-import { ownedDebtFamily } from "./owned-family.ts";
+import { additionalPrincipalRepayments } from "./debt_allocation.ts";
+import { ownedDebtFamily } from "./owned_family.ts";
 import { z } from "zod";
 import type { NodeResult } from "../../../../../../../../core/types/tax-node.ts";
 import { TaxNode } from "../../../../../../../../core/types/tax-node.ts";
@@ -18,8 +18,8 @@ import {
   reviewedForm7203DebtEvidenceSchema,
   sumPrincipalRepayments,
   totalCurrentDebtAdvances,
-} from "./debt-note.ts";
-import { reviewedStockLossLedgerSchema } from "./stock-ledger.ts";
+} from "./debt_note.ts";
+import { reviewedStockLossLedgerSchema } from "./stock_ledger.ts";
 
 // ─── Schema ───────────────────────────────────────────────────────────────────
 

@@ -5,7 +5,7 @@ import {
   computePersonalCreditAmounts,
   type F8911Input,
 } from "../../../../../nodes/inputs/credits/business/f8911/index.ts";
-import type { MefFormDescriptor } from "../../../form-descriptor.ts";
+import type { MefFormDescriptor } from "../../../form_descriptor.ts";
 
 type Input = Partial<F8911Input> & Record<string, unknown>;
 

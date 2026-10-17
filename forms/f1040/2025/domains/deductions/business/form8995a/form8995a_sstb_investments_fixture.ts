@@ -1,4 +1,4 @@
-import { pdfReviewFixtures } from "../../../../pdf/review-fixtures.ts";
+import { pdfReviewFixtures } from "../../../../pdf/review_fixtures.ts";
 import {
   sstbJointOwnerCases,
   sstbJointOwnerFixture,

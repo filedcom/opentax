@@ -1,12 +1,12 @@
 import { test } from "bun:test";
 import { assertEquals, assertRejects, assertThrows } from "@std/assert";
-import { sha256Hex } from "../../../../return-processing/prepared-source.ts";
+import { sha256Hex } from "../../../../return-processing/prepared_source.ts";
 import { fixture, packageFacts } from "./form8801_reviewed_return.fixture.ts";
 import {
   inspectForm8801PriorReturnBytes,
   stageForm8801PriorBoundReturn,
 } from "./form8801_prior_return_bytes.ts";
-import { assertAttachmentCoverage } from "../../../../return-processing/attachment-coverage.ts";
+import { assertAttachmentCoverage } from "../../../../return-processing/attachment_coverage.ts";
 
 // Constructed source copy using independently reviewed 2024 IRS field names.
 // It is not an accepted return and has no issuer-authentication evidence.

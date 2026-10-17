@@ -1,7 +1,7 @@
 import {
   currentFarmRentalNet,
   type CurrentFarmRentalQbiSource,
-} from "../../income/business/f4835/qbi-source.ts";
+} from "../../income/business/f4835/qbi_source.ts";
 import { z } from "zod";
 import {
   box11Line10SourceRows,

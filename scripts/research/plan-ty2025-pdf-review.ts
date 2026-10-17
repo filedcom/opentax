@@ -1,6 +1,6 @@
 /** Print a source-only plan for the held TY2025 filled-PDF review. */
 import { ALL_PDF_FORMS } from "../../forms/f1040/2025/pdf/forms/index.ts";
-import { pdfReviewFixtures } from "../../forms/f1040/2025/pdf/review-fixtures.ts";
+import { pdfReviewFixtures } from "../../forms/f1040/2025/pdf/review_fixtures.ts";
 
 const registered = new Set(ALL_PDF_FORMS.map((form) => form.pendingKey));
 const fixtureIds = new Set<string>();

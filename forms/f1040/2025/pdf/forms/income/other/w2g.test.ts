@@ -1,6 +1,6 @@
 import { test } from "bun:test";
 import { assertEquals, assertThrows } from "@std/assert";
-import { pdfReviewFixtures } from "../../../review-fixtures.ts";
+import { pdfReviewFixtures } from "../../../review_fixtures.ts";
 import { w2gPdf } from "./w2g.ts";
 
 const fixture = pdfReviewFixtures.find((item) =>

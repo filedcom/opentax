@@ -12,7 +12,7 @@ import {
 import type {
   MefBuildContext,
   MefFormDescriptor,
-} from "../../../form-descriptor.ts";
+} from "../../../form_descriptor.ts";
 import type { FilerIdentity } from "../../../../../mef/header.ts";
 import type { z } from "zod";
 import {

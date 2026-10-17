@@ -1,5 +1,5 @@
 import { element, elements } from "../../../../../mef/xml.ts";
-import type { MefFormDescriptor } from "../../../form-descriptor.ts";
+import type { MefFormDescriptor } from "../../../form_descriptor.ts";
 import { reconciledForm8908Source } from "./f8908_source_reconciliation.ts";
 import { reconcileForm8908PwaAttachments } from "./f8908_pwa.ts";
 

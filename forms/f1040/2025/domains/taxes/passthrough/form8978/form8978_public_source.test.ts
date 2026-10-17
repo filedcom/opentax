@@ -6,7 +6,7 @@ import {
   assertStringIncludes,
   assertThrows,
 } from "@std/assert";
-import { form8978ReviewFixtures } from "../../../../pdf/reviews/general/composed-returns/review-8978.fixture.ts";
+import { form8978ReviewFixtures } from "../../../../pdf/reviews/general/composed-returns/review_8978.fixture.ts";
 import { f1040_2025 } from "../../../../index.ts";
 import { buildPending } from "../../../../mef/execution/pending.ts";
 import { buildMefBundle, buildMefXml } from "../../../../mef/builder.ts";

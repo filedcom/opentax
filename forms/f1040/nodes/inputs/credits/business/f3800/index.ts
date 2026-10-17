@@ -1,8 +1,8 @@
-import { currentProductionAllocationSchema } from "./production-allocation.ts";
+import { currentProductionAllocationSchema } from "./production_allocation.ts";
 import {
   currentOrphanAllocationSchema,
   reconcileCurrentOrphanAllocation,
-} from "./current-allocation.ts";
+} from "./current_allocation.ts";
 import { z } from "zod";
 import type {
   NodeOutput,
@@ -20,11 +20,11 @@ import {
   ZERO_FORM3800_PASSIVE_ACTIVITY,
 } from "./calculation.ts";
 import { sourceAllocationSchema } from "../../../../intermediate/forms/credits/business/form8582cr/source.ts";
-import { allocateDisabledAccessLine1eCredits } from "./disabled-access.ts";
+import { allocateDisabledAccessLine1eCredits } from "./disabled_access.ts";
 import {
   form3800CarryoverVintageSchema,
   reconcileForm3800CarryoverLedger,
-} from "./carryover-ledger.ts";
+} from "./carryover_ledger.ts";
 
 // TY2025 — Form 3800: General Business Credit.
 // Source-backed Form 8826, Form 8835, and Form 5884 entries pass classified source

@@ -1,5 +1,5 @@
 import { element, elements } from "../../../../../mef/xml.ts";
-import type { MefFormDescriptor } from "../../../form-descriptor.ts";
+import type { MefFormDescriptor } from "../../../form_descriptor.ts";
 import { reconcileForm8994DocumentSource } from "../../../../domains/credits/business/form8994/form8994_source.ts";
 
 /** TY2025 v5.4 Shared/IRS8994/IRS8994.xsd A–D, then lines 1–3. */

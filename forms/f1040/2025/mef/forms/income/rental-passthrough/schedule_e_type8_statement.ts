@@ -3,7 +3,7 @@ import type { z } from "zod";
 import type { FilerIdentity } from "../../../../../mef/header.ts";
 import { inputSchema } from "../../../../../nodes/inputs/income/rental-passthrough/schedule_e/index.ts";
 import { appendScheduleEPartIStatement } from "../../../../pdf/forms/income/rental-passthrough/schedule_e_part_i_statement.ts";
-import type { MefPdfAttachment } from "../../../form-descriptor.ts";
+import type { MefPdfAttachment } from "../../../form_descriptor.ts";
 
 type Fields = Partial<z.infer<typeof inputSchema>>;
 

@@ -1,7 +1,7 @@
 import { test } from "bun:test";
 import * as fs from "node:fs/promises";
 import { PDFDocument } from "pdf-lib";
-import { sha256Hex } from "../../../../return-processing/prepared-source.ts";
+import { sha256Hex } from "../../../../return-processing/prepared_source.ts";
 import { assertEquals, assertRejects, assertStringIncludes } from "@std/assert";
 import {
   transferCases,
@@ -10,7 +10,7 @@ import {
 import { f1040_2025 } from "../../../../index.ts";
 import { extractFilerIdentity } from "../../../../../mef/filer.ts";
 import { buildPdfBytes, type PdfPageOrigin } from "../../../../pdf/builder.ts";
-import { preparedSourceSha256 } from "../../../../return-processing/prepared-source.ts";
+import { preparedSourceSha256 } from "../../../../return-processing/prepared_source.ts";
 
 for (const c of transferCases) {
   test(`Form 8835 reviewed transfer source-to-return: ${c.id}`, async () => {

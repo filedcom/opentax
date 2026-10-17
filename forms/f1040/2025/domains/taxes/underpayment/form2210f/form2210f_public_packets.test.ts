@@ -4,7 +4,7 @@ import { assertEquals, assertRejects, assertStringIncludes } from "@std/assert";
 import { f1040_2025 } from "../../../../index.ts";
 import { buildPending } from "../../../../mef/execution/pending.ts";
 import { buildPdfBytes, type PdfPageOrigin } from "../../../../pdf/builder.ts";
-import { pdfReviewFixtures } from "../../../../pdf/review-fixtures.ts";
+import { pdfReviewFixtures } from "../../../../pdf/review_fixtures.ts";
 
 const base = pdfReviewFixtures.find((f) =>
   f.id === "mfj-form2210f-first-joint-filing"

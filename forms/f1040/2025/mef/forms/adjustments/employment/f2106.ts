@@ -1,4 +1,4 @@
-import type { MefFormDescriptor } from "../../../form-descriptor.ts";
+import type { MefFormDescriptor } from "../../../form_descriptor.ts";
 import { inputSchema } from "../../../../../nodes/inputs/adjustments/employment/f2106/index.ts";
 import {
   buildStagedIRS2106,

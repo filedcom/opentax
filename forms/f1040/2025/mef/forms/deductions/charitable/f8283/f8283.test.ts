@@ -20,7 +20,7 @@ import {
   scheduleA as scheduleANode,
 } from "../../../../../../nodes/inputs/deductions/itemized/schedule_a/index.ts";
 import { buildMefBundle, buildMefXml } from "../../../../builder.ts";
-import { testFiler } from "../../../../support/test-filer.ts";
+import { testFiler } from "../../../../support/test_filer.ts";
 import { form8283 } from "./f8283.ts";
 
 test("Form 8283 emits the sourced ATS Scenario 2 Section A donation", () => {

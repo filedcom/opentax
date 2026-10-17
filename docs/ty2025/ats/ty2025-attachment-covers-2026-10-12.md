@@ -57,4 +57,4 @@ The full ATS directory passes **81 typed tests, zero failures or ignored tests**
 Focused lint and diff checks pass.
 
 Reproduce with `deno test -A forms/f1040/e2e/ats` and
-`deno run -A forms/f1040/e2e/ats/ty2025-check-ledger.ts /tmp/ats-ledger.json`.
+`deno run -A forms/f1040/e2e/ats/ty2025_check_ledger.ts /tmp/ats-ledger.json`.

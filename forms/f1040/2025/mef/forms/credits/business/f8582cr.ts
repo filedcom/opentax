@@ -7,7 +7,7 @@ import {
   PassiveCreditSourceOrigin,
 } from "../../../../../nodes/intermediate/forms/credits/business/form8582cr/index.ts";
 import { inputSchema as f3800InputSchema } from "../../../../../nodes/inputs/credits/business/f3800/index.ts";
-import type { MefBuildContext, MefFormDescriptor } from "../../../form-descriptor.ts";
+import type { MefBuildContext, MefFormDescriptor } from "../../../form_descriptor.ts";
 import { sameForm3800PassiveAllocations } from "./f3800/f3800_passive_link.ts";
 import { reconcileOrphanDrugK1Credits } from "./f8820_credit_evidence.ts";
 import { reconcileDisabledAccessK1Credits } from "./f8826_credit_evidence.ts";

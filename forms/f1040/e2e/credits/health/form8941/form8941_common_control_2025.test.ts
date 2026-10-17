@@ -13,7 +13,7 @@ import { registry } from "../../../../2025/registry.ts";
 import { buildMefBundle, buildMefXml } from "../../../../2025/mef/builder.ts";
 import { buildPending } from "../../../../2025/mef/execution/pending.ts";
 import { buildPdfBytes } from "../../../../2025/pdf/builder.ts";
-import { form8941CommonControlInputs } from "../../../../2025/pdf/reviews/general/composed-returns/review-8941-common-control.fixture.ts";
+import { form8941CommonControlInputs } from "../../../../2025/pdf/reviews/general/composed-returns/review_8941_common_control.fixture.ts";
 import { extractFilerIdentity } from "../../../../mef/filer.ts";
 import { calculateForm8941 } from "../../../../nodes/inputs/credits/health/f8941/index.ts";
 import {

@@ -15,7 +15,7 @@ import { form8835Pdf } from "./f8835.ts";
 import { ALL_PDF_FORMS } from "../../index.ts";
 import type { Form3800DocumentParts } from "../../../../mef/forms/credits/business/f3800/f3800_document.ts";
 import { f1040_2025 } from "../../../../index.ts";
-import { pdfReviewFixtures } from "../../../review-fixtures.ts";
+import { pdfReviewFixtures } from "../../../review_fixtures.ts";
 
 const filer: FilerIdentity = {
   primarySSN: "123456789",

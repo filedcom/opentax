@@ -19,7 +19,7 @@ import { scheduleA as scheduleAMef } from "../../itemized/schedule_a.ts";
 import { execute } from "../../../../../../../../core/runtime/executor.ts";
 import { buildExecutionPlan } from "../../../../../../../../core/runtime/planner.ts";
 import { registry } from "../../../../../registry.ts";
-import { pdfReviewFixtures } from "../../../../../pdf/review-fixtures.ts";
+import { pdfReviewFixtures } from "../../../../../pdf/review_fixtures.ts";
 import { buildPending } from "../../../../execution/pending.ts";
 import { buildMefBundle } from "../../../../builder.ts";
 import { buildPdfBytes } from "../../../../../pdf/builder.ts";

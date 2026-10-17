@@ -6,7 +6,7 @@ import {
 } from "../../../../../nodes/intermediate/forms/credits/individual/form2441/calculation.ts";
 import { FilingStatus as NodeFilingStatus } from "../../../../../nodes/types.ts";
 import { FilingStatus as HeaderFilingStatus } from "../../../../../mef/header.ts";
-import type { MefBuildContext, MefFormDescriptor } from "../../../form-descriptor.ts";
+import type { MefBuildContext, MefFormDescriptor } from "../../../form_descriptor.ts";
 
 export interface Fields {
   dep_care_benefits?: number | null;

@@ -1,26 +1,26 @@
 import {
   assertForm8835TransferSource,
   transferSourceSchema,
-} from "./transfer-source.ts";
-import { assertForm8835PwaSource, pwaSourceSchema } from "./pwa-source.ts";
+} from "./transfer_source.ts";
+import { assertForm8835PwaSource, pwaSourceSchema } from "./pwa_source.ts";
 import {
   assertForm8835EnergyCommunitySource,
   energyCommunitySourceSchema,
-} from "./energy-community-source.ts";
+} from "./energy_community_source.ts";
 import {
   assertForm8835DomesticSource,
   domesticContentSourceSchema,
-} from "./domestic-source.ts";
+} from "./domestic_source.ts";
 import {
   assertForm8835EarlyConstructionSource,
   earlyConstructionSourceSchema,
-} from "./early-construction-source.ts";
+} from "./early_construction_source.ts";
 import {
   assertForm8835SmallFacilitySource,
   smallFacilitySourceSchema,
-} from "./increase-source.ts";
+} from "./increase_source.ts";
 import { z } from "zod";
-import { assertForm8835BondSource, bondSourceSchema } from "./bond-source.ts";
+import { assertForm8835BondSource, bondSourceSchema } from "./bond_source.ts";
 import type { NodeContext } from "../../../../../../../core/types/node-context.ts";
 import { OutputNodes } from "../../../../../../../core/types/output-nodes.ts";
 import type { NodeResult } from "../../../../../../../core/types/tax-node.ts";

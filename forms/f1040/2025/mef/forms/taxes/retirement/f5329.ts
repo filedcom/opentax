@@ -1,7 +1,7 @@
 import { partII_tax } from "../../../../../nodes/intermediate/forms/taxes/retirement/form5329/index.ts";
 import { isDeepStrictEqual } from "node:util";
 import { reconcileForm8606RothInventories } from "../../../../domains/income/retirement/form8606/form8606_roth_inventory_reconciliation.ts";
-import { roundWholeDollars } from "../../../../../shared/whole-dollars.ts";
+import { roundWholeDollars } from "../../../../../shared/whole_dollars.ts";
 import { reconcileArcherPartVI } from "../../../../domains/adjustments/health/form8853/form8853_contributions_reconciliation.ts";
 import { element, elements } from "../../../../../mef/xml.ts";
 import {
@@ -14,7 +14,7 @@ import { TS } from "../../../../../nodes/types.ts";
 import type {
   MefBuildContext,
   MefFormDescriptor,
-} from "../../../form-descriptor.ts";
+} from "../../../form_descriptor.ts";
 
 type Input = Partial<typeof inputSchema._output> & {
   owner_forms?: unknown;

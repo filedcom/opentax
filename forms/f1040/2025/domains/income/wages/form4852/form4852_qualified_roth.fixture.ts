@@ -1,4 +1,4 @@
-import type { QualifiedRothReview } from "../../../../../nodes/inputs/income/wages/f4852/qualified-roth.ts";
+import type { QualifiedRothReview } from "../../../../../nodes/inputs/income/wages/f4852/qualified_roth.ts";
 /** Constructed, separately retained source records; no external authentication. */
 export function qualifiedRothSource(
   n: number,

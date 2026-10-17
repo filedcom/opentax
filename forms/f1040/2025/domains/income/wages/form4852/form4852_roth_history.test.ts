@@ -1,7 +1,7 @@
 import { test } from "bun:test";
 import * as fs from "node:fs/promises";
 import * as sys from "../../../../../../../scripts/support/sys.ts";
-import { reviewedRothOwnerInventory } from "../../../../../nodes/intermediate/forms/income/retirement/form8606/roth-inventory.ts";
+import { reviewedRothOwnerInventory } from "../../../../../nodes/intermediate/forms/income/retirement/form8606/roth_inventory.ts";
 import { createHash } from "node:crypto";
 import { printSchema } from "../../../../../nodes/intermediate/forms/income/retirement/form8606/index.ts";
 import { assertEquals, assertRejects, assertThrows } from "@std/assert";

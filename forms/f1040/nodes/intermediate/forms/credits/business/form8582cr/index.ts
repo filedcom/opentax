@@ -5,7 +5,7 @@ import { OutputNodes } from "../../../../../../../../core/types/output-nodes.ts"
 import { FilingStatus, filingStatusSchema } from "../../../../../types.ts";
 import { f3800 } from "../../../../../inputs/credits/business/f3800/index.ts";
 import type { NodeContext } from "../../../../../../../../core/types/node-context.ts";
-import { PassiveCreditReportingRoute } from "./credit-route.ts";
+import { PassiveCreditReportingRoute } from "./credit_route.ts";
 import { line6OrdinaryWorksheetSchema } from "./line6_source.ts";
 import {
   creditSourceSchema,
@@ -15,7 +15,7 @@ import {
   sourceAllocationSchema,
 } from "./source.ts";
 
-export { PassiveCreditReportingRoute } from "./credit-route.ts";
+export { PassiveCreditReportingRoute } from "./credit_route.ts";
 export { PassiveCreditCategory, PassiveCreditSourceOrigin } from "./source.ts";
 
 // Form 8582-CR — Passive Activity Credit Limitations

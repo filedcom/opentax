@@ -4,7 +4,7 @@ import {
   filedControlledGroupEins,
   inputSchema,
 } from "../../../../../nodes/inputs/credits/business/f5884/index.ts";
-import type { MefFormDescriptor } from "../../../form-descriptor.ts";
+import type { MefFormDescriptor } from "../../../form_descriptor.ts";
 
 export const form5884DeductionDifferentiationStatement: MefFormDescriptor<
   "f5884_deduction_differentiation_stmt",

@@ -4,7 +4,7 @@ import * as sys from "../../scripts/support/sys.ts";
 import { assertEquals, assertRejects, assertStringIncludes } from "@std/assert";
 import { join } from "node:path";
 import { PDFDocument, StandardFonts } from "pdf-lib";
-import { sha256Hex } from "../../forms/f1040/2025/return-processing/prepared-source.ts";
+import { sha256Hex } from "../../forms/f1040/2025/return-processing/prepared_source.ts";
 import { appendInput } from "../store/store.ts";
 import { createReturnCommand, getReturnCommand } from "./return.ts";
 import {

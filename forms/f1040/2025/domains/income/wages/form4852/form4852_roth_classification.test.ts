@@ -8,7 +8,7 @@ import {
   rothHistoryCases,
   rothHistoryReturnSource,
 } from "./form4852_roth_history.fixture.ts";
-import { reviewedRothOwnerInventory } from "../../../../../nodes/intermediate/forms/income/retirement/form8606/roth-inventory.ts";
+import { reviewedRothOwnerInventory } from "../../../../../nodes/intermediate/forms/income/retirement/form8606/roth_inventory.ts";
 
 test("ordinary retained Roth J/T unmarked owner sources reject marked current copies at public native and direct PDF boundaries", async () => {
   for (const row of [rothCases[1], rothCases.find((r) => r.code === "T")!]) {

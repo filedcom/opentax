@@ -1,7 +1,7 @@
 import {
   calculateCurrentYearInventory,
   currentYearInventorySchema,
-} from "./current-year.ts";
+} from "./current_year.ts";
 import {
   bonusAssetSchema,
   bonusInventorySchema,

@@ -3,7 +3,7 @@ import {
   assertForm8814CalculatedLines,
   type Form8814Lines,
 } from "../../../../../nodes/inputs/income/investments/f8814/index.ts";
-import type { MefBuildContext, MefFormDescriptor } from "../../../form-descriptor.ts";
+import type { MefBuildContext, MefFormDescriptor } from "../../../form_descriptor.ts";
 
 type Input = { items?: readonly Form8814Lines[] } & Record<string, unknown>;
 

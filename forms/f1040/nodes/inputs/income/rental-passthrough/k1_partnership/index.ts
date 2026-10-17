@@ -11,7 +11,7 @@ import { f8611 } from "../../../taxes/credit-recapture/f8611/index.ts";
 import {
   issuedPartnershipRecaptures,
   partnershipRecaptureSchema,
-} from "../../../taxes/credit-recapture/f8611/partnership-source.ts";
+} from "../../../taxes/credit-recapture/f8611/partnership_source.ts";
 import { z } from "zod";
 import { ty2025IrsCountryCodeSchema } from "../../../../irs_country_code.ts";
 import type {

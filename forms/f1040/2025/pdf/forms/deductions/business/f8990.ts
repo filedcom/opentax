@@ -1,4 +1,4 @@
-import type { PdfFieldEntry, PdfFormDescriptor } from "../../../form-descriptor.ts";
+import type { PdfFieldEntry, PdfFormDescriptor } from "../../../form_descriptor.ts";
 import { reconcileForm8990Projection } from "../../../../domains/deductions/business/form8990/form8990_projection.ts";
 import { buildPending } from "../../../../mef/execution/pending.ts";
 

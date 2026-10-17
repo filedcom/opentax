@@ -3,7 +3,7 @@ import {
   calculateForm8820,
   inputSchema,
 } from "../../../../../nodes/inputs/credits/business/f8820/index.ts";
-import type { MefFormDescriptor } from "../../../form-descriptor.ts";
+import type { MefFormDescriptor } from "../../../form_descriptor.ts";
 
 export const form8820ControlledGroupStatement: MefFormDescriptor<
   "f8820_controlled_group_statement",

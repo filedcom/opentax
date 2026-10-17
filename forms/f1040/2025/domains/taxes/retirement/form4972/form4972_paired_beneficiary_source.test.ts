@@ -10,7 +10,7 @@ import { form4972Pdf } from "../../../../pdf/forms/taxes/retirement/f4972.ts";
 import {
   fractionalBeneficiaryCases,
   fractionalBeneficiaryInputs,
-} from "../../../../pdf/reviews/taxes/retirement/form4972/review-4972-fractional.fixture.ts";
+} from "../../../../pdf/reviews/taxes/retirement/form4972/review_4972_fractional.fixture.ts";
 
 // Two independent source inventories preserve actual recipient and participant
 // identities; public elections cannot supply replacement issued boxes.
@@ -95,7 +95,7 @@ test("independent spouse beneficiary source inventories calculate their separate
 
 test("all reviewed fractional source families retain each spouse's independent worksheet tax", async () => {
   const { default: expected } = await import(
-    "../../../../pdf/reviews/taxes/retirement/form4972/review-4972-fractional.expected.json",
+    "../../../../pdf/reviews/taxes/retirement/form4972/review_4972_fractional.expected.json",
     { with: { type: "json" } }
   );
   for (const [index, first] of fractionalBeneficiaryCases.entries()) {

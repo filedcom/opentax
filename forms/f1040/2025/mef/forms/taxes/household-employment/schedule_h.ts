@@ -7,7 +7,7 @@ import {
 import type {
   MefBuildContext,
   MefFormDescriptor,
-} from "../../../form-descriptor.ts";
+} from "../../../form_descriptor.ts";
 import { FilingStatus } from "../../../types.ts";
 import {
   inputSchema as schedule2InputSchema,

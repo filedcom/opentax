@@ -117,5 +117,5 @@ Single/joint/spouse packets are in the individual patron reviewed batches under
 Reproduce with:
 
 ```sh
-deno test -A forms/f1040/2025/mef/submissions/submission-patron-replay.test.ts
+deno test -A forms/f1040/2025/mef/submissions/submission_patron_replay.test.ts
 ```

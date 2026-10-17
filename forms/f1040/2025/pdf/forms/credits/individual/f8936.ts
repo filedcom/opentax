@@ -2,7 +2,7 @@ import { form8936Lines } from "../../../../domains/credits/individual/form8936/f
 import { assertForm3800FinalCreditJoin } from "../../../../domains/credits/business/form3800/form3800_final_credit_join.ts";
 import { inputSchema, modifiedAgi } from "../../../../../nodes/inputs/credits/individual/f8936/index.ts";
 import { FilingStatus } from "../../../../../nodes/types.ts";
-import type { PdfFieldEntry, PdfFormDescriptor } from "../../../form-descriptor.ts";
+import type { PdfFieldEntry, PdfFormDescriptor } from "../../../form_descriptor.ts";
 
 const page = "topmostSubform[0].Page1[0].";
 const text = (domainKey: string, field: string): PdfFieldEntry => ({

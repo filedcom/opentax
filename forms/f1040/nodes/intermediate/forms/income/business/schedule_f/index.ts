@@ -1,7 +1,7 @@
-import { calculateCharitableNaturalResource } from "../../../../../inputs/deductions/charitable/f8283/natural-resource-source.ts";
+import { calculateCharitableNaturalResource } from "../../../../../inputs/deductions/charitable/f8283/natural_resource_source.ts";
 import { schedule1a } from "../../../deductions/additional/schedule1a/index.ts";
 import { form7206 } from "../../../adjustments/health/form7206/index.ts";
-import { filedOwnedScheduleF } from "../../../../../owned-business-filing.ts";
+import { filedOwnedScheduleF } from "../../../../../owned_business_filing.ts";
 import { patronFiledBusinessLines } from "../../../../../inputs/deductions/business/qbi_patron/calculation.ts";
 import { z } from "zod";
 import type {

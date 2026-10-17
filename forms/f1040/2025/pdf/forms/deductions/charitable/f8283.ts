@@ -40,7 +40,7 @@ import {
   carriedSectionAItem,
   reconcileForm8283Carryover,
 } from "../../../../mef/forms/deductions/charitable/f8283/f8283_carryover.ts";
-import type { PdfFieldEntry, PdfFormDescriptor } from "../../../form-descriptor.ts";
+import type { PdfFieldEntry, PdfFormDescriptor } from "../../../form_descriptor.ts";
 
 // Verified against the December 2025 IRS AcroForm, not the older f8283.pdf.
 const page = "Form8283[0].Page1[0]";

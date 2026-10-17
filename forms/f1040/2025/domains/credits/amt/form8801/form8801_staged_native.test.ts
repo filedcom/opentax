@@ -12,7 +12,7 @@ import {
   form8801NativeLineMap,
   stageForm8801NativeDocument,
 } from "./form8801_staged_native.ts";
-import { assertAttachmentCoverage } from "../../../../return-processing/attachment-coverage.ts";
+import { assertAttachmentCoverage } from "../../../../return-processing/attachment_coverage.ts";
 
 const schema = new URL(
   "../../../../../../../.state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/IndividualIncomeTax/Common/IRS8801/IRS8801.xsd",

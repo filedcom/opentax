@@ -43,7 +43,7 @@ Form 8886 prints through prepared disclosure packets, and Form 4562 appends its 
 
 Static comparison replayed 2026-10-05 of the descriptors actually registered in
 `forms/f1040/2025/mef/forms/index.ts` and `forms/f1040/2025/pdf/forms/index.ts`,
-checked against `forms/f1040/2025/return-processing/attachment-coverage.ts`. This is a
+checked against `forms/f1040/2025/return-processing/attachment_coverage.ts`. This is a
 printable-return coverage audit, not an IRS rule, passed test, or new product
 exclusion. That snapshot held **152 native descriptors and 118 PDF
 descriptors**. The newly registered Form 9000 has focused local XML/XSD and filled-page
@@ -231,7 +231,7 @@ descriptor, or matching positive-source export guard. Its absence is not a
 legitimate no-file decision: determine the disclosure trigger, per-transaction
 facts and separate OTSA copy workflow before claiming coverage. Other positive
 public inputs such as `f8938`, `f8833`, `f8801` and direct employer-credit forms
-are already explicitly blocked by `attachment-coverage.ts`; their lack of
+are already explicitly blocked by `attachment_coverage.ts`; their lack of
 native/PDF documents is known fail-closed work, not a silent omission when
 populated.
 
@@ -341,7 +341,7 @@ At commit `041564653`, a normal typed live-import audit completed exit 0 on Octo
 
 | Uncovered PDF keys | Current boundary and remaining existing work |
 | --- | --- |
-| `f5471_parent`, `f5471_schedule_e`, `f5471_schedule_h`, `f5471_schedule_i1`, `f5471_schedule_j`, `f5471_schedule_m`, `f5471_schedule_p`, `f5471_schedule_q`, `f5471_schedule_r`, `form8992`, `form8992_schedule_a` (11) | `attachment-coverage.ts` blocks active Form 5471 for Schedule R treatment/reference linkage; owned worksheet records have an earlier worksheet/election/consent/prior-books guard. Native Schedule 1 independently rejects positive 8n/8o inclusions. Resolve the existing source/attachment/business-rule boundaries before claiming complete foreign filing output. |
+| `f5471_parent`, `f5471_schedule_e`, `f5471_schedule_h`, `f5471_schedule_i1`, `f5471_schedule_j`, `f5471_schedule_m`, `f5471_schedule_p`, `f5471_schedule_q`, `f5471_schedule_r`, `form8992`, `form8992_schedule_a` (11) | `attachment_coverage.ts` blocks active Form 5471 for Schedule R treatment/reference linkage; owned worksheet records have an earlier worksheet/election/consent/prior-books guard. Native Schedule 1 independently rejects positive 8n/8o inclusions. Resolve the existing source/attachment/business-rule boundaries before claiming complete foreign filing output. |
 | `f4255` | Positive printable rows need authenticated prior-return and IRS determination bytes. |
 | `f8854`, `f8854_annual` | Initial printable records need authenticated prior returns, compliance and balance-sheet evidence; annual records need authenticated prior-filed obligation history. |
 | `f965` | This key is the registered Form **965-A** PDF, not proof of Form 965 parent coverage. Positive PDF needs verified prior-filed liabilities and actual installment payments. The descriptor separately restricts its source to one unadjusted original 2017–2020 installment liability. |

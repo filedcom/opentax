@@ -1,11 +1,11 @@
-import { currentProductionAllocationNode } from "../nodes/inputs/credits/business/f3800/production-allocation-node.ts";
-import { currentProductionAllocationSchema } from "../nodes/inputs/credits/business/f3800/production-allocation.ts";
-import { currentOrphanAllocationNode } from "../nodes/inputs/credits/business/f3800/current-allocation-node.ts";
-import { currentOrphanAllocationSchema } from "../nodes/inputs/credits/business/f3800/current-allocation.ts";
-import { f8886 } from "./domains/general/filing/form8886/public-node.ts";
+import { currentProductionAllocationNode } from "../nodes/inputs/credits/business/f3800/production_allocation_node.ts";
+import { currentProductionAllocationSchema } from "../nodes/inputs/credits/business/f3800/production_allocation.ts";
+import { currentOrphanAllocationNode } from "../nodes/inputs/credits/business/f3800/current_allocation_node.ts";
+import { currentOrphanAllocationSchema } from "../nodes/inputs/credits/business/f3800/current_allocation.ts";
+import { f8886 } from "./domains/general/filing/form8886/public_node.ts";
 import { publicSourceSchema as f8886InputSchema } from "./domains/general/filing/form8886/source.ts";
-import { ownedSepSourceSchema } from "../nodes/inputs/adjustments/retirement/sep_retirement/owned-source.ts";
-import { claimantReviewSchema } from "../nodes/inputs/credits/individual/f8863/claimant-review.ts";
+import { ownedSepSourceSchema } from "../nodes/inputs/adjustments/retirement/sep_retirement/owned_source.ts";
+import { claimantReviewSchema } from "../nodes/inputs/credits/individual/f8863/claimant_review.ts";
 import {
   inputSchema as qbiPatronInputSchema,
   qbiPatron,

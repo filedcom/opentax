@@ -97,7 +97,7 @@ missing-school EIN is absent in both projections.
 
 ## Evidence and remaining limits
 
-Focused cases: `forms/f1040/2025/pdf/reviews/credits/individual/form8863-mixed-schools.test.ts`. Artifacts:
+Focused cases: `forms/f1040/2025/pdf/reviews/credits/individual/form8863_mixed_schools.test.ts`. Artifacts:
 `/tmp/opentax-f8863-mixed-evidence/`, with `aoc-required`, `llc-required`,
 `aoc-scholarship`, and `llc-scholarship` prefixes and `-source-input.json`,
 `-full-return.xml`, and `-filled-return.pdf` suffixes. The focused test

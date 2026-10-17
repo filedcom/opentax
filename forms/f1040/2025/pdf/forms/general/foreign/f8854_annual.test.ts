@@ -3,7 +3,7 @@ import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import { PDFDocument } from "pdf-lib";
 import { annualInputSchema } from "../../../../../nodes/inputs/general/foreign/f8854/annual.ts";
 import { f8854Annual } from "../../../../../nodes/inputs/general/foreign/f8854/annual_node.ts";
-import { ReportedFormCode } from "../../../../../nodes/inputs/general/foreign/f8854/section-c.ts";
+import { ReportedFormCode } from "../../../../../nodes/inputs/general/foreign/f8854/section_c.ts";
 import { form8854AnnualNoEvent } from "../../../../domains/general/foreign/form8854/form8854_annual.fixture.ts";
 import { form8992Filer } from "../../../../domains/income/foreign/form8992/form8992.fixture.ts";
 import { form8854Annual } from "../../../../mef/forms/general/foreign/f8854/f8854_annual.ts";

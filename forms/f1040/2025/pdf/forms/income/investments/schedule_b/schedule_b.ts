@@ -1,4 +1,4 @@
-import type { PdfFieldEntry, PdfFormDescriptor } from "../../../../form-descriptor.ts";
+import type { PdfFieldEntry, PdfFormDescriptor } from "../../../../form_descriptor.ts";
 import { rgb, StandardFonts } from "pdf-lib";
 import { appendScheduleBInterestStatement } from "./schedule_b_interest_statement.ts";
 import { appendScheduleBDividendStatement } from "./schedule_b_dividend_statement.ts";

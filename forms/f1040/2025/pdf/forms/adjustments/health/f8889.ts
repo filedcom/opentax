@@ -1,5 +1,5 @@
 import { z } from "zod";
-import type { PdfFieldEntry, PdfFormDescriptor } from "../../../form-descriptor.ts";
+import type { PdfFieldEntry, PdfFormDescriptor } from "../../../form_descriptor.ts";
 import {
   reconcileCode2Form8889,
   reconcileDatedExceptionForm8889,

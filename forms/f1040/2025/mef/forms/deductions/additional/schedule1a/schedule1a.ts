@@ -1,12 +1,12 @@
-import { assertSchedule1ASeniorGeneralSource } from "../../../../../domains/deductions/additional/schedule1a-senior-source.ts";
+import { assertSchedule1ASeniorGeneralSource } from "../../../../../domains/deductions/additional/schedule1a_senior_source.ts";
 import { schedule_f as scheduleF } from "../../../../../../nodes/intermediate/forms/income/business/schedule_f/index.ts";
 import { extractFilerIdentity } from "../../../../../../mef/filer.ts";
 import { form7206 } from "../../../adjustments/health/f7206.ts";
 import { assertIndependentOwnerHealthSource } from "../../../../../domains/adjustments/health/form7206/form7206_independent_owner_source.ts";
-import { calculateSingleScheduleCForm7206 } from "../../../../../../nodes/intermediate/forms/adjustments/health/form7206/single-source.ts";
+import { calculateSingleScheduleCForm7206 } from "../../../../../../nodes/intermediate/forms/adjustments/health/form7206/single_source.ts";
 import { normalizeAllPending } from "../../../../../return-processing/pending.ts";
-import { assertOwnedScheduleSE } from "../../../../../domains/taxes/self-employment/schedule-se/schedule-se-owner-source.ts";
-import { tipSourceCanonical } from "../../../../../../nodes/intermediate/forms/deductions/business/form8995/qualified-tips.ts";
+import { assertOwnedScheduleSE } from "../../../../../domains/taxes/self-employment/schedule-se/schedule_se_owner_source.ts";
+import { tipSourceCanonical } from "../../../../../../nodes/intermediate/forms/deductions/business/form8995/qualified_tips.ts";
 import { z } from "zod";
 import { element, elements } from "../../../../../../mef/xml.ts";
 import {
@@ -30,7 +30,7 @@ import {
   calculatePhysicalPresence2555,
   physicalPresenceFilingSchema,
 } from "../../../../../../nodes/intermediate/forms/income/foreign/form2555/calculation.ts";
-import type { MefBuildContext, MefFormDescriptor } from "../../../../form-descriptor.ts";
+import type { MefBuildContext, MefFormDescriptor } from "../../../../form_descriptor.ts";
 
 const form1040ReconciliationSchema = z.object({
   filing_status: z.nativeEnum(FilingStatus).optional(),

@@ -8,7 +8,7 @@ import {
   passiveSCorpJointLossReturnInputs,
   passiveSCorpLossReturnInputs,
 } from "./eic_passive_s_corp_loss.fixture.ts";
-import { assertEicSource } from "./eic-source.ts";
+import { assertEicSource } from "./eic_source.ts";
 
 function check(p: any, credit = Number(p.f1040.line27_eitc ?? 0)) {
   assertEicSource(

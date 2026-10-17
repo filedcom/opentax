@@ -13,7 +13,7 @@ import {
   inputSchema as scheduleFInputSchema,
   wotcReductionsByFarm,
 } from "../../../../../nodes/intermediate/forms/income/business/schedule_f/index.ts";
-import type { MefFormDescriptor } from "../../../form-descriptor.ts";
+import type { MefFormDescriptor } from "../../../form_descriptor.ts";
 
 export const form5884: MefFormDescriptor<"f5884", unknown> = {
   pendingKey: "f5884",

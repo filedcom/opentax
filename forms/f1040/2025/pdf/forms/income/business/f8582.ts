@@ -1,11 +1,11 @@
-import type { PdfFieldEntry, PdfFormDescriptor } from "../../../form-descriptor.ts";
+import type { PdfFieldEntry, PdfFormDescriptor } from "../../../form_descriptor.ts";
 import {
   appendForm8582Continuation,
   type Form8582Continuation,
 } from "./f8582_continuation.ts";
 import { form8582 as nativeForm8582 } from "../../../../mef/forms/income/business/f8582/f8582.ts";
 import { inputSchema } from "../../../../../nodes/intermediate/forms/income/business/form8582/index.ts";
-import { reviewCurrentPropertyLoss8582 } from "../../../../mef/forms/income/business/f8582/f8582-current-loss-review.ts";
+import { reviewCurrentPropertyLoss8582 } from "../../../../mef/forms/income/business/f8582/f8582_current_loss_review.ts";
 
 // The actual 2025 AcroForm has five rows each in Parts IV–VIII and a single
 // three-line Part IX block. Project the native, source-reconciled worksheet;

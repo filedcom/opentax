@@ -102,7 +102,7 @@ release gate, not a substitute for that authorization rule.
 
 The PDF descriptor is **not registered** in `ALL_PDF_FORMS`; there is no
 completed/signature-reviewed Form 9465 page or linked-pass/ATS acceptance. The
-shared `attachment-coverage.ts` guard still rejects every nonempty `f9465`
+shared `attachment_coverage.ts` guard still rejects every nonempty `f9465`
 payload at **both** exports. Thus the new source, XML constructor, and PDF
 projection cannot be mistaken for a live filing route. The guard now names the
 distinct third-party disclosure authorization, and a source-only fixture asserts

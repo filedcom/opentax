@@ -42,7 +42,7 @@ and before the QBI deduction.
 
 ## Actual public source packets and expected arithmetic
 
-`form7206-spouse-medicare.fixture.ts` retains Alex and Casey's MFJ identities,
+`form7206_spouse_medicare.fixture.ts` retains Alex and Casey's MFJ identities,
 Casey's owned cash photography business, an issued $5,000 Form1099-NEC receipt
 already included in the business's $5,000 gross receipts, and the actual
 reviewed one-plan monthly premium/payment/employer-eligibility records. The
@@ -143,7 +143,7 @@ Reproduction from this isolated checkout:
 
 ```sh
 PATH=/tmp/opentax-poppler-env/bin:/Users/atul/.deno/bin:$PATH deno test -A \
-  forms/f1040/2025/pdf/reviews/adjustments/health/form7206-spouse-medicare.test.ts \
+  forms/f1040/2025/pdf/reviews/adjustments/health/form7206_spouse_medicare.test.ts \
   cli/commands/issue60-sehi.test.ts -- --write-review-artifacts
 PATH=/tmp/opentax-poppler-env/bin:/Users/atul/.deno/bin:$PATH deno test -A \
   $(cat /tmp/opentax-medicare-regression-files.txt)

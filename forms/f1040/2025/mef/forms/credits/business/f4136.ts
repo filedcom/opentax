@@ -14,7 +14,7 @@ import {
   inputSchema,
   rateForForm4136Claim,
 } from "../../../../../nodes/inputs/credits/business/f4136/index.ts";
-import type { MefFormDescriptor } from "../../../form-descriptor.ts";
+import type { MefFormDescriptor } from "../../../form_descriptor.ts";
 
 type Claim = Form4136Input["claims"][number];
 type Line = Claim["line"];

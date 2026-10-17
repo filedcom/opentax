@@ -3,7 +3,7 @@ import { element, elements } from "../../../../../mef/xml.ts";
 import type {
   MefBuildContext,
   MefFormDescriptor,
-} from "../../../form-descriptor.ts";
+} from "../../../form_descriptor.ts";
 import {
   calculateForm8815,
   type Form8815Input,

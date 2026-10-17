@@ -16,11 +16,11 @@ import { schedule_f } from "../../../../intermediate/forms/income/business/sched
 import { form6251 } from "../../../../intermediate/forms/taxes/amt/form6251/index.ts";
 import type { FarmSource } from "../../../../intermediate/forms/income/business/schedule_f/index.ts";
 import type { NodeContext } from "../../../../../../../core/types/node-context.ts";
-import { type RtaaSource, rtaaSourceSchema } from "./rtaa-source.ts";
+import { type RtaaSource, rtaaSourceSchema } from "./rtaa_source.ts";
 import {
   type TaxableGrantSource,
   taxableGrantSourceSchema,
-} from "./grant-source.ts";
+} from "./grant_source.ts";
 
 // Form 1099-G issuer reporting thresholds do not create recipient-side
 // taxable-income exclusions. Route any positive amount designated taxable.

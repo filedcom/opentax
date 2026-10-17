@@ -1,12 +1,12 @@
 import { assertForm6251CharitableSource } from "../../../../../domains/taxes/amt/form6251/form6251_charitable_source.ts";
 import { schedule_f } from "../../../../../../nodes/intermediate/forms/income/business/schedule_f/index.ts";
-import { calculateCharitableNaturalResource } from "../../../../../../nodes/inputs/deductions/charitable/f8283/natural-resource-source.ts";
+import { calculateCharitableNaturalResource } from "../../../../../../nodes/inputs/deductions/charitable/f8283/natural_resource_source.ts";
 import { inputSchema as giftSchema } from "../../../../../../nodes/inputs/deductions/charitable/f8283/index.ts";
 import { scheduleC } from "../../../../../../nodes/inputs/income/business/schedule_c/index.ts";
 import { w2 } from "../../../../../../nodes/inputs/income/wages/w2/index.ts";
 import { schedule_se } from "../../../../../../nodes/intermediate/forms/taxes/self-employment/schedule_se/index.ts";
 import { form8995 } from "../../../../../../nodes/intermediate/forms/deductions/business/form8995/index.ts";
-import type { MefBuildContext } from "../../../../form-descriptor.ts";
+import type { MefBuildContext } from "../../../../form_descriptor.ts";
 
 /** Source-derived operating income remains income even though the donated
  * property itself has no taxable sale. Replay each owned annual account. */

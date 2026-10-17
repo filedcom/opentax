@@ -15,7 +15,7 @@ import {
   scheduleJFishingPhaseInInputs,
 } from "./schedule_j_fishing_source.fixture.ts";
 import { assertScheduleJSourceReturn } from "./schedule_j_source_return.ts";
-import { calculateMixedFishingQbi } from "../../../../../nodes/intermediate/forms/deductions/business/form8995a/mixed-fishing.ts";
+import { calculateMixedFishingQbi } from "../../../../../nodes/intermediate/forms/deductions/business/form8995a/mixed_fishing.ts";
 import { form8995a } from "../../../../mef/forms/deductions/business/f8995a/f8995a.ts";
 import { form8995aPdf } from "../../../../pdf/forms/deductions/business/f8995a.ts";
 

@@ -10,7 +10,7 @@ import {
   inputSchema,
   modifiedAgi,
 } from "../../../../../nodes/inputs/credits/individual/f8936/index.ts";
-import type { MefFormDescriptor } from "../../../form-descriptor.ts";
+import type { MefFormDescriptor } from "../../../form_descriptor.ts";
 
 type Input =
   & Partial<ReturnType<typeof inputSchema.parse>>

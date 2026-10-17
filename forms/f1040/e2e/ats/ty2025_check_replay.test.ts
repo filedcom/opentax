@@ -1,0 +1,302 @@
+import { test } from "bun:test";
+import { atsSourceReconciliation } from "./ty2025_source_reconciliation.ts";
+import { buildAtsCheckLedger } from "./ty2025_check_ledger.ts";
+import { assertEquals, assertThrows } from "@std/assert";
+import {
+  ATS_REPLAY_TARGETS,
+  CheckResult,
+  compareAtsTarget,
+  PreparationResult,
+  replayAtsChecks,
+  TargetBasis,
+} from "./ty2025_check_replay.ts";
+import { TY2025_ATS_CASES } from "./ty2025_cases.ts";
+
+test("ATS check replay never treats an absent amount as a calculated zero", () => {
+  const check = {
+    path: "f1040.line24_total_tax",
+    expected: 0,
+    basis: TargetBasis.Printed,
+    sourceLocation: "Form1040 line24",
+  };
+  assertEquals(compareAtsTarget({}, check).result, CheckResult.NotProduced);
+  assertEquals(
+    compareAtsTarget({ f1040: { line24_total_tax: 0 } }, check).result,
+    CheckResult.Match,
+  );
+  assertEquals(
+    compareAtsTarget({ f1040: { line24_total_tax: 11 } }, check).result,
+    CheckResult.Different,
+  );
+  assertEquals(
+    compareAtsTarget({ f1040: { line24_total_tax: false } }, check).result,
+    CheckResult.Different,
+  );
+});
+
+test("ATS public-entry matrix retains missing prerequisites and printed conflicts across all eight scenarios", async () => {
+  const report = await replayAtsChecks();
+  assertEquals(
+    report.scenarios.map((s) => s.id),
+    TY2025_ATS_CASES.filter((s) => s.returnType === "1040").map((s) => s.id),
+  );
+  assertEquals(new Set(ATS_REPLAY_TARGETS.map((s) => s.id)).size, 8);
+  for (const s of report.scenarios) {
+    assertEquals(new Set(s.checks.map((c) => c.path)).size, s.checks.length);
+  }
+  assertEquals(report.denominator, 90);
+  const ledger = buildAtsCheckLedger(report);
+  assertEquals(ledger.count, 343);
+  assertEquals(ledger.sourceReconciliations.length, 8);
+  for (const entry of ledger.sourceReconciliations) {
+    const scenario = report.scenarios.find((s) => s.id === entry.scenario)!;
+    assertEquals(entry.sourceUrl, scenario.sourceUrl);
+    assertEquals(entry.notes, scenario.sourceReconciliation.notes);
+    assertEquals(entry.notes.length > 0, true);
+    assertEquals(entry.completeRequirementsInventoried, false);
+    assertEquals(entry.preparationResult, scenario.preparation.result);
+    assertEquals(entry.firstPreparationReason, scenario.preparation.reason);
+  }
+  // Partial preparation must retain unresolved credits and answer-key conflicts.
+  assertEquals(
+    ledger.sourceReconciliations.filter((s) =>
+      s.preparationResult === PreparationResult.PartialPrepared
+    ).map((s) => s.scenario),
+    ["1040-04", "1040-05", "1040-13"],
+  );
+  const retirement = ledger.sourceReconciliations.find((s) =>
+    s.scenario === "1040-08"
+  )!;
+  assertEquals(
+    retirement.firstPreparationReason.includes("box 2 recipient"),
+    true,
+  );
+  assertEquals(retirement.notes.some((n) => n.includes("QCD")), true);
+  assertEquals(retirement.notes.some((n) => n.includes("1099-DIV")), true);
+  // Notes describe missing evidence; adding them never adds pass/fail rows.
+  assertEquals(ledger.byKind, {
+    calculation: {
+      count: 90,
+      counts: { different: 23, match: 61, "not-produced": 6 },
+    },
+    "document-copy": {
+      count: 56,
+      counts: { missing: 12, "not-evaluated": 34, present: 10 },
+    },
+    "binary-attachment": {
+      count: 2,
+      counts: { missing: 1, "not-evaluated": 1 },
+    },
+    "native-retirement-value": {
+      count: 30,
+      counts: { "not-evaluated": 30 },
+    },
+    "native-w2-value": {
+      count: 80,
+      counts: { match: 30, "not-evaluated": 50 },
+    },
+    "native-value": {
+      count: 85,
+      counts: {
+        different: 10,
+        match: 24,
+        "missing-field": 2,
+        "not-evaluated": 49,
+      },
+    },
+  });
+  assertEquals(ledger.calculationAnchor.matching, 56);
+  assertEquals(ledger.calculationAnchor.evaluated, 79);
+  assertEquals(ledger.calculationAnchor.notProduced, 6);
+  assertEquals(ledger.calculationAnchor.provisional, 5);
+  assertEquals(ledger.calculationAnchor.percent, 100 * 56 / 79);
+  assertEquals(ledger.attachmentRequirementsNotInventoried.length, 0);
+  // Distinct W2 copy identities survive; blocked copies are not labeled missing.
+  assertEquals(
+    ledger.rows.filter((r) => r.id.startsWith("1040-01:document:W-2:")).map((
+      r,
+    ) => r.result),
+    ["not-evaluated", "not-evaluated"],
+  );
+
+  const native13 = report.scenarios.find((s) => s.id === "1040-13")!
+    .preparation.nativeValueCoverage;
+  assertEquals(
+    native13.rows.filter((r) => r.result === "different").map((
+      r,
+    ) => [r.path, r.expected, r.actual]),
+    [
+      ["f1040.line14_deductions_qbi_total", 30000, 31500],
+      ["f1040.line18_total_tax_before_credits", 162, 11],
+      ["f1040.line21_credits_total", 162, 11],
+      ["f1040.line15_taxable_income", 1620, 120],
+      ["f1040.line16_income_tax", 162, 11],
+      ["f1040.line20_nonrefundable_credits", 162, 11],
+      ["form6251.regular_tax_income", 1620, 120],
+      ["form6251.line2a_taxes_paid", 30000, 31500],
+      ["form6251.regular_tax", 162, 11],
+      ["schedule3.line6j_alt_fuel_vehicle_refueling", 162, 11],
+    ],
+  );
+  assertEquals(
+    native13.rows.filter((r) => r.result === "missing-field")
+      .map((r) => r.path),
+    ["form6251.amtftc"],
+  );
+  assertEquals(native13.unmappedTargetPaths, [
+    "f1040.line12a_standard_deduction",
+  ]);
+  const transfer = report.scenarios.find((s) => s.id === "1040-04")!;
+  assertEquals(transfer.preparation.attachments, []);
+  assertEquals(transfer.attachmentCoverage.knownRequiredCount, 1);
+  assertEquals(transfer.attachmentCoverage.allKnownRequiredPresent, false);
+  assertEquals(transfer.attachmentCoverage.rows, [{
+    description: "Transfer Election Statement",
+    result: "missing",
+    observed: [],
+  }]);
+  for (const scenario of report.scenarios) {
+    const coverage = scenario.attachmentCoverage;
+    assertEquals(coverage.requirementsInventoried, true);
+    assertEquals(coverage.completeRequirementsInventoried, false);
+    assertEquals(coverage.coverSheetReview?.page, 1);
+    assertEquals(
+      /^[a-f0-9]{64}$/.test(coverage.coverSheetReview!.sourceSha256),
+      true,
+    );
+    if (!["1040-04", "1040-05", "1040-13"].includes(scenario.id)) {
+      assertEquals(coverage.allKnownRequiredPresent, null);
+    }
+  }
+  assertEquals(
+    report.scenarios.find((s) => s.id === "1040-02")!.attachmentCoverage.rows,
+    [{
+      description: "Nonresident Spouse Choice Statement",
+      result: "not-evaluated",
+      observed: null,
+    }],
+  );
+  const documents = report.scenarios.map((s) => ({
+    id: s.id,
+    observed: s.documentCoverage.requiredCopiesObserved,
+    required: s.documentCoverage.requiredCopies,
+    present: s.documentCoverage.allRequiredCopiesPresent,
+  }));
+  assertEquals(documents, [
+    { id: "1040-01", observed: 0, required: 7, present: false },
+    { id: "1040-02", observed: 0, required: 7, present: false },
+    { id: "1040-03", observed: 0, required: 9, present: false },
+    { id: "1040-04", observed: 2, required: 7, present: false },
+    { id: "1040-05", observed: 2, required: 9, present: false },
+    { id: "1040-08", observed: 0, required: 3, present: false },
+    { id: "1040-12", observed: 0, required: 8, present: false },
+    { id: "1040-13", observed: 6, required: 6, present: true },
+  ]);
+  assertEquals(
+    report.scenarios.find((s) => s.id === "1040-04")!
+      .documentCoverage.rows.filter((r) => r.missingCopies).map((r) =>
+        r.sourceForm
+      ),
+    ["Schedule 3", "3800", "8835", "8936", "8936 Schedule A"],
+  );
+
+  assertEquals(
+    report.scenarios.find((s) => s.id === "1040-04")!.preparation.result,
+    PreparationResult.PartialPrepared,
+  );
+  assertEquals(
+    report.scenarios.find((s) => s.id === "1040-04")!.preparation.documentRoots,
+    ["IRS1040", "IRSW2"],
+  );
+  assertEquals(
+    report.scenarios.find((s) => s.id === "1040-01")!.preparation.result,
+    PreparationResult.NativeBlocked,
+  );
+  for (const id of ["1040-02", "1040-03"]) {
+    const scenario = report.scenarios.find((s) => s.id === id)!;
+    assertEquals(scenario.diagnostics, []);
+    if (id === "1040-02") {
+      assertEquals(
+        scenario.checks.every((c) => c.result === CheckResult.Match),
+        true,
+      );
+    }
+    assertEquals(scenario.preparation.result, PreparationResult.NativeBlocked);
+  }
+  assertEquals(report.counts, { match: 61, different: 23, "not-produced": 6 });
+  const farm = report.scenarios.find((s) => s.id === "1040-03")!;
+  assertEquals(
+    farm.checks.filter((c) => c.result !== CheckResult.Match).map(
+      (c) => [c.path, c.expected, c.actual, c.result],
+    ),
+    [
+      ["schedule1.line1_state_refund", 3110, null, CheckResult.NotProduced],
+      ["f1040.line8_additional_income", 17422, 14312, CheckResult.Different],
+      ["f1040.line9_total_income", 72235, 69125, CheckResult.Different],
+    ],
+  );
+  assertEquals(
+    transfer.checks.filter((c) => c.result === CheckResult.NotProduced)
+      .map((c) => [c.path, c.expected]),
+    [
+      ["f3800.f8835_credit_entries.0.credit_amount", 13200],
+      ["f3800.f8936_new_vehicle_credit.credit_amount", 130],
+    ],
+  );
+  // Preserve every printed AMT target, including stale tax limits and absent
+  // zero fields; never substitute the current-law output into the answer key.
+  const amt = report.scenarios.find((s) => s.id === "1040-13")!.checks
+    .filter((c) => c.path.startsWith("form6251."));
+  assertEquals(amt.map((c) => [c.path, c.expected, c.actual, c.result]), [
+    ["form6251.regular_tax_income", 1620, 120, CheckResult.Different],
+    ["form6251.line2a_taxes_paid", 30000, 31500, CheckResult.Different],
+    ["form6251.amti", 31620, 31620, CheckResult.Match],
+    ["form6251.exemption", 137000, 137000, CheckResult.Match],
+    ["form6251.taxable_excess", 0, 0, CheckResult.Match],
+    ["form6251.tentative_tax", 0, 0, CheckResult.Match],
+    ["form6251.amtftc", 0, null, CheckResult.NotProduced],
+    ["form6251.net_tmt", 0, 0, CheckResult.Match],
+    ["form6251.regular_tax", 162, 11, CheckResult.Different],
+    ["form6251.line11_amt", 0, 0, CheckResult.Match],
+  ]);
+  const optedOut = report.scenarios.find((s) => s.id === "1040-05")!.checks
+    .find((c) => c.path === "f1040.line28_actc")!;
+  assertEquals([optedOut.expected, optedOut.actual, optedOut.result], [
+    0,
+    null,
+    CheckResult.NotProduced,
+  ]);
+  const deduction = report.scenarios.find((s) => s.id === "1040-12")!.checks
+    .find((c) => c.path === "f1040.line12a_standard_deduction")!;
+  assertEquals([deduction.expected, deduction.actual, deduction.result], [
+    15000,
+    15750,
+    CheckResult.Different,
+  ]);
+  const credit = report.scenarios.find((s) => s.id === "1040-13")!.checks.find((
+    c,
+  ) => c.path === "schedule3.line6j_alt_fuel_vehicle_refueling")!;
+  assertEquals([credit.expected, credit.actual, credit.result], [
+    162,
+    11,
+    CheckResult.Different,
+  ]);
+  assertEquals(
+    report.scenarios.find((s) => s.id === "1040-01")!.checks.map((c) =>
+      c.actual
+    ),
+    [42470, 2713, 474],
+  );
+});
+
+test("ATS reconciliation requires a reviewed scenario and protects retained notes from report mutation", () => {
+  assertThrows(
+    () => atsSourceReconciliation("1040-99"),
+    Error,
+    "Missing ATS source reconciliation",
+  );
+  const first = atsSourceReconciliation("1040-01");
+  const expected = [...first.notes];
+  first.notes.splice(0, first.notes.length, "Cleared by caller");
+  assertEquals(atsSourceReconciliation("1040-01").notes, expected);
+});

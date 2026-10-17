@@ -1,7 +1,7 @@
 import { test } from "bun:test";
 import { assertEquals, assertThrows } from "@std/assert";
 import { type FilerIdentity, FilingStatus } from "../../../../../mef/header.ts";
-import type { MefBuildContext } from "../../../../mef/form-descriptor.ts";
+import type { MefBuildContext } from "../../../../mef/form_descriptor.ts";
 import {
   CoverageType,
   form8889 as form8889Node,

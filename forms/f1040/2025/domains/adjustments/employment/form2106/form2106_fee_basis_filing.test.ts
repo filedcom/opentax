@@ -2,7 +2,7 @@ import { test } from "bun:test";
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import { EmployeeType, VehicleMethod } from "../../../../../nodes/inputs/adjustments/employment/f2106/index.ts";
 import { FilingStatus } from "../../../../../nodes/types.ts";
-import { assertAttachmentCoverage } from "../../../../return-processing/attachment-coverage.ts";
+import { assertAttachmentCoverage } from "../../../../return-processing/attachment_coverage.ts";
 import { f1040_2025 } from "../../../../index.ts";
 import { form2106 } from "../../../../mef/forms/adjustments/employment/f2106.ts";
 import { normalizeAllPending } from "../../../../return-processing/pending.ts";

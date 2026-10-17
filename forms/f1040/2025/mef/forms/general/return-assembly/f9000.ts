@@ -2,7 +2,7 @@ import type { z } from "zod";
 import { element, elements } from "../../../../../mef/xml.ts";
 import { FilingStatus } from "../../../../../mef/header.ts";
 import { inputSchema } from "../../../../../nodes/inputs/general/filing/f9000/index.ts";
-import type { MefBuildContext, MefFormDescriptor } from "../../../form-descriptor.ts";
+import type { MefBuildContext, MefFormDescriptor } from "../../../form_descriptor.ts";
 
 type Input = z.input<typeof inputSchema> | readonly [];
 const personNamePattern = /^([A-Za-z0-9'-] ?)*[A-Za-z0-9'-]$/;

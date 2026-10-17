@@ -1,9 +1,9 @@
 import { PDFCheckBox, PDFDocument, PDFTextField, StandardFonts } from "pdf-lib";
 import { extractFilerIdentity } from "../../../../../mef/filer.ts";
-import { roundWholeDollars } from "../../../../../shared/whole-dollars.ts";
+import { roundWholeDollars } from "../../../../../shared/whole_dollars.ts";
 import { f1040_2025 } from "../../../../index.ts";
 import { normalizeAllPending } from "../../../../return-processing/pending.ts";
-import { sha256Hex } from "../../../../return-processing/prepared-source.ts";
+import { sha256Hex } from "../../../../return-processing/prepared_source.ts";
 import { stageForm2210RegularNativeDocument } from "./form2210_regular_staged_native.ts";
 
 export const FORM2210_2025_TEMPLATE_SHA256 =

@@ -10,13 +10,13 @@ import { f1040_2025 } from "../../../../index.ts";
 import { buildPending } from "../../../../mef/execution/pending.ts";
 import { buildMefBundle } from "../../../../mef/builder.ts";
 import { buildPdfBytes } from "../../../../pdf/builder.ts";
-import { pdfReviewFixtures } from "../../../../pdf/review-fixtures.ts";
+import { pdfReviewFixtures } from "../../../../pdf/review_fixtures.ts";
 import {
   inputSchema as scheduleCSchema,
   projectScheduleCItems,
 } from "../../../../../nodes/inputs/income/business/schedule_c/model.ts";
 import type { MefFormsPending } from "../../../../mef/types.ts";
-import type { PdfReviewFixture } from "../../../../pdf/review-fixtures.ts";
+import type { PdfReviewFixture } from "../../../../pdf/review_fixtures.ts";
 
 type Pending = Record<string, Record<string, unknown>>;
 function prepared(f: PdfReviewFixture): Pending {

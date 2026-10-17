@@ -1,6 +1,6 @@
-import { filedOwnedScheduleC } from "../../../../owned-business-filing.ts";
+import { filedOwnedScheduleC } from "../../../../owned_business_filing.ts";
 import { patronFiledBusinessLines } from "../../../deductions/business/qbi_patron/calculation.ts";
-import { assertPatrScheduleCIncome } from "../f1099patr/schedule-c-source.ts";
+import { assertPatrScheduleCIncome } from "../f1099patr/schedule_c_source.ts";
 import type { z } from "zod";
 import type {
   NodeOutput,
@@ -13,8 +13,8 @@ import { schedule1 } from "../../../../outputs/general/return-assembly/schedule1
 import { schedule_se } from "../../../../intermediate/forms/taxes/self-employment/schedule_se/index.ts";
 import { schedule1a } from "../../../../intermediate/forms/deductions/additional/schedule1a/index.ts";
 import { form8995 } from "../../../../intermediate/forms/deductions/business/form8995/index.ts";
-import { internalForm8990ScheduleCPass } from "../../../../intermediate/forms/deductions/business/form8990/schedule-c-pass.ts";
-import { sameStagedScheduleCSource } from "../../../../intermediate/forms/deductions/business/form8990/two-stage.ts";
+import { internalForm8990ScheduleCPass } from "../../../../intermediate/forms/deductions/business/form8990/schedule_c_pass.ts";
+import { sameStagedScheduleCSource } from "../../../../intermediate/forms/deductions/business/form8990/two_stage.ts";
 import { form8582 } from "../../../../intermediate/forms/income/business/form8582/index.ts";
 import { form6251 } from "../../../../intermediate/forms/taxes/amt/form6251/index.ts";
 import { form461 } from "../../../../intermediate/forms/income/business/form461/index.ts";

@@ -1,7 +1,7 @@
-import type { PdfFieldEntry, PdfFormDescriptor } from "../../../form-descriptor.ts";
+import type { PdfFieldEntry, PdfFormDescriptor } from "../../../form_descriptor.ts";
 import { rgb, StandardFonts } from "pdf-lib";
 import { form8814ParentPrintAmounts } from "./f8814.ts";
-import { assertScheduleDK1Source } from "../../../../domains/income/investments/schedule-d/schedule-d-k1-source.ts";
+import { assertScheduleDK1Source } from "../../../../domains/income/investments/schedule-d/schedule_d_k1_source.ts";
 
 // IRS Schedule D (2025) AcroForm field names.
 // Verified against the f1040sd--2025.pdf AcroForm field dump.

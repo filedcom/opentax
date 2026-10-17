@@ -1,4 +1,4 @@
-import { pdfReviewFixtures } from "../../../../pdf/review-fixtures.ts";
+import { pdfReviewFixtures } from "../../../../pdf/review_fixtures.ts";
 export const sstbStatusCases = (["hoh", "qss"] as const).flatMap((status) =>
   [true, false].map((payroll) => ({
     status,

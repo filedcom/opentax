@@ -13,14 +13,14 @@ import {
 } from "../../../../../../nodes/intermediate/forms/credits/health/form8962/index.ts";
 import { inputSchema as generalSchema } from "../../../../../../nodes/inputs/general/filing/general/index.ts";
 import { inputSchema as f1099intSchema } from "../../../../../../nodes/inputs/income/investments/f1099int/index.ts";
-import { reconcileDependentMagi } from "../../../../../domains/credits/health/form8962/form8962-dependent-magi.ts";
-import { assertForm8962FamilyEligibility } from "../../../../../domains/credits/health/form8962/form8962-family-eligibility.ts";
-import { roundForm8962Amounts } from "../../../../../domains/credits/health/form8962/form8962-money.ts";
+import { reconcileDependentMagi } from "../../../../../domains/credits/health/form8962/form8962_dependent_magi.ts";
+import { assertForm8962FamilyEligibility } from "../../../../../domains/credits/health/form8962/form8962_family_eligibility.ts";
+import { roundForm8962Amounts } from "../../../../../domains/credits/health/form8962/form8962_money.ts";
 import { assertForm8962Pub974Return } from "../../../../../domains/credits/health/form8962/form8962_pub974_return.ts";
 import type {
   MefBuildContext,
   MefFormDescriptor,
-} from "../../../../form-descriptor.ts";
+} from "../../../../form_descriptor.ts";
 
 interface MonthlyRow {
   month_code: string;

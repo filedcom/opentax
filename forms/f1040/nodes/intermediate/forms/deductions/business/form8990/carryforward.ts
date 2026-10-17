@@ -6,7 +6,7 @@ import {
 import {
   assertFinalizedBoundedForm8990Return,
   type FinalizedBoundedForm8990Return,
-} from "./final-reconciliation.ts";
+} from "./final_reconciliation.ts";
 
 export const priorCarryforwardSchema = z.object({
   tax_year: z.literal(2024),

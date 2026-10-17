@@ -1,4 +1,4 @@
-import { reconcileHealthPolicyRecords } from "../../../../../nodes/intermediate/forms/adjustments/health/form7206/policy-records.ts";
+import { reconcileHealthPolicyRecords } from "../../../../../nodes/intermediate/forms/adjustments/health/form7206/policy_records.ts";
 import {
   assertIndependentOwnerHealth,
   assertOwnedSepContext,
@@ -8,7 +8,7 @@ import { patronFiledBusinessLines } from "../../../../../nodes/inputs/deductions
 import type {
   PdfFieldEntry,
   PdfFormDescriptor,
-} from "../../../form-descriptor.ts";
+} from "../../../form_descriptor.ts";
 import {
   calculateSingleScheduleCForm7206,
   form7206LinesSchema,
@@ -27,7 +27,7 @@ import { z } from "zod";
 import { form7206 as nativeForm7206 } from "../../../../mef/forms/adjustments/health/f7206.ts";
 import { assertForm7206SpouseCoverage } from "../../../../domains/adjustments/health/form7206/form7206_spouse_coverage.ts";
 import { TS } from "../../../../../nodes/types.ts";
-import { assertScheduleCReceiptSourceIdentity } from "../../../../domains/general/return-assembly/filer-source-reconciliation.ts";
+import { assertScheduleCReceiptSourceIdentity } from "../../../../domains/general/return-assembly/filer_source_reconciliation.ts";
 import { extractFilerIdentity } from "../../../../../mef/filer.ts";
 
 // TY2025 AcroForm has two identity fields followed by printed lines 1-14.

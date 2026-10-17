@@ -5,7 +5,7 @@ import { form4797 } from "../../../../mef/forms/income/business/f4797.ts";
 import { buildPending } from "../../../../mef/execution/pending.ts";
 import { normalizeAllPending } from "../../../../return-processing/pending.ts";
 import { form4797Pdf } from "../../../../pdf/forms/income/business/f4797.ts";
-import { pdfReviewFixtures } from "../../../../pdf/review-fixtures.ts";
+import { pdfReviewFixtures } from "../../../../pdf/review_fixtures.ts";
 
 const base = pdfReviewFixtures.find((item) => item.id === "single-w2-refund")!;
 const common = {

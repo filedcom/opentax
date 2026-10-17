@@ -1,7 +1,7 @@
 import { test } from "bun:test";
 import * as fs from "node:fs/promises";
 import * as sys from "../../../../../../scripts/support/sys.ts";
-import { withHealthPolicyRecords } from "../../../../nodes/intermediate/forms/adjustments/health/form7206/policy-records.fixture.ts";
+import { withHealthPolicyRecords } from "../../../../nodes/intermediate/forms/adjustments/health/form7206/policy_records.fixture.ts";
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import { PDFDocument } from "pdf-lib";
 import { execute } from "../../../../../../core/runtime/executor.ts";

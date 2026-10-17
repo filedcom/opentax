@@ -1,7 +1,7 @@
 import { FilingStatus } from "../../../../../nodes/types.ts";
 import { ordinaryTax2025 } from "../../../../../nodes/intermediate/worksheets/taxes/calculation/tax_table_2025.ts";
 import { extractFilerIdentity } from "../../../../../mef/filer.ts";
-import type { PdfReviewFixture } from "../../../../pdf/review-fixtures.ts";
+import type { PdfReviewFixture } from "../../../../pdf/review_fixtures.ts";
 
 const passiveIncome = 20_000;
 const taxable = 104_250;

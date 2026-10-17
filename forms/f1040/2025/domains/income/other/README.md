@@ -5,7 +5,7 @@ Income sources, exclusions, and net-income reconciliation.
 | Area | Contents |
 | --- | --- |
 | [alimony_received_route.test.ts](alimony_received_route.test.ts) | 1 files |
-| [benefit-1042s-source.test.ts](benefit-1042s-source.test.ts) | 1 files |
+| [benefit_1042s_source.test.ts](benefit_1042s_source.test.ts) | 1 files |
 | [f1099b](../investments/f1099b) | 2 files |
 | [f1099d](../investments/f1099div) | 4 files |
 | [f1099g](f1099g) | 4 files |
@@ -17,16 +17,16 @@ Income sources, exclusions, and net-income reconciliation.
 | [f1099p](../business/f1099patr) | 2 files |
 | [form982](form982) | 1 files |
 | [line1a_w2_source_replay.test.ts](../wages/line1a_w2_source_replay.test.ts) | 1 files |
-| [line1b-household-wages.ts](../wages/line1b-household-wages.ts) | 1 files |
+| [line1b_household_wages.ts](../wages/line1b_household_wages.ts) | 1 files |
 | [line1b_household_source_replay.test.ts](../wages/line1b_household_source_replay.test.ts) | 1 files |
-| [line1h-source.ts](../wages/line1h-source.ts) | 1 files |
+| [line1h_source.ts](../wages/line1h_source.ts) | 1 files |
 | [line1h_fec_w2_excess.test.ts](../wages/line1h_fec_w2_excess.test.ts) | 1 files |
 | [line1i_combat_pay_source.test.ts](../wages/line1i_combat_pay_source.test.ts) | 1 files |
 | [nonstandard_w2_source.test.ts](../wages/nonstandard_w2_source.test.ts) | 1 files |
 | [ordinary_state_refund_source.fixture.ts](ordinary_state_refund_source.fixture.ts) | 1 files |
 | [ordinary_state_refund_source.test.ts](ordinary_state_refund_source.test.ts) | 1 files |
-| [schedule1-instance-parity.test.ts](schedule1-instance-parity.test.ts) | 1 files |
-| [schedule1-line9-final-reconciliation.test.ts](schedule1-line9-final-reconciliation.test.ts) | 1 files |
+| [schedule1_instance_parity.test.ts](schedule1_instance_parity.test.ts) | 1 files |
+| [schedule1_line9_final_reconciliation.test.ts](schedule1_line9_final_reconciliation.test.ts) | 1 files |
 | [schedule1_box3_source_replay.test.ts](schedule1_box3_source_replay.test.ts) | 1 files |
 | [schedule1_grant_source_replay.test.ts](schedule1_grant_source_replay.test.ts) | 1 files |
 | [schedule1_rtaa_source.test.ts](schedule1_rtaa_source.test.ts) | 1 files |

@@ -11,7 +11,7 @@ import { f1040_2025 } from "../../../../index.ts";
 import { extractFilerIdentity } from "../../../../../mef/filer.ts";
 import { form4972 as native } from "../../../../mef/forms/taxes/retirement/f4972.ts";
 import { form4972Pdf } from "../../../../pdf/forms/taxes/retirement/f4972.ts";
-import { participantInventorySchema } from "../../../../../nodes/intermediate/forms/taxes/retirement/form4972/participant-inventory.ts";
+import { participantInventorySchema } from "../../../../../nodes/intermediate/forms/taxes/retirement/form4972/participant_inventory.ts";
 
 type Row = Record<string, unknown>;
 function splitCents(total: number, count: number, index: number) {

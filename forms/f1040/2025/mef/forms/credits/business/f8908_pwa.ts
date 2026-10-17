@@ -5,7 +5,7 @@ import {
   type Form8908Source,
   form8908SourceSchema,
 } from "../../../../domains/credits/business/form8908/form8908_source.ts";
-import type { MefBuildContext, MefPdfAttachment } from "../../../form-descriptor.ts";
+import type { MefBuildContext, MefPdfAttachment } from "../../../form_descriptor.ts";
 import { assertForm8908Form7220PdfContents } from "./f8908_form7220_pdf.ts";
 import { assertForm8908NoAlterationsStatementPdf } from "./f8908_no_alterations_pdf.ts";
 

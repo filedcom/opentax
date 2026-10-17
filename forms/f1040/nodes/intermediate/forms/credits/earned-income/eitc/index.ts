@@ -10,11 +10,11 @@ import { f1040 } from "../../../../../outputs/general/return-assembly/f1040/inde
 import type { NodeContext } from "../../../../../../../../core/types/node-context.ts";
 import { CONFIG_BY_YEAR } from "../../../../../config/index.ts";
 import { lookupEic2025 } from "./table_2025.ts";
-import { eicBirthResidencyReviewSchema } from "../../../../../../2025/domains/credits/earned-income/eic/eic-birth-residency.ts";
+import { eicBirthResidencyReviewSchema } from "../../../../../../2025/domains/credits/earned-income/eic/eic_birth_residency.ts";
 
-import { eicDatedResidencyReviewSchema } from "../../../../../../2025/domains/credits/earned-income/eic/eic-dated-residency.ts";
+import { eicDatedResidencyReviewSchema } from "../../../../../../2025/domains/credits/earned-income/eic/eic_dated_residency.ts";
 
-import { eicDeathResidencyReviewSchema } from "../../../../../../2025/domains/credits/earned-income/eic/eic-death-residency.ts";
+import { eicDeathResidencyReviewSchema } from "../../../../../../2025/domains/credits/earned-income/eic/eic_death_residency.ts";
 
 // ─── Schema ───────────────────────────────────────────────────────────────────
 

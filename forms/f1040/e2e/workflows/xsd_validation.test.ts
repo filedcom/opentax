@@ -35,7 +35,7 @@ import {
   SCENARIO_1040_13_FACTS,
 } from "../ats/ty2025_cases.ts";
 import { scenario104008Input } from "../ats/scenario_1040_08_input.ts";
-import { pdfReviewFixtures } from "../../2025/pdf/review-fixtures.ts";
+import { pdfReviewFixtures } from "../../2025/pdf/review_fixtures.ts";
 
 // ── XSD paths ────────────────────────────────────────────────────────────────
 

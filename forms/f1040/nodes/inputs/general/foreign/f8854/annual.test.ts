@@ -7,9 +7,9 @@ import {
 } from "../../../../../2025/mef/forms/general/foreign/f8854/f8854_annual.ts";
 import { annualInputSchema } from "./annual.ts";
 import { f8854Annual } from "./annual_node.ts";
-import { reconcileAnnualForm8854Form8949Properties } from "./reconcile-annual-capital.ts";
+import { reconcileAnnualForm8854Form8949Properties } from "./reconcile_annual_capital.ts";
 import { ExpatriateType } from "./index.ts";
-import { ReportedFormCode } from "./section-c.ts";
+import { ReportedFormCode } from "./section_c.ts";
 
 function annualInput(overrides: Record<string, unknown> = {}) {
   const deferred = (overrides.deferred_properties ?? []) as Array<{

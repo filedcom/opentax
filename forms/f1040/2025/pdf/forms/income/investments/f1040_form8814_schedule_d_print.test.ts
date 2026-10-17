@@ -15,7 +15,7 @@ import { buildMefXml } from "../../../../mef/builder.ts";
 import { buildPending } from "../../../../mef/execution/pending.ts";
 import { normalizeAllPending } from "../../../../return-processing/pending.ts";
 import { buildPdfBytes, fillFormPdf, type PdfPageOrigin } from "../../../builder.ts";
-import { pdfReviewFixtures } from "../../../review-fixtures.ts";
+import { pdfReviewFixtures } from "../../../review_fixtures.ts";
 import { irs1040Pdf } from "../../general/return-assembly/f1040.ts";
 import { form8814Pdf } from "./f8814.ts";
 import { scheduleDPdf } from "./schedule_d.ts";

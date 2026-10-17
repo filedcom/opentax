@@ -8,7 +8,7 @@ import {
 } from "../../../../../nodes/intermediate/forms/deductions/business/form8995a/index.ts";
 import { independentReviewsSchema } from "../../../../../nodes/inputs/deductions/business/qbi_patron/schema.ts";
 import { inputSchema as farmSchema } from "../../../../../nodes/intermediate/forms/income/business/schedule_f/model.ts";
-import { assertOwnedScheduleSE } from "../../../taxes/self-employment/schedule-se/schedule-se-owner-source.ts";
+import { assertOwnedScheduleSE } from "../../../taxes/self-employment/schedule-se/schedule_se_owner_source.ts";
 import { normalizeAllPending } from "../../../../return-processing/pending.ts";
 import { ordinaryTax2025 } from "../../../../../nodes/intermediate/worksheets/taxes/calculation/tax_table_2025.ts";
 

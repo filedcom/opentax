@@ -13,7 +13,7 @@ import { Box12Code } from "../../../../nodes/inputs/income/wages/w2/index.ts";
 import { buildMefXml } from "../../../mef/builder.ts";
 import { buildPending } from "../../../mef/execution/pending.ts";
 import { buildPdfBytes } from "../../../pdf/builder.ts";
-import { pdfReviewFixtures } from "../../../pdf/review-fixtures.ts";
+import { pdfReviewFixtures } from "../../../pdf/review_fixtures.ts";
 import { registry } from "../../../registry.ts";
 
 const base = pdfReviewFixtures.find((fixture) =>

@@ -487,7 +487,7 @@ test("Schedule E actual issued RPE K1 keeps legal source identity while native b
   const source = JSON.parse(
     await fs.readFile(
       new URL(
-        "../../../../domains/deductions/business/form8995a/form8995a-rpe-3-business-source.json",
+        "../../../../domains/deductions/business/form8995a/form8995a_rpe_3_business_source.json",
         import.meta.url,
       ), "utf8",
     ),

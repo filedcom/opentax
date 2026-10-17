@@ -7,8 +7,8 @@ import { registry } from "../../../registry.ts";
 import { buildMefBundle } from "../../../mef/builder.ts";
 import { buildPending } from "../../../mef/execution/pending.ts";
 import { buildPdfBytes } from "../../../pdf/builder.ts";
-import { pdfReviewFixtures } from "../../../pdf/review-fixtures.ts";
-import { assertSchedule1Form8814Source } from "../../general/return-assembly/filer-source-reconciliation.ts";
+import { pdfReviewFixtures } from "../../../pdf/review_fixtures.ts";
+import { assertSchedule1Form8814Source } from "../../general/return-assembly/filer_source_reconciliation.ts";
 
 const fixture = pdfReviewFixtures.find((item) =>
   item.id === "single-form8814-child-gain-with-schedule-d"

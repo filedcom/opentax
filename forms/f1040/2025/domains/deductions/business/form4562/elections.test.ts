@@ -9,7 +9,7 @@ import { f1040_2025 } from "../../../../index.ts";
 import {
   calculateCurrentYearInventory,
   filedCurrentYearSchema,
-} from "../../../../../nodes/intermediate/forms/deductions/business/form4562/current-year.ts";
+} from "../../../../../nodes/intermediate/forms/deductions/business/form4562/current_year.ts";
 import { bonusFilerFixture } from "../../../credits/business/form3800/form8911_bonus_fixture.ts";
 import { bonusElectionInput, electionCases } from "./elections.fixture.ts";
 

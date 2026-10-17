@@ -1,5 +1,5 @@
 import { publicInputSchema } from "../../../../../nodes/intermediate/forms/deductions/business/form8990/index.ts";
-import { runBoundedForm8990TwoPass } from "../../../../../nodes/intermediate/forms/deductions/business/form8990/run-two-pass.ts";
+import { runBoundedForm8990TwoPass } from "../../../../../nodes/intermediate/forms/deductions/business/form8990/run_two_pass.ts";
 import { execute, type ExecuteResult } from "../../../../../../../core/runtime/executor.ts";
 
 /** Internal composed workpaper. Public8990 still requires authentic source and

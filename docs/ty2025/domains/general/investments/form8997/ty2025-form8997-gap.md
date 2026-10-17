@@ -71,7 +71,7 @@ subsection additionally requires paired code-O rows. Neither the old code-Q
 zero-basis sale nor the duplicate Form 2439 route is valid.
 
 Do not register either staged descriptor or relax
-`forms/f1040/2025/return-processing/attachment-coverage.ts` until the source and return-wide joins
+`forms/f1040/2025/return-processing/attachment_coverage.ts` until the source and return-wide joins
 above are built, then run the full test batch, TY2025 XSD/business rules, visual
 PDF checks, and ATS cases.
 

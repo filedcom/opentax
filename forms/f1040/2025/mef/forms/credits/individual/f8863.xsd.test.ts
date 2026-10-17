@@ -6,7 +6,7 @@ import {
   educationDependentReview,
   educationGeneralReview,
   educationOwnershipReview,
-} from "../../../../pdf/reviews/credits/individual/form8863-owner-review.fixture.ts";
+} from "../../../../pdf/reviews/credits/individual/form8863_owner_review.fixture.ts";
 import { assert, assertEquals, assertThrows } from "@std/assert";
 import { buildMefXml } from "../../../builder.ts";
 import { type FilerIdentity, FilingStatus } from "../../../types.ts";

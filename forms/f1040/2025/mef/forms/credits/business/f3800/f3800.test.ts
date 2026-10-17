@@ -9,7 +9,7 @@ import {
   PassiveCreditSourceOrigin,
   sourceAllocationSchema,
 } from "../../../../../../nodes/intermediate/forms/credits/business/form8582cr/source.ts";
-import { PassiveCreditReportingRoute } from "../../../../../../nodes/intermediate/forms/credits/business/form8582cr/credit-route.ts";
+import { PassiveCreditReportingRoute } from "../../../../../../nodes/intermediate/forms/credits/business/form8582cr/credit_route.ts";
 import { form3800, prepareForm3800DocumentParts } from "./f3800.ts";
 import { buildIRS3800Document } from "./f3800_document.ts";
 

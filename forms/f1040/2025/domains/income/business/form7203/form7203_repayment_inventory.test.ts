@@ -9,7 +9,7 @@ import {
   repaymentCases,
   repaymentInventoryInputs,
 } from "./form7203_repayment_inventory.fixture.ts";
-import { reviewedMixedCurrentDebtSchema } from "../../../../../nodes/intermediate/forms/income/business/form7203/debt-note.ts";
+import { reviewedMixedCurrentDebtSchema } from "../../../../../nodes/intermediate/forms/income/business/form7203/debt_note.ts";
 import { form7203StockLossPdf } from "../../../../pdf/forms/income/business/f7203_stock_loss.ts";
 import { inputSchema as k1Schema } from "../../../../../nodes/inputs/income/rental-passthrough/k1_s_corp/index.ts";
 

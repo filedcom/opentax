@@ -1,6 +1,6 @@
-import { pdfReviewFixtures } from "../../../../pdf/review-fixtures.ts";
+import { pdfReviewFixtures } from "../../../../pdf/review_fixtures.ts";
 import { patronStatusFixture } from "./form8995a_patron_status_fixture.ts";
-import { spouseOwnedPatronFixture } from "../../../../pdf/reviews/general/composed-returns/review-8995a-patron-joint.fixture.ts";
+import { spouseOwnedPatronFixture } from "../../../../pdf/reviews/general/composed-returns/review_8995a_patron_joint.fixture.ts";
 import { patronFiledBusinessLines } from "../../../../../nodes/inputs/deductions/business/qbi_patron/calculation.ts";
 
 export const patronWageCases =

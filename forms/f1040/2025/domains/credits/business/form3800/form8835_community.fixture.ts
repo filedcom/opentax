@@ -2,7 +2,7 @@ import { PDFDocument } from "pdf-lib";
 import { domesticFixture } from "./form8835_domestic.fixture.ts";
 import { increasedFixture } from "./form8835_increased.fixture.ts";
 import { earlyFixture } from "./form8835_early.fixture.ts";
-import { sha256Hex } from "../../../../return-processing/prepared-source.ts";
+import { sha256Hex } from "../../../../return-processing/prepared_source.ts";
 
 export const communityCases = [
   {

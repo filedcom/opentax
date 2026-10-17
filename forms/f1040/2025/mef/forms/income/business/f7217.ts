@@ -7,7 +7,7 @@ import {
   inputSchema,
 } from "../../../../../nodes/inputs/income/business/f7217/index.ts";
 import { assertForm7217GainFiling } from "../../../../domains/income/business/form7217/form7217_gain_filing.ts";
-import type { MefBuildContext, MefFormDescriptor } from "../../../form-descriptor.ts";
+import type { MefBuildContext, MefFormDescriptor } from "../../../form_descriptor.ts";
 
 type Input = Partial<Form7217Input> & Record<string, unknown>;
 

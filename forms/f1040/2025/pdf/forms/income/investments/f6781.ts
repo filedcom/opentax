@@ -1,4 +1,4 @@
-import type { PdfFieldEntry, PdfFormDescriptor } from "../../../form-descriptor.ts";
+import type { PdfFieldEntry, PdfFormDescriptor } from "../../../form_descriptor.ts";
 import { inputSchema } from "../../../../../nodes/intermediate/forms/income/investments/form6781/index.ts";
 import { rgb, StandardFonts } from "pdf-lib";
 

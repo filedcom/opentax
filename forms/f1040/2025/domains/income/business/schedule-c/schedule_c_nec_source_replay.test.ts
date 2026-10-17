@@ -14,7 +14,7 @@ import { registry } from "../../../../registry.ts";
 import { buildMefXml } from "../../../../mef/builder.ts";
 import { buildPending } from "../../../../mef/execution/pending.ts";
 import { buildPdfBytes } from "../../../../pdf/builder.ts";
-import { pdfReviewFixtures } from "../../../../pdf/review-fixtures.ts";
+import { pdfReviewFixtures } from "../../../../pdf/review_fixtures.ts";
 
 test("Schedule C 1099-NEC receipt replays its payer copy in native and PDF export", async () => {
   const fixture = pdfReviewFixtures.find((item) =>

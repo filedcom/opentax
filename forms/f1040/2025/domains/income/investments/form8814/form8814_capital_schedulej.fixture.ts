@@ -1,6 +1,6 @@
 import { scheduleJNonfarmW2Inputs } from "../../../taxes/income-averaging/schedule-j/schedule_j_nonfarm_w2.fixture.ts";
 import { participantCollectionInputs } from "../../../taxes/retirement/form4972/form4972_participant_collection.fixture.ts";
-import { pdfReviewFixtures } from "../../../../pdf/review-fixtures.ts";
+import { pdfReviewFixtures } from "../../../../pdf/review_fixtures.ts";
 
 /** Reviewed child box 2a facts added to the retained Ada source inventory. */
 export function form8814CapitalScheduleJInputs(

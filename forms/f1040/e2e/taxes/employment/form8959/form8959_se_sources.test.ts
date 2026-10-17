@@ -5,7 +5,7 @@ import { f1040_2025 } from "../../../../2025/index.ts";
 import { buildMefXml } from "../../../../2025/mef/builder.ts";
 import { buildPending } from "../../../../2025/mef/execution/pending.ts";
 import { buildPdfBytes } from "../../../../2025/pdf/builder.ts";
-import { pdfReviewFixtures } from "../../../../2025/pdf/review-fixtures.ts";
+import { pdfReviewFixtures } from "../../../../2025/pdf/review_fixtures.ts";
 
 const cases = [
   {

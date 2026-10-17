@@ -3,8 +3,8 @@ import * as fs from "node:fs/promises";
 import * as sys from "../../../../../../../../scripts/support/sys.ts";
 import { assertEquals, assertRejects } from "@std/assert";
 import { PDFDocument } from "pdf-lib";
-import { pdfReviewFixtures } from "../../../../review-fixtures.ts";
-import type { Form3800CarryoverVintage } from "../../../../../../nodes/inputs/credits/business/f3800/carryover-ledger.ts";
+import { pdfReviewFixtures } from "../../../../review_fixtures.ts";
+import type { Form3800CarryoverVintage } from "../../../../../../nodes/inputs/credits/business/f3800/carryover_ledger.ts";
 import { PassiveCreditSourceOrigin } from "../../../../../../nodes/intermediate/forms/credits/business/form8582cr/source.ts";
 import { appendForm3800CarryoverStatement } from "./f3800_carryover_statement.ts";
 

@@ -10,7 +10,7 @@ import type { MefFormsPending } from "../../../../mef/types.ts";
 import { buildPdfBytes } from "../../../builder.ts";
 import { form8962Pdf } from "../../../forms/credits/health/f8962.ts";
 import type { Fields as Form8962Fields } from "../../../../mef/forms/credits/health/f8962/f8962.ts";
-import { pdfReviewFixtures } from "../../../review-fixtures.ts";
+import { pdfReviewFixtures } from "../../../review_fixtures.ts";
 
 const agreed = pdfReviewFixtures.find((item) =>
   item.id === "single-situation4-nonenrolled-other-taxpayer"

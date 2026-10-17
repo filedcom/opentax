@@ -3,7 +3,7 @@ import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import { createHash } from "node:crypto";
 import { Buffer } from "node:buffer";
 import { FilingStatus } from "../../../../../mef/header.ts";
-import type { MefBuildContext } from "../../../form-descriptor.ts";
+import type { MefBuildContext } from "../../../form_descriptor.ts";
 import {
   CoverageType,
   form8889 as form8889Node,

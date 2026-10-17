@@ -9,7 +9,7 @@ import {
 } from "@std/assert";
 import { f1040_2025 } from "../../../../index.ts";
 import { normalizeAllPending } from "../../../../return-processing/pending.ts";
-import { pdfReviewFixtures } from "../../../../pdf/review-fixtures.ts";
+import { pdfReviewFixtures } from "../../../../pdf/review_fixtures.ts";
 import { form8995 } from "../../../../mef/forms/deductions/business/f8995/f8995.ts";
 import { form8995Pdf } from "../../../../pdf/forms/deductions/business/f8995/f8995.ts";
 import { form5884Pdf } from "../../../../pdf/forms/credits/business/f5884.ts";

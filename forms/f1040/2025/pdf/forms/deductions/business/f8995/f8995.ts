@@ -1,9 +1,9 @@
 import { appendQbiBusinessContinuation } from "./f8995_continuation.ts";
-import type { PdfFieldEntry, PdfFormDescriptor } from "../../../../form-descriptor.ts";
+import type { PdfFieldEntry, PdfFormDescriptor } from "../../../../form_descriptor.ts";
 import {
   assertNoUnfiled8995Loss,
   assertPositive8995,
-} from "../../../../../mef/forms/deductions/business/f8995/f8995-route.ts";
+} from "../../../../../mef/forms/deductions/business/f8995/f8995_route.ts";
 
 const page1 = "topmostSubform[0].Page1[0].";
 const fields: ReadonlyArray<PdfFieldEntry> = [

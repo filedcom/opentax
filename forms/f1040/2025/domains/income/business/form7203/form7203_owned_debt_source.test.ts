@@ -18,7 +18,7 @@ import {
   ownedDebtInputs,
   ownedDebtSource,
 } from "./form7203_owned_debt.fixture.ts";
-import { ownedSCorpLossLines } from "../../../../../nodes/intermediate/forms/deductions/business/form8995/owned-s-corp-loss.ts";
+import { ownedSCorpLossLines } from "../../../../../nodes/intermediate/forms/deductions/business/form8995/owned_s_corp_loss.ts";
 import { form8995 } from "../../../../mef/forms/deductions/business/f8995/f8995.ts";
 import { form8995Pdf } from "../../../../pdf/forms/deductions/business/f8995/f8995.ts";
 import { form7203StockLossPdf } from "../../../../pdf/forms/income/business/f7203_stock_loss.ts";

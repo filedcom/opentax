@@ -46,7 +46,7 @@ This proves single owned ScheduleC sources, independently owned MFJ businesses (
 
 ## Evidence
 
-- Source fixture/test: `forms/f1040/2025/pdf/reviews/deductions/business/form8995-qualified-tips.fixture.ts` and `.test.ts`.
+- Source fixture/test: `forms/f1040/2025/pdf/reviews/deductions/business/form8995_qualified_tips.fixture.ts` and `.test.ts`.
 - Artifact directory: `/tmp/opentax-qbi-qualified-tip-exclusion-evidence`.
 - Focused source/native/XSD/PDF log: `/tmp/opentax-qbi-qualified-tips-focused-v5.log`.
 - Related compatibility log: `/tmp/opentax-qbi-qualified-tips-regression-v1.log`.

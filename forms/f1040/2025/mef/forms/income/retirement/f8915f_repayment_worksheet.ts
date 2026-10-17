@@ -5,7 +5,7 @@ import {
   type Form8915FItem,
   itemSchema,
 } from "../../../../../nodes/inputs/income/retirement/f8915f/index.ts";
-import type { MefPdfAttachment } from "../../../form-descriptor.ts";
+import type { MefPdfAttachment } from "../../../form_descriptor.ts";
 
 export function repaymentWorksheetFileName(item: Form8915FItem): string {
   return item.retirement_source_kind === "plan"

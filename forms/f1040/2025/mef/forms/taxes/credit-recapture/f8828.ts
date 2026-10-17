@@ -4,7 +4,7 @@ import {
   type F8828Item,
   inputSchema,
 } from "../../../../../nodes/inputs/taxes/credit-recapture/f8828/index.ts";
-import type { MefBuildContext, MefFormDescriptor } from "../../../form-descriptor.ts";
+import type { MefBuildContext, MefFormDescriptor } from "../../../form_descriptor.ts";
 import { reconcileForm8828Sources } from "./f8828_source_reconciliation.ts";
 
 type Input = ReturnType<typeof inputSchema.parse>;

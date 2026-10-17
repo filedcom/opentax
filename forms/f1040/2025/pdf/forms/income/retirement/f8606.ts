@@ -1,6 +1,6 @@
-import { formatForm8606BasisRatio } from "../../../../../nodes/intermediate/forms/income/retirement/form8606/roth-current-conversion.ts";
+import { formatForm8606BasisRatio } from "../../../../../nodes/intermediate/forms/income/retirement/form8606/roth_current_conversion.ts";
 import { reconcileForm8606RothInventories } from "../../../../domains/income/retirement/form8606/form8606_roth_inventory_reconciliation.ts";
-import type { PdfFieldEntry, PdfFormDescriptor } from "../../../form-descriptor.ts";
+import type { PdfFieldEntry, PdfFormDescriptor } from "../../../form_descriptor.ts";
 import { form8606 } from "../../../../mef/forms/income/retirement/f8606.ts";
 import { printSchema } from "../../../../../nodes/intermediate/forms/income/retirement/form8606/index.ts";
 import { reconcileForm8606Distribution } from "../../../../domains/income/retirement/form8606/form8606_distribution_reconciliation.ts";

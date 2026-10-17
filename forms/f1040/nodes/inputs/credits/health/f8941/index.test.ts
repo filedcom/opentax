@@ -142,7 +142,7 @@ test("Form 8941 sends only its bounded direct source to Form 3800", () => {
 
 test("Form8941 part-year enrollment prorates average premiums, not annual payroll hours", async () => {
   const { form8941PartYearSource } = await import(
-    "../../../../../2025/pdf/reviews/general/composed-returns/review-8941-partyear.fixture.ts"
+    "../../../../../2025/pdf/reviews/general/composed-returns/review_8941_partyear.fixture.ts"
   );
   const source = form8941PartYearSource();
   const lines = calculateForm8941(source);
@@ -170,7 +170,7 @@ test("Form8941 part-year enrollment prorates average premiums, not annual payrol
 });
 test("Form8941 part-year rejects missing/extra months and inconsistent dated paid evidence", async () => {
   const { form8941PartYearSource } = await import(
-    "../../../../../2025/pdf/reviews/general/composed-returns/review-8941-partyear.fixture.ts"
+    "../../../../../2025/pdf/reviews/general/composed-returns/review_8941_partyear.fixture.ts"
   );
   const priorInvoice = form8941PartYearSource();
   priorInvoice.shop_review.employee_premium_reviews[0].monthly_premiums[0]
@@ -218,7 +218,7 @@ test("Form8941 part-year rejects missing/extra months and inconsistent dated pai
 });
 test("Form8941 actual annual wages trigger the wage ceiling despite short enrollment", async () => {
   const { form8941PartYearSource } = await import(
-    "../../../../../2025/pdf/reviews/general/composed-returns/review-8941-partyear.fixture.ts"
+    "../../../../../2025/pdf/reviews/general/composed-returns/review_8941_partyear.fixture.ts"
   );
   const source = form8941PartYearSource();
   source.employees.forEach((e, i) => {
@@ -231,7 +231,7 @@ test("Form8941 actual annual wages trigger the wage ceiling despite short enroll
 
 test("Form8941 sourced Albany family and mixed tier premiums use their own table columns", async () => {
   const { form8941FamilySource } = await import(
-    "../../../../../2025/pdf/reviews/general/composed-returns/review-8941-family.fixture.ts"
+    "../../../../../2025/pdf/reviews/general/composed-returns/review_8941_family.fixture.ts"
   );
   const family = calculateForm8941(form8941FamilySource(true));
   assertEquals(family.line1, 5);
@@ -253,7 +253,7 @@ test("Form8941 sourced Albany family and mixed tier premiums use their own table
 });
 test("Form8941 family rejects mismatched tier table and dependent enrollment allocations", async () => {
   const { form8941FamilySource } = await import(
-    "../../../../../2025/pdf/reviews/general/composed-returns/review-8941-family.fixture.ts"
+    "../../../../../2025/pdf/reviews/general/composed-returns/review_8941_family.fixture.ts"
   );
   const table = form8941FamilySource();
   table.shop_review.irs_table_family_average_premium = 9358;
@@ -271,7 +271,7 @@ test("Form8941 family rejects mismatched tier table and dependent enrollment all
 });
 test("Form8941 composite tier billing reconciles equal tier/month premiums and uniform employer share", async () => {
   const { form8941FamilySource } = await import(
-    "../../../../../2025/pdf/reviews/general/composed-returns/review-8941-family.fixture.ts"
+    "../../../../../2025/pdf/reviews/general/composed-returns/review_8941_family.fixture.ts"
   );
   const source = form8941FamilySource();
   const invoice =

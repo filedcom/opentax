@@ -4,7 +4,7 @@ import { estimatedPaymentTotal, f1040es } from "./index.ts";
 import {
   agreedJointPayment,
   agreedMfsJointPayment,
-} from "./agreed-payment.fixture.ts";
+} from "./agreed_payment.fixture.ts";
 import { fieldsOf } from "../../../../../../../core/test-utils/output.ts";
 import { f1040 } from "../../../../outputs/general/return-assembly/f1040/index.ts";
 

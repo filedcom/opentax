@@ -1,7 +1,7 @@
 import { test } from "bun:test";
 import { assertEquals, assertRejects, assertThrows } from "@std/assert";
 import { calculateForm2210FBoxB } from "./form2210f_box_b.ts";
-import { sha256Hex } from "../../../../return-processing/prepared-source.ts";
+import { sha256Hex } from "../../../../return-processing/prepared_source.ts";
 import { bindForm2210FBoxBSettlement } from "./form2210f_settlement.ts";
 
 function sourcedBoxB() {

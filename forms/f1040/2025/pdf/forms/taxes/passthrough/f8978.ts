@@ -1,4 +1,4 @@
-import type { PdfFieldEntry, PdfFormDescriptor } from "../../../form-descriptor.ts";
+import type { PdfFieldEntry, PdfFormDescriptor } from "../../../form_descriptor.ts";
 import { Form8978Source } from "../../../../../nodes/inputs/taxes/passthrough/f8978/index.ts";
 import { form8978PdfSource } from "./f8978_shared.ts";
 

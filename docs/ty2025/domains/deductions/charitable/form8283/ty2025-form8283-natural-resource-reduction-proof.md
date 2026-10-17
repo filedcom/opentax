@@ -239,7 +239,7 @@ compatibility578/0: `/tmp/opentax-form8283-legacy-offset-compat-v1.log`.
 The exact33-file list remains
 `/tmp/opentax-form8283-natural-resource-compat-files.json`.
 Set `FORM8283_EVIDENCE_DIR` to a new directory and run the public
-`forms/f1040/2025/pdf/reviews/deductions/charitable/form8283-natural-resource.test.ts` test with `deno test -A`;
+`forms/f1040/2025/pdf/reviews/deductions/charitable/form8283_natural_resource.test.ts` test with `deno test -A`;
 reuse the retained v7 PDF cache and complete local XSD cache. Immutable-source
 replay must read the retained source JSON/attachment bytes rather than regenerate
 fixture financial-PDF modification metadata.

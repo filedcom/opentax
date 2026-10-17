@@ -1,5 +1,5 @@
 import { buildMedicareJointDocumentParts } from "./f8853.ts";
-import type { MefFormDescriptor } from "../../../form-descriptor.ts";
+import type { MefFormDescriptor } from "../../../form_descriptor.ts";
 import {
   type Form8853Input,
   inputSchema,

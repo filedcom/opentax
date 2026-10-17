@@ -1,5 +1,5 @@
-import { owned5471PdfValues } from "./f5471-owned-values.ts";
-import type { PdfFieldEntry, PdfFormDescriptor } from "../../../../form-descriptor.ts";
+import { owned5471PdfValues } from "./f5471_owned_values.ts";
+import type { PdfFieldEntry, PdfFormDescriptor } from "../../../../form_descriptor.ts";
 import { projectForm8992Source } from "../../../../../domains/income/foreign/form8992/form8992_source.ts";
 
 const page = (number: number) => `topmostSubform[0].Page${number}[0].`;

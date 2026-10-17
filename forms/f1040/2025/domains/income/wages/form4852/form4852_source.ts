@@ -1,5 +1,5 @@
-import { assertQualifiedRothSource } from "../../../../../nodes/inputs/income/wages/f4852/qualified-roth.ts";
-import { reviewedForm4852AccountType } from "../../../../../nodes/inputs/income/wages/f4852/retirement-account.ts";
+import { assertQualifiedRothSource } from "../../../../../nodes/inputs/income/wages/f4852/qualified_roth.ts";
+import { reviewedForm4852AccountType } from "../../../../../nodes/inputs/income/wages/f4852/retirement_account.ts";
 import { reconcileForm8606RothInventories } from "../../retirement/form8606/form8606_roth_inventory_reconciliation.ts";
 import { reconcileForm8606RothActivity } from "../../retirement/form8606/form8606_roth_activity_reconciliation.ts";
 import { isDeepStrictEqual } from "node:util";

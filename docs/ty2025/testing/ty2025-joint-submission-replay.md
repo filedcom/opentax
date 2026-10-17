@@ -59,5 +59,5 @@ not incremented for these archive replays.
 Reproduce the focused gate:
 
 ```sh
-deno test -A forms/f1040/2025/mef/submissions/submission-joint-replay.test.ts
+deno test -A forms/f1040/2025/mef/submissions/submission_joint_replay.test.ts
 ```

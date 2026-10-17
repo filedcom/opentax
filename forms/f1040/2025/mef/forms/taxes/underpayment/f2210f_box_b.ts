@@ -5,7 +5,7 @@ import {
   form2210FBoxBInputSchema,
   form2210FBoxBLinesSchema,
 } from "../../../../domains/taxes/underpayment/form2210f/form2210f_box_b.ts";
-import type { MefFormDescriptor } from "../../../form-descriptor.ts";
+import type { MefFormDescriptor } from "../../../form_descriptor.ts";
 
 export const finalizedForm2210FSchema = z.object({
   source: form2210FBoxBInputSchema,

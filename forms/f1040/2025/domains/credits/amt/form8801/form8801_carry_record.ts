@@ -2,7 +2,7 @@ import { z } from "zod";
 import { stageForm8801PriorBoundReturn } from "./form8801_prior_return_bytes.ts";
 import type { SourceDocumentBytes } from "../../../../../../../core/runtime/source-documents.ts";
 import { VerifiedSourceDocuments } from "../../../../../../../core/runtime/source-documents.ts";
-import { sha256Hex } from "../../../../return-processing/prepared-source.ts";
+import { sha256Hex } from "../../../../return-processing/prepared_source.ts";
 
 /** Reproducible unfiled record. No IRS acceptance or next-year filing admission
  * can be supplied by a caller or inferred from matching calculated bytes. */

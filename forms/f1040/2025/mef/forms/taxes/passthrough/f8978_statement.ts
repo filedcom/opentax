@@ -10,7 +10,7 @@ import {
   type Form8978Input,
   inputSchema,
 } from "../../../../../nodes/inputs/taxes/passthrough/f8978/index.ts";
-import type { MefPdfAttachment } from "../../../form-descriptor.ts";
+import type { MefPdfAttachment } from "../../../form_descriptor.ts";
 
 export function statementFileName(index: number): string {
   return `Form8978TaxCalculation${index + 1}.pdf`;

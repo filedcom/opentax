@@ -1,7 +1,7 @@
 import { test } from "bun:test";
 import { assertEquals, assertRejects } from "@std/assert";
 import { f1040_2025 } from "../../../../../index.ts";
-import { pdfReviewFixtures } from "../../../../review-fixtures.ts";
+import { pdfReviewFixtures } from "../../../../review_fixtures.ts";
 
 test("Form 8874 direct QEI stays outside prepared child PDF assembly until authenticated", async () => {
   const fixture = pdfReviewFixtures.find((item) =>

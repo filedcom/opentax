@@ -440,7 +440,7 @@ v5.4 XSD validation: the source calculation carries $21,000 to Schedule A
 line 8a and Form 1040 itemized deductions. The direct Schedule A PDF projection
 case also passed, checking the same $21,000 amount and rejecting a changed
 filed total or a second-loan recipient that is not the filer. Focused commands:
-`deno test --allow-read --allow-write --allow-run=xmllint --allow-net=www.irs.gov --filter='2025 purchase points and an existing mortgage' forms/f1040/2025/mef/xsd-validation.test.ts`
+`deno test --allow-read --allow-write --allow-run=xmllint --allow-net=www.irs.gov --filter='2025 purchase points and an existing mortgage' forms/f1040/2025/mef/xsd_validation.test.ts`
 (1 passed) and
 `deno test --filter='Schedule A PDF replays purchase points and the second mortgage' forms/f1040/2025/pdf/forms/deductions/itemized/schedule_a.test.ts`
 (1 passed). The later capped-ratio case also generated a three-page packet;

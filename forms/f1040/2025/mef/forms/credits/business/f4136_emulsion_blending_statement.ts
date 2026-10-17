@@ -4,7 +4,7 @@ import {
   form4136BlenderCertification,
   inputSchema,
 } from "../../../../../nodes/inputs/credits/business/f4136/index.ts";
-import type { MefFormDescriptor } from "../../../form-descriptor.ts";
+import type { MefFormDescriptor } from "../../../form_descriptor.ts";
 
 // Each line 15a claim needs the blender's four-part certification.
 export const form4136EmulsionBlendingStatement: MefFormDescriptor<

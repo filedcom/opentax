@@ -1,8 +1,8 @@
-import type { PdfFieldEntry, PdfFormDescriptor } from "../../../form-descriptor.ts";
+import type { PdfFieldEntry, PdfFormDescriptor } from "../../../form_descriptor.ts";
 import {
   assertForm982AbsentSource,
   projectQpriForm982,
-} from "../../../../domains/income/other/form982/form982-qpri.ts";
+} from "../../../../domains/income/other/form982/form982_qpri.ts";
 import { FilingStatus, filingStatusSchema } from "../../../../../nodes/types.ts";
 
 // IRS Form 982 (March 2018) AcroForm field names. This remains the current

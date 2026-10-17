@@ -4,7 +4,7 @@ import {
   form8834SourceCredit,
   itemSchema,
 } from "../../../../../nodes/inputs/credits/individual/f8834/index.ts";
-import type { MefFormDescriptor } from "../../../form-descriptor.ts";
+import type { MefFormDescriptor } from "../../../form_descriptor.ts";
 
 const amount = z.number().finite().nonnegative();
 const finalizedSchema = z.object({

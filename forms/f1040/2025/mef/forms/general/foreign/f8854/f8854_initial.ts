@@ -3,8 +3,8 @@ import {
   type F8854Input,
   inputSchema,
 } from "../../../../../../nodes/inputs/general/foreign/f8854/index.ts";
-import { NongrantorTrustTreatment } from "../../../../../../nodes/inputs/general/foreign/f8854/section-c.ts";
-import { reconcileForm8854Form8949Properties } from "../../../../../../nodes/inputs/general/foreign/f8854/reconcile-capital.ts";
+import { NongrantorTrustTreatment } from "../../../../../../nodes/inputs/general/foreign/f8854/section_c.ts";
+import { reconcileForm8854Form8949Properties } from "../../../../../../nodes/inputs/general/foreign/f8854/reconcile_capital.ts";
 import {
   buildForm8854BalanceSheet,
   buildForm8854BalanceSheetStatements,

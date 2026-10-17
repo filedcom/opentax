@@ -8,12 +8,12 @@ import {
 } from "@std/assert";
 import { f1040_2025 } from "../../../../2025/index.ts";
 import { extractFilerIdentity } from "../../../../mef/filer.ts";
-import { form8941OwnedInputs } from "../../../../2025/pdf/reviews/general/composed-returns/review-8941-owned.fixture.ts";
-import { form8941FamilyInputs } from "../../../../2025/pdf/reviews/general/composed-returns/review-8941-family.fixture.ts";
-import { form8941MultiplePlanInputs } from "../../../../2025/pdf/reviews/general/composed-returns/review-8941-multiple-plans.fixture.ts";
+import { form8941OwnedInputs } from "../../../../2025/pdf/reviews/general/composed-returns/review_8941_owned.fixture.ts";
+import { form8941FamilyInputs } from "../../../../2025/pdf/reviews/general/composed-returns/review_8941_family.fixture.ts";
+import { form8941MultiplePlanInputs } from "../../../../2025/pdf/reviews/general/composed-returns/review_8941_multiple_plans.fixture.ts";
 import { form8941Pdf } from "../../../../2025/pdf/forms/credits/health/f8941.ts";
 import { calculateForm8941 } from "../../../../nodes/inputs/credits/health/f8941/index.ts";
-import { form8941AveragePremiums } from "../../../../nodes/inputs/credits/health/f8941/average-premiums.ts";
+import { form8941AveragePremiums } from "../../../../nodes/inputs/credits/health/f8941/average_premiums.ts";
 import { multiplePlanWorksheet } from "../../../../nodes/inputs/credits/health/f8941/multiple_plans.ts";
 
 const cases = [

@@ -1,4 +1,4 @@
-import { assertProducingMiningZeroQbi } from "../../../../../nodes/intermediate/forms/deductions/business/form8995a/producing-mining.ts";
+import { assertProducingMiningZeroQbi } from "../../../../../nodes/intermediate/forms/deductions/business/form8995a/producing_mining.ts";
 import type { Form8995AInput } from "../../../../../nodes/intermediate/forms/deductions/business/form8995a/index.ts";
 import { form8995 } from "../../../../../nodes/intermediate/forms/deductions/business/form8995/index.ts";
 import { assertCharitableNaturalResourceReturn } from "../../../../mef/forms/deductions/charitable/f8283/f8283_natural_resource_return.ts";

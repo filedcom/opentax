@@ -1,8 +1,8 @@
-import { mefBusinessNameLine1 } from "../../../../../mef/business-name.ts";
+import { mefBusinessNameLine1 } from "../../../../../mef/business_name.ts";
 import { form4852NativeSources } from "../../../../domains/income/wages/form4852/form4852_native_source.ts";
 import { element, elements } from "../../../../../mef/xml.ts";
 import type { W2Item } from "../../../../../nodes/inputs/income/wages/w2/index.ts";
-import type { MefBuildContext, MefFormDescriptor } from "../../../form-descriptor.ts";
+import type { MefBuildContext, MefFormDescriptor } from "../../../form_descriptor.ts";
 import { FilingStatus } from "../../../types.ts";
 
 interface Fields {

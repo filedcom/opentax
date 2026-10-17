@@ -1,9 +1,9 @@
 import {
   needsParticipantCollection,
   reconcileParticipantCollection,
-} from "./participant-collection.ts";
-import { isSourceMoney } from "./source-rounding.ts";
-import { reconcileSharedParticipantElections } from "./participant-inventory.ts";
+} from "./participant_collection.ts";
+import { isSourceMoney } from "./source_rounding.ts";
+import { reconcileSharedParticipantElections } from "./participant_inventory.ts";
 import { z } from "zod";
 import type {
   NodeOutput,

@@ -1,6 +1,6 @@
-import { currentLossFilingProjection } from "../../../../domains/income/business/current-loss-filing-projection.ts";
+import { currentLossFilingProjection } from "../../../../domains/income/business/current_loss_filing_projection.ts";
 import { assertSection1231HistoryFilingEvidence } from "../../../../../nodes/intermediate/forms/income/business/form4797/prior_history.ts";
-import { currentPropertyPassiveAmounts } from "../../../../../nodes/inputs/income/rental-passthrough/schedule_e/current-property-source.ts";
+import { currentPropertyPassiveAmounts } from "../../../../../nodes/inputs/income/rental-passthrough/schedule_e/current_property_source.ts";
 import { assertCurrentPassivePropertyReturn } from "../../../../domains/income/business/current_passive_property_source.ts";
 import { assertCurrentPassiveLine10Return } from "../../../../domains/income/business/current_passive_line10_source.ts";
 import { element, elements } from "../../../../../mef/xml.ts";
@@ -34,7 +34,7 @@ import { z } from "zod";
 import type {
   MefBuildContext,
   MefFormDescriptor,
-} from "../../../form-descriptor.ts";
+} from "../../../form_descriptor.ts";
 import {
   assertFullyRecapturedInvestment1245Return,
   assertInvestment1245FilingLinks,

@@ -1,5 +1,5 @@
 import { element, elements } from "../../../../../../mef/xml.ts";
-import type { MefFormDescriptor } from "../../../../form-descriptor.ts";
+import type { MefFormDescriptor } from "../../../../form_descriptor.ts";
 
 // Form 1116 Part I line 3b requires a separate list of deductions not
 // definitely related to a particular source of income. The IRS schema links

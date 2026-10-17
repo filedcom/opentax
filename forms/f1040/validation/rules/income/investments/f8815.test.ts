@@ -1,7 +1,7 @@
 import { test } from "bun:test";
 import { assertEquals } from "@std/assert";
 import { createReturnContext } from "../../../../../../core/validation/context.ts";
-import { FIELD_REGISTRY } from "../../../field-registry.ts";
+import { FIELD_REGISTRY } from "../../../field_registry.ts";
 import { F8815_RULES } from "./f8815.ts";
 
 function rulePasses(

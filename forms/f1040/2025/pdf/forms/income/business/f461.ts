@@ -1,4 +1,4 @@
-import type { PdfFieldEntry, PdfFormDescriptor } from "../../../form-descriptor.ts";
+import type { PdfFieldEntry, PdfFormDescriptor } from "../../../form_descriptor.ts";
 import { filedForm461Schema } from "../../../../../nodes/intermediate/forms/income/business/form461/index.ts";
 import { form461 as nativeForm461 } from "../../../../mef/forms/income/business/f461.ts";
 

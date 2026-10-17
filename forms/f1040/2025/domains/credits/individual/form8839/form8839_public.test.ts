@@ -8,7 +8,7 @@ import {
 } from "@std/assert";
 import { PDFDocument, StandardFonts } from "pdf-lib";
 import { extractFilerIdentity } from "../../../../../mef/filer.ts";
-import { sha256Hex } from "../../../../return-processing/prepared-source.ts";
+import { sha256Hex } from "../../../../return-processing/prepared_source.ts";
 import { f1040_2025 } from "../../../../index.ts";
 import { buildMefBundle, buildMefXml } from "../../../../mef/builder.ts";
 import { buildPending } from "../../../../mef/execution/pending.ts";

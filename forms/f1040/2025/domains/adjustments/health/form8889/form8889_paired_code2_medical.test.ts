@@ -13,7 +13,7 @@ import {
 import { f1040_2025 } from "../../../../index.ts";
 import { form8889 } from "../../../../mef/forms/adjustments/health/f8889.ts";
 import { form8889Pdf } from "../../../../pdf/forms/adjustments/health/f8889.ts";
-import { pdfReviewFixtures } from "../../../../pdf/review-fixtures.ts";
+import { pdfReviewFixtures } from "../../../../pdf/review_fixtures.ts";
 
 type Form8889Owner = Extract<
   Parameters<typeof form8889.build>[0],

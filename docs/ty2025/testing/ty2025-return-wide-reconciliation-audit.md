@@ -7,7 +7,7 @@ outputs without replaying the sink calculation.
 
 ## Bounded export replay staged in this batch
 
-`return-wide-arithmetic.ts` checks the retained Form 1040 lines 11, 14, 15,
+`return_wide_arithmetic.ts` checks the retained Form 1040 lines 11, 14, 15,
 18, 21, 22, 24, 25d, 32, 33, 34, and 37 against their immediate component lines whenever the subtotal is
 supplied. Both Form 1040 native and PDF descriptors call the same check before
 projection. The replay catches a changed AGI, deduction, taxable-income, tax,

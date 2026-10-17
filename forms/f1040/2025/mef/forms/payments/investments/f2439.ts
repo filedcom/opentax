@@ -6,7 +6,7 @@ import {
   itemSchema,
 } from "../../../../../nodes/inputs/payments/investments/f2439/index.ts";
 import { TS } from "../../../../../nodes/types.ts";
-import type { MefBuildContext, MefFormDescriptor } from "../../../form-descriptor.ts";
+import type { MefBuildContext, MefFormDescriptor } from "../../../form_descriptor.ts";
 
 type Item = z.infer<typeof itemSchema>;
 type Input = Partial<z.infer<typeof inputSchema>>;

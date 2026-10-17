@@ -1,4 +1,4 @@
-import { participantCollectionReviewSchema } from "./participant-collection.ts";
+import { participantCollectionReviewSchema } from "./participant_collection.ts";
 import {
   allocatedSourceCents,
   filedDollars,
@@ -9,7 +9,7 @@ import {
   roundRecipientTax,
   sourceCents,
   worksheetRatio,
-} from "./source-rounding.ts";
+} from "./source_rounding.ts";
 import { z } from "zod";
 import type {
   NodeOutput,

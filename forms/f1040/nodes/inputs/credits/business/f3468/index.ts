@@ -8,7 +8,7 @@ import { OutputNodes } from "../../../../../../../core/types/output-nodes.ts";
 import { schedule3 } from "../../../../intermediate/aggregation/general/return-assembly/schedule3/index.ts";
 import { f3800 } from "../f3800/index.ts";
 import type { NodeContext } from "../../../../../../../core/types/node-context.ts";
-import { trustPartVStatementSchema } from "./trust-part-v-source.ts";
+import { trustPartVStatementSchema } from "./trust_part_v_source.ts";
 
 // Form 3468 — Investment Credit (IRC §§47, 48, 48C, 48E)
 // All credit components aggregate to Schedule 3, Line 6z (General Business Credit).

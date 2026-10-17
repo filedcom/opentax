@@ -1,12 +1,12 @@
 import {
   currentYearInput,
   currentYearMultiInput,
-} from "./current-year.fixture.ts";
+} from "./current_year.fixture.ts";
 import { bonusElectionInput, electionCases } from "./elections.fixture.ts";
 import {
   DepreciationMethod,
   methodElectionReviewSchema,
-} from "../../../../../nodes/intermediate/forms/deductions/business/form4562/method-elections.ts";
+} from "../../../../../nodes/intermediate/forms/deductions/business/form4562/method_elections.ts";
 
 export const methodCases = [
   {

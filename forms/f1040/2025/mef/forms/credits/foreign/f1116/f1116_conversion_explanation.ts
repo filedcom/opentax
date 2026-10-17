@@ -2,7 +2,7 @@ import { PDFDocument, StandardFonts } from "pdf-lib";
 import type { PDFFont, PDFPage } from "pdf-lib";
 import type { FilerIdentity } from "../../../../../../mef/header.ts";
 import type { CategorySummary } from "../../../../../../nodes/intermediate/forms/credits/foreign/form_1116/index.ts";
-import type { MefBuildContext, MefPdfAttachment } from "../../../../form-descriptor.ts";
+import type { MefBuildContext, MefPdfAttachment } from "../../../../form_descriptor.ts";
 
 export const CONVERSION_EXPLANATION_FILE =
   "Form1116PaidTaxConversionExplanation.pdf";

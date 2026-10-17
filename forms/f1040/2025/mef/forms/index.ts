@@ -7,7 +7,7 @@ import {
   form8886,
   form8886AdditionalDetails,
   form8886ExpectedBenefits,
-} from "../../domains/general/filing/form8886/mef-descriptors.ts";
+} from "../../domains/general/filing/form8886/mef_descriptors.ts";
 import { iraRecharacterizationStatement } from "./income/retirement/ira_recharacterization_statement.ts";
 import { form8853MedicareStatements } from "./adjustments/health/f8853_medicare_statements.ts";
 import { eitc } from "./credits/earned-income/eitc.ts";

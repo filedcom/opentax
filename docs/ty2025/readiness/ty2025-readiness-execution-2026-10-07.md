@@ -2703,7 +2703,7 @@ Replayed exactly the eleven retained preparation rejections through the current 
 | Seven direct-QEI Form 8874 fixtures | Attachment coverage blocks native and PDF claims until authenticated CDE status and recapture history. | Issuer authentication/current status/history and positive retained route remain open; old visual/XSD evidence does not override the present guard. |
 | One Form 461 synthetic fixture | Public calculation stops in Form 8995: net QBI loss needs the sourced carryforward route. | Existing future-only review-fixture reconciliation remains unworked; this is not a newly completed Form 461 route. |
 
-Current rejection sites were read in `mef/forms/f8862.ts`, `mef/w2g-payer-copy.ts`, `attachment-coverage.ts`, and the Form 8995 node. The private script writes new evidence only; original preflight, prepared files and other audits remain untouched. Exploratory filenames for the old script/Form 8874 note were incorrect and were corrected using actual file inventory. The combined historical gap-note read was truncated; this current classification rests on safely read original rejection records, actual guard code and terminal current replay, not an assertion of complete historical-note review.
+Current rejection sites were read in `mef/forms/f8862.ts`, `mef/w2g_payer_copy.ts`, `attachment_coverage.ts`, and the Form 8995 node. The private script writes new evidence only; original preflight, prepared files and other audits remain untouched. Exploratory filenames for the old script/Form 8874 note were incorrect and were corrected using actual file inventory. The combined historical gap-note read was truncated; this current classification rests on safely read original rejection records, actual guard code and terminal current replay, not an assertion of complete historical-note review.
 
 Private `guarded11-current-replay-20261007T1800.json/.log/.ts` and `guarded11-current-replay-independent-observation-20261007T1800.json` retain times, Deno versions, all diagnostic/input hashes and the exact command. Log SHA-256 `cf3998786de7d2b0eca3a94671e7c5d4f7d8b098128b1b3e43631cf37b16c0d7`. Independently verified all 2,590 runtime hashes against the green full-run launch manifest: unchanged. No XSD/PDF/business-rule/ATS acceptance was attempted or claimed for rejected cases; these local safety boundaries are not named user-approved exclusions. No guard removed, future item implemented, aggregate increase or main checkoff. Main 52 frozen/future 31 unworked; combined passing aggregate stays 75 batches/267 packets/2,706 pages, full regression 12,255 passed/0 failed. Top MeF estimate unchanged.
 
@@ -2713,7 +2713,7 @@ At commit `041564653`, a normal typed live-import audit completed exit 0 on Octo
 
 | Uncovered PDF keys | Current boundary and remaining existing work |
 | --- | --- |
-| `f5471_parent`, `f5471_schedule_e`, `f5471_schedule_h`, `f5471_schedule_i1`, `f5471_schedule_j`, `f5471_schedule_m`, `f5471_schedule_p`, `f5471_schedule_q`, `f5471_schedule_r`, `form8992`, `form8992_schedule_a` (11) | `attachment-coverage.ts` blocks active Form 5471 for Schedule R treatment/reference linkage; owned worksheet records have an earlier worksheet/election/consent/prior-books guard. Native Schedule 1 independently rejects positive 8n/8o inclusions. Resolve the existing source/attachment/business-rule boundaries before claiming complete foreign filing output. |
+| `f5471_parent`, `f5471_schedule_e`, `f5471_schedule_h`, `f5471_schedule_i1`, `f5471_schedule_j`, `f5471_schedule_m`, `f5471_schedule_p`, `f5471_schedule_q`, `f5471_schedule_r`, `form8992`, `form8992_schedule_a` (11) | `attachment_coverage.ts` blocks active Form 5471 for Schedule R treatment/reference linkage; owned worksheet records have an earlier worksheet/election/consent/prior-books guard. Native Schedule 1 independently rejects positive 8n/8o inclusions. Resolve the existing source/attachment/business-rule boundaries before claiming complete foreign filing output. |
 | `f4255` | Positive printable rows need authenticated prior-return and IRS determination bytes. |
 | `f8854`, `f8854_annual` | Initial printable records need authenticated prior returns, compliance and balance-sheet evidence; annual records need authenticated prior-filed obligation history. |
 | `f965` | This key is the registered Form **965-A** PDF, not proof of Form 965 parent coverage. Positive PDF needs verified prior-filed liabilities and actual installment payments. The descriptor separately restricts its source to one unadjusted original 2017–2020 installment liability. |
@@ -3157,8 +3157,8 @@ credit is deposited. Native/source projection and prepared-packet integration
 remain required under the existing main trust-K1 requirement.
 
 Normal typed focused command: `deno test --allow-read --allow-write
---allow-net=www.irs.gov forms/f1040/2025/domains/income/business/trust-k1/trust-k1-issued-copy-fields.test.ts
-forms/f1040/2025/domains/income/business/trust-k1/trust-k1-issued-copy-review.test.ts
+--allow-net=www.irs.gov forms/f1040/2025/domains/income/business/trust-k1/trust_k1_issued_copy_fields.test.ts
+forms/f1040/2025/domains/income/business/trust-k1/trust_k1_issued_copy_review.test.ts
 forms/f1040/2025/domains/payments/withholding/trust-k1/trust_k1_backup_withholding.test.ts`: **15 passed /0 failed**.
 Cases include full field preservation and continued export guards, rehashed
 identity/amount changes, duplicate/missing codeB, malformed amount, missing
@@ -3188,9 +3188,9 @@ nonnegative-type, invalid-date and conflicting-indicator rows reject.
 
 Final normal typed focused command:
 `deno test --allow-read --allow-write --allow-run=xmllint --allow-net=www.irs.gov
-forms/f1040/2025/domains/income/business/trust-k1/trust-k1-native-copy-review.test.ts
-forms/f1040/2025/domains/income/business/trust-k1/trust-k1-issued-copy-fields.test.ts
-forms/f1040/2025/domains/income/business/trust-k1/trust-k1-issued-copy-review.test.ts
+forms/f1040/2025/domains/income/business/trust-k1/trust_k1_native_copy_review.test.ts
+forms/f1040/2025/domains/income/business/trust-k1/trust_k1_issued_copy_fields.test.ts
+forms/f1040/2025/domains/income/business/trust-k1/trust_k1_issued_copy_review.test.ts
 forms/f1040/2025/domains/payments/withholding/trust-k1/trust_k1_backup_withholding.test.ts`: **29 passed /0 failed**.
 Four positive native shapes validate against the cached standalone K1 XSD:
 all amount rows, foreign-address, spouse-owned, suffix/care-of/second-line.
@@ -3237,10 +3237,10 @@ helper does not authorize a codeB credit or authenticate the fiduciary.
 
 Normal typed focused command:
 `deno test --allow-read --allow-write --allow-run=xmllint --allow-net=www.irs.gov
-forms/f1040/2025/domains/income/business/trust-k1/trust-k1-source-copy-reconciliation.test.ts
-forms/f1040/2025/domains/income/business/trust-k1/trust-k1-native-copy-review.test.ts
-forms/f1040/2025/domains/income/business/trust-k1/trust-k1-issued-copy-fields.test.ts
-forms/f1040/2025/domains/income/business/trust-k1/trust-k1-issued-copy-review.test.ts
+forms/f1040/2025/domains/income/business/trust-k1/trust_k1_source_copy_reconciliation.test.ts
+forms/f1040/2025/domains/income/business/trust-k1/trust_k1_native_copy_review.test.ts
+forms/f1040/2025/domains/income/business/trust-k1/trust_k1_issued_copy_fields.test.ts
+forms/f1040/2025/domains/income/business/trust-k1/trust_k1_issued_copy_review.test.ts
 forms/f1040/2025/domains/payments/withholding/trust-k1/trust_k1_backup_withholding.test.ts`: **51 passed /0 failed**.
 One prior49/1 run used numeric MeF filing status in a public-input fixture;
 corrected it to `FilingStatus.Single` and reran. All logs retained. After the
@@ -3285,11 +3285,11 @@ Normal typed focused command:
 `PATH=/tmp/opentax-poppler-env/bin:$PATH deno test --allow-read --allow-write
 --allow-run=xmllint,pdftotext,pdftoppm --allow-net=www.irs.gov
 forms/f1040/nodes/inputs/income/rental-passthrough/k1_trust/index.test.ts
-forms/f1040/2025/domains/payments/withholding/f8288/f8288-withholding-reconciliation.test.ts
-forms/f1040/2025/domains/income/business/trust-k1/trust-k1-source-copy-reconciliation.test.ts
-forms/f1040/2025/domains/income/business/trust-k1/trust-k1-native-copy-review.test.ts
-forms/f1040/2025/domains/income/business/trust-k1/trust-k1-issued-copy-fields.test.ts
-forms/f1040/2025/domains/income/business/trust-k1/trust-k1-issued-copy-review.test.ts
+forms/f1040/2025/domains/payments/withholding/f8288/f8288_withholding_reconciliation.test.ts
+forms/f1040/2025/domains/income/business/trust-k1/trust_k1_source_copy_reconciliation.test.ts
+forms/f1040/2025/domains/income/business/trust-k1/trust_k1_native_copy_review.test.ts
+forms/f1040/2025/domains/income/business/trust-k1/trust_k1_issued_copy_fields.test.ts
+forms/f1040/2025/domains/income/business/trust-k1/trust_k1_issued_copy_review.test.ts
 forms/f1040/2025/domains/payments/withholding/trust-k1/trust_k1_backup_withholding.test.ts`: **111 passed /0 failed**.
 Cases include cent drift, unsafe sum, two-owner/W2G aggregate346, all-five-source
 replay75,700.75, changed/omitted/excess source totals and continued attachment
@@ -3564,8 +3564,8 @@ guard. That remains the pre-existing parent scope, not a completed slice.
 
 Existing EIC/Form8582/Form4797 parent advanced on isolated
 `codex/eic-investment-reconciliation-20261008`, commit `fb225f45b`. Added
-`current-form-allocation.ts` for gross current income/loss by activity and
-original reporting form, and `current-property-loss-allocation.ts` deriving
+`current_form_allocation.ts` for gross current income/loss by activity and
+original reporting form, and `current_property_loss_allocation.ts` deriving
 those columns from purchase/closing/rent/tax and farm receipt/repair sources.
 The calculation uses the existing exact-dollar activity and PartIX allocation
 helpers, preserves Form4797 PartsI/II separately and checks every allowed/
@@ -3688,8 +3688,8 @@ private `current-property-loss-review-final-20261008-v3/`, log SHA256
 Run JSON binds changed code/test hashes and every retained XML/PDF/JSON/text hash.
 Command: `deno test --allow-read --allow-write --allow-run=xmllint,pdftotext
 --allow-net=www.irs.gov forms/f1040/2025/pdf/forms/income/business/f8582.test.ts
-forms/f1040/2025/pdf/forms/income/business/f8582-current-loss-review.test.ts
-forms/f1040/2025/mef/forms/income/business/f8582/f8582-current-loss-review.test.ts --
+forms/f1040/2025/pdf/forms/income/business/f8582_current_loss_review.test.ts
+forms/f1040/2025/mef/forms/income/business/f8582/f8582_current_loss_review.test.ts --
 --write-review-artifacts <private-directory>`; Poppler supplied by
 `/tmp/opentax-poppler-env/bin`.
 
@@ -3777,7 +3777,7 @@ Run JSON binds all four modified/new code/test files, source/pending review
 JSONs and11 standalone XSD-validated documents: four IRS1040ScheduleE, four
 IRS4835 and three IRS4797; the fully suspended ordinary loss has no IRS4797.
 Command: `deno test --allow-read --allow-write --allow-run=xmllint
---allow-net=www.irs.gov forms/f1040/2025/mef/support/current-loss-original-form-review.test.ts
+--allow-net=www.irs.gov forms/f1040/2025/mef/support/current_loss_original_form_review.test.ts
 forms/f1040/2025/mef/forms/income/rental-passthrough/schedule_e.test.ts
 forms/f1040/2025/mef/forms/income/business/f4835.test.ts
 forms/f1040/2025/mef/forms/income/business/f4797.test.ts
@@ -3798,7 +3798,7 @@ bound in the accompanying JSON; the printed property description follows the
 native20-character limit. No blank deductible page is generated for fully
 suspended loss. Command: `PATH=/tmp/opentax-poppler-env/bin:$PATH deno test
 --allow-read --allow-write --allow-run=pdftotext
-forms/f1040/2025/pdf/support/current-loss-4797-review.test.ts --
+forms/f1040/2025/pdf/support/current_loss_4797_review.test.ts --
 --write-review-artifacts <private-directory>`.
 
 PDF v1 failed type checking: my empty-result fields had an inconsistent inferred
@@ -3846,7 +3846,7 @@ Focused final5/0 (1s; 3.72s invocation),
 Run JSON binds three changed/new files and all review input/pending/projection,
 PDF and text hashes. Command: `PATH=/tmp/opentax-poppler-env/bin:$PATH deno test
 --allow-read --allow-write --allow-run=pdftotext
-forms/f1040/2025/pdf/support/current-loss-operating-review.test.ts
+forms/f1040/2025/pdf/support/current_loss_operating_review.test.ts
 forms/f1040/2025/pdf/forms/income/business/f4835.test.ts --
 --write-review-artifacts <private-directory>`.
 
@@ -3952,7 +3952,7 @@ base `12200f62624a8a2d67f15475b1d23a75c028de8a` plus two source files bound in
 private `current-loss-return-pdf-review-20261008-v4/run.json`.
 Command: `PATH=/tmp/opentax-poppler-env/bin:$PATH deno test --allow-read
 --allow-write --allow-run=pdftotext --allow-net=www.irs.gov
-forms/f1040/2025/pdf/support/current-loss-return-review.test.ts --
+forms/f1040/2025/pdf/support/current_loss_return_review.test.ts --
 --write-review-artifacts <private-directory>`.
 Log SHA256 `8e10374f59f35c65e6083e932493ceb0e6ab4f8394efae22005b1c2025f4e1cd`.
 
@@ -4011,9 +4011,9 @@ Normal typed focus **89 passed/0 failed**, exit0,
 2026-10-07T23:06:28.660798Z–23:06:30.910700Z, base
 `798ff260beb263622466a39d6b9ef3e41b68fed2` plus two bound files.
 Command: `deno test --allow-read --allow-write
-forms/f1040/2025/domains/income/business/current-loss-ledger.test.ts
+forms/f1040/2025/domains/income/business/current_loss_ledger.test.ts
 forms/f1040/nodes/intermediate/forms/income/business/form8582/ledger.test.ts
-forms/f1040/nodes/intermediate/forms/income/business/form8582/current-form-allocation.test.ts
+forms/f1040/nodes/intermediate/forms/income/business/form8582/current_form_allocation.test.ts
 forms/f1040/nodes/intermediate/forms/income/business/form8582/index.test.ts --
 --write-review-artifacts <private-directory>`.
 Private `current-loss-ledger-20261008-v3/` retains run/verification manifests
@@ -4149,7 +4149,7 @@ command. No main TODO is checked off.
 
 Normal typed focused command: `deno test --allow-read --allow-write
 cli/store/form8582-ledger.test.ts cli/store/store.test.ts
-forms/f1040/2025/domains/income/business/current-loss-ledger.test.ts
+forms/f1040/2025/domains/income/business/current_loss_ledger.test.ts
 forms/f1040/nodes/intermediate/forms/income/business/form8582/ledger.test.ts`.
 Final v4 result: **39 passed / 0 failed**, exit 0,
 2026-10-07T23:24:31.103372Z–23:24:33.518122Z.
@@ -4675,7 +4675,7 @@ explicitly remains filing-unready, payment-authenticity-unverified and annual
 required-payment-unreconciled. No filed line 19 is generated.
 
 Final ordinary typed six-module command:
-`PATH=/tmp/opentax-poppler-env/bin:$PATH deno task test forms/f1040/2025/domains/taxes/underpayment/form2210/form2210_payments.test.ts forms/f1040/2025/domains/taxes/underpayment/form2210/form2210_box_e.test.ts forms/f1040/2025/domains/taxes/underpayment/form2210/form2210_box_e_chain.test.ts forms/f1040/nodes/inputs/taxes/underpayment/f2210/calculation.test.ts forms/f1040/nodes/inputs/taxes/underpayment/f2210/index.test.ts forms/f1040/2025/return-processing/attachment-coverage.test.ts`.
+`PATH=/tmp/opentax-poppler-env/bin:$PATH deno task test forms/f1040/2025/domains/taxes/underpayment/form2210/form2210_payments.test.ts forms/f1040/2025/domains/taxes/underpayment/form2210/form2210_box_e.test.ts forms/f1040/2025/domains/taxes/underpayment/form2210/form2210_box_e_chain.test.ts forms/f1040/nodes/inputs/taxes/underpayment/f2210/calculation.test.ts forms/f1040/nodes/inputs/taxes/underpayment/f2210/index.test.ts forms/f1040/2025/return-processing/attachment_coverage.test.ts`.
 Actual session 13708 terminal exit 0; **52 passed / 0 failed / 0 ignored**,
 393ms test duration, 03:19:53.293656–03:19:58.705874 UTC. This includes eight
 new cases and the existing prior-source/native/PDF projection and attachment
@@ -4730,7 +4730,7 @@ The calculated penalty stays an optional worksheet; no Form 1040 line 38 is
 inserted and both public attachment guards remain active.
 
 Normal typed seven-module command:
-`PATH=/tmp/opentax-poppler-env/bin:$PATH deno task test forms/f1040/2025/domains/taxes/underpayment/form2210/form2210_box_e_payment_return.test.ts forms/f1040/2025/domains/taxes/underpayment/form2210/form2210_payments.test.ts forms/f1040/2025/domains/taxes/underpayment/form2210/form2210_box_e.test.ts forms/f1040/2025/domains/taxes/underpayment/form2210/form2210_box_e_chain.test.ts forms/f1040/nodes/inputs/taxes/underpayment/f2210/calculation.test.ts forms/f1040/nodes/inputs/taxes/underpayment/f2210/index.test.ts forms/f1040/2025/return-processing/attachment-coverage.test.ts`.
+`PATH=/tmp/opentax-poppler-env/bin:$PATH deno task test forms/f1040/2025/domains/taxes/underpayment/form2210/form2210_box_e_payment_return.test.ts forms/f1040/2025/domains/taxes/underpayment/form2210/form2210_payments.test.ts forms/f1040/2025/domains/taxes/underpayment/form2210/form2210_box_e.test.ts forms/f1040/2025/domains/taxes/underpayment/form2210/form2210_box_e_chain.test.ts forms/f1040/nodes/inputs/taxes/underpayment/f2210/calculation.test.ts forms/f1040/nodes/inputs/taxes/underpayment/f2210/index.test.ts forms/f1040/2025/return-processing/attachment_coverage.test.ts`.
 Actual session 27758 terminal exit 0: **56 passed / 0 failed / 0 ignored**,
 950ms test duration, 03:27:14.939054–03:27:45.497137 UTC. Four new tests
 include fourteen source/identity/tax/prior-byte/override conflicts plus source
@@ -4772,7 +4772,7 @@ actual method, emits no partial XML/PDF and inserts no line 38; the regular
 E-only API keeps its default-method contract. Both export guards remain.
 
 Normal typed command:
-`PATH=/tmp/opentax-poppler-env/bin:$PATH deno task test forms/f1040/2025/domains/taxes/underpayment/form2210/form2210_box_e_payment_return.test.ts forms/f1040/2025/domains/taxes/underpayment/form2210/form2210_payments.test.ts forms/f1040/2025/domains/taxes/underpayment/form2210/form2210_box_e.test.ts forms/f1040/2025/domains/taxes/underpayment/form2210/form2210_box_e_chain.test.ts forms/f1040/nodes/inputs/taxes/underpayment/f2210/calculation.test.ts forms/f1040/nodes/inputs/taxes/underpayment/f2210/index.test.ts forms/f1040/2025/return-processing/attachment-coverage.test.ts`.
+`PATH=/tmp/opentax-poppler-env/bin:$PATH deno task test forms/f1040/2025/domains/taxes/underpayment/form2210/form2210_box_e_payment_return.test.ts forms/f1040/2025/domains/taxes/underpayment/form2210/form2210_payments.test.ts forms/f1040/2025/domains/taxes/underpayment/form2210/form2210_box_e.test.ts forms/f1040/2025/domains/taxes/underpayment/form2210/form2210_box_e_chain.test.ts forms/f1040/nodes/inputs/taxes/underpayment/f2210/calculation.test.ts forms/f1040/nodes/inputs/taxes/underpayment/f2210/index.test.ts forms/f1040/2025/return-processing/attachment_coverage.test.ts`.
 Actual session 33931 terminal exit 0: **62 passed / 0 failed / 0 ignored**,
 953ms test duration, 03:36:41.906588–03:37:12.370731 UTC.
 Deno 2.9.4/V8 15.0.245.2-rusty/TypeScript 6.0.3; root lock unchanged.
@@ -4817,7 +4817,7 @@ penalty is rounded directly to whole dollars for line 19; a constructed
 while the separate cent worksheet is $101.50. No double rounding is used.
 
 Normal typed seven-module command:
-`PATH=/tmp/opentax-poppler-env/bin:$PATH deno task test forms/f1040/2025/domains/taxes/underpayment/form2210/form2210_box_e_payment_return.test.ts forms/f1040/2025/domains/taxes/underpayment/form2210/form2210_payments.test.ts forms/f1040/2025/domains/taxes/underpayment/form2210/form2210_box_e.test.ts forms/f1040/2025/domains/taxes/underpayment/form2210/form2210_box_e_chain.test.ts forms/f1040/nodes/inputs/taxes/underpayment/f2210/calculation.test.ts forms/f1040/nodes/inputs/taxes/underpayment/f2210/index.test.ts forms/f1040/2025/return-processing/attachment-coverage.test.ts`.
+`PATH=/tmp/opentax-poppler-env/bin:$PATH deno task test forms/f1040/2025/domains/taxes/underpayment/form2210/form2210_box_e_payment_return.test.ts forms/f1040/2025/domains/taxes/underpayment/form2210/form2210_payments.test.ts forms/f1040/2025/domains/taxes/underpayment/form2210/form2210_box_e.test.ts forms/f1040/2025/domains/taxes/underpayment/form2210/form2210_box_e_chain.test.ts forms/f1040/nodes/inputs/taxes/underpayment/f2210/calculation.test.ts forms/f1040/nodes/inputs/taxes/underpayment/f2210/index.test.ts forms/f1040/2025/return-processing/attachment_coverage.test.ts`.
 Actual session 89643 terminal exit 0: **65 passed / 0 failed / 0 ignored**,
 1s Deno test duration; 03:44:28.505322–03:44:59.500174 UTC.
 Deno 2.9.4/V8 15.0.245.2-rusty/TypeScript 6.0.3; root lock unchanged.
@@ -4869,7 +4869,7 @@ preflight/log/status; no pass is claimed. Synthesizing blank appearances before
 AI removal fixed the newly added helper. Existing future date handler unchanged.
 
 Final normal typed seven-module command:
-`PATH=/tmp/opentax-poppler-env/bin:$PATH deno task test forms/f1040/2025/domains/taxes/underpayment/form2210/form2210_box_e_payment_return.test.ts forms/f1040/2025/domains/taxes/underpayment/form2210/form2210_payments.test.ts forms/f1040/2025/domains/taxes/underpayment/form2210/form2210_box_e.test.ts forms/f1040/2025/domains/taxes/underpayment/form2210/form2210_box_e_chain.test.ts forms/f1040/nodes/inputs/taxes/underpayment/f2210/calculation.test.ts forms/f1040/nodes/inputs/taxes/underpayment/f2210/index.test.ts forms/f1040/2025/return-processing/attachment-coverage.test.ts`.
+`PATH=/tmp/opentax-poppler-env/bin:$PATH deno task test forms/f1040/2025/domains/taxes/underpayment/form2210/form2210_box_e_payment_return.test.ts forms/f1040/2025/domains/taxes/underpayment/form2210/form2210_payments.test.ts forms/f1040/2025/domains/taxes/underpayment/form2210/form2210_box_e.test.ts forms/f1040/2025/domains/taxes/underpayment/form2210/form2210_box_e_chain.test.ts forms/f1040/nodes/inputs/taxes/underpayment/f2210/calculation.test.ts forms/f1040/nodes/inputs/taxes/underpayment/f2210/index.test.ts forms/f1040/2025/return-processing/attachment_coverage.test.ts`.
 Actual session 61326 terminal exit 0: **67 passed / 0 failed / 0 ignored**,
 1s test duration, 03:50:21.488865–03:50:24.096072 UTC.
 Deno 2.9.4/V8 15.0.245.2-rusty/TypeScript 6.0.3; root lock unchanged.

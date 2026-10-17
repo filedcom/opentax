@@ -1,11 +1,11 @@
 import {
   allocateCurrentPassiveForms,
   currentPassiveFormsSchema,
-} from "../form8582/current-form-allocation.ts";
+} from "../form8582/current_form_allocation.ts";
 import {
   currentPropertyPassiveAmounts,
   currentPropertySourceSchema,
-} from "../../../../../inputs/income/rental-passthrough/schedule_e/current-property-source.ts";
+} from "../../../../../inputs/income/rental-passthrough/schedule_e/current_property_source.ts";
 import { z } from "zod";
 import type {
   NodeOutput,

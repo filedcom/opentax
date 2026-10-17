@@ -1,5 +1,5 @@
 import { StandardFonts } from "pdf-lib";
-import type { PdfFieldEntry, PdfFormDescriptor } from "../../../form-descriptor.ts";
+import type { PdfFieldEntry, PdfFormDescriptor } from "../../../form_descriptor.ts";
 import {
   calculateForm4255Routes,
   type F4255Input,
@@ -13,7 +13,7 @@ import {
   assertNo2025Schedule2Line10,
   assertNoUnsupportedSchedule2Line14,
 } from "../../../../../nodes/intermediate/aggregation/taxes/other/schedule2/index.ts";
-import { assertSection453aSchedule2Line } from "../../../../domains/taxes/other/section453a-reconciliation.ts";
+import { assertSection453aSchedule2Line } from "../../../../domains/taxes/other/section453a_reconciliation.ts";
 
 // IRS Schedule 2 (2025) AcroForm field names.
 // Verified layout from https://www.irs.gov/pub/irs-prior/f1040s2--2025.pdf

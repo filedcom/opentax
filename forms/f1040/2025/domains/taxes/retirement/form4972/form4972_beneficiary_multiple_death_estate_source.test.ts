@@ -9,7 +9,7 @@ import { buildPdfBytes } from "../../../../pdf/builder.ts";
 import {
   type AllocationRoute,
   partialBeneficiaryMultipleAllocationInputs,
-} from "../../../../pdf/reviews/taxes/retirement/form4972/review-4972-partial-multiple-death-estate.fixture.ts";
+} from "../../../../pdf/reviews/taxes/retirement/form4972/review_4972_partial_multiple_death_estate.fixture.ts";
 
 const dir =
   ".state/research/2026-10-06-form4972-beneficiary-multicopy-death-estate";

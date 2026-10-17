@@ -475,7 +475,7 @@ cannot disappear from positive refund inventory validation.
 Final checked six-module command:
 
 ```sh
-PATH=/tmp/opentax-poppler-env/bin:/Users/atul/.deno/bin:$PATH deno test -A forms/f1040/2025/domains/income/other/ordinary_state_refund_source.test.ts forms/f1040/2025/domains/taxes/amt/form6251/form6251_refund_source.test.ts forms/f1040/2025/domains/taxes/amt/form6251/form6251_two_refunds.test.ts forms/f1040/nodes/intermediate/forms/taxes/amt/form6251/index.test.ts forms/f1040/2025/domains/income/other/f1099g/f1099g-owner-reconciliation.test.ts forms/f1040/2025/domains/income/other/f1099g/f1099g_unemployment_source_replay.test.ts
+PATH=/tmp/opentax-poppler-env/bin:/Users/atul/.deno/bin:$PATH deno test -A forms/f1040/2025/domains/income/other/ordinary_state_refund_source.test.ts forms/f1040/2025/domains/taxes/amt/form6251/form6251_refund_source.test.ts forms/f1040/2025/domains/taxes/amt/form6251/form6251_two_refunds.test.ts forms/f1040/nodes/intermediate/forms/taxes/amt/form6251/index.test.ts forms/f1040/2025/domains/income/other/f1099g/f1099g_owner_reconciliation.test.ts forms/f1040/2025/domains/income/other/f1099g/f1099g_unemployment_source_replay.test.ts
 ```
 
 Terminal119/0(46s), `/tmp/opentax-state-refund-final-source-proof.log`. This

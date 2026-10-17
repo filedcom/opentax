@@ -114,7 +114,7 @@ Reproduction:
 
 ```sh
 PATH=/tmp/opentax-poppler-env/bin:/Users/atul/.deno/bin:$PATH deno test -A \
-  forms/f1040/2025/pdf/reviews/adjustments/health/form7206-zero-eligible.test.ts -- --write-review-artifacts
+  forms/f1040/2025/pdf/reviews/adjustments/health/form7206_zero_eligible.test.ts -- --write-review-artifacts
 PATH=/tmp/opentax-poppler-env/bin:/Users/atul/.deno/bin:$PATH deno test -A \
   $(cat /tmp/opentax-medicare-zero-regression-files.txt)
 ```

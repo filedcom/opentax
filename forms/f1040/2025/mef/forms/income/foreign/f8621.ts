@@ -8,7 +8,7 @@ import {
   assertForm8621PrintableSource,
   projectForm8621ParentSource,
 } from "../../../../domains/income/foreign/form8621/form8621_parent_source.ts";
-import type { MefBuildContext, MefFormDescriptor } from "../../../form-descriptor.ts";
+import type { MefBuildContext, MefFormDescriptor } from "../../../form_descriptor.ts";
 import { explainForm8621ExcessStatement } from "./f8621_excess_statement.ts";
 import { form8621ElectionBTaxForHolding } from "../../../../domains/income/foreign/form8621/form8621_1294_allocation.ts";
 

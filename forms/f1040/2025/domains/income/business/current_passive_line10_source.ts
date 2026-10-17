@@ -1,4 +1,4 @@
-import { assertCurrentK1Qbi } from "../../../mef/forms/deductions/business/f8995/f8995-current-k1.ts";
+import { assertCurrentK1Qbi } from "../../../mef/forms/deductions/business/f8995/f8995_current_k1.ts";
 import {
   assertBox11Line10Sources,
   box11Line10SourceSchema,

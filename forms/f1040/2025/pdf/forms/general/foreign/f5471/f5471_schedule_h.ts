@@ -1,4 +1,4 @@
-import type { PdfFieldEntry, PdfFormDescriptor } from "../../../../form-descriptor.ts";
+import type { PdfFieldEntry, PdfFormDescriptor } from "../../../../form_descriptor.ts";
 import { projectForm8992Source } from "../../../../../domains/income/foreign/form8992/form8992_source.ts";
 
 const page = "topmostSubform[0].Page1[0].";

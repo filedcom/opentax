@@ -3,7 +3,7 @@ import * as fs from "node:fs/promises";
 import * as sys from "../../../../../../../scripts/support/sys.ts";
 import { assertEquals, assertRejects, assertThrows } from "@std/assert";
 import { f1040_2025 } from "../../../../index.ts";
-import { pdfReviewFixtures } from "../../../../pdf/review-fixtures.ts";
+import { pdfReviewFixtures } from "../../../../pdf/review_fixtures.ts";
 import { buildPending } from "../../../../mef/execution/pending.ts";
 import { buildMefBundle } from "../../../../mef/builder.ts";
 import { buildPdfBytes } from "../../../../pdf/builder.ts";

@@ -24,7 +24,7 @@ Existing blockers remain: missing1098 evidence and QBI/cooperative reconciliatio
 ## Reproduce
 
 ```sh
-deno run --allow-all forms/f1040/e2e/ats/ty2025-check-replay.ts /tmp/ats-check-replay.json
+deno run --allow-all forms/f1040/e2e/ats/ty2025_check_replay.ts /tmp/ats-check-replay.json
 ```
 
 The replay reports differences instead of changing the retained targets. Missing output is distinct from a calculated zero, and printed targets are kept separate from derived/provisional ones. The JSON includes source URLs, required source-document inventories, exact graph diagnostics, native preparation results and each observation.

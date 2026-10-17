@@ -11,7 +11,7 @@ import { f1040_2025 } from "../../../../2025/index.ts";
 import { buildMefXml } from "../../../../2025/mef/builder.ts";
 import { buildPending } from "../../../../2025/mef/execution/pending.ts";
 import { buildPdfBytes } from "../../../../2025/pdf/builder.ts";
-import { pdfReviewFixtures } from "../../../../2025/pdf/review-fixtures.ts";
+import { pdfReviewFixtures } from "../../../../2025/pdf/review_fixtures.ts";
 import { form982Pdf } from "../../../../2025/pdf/forms/income/other/f982.ts";
 import { FilingStatus } from "../../../../mef/header.ts";
 

@@ -12,9 +12,9 @@ import { buildExecutionPlan } from "../../../../../../core/runtime/planner.ts";
 import { buildMefXml } from "../../../mef/builder.ts";
 import { buildPending } from "../../../mef/execution/pending.ts";
 import { buildPdfBytes } from "../../../pdf/builder.ts";
-import { pdfReviewFixtures } from "../../../pdf/review-fixtures.ts";
+import { pdfReviewFixtures } from "../../../pdf/review_fixtures.ts";
 import { registry } from "../../../registry.ts";
-import { assertLine1aWageSource } from "../../payments/withholding/w2-withholding-reconciliation.ts";
+import { assertLine1aWageSource } from "../../payments/withholding/w2_withholding_reconciliation.ts";
 import { FormType } from "../../../../nodes/inputs/income/wages/f4852/index.ts";
 
 const base = pdfReviewFixtures.find((fixture) =>

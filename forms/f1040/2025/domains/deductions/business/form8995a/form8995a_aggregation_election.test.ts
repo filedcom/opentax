@@ -7,7 +7,7 @@ import {
   assertRejects,
   assertStringIncludes,
 } from "@std/assert";
-import { ownedAggregationElectionFixture } from "../../../../pdf/reviews/general/composed-returns/review-8995a-aggregation-election.fixture.ts";
+import { ownedAggregationElectionFixture } from "../../../../pdf/reviews/general/composed-returns/review_8995a_aggregation_election.fixture.ts";
 import { f1040_2025 } from "../../../../index.ts";
 import { buildPending } from "../../../../mef/execution/pending.ts";
 import { buildMefBundle, buildMefXml } from "../../../../mef/builder.ts";

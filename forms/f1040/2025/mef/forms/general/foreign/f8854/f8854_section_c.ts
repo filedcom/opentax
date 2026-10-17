@@ -7,13 +7,13 @@ import {
 import {
   allocateMarkToMarketExclusion,
   wholeDollarAssets,
-} from "../../../../../../nodes/inputs/general/foreign/f8854/mark-to-market.ts";
+} from "../../../../../../nodes/inputs/general/foreign/f8854/mark_to_market.ts";
 import {
   NongrantorTrustTreatment,
   type SectionC,
   sectionCSchema,
-} from "../../../../../../nodes/inputs/general/foreign/f8854/section-c.ts";
-import { calculateSectionDDeferral } from "../../../../../../nodes/inputs/general/foreign/f8854/section-d.ts";
+} from "../../../../../../nodes/inputs/general/foreign/f8854/section_c.ts";
+import { calculateSectionDDeferral } from "../../../../../../nodes/inputs/general/foreign/f8854/section_d.ts";
 
 export type Form8854SectionCStatementIds = {
   eligibleDeferredCompensation?: string;

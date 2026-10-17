@@ -4,7 +4,7 @@ import {
   assertReviewSourceFileContents,
   reviewSourceFileContents,
 } from "./ty2025-pdf-review-source.ts";
-import type { PdfReviewFixture } from "../../forms/f1040/2025/pdf/review-fixtures.ts";
+import type { PdfReviewFixture } from "../../forms/f1040/2025/pdf/review_fixtures.ts";
 import type { FilerIdentity } from "../../forms/f1040/mef/header.ts";
 
 test("source replay rejects extra unsupported fields despite matching manifest hash", () => {

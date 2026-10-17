@@ -6,7 +6,7 @@ import { f1040_2025 } from "../../../../index.ts";
 import { extractFilerIdentity } from "../../../../../mef/filer.ts";
 import { normalizeAllPending } from "../../../../return-processing/pending.ts";
 import { buildPdfBytes } from "../../../../pdf/builder.ts";
-import { multipleNuaInputs } from "../../../../pdf/reviews/taxes/retirement/form4972/review-4972-multiple-nua.fixture.ts";
+import { multipleNuaInputs } from "../../../../pdf/reviews/taxes/retirement/form4972/review_4972_multiple_nua.fixture.ts";
 
 const expectedTax: Record<number, number> = {
   2: 1790,

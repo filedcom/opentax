@@ -7,7 +7,7 @@ import {
 } from "../../../../../nodes/inputs/credits/business/f8820/index.ts";
 import { inputSchema as scheduleCInputSchema } from "../../../../../nodes/inputs/income/business/schedule_c/model.ts";
 import { inputSchema as scheduleFInputSchema } from "../../../../../nodes/intermediate/forms/income/business/schedule_f/index.ts";
-import type { MefFormDescriptor } from "../../../form-descriptor.ts";
+import type { MefFormDescriptor } from "../../../form_descriptor.ts";
 import { appendForm8820ExpenseStatement } from "../../../../pdf/forms/credits/business/f8820_expense_statement.ts";
 import { reconcileOrphanDrugK1Credits } from "./f8820_credit_evidence.ts";
 

@@ -75,7 +75,7 @@ refundable. The parent cases supply explicit Schedule 8812 credit-limit
 worksheets, so education credits precede ODC. The two-student packet also proves
 the second native student group and actual extra PDF Part III page.
 
-Focused tests: `forms/f1040/2025/pdf/reviews/credits/individual/form8863-claimant-owner.test.ts`. Artifacts
+Focused tests: `forms/f1040/2025/pdf/reviews/credits/individual/form8863_claimant_owner.test.ts`. Artifacts
 are in `/tmp/opentax-f8863-owner-evidence/`, with packet prefixes
 `parent-limited`, `parent-two`, `student-refundable`, `student-no-refund`, and
 `student-scholarship`; each has `-source-input.json`, `-full-return.xml`, and

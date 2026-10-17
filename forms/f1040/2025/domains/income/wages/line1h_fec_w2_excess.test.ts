@@ -14,7 +14,7 @@ import { buildPending } from "../../../mef/execution/pending.ts";
 import { buildMefXml } from "../../../mef/builder.ts";
 import { buildPdfBytes } from "../../../pdf/builder.ts";
 import { irs1040Pdf } from "../../../pdf/forms/general/return-assembly/f1040.ts";
-import { pdfReviewFixtures } from "../../../pdf/review-fixtures.ts";
+import { pdfReviewFixtures } from "../../../pdf/review_fixtures.ts";
 import { Box12Code } from "../../../../nodes/inputs/income/wages/w2/index.ts";
 
 const base = pdfReviewFixtures.find((fixture) =>

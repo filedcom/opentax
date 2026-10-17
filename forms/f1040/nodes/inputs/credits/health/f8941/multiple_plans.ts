@@ -1,4 +1,4 @@
-import { assertForm8941RatingReview } from "./average-premiums.ts";
+import { assertForm8941RatingReview } from "./average_premiums.ts";
 import { z } from "zod";
 import {
   arrangementQuoteContribution,

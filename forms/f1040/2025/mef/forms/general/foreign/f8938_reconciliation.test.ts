@@ -6,7 +6,7 @@ import {
   form8992Filer,
   form8992Pending,
 } from "../../../../domains/income/foreign/form8992/form8992.fixture.ts";
-import type { MefBuildContext } from "../../../form-descriptor.ts";
+import type { MefBuildContext } from "../../../form_descriptor.ts";
 import { form8938Fixture } from "./f8938.fixture.ts";
 import { form8938 } from "./f8938.ts";
 import { assertForm8938ReturnReconciliation } from "./f8938_reconciliation.ts";

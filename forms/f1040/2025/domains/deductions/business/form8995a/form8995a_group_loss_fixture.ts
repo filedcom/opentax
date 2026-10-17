@@ -1,4 +1,4 @@
-import { pdfReviewFixtures } from "../../../../pdf/review-fixtures.ts";
+import { pdfReviewFixtures } from "../../../../pdf/review_fixtures.ts";
 // Synthetic source references do not authenticate issued payroll or ownership.
 type Row = Record<string, any>;
 export const groupLossCases = [

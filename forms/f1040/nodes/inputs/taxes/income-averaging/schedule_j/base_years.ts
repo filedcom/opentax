@@ -1,4 +1,4 @@
-import { scheduleJTaxSourceSchema } from "../../../../intermediate/forms/taxes/income-averaging/schedule_j_calculation/tax-source.ts";
+import { scheduleJTaxSourceSchema } from "../../../../intermediate/forms/taxes/income-averaging/schedule_j_calculation/tax_source.ts";
 import { z } from "zod";
 import { FilingStatus } from "../../../../types.ts";
 

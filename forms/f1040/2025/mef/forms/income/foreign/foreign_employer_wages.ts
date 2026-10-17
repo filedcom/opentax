@@ -12,12 +12,12 @@ import {
   correctivePlanItems,
   inputSchema as f1099rInputSchema,
 } from "../../../../../nodes/inputs/income/retirement/f1099r/index.ts";
-import { assert1099RRecipientOwner } from "../../../../domains/income/retirement/f1099r/f1099r-recipient-owner.ts";
+import { assert1099RRecipientOwner } from "../../../../domains/income/retirement/f1099r/f1099r_recipient_owner.ts";
 import {
   codeDExcessDeferral,
   inputSchema as w2InputSchema,
 } from "../../../../../nodes/inputs/income/wages/w2/index.ts";
-import type { MefBuildContext, MefFormDescriptor } from "../../../form-descriptor.ts";
+import type { MefBuildContext, MefFormDescriptor } from "../../../form_descriptor.ts";
 import type { z } from "zod";
 
 function filingDetails(

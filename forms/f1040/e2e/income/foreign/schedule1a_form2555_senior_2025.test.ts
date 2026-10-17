@@ -9,7 +9,7 @@ import { registry } from "../../../2025/registry.ts";
 import { buildMefXml } from "../../../2025/mef/builder.ts";
 import { buildPdfBytes } from "../../../2025/pdf/builder.ts";
 import { schedule1aPdf } from "../../../2025/pdf/forms/deductions/additional/schedule1a/schedule1a.ts";
-import { pdfReviewFixtures } from "../../../2025/pdf/review-fixtures.ts";
+import { pdfReviewFixtures } from "../../../2025/pdf/review_fixtures.ts";
 import { extractFilerIdentity } from "../../../mef/filer.ts";
 
 const senior = pdfReviewFixtures.find((item) =>

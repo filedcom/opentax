@@ -1,7 +1,7 @@
 import { test } from "bun:test";
 import * as fs from "node:fs/promises";
 import * as sys from "../../../../../../../scripts/support/sys.ts";
-import { canonicalForm1098CopyDocument } from "../../../../pdf/reviews/deductions/mortgage/review-1098-copy.fixture.ts";
+import { canonicalForm1098CopyDocument } from "../../../../pdf/reviews/deductions/mortgage/review_1098_copy.fixture.ts";
 import { assertEquals, assertRejects, assertThrows } from "@std/assert";
 import { PDFDocument } from "pdf-lib";
 import { extractFilerIdentity } from "../../../../../mef/filer.ts";
@@ -9,7 +9,7 @@ import { f1040_2025 } from "../../../../index.ts";
 import { buildMefBundle, buildMefXml } from "../../../../mef/builder.ts";
 import { buildPending } from "../../../../mef/execution/pending.ts";
 import { buildPdfBytes } from "../../../../pdf/builder.ts";
-import { pdfReviewFixtures } from "../../../../pdf/review-fixtures.ts";
+import { pdfReviewFixtures } from "../../../../pdf/review_fixtures.ts";
 
 const base = pdfReviewFixtures.find((item) => item.id === "single-w2-refund")!;
 const jointBase = pdfReviewFixtures.find((item) =>

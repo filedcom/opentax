@@ -1,4 +1,4 @@
-import type { PdfFieldEntry, PdfFormDescriptor } from "../../../form-descriptor.ts";
+import type { PdfFieldEntry, PdfFormDescriptor } from "../../../form_descriptor.ts";
 
 // IRS Form 8960 (2025) AcroForm field names.
 // Net Investment Income Tax — Individuals, Estates, and Trusts.

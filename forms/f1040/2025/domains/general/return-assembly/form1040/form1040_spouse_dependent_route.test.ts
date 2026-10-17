@@ -9,7 +9,7 @@ import { PDFDocument } from "pdf-lib";
 import { buildMefBundle } from "../../../../mef/builder.ts";
 import { buildPending } from "../../../../mef/execution/pending.ts";
 import { buildPdfBytes } from "../../../../pdf/builder.ts";
-import { pdfReviewFixtures } from "../../../../pdf/review-fixtures.ts";
+import { pdfReviewFixtures } from "../../../../pdf/review_fixtures.ts";
 
 const general = {
   filing_status: FilingStatus.MFJ,

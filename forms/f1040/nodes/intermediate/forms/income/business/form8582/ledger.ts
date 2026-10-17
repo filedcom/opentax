@@ -10,7 +10,7 @@ import {
   passiveLossLimit,
 } from "./index.ts";
 import { FilingStatus } from "../../../../../types.ts";
-import { allocateCurrentPassiveForms } from "./current-form-allocation.ts";
+import { allocateCurrentPassiveForms } from "./current_form_allocation.ts";
 
 const reportingFormSchema = z.enum([
   "schedule_e",

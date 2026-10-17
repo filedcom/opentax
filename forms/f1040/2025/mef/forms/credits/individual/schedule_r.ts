@@ -5,7 +5,7 @@ import {
   schedule_r,
   validDisabilityEvidence,
 } from "../../../../../nodes/inputs/credits/elderly-disabled/schedule_r/index.ts";
-import type { MefBuildContext, MefFormDescriptor } from "../../../form-descriptor.ts";
+import type { MefBuildContext, MefFormDescriptor } from "../../../form_descriptor.ts";
 
 function number(fields: Record<string, unknown>, key: string): number {
   const value = fields[key];

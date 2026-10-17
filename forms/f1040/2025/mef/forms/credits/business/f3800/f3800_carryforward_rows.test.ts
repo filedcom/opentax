@@ -7,7 +7,7 @@ import {
   calculateForm3800Nonpassive,
   ZERO_FORM3800_PASSIVE_ACTIVITY,
 } from "../../../../../../nodes/inputs/credits/business/f3800/calculation.ts";
-import type { Form3800CarryoverVintage } from "../../../../../../nodes/inputs/credits/business/f3800/carryover-ledger.ts";
+import type { Form3800CarryoverVintage } from "../../../../../../nodes/inputs/credits/business/f3800/carryover_ledger.ts";
 import { PassiveCreditSourceOrigin } from "../../../../../../nodes/intermediate/forms/credits/business/form8582cr/source.ts";
 import { FilingStatus } from "../../../../../../nodes/types.ts";
 import { form3800PartVIFields } from "../../../../../pdf/forms/credits/business/f3800/f3800_fields.ts";

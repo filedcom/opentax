@@ -12,7 +12,7 @@ import { buildMefBundle } from "../../../../mef/builder.ts";
 import { buildPending } from "../../../../mef/execution/pending.ts";
 import { buildPdfBytes } from "../../../builder.ts";
 import { form8889Pdf } from "../../../forms/adjustments/health/f8889.ts";
-import { pdfReviewFixtures } from "../../../review-fixtures.ts";
+import { pdfReviewFixtures } from "../../../review_fixtures.ts";
 import {
   DependentRelationship,
   IRSDependentRelationshipCode,

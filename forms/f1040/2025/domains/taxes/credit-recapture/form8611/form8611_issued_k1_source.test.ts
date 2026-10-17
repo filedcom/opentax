@@ -6,7 +6,7 @@ import { f1040_2025 } from "../../../../index.ts";
 import { extractFilerIdentity } from "../../../../../mef/filer.ts";
 import { normalizeAllPending } from "../../../../return-processing/pending.ts";
 import { buildPdfBytes } from "../../../../pdf/builder.ts";
-import { issuedRecaptureInputs } from "../../../../pdf/reviews/general/composed-returns/review-8611-issued-k1.fixture.ts";
+import { issuedRecaptureInputs } from "../../../../pdf/reviews/general/composed-returns/review_8611_issued_k1.fixture.ts";
 test("actual section42j5 issued K1 building recaptures reach complete native XSD and PDF", async () => {
   for (const joint of [false, true]) {
     const inputs = issuedRecaptureInputs(joint);

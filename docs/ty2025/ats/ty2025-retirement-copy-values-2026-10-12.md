@@ -63,7 +63,7 @@ before/after ledgers, the three observed images, source/image hashes, reviewed
 schema mappings/hashes and the typed test log. Reproduce with:
 
 ```sh
-deno run -A forms/f1040/e2e/ats/ty2025-check-ledger.ts /tmp/ats-ledger.json
+deno run -A forms/f1040/e2e/ats/ty2025_check_ledger.ts /tmp/ats-ledger.json
 deno test -A forms/f1040/e2e/ats
 ```
 

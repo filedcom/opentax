@@ -1,14 +1,14 @@
-import { notePrincipalRepaid } from "../../../../../nodes/intermediate/forms/income/business/form7203/repayment-inventory.ts";
-import { projectPassiveSCorp7203Copy } from "../../../../domains/income/business/passive-s-corp-loss-copies.ts";
-import { buildFirstYearPassiveSCorp7203 } from "../../../../domains/income/business/form7203/form7203-passive-loss-projection.ts";
+import { notePrincipalRepaid } from "../../../../../nodes/intermediate/forms/income/business/form7203/repayment_inventory.ts";
+import { projectPassiveSCorp7203Copy } from "../../../../domains/income/business/passive_s_corp_loss_copies.ts";
+import { buildFirstYearPassiveSCorp7203 } from "../../../../domains/income/business/form7203/form7203_passive_loss_projection.ts";
 import { projectOverflowDebtInventory } from "../../../../domains/income/business/form7203/form7203_debt_inventory.ts";
 import { element, elements } from "../../../../../mef/xml.ts";
 import type {
   MefBuildContext,
   MefFormDescriptor,
-} from "../../../form-descriptor.ts";
+} from "../../../form_descriptor.ts";
 import { projectReviewedStockLoss7203 } from "../../../../domains/income/business/form7203/form7203_stock_loss_projection.ts";
-import { sumPrincipalRepayments } from "../../../../../nodes/intermediate/forms/income/business/form7203/debt-note.ts";
+import { sumPrincipalRepayments } from "../../../../../nodes/intermediate/forms/income/business/form7203/debt_note.ts";
 
 export function buildReviewedStockLoss7203(
   rawFields: Record<string, unknown>,

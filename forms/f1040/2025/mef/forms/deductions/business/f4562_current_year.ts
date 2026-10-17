@@ -2,7 +2,7 @@ import { reconcileInventorySection179Income } from "./f4562_section179.ts";
 import {
   calculateCurrentYearInventory,
   filedCurrentYearSchema,
-} from "../../../../../nodes/intermediate/forms/deductions/business/form4562/current-year.ts";
+} from "../../../../../nodes/intermediate/forms/deductions/business/form4562/current_year.ts";
 import { reconcileInventorySources } from "./f4562_bonus.ts";
 
 export function reconcileCurrentYearInventory(

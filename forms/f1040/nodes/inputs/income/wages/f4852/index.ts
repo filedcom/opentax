@@ -1,13 +1,13 @@
 import {
   assertQualifiedRothSource,
   qualifiedRothReviewSchema,
-} from "./qualified-roth.ts";
+} from "./qualified_roth.ts";
 import {
   retirementAccountTypeSchema,
   reviewedForm4852AccountType,
-} from "./retirement-account.ts";
-import { reviewedRothActivity } from "../../../../intermediate/forms/income/retirement/form8606/roth-activity.ts";
-import { ownerIdentitySchema } from "../../../../intermediate/forms/taxes/self-employment/schedule_se/owner-calculation.ts";
+} from "./retirement_account.ts";
+import { reviewedRothActivity } from "../../../../intermediate/forms/income/retirement/form8606/roth_activity.ts";
+import { ownerIdentitySchema } from "../../../../intermediate/forms/taxes/self-employment/schedule_se/owner_calculation.ts";
 import { z } from "zod";
 import type {
   NodeOutput,

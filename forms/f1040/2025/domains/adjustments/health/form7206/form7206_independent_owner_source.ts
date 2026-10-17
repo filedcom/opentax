@@ -14,8 +14,8 @@ import {
   qualifiedBusinessTipQbiSource,
 } from "../../../../../nodes/intermediate/forms/deductions/additional/schedule1a/calculation.ts";
 import { normalizeAllPending } from "../../../../return-processing/pending.ts";
-import { assertOwnedScheduleSE } from "../../../taxes/self-employment/schedule-se/schedule-se-owner-source.ts";
-import { assertScheduleCReceiptSourceIdentity } from "../../../general/return-assembly/filer-source-reconciliation.ts";
+import { assertOwnedScheduleSE } from "../../../taxes/self-employment/schedule-se/schedule_se_owner_source.ts";
+import { assertScheduleCReceiptSourceIdentity } from "../../../general/return-assembly/filer_source_reconciliation.ts";
 import { assertForm7206SpouseCoverage } from "./form7206_spouse_coverage.ts";
 import { extractFilerIdentity } from "../../../../../mef/filer.ts";
 import type { FilerIdentity } from "../../../../../mef/header.ts";
@@ -23,7 +23,7 @@ import { CONFIG_BY_YEAR } from "../../../../../nodes/config/index.ts";
 import {
   calculateIndependentOwnerHealth,
   reconcileIndependentOwnerHealthGraph,
-} from "../../../../../nodes/intermediate/forms/adjustments/health/form7206/independent-owner.ts";
+} from "../../../../../nodes/intermediate/forms/adjustments/health/form7206/independent_owner.ts";
 export const independentHealthCanonical = (value: unknown) =>
   JSON.stringify(
     value,

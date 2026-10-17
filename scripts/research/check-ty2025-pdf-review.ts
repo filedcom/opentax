@@ -6,13 +6,13 @@ import { PDFDocument } from "pdf-lib";
 import { f1040_2025 } from "../../forms/f1040/2025/index.ts";
 import { buildMefBundle } from "../../forms/f1040/2025/mef/builder.ts";
 import { buildPending } from "../../forms/f1040/2025/mef/execution/pending.ts";
-import { pdfReviewFixtures } from "../../forms/f1040/2025/pdf/review-fixtures.ts";
+import { pdfReviewFixtures } from "../../forms/f1040/2025/pdf/review_fixtures.ts";
 import { ALL_PDF_FORMS } from "../../forms/f1040/2025/pdf/forms/index.ts";
 import {
   buildPdfBytes,
   type PdfPageOrigin,
 } from "../../forms/f1040/2025/pdf/builder.ts";
-import { sha256Hex } from "../../forms/f1040/2025/return-processing/prepared-source.ts";
+import { sha256Hex } from "../../forms/f1040/2025/return-processing/prepared_source.ts";
 import {
   assertReviewSourceFileContents,
   REVIEW_RETURN_TIMESTAMP,

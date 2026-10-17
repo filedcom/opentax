@@ -9,7 +9,7 @@ import { buildMefBundle } from "../../../../mef/builder.ts";
 import { form4952 as nativeForm4952 } from "../../../../mef/forms/deductions/investments/f4952/f4952.ts";
 import { buildPending } from "../../../../mef/execution/pending.ts";
 import { form4952Pdf } from "../../../forms/deductions/investments/f4952.ts";
-import { pdfReviewFixtures } from "../../../review-fixtures.ts";
+import { pdfReviewFixtures } from "../../../review_fixtures.ts";
 
 const base = pdfReviewFixtures.find((item) => item.id === "single-w2-refund")!;
 const k1 = {

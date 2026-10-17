@@ -1,23 +1,23 @@
-import { assertDependentKiddieTaxFamilyReturn } from "../../../../../nodes/inputs/taxes/investments/f8615/dependent-source-review.ts";
+import { assertDependentKiddieTaxFamilyReturn } from "../../../../../nodes/inputs/taxes/investments/f8615/dependent_source_review.ts";
 import { assertW2ArcherContributionSources } from "../../../../domains/adjustments/health/form8853/form8853_contributions_reconciliation.ts";
 import { assertEducationIncomeSource } from "../../../../../nodes/inputs/income/other/education_income/index.ts";
 import { element, elements } from "../../../../../mef/xml.ts";
-import { retainedActcOptOut } from "../../../../domains/credits/earned-income/actc-opt-out-source.ts";
-import { retainedEicOptOut } from "../../../../domains/credits/earned-income/eic/eic-opt-out-source.ts";
-import { assertLine1hSupportedSource } from "../../../../domains/income/wages/line1h-source.ts";
-import { assertIdentified1099IntOwner } from "../../../../domains/income/investments/f1099int/f1099int-owner-reconciliation.ts";
-import { assertPositive1099OidOwner } from "../../../../domains/income/investments/f1099oid/f1099oid-owner-reconciliation.ts";
-import { assertPositive1099DivOwner } from "../../../../domains/income/investments/f1099div/f1099div-owner-reconciliation.ts";
-import { assertPositive1099GOwner } from "../../../../domains/income/other/f1099g/f1099g-owner-reconciliation.ts";
-import { assertPositive1099MOwner } from "../../../../domains/income/business/f1099m/f1099m-owner-reconciliation.ts";
-import { assertPositive1099NecOwner } from "../../../../domains/income/business/f1099nec/f1099nec-owner-reconciliation.ts";
-import { assertPositive1099PatrOwner } from "../../../../domains/income/business/f1099patr/f1099patr-owner-reconciliation.ts";
-import { assertDirectCapitalGainDistributionSource } from "../../../../domains/income/investments/line7a-source-reconciliation.ts";
-import { assertJointDependentRefundSource } from "../../../../domains/general/return-assembly/line12a-dependent-source.ts";
-import { assertLine36EstimatedTaxSource } from "../../../../domains/payments/settlement/line36-estimated-tax-source.ts";
-import { assertNoUnsupportedDeceasedReturn } from "../../../../domains/general/return-assembly/filer-source-reconciliation.ts";
-import { assertHohQualifyingChildSource } from "../../../../domains/general/return-assembly/filing-status/hoh-qualifying-child-source.ts";
-import { assertQssNonclaimedChildSource } from "../../../../domains/general/return-assembly/filing-status/qss-nonclaimed-child-source.ts";
+import { retainedActcOptOut } from "../../../../domains/credits/earned-income/actc_opt_out_source.ts";
+import { retainedEicOptOut } from "../../../../domains/credits/earned-income/eic/eic_opt_out_source.ts";
+import { assertLine1hSupportedSource } from "../../../../domains/income/wages/line1h_source.ts";
+import { assertIdentified1099IntOwner } from "../../../../domains/income/investments/f1099int/f1099int_owner_reconciliation.ts";
+import { assertPositive1099OidOwner } from "../../../../domains/income/investments/f1099oid/f1099oid_owner_reconciliation.ts";
+import { assertPositive1099DivOwner } from "../../../../domains/income/investments/f1099div/f1099div_owner_reconciliation.ts";
+import { assertPositive1099GOwner } from "../../../../domains/income/other/f1099g/f1099g_owner_reconciliation.ts";
+import { assertPositive1099MOwner } from "../../../../domains/income/business/f1099m/f1099m_owner_reconciliation.ts";
+import { assertPositive1099NecOwner } from "../../../../domains/income/business/f1099nec/f1099nec_owner_reconciliation.ts";
+import { assertPositive1099PatrOwner } from "../../../../domains/income/business/f1099patr/f1099patr_owner_reconciliation.ts";
+import { assertDirectCapitalGainDistributionSource } from "../../../../domains/income/investments/line7a_source_reconciliation.ts";
+import { assertJointDependentRefundSource } from "../../../../domains/general/return-assembly/line12a_dependent_source.ts";
+import { assertLine36EstimatedTaxSource } from "../../../../domains/payments/settlement/line36_estimated_tax_source.ts";
+import { assertNoUnsupportedDeceasedReturn } from "../../../../domains/general/return-assembly/filer_source_reconciliation.ts";
+import { assertHohQualifyingChildSource } from "../../../../domains/general/return-assembly/filing-status/hoh_qualifying_child_source.ts";
+import { assertQssNonclaimedChildSource } from "../../../../domains/general/return-assembly/filing-status/qss_nonclaimed_child_source.ts";
 import {
   DependentCreditCategory,
   dependentCreditCategory,
@@ -43,18 +43,18 @@ import {
   isIraRollover,
   isPensionDirectRollover,
 } from "../../../../../nodes/inputs/income/retirement/f1099r/index.ts";
-import type { MefBuildContext, MefFormDescriptor } from "../../../form-descriptor.ts";
-import { assertMfsEitcSource } from "../../../../domains/credits/earned-income/eic/mfs-eitc-source.ts";
-import { assertEicSource } from "../../../../domains/credits/earned-income/eic/eic-source.ts";
-import { residentElectionName } from "../../../../domains/general/return-assembly/resident-election-source.ts";
-import { assertSchedule2Line23 } from "../../../../domains/taxes/other/schedule2-line23-reconciliation.ts";
-import { assertEstimatedPaymentLine26 } from "../../../../domains/payments/settlement/estimated-payment-reconciliation.ts";
-import { assertOtherFormsWithholding } from "../../../../domains/payments/withholding/f8288/f8288-withholding-reconciliation.ts";
-import { assertPresidentialCampaignSource } from "../../../../domains/general/return-assembly/presidential-campaign-source.ts";
+import type { MefBuildContext, MefFormDescriptor } from "../../../form_descriptor.ts";
+import { assertMfsEitcSource } from "../../../../domains/credits/earned-income/eic/mfs_eitc_source.ts";
+import { assertEicSource } from "../../../../domains/credits/earned-income/eic/eic_source.ts";
+import { residentElectionName } from "../../../../domains/general/return-assembly/resident_election_source.ts";
+import { assertSchedule2Line23 } from "../../../../domains/taxes/other/schedule2_line23_reconciliation.ts";
+import { assertEstimatedPaymentLine26 } from "../../../../domains/payments/settlement/estimated_payment_reconciliation.ts";
+import { assertOtherFormsWithholding } from "../../../../domains/payments/withholding/f8288/f8288_withholding_reconciliation.ts";
+import { assertPresidentialCampaignSource } from "../../../../domains/general/return-assembly/presidential_campaign_source.ts";
 import {
   assertReturnScheduleJoins,
   assertReturnWideArithmetic,
-} from "../../../../return-processing/return-wide-arithmetic.ts";
+} from "../../../../return-processing/return_wide_arithmetic.ts";
 
 export interface Fields {
   presidential_campaign_fund_taxpayer?: boolean;

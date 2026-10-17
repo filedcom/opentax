@@ -49,7 +49,7 @@ namespace, business-rule, PDF or IRS acceptance validation.
 ## Reproduction
 
 ```sh
-deno run -A forms/f1040/e2e/ats/ty2025-check-ledger.ts /tmp/ats-native-values.json
+deno run -A forms/f1040/e2e/ats/ty2025_check_ledger.ts /tmp/ats-native-values.json
 deno test -A forms/f1040/e2e/ats
 ```
 

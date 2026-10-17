@@ -1,5 +1,5 @@
 import { element, elements } from "../../../../../mef/xml.ts";
-import type { MefFormDescriptor } from "../../../form-descriptor.ts";
+import type { MefFormDescriptor } from "../../../form_descriptor.ts";
 import { reconcileForm8844DirectEmployer } from "./f8844_source.ts";
 
 export const form8844: MefFormDescriptor<"f8844", unknown> = {

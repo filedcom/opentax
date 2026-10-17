@@ -1,6 +1,6 @@
-import { projectPassiveSCorp7203Copy } from "../../../../domains/income/business/passive-s-corp-loss-copies.ts";
+import { projectPassiveSCorp7203Copy } from "../../../../domains/income/business/passive_s_corp_loss_copies.ts";
 import { element, elements } from "../../../../../mef/xml.ts";
-import type { MefBuildContext, MefFormDescriptor } from "../../../form-descriptor.ts";
+import type { MefBuildContext, MefFormDescriptor } from "../../../form_descriptor.ts";
 import {
   projectOwned7203Family,
   projectReviewedStockLoss7203,

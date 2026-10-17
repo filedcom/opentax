@@ -1,4 +1,4 @@
-import { formatForm8606BasisRatio } from "../../../../../nodes/intermediate/forms/income/retirement/form8606/roth-current-conversion.ts";
+import { formatForm8606BasisRatio } from "../../../../../nodes/intermediate/forms/income/retirement/form8606/roth_current_conversion.ts";
 import { reconcileForm8606RothInventories } from "../../../../domains/income/retirement/form8606/form8606_roth_inventory_reconciliation.ts";
 import { element, elements } from "../../../../../mef/xml.ts";
 import { FilingStatus } from "../../../../../mef/header.ts";
@@ -6,7 +6,7 @@ import {
   IraOwner,
   printSchema,
 } from "../../../../../nodes/intermediate/forms/income/retirement/form8606/index.ts";
-import type { MefBuildContext, MefFormDescriptor } from "../../../form-descriptor.ts";
+import type { MefBuildContext, MefFormDescriptor } from "../../../form_descriptor.ts";
 import type { z } from "zod";
 import { inputSchema as iraWorksheetSchema } from "../../../../../nodes/intermediate/worksheets/adjustments/retirement/ira_deduction_worksheet/index.ts";
 import { inputSchema as w2Schema } from "../../../../../nodes/inputs/income/wages/w2/index.ts";

@@ -11,7 +11,7 @@ import { FilingStatus } from "../../../../mef/header.ts";
 import { buildPending } from "../../../mef/execution/pending.ts";
 import { buildPdfBytes, fillFormPdf } from "../../../pdf/builder.ts";
 import { schedule1Pdf } from "../../../pdf/forms/general/return-assembly/schedule1/schedule1.ts";
-import { pdfReviewFixtures } from "../../../pdf/review-fixtures.ts";
+import { pdfReviewFixtures } from "../../../pdf/review_fixtures.ts";
 import { taxableAlimonyReceived } from "../../../../nodes/inputs/income/other/alimony_received/index.ts";
 
 const source = {

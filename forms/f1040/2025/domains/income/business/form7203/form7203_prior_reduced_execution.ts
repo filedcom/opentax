@@ -9,8 +9,8 @@ import type {
 import { buildExecutionPlan } from "../../../../../../../core/runtime/planner.ts";
 import { registry } from "../../../../registry.ts";
 import { inputSchema as k1InputSchema } from "../../../../../nodes/inputs/income/rental-passthrough/k1_s_corp/index.ts";
-import { calculatePriorReducedNoteGainCandidate } from "../../../../../nodes/intermediate/forms/income/business/form7203/prior-reduced-note.ts";
-import { inspectPrior7203MeFXml } from "../../../../../nodes/intermediate/forms/income/business/form7203/prior-filing-xml.ts";
+import { calculatePriorReducedNoteGainCandidate } from "../../../../../nodes/intermediate/forms/income/business/form7203/prior_reduced_note.ts";
+import { inspectPrior7203MeFXml } from "../../../../../nodes/intermediate/forms/income/business/form7203/prior_filing_xml.ts";
 
 /**
  * Bind every claimed source to bytes in the same execution. The graph's prior

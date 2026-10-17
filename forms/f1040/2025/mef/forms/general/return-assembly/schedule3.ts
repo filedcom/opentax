@@ -1,5 +1,5 @@
 import { element, elements } from "../../../../../mef/xml.ts";
-import type { MefBuildContext, MefFormDescriptor } from "../../../form-descriptor.ts";
+import type { MefBuildContext, MefFormDescriptor } from "../../../form_descriptor.ts";
 import { assertSchedule3Line8Join } from "../../../../domains/credits/individual/schedule3_line8_join.ts";
 import { assertSchedule3Line13aSource } from "../../../../domains/payments/refundable/schedule3_line13a_source.ts";
 import { assertSchedule3Line6jSource } from "../../../../domains/credits/individual/schedule3_line6j_source.ts";

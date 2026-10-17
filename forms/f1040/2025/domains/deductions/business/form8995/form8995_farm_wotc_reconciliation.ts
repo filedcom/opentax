@@ -2,11 +2,11 @@ import {
   inputSchema as tipInputSchema,
   qualifiedBusinessTipQbiSource,
 } from "../../../../../nodes/intermediate/forms/deductions/additional/schedule1a/calculation.ts";
-import { tipSourceCanonical } from "../../../../../nodes/intermediate/forms/deductions/business/form8995/qualified-tips.ts";
+import { tipSourceCanonical } from "../../../../../nodes/intermediate/forms/deductions/business/form8995/qualified_tips.ts";
 import {
   calculateIndependentOwnerHealth,
   reconcileIndependentOwnerHealthGraph,
-} from "../../../../../nodes/intermediate/forms/adjustments/health/form7206/independent-owner.ts";
+} from "../../../../../nodes/intermediate/forms/adjustments/health/form7206/independent_owner.ts";
 import {
   computeNetProfit as cProfit,
   inputSchema as cSchema,
@@ -16,11 +16,11 @@ import { inputSchema as gSchema } from "../../../../../nodes/inputs/income/other
 import {
   filedOwnedScheduleC,
   filedOwnedScheduleF,
-} from "../../../../../nodes/owned-business-filing.ts";
-import { jointOwnerQbi } from "../../../../../nodes/intermediate/forms/deductions/business/form8995/joint-owner.ts";
+} from "../../../../../nodes/owned_business_filing.ts";
+import { jointOwnerQbi } from "../../../../../nodes/intermediate/forms/deductions/business/form8995/joint_owner.ts";
 import { isDeepStrictEqual } from "node:util";
 import { normalizeAllPending } from "../../../../return-processing/pending.ts";
-import { assertOwnedScheduleSE } from "../../../taxes/self-employment/schedule-se/schedule-se-owner-source.ts";
+import { assertOwnedScheduleSE } from "../../../taxes/self-employment/schedule-se/schedule_se_owner_source.ts";
 import {
   computeNetProfit,
   inputSchema as farmSchema,
@@ -42,7 +42,7 @@ import { inputSchema as parentSchema } from "../../../../../nodes/intermediate/f
 import {
   calculateFarmWotcLines,
   farmWotcBusinessAmounts,
-} from "../../../../../nodes/intermediate/forms/deductions/business/form8995a/farm-wotc.ts";
+} from "../../../../../nodes/intermediate/forms/deductions/business/form8995a/farm_wotc.ts";
 
 import type { FilerIdentity } from "../../../../../mef/header.ts";
 import { assertForm3800FinalCreditJoin } from "../../../credits/business/form3800/form3800_final_credit_join.ts";

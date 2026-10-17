@@ -1,7 +1,7 @@
 import {
   currentYearInput,
   currentYearMultiInput,
-} from "./current-year.fixture.ts";
+} from "./current_year.fixture.ts";
 import { bonusElectionReviewSchema } from "../../../../../nodes/intermediate/forms/deductions/business/form4562/elections.ts";
 
 export const electionCases = [

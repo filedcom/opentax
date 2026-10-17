@@ -1,18 +1,18 @@
 import { StandardFonts } from "pdf-lib";
-import { assertOwnedScheduleSE } from "../../../../domains/taxes/self-employment/schedule-se/schedule-se-owner-source.ts";
+import { assertOwnedScheduleSE } from "../../../../domains/taxes/self-employment/schedule-se/schedule_se_owner_source.ts";
 import { calculateIndependentPatronBusinesses } from "../../../../../nodes/intermediate/forms/deductions/business/form8995a/index.ts";
 import { patronProprietorSsn } from "../../../../domains/deductions/business/form8995a/form8995a_patron_reconciliation.ts";
 import { assertProducingMiningZeroQbiReturn } from "../../../../domains/deductions/business/form8995a/form8995a_producing_mining_source.ts";
 import { assertFarmWotcReturn } from "../../../../domains/deductions/business/form8995/form8995_farm_wotc_reconciliation.ts";
 import { assertMixedFishingQbiReturn } from "../../../../domains/deductions/business/form8995a/form8995a_mixed_fishing_source.ts";
-import { calculateFarmWotcLines } from "../../../../../nodes/intermediate/forms/deductions/business/form8995a/farm-wotc.ts";
-import { qbiPercentageForPdf } from "../../../reviews/general/composed-returns/qbi-percentage.ts";
-import { assertSstbScheduleCSource } from "../../../../mef/forms/deductions/business/f8995a/f8995a-sstb-source.ts";
+import { calculateFarmWotcLines } from "../../../../../nodes/intermediate/forms/deductions/business/form8995a/farm_wotc.ts";
+import { qbiPercentageForPdf } from "../../../reviews/general/composed-returns/qbi_percentage.ts";
+import { assertSstbScheduleCSource } from "../../../../mef/forms/deductions/business/f8995a/f8995a_sstb_source.ts";
 import { assertForm8995APatronReturn } from "../../../../domains/deductions/business/form8995a/form8995a_patron_reconciliation.ts";
 import type {
   PdfFieldEntry,
   PdfFormDescriptor,
-} from "../../../form-descriptor.ts";
+} from "../../../form_descriptor.ts";
 import type { FilerIdentity } from "../../../../../mef/header.ts";
 import {
   assertMfsSstbOwner,

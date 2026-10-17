@@ -4,7 +4,7 @@ import {
   type PhysicalPresenceFiling,
   physicalPresenceFilingSchema,
 } from "../../../../../nodes/intermediate/forms/income/foreign/form2555/calculation.ts";
-import type { MefBuildContext, MefFormDescriptor } from "../../../form-descriptor.ts";
+import type { MefBuildContext, MefFormDescriptor } from "../../../form_descriptor.ts";
 
 export interface Fields {
   filing_details?: PhysicalPresenceFiling | null;

@@ -5,8 +5,8 @@ import {
   assertForm8949TransactionMath,
   transactionSchema,
 } from "../../../../../nodes/intermediate/forms/income/investments/form8949/index.ts";
-import type { MefFormDescriptor } from "../../../form-descriptor.ts";
-import type { MefBuildContext } from "../../../form-descriptor.ts";
+import type { MefFormDescriptor } from "../../../form_descriptor.ts";
+import type { MefBuildContext } from "../../../form_descriptor.ts";
 import {
   calculateInvestment1245Disposition,
   investment1245DispositionSchema,

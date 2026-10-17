@@ -3,7 +3,7 @@ import * as fs from "node:fs/promises";
 import * as sys from "../../../../../../../scripts/support/sys.ts";
 import { form8606 } from "../../../../mef/forms/income/retirement/f8606.ts";
 import { form8606Pdf } from "../../../../pdf/forms/income/retirement/f8606.ts";
-import { reviewedRothOwnerInventory } from "../../../../../nodes/intermediate/forms/income/retirement/form8606/roth-inventory.ts";
+import { reviewedRothOwnerInventory } from "../../../../../nodes/intermediate/forms/income/retirement/form8606/roth_inventory.ts";
 import { createHash } from "node:crypto";
 import { printSchema } from "../../../../../nodes/intermediate/forms/income/retirement/form8606/index.ts";
 import { assertEquals, assertRejects, assertThrows } from "@std/assert";

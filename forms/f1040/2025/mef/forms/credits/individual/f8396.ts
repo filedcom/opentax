@@ -5,7 +5,7 @@ import {
   type Form8396Source,
   form8396SourceSchema,
 } from "../../../../../nodes/intermediate/forms/credits/individual/form8396/calculation.ts";
-import type { MefBuildContext, MefFormDescriptor } from "../../../form-descriptor.ts";
+import type { MefBuildContext, MefFormDescriptor } from "../../../form_descriptor.ts";
 import { assertForm8396ReissueForm8828Join } from "./f8396_reissue_join.ts";
 
 type LineKey =

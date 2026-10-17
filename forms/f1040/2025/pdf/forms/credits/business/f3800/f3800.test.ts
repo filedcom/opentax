@@ -10,15 +10,15 @@ import { FilingStatus } from "../../../../../../nodes/types.ts";
 import { EnergyType } from "../../../../../../nodes/inputs/credits/business/f8835/index.ts";
 import { inputSchema as f8835InputSchema } from "../../../../../../nodes/inputs/credits/business/f8835/index.ts";
 import { buildMefBundle } from "../../../../../mef/builder.ts";
-import { testFiler } from "../../../../../mef/support/test-filer.ts";
+import { testFiler } from "../../../../../mef/support/test_filer.ts";
 import { form3800Pdf } from "./f3800.ts";
 import { form8835Pdf } from "../f8835.ts";
 import { buildPdfBytes } from "../../../../builder.ts";
 import { PDFDocument } from "pdf-lib";
-import { pdfReviewFixtures } from "../../../../review-fixtures.ts";
+import { pdfReviewFixtures } from "../../../../review_fixtures.ts";
 import { f1040_2025 } from "../../../../../index.ts";
 import { normalizeAllPending } from "../../../../../return-processing/pending.ts";
-import { sha256Hex } from "../../../../../return-processing/prepared-source.ts";
+import { sha256Hex } from "../../../../../return-processing/prepared_source.ts";
 import { inputSchema as f3800InputSchema } from "../../../../../../nodes/inputs/credits/business/f3800/index.ts";
 import {
   form3800PartIAndIIFields,

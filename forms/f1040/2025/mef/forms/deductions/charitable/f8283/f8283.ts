@@ -1,6 +1,6 @@
-import { intellectualPropertyIdentity } from "../../../../../../nodes/inputs/deductions/charitable/f8283/intellectual-property-source.ts";
-import { calculateCharitableNaturalResource } from "../../../../../../nodes/inputs/deductions/charitable/f8283/natural-resource-source.ts";
-import { calculateCharitableDepreciation } from "../../../../../../nodes/inputs/deductions/charitable/f8283/depreciation-source.ts";
+import { intellectualPropertyIdentity } from "../../../../../../nodes/inputs/deductions/charitable/f8283/intellectual_property_source.ts";
+import { calculateCharitableNaturalResource } from "../../../../../../nodes/inputs/deductions/charitable/f8283/natural_resource_source.ts";
+import { calculateCharitableDepreciation } from "../../../../../../nodes/inputs/deductions/charitable/f8283/depreciation_source.ts";
 import { assertReviewedForm8283Return } from "./f8283_return.ts";
 import { element, elements } from "../../../../../../mef/xml.ts";
 import {
@@ -17,7 +17,7 @@ import {
 import type {
   MefBuildContext,
   MefFormDescriptor,
-} from "../../../../form-descriptor.ts";
+} from "../../../../form_descriptor.ts";
 import {
   assertElectedSectionAReconciled,
   assertElectedSectionBReconciled,

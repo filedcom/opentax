@@ -4,30 +4,30 @@ import {
   ableContributionReviewSchema,
   ownedAbleDistributions,
 } from "../../../../intermediate/forms/credits/individual/form8880/able_contribution_review.ts";
-import { ptcJointIncomeReviewSchema } from "../../../../../2025/domains/credits/health/form8962/form8962-joint-income.ts";
+import { ptcJointIncomeReviewSchema } from "../../../../../2025/domains/credits/health/form8962/form8962_joint_income.ts";
 import {
   assertForm8962SpouseIncomeReview,
   ptcSpouseIncomeReviewSchema,
-} from "../../../../../2025/domains/credits/health/form8962/form8962-family-eligibility.ts";
-import type { FilerCreditEligibility } from "./filer-eligibility.ts";
+} from "../../../../../2025/domains/credits/health/form8962/form8962_family_eligibility.ts";
+import type { FilerCreditEligibility } from "./filer_eligibility.ts";
 import {
   filerCreditEligibility,
   isAge65ByEndOfTaxYear,
-} from "./filer-eligibility.ts";
+} from "./filer_eligibility.ts";
 export {
   filerCreditEligibility,
   isAge65ByEndOfTaxYear,
-} from "./filer-eligibility.ts";
+} from "./filer_eligibility.ts";
 export type {
   FilerCreditEligibility,
   FilerCreditFacts,
-} from "./filer-eligibility.ts";
-import { dependentKiddieTaxFacts } from "../../../taxes/investments/f8615/dependent-source-review.ts";
+} from "./filer_eligibility.ts";
+import { dependentKiddieTaxFacts } from "../../../taxes/investments/f8615/dependent_source_review.ts";
 import {
   dependentKiddieTaxFamilyReviewSchema,
   dependentScholarshipEarned,
   dependentScholarshipReviewSchema,
-} from "../../../income/other/education_income/dependent-scholarship-review.ts";
+} from "../../../income/other/education_income/dependent_scholarship_review.ts";
 import { z } from "zod";
 import type {
   NodeOutput,
@@ -83,17 +83,17 @@ import {
   eicBirthResidencyReviewSchema,
   reviewedEicBirthResidence,
   scheduleEicLine6Months,
-} from "../../../../../2025/domains/credits/earned-income/eic/eic-birth-residency.ts";
+} from "../../../../../2025/domains/credits/earned-income/eic/eic_birth_residency.ts";
 
 import {
   eicDatedResidencyReviewSchema,
   reviewedEicDatedResidence,
-} from "../../../../../2025/domains/credits/earned-income/eic/eic-dated-residency.ts";
+} from "../../../../../2025/domains/credits/earned-income/eic/eic_dated_residency.ts";
 
 import {
   eicDeathResidencyReviewSchema,
   reviewedEicDeathResidence,
-} from "../../../../../2025/domains/credits/earned-income/eic/eic-death-residency.ts";
+} from "../../../../../2025/domains/credits/earned-income/eic/eic_death_residency.ts";
 
 // ─── Enums ────────────────────────────────────────────────────────────────────
 

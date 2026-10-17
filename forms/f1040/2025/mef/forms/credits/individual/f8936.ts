@@ -7,7 +7,7 @@ import {
 } from "../../../../../nodes/inputs/credits/individual/f8936/index.ts";
 import { form8936Lines } from "../../../../domains/credits/individual/form8936/form8936_lines.ts";
 import { FilingStatus } from "../../../../../nodes/types.ts";
-import type { MefBuildContext, MefFormDescriptor } from "../../../form-descriptor.ts";
+import type { MefBuildContext, MefFormDescriptor } from "../../../form_descriptor.ts";
 
 type Input = Partial<F8936Input> & Record<string, unknown>;
 

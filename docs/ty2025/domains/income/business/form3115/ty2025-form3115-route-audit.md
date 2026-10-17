@@ -32,7 +32,7 @@ remains separate and retains its presentation qualifications.
 
 Evidence: `.state/research/method-recapture-routes-2026-10-10/components.log`
 and `public.log`, on production runtime `d65263134`. The public tests live in
-`forms/f1040/2025/domains/general/return-assembly/method-recapture.test.ts`.
+`forms/f1040/2025/domains/general/return-assembly/method_recapture.test.ts`.
 The component batch comprises Form3115 input and ScheduleC e2e, plus input,
 native and PDF modules for each of Forms4255 and8611.
 

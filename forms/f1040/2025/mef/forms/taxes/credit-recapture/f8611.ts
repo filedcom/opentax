@@ -5,7 +5,7 @@ import {
   type F8611Item,
   inputSchema,
 } from "../../../../../nodes/inputs/taxes/credit-recapture/f8611/index.ts";
-import type { MefBuildContext, MefFormDescriptor } from "../../../form-descriptor.ts";
+import type { MefBuildContext, MefFormDescriptor } from "../../../form_descriptor.ts";
 
 export function reconcileForm8611Schedule2(
   items: readonly F8611Item[],

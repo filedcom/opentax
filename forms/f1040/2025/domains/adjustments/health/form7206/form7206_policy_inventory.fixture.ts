@@ -1,4 +1,4 @@
-import { independentHealthInputs } from "../../../../pdf/reviews/adjustments/health/form7206-independent-owner.fixture.ts";
+import { independentHealthInputs } from "../../../../pdf/reviews/adjustments/health/form7206_independent_owner.fixture.ts";
 
 export const policyInventoryCases = [
   {

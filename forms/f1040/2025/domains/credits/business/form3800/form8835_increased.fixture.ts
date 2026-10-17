@@ -1,11 +1,11 @@
 import { PDFDocument, StandardFonts } from "pdf-lib";
 import { fixture } from "./form3800_k1_inventory.fixture.ts";
-import { form8835IncreaseDescription } from "../../../../../nodes/inputs/credits/business/f8835/increase-source.ts";
+import { form8835IncreaseDescription } from "../../../../../nodes/inputs/credits/business/f8835/increase_source.ts";
 import {
   increasedCreditPerjury,
   smallFacilityDeclaration,
 } from "../../../../mef/forms/credits/business/f8835_increase_statement.ts";
-import { sha256Hex } from "../../../../return-processing/prepared-source.ts";
+import { sha256Hex } from "../../../../return-processing/prepared_source.ts";
 
 export async function increasedFixture(
   count: number,

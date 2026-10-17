@@ -17,7 +17,7 @@ import { assertForm6251RefundSource } from "../../../../domains/taxes/amt/form62
 import { assertForm6251Form8864Source } from "../../../../domains/taxes/amt/form6251/form6251_form8864_source.ts";
 import { assertForm6251HouseboatInterestSource } from "../../../../domains/taxes/amt/form6251/form6251_houseboat_source.ts";
 import { FilingStatus } from "../../../../../mef/header.ts";
-import type { MefBuildContext, MefFormDescriptor } from "../../../form-descriptor.ts";
+import type { MefBuildContext, MefFormDescriptor } from "../../../form_descriptor.ts";
 
 export interface Fields {
   regular_tax_income?: number | null;

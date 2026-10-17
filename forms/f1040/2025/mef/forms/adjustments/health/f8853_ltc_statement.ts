@@ -3,7 +3,7 @@ import {
   type Form8853Input,
   inputSchema,
 } from "../../../../../nodes/intermediate/forms/adjustments/health/form8853/index.ts";
-import type { MefFormDescriptor } from "../../../form-descriptor.ts";
+import type { MefFormDescriptor } from "../../../form_descriptor.ts";
 
 export const form8853LtcStatement: MefFormDescriptor<
   "form8853",

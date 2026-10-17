@@ -1,6 +1,6 @@
 import { element, elements } from "../../../../../mef/xml.ts";
 import type { ScheduleJLines } from "../../../../../nodes/intermediate/forms/taxes/income-averaging/schedule_j_calculation/calculation.ts";
-import type { MefBuildContext, MefFormDescriptor } from "../../../form-descriptor.ts";
+import type { MefBuildContext, MefFormDescriptor } from "../../../form_descriptor.ts";
 import { scheduleJChildElectionTax } from "../../../../domains/taxes/income-averaging/schedule-j/schedule_j_child_tax_join.ts";
 
 // The calculator publishes one complete set of Schedule J dollar lines. Lines

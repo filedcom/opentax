@@ -4,7 +4,7 @@ import {
   inputSchema,
   totalCarryforward,
 } from "../../../../../nodes/inputs/credits/individual/f8859/index.ts";
-import type { MefFormDescriptor } from "../../../form-descriptor.ts";
+import type { MefFormDescriptor } from "../../../form_descriptor.ts";
 
 const amount = z.number().finite().nonnegative();
 const finalizedSchema = inputSchema.extend({

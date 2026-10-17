@@ -1,19 +1,19 @@
 import { z } from "zod";
-import type { filedCurrentYearSchema } from "../../../../../nodes/intermediate/forms/deductions/business/form4562/current-year.ts";
-import type { section179SummarySchema } from "../../../../../nodes/intermediate/forms/deductions/business/form4562/section179-inventory.ts";
+import type { filedCurrentYearSchema } from "../../../../../nodes/intermediate/forms/deductions/business/form4562/current_year.ts";
+import type { section179SummarySchema } from "../../../../../nodes/intermediate/forms/deductions/business/form4562/section179_inventory.ts";
 import {
   computeNetProfit,
   inputSchema as scheduleCSchema,
 } from "../../../../../nodes/inputs/income/business/schedule_c/model.ts";
 import { inputSchema as w2Schema } from "../../../../../nodes/inputs/income/wages/w2/index.ts";
 import { FilingStatus } from "../../../../../nodes/types.ts";
-import { roundWholeDollars } from "../../../../../shared/whole-dollars.ts";
+import { roundWholeDollars } from "../../../../../shared/whole_dollars.ts";
 import { element, elements } from "../../../../../mef/xml.ts";
 import {
   calculateSingleScheduleCForm7206,
   form7206LinesSchema,
   singleScheduleCPlanSchema,
-} from "../../../../../nodes/intermediate/forms/adjustments/health/form7206/single-source.ts";
+} from "../../../../../nodes/intermediate/forms/adjustments/health/form7206/single_source.ts";
 import { TS } from "../../../../../nodes/types.ts";
 
 function section179HealthDeduction(

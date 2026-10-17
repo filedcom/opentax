@@ -1,6 +1,6 @@
 import * as sys from "../support/sys.ts";
 import { join } from "node:path";
-import { sha256Hex } from "../../forms/f1040/2025/return-processing/prepared-source.ts";
+import { sha256Hex } from "../../forms/f1040/2025/return-processing/prepared_source.ts";
 
 export interface ReviewTemplateCacheEntry {
   readonly fileName: string;

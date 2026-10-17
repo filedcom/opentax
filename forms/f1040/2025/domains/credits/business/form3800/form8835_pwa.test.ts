@@ -16,12 +16,12 @@ import { buildPdfBytes, type PdfPageOrigin } from "../../../../pdf/builder.ts";
 import {
   preparedSourceSha256,
   sha256Hex,
-} from "../../../../return-processing/prepared-source.ts";
+} from "../../../../return-processing/prepared_source.ts";
 import {
   calculateForm8835,
   inputSchema,
 } from "../../../../../nodes/inputs/credits/business/f8835/index.ts";
-import { reconcileForm8835PwaPayroll } from "../../../../../nodes/inputs/credits/business/f8835/pwa-source.ts";
+import { reconcileForm8835PwaPayroll } from "../../../../../nodes/inputs/credits/business/f8835/pwa_source.ts";
 import { form8835PwaFields } from "../../../../mef/forms/credits/business/f8835_pwa_statement.ts";
 
 for (const c of pwaCases) {

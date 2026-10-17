@@ -1,5 +1,5 @@
 import { element, elements } from "../../../../../mef/xml.ts";
-import type { MefFormDescriptor } from "../../../form-descriptor.ts";
+import type { MefFormDescriptor } from "../../../form_descriptor.ts";
 import { section1294DueFromCalculatedForm } from "../../../../../nodes/inputs/income/foreign/f8621/section1294.ts";
 
 // TY2025 ReturnData1040 permits one statement for Schedule 2 line 17z.

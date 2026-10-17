@@ -11,7 +11,7 @@ import { buildExecutionPlan } from "../../../../../../core/runtime/planner.ts";
 import { buildMefXml } from "../../../mef/builder.ts";
 import { buildPending } from "../../../mef/execution/pending.ts";
 import { buildPdfBytes } from "../../../pdf/builder.ts";
-import { pdfReviewFixtures } from "../../../pdf/review-fixtures.ts";
+import { pdfReviewFixtures } from "../../../pdf/review_fixtures.ts";
 import { registry } from "../../../registry.ts";
 import { inputSchema as form8959Schema } from "../../../../nodes/intermediate/forms/taxes/employment/form8959/index.ts";
 

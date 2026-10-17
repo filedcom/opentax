@@ -1,4 +1,4 @@
-import { sourceDistributionFraction } from "../../../../../nodes/intermediate/forms/taxes/retirement/form4972/source-rounding.ts";
+import { sourceDistributionFraction } from "../../../../../nodes/intermediate/forms/taxes/retirement/form4972/source_rounding.ts";
 
 import { reconcileIraRecharacterizations } from "../../../../domains/income/retirement/form8606/form8606_recharacterization_source.ts";
 import { form4852NativeSources } from "../../../../domains/income/wages/form4852/form4852_native_source.ts";
@@ -9,8 +9,8 @@ import {
   type itemSchema,
 } from "../../../../../nodes/inputs/income/retirement/f1099r/index.ts";
 import { TS } from "../../../../../nodes/types.ts";
-import type { MefBuildContext, MefFormDescriptor } from "../../../form-descriptor.ts";
-import { assert1099RRecipientOwner } from "../../../../domains/income/retirement/f1099r/f1099r-recipient-owner.ts";
+import type { MefBuildContext, MefFormDescriptor } from "../../../form_descriptor.ts";
+import { assert1099RRecipientOwner } from "../../../../domains/income/retirement/f1099r/f1099r_recipient_owner.ts";
 
 type Item = z.infer<typeof itemSchema>;
 

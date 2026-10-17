@@ -1,4 +1,4 @@
-import { assertPrintableSourceTextFields } from "../../../../../shared/source-printable-fields.ts";
+import { assertPrintableSourceTextFields } from "../../../../../shared/source_printable_fields.ts";
 import { PDFDocument } from "pdf-lib";
 import { z } from "zod";
 import { inputSchema as refinancePointsInputSchema } from "../mortgage_refinance_points/index.ts";

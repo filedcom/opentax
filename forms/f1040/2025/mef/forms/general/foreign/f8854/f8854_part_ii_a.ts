@@ -4,7 +4,7 @@ import {
   inputSchema,
   sectionAExceptionAnswers,
 } from "../../../../../../nodes/inputs/general/foreign/f8854/index.ts";
-import { calculateBalanceSheet } from "../../../../../../nodes/inputs/general/foreign/f8854/balance-sheet.ts";
+import { calculateBalanceSheet } from "../../../../../../nodes/inputs/general/foreign/f8854/balance_sheet.ts";
 
 /** IRS8854 Part II Section A children in 2025v5.4 XSD order. */
 export function buildForm8854PartIISectionA(

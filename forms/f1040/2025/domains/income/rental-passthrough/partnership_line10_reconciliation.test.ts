@@ -3,7 +3,7 @@ import { assertEquals, assertRejects, assertThrows } from "@std/assert";
 import { buildExecutionPlan } from "../../../../../../core/runtime/planner.ts";
 import { execute } from "../../../../../../core/runtime/executor.ts";
 import { registry } from "../../../registry.ts";
-import { pdfReviewFixtures } from "../../../pdf/review-fixtures.ts";
+import { pdfReviewFixtures } from "../../../pdf/review_fixtures.ts";
 import { buildMefXml } from "../../../mef/builder.ts";
 import { buildPending } from "../../../mef/execution/pending.ts";
 import { buildPdfBytes } from "../../../pdf/builder.ts";

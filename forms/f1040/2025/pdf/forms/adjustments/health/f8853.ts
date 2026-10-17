@@ -8,7 +8,7 @@ import { StandardFonts } from "pdf-lib";
 import type {
   PdfFieldEntry,
   PdfFormDescriptor,
-} from "../../../form-descriptor.ts";
+} from "../../../form_descriptor.ts";
 import {
   calculateArcherMsaDistribution,
   inputSchema,

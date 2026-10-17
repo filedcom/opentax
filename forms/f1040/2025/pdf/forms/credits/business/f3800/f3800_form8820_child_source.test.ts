@@ -2,7 +2,7 @@ import { test } from "bun:test";
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import { f1040_2025 } from "../../../../../index.ts";
 import { normalizeAllPending } from "../../../../../return-processing/pending.ts";
-import { pdfReviewFixtures } from "../../../../review-fixtures.ts";
+import { pdfReviewFixtures } from "../../../../review_fixtures.ts";
 import { form8820Pdf } from "../f8820.ts";
 
 const orphan = {

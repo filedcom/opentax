@@ -9,7 +9,7 @@ import { form8889 } from "../../../../mef/forms/adjustments/health/f8889.ts";
 import { form5329 } from "../../../../mef/forms/taxes/retirement/f5329.ts";
 import { form8889Pdf } from "../../../../pdf/forms/adjustments/health/f8889.ts";
 import { form5329Pdf } from "../../../../pdf/forms/taxes/retirement/f5329.ts";
-import { pdfReviewFixtures } from "../../../../pdf/review-fixtures.ts";
+import { pdfReviewFixtures } from "../../../../pdf/review_fixtures.ts";
 
 const base = pdfReviewFixtures.find((item) =>
   item.id === "joint-two-hsa-owners"

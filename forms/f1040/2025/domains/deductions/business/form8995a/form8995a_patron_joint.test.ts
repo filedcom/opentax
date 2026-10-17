@@ -1,6 +1,6 @@
 import { test } from "bun:test";
 import * as sys from "../../../../../../../scripts/support/sys.ts";
-import { patronSpouseW2 } from "../../../../pdf/reviews/general/composed-returns/review-8995a-patron-joint.fixture.ts";
+import { patronSpouseW2 } from "../../../../pdf/reviews/general/composed-returns/review_8995a_patron_joint.fixture.ts";
 import {
   assert,
   assertEquals,
@@ -12,7 +12,7 @@ import { f1040_2025 } from "../../../../index.ts";
 import { buildPending } from "../../../../mef/execution/pending.ts";
 import { buildMefBundle } from "../../../../mef/builder.ts";
 import { buildPdfBytes } from "../../../../pdf/builder.ts";
-import { pdfReviewFixtures } from "../../../../pdf/review-fixtures.ts";
+import { pdfReviewFixtures } from "../../../../pdf/review_fixtures.ts";
 import {
   calculateOneBusiness8995ALines,
   calculatePatronScheduleDLines,

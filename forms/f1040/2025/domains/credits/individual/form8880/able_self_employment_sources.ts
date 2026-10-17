@@ -14,7 +14,7 @@ import { w2ItemSchema } from "../../../../../nodes/inputs/income/wages/w2/index.
 import {
   filedOwnedScheduleC,
   filedOwnedScheduleF,
-} from "../../../../../nodes/owned-business-filing.ts";
+} from "../../../../../nodes/owned_business_filing.ts";
 import { scheduleSELines } from "../../../../../nodes/intermediate/forms/taxes/self-employment/schedule_se/calculation.ts";
 import { CONFIG_BY_YEAR } from "../../../../../nodes/config/index.ts";
 import { TS } from "../../../../../nodes/types.ts";

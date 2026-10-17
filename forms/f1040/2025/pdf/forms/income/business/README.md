@@ -22,8 +22,8 @@ Income sources, exclusions, and net-income reconciliation.
 | [f7203_stock_loss.ts](f7203_stock_loss.ts) | 1 files |
 | [f7217.test.ts](f7217.test.ts) | 1 files |
 | [f7217.ts](f7217.ts) | 1 files |
-| [f8582-current-loss-review.test.ts](f8582-current-loss-review.test.ts) | 1 files |
-| [f8582-current-loss-review.ts](f8582-current-loss-review.ts) | 1 files |
+| [f8582_current_loss_review.test.ts](f8582_current_loss_review.test.ts) | 1 files |
+| [f8582_current_loss_review.ts](f8582_current_loss_review.ts) | 1 files |
 | [f8582.test.ts](f8582.test.ts) | 1 files |
 | [f8582.ts](f8582.ts) | 1 files |
 | [f8582_continuation.ts](f8582_continuation.ts) | 1 files |

@@ -5,7 +5,7 @@ import { assertEquals, assertRejects, assertThrows } from "@std/assert";
 import {
   currentPropertyQbiRows,
   currentPropertySourceSchema,
-} from "../../../../../nodes/inputs/income/rental-passthrough/schedule_e/current-property-source.ts";
+} from "../../../../../nodes/inputs/income/rental-passthrough/schedule_e/current_property_source.ts";
 import { f1040_2025 } from "../../../../index.ts";
 import {
   passivePropertyCases,

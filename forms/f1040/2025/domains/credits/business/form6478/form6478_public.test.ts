@@ -1,7 +1,7 @@
 import { test } from "bun:test";
 import { assertEquals, assertStringIncludes } from "@std/assert";
 import { f1040_2025 } from "../../../../index.ts";
-import { pdfReviewFixtures } from "../../../../pdf/review-fixtures.ts";
+import { pdfReviewFixtures } from "../../../../pdf/review_fixtures.ts";
 import { BiofuelType } from "../../../../../nodes/inputs/credits/business/f6478/index.ts";
 
 const base = pdfReviewFixtures.find((f) => f.id === "single-w2-refund")!;

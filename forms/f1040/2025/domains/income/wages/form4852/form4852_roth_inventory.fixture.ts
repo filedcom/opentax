@@ -6,7 +6,7 @@ import {
 import {
   rothOwnerInventoryDocuments,
   rothOwnerInventorySchema,
-} from "../../../../../nodes/intermediate/forms/income/retirement/form8606/roth-inventory.ts";
+} from "../../../../../nodes/intermediate/forms/income/retirement/form8606/roth_inventory.ts";
 import { rothCases, rothReturnSource } from "./form4852_roth.fixture.ts";
 import {
   officialForm4852EvidenceTemplate,

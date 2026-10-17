@@ -1,6 +1,6 @@
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { z } from "zod";
-import { sha256Hex } from "../../forms/f1040/2025/return-processing/prepared-source.ts";
+import { sha256Hex } from "../../forms/f1040/2025/return-processing/prepared_source.ts";
 import { dirname, join } from "node:path";
 import {
   emittedValidationScope,
@@ -14,7 +14,7 @@ import {
   otsaExportRequestSchema,
   prepareForm8886OtsaDeliveryRecord,
   prepareForm8886OtsaExport,
-} from "../../forms/f1040/2025/domains/general/filing/form8886/otsa-export.ts";
+} from "../../forms/f1040/2025/domains/general/filing/form8886/otsa_export.ts";
 
 async function prepareExport(
   args: ExportReturnArgs & {

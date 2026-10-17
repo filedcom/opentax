@@ -12,7 +12,7 @@ import { buildMefBundle } from "../../../../mef/builder.ts";
 import { buildPending } from "../../../../mef/execution/pending.ts";
 import { buildPdfBytes } from "../../../builder.ts";
 import { form6251Pdf } from "../../../forms/taxes/amt/f6251.ts";
-import { pdfReviewFixtures } from "../../../review-fixtures.ts";
+import { pdfReviewFixtures } from "../../../review_fixtures.ts";
 
 const base = pdfReviewFixtures.find((item) => item.id === "single-w2-refund")!;
 const bonds = [1, 2].map((index) => ({

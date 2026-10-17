@@ -12,7 +12,7 @@ import {
 import { inputSchema as f3800InputSchema } from "../../../../../nodes/inputs/credits/business/f3800/index.ts";
 import { inputSchema as partnershipK1InputSchema } from "../../../../../nodes/inputs/income/rental-passthrough/k1_partnership/index.ts";
 import { inputSchema as sCorpK1InputSchema } from "../../../../../nodes/inputs/income/rental-passthrough/k1_s_corp/index.ts";
-import type { MefBuildContext, MefFormDescriptor } from "../../../form-descriptor.ts";
+import type { MefBuildContext, MefFormDescriptor } from "../../../form_descriptor.ts";
 
 type Form8874K1Credit = {
   source_type: "partnership" | "s_corporation";

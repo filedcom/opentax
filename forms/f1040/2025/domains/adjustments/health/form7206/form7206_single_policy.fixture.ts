@@ -1,5 +1,5 @@
-import { spouseMedicareInputs } from "../../../../pdf/reviews/adjustments/health/form7206-spouse-medicare.fixture.ts";
-import { withHealthPolicyRecords } from "../../../../../nodes/intermediate/forms/adjustments/health/form7206/policy-records.fixture.ts";
+import { spouseMedicareInputs } from "../../../../pdf/reviews/adjustments/health/form7206_spouse_medicare.fixture.ts";
+import { withHealthPolicyRecords } from "../../../../../nodes/intermediate/forms/adjustments/health/form7206/policy_records.fixture.ts";
 import { f1040_2025 } from "../../../../index.ts";
 
 export const singlePolicyCases = [

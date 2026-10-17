@@ -3,7 +3,7 @@ import {
   allForm4136Claims,
   inputSchema,
 } from "../../../../../nodes/inputs/credits/business/f4136/index.ts";
-import type { MefFormDescriptor } from "../../../form-descriptor.ts";
+import type { MefFormDescriptor } from "../../../form_descriptor.ts";
 
 // Form 4136 line 7a requires the government buyers and gallons sold to each.
 export const form4136KeroseneGovernmentSalesStatement: MefFormDescriptor<

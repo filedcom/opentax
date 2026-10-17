@@ -5,7 +5,7 @@ import { assertEquals, assertRejects, assertThrows } from "@std/assert";
 import { createHash } from "node:crypto";
 import { PDFDocument } from "pdf-lib";
 import { buildPdfBytes, type PdfPageOrigin } from "../../../../pdf/builder.ts";
-import education from "../../../../pdf/reviews/general/composed-returns/review-8863-scholarship-source.json" with {
+import education from "../../../../pdf/reviews/general/composed-returns/review_8863_scholarship_source.json" with {
   type: "json",
 };
 import { PficRegime } from "../../../../../nodes/inputs/income/foreign/f8621/index.ts";
@@ -13,11 +13,11 @@ import { f1040_2025 } from "../../../../index.ts";
 import { buildPending } from "../../../../mef/execution/pending.ts";
 import { assertForm8621QefRefigureSource } from "./form8621_1294_refigure.ts";
 import { executeForm8863TwoPass } from "../../../credits/individual/form8863/form8863_two_pass.ts";
-import { pdfReviewFixtures } from "../../../../pdf/review-fixtures.ts";
+import { pdfReviewFixtures } from "../../../../pdf/review_fixtures.ts";
 import {
   filer as claimantFiler,
   fixture as claimantFixture,
-} from "../../../../pdf/reviews/credits/individual/form8863-claimant-source.fixture.ts";
+} from "../../../../pdf/reviews/credits/individual/form8863_claimant_source.fixture.ts";
 
 const cp = (id: string, value: string) => ({
   document_id: id,

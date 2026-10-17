@@ -1,7 +1,7 @@
 import { createHash } from "node:crypto";
 import { Buffer } from "node:buffer";
 import { z } from "zod";
-import { employerCode2RetainedSourceSchema } from "../../../../../nodes/intermediate/forms/adjustments/health/form8889/employer-code2-evidence-schema.ts";
+import { employerCode2RetainedSourceSchema } from "../../../../../nodes/intermediate/forms/adjustments/health/form8889/employer_code2_evidence_schema.ts";
 import {
   Box12Code,
   inputSchema as w2InputSchema,

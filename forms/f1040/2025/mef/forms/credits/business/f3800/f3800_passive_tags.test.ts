@@ -4,7 +4,7 @@ import {
   form3800SpecifiedCreditLineSchema,
   form3800StandardCreditLineSchema,
   PassiveCreditReportingRoute,
-} from "../../../../../../nodes/intermediate/forms/credits/business/form8582cr/credit-route.ts";
+} from "../../../../../../nodes/intermediate/forms/credits/business/form8582cr/credit_route.ts";
 import { PassiveCreditSourceOrigin } from "../../../../../../nodes/intermediate/forms/credits/business/form8582cr/index.ts";
 import { groupForm3800PassiveCreditVintages } from "../../../../../../nodes/inputs/credits/business/f3800/calculation.ts";
 import {

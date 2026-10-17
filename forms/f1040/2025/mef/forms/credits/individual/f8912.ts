@@ -13,7 +13,7 @@ import {
   partIVRowInput,
   sourceLinesFromInput,
 } from "../../../../../nodes/inputs/credits/individual/f8912/index.ts";
-import type { MefBuildContext, MefFormDescriptor } from "../../../form-descriptor.ts";
+import type { MefBuildContext, MefFormDescriptor } from "../../../form_descriptor.ts";
 
 // One return-level Form 8912, with all bond rows and finalized Part II.
 export function buildForm8912Document(

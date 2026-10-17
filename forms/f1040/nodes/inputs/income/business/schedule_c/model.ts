@@ -1,13 +1,13 @@
-import { sstbServiceClassificationSchema } from "./sstb-classification.ts";
+import { sstbServiceClassificationSchema } from "./sstb_classification.ts";
 import {
   calculateCharitableNaturalResource,
   charitableNaturalResourceSourceSchema,
-} from "../../../deductions/charitable/f8283/natural-resource-source.ts";
+} from "../../../deductions/charitable/f8283/natural_resource_source.ts";
 import {
   calculateCharitableDepreciation,
   charitableDepreciationSourceSchema,
-} from "../../../deductions/charitable/f8283/depreciation-source.ts";
-import { mfsSstbFilingReviewSchema } from "./mfs-sstb-review.ts";
+} from "../../../deductions/charitable/f8283/depreciation_source.ts";
+import { mfsSstbFilingReviewSchema } from "./mfs_sstb_review.ts";
 import { inputSchema as patronReviewSchema } from "../../../deductions/business/qbi_patron/schema.ts";
 import { itemSchema as patrItemSchema } from "../f1099patr/schema.ts";
 import { z } from "zod";
@@ -17,8 +17,8 @@ import {
   simplifiedAtRiskSchema,
 } from "../../../../intermediate/forms/income/business/form6198/simplified.ts";
 import { TS } from "../../../../types.ts";
-import { zeroLimitInventorySchema } from "../../../../intermediate/forms/deductions/business/form8995a/zero-limit-inventory.ts";
-import { positiveLimitInventorySchema } from "../../../../intermediate/forms/deductions/business/form8995a/positive-limit-inventory.ts";
+import { zeroLimitInventorySchema } from "../../../../intermediate/forms/deductions/business/form8995a/zero_limit_inventory.ts";
+import { positiveLimitInventorySchema } from "../../../../intermediate/forms/deductions/business/form8995a/positive_limit_inventory.ts";
 
 const MEALS_STANDARD_PCT = 0.50; // Standard business meals
 const MEALS_DOT_PCT = 0.80; // DOT hours-of-service workers

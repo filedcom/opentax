@@ -3,7 +3,7 @@ import {
   inputSchema as f3800InputSchema,
   reconcileForm3800NonpassiveCarryforwards,
 } from "../../../../../../nodes/inputs/credits/business/f3800/index.ts";
-import type { MefFormDescriptor } from "../../../../form-descriptor.ts";
+import type { MefFormDescriptor } from "../../../../form_descriptor.ts";
 
 /** One source-vintage computation for each native Form 3800 carryforward. */
 export const form3800CarryforwardStatement: MefFormDescriptor<

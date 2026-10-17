@@ -45,14 +45,14 @@ function definition(
   } as unknown as FormDefinition;
 }
 
-const hatch = "forms/f1040/2025/domains/general/filing/form8886/public-node.ts";
+const hatch = "forms/f1040/2025/domains/general/filing/form8886/public_node.ts";
 const registryFile = "forms/f1040/2025/registry.ts";
 
 test("canonical node paths and the year's start node pass", () => {
   for (
     const path of [
       "forms/f1040/nodes/inputs/income/investments/f1099int/index.ts",
-      "forms/f1040/nodes/inputs/credits/business/f3800/production-allocation-node.ts",
+      "forms/f1040/nodes/inputs/credits/business/f3800/production_allocation_node.ts",
       "forms/f1040/nodes/intermediate/forms/credits/foreign/form1116/index.ts",
       "forms/f1040/nodes/intermediate/aggregation/general/return-assembly/agi_aggregator/index.ts",
       "forms/f1040/nodes/intermediate/worksheets/adjustments/retirement/ira_deduction_worksheet/index.ts",

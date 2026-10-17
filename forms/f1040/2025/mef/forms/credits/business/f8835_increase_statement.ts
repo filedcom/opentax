@@ -1,21 +1,21 @@
 import {
   assertForm8835PwaSource,
   form8835PwaDeclaration,
-} from "../../../../../nodes/inputs/credits/business/f8835/pwa-source.ts";
+} from "../../../../../nodes/inputs/credits/business/f8835/pwa_source.ts";
 import { assertForm8835PwaAttachment } from "./f8835_pwa_statement.ts";
 import {
   assertForm8835EarlyConstructionSource,
   form8835EarlyConstructionDeclaration,
-} from "../../../../../nodes/inputs/credits/business/f8835/early-construction-source.ts";
+} from "../../../../../nodes/inputs/credits/business/f8835/early_construction_source.ts";
 import { PDFDocument } from "pdf-lib";
 import { inputSchema } from "../../../../../nodes/inputs/credits/business/f8835/index.ts";
 import {
   assertForm8835SmallFacilitySource,
   form8835IncreaseDescription,
-} from "../../../../../nodes/inputs/credits/business/f8835/increase-source.ts";
-import type { MefPdfAttachment } from "../../../form-descriptor.ts";
+} from "../../../../../nodes/inputs/credits/business/f8835/increase_source.ts";
+import type { MefPdfAttachment } from "../../../form_descriptor.ts";
 import type { FilerIdentity } from "../../../../../mef/header.ts";
-import { sha256Hex } from "../../../../return-processing/prepared-source.ts";
+import { sha256Hex } from "../../../../return-processing/prepared_source.ts";
 
 export const smallFacilityDeclaration =
   "The facility has a maximum net output of less than 1 megawatt, measured in alternating current.";

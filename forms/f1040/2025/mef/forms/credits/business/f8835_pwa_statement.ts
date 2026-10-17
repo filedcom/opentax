@@ -5,9 +5,9 @@ import {
   form8835PwaDescription,
   type PwaWageRow,
   reconcileForm8835PwaPayroll,
-} from "../../../../../nodes/inputs/credits/business/f8835/pwa-source.ts";
-import type { MefPdfAttachment } from "../../../form-descriptor.ts";
-import { sha256Hex } from "../../../../return-processing/prepared-source.ts";
+} from "../../../../../nodes/inputs/credits/business/f8835/pwa_source.ts";
+import type { MefPdfAttachment } from "../../../form_descriptor.ts";
+import { sha256Hex } from "../../../../return-processing/prepared_source.ts";
 
 const dateText = (s: string) =>
   `${s.slice(5, 7)}/${s.slice(8, 10)}/${s.slice(0, 4)}`;

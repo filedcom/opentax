@@ -8,7 +8,7 @@ import {
   inputSchema as scheduleFInputSchema,
 } from "../../../../../nodes/intermediate/forms/income/business/schedule_f/index.ts";
 import type { CccLoanDetail } from "../../../../../nodes/intermediate/forms/income/business/farm_elections.ts";
-import type { MefFormDescriptor } from "../../../form-descriptor.ts";
+import type { MefFormDescriptor } from "../../../form_descriptor.ts";
 
 function loanStatement(loans: readonly CccLoanDetail[]): string {
   return elements(

@@ -2,7 +2,7 @@ import { form6251 } from "../../../../intermediate/forms/taxes/amt/form6251/inde
 import {
   calculateCharitableNaturalResource,
   charitableNaturalResourceSourceSchema,
-} from "../../charitable/f8283/natural-resource-source.ts";
+} from "../../charitable/f8283/natural_resource_source.ts";
 import { form8995 } from "../../../../intermediate/forms/deductions/business/form8995/index.ts";
 import { z } from "zod";
 import type {

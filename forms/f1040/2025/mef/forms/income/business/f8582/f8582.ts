@@ -1,16 +1,16 @@
-import { projectPassiveSCorpLossCopies } from "../../../../../domains/income/business/passive-s-corp-loss-copies.ts";
-import { currentLossFilingProjection } from "../../../../../domains/income/business/current-loss-filing-projection.ts";
-import { worksheetRatios } from "./f8582-ratios.ts";
+import { projectPassiveSCorpLossCopies } from "../../../../../domains/income/business/passive_s_corp_loss_copies.ts";
+import { currentLossFilingProjection } from "../../../../../domains/income/business/current_loss_filing_projection.ts";
+import { worksheetRatios } from "./f8582_ratios.ts";
 import {
   currentPropertyPassiveAmounts,
   reconcileCurrentPropertySource,
-} from "../../../../../../nodes/inputs/income/rental-passthrough/schedule_e/current-property-source.ts";
-import { assertCurrentPropertyQbi } from "../../../deductions/business/f8995/f8995-current-property.ts";
+} from "../../../../../../nodes/inputs/income/rental-passthrough/schedule_e/current_property_source.ts";
+import { assertCurrentPropertyQbi } from "../../../deductions/business/f8995/f8995_current_property.ts";
 import {
   box11Line10SourceRows,
   currentPassiveLine10Activities,
 } from "../../../../../../nodes/inputs/income/rental-passthrough/k1_partnership/box11_line10.ts";
-import { assertCurrentK1Qbi } from "../../../deductions/business/f8995/f8995-current-k1.ts";
+import { assertCurrentK1Qbi } from "../../../deductions/business/f8995/f8995_current_k1.ts";
 import { inputSchema as partnershipSchema } from "../../../../../../nodes/inputs/income/rental-passthrough/k1_partnership/index.ts";
 import { inputSchema as sCorpSchema } from "../../../../../../nodes/inputs/income/rental-passthrough/k1_s_corp/index.ts";
 import { passiveK1Activities } from "../../../../../../nodes/inputs/income/rental-passthrough/k1_passive_source.ts";
@@ -48,7 +48,7 @@ import {
 import { reconcileFiled2024Form8582Record } from "../../../../../../nodes/intermediate/forms/income/business/form8582/prior_year_import.ts";
 import { inputSchema as w2InputSchema } from "../../../../../../nodes/inputs/income/wages/w2/index.ts";
 import { z } from "zod";
-import type { MefBuildContext, MefFormDescriptor } from "../../../../form-descriptor.ts";
+import type { MefBuildContext, MefFormDescriptor } from "../../../../form_descriptor.ts";
 
 type Input = Record<string, unknown>;
 

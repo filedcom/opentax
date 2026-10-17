@@ -1,4 +1,4 @@
-import { ownedAggregationElectionFixture } from "../../../../pdf/reviews/general/composed-returns/review-8995a-aggregation-election.fixture.ts";
+import { ownedAggregationElectionFixture } from "../../../../pdf/reviews/general/composed-returns/review_8995a_aggregation_election.fixture.ts";
 import {
   jointAggregationCases,
   jointAggregationFixture,

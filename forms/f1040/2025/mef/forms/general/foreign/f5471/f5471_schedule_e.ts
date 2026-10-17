@@ -1,10 +1,10 @@
 import {
   buildOwned5471Schedule,
   owned5471AdditionalSchedules,
-} from "./f5471-owned-schedules.ts";
+} from "./f5471_owned_schedules.ts";
 import { element, elements } from "../../../../../../mef/xml.ts";
 import { projectForm8992Source } from "../../../../../domains/income/foreign/form8992/form8992_source.ts";
-import type { MefFormDescriptor } from "../../../../form-descriptor.ts";
+import type { MefFormDescriptor } from "../../../../form_descriptor.ts";
 
 export const form5471ScheduleE: MefFormDescriptor<"f5471_schedule_e", unknown> =
   {

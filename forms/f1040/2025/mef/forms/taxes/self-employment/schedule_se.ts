@@ -1,10 +1,10 @@
-import { assertOwnedScheduleSE } from "../../../../domains/taxes/self-employment/schedule-se/schedule-se-owner-source.ts";
+import { assertOwnedScheduleSE } from "../../../../domains/taxes/self-employment/schedule-se/schedule_se_owner_source.ts";
 import { element, elements } from "../../../../../mef/xml.ts";
 import { scheduleSELines } from "../../../../../nodes/intermediate/forms/taxes/self-employment/schedule_se/calculation.ts";
 import { CONFIG_BY_YEAR } from "../../../../../nodes/config/index.ts";
-import type { MefBuildContext, MefFormDescriptor } from "../../../form-descriptor.ts";
+import type { MefBuildContext, MefFormDescriptor } from "../../../form_descriptor.ts";
 import { FilingStatus as MefFilingStatus } from "../../../../../mef/header.ts";
-import { scheduleSeSpouseProprietor } from "../../../../domains/taxes/self-employment/schedule-se/schedule-se-proprietor.ts";
+import { scheduleSeSpouseProprietor } from "../../../../domains/taxes/self-employment/schedule-se/schedule_se_proprietor.ts";
 
 export interface Fields {
   net_profit_schedule_c?: number | null;

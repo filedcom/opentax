@@ -2,7 +2,7 @@ import { test } from "bun:test";
 import { assertEquals, assertRejects, assertThrows } from "@std/assert";
 import { f1040_2025 } from "../../../../../2025/index.ts";
 import { buildPending } from "../../../../../2025/mef/execution/pending.ts";
-import { pdfReviewFixtures } from "../../../../../2025/pdf/review-fixtures.ts";
+import { pdfReviewFixtures } from "../../../../../2025/pdf/review_fixtures.ts";
 import { inputSchema } from "./index.ts";
 
 const base = pdfReviewFixtures.find((fixture) =>

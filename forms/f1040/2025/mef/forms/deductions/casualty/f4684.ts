@@ -3,7 +3,7 @@ import {
   casualtyLossLines,
   inputSchema,
 } from "../../../../../nodes/intermediate/forms/deductions/casualty/form4684/index.ts";
-import type { MefBuildContext, MefFormDescriptor } from "../../../form-descriptor.ts";
+import type { MefBuildContext, MefFormDescriptor } from "../../../form_descriptor.ts";
 
 type Input = Record<string, unknown>;
 

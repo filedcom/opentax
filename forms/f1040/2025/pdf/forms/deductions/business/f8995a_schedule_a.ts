@@ -1,6 +1,6 @@
-import { qbiPercentageForPdf } from "../../../reviews/general/composed-returns/qbi-percentage.ts";
-import { assertSstbScheduleCSource } from "../../../../mef/forms/deductions/business/f8995a/f8995a-sstb-source.ts";
-import type { PdfFieldEntry, PdfFormDescriptor } from "../../../form-descriptor.ts";
+import { qbiPercentageForPdf } from "../../../reviews/general/composed-returns/qbi_percentage.ts";
+import { assertSstbScheduleCSource } from "../../../../mef/forms/deductions/business/f8995a/f8995a_sstb_source.ts";
+import type { PdfFieldEntry, PdfFormDescriptor } from "../../../form_descriptor.ts";
 import {
   assertMfsSstbOwner,
   calculateOneSstb8995ALines,

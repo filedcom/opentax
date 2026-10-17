@@ -5,7 +5,7 @@ import { FilingStatus } from "../../../../../../mef/header.ts";
 import { execute } from "../../../../../../../../core/runtime/executor.ts";
 import { buildExecutionPlan } from "../../../../../../../../core/runtime/planner.ts";
 import { registry } from "../../../../../registry.ts";
-import { pdfReviewFixtures } from "../../../../review-fixtures.ts";
+import { pdfReviewFixtures } from "../../../../review_fixtures.ts";
 
 test("Schedule 1 PDF includes filer identity on page 1", () => {
   assertEquals(schedule1Pdf.filerFields?.map((entry) => entry.domainKey), [

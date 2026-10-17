@@ -14,7 +14,7 @@ import { buildMefBundle } from "../../../../../mef/builder.ts";
 import { buildPending } from "../../../../../mef/execution/pending.ts";
 import { normalizeAllPending } from "../../../../../return-processing/pending.ts";
 import { buildPdfBytes } from "../../../../builder.ts";
-import { pdfReviewFixtures } from "../../../../review-fixtures.ts";
+import { pdfReviewFixtures } from "../../../../review_fixtures.ts";
 import { form1116Pdf } from "./f1116.ts";
 import { form1116ScheduleBPdf } from "./f1116_schedule_b.ts";
 import { form1116 } from "../../../../../mef/forms/credits/foreign/f1116/f1116.ts";

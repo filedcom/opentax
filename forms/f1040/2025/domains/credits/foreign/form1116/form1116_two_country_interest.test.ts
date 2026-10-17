@@ -9,7 +9,7 @@ import { form1116ScheduleBPdf } from "../../../../pdf/forms/credits/foreign/f111
 import { buildMefBundle } from "../../../../mef/builder.ts";
 import { buildPending } from "../../../../mef/execution/pending.ts";
 import { buildPdfBytes } from "../../../../pdf/builder.ts";
-import { pdfReviewFixtures } from "../../../../pdf/review-fixtures.ts";
+import { pdfReviewFixtures } from "../../../../pdf/review_fixtures.ts";
 import { FilingStatus } from "../../../../../nodes/types.ts";
 
 const canadaRef = "2025 Canadian Bank 1099-INT";

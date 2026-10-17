@@ -1,6 +1,6 @@
-import { notePrincipalRepaid } from "../../../../../nodes/intermediate/forms/income/business/form7203/repayment-inventory.ts";
-import { allocateDebtInventory } from "../../../../../nodes/intermediate/forms/income/business/form7203/debt-allocation.ts";
-import type { ReviewedNewFormalNotes } from "../../../../../nodes/intermediate/forms/income/business/form7203/debt-note.ts";
+import { notePrincipalRepaid } from "../../../../../nodes/intermediate/forms/income/business/form7203/repayment_inventory.ts";
+import { allocateDebtInventory } from "../../../../../nodes/intermediate/forms/income/business/form7203/debt_allocation.ts";
+import type { ReviewedNewFormalNotes } from "../../../../../nodes/intermediate/forms/income/business/form7203/debt_note.ts";
 
 /** Called only after the complete public source has been independently replayed. */
 export function projectOverflowDebtInventory(

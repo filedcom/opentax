@@ -4,7 +4,7 @@ import {
   assertForm8959Absent,
   assertForm8959Sources,
   hasForm8959Print,
-} from "../../../../domains/taxes/employment/form8959/form8959-source.ts";
+} from "../../../../domains/taxes/employment/form8959/form8959_source.ts";
 import {
   additionalMedicareTax,
   type Form8959PrintFields,
@@ -13,7 +13,7 @@ import {
 import type {
   MefBuildContext,
   MefFormDescriptor,
-} from "../../../form-descriptor.ts";
+} from "../../../form_descriptor.ts";
 
 // TY2025 IRS8959.xsd: every amount is a whole-dollar USAmountType or
 // USAmountNNType. The graph node owns all line 1-24 calculations; MeF only

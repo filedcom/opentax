@@ -4,7 +4,7 @@ import { earlyCases, earlyFixture } from "./form8835_early.fixture.ts";
 import { domesticCases, domesticFixture } from "./form8835_domestic.fixture.ts";
 import { communityFixture } from "./form8835_community.fixture.ts";
 import { pwaCases, pwaFixture } from "./form8835_pwa.fixture.ts";
-import { sha256Hex } from "../../../../return-processing/prepared-source.ts";
+import { sha256Hex } from "../../../../return-processing/prepared_source.ts";
 
 export const solarCases = [
   {

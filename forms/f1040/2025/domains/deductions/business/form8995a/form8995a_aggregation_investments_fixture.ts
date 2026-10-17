@@ -46,7 +46,7 @@ export async function aggregationInvestmentFixture(
   } else if (name === "single-rpe-income-cap") {
     input = JSON.parse(
       await fs.readFile(
-        new URL("./form8995a-rpe-3-business-source.json", import.meta.url), "utf8",
+        new URL("./form8995a_rpe_3_business_source.json", import.meta.url), "utf8",
       ),
     );
     delete input.w2;

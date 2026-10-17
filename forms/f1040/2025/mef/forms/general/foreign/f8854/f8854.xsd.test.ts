@@ -22,7 +22,7 @@ import {
   inputSchema as initialSchema,
 } from "../../../../../../nodes/inputs/general/foreign/f8854/index.ts";
 import { annualInputSchema } from "../../../../../../nodes/inputs/general/foreign/f8854/annual.ts";
-import { ReportedFormCode } from "../../../../../../nodes/inputs/general/foreign/f8854/section-c.ts";
+import { ReportedFormCode } from "../../../../../../nodes/inputs/general/foreign/f8854/section_c.ts";
 
 const XSD_PATH = new URL(
   "../../../../../../../../.state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/IndividualIncomeTax/Common/IRS8854/IRS8854.xsd",

@@ -11,7 +11,7 @@ import {
   wotcReductionsByFarm,
 } from "../../../../../nodes/intermediate/forms/income/business/schedule_f/index.ts";
 import type { SimplifiedAtRiskFacts } from "../../../../../nodes/intermediate/forms/income/business/form6198/simplified.ts";
-import type { MefFormDescriptor } from "../../../form-descriptor.ts";
+import type { MefFormDescriptor } from "../../../form_descriptor.ts";
 
 export function buildSimplifiedIRS6198(
   activityDescription: string,

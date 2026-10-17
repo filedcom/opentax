@@ -4,7 +4,7 @@ import {
   type Form5695Input,
   sectionBQualifiedItems,
 } from "../../../../../nodes/intermediate/forms/credits/individual/form5695/index.ts";
-import type { MefPdfAttachment } from "../../../form-descriptor.ts";
+import type { MefPdfAttachment } from "../../../form_descriptor.ts";
 
 type QmidItem = { readonly qmid: string; readonly cost: number };
 

@@ -2,7 +2,7 @@ import { test } from "bun:test";
 import { assertEquals, assertThrows } from "@std/assert";
 import { fixture, packageFacts } from "./form8801_reviewed_return.fixture.ts";
 import { stageForm8801SettledReturn } from "./form8801_settled_return.ts";
-import { assertAttachmentCoverage } from "../../../../return-processing/attachment-coverage.ts";
+import { assertAttachmentCoverage } from "../../../../return-processing/attachment_coverage.ts";
 import { BondType } from "../../../../../nodes/inputs/credits/individual/f8912/index.ts";
 
 test("Form 8801 settled credit flows through Schedule 3, tax and refund", async () => {

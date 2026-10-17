@@ -8,12 +8,12 @@ Individual and business credits and their limitations.
 | [form8863](form8863) | 1 files |
 | [form8880](form8880) | 3 files |
 | [form8936](form8936) | 1 files |
-| [schedule2-form8936-reconciliation.ts](schedule2-form8936-reconciliation.ts) | 1 files |
+| [schedule2_form8936_reconciliation.ts](schedule2_form8936_reconciliation.ts) | 1 files |
 | [schedule2_form8936_replay.test.ts](schedule2_form8936_replay.test.ts) | 1 files |
-| [schedule3-form8396-reconciliation.ts](schedule3-form8396-reconciliation.ts) | 1 files |
-| [schedule3-form8834-reconciliation.ts](schedule3-form8834-reconciliation.ts) | 1 files |
-| [schedule3-form8859-reconciliation.ts](schedule3-form8859-reconciliation.ts) | 1 files |
-| [schedule3-form8912-reconciliation.ts](schedule3-form8912-reconciliation.ts) | 1 files |
+| [schedule3_form8396_reconciliation.ts](schedule3_form8396_reconciliation.ts) | 1 files |
+| [schedule3_form8834_reconciliation.ts](schedule3_form8834_reconciliation.ts) | 1 files |
+| [schedule3_form8859_reconciliation.ts](schedule3_form8859_reconciliation.ts) | 1 files |
+| [schedule3_form8912_reconciliation.ts](schedule3_form8912_reconciliation.ts) | 1 files |
 | [schedule3_form8396_replay.test.ts](schedule3_form8396_replay.test.ts) | 1 files |
 | [schedule3_form8834_replay.test.ts](schedule3_form8834_replay.test.ts) | 1 files |
 | [schedule3_form8859_replay.test.ts](schedule3_form8859_replay.test.ts) | 1 files |

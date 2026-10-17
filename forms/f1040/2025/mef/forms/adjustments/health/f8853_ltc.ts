@@ -22,7 +22,7 @@ import {
   LtcOwner,
 } from "../../../../../nodes/intermediate/forms/adjustments/health/form8853/ltc.ts";
 import { schedule1 } from "../../general/return-assembly/schedule1/schedule1.ts";
-import type { MefBuildContext } from "../../../form-descriptor.ts";
+import type { MefBuildContext } from "../../../form_descriptor.ts";
 import { ltcLedgerSchema } from "../../../../../nodes/intermediate/forms/adjustments/health/form8853/ltc.ts";
 import { archerContributionLedgerSchema } from "../../../../../nodes/intermediate/forms/adjustments/health/form8853/archer_contributions.ts";
 

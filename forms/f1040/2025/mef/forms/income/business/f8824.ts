@@ -7,7 +7,7 @@ import {
   type Form8824Input,
   inputSchema,
 } from "../../../../../nodes/intermediate/forms/income/business/form8824/index.ts";
-import type { MefBuildContext, MefFormDescriptor } from "../../../form-descriptor.ts";
+import type { MefBuildContext, MefFormDescriptor } from "../../../form_descriptor.ts";
 import {
   buildForm8824GainStatement,
   GAIN_STATEMENT_FILE,

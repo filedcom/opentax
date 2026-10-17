@@ -2,12 +2,12 @@ import { PDFDocument, StandardFonts } from "pdf-lib";
 import { increasedFixture } from "./form8835_increased.fixture.ts";
 import { earlyFixture } from "./form8835_early.fixture.ts";
 import { domesticStatementFields } from "../../../../mef/forms/credits/business/f8835_domestic_statement.ts";
-import { form8835DomesticDescription } from "../../../../../nodes/inputs/credits/business/f8835/domestic-source.ts";
+import { form8835DomesticDescription } from "../../../../../nodes/inputs/credits/business/f8835/domestic_source.ts";
 import {
   calculateForm8835,
   inputSchema,
 } from "../../../../../nodes/inputs/credits/business/f8835/index.ts";
-import { sha256Hex } from "../../../../return-processing/prepared-source.ts";
+import { sha256Hex } from "../../../../return-processing/prepared_source.ts";
 
 export const domesticCases = [
   {

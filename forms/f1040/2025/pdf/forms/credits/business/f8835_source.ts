@@ -1,10 +1,10 @@
-import { assertForm8835TransferSource } from "../../../../../nodes/inputs/credits/business/f8835/transfer-source.ts";
-import { assertForm8835PwaSource } from "../../../../../nodes/inputs/credits/business/f8835/pwa-source.ts";
-import { assertForm8835EnergyCommunitySource } from "../../../../../nodes/inputs/credits/business/f8835/energy-community-source.ts";
-import { assertForm8835DomesticSource } from "../../../../../nodes/inputs/credits/business/f8835/domestic-source.ts";
-import { assertForm8835EarlyConstructionSource } from "../../../../../nodes/inputs/credits/business/f8835/early-construction-source.ts";
-import { assertForm8835SmallFacilitySource } from "../../../../../nodes/inputs/credits/business/f8835/increase-source.ts";
-import { assertForm8835BondSource } from "../../../../../nodes/inputs/credits/business/f8835/bond-source.ts";
+import { assertForm8835TransferSource } from "../../../../../nodes/inputs/credits/business/f8835/transfer_source.ts";
+import { assertForm8835PwaSource } from "../../../../../nodes/inputs/credits/business/f8835/pwa_source.ts";
+import { assertForm8835EnergyCommunitySource } from "../../../../../nodes/inputs/credits/business/f8835/energy_community_source.ts";
+import { assertForm8835DomesticSource } from "../../../../../nodes/inputs/credits/business/f8835/domestic_source.ts";
+import { assertForm8835EarlyConstructionSource } from "../../../../../nodes/inputs/credits/business/f8835/early_construction_source.ts";
+import { assertForm8835SmallFacilitySource } from "../../../../../nodes/inputs/credits/business/f8835/increase_source.ts";
+import { assertForm8835BondSource } from "../../../../../nodes/inputs/credits/business/f8835/bond_source.ts";
 import {
   allocateForm3800CreditUse,
   form3800NonpassiveCreditUseRows,
@@ -12,7 +12,7 @@ import {
 import {
   assertCurrentProductionAllocationSource,
   reconcileCurrentProductionAllocation,
-} from "../../../../../nodes/inputs/credits/business/f3800/production-allocation.ts";
+} from "../../../../../nodes/inputs/credits/business/f3800/production_allocation.ts";
 import type { FilerIdentity } from "../../../../../mef/header.ts";
 import { f1040 } from "../../../../../nodes/outputs/general/return-assembly/f1040/index.ts";
 import {

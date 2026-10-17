@@ -7,10 +7,10 @@ import {
 import {
   assertForm8835DomesticSource,
   form8835DomesticDescription,
-} from "../../../../../nodes/inputs/credits/business/f8835/domestic-source.ts";
-import type { MefPdfAttachment } from "../../../form-descriptor.ts";
+} from "../../../../../nodes/inputs/credits/business/f8835/domestic_source.ts";
+import type { MefPdfAttachment } from "../../../form_descriptor.ts";
 import type { FilerIdentity } from "../../../../../mef/header.ts";
-import { sha256Hex } from "../../../../return-processing/prepared-source.ts";
+import { sha256Hex } from "../../../../return-processing/prepared_source.ts";
 
 export const domesticContentDeclaration =
   "Any steel, iron, or manufactured product that is a component of the facility upon completion of construction was produced in the United States, as determined under the domestic content requirements of section 45(b)(9) and Notice 2023-38.";

@@ -1,5 +1,5 @@
 import { PDFDocument } from "pdf-lib";
-import type { RothDistributionYear } from "../../../../../nodes/intermediate/forms/income/retirement/form8606/roth-history.ts";
+import type { RothDistributionYear } from "../../../../../nodes/intermediate/forms/income/retirement/form8606/roth_history.ts";
 
 export async function assertRothHistoryPdf(
   facts:

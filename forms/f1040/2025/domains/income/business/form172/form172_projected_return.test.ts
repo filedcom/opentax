@@ -2,8 +2,8 @@ import { test } from "bun:test";
 import { assertEquals, assertRejects, assertThrows } from "@std/assert";
 import { stageForm172ProjectedReturn } from "./form172_projected_return.ts";
 import { passiveK1Inputs, passiveK1Item } from "../../../credits/earned-income/eic/eic_passive_k1.fixture.ts";
-import { assertAttachmentCoverage } from "../../../../return-processing/attachment-coverage.ts";
-import educationSource from "../../../../pdf/reviews/general/composed-returns/review-8863-scholarship-source.json" with {
+import { assertAttachmentCoverage } from "../../../../return-processing/attachment_coverage.ts";
+import educationSource from "../../../../pdf/reviews/general/composed-returns/review_8863_scholarship_source.json" with {
   type: "json",
 };
 function origin() {
@@ -772,8 +772,8 @@ test("Form172 ordinary NOL refigures QBI taxable-income limit without reducing c
   assertEquals(r.filingReady, false);
 });
 
-import { calculateBoundedProvisionalATI } from "../../../../../nodes/intermediate/forms/deductions/business/form8990/provisional-ati.ts";
-import { reconcileBoundedForm8990FinalReturn } from "../../../../../nodes/intermediate/forms/deductions/business/form8990/final-reconciliation.ts";
+import { calculateBoundedProvisionalATI } from "../../../../../nodes/intermediate/forms/deductions/business/form8990/provisional_ati.ts";
+import { reconcileBoundedForm8990FinalReturn } from "../../../../../nodes/intermediate/forms/deductions/business/form8990/final_reconciliation.ts";
 import { executeForm172Form8990Return } from "./form172_form8990_return.ts";
 import { f1040_2025 } from "../../../../index.ts";
 const interestBaseInputs = {

@@ -1,4 +1,4 @@
-import type { PdfFieldEntry, PdfFormDescriptor } from "../../../form-descriptor.ts";
+import type { PdfFieldEntry, PdfFormDescriptor } from "../../../form_descriptor.ts";
 import { scheduleJChildElectionTax } from "../../../../domains/taxes/income-averaging/schedule-j/schedule_j_child_tax_join.ts";
 
 // Verified against the 2025 IRS Schedule J AcroForm. Page 1 has the name and

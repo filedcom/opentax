@@ -2,7 +2,7 @@ import {
   fullShareCentCases,
   fullShareCentInputs,
 } from "./form4972_full_share_cents.fixture.ts";
-import { pdfReviewFixtures } from "../../../../pdf/review-fixtures.ts";
+import { pdfReviewFixtures } from "../../../../pdf/review_fixtures.ts";
 export { fullShareCentCases as preferentialAmtCases };
 export function preferentialAmtInputs(
   entry: typeof fullShareCentCases[number],

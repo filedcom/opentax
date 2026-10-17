@@ -2,7 +2,7 @@ import { assertRetirementStateLocalTaxSource } from "../../../../domains/income/
 import type {
   PdfFieldEntry,
   PdfFormDescriptor,
-} from "../../../form-descriptor.ts";
+} from "../../../form_descriptor.ts";
 import { FilingStatus } from "../../../../../mef/header.ts";
 import {
   assertForm1098Box1Sources,

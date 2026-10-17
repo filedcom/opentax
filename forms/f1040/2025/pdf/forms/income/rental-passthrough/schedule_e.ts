@@ -1,9 +1,9 @@
 import { StandardFonts } from "pdf-lib";
-import { currentPropertyPassiveAmounts } from "../../../../../nodes/inputs/income/rental-passthrough/schedule_e/current-property-source.ts";
+import { currentPropertyPassiveAmounts } from "../../../../../nodes/inputs/income/rental-passthrough/schedule_e/current_property_source.ts";
 import type {
   PdfFieldEntry,
   PdfFormDescriptor,
-} from "../../../form-descriptor.ts";
+} from "../../../form_descriptor.ts";
 import {
   computeExpenses,
   computePropertyNet,
@@ -17,7 +17,7 @@ import {
   validatePassiveActivityLink,
 } from "../../../../mef/forms/income/rental-passthrough/schedule_e.ts";
 import { verifyMiscRoyaltySource } from "../../../../mef/forms/income/rental-passthrough/schedule_e.ts";
-import { scheduleEK1Part2Rows } from "../../../../domains/income/rental-passthrough/schedule-e/schedule-e-k1-part2.ts";
+import { scheduleEK1Part2Rows } from "../../../../domains/income/rental-passthrough/schedule-e/schedule_e_k1_part2.ts";
 import {
   calculateForm4835AtRiskNet,
   inputSchema as form4835InputSchema,

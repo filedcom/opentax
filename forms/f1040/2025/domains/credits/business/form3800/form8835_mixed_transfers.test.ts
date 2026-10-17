@@ -8,7 +8,7 @@ import {
 import { f1040_2025 } from "../../../../index.ts";
 import { extractFilerIdentity } from "../../../../../mef/filer.ts";
 import { buildPdfBytes, type PdfPageOrigin } from "../../../../pdf/builder.ts";
-import { preparedSourceSha256 } from "../../../../return-processing/prepared-source.ts";
+import { preparedSourceSha256 } from "../../../../return-processing/prepared_source.ts";
 
 for (const c of mixedTransferCases) {
   test(`Form 8835 mixed transfer limits and allocations: ${c.id}`, async () => {

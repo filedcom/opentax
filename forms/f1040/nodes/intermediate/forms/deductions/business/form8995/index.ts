@@ -1,7 +1,7 @@
-import { assertSstbServiceClassification } from "../../../../../inputs/income/business/schedule_c/sstb-classification.ts";
+import { assertSstbServiceClassification } from "../../../../../inputs/income/business/schedule_c/sstb_classification.ts";
 import { passiveSCorpLossBundleSchema } from "../../../../../inputs/income/rental-passthrough/k1_s_corp_passive_loss_source.ts";
-import { passiveSCorpLossQbiLines } from "./passive-s-corp-loss.ts";
-import { ownedSepSourceSchema } from "../../../../../inputs/adjustments/retirement/sep_retirement/owned-source.ts";
+import { passiveSCorpLossQbiLines } from "./passive_s_corp_loss.ts";
+import { ownedSepSourceSchema } from "../../../../../inputs/adjustments/retirement/sep_retirement/owned_source.ts";
 import {
   reviewedRpeAggregation,
   rpeAggregationSourceSchema,
@@ -17,39 +17,39 @@ import {
   currentPropertyQbiLines,
   currentPropertyQbiRows,
   currentPropertySourceSchema,
-} from "../../../../../inputs/income/rental-passthrough/schedule_e/current-property-source.ts";
+} from "../../../../../inputs/income/rental-passthrough/schedule_e/current_property_source.ts";
 import { currentPassiveLine10SourceSchema } from "../../../../../inputs/income/rental-passthrough/k1_partnership/box11_line10.ts";
-import { currentFarmRentalQbiSourceSchema } from "../../../../../inputs/income/business/f4835/qbi-source.ts";
+import { currentFarmRentalQbiSourceSchema } from "../../../../../inputs/income/business/f4835/qbi_source.ts";
 import { k1PassiveIncomeSourceSchema } from "../../../../../inputs/income/rental-passthrough/k1_passive_source.ts";
 import {
   currentK1QbiFarmRows,
   currentK1QbiLines,
   currentK1QbiSourceSchema,
 } from "../../../../../inputs/deductions/business/k1_qbi_source.ts";
-import { ownedDebtFamilyQbiLines } from "../../../income/business/form7203/owned-family.ts";
-import { ownedSCorpLossLines } from "./owned-s-corp-loss.ts";
+import { ownedDebtFamilyQbiLines } from "../../../income/business/form7203/owned_family.ts";
+import { ownedSCorpLossLines } from "./owned_s_corp_loss.ts";
 import {
   ownerW2WageSourceSchema,
   singleFarmSourceAmounts,
-} from "../form8995a/single-farm-source.ts";
+} from "../form8995a/single_farm_source.ts";
 import {
   qualifiedTipQbiSourceSchema,
   reviewedQualifiedTipExclusions,
-} from "./qualified-tips.ts";
-import { farmWotcAdvancedFields } from "../form8995a/farm-wotc.ts";
-import { jointOwnerQbi } from "./joint-owner.ts";
-import { singleScheduleCPlanSchema } from "../../../adjustments/health/form7206/single-source.ts";
-import { independentOwnerHealthSourceSchema } from "../../../adjustments/health/form7206/independent-owner.ts";
+} from "./qualified_tips.ts";
+import { farmWotcAdvancedFields } from "../form8995a/farm_wotc.ts";
+import { jointOwnerQbi } from "./joint_owner.ts";
+import { singleScheduleCPlanSchema } from "../../../adjustments/health/form7206/single_source.ts";
+import { independentOwnerHealthSourceSchema } from "../../../adjustments/health/form7206/independent_owner.ts";
 import {
   ownedScheduleSE,
   ownerSourcesSchema,
-} from "../../../taxes/self-employment/schedule_se/owner-calculation.ts";
+} from "../../../taxes/self-employment/schedule_se/owner_calculation.ts";
 import { inputSchema as patronReviewSchema } from "../../../../../inputs/deductions/business/qbi_patron/schema.ts";
 import { patronSourceAmounts } from "../../../../../inputs/deductions/business/qbi_patron/calculation.ts";
 import {
   qbiCapitalSourcesSchema,
   qbiCapitalTotal,
-} from "../qbi-capital-sources.ts";
+} from "../qbi_capital_sources.ts";
 import { z } from "zod";
 import type {
   NodeOutput,
@@ -65,8 +65,8 @@ import {
   allocateSharedSeDeduction,
   reviewedMultipleScheduleCQbi,
   roundSignedQbiDollars,
-} from "../../../../../inputs/income/business/schedule_c/qbi-multiple.ts";
-import { reviewedWotcQbiWages } from "../../../../../inputs/income/business/schedule_c/qbi-wotc.ts";
+} from "../../../../../inputs/income/business/schedule_c/qbi_multiple.ts";
+import { reviewedWotcQbiWages } from "../../../../../inputs/income/business/schedule_c/qbi_wotc.ts";
 import { FilingStatus } from "../../../../../types.ts";
 import {
   calculateScheduleFAtRiskNet,

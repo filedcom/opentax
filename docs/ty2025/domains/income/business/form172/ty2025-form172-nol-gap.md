@@ -42,7 +42,7 @@ Code inspected: `form172_current_deduction_source.ts`,
 `form172_reviewed_return.ts`, `form172_projected_return.ts`,
 `form172_amt_projected_return.ts`, `form172_loss_year_native.ts`,
 `form172_loss_year_pdf.ts`, both exporter descriptor arrays and Schedule1
-mappings, `attachment-coverage.ts`, the public NOL node and Form6251 line2f
+mappings, `attachment_coverage.ts`, the public NOL node and Form6251 line2f
 guard. Private `form172-original-requirements-audit-20261008-v1/review.json`
 retains exact root/candidate runtime manifests and the requirement dispositions;
 root matches the live full-regression preflight. No new test pass, coverage

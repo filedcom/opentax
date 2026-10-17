@@ -3,7 +3,7 @@ import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import { form1116Pdf } from "./f1116.ts";
 import { form1116ScheduleBPdf } from "./f1116_schedule_b.ts";
 import { form1116 as form1116Mef } from "../../../../../mef/forms/credits/foreign/f1116/f1116.ts";
-import { testFiler } from "../../../../../mef/support/test-filer.ts";
+import { testFiler } from "../../../../../mef/support/test_filer.ts";
 import { FilingStatus } from "../../../../../../nodes/types.ts";
 import { ordinaryTax2025 } from "../../../../../../nodes/intermediate/worksheets/taxes/calculation/tax_table_2025.ts";
 import {
@@ -13,13 +13,13 @@ import {
   form1116,
   IncomeCategory,
 } from "../../../../../../nodes/intermediate/forms/credits/foreign/form_1116/index.ts";
-import { scheduleCLedger } from "../../../../../../nodes/inputs/credits/foreign/form1116_schedule_c_source/test-fixture.ts";
+import { scheduleCLedger } from "../../../../../../nodes/inputs/credits/foreign/form1116_schedule_c_source/test_fixture.ts";
 import { k1Partnership } from "../../../../../../nodes/inputs/income/rental-passthrough/k1_partnership/index.ts";
 import { k1SCorpNode } from "../../../../../../nodes/inputs/income/rental-passthrough/k1_s_corp/index.ts";
 import { buildExecutionPlan } from "../../../../../../../../core/runtime/planner.ts";
 import { execute } from "../../../../../../../../core/runtime/executor.ts";
 import { registry } from "../../../../../registry.ts";
-import { pdfReviewFixtures } from "../../../../review-fixtures.ts";
+import { pdfReviewFixtures } from "../../../../review_fixtures.ts";
 
 test("Form 1116 PDF accepts context-only Schedule 1-A on the sourced interest return", () => {
   const fixture = pdfReviewFixtures.find((item) =>

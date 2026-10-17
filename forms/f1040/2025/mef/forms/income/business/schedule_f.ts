@@ -1,4 +1,4 @@
-import { filedOwnedScheduleF } from "../../../../../nodes/owned-business-filing.ts";
+import { filedOwnedScheduleF } from "../../../../../nodes/owned_business_filing.ts";
 import { assertFarmWotcReturn } from "../../../../domains/deductions/business/form8995/form8995_farm_wotc_reconciliation.ts";
 import { patronFiledBusinessLines } from "../../../../../nodes/inputs/deductions/business/qbi_patron/calculation.ts";
 import { element, elements } from "../../../../../mef/xml.ts";
@@ -17,7 +17,7 @@ import {
   type ScheduleFItem,
   wotcReductionsByFarm,
 } from "../../../../../nodes/intermediate/forms/income/business/schedule_f/index.ts";
-import type { MefBuildContext, MefFormDescriptor } from "../../../form-descriptor.ts";
+import type { MefBuildContext, MefFormDescriptor } from "../../../form_descriptor.ts";
 import { FilingStatus } from "../../../../../mef/header.ts";
 import { inputSchema as form4835InputSchema } from "../../../../../nodes/inputs/income/business/f4835/index.ts";
 import {

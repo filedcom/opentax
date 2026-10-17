@@ -1,4 +1,4 @@
-import { issuerIdentitySchema } from "./partnership-source.ts";
+import { issuerIdentitySchema } from "./partnership_source.ts";
 import { z } from "zod";
 import type { NodeResult } from "../../../../../../../core/types/tax-node.ts";
 import { output, TaxNode } from "../../../../../../../core/types/tax-node.ts";

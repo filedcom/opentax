@@ -3,7 +3,7 @@ import { assertEquals } from "@std/assert";
 import { buildMefBundle } from "../mef/builder.ts";
 import { f1040_2025 } from "../index.ts";
 import { buildPending } from "../mef/execution/pending.ts";
-import { pdfReviewFixtures } from "../pdf/review-fixtures.ts";
+import { pdfReviewFixtures } from "../pdf/review_fixtures.ts";
 
 // These source/attachment cases are intentionally guarded before packet
 // preparation. Keep exclusions explicit so a newly guarded fixture cannot

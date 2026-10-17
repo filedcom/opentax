@@ -20,14 +20,14 @@ import {
   NET_WORTH_THRESHOLD,
   sectionAExceptionAnswers,
 } from "./index.ts";
-import { allocateMarkToMarketExclusion } from "./mark-to-market.ts";
-import { calculateBalanceSheet } from "./balance-sheet.ts";
+import { allocateMarkToMarketExclusion } from "./mark_to_market.ts";
+import { calculateBalanceSheet } from "./balance_sheet.ts";
 import {
   Form8949LossTreatment,
   type MarkToMarketAsset,
   NongrantorTrustTreatment,
   ReportedFormCode,
-} from "./section-c.ts";
+} from "./section_c.ts";
 import {
   buildForm8854SectionC,
   buildForm8854SectionCStatements,
@@ -36,13 +36,13 @@ import {
   buildForm8854DeferredPropertyStatement,
   buildForm8854SectionD,
 } from "../../../../../2025/mef/forms/general/foreign/f8854/f8854_section_d.ts";
-import { calculateSectionDDeferral } from "./section-d.ts";
+import { calculateSectionDDeferral } from "./section_d.ts";
 import {
   buildForm8854InitialBundle,
   buildForm8854NativeStatementContents,
   linkForm8854NativeStatementIds,
 } from "../../../../../2025/mef/forms/general/foreign/f8854/f8854_initial.ts";
-import { reconcileForm8854Form8949Properties } from "./reconcile-capital.ts";
+import { reconcileForm8854Form8949Properties } from "./reconcile_capital.ts";
 
 function asset(
   assetId: string,

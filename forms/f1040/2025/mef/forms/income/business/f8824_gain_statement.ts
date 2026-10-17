@@ -8,7 +8,7 @@ import {
   type Form8824Input,
   inputSchema,
 } from "../../../../../nodes/intermediate/forms/income/business/form8824/index.ts";
-import type { MefPdfAttachment } from "../../../form-descriptor.ts";
+import type { MefPdfAttachment } from "../../../form_descriptor.ts";
 
 export const GAIN_STATEMENT_FILE =
   "Form8824RealizedRecognizedGainStatement.pdf";

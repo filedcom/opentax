@@ -7,7 +7,7 @@ import { form8582 } from "../../../../mef/forms/income/business/f8582/f8582.ts";
 import { scheduleE } from "../../../../mef/forms/income/rental-passthrough/schedule_e.ts";
 import { form8582Pdf } from "../../../../pdf/forms/income/business/f8582.ts";
 import { scheduleEPdf } from "../../../../pdf/forms/income/rental-passthrough/schedule_e.ts";
-import { assertAttachmentCoverage } from "../../../../return-processing/attachment-coverage.ts";
+import { assertAttachmentCoverage } from "../../../../return-processing/attachment_coverage.ts";
 import { buildForm8582Ledger } from "../../../../../nodes/intermediate/forms/income/business/form8582/ledger.ts";
 import { reconcileForm8582NextYearOpening } from "../../../../../nodes/intermediate/forms/income/business/form8582/next_year_import.ts";
 

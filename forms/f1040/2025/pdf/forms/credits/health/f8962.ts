@@ -3,7 +3,7 @@ import { FilingStatus } from "../../../../../mef/header.ts";
 import type {
   PdfFieldEntry,
   PdfFormDescriptor,
-} from "../../../form-descriptor.ts";
+} from "../../../form_descriptor.ts";
 import {
   current1095AStatements,
   inputSchema as form1095aSchema,
@@ -14,7 +14,7 @@ import {
   onePersonTransitionOverlapMonth,
 } from "../../../../mef/forms/credits/health/f8962/f8962.ts";
 import { appendForm8962AllocationStatement } from "./f8962_allocation_statement.ts";
-import { reconcileDependentMagi } from "../../../../domains/credits/health/form8962/form8962-dependent-magi.ts";
+import { reconcileDependentMagi } from "../../../../domains/credits/health/form8962/form8962_dependent_magi.ts";
 import { assertForm8962Pub974Return } from "../../../../domains/credits/health/form8962/form8962_pub974_return.ts";
 
 // TY2025 Form 8962 AcroForm fields, verified against the year-pinned IRS PDF.

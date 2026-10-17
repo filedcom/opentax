@@ -7,7 +7,7 @@ import {
 import type { SourceDocumentBytes } from "../../../../../../../core/runtime/source-documents.ts";
 import { extractFilerIdentity } from "../../../../../mef/filer.ts";
 import { FilingStatus } from "../../../../../mef/header.ts";
-import { sha256Hex } from "../../../../return-processing/prepared-source.ts";
+import { sha256Hex } from "../../../../return-processing/prepared_source.ts";
 import { stageForm8801NativeDocument } from "./form8801_staged_native.ts";
 
 export const FORM8801_2025_TEMPLATE_SHA256 =

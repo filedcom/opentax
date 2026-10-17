@@ -9,7 +9,7 @@ import {
   type RedeterminationDisclosure,
   scheduleCFilingBlockReason,
 } from "../../../../../../nodes/intermediate/forms/credits/foreign/form_1116/index.ts";
-import type { MefBuildContext, MefFormDescriptor } from "../../../../form-descriptor.ts";
+import type { MefBuildContext, MefFormDescriptor } from "../../../../form_descriptor.ts";
 import {
   scheduleBFieldsSchema,
   scheduleBPresentation,

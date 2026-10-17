@@ -7,7 +7,7 @@ import {
   inputSchema as scheduleAInputSchema,
   scheduleA,
 } from "../../../../../../nodes/inputs/deductions/itemized/schedule_a/index.ts";
-import type { MefBuildContext } from "../../../../form-descriptor.ts";
+import type { MefBuildContext } from "../../../../form_descriptor.ts";
 import {
   reviewForm8283CarryoverAttachment,
   scheduleACarryoverMatchSchema,

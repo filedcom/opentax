@@ -5,7 +5,7 @@ import {
   type F4255Row,
   inputSchema,
 } from "../../../../../nodes/inputs/taxes/credit-recapture/f4255/index.ts";
-import type { MefBuildContext, MefFormDescriptor } from "../../../form-descriptor.ts";
+import type { MefBuildContext, MefFormDescriptor } from "../../../form_descriptor.ts";
 
 type PartIRow = Omit<
   F4255Row,

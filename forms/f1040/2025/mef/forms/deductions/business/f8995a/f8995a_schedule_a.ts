@@ -1,4 +1,4 @@
-import { assertSstbScheduleCSource } from "./f8995a-sstb-source.ts";
+import { assertSstbScheduleCSource } from "./f8995a_sstb_source.ts";
 import {
   assertMfsSstbOwner,
   calculateOneSstb8995ALines,
@@ -11,7 +11,7 @@ import { FilingStatus as NodeFilingStatus } from "../../../../../../nodes/types.
 import type {
   MefBuildContext,
   MefFormDescriptor,
-} from "../../../../form-descriptor.ts";
+} from "../../../../form_descriptor.ts";
 
 type Input = Form8995AInput | readonly [];
 

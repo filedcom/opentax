@@ -3,7 +3,7 @@ import {
   type BalanceSheet,
   balanceSheetSchema,
   calculateBalanceSheet,
-} from "../../../../../../nodes/inputs/general/foreign/f8854/balance-sheet.ts";
+} from "../../../../../../nodes/inputs/general/foreign/f8854/balance_sheet.ts";
 import {
   type F8854Input,
   inputSchema,

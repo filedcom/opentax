@@ -30,11 +30,11 @@ business kind does not establish that kind's public filing route.
 ## Authoritative code and verification scope
 
 - [public node](../../../../../../forms/f1040/nodes/intermediate/forms/adjustments/health/form7206/index.ts)
-- [single-plan schema/calculator](../../../../../../forms/f1040/nodes/intermediate/forms/adjustments/health/form7206/single-source.ts)
-- [independent-plan calculator](../../../../../../forms/f1040/nodes/intermediate/forms/adjustments/health/form7206/independent-owner.ts)
-- [shared policy checks](../../../../../../forms/f1040/nodes/intermediate/forms/adjustments/health/form7206/policy-records.ts)
+- [single-plan schema/calculator](../../../../../../forms/f1040/nodes/intermediate/forms/adjustments/health/form7206/single_source.ts)
+- [independent-plan calculator](../../../../../../forms/f1040/nodes/intermediate/forms/adjustments/health/form7206/independent_owner.ts)
+- [shared policy checks](../../../../../../forms/f1040/nodes/intermediate/forms/adjustments/health/form7206/policy_records.ts)
 - [complete-return reconciliation](../../../../../../forms/f1040/2025/domains/adjustments/health/form7206/form7206_independent_owner_source.ts)
-- [owned SEP source](../../../../../../forms/f1040/nodes/inputs/adjustments/retirement/sep_retirement/owned-source.ts)
+- [owned SEP source](../../../../../../forms/f1040/nodes/inputs/adjustments/retirement/sep_retirement/owned_source.ts)
 - [native descriptor](../../../../../../forms/f1040/2025/mef/forms/adjustments/health/f7206.ts)
 - [PDF descriptor](../../../../../../forms/f1040/2025/pdf/forms/adjustments/health/f7206.ts)
 - [native registry](../../../../../../forms/f1040/2025/mef/forms/index.ts)

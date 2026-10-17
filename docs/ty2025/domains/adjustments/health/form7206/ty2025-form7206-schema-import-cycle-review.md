@@ -6,7 +6,7 @@ The standalone `forms/f1040/2025/domains/credits/health/form8962/form8962_pub974
 
 ## Repair
 
-Move the existing one-Schedule-C policy schema, line schema, types, and pure calculator to `form7206/single-source.ts`. Both calculation nodes import that module; Form 7206 preserves its previous exports. Form 8995's joint-owner helper also imports the pure module. The shared module imports only Zod and the taxpayer/spouse enum, with no calculation-node imports.
+Move the existing one-Schedule-C policy schema, line schema, types, and pure calculator to `form7206/single_source.ts`. Both calculation nodes import that module; Form 7206 preserves its previous exports. Form 8995's joint-owner helper also imports the pure module. The shared module imports only Zod and the taxpayer/spouse enum, with no calculation-node imports.
 
 A token comparison of the original schema/calculator against the extracted code confirms unchanged validation and arithmetic (apart from exporting the existing money schema). This repair adds no plan scope, changes no source requirements, and does not modify tax equations or export behavior.
 

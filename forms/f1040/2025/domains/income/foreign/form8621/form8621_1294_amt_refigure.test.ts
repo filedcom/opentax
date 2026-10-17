@@ -9,7 +9,7 @@ import { f1040_2025 } from "../../../../index.ts";
 import { buildPending } from "../../../../mef/execution/pending.ts";
 import { buildMefXml } from "../../../../mef/builder.ts";
 import { buildPdfBytes, type PdfPageOrigin } from "../../../../pdf/builder.ts";
-import { pdfReviewFixtures } from "../../../../pdf/review-fixtures.ts";
+import { pdfReviewFixtures } from "../../../../pdf/review_fixtures.ts";
 
 const iso = pdfReviewFixtures.find((row) => row.id === "single-iso-amt")!;
 const farm = pdfReviewFixtures.find((row) =>

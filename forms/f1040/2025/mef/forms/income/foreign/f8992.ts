@@ -1,6 +1,6 @@
 import { element, elements } from "../../../../../mef/xml.ts";
 import { projectForm8992Source } from "../../../../domains/income/foreign/form8992/form8992_source.ts";
-import type { MefFormDescriptor } from "../../../form-descriptor.ts";
+import type { MefFormDescriptor } from "../../../form_descriptor.ts";
 
 // TY2025 v5.4 IRS8992.xsd. Part II line 1 repeats Part I line 3 on the
 // printed form; the native schema has only NetCFCTestedIncomeAmt.

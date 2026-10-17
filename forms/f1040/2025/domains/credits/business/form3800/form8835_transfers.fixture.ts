@@ -4,9 +4,9 @@ import {
   solarBondFixture,
 } from "./form8835_solar_bonds.fixture.ts";
 import { calculateForm8835 } from "../../../../../nodes/inputs/credits/business/f8835/index.ts";
-import { form8835TransferDescription } from "../../../../../nodes/inputs/credits/business/f8835/transfer-source.ts";
+import { form8835TransferDescription } from "../../../../../nodes/inputs/credits/business/f8835/transfer_source.ts";
 import { transferStatementFields } from "../../../../mef/forms/credits/business/f8835_transfer_statement.ts";
-import { sha256Hex } from "../../../../return-processing/prepared-source.ts";
+import { sha256Hex } from "../../../../return-processing/prepared_source.ts";
 
 export const transferCases = [
   { id: "transfer-base-partial", source: 0, portions: [[200]] },

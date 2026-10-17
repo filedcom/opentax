@@ -1,8 +1,8 @@
-import { filedOwnedScheduleF } from "../../../../../nodes/owned-business-filing.ts";
+import { filedOwnedScheduleF } from "../../../../../nodes/owned_business_filing.ts";
 import { assertFarmWotcReturn } from "../../../../domains/deductions/business/form8995/form8995_farm_wotc_reconciliation.ts";
 import { patronFiledBusinessLines } from "../../../../../nodes/inputs/deductions/business/qbi_patron/calculation.ts";
-import type { PdfFieldEntry, PdfFormDescriptor } from "../../../form-descriptor.ts";
-import { appendExpenseStatement } from "../../../support/expense-statement.ts";
+import type { PdfFieldEntry, PdfFormDescriptor } from "../../../form_descriptor.ts";
+import { appendExpenseStatement } from "../../../support/expense_statement.ts";
 import { type FilerIdentity, FilingStatus } from "../../../../../mef/header.ts";
 import {
   assertScheduleF1099Answers,

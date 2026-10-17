@@ -3,7 +3,7 @@ import {
   allForm4136Claims,
   inputSchema,
 } from "../../../../../nodes/inputs/credits/business/f4136/index.ts";
-import type { MefFormDescriptor } from "../../../form-descriptor.ts";
+import type { MefFormDescriptor } from "../../../form_descriptor.ts";
 
 // The 2025 instructions require a separate statement of each government
 // purchaser's identity and gallons for Form 4136 line 6a.

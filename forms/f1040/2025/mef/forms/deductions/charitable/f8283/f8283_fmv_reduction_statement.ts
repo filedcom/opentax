@@ -1,5 +1,5 @@
 import { inputSchema } from "../../../../../../nodes/inputs/deductions/charitable/f8283/index.ts";
-import type { MefFormDescriptor } from "../../../../form-descriptor.ts";
+import type { MefFormDescriptor } from "../../../../form_descriptor.ts";
 import {
   assertCreatorReductionSource,
   assertIntellectualPropertyReductionSource,

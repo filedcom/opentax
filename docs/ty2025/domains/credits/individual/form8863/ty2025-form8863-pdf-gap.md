@@ -44,7 +44,7 @@ stays46/133, with every one of133 case rows identical to the prior checkpoint.
 Private evidence: `.state/research/form8863-foreign-school-2026-10-09/` retains
 sources, expected/finalized records, XML, full PDFs, all52 renders, review/hash
 reports, test logs, and the benchmark comparison. The committed regression is
-`form8863-foreign-school-source.test.ts`; run with `deno test -A` and
+`form8863_foreign_school_source.test.ts`; run with `deno test -A` and
 `-- --write-review-artifacts` to retain the eight packets. These synthetic
 amounts are already U.S. dollars; the checkpoint does not verify currency
 conversion, source authenticity, wider eligibility, or IRS acceptance.
@@ -110,7 +110,7 @@ source authentication and IRS acceptance remain open.
 Private evidence: `.state/research/form8863-prior-school-2026-10-09/` retains
 source/pending/expected records, native XML, full PDFs, renders, page hashes,
 verification report, focused/grouped/replay logs and benchmark comparison.
-Run the `form8863-prior-school-source.test.ts` review with `deno test -A` and
+Run the `form8863_prior_school_source.test.ts` review with `deno test -A` and
 `-- --write-review-artifacts`; the retained verifier checks XSD and full packets.
 
 ## October 9 school-continuation source checkpoint
@@ -177,7 +177,7 @@ Evidence: `.state/research/form8863-school-continuations-2026-10-09/`
 contains each source, finalized pending graph, expected amounts, page origins,
 projected instances, XML, PDF and rendered pages, plus validation/test/benchmark
 logs and hash manifests. Source tests live in
-`forms/f1040/2025/pdf/reviews/credits/individual/form8863-school-continuations.test.ts`.
+`forms/f1040/2025/pdf/reviews/credits/individual/form8863_school_continuations.test.ts`.
 The canonical two-page template digest is
 `a251a1cfbd613d5dd81646b276b1cc3562d7efb8bed969491eada7c8eb0d8e00`;
 the Return1040 XSD digest is
@@ -317,7 +317,7 @@ inspect a filled PDF's field values, widget appearances and rendered pages in
 the deferred batch.
 
 The existing focused preflight cases in `forms/f1040/2025/pdf/reviews/general/composed-returns/builder.test.ts`
-and `forms/f1040/2025/return-processing/attachment-coverage.test.ts` assert that a nonempty Form
+and `forms/f1040/2025/return-processing/attachment_coverage.test.ts` assert that a nonempty Form
 8863 source rejects PDF export while its MeF export remains eligible. They are
 written but have not been run in the shared full batch. No PDF, typecheck, XSD,
 end-to-end, IRS business-rule or ATS result is claimed.

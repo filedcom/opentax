@@ -1,7 +1,7 @@
 import { isDeepStrictEqual } from "node:util";
 import { inputSchema as rSchema } from "../../../../../nodes/inputs/income/retirement/f1099r/index.ts";
 import { printSchema } from "../../../../../nodes/intermediate/forms/income/retirement/form8606/index.ts";
-import { reviewedRothActivity } from "../../../../../nodes/intermediate/forms/income/retirement/form8606/roth-activity.ts";
+import { reviewedRothActivity } from "../../../../../nodes/intermediate/forms/income/retirement/form8606/roth_activity.ts";
 import { type FilerIdentity, FilingStatus } from "../../../../../mef/header.ts";
 
 /** Source replay for regular-contribution Roth J/T claims and their filed consequences. */

@@ -1,5 +1,5 @@
 import { element, elements } from "../../../../../../mef/xml.ts";
-import type { MefFormDescriptor } from "../../../../form-descriptor.ts";
+import type { MefFormDescriptor } from "../../../../form_descriptor.ts";
 import { schedule1OtherIncomeRows } from "./schedule1_other_income_rows.ts";
 
 /** TY2025 ReturnData1040 permits one ordered line-8z type statement. */

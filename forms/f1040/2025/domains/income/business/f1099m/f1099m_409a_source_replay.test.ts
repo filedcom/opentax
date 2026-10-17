@@ -14,7 +14,7 @@ import { registry } from "../../../../registry.ts";
 import { buildMefBundle } from "../../../../mef/builder.ts";
 import { buildPending } from "../../../../mef/execution/pending.ts";
 import { buildPdfBytes } from "../../../../pdf/builder.ts";
-import { assertSchedule2Line17HSources } from "../../../taxes/other/schedule2-w2-source-reconciliation.ts";
+import { assertSchedule2Line17HSources } from "../../../taxes/other/schedule2_w2_source_reconciliation.ts";
 
 const general = {
   filing_status: "single",

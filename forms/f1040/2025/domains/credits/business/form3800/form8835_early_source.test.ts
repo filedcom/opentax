@@ -5,7 +5,7 @@ import { itemSchema } from "../../../../../nodes/inputs/credits/business/f8835/i
 import {
   assertForm8835EarlyConstructionSource,
   form8835ContinuityDeadline,
-} from "../../../../../nodes/inputs/credits/business/f8835/early-construction-source.ts";
+} from "../../../../../nodes/inputs/credits/business/f8835/early_construction_source.ts";
 
 test("Form8835 continuity notice deadlines include the 2016-2020 extensions", () => {
   for (

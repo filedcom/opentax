@@ -9,7 +9,7 @@ import {
   inputSchema,
   type JointOccupancyStatement,
 } from "../../../../../nodes/intermediate/forms/general/filing/joint_occupancy_statement/index.ts";
-import type { MefFormDescriptor } from "../../../form-descriptor.ts";
+import type { MefFormDescriptor } from "../../../form_descriptor.ts";
 
 const GROUP_TAG: Readonly<Record<HomeImprovementKind, string>> = {
   [HomeImprovementKind.Insulation]: "InsulationOrAirSealingGrp",

@@ -3,7 +3,7 @@ import { z } from "zod";
 import { inputSchema as k1Schema } from "../../../../../nodes/inputs/income/rental-passthrough/k1_s_corp/index.ts";
 import { inputSchema as generalSchema } from "../../../../../nodes/inputs/general/filing/general/index.ts";
 import { w2ItemSchema } from "../../../../../nodes/inputs/income/wages/w2/index.ts";
-import { reviewedMixedCurrentDebtSchema } from "../../../../../nodes/intermediate/forms/income/business/form7203/debt-note.ts";
+import { reviewedMixedCurrentDebtSchema } from "../../../../../nodes/intermediate/forms/income/business/form7203/debt_note.ts";
 import {
   overflowDebtCases,
   overflowDebtInputs,

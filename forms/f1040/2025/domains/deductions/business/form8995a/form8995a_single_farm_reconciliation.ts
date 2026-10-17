@@ -4,7 +4,7 @@ import { inputSchema as advancedInput } from "../../../../../nodes/intermediate/
 import {
   assertSingleFarmAmounts,
   singleFarmSourceAmounts,
-} from "../../../../../nodes/intermediate/forms/deductions/business/form8995a/single-farm-source.ts";
+} from "../../../../../nodes/intermediate/forms/deductions/business/form8995a/single_farm_source.ts";
 function record(v: unknown): Record<string, unknown> {
   if (!v || typeof v !== "object" || Array.isArray(v)) {
     throw new Error("Advanced farm QBI needs a retained return source record");

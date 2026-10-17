@@ -9,8 +9,8 @@ import { f1040_2025 } from "../../../../index.ts";
 import {
   calculateCurrentYearInventory,
   filedCurrentYearSchema,
-} from "../../../../../nodes/intermediate/forms/deductions/business/form4562/current-year.ts";
-import { DepreciationMethod } from "../../../../../nodes/intermediate/forms/deductions/business/form4562/method-elections.ts";
+} from "../../../../../nodes/intermediate/forms/deductions/business/form4562/current_year.ts";
+import { DepreciationMethod } from "../../../../../nodes/intermediate/forms/deductions/business/form4562/method_elections.ts";
 import { bonusFilerFixture } from "../../../credits/business/form3800/form8911_bonus_fixture.ts";
 import { methodCases, methodElectionInput } from "./methods.fixture.ts";
 

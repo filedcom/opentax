@@ -9,8 +9,8 @@ import { buildPdfBytes } from "../../../../pdf/builder.ts";
 import {
   fractionalBeneficiaryCases,
   fractionalBeneficiaryInputs,
-} from "../../../../pdf/reviews/taxes/retirement/form4972/review-4972-fractional.fixture.ts";
-import expected from "../../../../pdf/reviews/taxes/retirement/form4972/review-4972-fractional.expected.json" with {
+} from "../../../../pdf/reviews/taxes/retirement/form4972/review_4972_fractional.fixture.ts";
+import expected from "../../../../pdf/reviews/taxes/retirement/form4972/review_4972_fractional.expected.json" with {
   type: "json",
 };
 

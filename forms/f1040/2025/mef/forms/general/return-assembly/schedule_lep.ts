@@ -5,7 +5,7 @@ import {
   inputSchema,
   LanguagePreferenceCode,
 } from "../../../../../nodes/inputs/general/filing/schedule_lep/index.ts";
-import type { MefBuildContext, MefFormDescriptor } from "../../../form-descriptor.ts";
+import type { MefBuildContext, MefFormDescriptor } from "../../../form_descriptor.ts";
 
 type Input = z.input<typeof inputSchema> | readonly [];
 

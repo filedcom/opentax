@@ -1,4 +1,4 @@
-import { calculateCharitableDepreciation } from "../../../../../../nodes/inputs/deductions/charitable/f8283/depreciation-source.ts";
+import { calculateCharitableDepreciation } from "../../../../../../nodes/inputs/deductions/charitable/f8283/depreciation_source.ts";
 import { inputSchema as giftSchema } from "../../../../../../nodes/inputs/deductions/charitable/f8283/index.ts";
 import { scheduleC } from "../../../../../../nodes/inputs/income/business/schedule_c/index.ts";
 import { projectScheduleCItems } from "../../../../../../nodes/inputs/income/business/schedule_c/model.ts";
@@ -6,7 +6,7 @@ import { f1099nec } from "../../../../../../nodes/inputs/income/business/f1099ne
 import { w2 } from "../../../../../../nodes/inputs/income/wages/w2/index.ts";
 import { schedule_se } from "../../../../../../nodes/intermediate/forms/taxes/self-employment/schedule_se/index.ts";
 import { form8995 } from "../../../../../../nodes/intermediate/forms/deductions/business/form8995/index.ts";
-import type { MefBuildContext } from "../../../../form-descriptor.ts";
+import type { MefBuildContext } from "../../../../form_descriptor.ts";
 
 /** Replay the active donation's owned annual ledger through the filed business,
  * issued receipts, owner SE, adjustment and QBI. Hypothetical gain is never income. */

@@ -1,5 +1,5 @@
-import { allocateCurrentPassiveForms } from "./current-form-allocation.ts";
-import { currentPassiveFormsSchema } from "./current-form-schema.ts";
+import { allocateCurrentPassiveForms } from "./current_form_allocation.ts";
+import { currentPassiveFormsSchema } from "./current_form_schema.ts";
 import { z } from "zod";
 import type {
   NodeOutput,

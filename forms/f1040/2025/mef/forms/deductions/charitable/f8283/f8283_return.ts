@@ -11,7 +11,7 @@ import { agi_aggregator } from "../../../../../../nodes/intermediate/aggregation
 import { agi_final } from "../../../../../../nodes/intermediate/aggregation/general/return-assembly/agi_final/index.ts";
 import { income_tax_calculation } from "../../../../../../nodes/intermediate/worksheets/taxes/calculation/income_tax_calculation/index.ts";
 import { w2 } from "../../../../../../nodes/inputs/income/wages/w2/index.ts";
-import type { MefBuildContext } from "../../../../form-descriptor.ts";
+import type { MefBuildContext } from "../../../../form_descriptor.ts";
 
 /** Expanded owned-gift packets retain the actual income and tax worksheet graph.
  * Replay those nodes rather than accepting an independently asserted AGI/tax.

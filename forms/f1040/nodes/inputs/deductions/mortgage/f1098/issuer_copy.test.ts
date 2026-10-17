@@ -1,5 +1,5 @@
 import { test } from "bun:test";
-import { canonicalForm1098CopyDocument } from "../../../../../2025/pdf/reviews/deductions/mortgage/review-1098-copy.fixture.ts";
+import { canonicalForm1098CopyDocument } from "../../../../../2025/pdf/reviews/deductions/mortgage/review_1098_copy.fixture.ts";
 import { assertEquals, assertRejects, assertStringIncludes } from "@std/assert";
 import { PDFDocument, PDFName } from "pdf-lib";
 import {

@@ -10,7 +10,7 @@ import {
   scheduleA,
 } from "../../../../../../nodes/inputs/deductions/itemized/schedule_a/index.ts";
 import type { FilerIdentity } from "../../../../../../mef/header.ts";
-import type { MefBuildContext } from "../../../../form-descriptor.ts";
+import type { MefBuildContext } from "../../../../form_descriptor.ts";
 
 function hasCompleteSectionAColumns(item: SectionAItem): boolean {
   const address = item.donee_organization_us_address;

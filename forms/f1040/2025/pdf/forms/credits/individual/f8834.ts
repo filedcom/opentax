@@ -3,7 +3,7 @@ import {
   form8834SourceCredit,
   itemSchema,
 } from "../../../../../nodes/inputs/credits/individual/f8834/index.ts";
-import type { PdfFieldEntry, PdfFormDescriptor } from "../../../form-descriptor.ts";
+import type { PdfFieldEntry, PdfFormDescriptor } from "../../../form_descriptor.ts";
 
 // October 2024 is the IRS continuous-use revision for tax years 2024 onward.
 // The 2024 prior PDF and current PDF have identical SHA-256 content.

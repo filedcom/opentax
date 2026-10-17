@@ -3,8 +3,8 @@ import {
   type QualifyingChildDetail,
   qualifyingChildDetailSchema,
 } from "../../../../../nodes/intermediate/forms/credits/earned-income/eitc/index.ts";
-import type { MefBuildContext, MefFormDescriptor } from "../../../form-descriptor.ts";
-import { scheduleEicLine6Months } from "../../../../domains/credits/earned-income/eic/eic-birth-residency.ts";
+import type { MefBuildContext, MefFormDescriptor } from "../../../form_descriptor.ts";
+import { scheduleEicLine6Months } from "../../../../domains/credits/earned-income/eic/eic_birth_residency.ts";
 
 export interface Fields {
   credit_amount?: number;

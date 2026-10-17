@@ -1,6 +1,6 @@
 import * as fs from "node:fs/promises";
 import * as sys from "../../../../../../../scripts/support/sys.ts";
-import { qualifiedRothDocuments } from "../../../../../nodes/inputs/income/wages/f4852/qualified-roth.ts";
+import { qualifiedRothDocuments } from "../../../../../nodes/inputs/income/wages/f4852/qualified_roth.ts";
 import { iraRecharacterizationDocuments } from "../../../../../nodes/intermediate/forms/income/retirement/form8606/recharacterization.ts";
 import { addForm4852IraMargin } from "./form4852_ira_margin.ts";
 import { PDFCheckBox, PDFDocument, PDFTextField, StandardFonts } from "pdf-lib";
@@ -12,7 +12,7 @@ import {
 } from "../../../../../nodes/inputs/income/wages/f4852/index.ts";
 import { type FilerIdentity, FilingStatus } from "../../../../../mef/header.ts";
 import { form4852RetainedPdf } from "../../../../pdf/forms/income/wages/f4852_retained.ts";
-import { roundWholeDollars } from "../../../../../shared/whole-dollars.ts";
+import { roundWholeDollars } from "../../../../../shared/whole_dollars.ts";
 import type { Form4852RetainedDocument } from "./form4852_source.ts";
 
 export const form4852Filer: FilerIdentity = {

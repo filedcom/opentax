@@ -16,7 +16,7 @@ import {
   hasForm4952PriorCarryforward,
   reconcileForm4952PriorCarryforward,
 } from "../../../../../domains/deductions/investments/form4952/form4952_prior_carryforward_reconciliation.ts";
-import type { MefFormDescriptor } from "../../../../form-descriptor.ts";
+import type { MefFormDescriptor } from "../../../../form_descriptor.ts";
 import { FilingStatus } from "../../../../types.ts";
 import { reconcileForm4952ScheduleJChildDividend } from "../../../../../domains/deductions/investments/form4952/form4952_schedulej_child_reconciliation.ts";
 import { reconcileForm4952PabAmt } from "../../../../../domains/deductions/investments/form4952/form4952_pab_amt_reconciliation.ts";

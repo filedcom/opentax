@@ -1,5 +1,5 @@
 import { PDFDocument, StandardFonts } from "pdf-lib";
-import type { PdfFieldEntry, PdfFormDescriptor } from "../../../form-descriptor.ts";
+import type { PdfFieldEntry, PdfFormDescriptor } from "../../../form_descriptor.ts";
 import type { Form8621Lines } from "../../../../../nodes/inputs/income/foreign/f8621/index.ts";
 import { PficRegime } from "../../../../../nodes/inputs/income/foreign/f8621/index.ts";
 import { projectForm8621Packet } from "./f8621_packet_source.ts";

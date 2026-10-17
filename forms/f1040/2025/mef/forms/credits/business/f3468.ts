@@ -1,5 +1,5 @@
 import { element, elements } from "../../../../../mef/xml.ts";
-import type { MefFormDescriptor } from "../../../form-descriptor.ts";
+import type { MefFormDescriptor } from "../../../form_descriptor.ts";
 import { inputSchema as f3468InputSchema } from "../../../../../nodes/inputs/credits/business/f3468/index.ts";
 import { reconcileFiledTrustPartVClaims } from "./f3468_source.ts";
 

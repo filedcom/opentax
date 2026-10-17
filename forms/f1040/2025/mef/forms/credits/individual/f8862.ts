@@ -14,7 +14,7 @@ import {
   inputSchema as form8812InputSchema,
 } from "../../../../../nodes/inputs/credits/child/f8812/index.ts";
 import { inputSchema as generalInputSchema } from "../../../../../nodes/inputs/general/filing/general/index.ts";
-import type { MefBuildContext, MefFormDescriptor } from "../../../form-descriptor.ts";
+import type { MefBuildContext, MefFormDescriptor } from "../../../form_descriptor.ts";
 
 function boolElement(tag: string, value: boolean | undefined): string {
   return element(tag, value === undefined ? undefined : String(value));

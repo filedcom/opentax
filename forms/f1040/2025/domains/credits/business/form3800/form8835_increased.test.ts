@@ -9,7 +9,7 @@ import { f1040_2025 } from "../../../../index.ts";
 import { extractFilerIdentity } from "../../../../../mef/filer.ts";
 import { buildPdfBytes, type PdfPageOrigin } from "../../../../pdf/builder.ts";
 import { form8835Pdf } from "../../../../pdf/forms/credits/business/f8835.ts";
-import { sha256Hex } from "../../../../return-processing/prepared-source.ts";
+import { sha256Hex } from "../../../../return-processing/prepared_source.ts";
 
 const cases = [
   { id: "small-wind", count: 1, kwh: 100000, capacity: 900, wind: true },

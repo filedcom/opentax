@@ -1,7 +1,7 @@
 import { FilingStatus } from "../../../../../mef/header.ts";
 import { ForeignAssetType } from "../../../../../nodes/inputs/general/foreign/f8938/index.ts";
 import { projectForm8992Source } from "../../../../domains/income/foreign/form8992/form8992_source.ts";
-import type { MefBuildContext } from "../../../form-descriptor.ts";
+import type { MefBuildContext } from "../../../form_descriptor.ts";
 import { projectForm8938 } from "./f8938_projection.ts";
 
 const status = {

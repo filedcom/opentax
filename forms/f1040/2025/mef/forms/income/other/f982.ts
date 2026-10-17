@@ -2,10 +2,10 @@ import { element, elements } from "../../../../../mef/xml.ts";
 import {
   assertForm982AbsentSource,
   projectQpriForm982,
-} from "../../../../domains/income/other/form982/form982-qpri.ts";
+} from "../../../../domains/income/other/form982/form982_qpri.ts";
 import { inputSchema } from "../../../../../nodes/intermediate/forms/income/other/form982/index.ts";
 import { FilingStatus } from "../../../types.ts";
-import type { MefBuildContext, MefFormDescriptor } from "../../../form-descriptor.ts";
+import type { MefBuildContext, MefFormDescriptor } from "../../../form_descriptor.ts";
 
 type Input = Partial<typeof inputSchema._output> & Record<string, unknown>;
 

@@ -1,7 +1,7 @@
-import { assertReviewedDependentForm8615 } from "../../../../../nodes/inputs/taxes/investments/f8615/dependent-source-review.ts";
+import { assertReviewedDependentForm8615 } from "../../../../../nodes/inputs/taxes/investments/f8615/dependent_source_review.ts";
 import { element, elements } from "../../../../../mef/xml.ts";
 import { FilingStatus } from "../../../../../nodes/types.ts";
-import type { MefFormDescriptor } from "../../../form-descriptor.ts";
+import type { MefFormDescriptor } from "../../../form_descriptor.ts";
 
 export interface Fields {
   parent_name: string;

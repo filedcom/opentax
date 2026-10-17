@@ -96,7 +96,7 @@ These are previously recorded source gaps, not newly discovered production defec
 ## Evidence and reproduction
 
 ```sh
-deno run -A forms/f1040/e2e/ats/ty2025-check-ledger.ts /tmp/ats-check-ledger.json
+deno run -A forms/f1040/e2e/ats/ty2025_check_ledger.ts /tmp/ats-check-ledger.json
 deno test -A forms/f1040/e2e/ats
 ```
 

@@ -8,7 +8,7 @@ import { schedule_j_calculation } from "../../../../intermediate/forms/taxes/inc
 import { income_tax_calculation } from "../../../../intermediate/worksheets/taxes/calculation/income_tax_calculation/index.ts";
 
 import { ordinaryYearFactsSchema } from "../../../../intermediate/forms/taxes/income-averaging/schedule_j_calculation/calculation.ts";
-import { scheduleJTaxSourceSchema } from "../../../../intermediate/forms/taxes/income-averaging/schedule_j_calculation/tax-source.ts";
+import { scheduleJTaxSourceSchema } from "../../../../intermediate/forms/taxes/income-averaging/schedule_j_calculation/tax_source.ts";
 
 const nonfarmWageSourceSchema = z.object({
   document_id: z.string().trim().min(1),

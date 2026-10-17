@@ -2,7 +2,7 @@ import {
   aggregationChangeDescription,
   appendAggregationAnnualDisclosure,
 } from "./f8995a_aggregation_statement.ts";
-import type { PdfFieldEntry, PdfFormDescriptor } from "../../../form-descriptor.ts";
+import type { PdfFieldEntry, PdfFormDescriptor } from "../../../form_descriptor.ts";
 import { inputSchema } from "../../../../../nodes/intermediate/forms/deductions/business/form8995a/index.ts";
 import { assertScheduleBAggregationJoin } from "../../../../mef/forms/deductions/business/f8995a/f8995a_schedule_b.ts";
 

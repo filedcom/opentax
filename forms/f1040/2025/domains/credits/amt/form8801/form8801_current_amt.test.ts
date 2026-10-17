@@ -6,11 +6,11 @@ import {
   stageForm8801CarryRecord,
 } from "./form8801_carry_record.ts";
 import { stageForm8801PriorBoundReturn } from "./form8801_prior_return_bytes.ts";
-import { sha256Hex } from "../../../../return-processing/prepared-source.ts";
-import { assertAttachmentCoverage } from "../../../../return-processing/attachment-coverage.ts";
+import { sha256Hex } from "../../../../return-processing/prepared_source.ts";
+import { assertAttachmentCoverage } from "../../../../return-processing/attachment_coverage.ts";
 import { f1040_2025 } from "../../../../index.ts";
 import { buildPdfBytes } from "../../../../pdf/builder.ts";
-import { pdfReviewFixtures } from "../../../../pdf/review-fixtures.ts";
+import { pdfReviewFixtures } from "../../../../pdf/review_fixtures.ts";
 
 // Constructed prior-copy fields; this is not an accepted prior return.
 const priorXml =

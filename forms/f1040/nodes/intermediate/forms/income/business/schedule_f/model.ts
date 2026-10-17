@@ -2,7 +2,7 @@ import { independentReviewsSchema } from "../../../../../inputs/deductions/busin
 import {
   calculateCharitableNaturalResource,
   charitableNaturalResourceSourceSchema,
-} from "../../../../../inputs/deductions/charitable/f8283/natural-resource-source.ts";
+} from "../../../../../inputs/deductions/charitable/f8283/natural_resource_source.ts";
 import { itemSchema as scheduleCItemSchema } from "../../../../../inputs/income/business/schedule_c/model.ts";
 import { z } from "zod";
 import { inputSchema as patronReviewSchema } from "../../../../../inputs/deductions/business/qbi_patron/schema.ts";

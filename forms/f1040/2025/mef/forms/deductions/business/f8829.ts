@@ -15,7 +15,7 @@ import {
 import type {
   MefBuildContext,
   MefFormDescriptor,
-} from "../../../form-descriptor.ts";
+} from "../../../form_descriptor.ts";
 
 type Input = Partial<Form8829Lines & { rented_home: RentedHomeSource }>;
 

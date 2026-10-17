@@ -32,7 +32,7 @@ carryover ledger. The tax-use allocator orders supplied vintages before
 current-year credits, yet only vintages actually supplied by the supported
 source paths can participate.
 
-`carryover-ledger.ts` now provides a separate cent-precise reconciliation for
+`carryover_ledger.ts` now provides a separate cent-precise reconciliation for
 one origin-year credit per source. It checks originating credit against the
 amount allowed in that year, subsequent return uses, earlier downward changes,
 and the balance entering 2025. It also keeps a 2025 recapture adjustment out

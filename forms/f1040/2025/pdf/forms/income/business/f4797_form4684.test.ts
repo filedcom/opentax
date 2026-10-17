@@ -1,6 +1,6 @@
 import { test } from "bun:test";
 import { assertEquals, assertThrows } from "@std/assert";
-import { pdfReviewFixtures } from "../../../review-fixtures.ts";
+import { pdfReviewFixtures } from "../../../review_fixtures.ts";
 import { form4684Pdf } from "../../deductions/casualty/f4684.ts";
 import { form4797Pdf } from "./f4797.ts";
 

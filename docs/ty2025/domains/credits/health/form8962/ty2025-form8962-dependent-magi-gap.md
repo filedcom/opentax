@@ -446,7 +446,7 @@ Validation retained in `.state/research/form8962-dependent-thresholds-2026-10-09
 - All 72 pages were covered by visual inspection of 26 distinct rendered pages
   and 46 exact PNG matches; flattened outputs have no fields or widgets.
   Each packet contains Form 1040, Schedules 3/8812/EIC and Form 8962.
-- The new typed `form8962-dependent-thresholds.test.ts` passes 10/0, including
+- The new typed `form8962_dependent_thresholds.test.ts` passes 10/0, including
   54 changed source/review/SLCSP/payment/MAGI/final-credit variants rejected by
   both native and PDF checks. Raising excluded wages to 15,751 or interest to
   1,351 cannot retain the excluded-income result.

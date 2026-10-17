@@ -3,7 +3,7 @@ import { FormType, itemSchema } from "../../../../../nodes/inputs/income/wages/f
 import {
   rothActivityDocuments,
   rothActivityReviewSchema,
-} from "../../../../../nodes/intermediate/forms/income/retirement/form8606/roth-activity.ts";
+} from "../../../../../nodes/intermediate/forms/income/retirement/form8606/roth_activity.ts";
 import { FilingStatus } from "../../../../../mef/header.ts";
 import {
   form4852BaseInputs,

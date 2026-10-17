@@ -5,13 +5,13 @@ import {
 import {
   needsParticipantCollection,
   reconcileParticipantCollection,
-} from "../../../../../nodes/intermediate/forms/taxes/retirement/form4972/participant-collection.ts";
-import { sumSourceMoney } from "../../../../../nodes/intermediate/forms/taxes/retirement/form4972/source-rounding.ts";
-import { isSourceMoney } from "../../../../../nodes/intermediate/forms/taxes/retirement/form4972/source-rounding.ts";
+} from "../../../../../nodes/intermediate/forms/taxes/retirement/form4972/participant_collection.ts";
+import { sumSourceMoney } from "../../../../../nodes/intermediate/forms/taxes/retirement/form4972/source_rounding.ts";
+import { isSourceMoney } from "../../../../../nodes/intermediate/forms/taxes/retirement/form4972/source_rounding.ts";
 import {
   reconcileParticipantIssuedInventory,
   reconcileSharedParticipantElections,
-} from "../../../../../nodes/intermediate/forms/taxes/retirement/form4972/participant-inventory.ts";
+} from "../../../../../nodes/intermediate/forms/taxes/retirement/form4972/participant_inventory.ts";
 import { z } from "zod";
 import { inputSchema as f1099rSchema } from "../../../../../nodes/inputs/income/retirement/f1099r/index.ts";
 import { type FilerIdentity, FilingStatus } from "../../../../../mef/header.ts";

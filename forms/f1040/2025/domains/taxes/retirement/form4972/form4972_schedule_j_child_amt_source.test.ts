@@ -5,7 +5,7 @@ import { assertEquals, assertRejects, assertThrows } from "@std/assert";
 import { f1040_2025 } from "../../../../index.ts";
 import { scheduleJNonfarmW2Inputs } from "../../income-averaging/schedule-j/schedule_j_nonfarm_w2.fixture.ts";
 import { participantCollectionInputs } from "./form4972_participant_collection.fixture.ts";
-import { pdfReviewFixtures } from "../../../../pdf/review-fixtures.ts";
+import { pdfReviewFixtures } from "../../../../pdf/review_fixtures.ts";
 import { normalizeAllPending } from "../../../../return-processing/pending.ts";
 import { extractFilerIdentity } from "../../../../../mef/filer.ts";
 import { buildPdfBytes, type PdfPageOrigin } from "../../../../pdf/builder.ts";

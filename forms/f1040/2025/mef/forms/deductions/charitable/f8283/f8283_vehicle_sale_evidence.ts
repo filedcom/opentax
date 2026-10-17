@@ -1,6 +1,6 @@
 import { PDFDocument } from "pdf-lib";
 import { z } from "zod";
-import type { MefPdfAttachment } from "../../../../form-descriptor.ts";
+import type { MefPdfAttachment } from "../../../../form_descriptor.ts";
 import {
   inputSchema as form8283SourceSchema,
   vehicleMaterialImprovementPdfReviewSchema,

@@ -3,9 +3,9 @@ import type { NodeResult } from "../../../../../../../core/types/tax-node.ts";
 import { TaxNode } from "../../../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../../../core/types/output-nodes.ts";
 import type { NodeContext } from "../../../../../../../core/types/node-context.ts";
-import { balanceSheetSchema, calculateBalanceSheet } from "./balance-sheet.ts";
-import { ReportedFormCode, sectionCSchema } from "./section-c.ts";
-import { sectionDSchema } from "./section-d.ts";
+import { balanceSheetSchema, calculateBalanceSheet } from "./balance_sheet.ts";
+import { ReportedFormCode, sectionCSchema } from "./section_c.ts";
+import { sectionDSchema } from "./section_d.ts";
 export { MARK_TO_MARKET_EXCLUSION_2025 } from "./constants.ts";
 
 // 2025 Form 8854 and instructions. The $206,000 average-tax threshold and

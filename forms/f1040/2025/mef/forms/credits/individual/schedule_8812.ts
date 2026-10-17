@@ -7,7 +7,7 @@ import {
   type F8812Input,
   inputSchema,
 } from "../../../../../nodes/inputs/credits/child/f8812/index.ts";
-import type { MefBuildContext, MefFormDescriptor } from "../../../form-descriptor.ts";
+import type { MefBuildContext, MefFormDescriptor } from "../../../form_descriptor.ts";
 
 const HEADER_STATUS: Readonly<Record<NodeFilingStatus, HeaderFilingStatus>> = {
   [NodeFilingStatus.Single]: HeaderFilingStatus.Single,

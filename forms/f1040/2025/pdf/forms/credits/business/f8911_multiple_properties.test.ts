@@ -1,7 +1,7 @@
 import { test } from "bun:test";
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import { f1040_2025 } from "../../../../index.ts";
-import { pdfReviewFixtures } from "../../../review-fixtures.ts";
+import { pdfReviewFixtures } from "../../../review_fixtures.ts";
 import { buildMefBundle } from "../../../../mef/builder.ts";
 import {
   computePersonalCreditAmounts,

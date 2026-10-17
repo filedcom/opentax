@@ -13,7 +13,7 @@ import { buildPdfBytes, type PdfPageOrigin } from "../../../../pdf/builder.ts";
 import { assertForm8621QefRefigureSource } from "./form8621_1294_refigure.ts";
 import { executeForm8839TwoPass } from "../../../credits/individual/form8839/form8839_two_pass.ts";
 import { f1040_2025 } from "../../../../index.ts";
-import { pdfReviewFixtures } from "../../../../pdf/review-fixtures.ts";
+import { pdfReviewFixtures } from "../../../../pdf/review_fixtures.ts";
 import { PficRegime } from "../../../../../nodes/inputs/income/foreign/f8621/index.ts";
 import { createHash } from "node:crypto";
 import { buildPending } from "../../../../mef/execution/pending.ts";

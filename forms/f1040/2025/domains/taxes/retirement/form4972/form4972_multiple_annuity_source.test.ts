@@ -6,7 +6,7 @@ import { f1040_2025 } from "../../../../index.ts";
 import { extractFilerIdentity } from "../../../../../mef/filer.ts";
 import { normalizeAllPending } from "../../../../return-processing/pending.ts";
 import { buildPdfBytes } from "../../../../pdf/builder.ts";
-import { multipleAnnuityInputs } from "../../../../pdf/reviews/taxes/retirement/form4972/review-4972-multiple-annuity.fixture.ts";
+import { multipleAnnuityInputs } from "../../../../pdf/reviews/taxes/retirement/form4972/review_4972_multiple_annuity.fixture.ts";
 
 // Independent Form4972 worksheet and 1986 rate-schedule totals, including
 // subtraction of the separate annuity tax on lines26-28.

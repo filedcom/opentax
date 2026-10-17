@@ -143,10 +143,10 @@ Forms 2106, 3468, 8844, 8864, 8881, 8882, 8941 and 8994 now have bounded
 native/PDF registrations, while Forms 2210, 8828, 8908, 8938, 8997 and 9465
 have unregistered source literals. Other positive branches in the table still
 need a verified route or an explicit fail-closed disposition. The shared
-`attachment-coverage.ts` guards are branch-specific and cannot be inferred
+`attachment_coverage.ts` guards are branch-specific and cannot be inferred
 from a historical form name. Focused source-to-export and registry cases are
 written in `forms/f1040/e2e/workflows/unregistered_attachment_export.test.ts` and
-`forms/f1040/2025/return-processing/attachment-coverage.test.ts`; they do not establish a
+`forms/f1040/2025/return-processing/attachment_coverage.test.ts`; they do not establish a
 current full-suite pass.
 
 Form 1099-B source correction, unrun:

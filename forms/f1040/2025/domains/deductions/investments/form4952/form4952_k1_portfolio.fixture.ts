@@ -2,8 +2,8 @@ import { z } from "zod";
 import { FilingStatus } from "../../../../../nodes/types.ts";
 import { inputSchema as generalSchema } from "../../../../../nodes/inputs/general/filing/general/index.ts";
 import { w2ItemSchema as wageSchema } from "../../../../../nodes/inputs/income/wages/w2/index.ts";
-import { pdfReviewFixtures } from "../../../../pdf/review-fixtures.ts";
-import { withSyntheticForm1098Copy } from "../../../../pdf/reviews/deductions/mortgage/review-1098-copy.fixture.ts";
+import { pdfReviewFixtures } from "../../../../pdf/review_fixtures.ts";
+import { withSyntheticForm1098Copy } from "../../../../pdf/reviews/deductions/mortgage/review_1098_copy.fixture.ts";
 const base =
   pdfReviewFixtures.find((row) => row.id === "single-w2-refund")!.inputs;
 const wage = z.array(wageSchema).parse(base.w2)[0];

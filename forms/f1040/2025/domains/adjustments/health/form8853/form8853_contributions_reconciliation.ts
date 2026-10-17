@@ -15,7 +15,7 @@ import {
   calculateArcherContributions,
   codeREntrySchema,
 } from "../../../../../nodes/intermediate/forms/adjustments/health/form8853/archer_contributions.ts";
-import type { MefBuildContext } from "../../../../mef/form-descriptor.ts";
+import type { MefBuildContext } from "../../../../mef/form_descriptor.ts";
 
 export function reconcileArcherContributions(
   raw: unknown,

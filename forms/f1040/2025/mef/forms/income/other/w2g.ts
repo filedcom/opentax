@@ -1,7 +1,7 @@
 import { element, elements } from "../../../../../mef/xml.ts";
 import { inputSchema, type W2GItem } from "../../../../../nodes/inputs/income/gambling/w2g/index.ts";
 import { type FilerIdentity, FilingStatus } from "../../../../../mef/header.ts";
-import type { MefBuildContext, MefFormDescriptor } from "../../../form-descriptor.ts";
+import type { MefBuildContext, MefFormDescriptor } from "../../../form_descriptor.ts";
 
 function digits(value: string): string {
   return value.replace(/\D/g, "");

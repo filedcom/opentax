@@ -1,10 +1,10 @@
-import { owned5471Calculation } from "../../../../../domains/general/foreign/form5471/form5471-owned-source.ts";
-import { requiredScheduleReferences } from "./f5471-linkage.ts";
+import { owned5471Calculation } from "../../../../../domains/general/foreign/form5471/form5471_owned_source.ts";
+import { requiredScheduleReferences } from "./f5471_linkage.ts";
 import { element, elements } from "../../../../../../mef/xml.ts";
 import type { FilerAddress } from "../../../../../../mef/header.ts";
 import type { F5471Item } from "../../../../../../nodes/inputs/general/foreign/f5471/index.ts";
 import { projectForm8992Source } from "../../../../../domains/income/foreign/form8992/form8992_source.ts";
-import type { MefFormDescriptor } from "../../../../form-descriptor.ts";
+import type { MefFormDescriptor } from "../../../../form_descriptor.ts";
 
 function usAddress(address: FilerAddress): string {
   return elements("USAddress", [

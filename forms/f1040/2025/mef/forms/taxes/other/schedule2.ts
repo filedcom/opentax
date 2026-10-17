@@ -13,8 +13,8 @@ import {
   assertNo2025Schedule2Line10,
   assertNoUnsupportedSchedule2Line14,
 } from "../../../../../nodes/intermediate/aggregation/taxes/other/schedule2/index.ts";
-import { assertSection453aSchedule2Line } from "../../../../domains/taxes/other/section453a-reconciliation.ts";
-import type { MefBuildContext, MefFormDescriptor } from "../../../form-descriptor.ts";
+import { assertSection453aSchedule2Line } from "../../../../domains/taxes/other/section453a_reconciliation.ts";
+import type { MefBuildContext, MefFormDescriptor } from "../../../form_descriptor.ts";
 
 export interface Fields {
   line1a_excess_advance_premium?: number | null;

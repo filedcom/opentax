@@ -7,7 +7,7 @@ import {
   assertRejects,
   assertStringIncludes,
 } from "@std/assert";
-import { independentPatronFixture } from "../../../../pdf/reviews/general/composed-returns/review-8995a-independent-patron.fixture.ts";
+import { independentPatronFixture } from "../../../../pdf/reviews/general/composed-returns/review_8995a_independent_patron.fixture.ts";
 import { f1040_2025 } from "../../../../index.ts";
 import { buildPending } from "../../../../mef/execution/pending.ts";
 import { buildMefBundle } from "../../../../mef/builder.ts";

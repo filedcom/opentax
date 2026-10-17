@@ -22,7 +22,7 @@ import type {
   DiagnosticsReport,
   ErrorCategory,
 } from "../../core/validation/types.ts";
-import { FIELD_REGISTRY } from "../../forms/f1040/validation/field-registry.ts";
+import { FIELD_REGISTRY } from "../../forms/f1040/validation/field_registry.ts";
 import { ALL_RULES } from "../../forms/f1040/validation/rules/index.ts";
 import { normalizeAllPending } from "../../forms/f1040/2025/return-processing/pending.ts";
 import { returnHeaderNameLine1 } from "../../forms/f1040/mef/header.ts";

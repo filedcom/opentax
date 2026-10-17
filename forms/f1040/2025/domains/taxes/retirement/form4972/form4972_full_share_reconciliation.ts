@@ -1,4 +1,4 @@
-import { reconcileParticipantCollection } from "../../../../../nodes/intermediate/forms/taxes/retirement/form4972/participant-collection.ts";
+import { reconcileParticipantCollection } from "../../../../../nodes/intermediate/forms/taxes/retirement/form4972/participant_collection.ts";
 import { inputSchema as f1099rSchema } from "../../../../../nodes/inputs/income/retirement/f1099r/index.ts";
 import {
   form4972,

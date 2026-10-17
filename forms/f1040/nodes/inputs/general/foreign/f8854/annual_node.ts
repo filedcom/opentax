@@ -3,7 +3,7 @@ import { TaxNode } from "../../../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../../../core/types/output-nodes.ts";
 import type { NodeContext } from "../../../../../../../core/types/node-context.ts";
 import { annualInputSchema, type F8854AnnualInput } from "./annual.ts";
-import { ReportedFormCode } from "./section-c.ts";
+import { ReportedFormCode } from "./section_c.ts";
 
 export function validateAnnualForm8854Filing(
   raw: F8854AnnualInput,

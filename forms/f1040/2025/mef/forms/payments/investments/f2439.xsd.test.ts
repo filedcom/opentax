@@ -4,7 +4,7 @@ import * as sys from "../../../../../../../scripts/support/sys.ts";
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import { buildMefXml } from "../../../builder.ts";
 import type { MefBundle } from "../../../builder.ts";
-import { assertPreparedDocumentInventory } from "../../../attachments/prepared-attachment-manifest.ts";
+import { assertPreparedDocumentInventory } from "../../../attachments/prepared_attachment_manifest.ts";
 import { type FilerIdentity, FilingStatus } from "../../../types.ts";
 import { TS } from "../../../../../nodes/types.ts";
 import { form2439 } from "./f2439.ts";

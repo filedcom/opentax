@@ -1,4 +1,4 @@
-import { reportedCapitalSale } from "../../../../intermediate/forms/income/investments/form8949/reported-money.ts";
+import { reportedCapitalSale } from "../../../../intermediate/forms/income/investments/form8949/reported_money.ts";
 import { z } from "zod";
 import type {
   NodeOutput,

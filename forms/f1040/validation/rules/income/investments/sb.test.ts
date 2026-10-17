@@ -1,7 +1,7 @@
 import { test } from "bun:test";
 import { assertEquals } from "@std/assert";
 import { createReturnContext } from "../../../../../../core/validation/context.ts";
-import { FIELD_REGISTRY } from "../../../field-registry.ts";
+import { FIELD_REGISTRY } from "../../../field_registry.ts";
 import { SB_RULES } from "./sb.ts";
 
 function check(ruleNumber: string, fields: Record<string, unknown>): boolean {

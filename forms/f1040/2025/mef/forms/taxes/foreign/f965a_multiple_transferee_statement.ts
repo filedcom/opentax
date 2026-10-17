@@ -1,6 +1,6 @@
 import { element, elements } from "../../../../../mef/xml.ts";
 import { inputSchema } from "../../../../../nodes/inputs/taxes/foreign/f965/index.ts";
-import type { MefFormDescriptor } from "../../../form-descriptor.ts";
+import type { MefFormDescriptor } from "../../../form_descriptor.ts";
 
 export const form965aMultipleTransfereeStatement: MefFormDescriptor<
   "f965_multiple_transferee_statement",

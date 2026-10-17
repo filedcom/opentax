@@ -1,11 +1,11 @@
-import { charitableNaturalResourceDocumentFields } from "../../../../../../nodes/inputs/deductions/charitable/f8283/natural-resource-source.ts";
-import { charitableDepreciationDocumentFields } from "../../../../../../nodes/inputs/deductions/charitable/f8283/depreciation-source.ts";
+import { charitableNaturalResourceDocumentFields } from "../../../../../../nodes/inputs/deductions/charitable/f8283/natural_resource_source.ts";
+import { charitableDepreciationDocumentFields } from "../../../../../../nodes/inputs/deductions/charitable/f8283/depreciation_source.ts";
 import { PDFDocument } from "pdf-lib";
 import {
   groupSectionBSourceForms,
   inputSchema,
 } from "../../../../../../nodes/inputs/deductions/charitable/f8283/index.ts";
-import type { MefPdfAttachment } from "../../../../form-descriptor.ts";
+import type { MefPdfAttachment } from "../../../../form_descriptor.ts";
 import type { FilerIdentity } from "../../../../../../mef/header.ts";
 
 /** Verify logical fields when retained signed evidence is an IRS AcroForm.

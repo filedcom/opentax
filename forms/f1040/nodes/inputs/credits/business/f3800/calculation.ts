@@ -1,12 +1,12 @@
 /** TY2025 Form 3800 Part I and II for individual credits. */
 import { z } from "zod";
 import { FilingStatus } from "../../../../types.ts";
-import { PassiveCreditReportingRoute } from "../../../../intermediate/forms/credits/business/form8582cr/credit-route.ts";
+import { PassiveCreditReportingRoute } from "../../../../intermediate/forms/credits/business/form8582cr/credit_route.ts";
 import type { calculateForm8582CR } from "../../../../intermediate/forms/credits/business/form8582cr/index.ts";
 import {
   form3800SpecifiedCreditLineSchema,
   form3800StandardCreditLineSchema,
-} from "../../../../intermediate/forms/credits/business/form8582cr/credit-route.ts";
+} from "../../../../intermediate/forms/credits/business/form8582cr/credit_route.ts";
 
 type Form8582CRSourceAllocation = ReturnType<
   typeof calculateForm8582CR

@@ -1,5 +1,5 @@
 import { z } from "zod";
-import type { MefPdfAttachment } from "../../../../../../2025/mef/form-descriptor.ts";
+import type { MefPdfAttachment } from "../../../../../../2025/mef/form_descriptor.ts";
 import { type Form8839Input, inputSchema } from "./index.ts";
 import { form8839MagiReviewSchema } from "./pre_adoption_reconciliation.ts";
 import {

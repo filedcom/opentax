@@ -7,7 +7,7 @@ import {
   calculateOwnerForms,
   ownerEntrySchema,
 } from "../../../../../nodes/intermediate/forms/taxes/retirement/form5329/index.ts";
-import type { MefBuildContext } from "../../../form-descriptor.ts";
+import type { MefBuildContext } from "../../../form_descriptor.ts";
 
 test("Form 5329 emits distinct owner documents and reconciles combined Schedule 2 tax", () => {
   const owner_entries = [

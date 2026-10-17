@@ -3,7 +3,7 @@ import {
   claimantReviewSchema,
   reviewedEducationStudents,
   studentOwnershipReviewSchema,
-} from "./claimant-review.ts";
+} from "./claimant_review.ts";
 import { z } from "zod";
 import type {
   NodeOutput,

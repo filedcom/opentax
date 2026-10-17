@@ -4,7 +4,7 @@ import {
   filedForm461Schema,
   form461ScopeReviewSchema,
 } from "../../../../../nodes/intermediate/forms/income/business/form461/index.ts";
-import type { MefBuildContext, MefFormDescriptor } from "../../../form-descriptor.ts";
+import type { MefBuildContext, MefFormDescriptor } from "../../../form_descriptor.ts";
 
 type Fields = z.infer<typeof filedForm461Schema>;
 type Input = Fields | readonly [];

@@ -2,7 +2,7 @@ import {
   calculateForm4835AtRiskNet,
   inputSchema as form4835InputSchema,
 } from "../../../../../nodes/inputs/income/business/f4835/index.ts";
-import type { MefFormDescriptor } from "../../../form-descriptor.ts";
+import type { MefFormDescriptor } from "../../../form_descriptor.ts";
 import { buildSimplifiedIRS6198 } from "./f6198.ts";
 
 export const form4835AtRisk: MefFormDescriptor<

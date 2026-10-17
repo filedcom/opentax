@@ -1,7 +1,7 @@
 import { test } from "bun:test";
 import { assertEquals, assertRejects } from "@std/assert";
 import { PDFDocument } from "pdf-lib";
-import { sha256Hex } from "../../../../return-processing/prepared-source.ts";
+import { sha256Hex } from "../../../../return-processing/prepared_source.ts";
 import { reviewForm1116ScheduleBFiledDocuments } from "./form1116_schedule_b_filed_documents.ts";
 import { IncomeCategory } from "../../../../../nodes/intermediate/forms/credits/foreign/form_1116/index.ts";
 

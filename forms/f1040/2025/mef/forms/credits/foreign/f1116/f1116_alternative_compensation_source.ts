@@ -8,7 +8,7 @@ import {
   ForeignTaxKind,
   IncomeCategory,
 } from "../../../../../../nodes/intermediate/forms/credits/foreign/form_1116/index.ts";
-import type { MefBuildContext } from "../../../../form-descriptor.ts";
+import type { MefBuildContext } from "../../../../form_descriptor.ts";
 
 /** Require every line 1b item to be the identified foreign-employer source. */
 export function assertAlternativeCompensationSources(

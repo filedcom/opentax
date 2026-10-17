@@ -5,7 +5,7 @@ import {
   inputSchema,
   isEligible,
 } from "../../../../../nodes/inputs/credits/business/f8826/index.ts";
-import type { MefFormDescriptor } from "../../../form-descriptor.ts";
+import type { MefFormDescriptor } from "../../../form_descriptor.ts";
 import { reconcileDisabledAccessK1Credits } from "./f8826_credit_evidence.ts";
 import { readDisabledAccessCapLedger } from "./f8826_cap_ledger.ts";
 import { reconcileForm8826SelfSource } from "./f8826_source.ts";

@@ -1,6 +1,6 @@
 import { createHash } from "node:crypto";
 import { PficRegime } from "../../../../../nodes/inputs/income/foreign/f8621/index.ts";
-import type { PdfReviewFixture } from "../../../../pdf/review-fixtures.ts";
+import type { PdfReviewFixture } from "../../../../pdf/review_fixtures.ts";
 
 /** Synthetic byte-bound issuer, annual QEF and distribution records. */
 function copy(document_id: string, content: string) {

@@ -12,7 +12,7 @@ import { buildPdfBytes, type PdfPageOrigin } from "../../../../pdf/builder.ts";
 import { schedule2Pdf } from "../../../../pdf/forms/taxes/other/schedule2.ts";
 import { schedule2 as schedule2Native } from "../../../../mef/forms/taxes/other/schedule2.ts";
 import { form8621Pdf } from "../../../../pdf/forms/income/foreign/f8621.ts";
-import { pdfReviewFixtures } from "../../../../pdf/review-fixtures.ts";
+import { pdfReviewFixtures } from "../../../../pdf/review_fixtures.ts";
 import { PficRegime } from "../../../../../nodes/inputs/income/foreign/f8621/index.ts";
 import { ExcessEventKind } from "../../../../../nodes/inputs/income/foreign/f8621/excess_distribution.ts";
 import { calculateSection1294PriorStatus } from "../../../../../nodes/inputs/income/foreign/f8621/section1294.ts";
