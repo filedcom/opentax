@@ -15,7 +15,10 @@ import { assertPositive1099PatrOwner } from "../../../../domains/income/business
 import { assertDirectCapitalGainDistributionSource } from "../../../../domains/income/investments/line7a-source-reconciliation.ts";
 import { assertJointDependentRefundSource } from "../../../../domains/general/return-assembly/line12a-dependent-source.ts";
 import { assertLine36EstimatedTaxSource } from "../../../../domains/payments/settlement/line36-estimated-tax-source.ts";
-import { assertNoUnsupportedDeceasedReturn } from "../../../../domains/general/return-assembly/filer-source-reconciliation.ts";
+import {
+  assertNoUnsupportedDeceasedReturn,
+  isReviewedSurvivingSpouseJointReturn,
+} from "../../../../domains/general/return-assembly/filer-source-reconciliation.ts";
 import { assertHohQualifyingChildSource } from "../../../../domains/general/return-assembly/filing-status/hoh-qualifying-child-source.ts";
 import { assertQssNonclaimedChildSource } from "../../../../domains/general/return-assembly/filing-status/qss-nonclaimed-child-source.ts";
 import {
@@ -741,7 +744,18 @@ function buildIRS1040(fields: Input, context?: MefBuildContext): string {
 
   // VirtualCurAcquiredDurTYInd is required by IRS1040.xsd §338 (BooleanType).
   // Preserve the answer supplied on the general input rather than overwriting Yes.
+  const survivingSpouseReturn = isReviewedSurvivingSpouseJointReturn(
+    fields as Record<string, unknown>,
+    context?.pending?.general as Record<string, unknown> | undefined,
+    context?.filer,
+  );
   const requiredPrefix = [
+    ...(survivingSpouseReturn
+      ? [
+        element("DeceasedInd", "X"),
+        element("SpouseDeathDt", String(fields.spouse_death_date)),
+      ]
+      : []),
     ...(mainHomeInUS === true
       ? [element("MainHomeInUSOverHalfYrInd", "X")]
       : []),
@@ -1120,6 +1134,7 @@ function buildIRS1040(fields: Input, context?: MefBuildContext): string {
   // "NO FINANCIAL PRODUCT" indicates the filer is not using a refund anticipation
   // loan or refund transfer product — the correct value for direct refunds.
   const requiredSuffix = [
+    survivingSpouseReturn ? element("SurvivingSpouseInd", "X") : "",
     element("RefundProductCd", "NO FINANCIAL PRODUCT"),
   ];
 

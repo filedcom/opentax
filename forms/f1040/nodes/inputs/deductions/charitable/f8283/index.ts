@@ -220,6 +220,8 @@ const sectionAItemSchema = z.object({
     zip: z.string(),
   }).optional(),
   date_acquired: z.string().optional(), // ISO date YYYY-MM-DD
+  // Column (e) "Various" for a group of similar items acquired on several dates.
+  date_acquired_various: z.literal(true).optional(),
   date_contributed: z.string().optional(), // ISO date YYYY-MM-DD
   donor_acquisition_description: z.string().optional(),
   fmv: z.number().nonnegative().optional(),

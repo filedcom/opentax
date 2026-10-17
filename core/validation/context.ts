@@ -64,8 +64,12 @@ export function createReturnContext(
   // document. Lower-case names are engine facts outside the XML.
   function emittedValues(xmlName: string): readonly string[] | undefined {
     if (!emitted || !/^[A-Z]/.test(xmlName)) return undefined;
-    // "Schedule1/Leaf" names a leaf in another document.
+    // "Schedule1/Leaf" names a leaf in another document; "ReturnHeader/Leaf"
+    // names one in the header only.
     const [documentName, ...rest] = xmlName.split("/");
+    if (documentName === "ReturnHeader" && rest.length > 0) {
+      return emitted.header.values.get(rest.join("/")) ?? [];
+    }
     const named = rest.length > 0
       ? [
         ...[`IRS1040${documentName}`, `IRS${documentName}`]

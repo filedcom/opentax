@@ -240,6 +240,15 @@ export const eqDiffFloorZero = (target: string, a: string, b: string): RuleCheck
 export const eqProduct = (target: string, a: string, rate: number): RuleCheck =>
   (ctx) => Math.abs(ctx.num(target) - ctx.num(a) * rate) < 0.01;
 
+/** Target = min(a * rate, cap), within whole-dollar rounding: a form line that says "do not enter more than". */
+export const eqCappedProduct = (
+  target: string,
+  a: string,
+  rate: number,
+  cap: number,
+): RuleCheck =>
+  (ctx) => Math.abs(ctx.num(target) - Math.min(ctx.num(a) * rate, cap)) <= 0.5;
+
 /** Target = min(a, b) (penny tolerance). */
 export const eqMin = (target: string, a: string, b: string): RuleCheck =>
   (ctx) => Math.abs(ctx.num(target) - Math.min(ctx.num(a), ctx.num(b))) < 0.01;

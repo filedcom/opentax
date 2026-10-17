@@ -927,3 +927,20 @@ test("Schedule A combines sources on line 5a before rounding", () => {
   });
   assertEquals(deductionInput(result).itemized_deductions, 201);
 });
+
+test("scheduleA.inputSchema: line 11 qualified contributions stay within sourced cash gifts", () => {
+  assertEquals(
+    inputSchema.safeParse({
+      cash_contributions_to_50_percent_organizations: 250,
+      line_11_qualified_contributions: 200,
+    }).success,
+    true,
+  );
+  assertEquals(
+    inputSchema.safeParse({
+      cash_contributions_to_50_percent_organizations: 150,
+      line_11_qualified_contributions: 200,
+    }).success,
+    false,
+  );
+});

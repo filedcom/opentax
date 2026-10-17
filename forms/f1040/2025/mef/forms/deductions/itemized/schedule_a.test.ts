@@ -255,3 +255,19 @@ test("Schedule A deducts the full Form 8396 line 3 even when the allowed credit 
     "differs from Form 8396 line 3",
   );
 });
+
+test("Schedule A line 11 carries the dotted-line qualified contributions", () => {
+  const xml = scheduleA.build(
+    {
+      cash_contributions_to_50_percent_organizations: 250,
+      line_11_cash_contributions: 250,
+      line_11_qualified_contributions: 200,
+      charitable_limits_finalized: true,
+    },
+    { pending: { f1040: { line12e_itemized_deductions: 250 } } },
+  );
+  assertStringIncludes(
+    xml,
+    '<GiftsByCashOrCheckAmt qualifiedContributionsAmt="200">250</GiftsByCashOrCheckAmt>',
+  );
+});

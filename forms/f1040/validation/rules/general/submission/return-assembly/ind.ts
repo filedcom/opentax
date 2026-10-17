@@ -369,7 +369,7 @@ export const IND_RULES: readonly RuleDef[] = [
     "IND-055-02",
     "reject",
     "incorrect_data",
-    noValue("AddressLine2Txt"),
+    noValue("ReturnHeader/AddressLine2Txt"),
     "'AddressLine2Txt' in the Return Header must not have a value.",
   ),
   rule(

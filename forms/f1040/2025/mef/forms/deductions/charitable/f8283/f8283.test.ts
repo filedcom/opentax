@@ -57,6 +57,35 @@ test("Form 8283 emits the sourced ATS Scenario 2 Section A donation", () => {
   assertStringIncludes(xml, "<FairMarketValueAmt>700</FairMarketValueAmt>");
 });
 
+test("Form 8283 files a Various acquisition date for a group of similar items", () => {
+  const donation = SCENARIO_1040_02_FACTS.form8283;
+  const item = {
+    donee_organization_name: donation.donee,
+    property_description: donation.propertyDescription,
+    date_contributed: donation.donationDate,
+    date_acquired_various: true,
+    donor_acquisition_description: donation.howAcquired,
+    cost_or_adjusted_basis: donation.costBasis,
+    fmv: donation.fairMarketValue,
+    charitable_limit_category: "noncash_50",
+    is_capital_gain_property: false,
+  } as const;
+  assertStringIncludes(
+    buildMefXml({ f8283: { section_a_items: [item] } }, testFiler()),
+    "<DonorAcquiredDt>VARIOUS</DonorAcquiredDt><DonorAcquisitionDesc>Purchase</DonorAcquisitionDesc>",
+  );
+  assertThrows(
+    () =>
+      buildMefXml({
+        f8283: {
+          section_a_items: [{ ...item, date_acquired: "2020-01-01" }],
+        },
+      }, testFiler()),
+    Error,
+    "both a date and Various",
+  );
+});
+
 test("Form 8283 preserves multiple Section A rows and month-only acquisition dates", () => {
   const [xml] = form8283.build({
     section_a_items: [

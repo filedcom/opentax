@@ -154,6 +154,8 @@ export const inputSchema = z.object({
   // Pub. 526 Worksheet 2 lines 5/7: cash to a second-category organization
   // or held for the use of any qualified organization.
   cash_contributions_other_30: z.number().nonnegative().optional(),
+  // The amount printed on the line 11 dotted line; it stays within line 11.
+  line_11_qualified_contributions: z.number().positive().optional(),
   qualified_conservation_contributions: z.number().nonnegative().optional(),
   noncash_contribution_items: z.array(noncashContributionItemSchema).optional(),
   capital_gain_50_percent_election_confirmed: z.literal(true).optional(),
@@ -217,6 +219,19 @@ export const inputSchema = z.object({
       path: ["home_mortgage_nonqualifying_use_review"],
       message:
         "Schedule A line 8 mortgage-use review needs positive filed home interest",
+    });
+  }
+  if (
+    data.line_11_qualified_contributions !== undefined &&
+    data.line_11_qualified_contributions >
+      (data.cash_contributions_to_50_percent_organizations ?? 0) +
+        (data.cash_contributions_other_30 ?? 0)
+  ) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ["line_11_qualified_contributions"],
+      message:
+        "Schedule A line 11 qualified contributions cannot exceed sourced cash gifts",
     });
   }
   if (data.force_itemized === true && data.force_standard === true) {

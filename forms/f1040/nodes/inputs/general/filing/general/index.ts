@@ -148,6 +148,12 @@ export enum DependentCreditCategory {
 
 // ─── Schemas ─────────────────────────────────────────────────────────────────
 
+export const survivingSpouseJointReturnReviewSchema = z.object({
+  death_record_reference: z.string().trim().min(1),
+  no_personal_representative_appointed_verified: z.literal(true),
+  surviving_spouse_signs_verified: z.literal(true),
+}).strict();
+
 const ptcDividendSourceSchema = z.object({
   source_document_id: z.string().min(1),
   payer_ein: z.string().regex(/^\d{9}$/),
@@ -402,6 +408,10 @@ export const inputSchema = z.object({
   spouse_email: z.string().optional(),
   spouse_deceased: z.boolean().optional(),
   spouse_death_date: z.string().optional(),
+  // Pub. 559: with no personal representative, the surviving spouse files the
+  // joint return, signs it and receives the refund without Form 1310.
+  surviving_spouse_joint_return_review: survivingSpouseJointReturnReviewSchema
+    .optional(),
   spouse_ip_pin: z.string().length(6).optional(),
   spouse_prior_year_agi: z.number().optional(),
   spouse_prior_year_pin: z.string().regex(/^\d{5}$/).optional(),
@@ -1190,6 +1200,11 @@ function buildF1040Input(input: GeneralInput): Record<string, unknown> {
   addIfDefined(fields, "spouse_occupation", input.spouse_occupation);
   addIfDefined(fields, "spouse_deceased", input.spouse_deceased);
   addIfDefined(fields, "spouse_death_date", input.spouse_death_date);
+  addIfDefined(
+    fields,
+    "surviving_spouse_joint_return_review",
+    input.surviving_spouse_joint_return_review,
+  );
   addIfDefined(fields, "spouse_ip_pin", input.spouse_ip_pin);
   addIfDefined(fields, "spouse_prior_year_agi", input.spouse_prior_year_agi);
   addIfDefined(fields, "spouse_prior_year_pin", input.spouse_prior_year_pin);

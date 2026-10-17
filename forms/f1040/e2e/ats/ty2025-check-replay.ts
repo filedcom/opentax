@@ -12,13 +12,17 @@ import {
 } from "./ty2025-w2-value-coverage.ts";
 import { compareAtsNativeValues } from "./ty2025-native-value-coverage.ts";
 import { compareAtsAttachments } from "./ty2025-attachment-coverage.ts";
+import type { MefPdfAttachment } from "../../2025/mef/form-descriptor.ts";
 import { assertPreparedAttachmentManifest } from "../../2025/mef/attachments/prepared-attachment-manifest.ts";
 import { compareAtsDocuments } from "./ty2025-document-coverage.ts";
 import { z } from "zod";
 import { extractFilerIdentity } from "../../mef/filer.ts";
 import { f1040_2025 } from "../../2025/index.ts";
 import { scenario104001Input } from "./scenario_1040_01_input.ts";
-import { scenario104002Input } from "./scenario_1040_02_input.ts";
+import {
+  scenario104002Attachments,
+  scenario104002Input,
+} from "./scenario_1040_02_input.ts";
 import { scenario104003Input } from "./scenario_1040_03_input.ts";
 import {
   scenario104004Attachments,
@@ -447,8 +451,11 @@ export const ATS_SCENARIO_INPUTS = {
   "1040-13": scenario104013CurrentLawInput,
 } as const;
 const sourceFiles: Readonly<
-  Record<string, () => Parameters<typeof f1040_2025.prepareReturn>[2]>
-> = { "1040-04": scenario104004Attachments };
+  Record<string, () => MefPdfAttachment[] | Promise<MefPdfAttachment[]>>
+> = {
+  "1040-02": scenario104002Attachments,
+  "1040-04": scenario104004Attachments,
+};
 const retainedFiles: Readonly<
   Record<string, () => Parameters<typeof f1040_2025.prepareReturn>[3]>
 > = { "1040-05": scenario104005RetainedSourceDocuments };
@@ -504,7 +511,7 @@ async function replayPreparation(
     const prepared = await f1040_2025.prepareReturn(
       execution.pending,
       extractFilerIdentity(execution.pending.f1040),
-      sourceFiles[id]?.() ?? [],
+      await sourceFiles[id]?.() ?? [],
       retainedFiles[id]?.() ?? [],
     );
     await assertPreparedAttachmentManifest(prepared.bundle);
@@ -549,11 +556,12 @@ export async function replayAtsChecks() {
   const scenarios = await Promise.all(
     ATS_REPLAY_TARGETS.map(async (scenario) => {
       const source = TY2025_ATS_CASES.find((s) => s.id === scenario.id)!;
-      const factory = ATS_SCENARIO_INPUTS[scenario.id as keyof typeof ATS_SCENARIO_INPUTS];
+      const factory =
+        ATS_SCENARIO_INPUTS[scenario.id as keyof typeof ATS_SCENARIO_INPUTS];
       if (!source || !factory) {
         throw new Error(`Missing ATS source/input ${scenario.id}`);
       }
-      const execution = f1040_2025.executeReturn(factory());
+      const execution = f1040_2025.executeReturn(await factory());
       const preparation = await replayPreparation(
         execution,
         scenario.targets,
@@ -620,6 +628,7 @@ export async function replayAtsChecks() {
 }
 if (import.meta.main) {
   const report = JSON.stringify(await replayAtsChecks(), null, 2) + "\n";
-  if (process.argv.slice(2)[0]) await fs.writeFile(process.argv.slice(2)[0], report);
-  else console.log(report);
+  if (process.argv.slice(2)[0]) {
+    await fs.writeFile(process.argv.slice(2)[0], report);
+  } else console.log(report);
 }

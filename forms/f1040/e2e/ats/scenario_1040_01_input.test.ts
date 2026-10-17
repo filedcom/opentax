@@ -6,15 +6,29 @@ import {
   schedule_h,
 } from "../../nodes/intermediate/forms/taxes/household-employment/schedule_h/index.ts";
 import {
+  SCENARIO_1040_01_ASSUMPTIONS,
   scenario104001Input,
   SCENARIO_1040_01_RECONCILIATION,
 } from "./scenario_1040_01_input.ts";
+import { SCENARIO_1040_01_FACTS } from "./ty2025_cases.ts";
+import {
+  exportAtsReturn,
+  validateReturn1040Xsd,
+  xmlAmount,
+  xmlValues,
+  xsdAvailable,
+} from "./ty2025-export.ts";
 
-test("ATS 1040 Scenario 1 retains two distinct W-2s and a partial Schedule H", () => {
+test("ATS 1040 Scenario 1 retains two distinct W-2s and Schedule H", () => {
   const input = scenario104001Input();
   const wageForms = input.w2 as Record<string, unknown>[];
   const household = input.schedule_h as Record<string, unknown>;
-  assertEquals(Object.keys(input).sort(), ["general", "schedule_h", "w2"]);
+  assertEquals(Object.keys(input).sort(), [
+    "f5695",
+    "general",
+    "schedule_h",
+    "w2",
+  ]);
   assertEquals(wageForms.map((form) => form.employer_name), [
     "The Green Ladies",
     "C&R",
@@ -84,24 +98,63 @@ test("ATS 1040 Scenario 1 W-2 and household tax source slices reconcile", () => 
   );
 });
 
-test("ATS 1040 Scenario 1 keeps Form 5695 packet conflicts outside filing input", () => {
+test("ATS 1040 Scenario 1 records each assumption once and keeps printed door facts", () => {
   const input = scenario104001Input();
-  const source = SCENARIO_1040_01_RECONCILIATION.form5695;
-  assertEquals("f5695" in input, false);
-  assertEquals("form5695" in input, false);
-  assertEquals(source.individuallyListedDoorCosts, [1_020, 920, 800]);
+  const fields = SCENARIO_1040_01_ASSUMPTIONS.map((item) => item.field);
+  assertEquals(new Set(fields).size, fields.length);
+  const form5695 = input.f5695 as {
+    part_ii_section_a: { exterior_doors: { cost: number; qmid: string }[] };
+  };
+  const doors = form5695.part_ii_section_a.exterior_doors;
+  assertEquals(doors.slice(0, 3), [...SCENARIO_1040_01_FACTS.form5695.exteriorDoors]);
   assertEquals(
-    source.individuallyListedDoorCosts.slice(1).reduce(
-      (sum, cost) => sum + cost,
-      0,
-    ),
-    source.printedLine19dNextTwoDoorsCost,
+    doors.slice(3).reduce((sum, door) => sum + door.cost, 0),
+    SCENARIO_1040_01_FACTS.form5695.line19eOtherDoorsCost,
   );
-  assertEquals(
-    source.individuallyListedDoorCosts.reduce((sum, cost) => sum + cost, 0),
-    source.printedLine19eOtherDoorsCost,
-  );
-  assertEquals(source.otherDoorItemsProvided, false);
-  assertEquals(source.secondAirConditionerCost, 400);
-  assertEquals(source.secondAirConditionerQmidProvided, false);
+  assertEquals(doors.slice(3).every((door) => door.cost < 800), true);
 });
+
+test("ATS 1040 Scenario 1 exports without force, XSD-valid, with the packet values", async () => {
+  const exported = await exportAtsReturn(scenario104001Input());
+  assertEquals(exported.diagnostics, []);
+  assertEquals(exported.rejects, []);
+  assertEquals(exported.attachments, ["AdditionalQMIDStatement.pdf"]);
+  if (xsdAvailable()) {
+    const { success, stderr } = await validateReturn1040Xsd(exported.xml);
+    assertEquals(success, true, stderr);
+  }
+  const { xml } = exported;
+  const printed = SCENARIO_1040_01_RECONCILIATION.printed;
+  const derived = SCENARIO_1040_01_RECONCILIATION.form5695;
+  const household = SCENARIO_1040_01_RECONCILIATION.scheduleH;
+  const amount = (root: string, tag: string) => xmlAmount(xml, root, tag);
+  assertEquals(amount("IRS1040", "WagesAmt"), printed.line1aWages);
+  assertEquals(amount("IRS1040", "FormW2WithheldTaxAmt"), printed.line25aW2Withholding);
+  assertEquals(xmlValues(xml, "StateIncomeTaxAmt"), ["320", "416"]);
+  assertEquals(amount("IRS1040ScheduleH", "SocialSecurityTaxCashWagesAmt"), 3_100);
+  assertEquals(amount("IRS1040ScheduleH", "MedicareTaxCashWagesAmt"), 3_100);
+  assertEquals(amount("IRS1040ScheduleH", "SocialSecurityTaxAmt"), household.socialSecurityTax);
+  assertEquals(amount("IRS1040ScheduleH", "MedicareTaxWithheldAmt"), household.medicareTax);
+  assertEquals(amount("IRS1040ScheduleH", "TotSocSecMedcrAndFedIncmTaxAmt"), household.line8TotalTax);
+  assertEquals(amount("IRS1040Schedule2", "HouseholdEmploymentTaxAmt"), household.schedule2Line9);
+  assertEquals(amount("IRS5695", "MostExpnsExtrDoorCostAmt"), printed.form5695Line19a);
+  assertEquals(xmlValues(xml, "MostExpnsExtrDoorQMID"), ["A1B2"]);
+  assertEquals(amount("IRS5695", "MostExpnsExtrDoorsStdPctCrAmt"), derived.line19c);
+  assertEquals(amount("IRS5695", "NextMostExpnsExtrDoorCostAmt"), printed.form5695Line19d);
+  assertEquals(amount("IRS5695", "OtherQlfyExtrDoorsCostAmt"), printed.form5695Line19e);
+  assertEquals(amount("IRS5695", "TotalOtherQlfyExtrDoorsCostAmt"), derived.line19f);
+  assertEquals(amount("IRS5695", "OtherQlfyExtrDoorsStdPctCrAmt"), derived.line19g);
+  assertEquals(amount("IRS5695", "TotalExtrDoorsCreditAmt"), derived.line19h);
+  assertEquals(amount("IRS5695", "MostExpnsExtrWndwSkyltCostAmt"), printed.form5695Line20a);
+  assertEquals(amount("IRS5695", "ExtrWndwSkylightStdPctCrAmt"), derived.line20d);
+  assertEquals(amount("IRS5695", "MostExpnsCentralAirCondCostAmt"), printed.form5695Line22a);
+  assertEquals(amount("IRS5695", "OthCentralAirCondCostAmt"), printed.form5695Line22b);
+  assertEquals(amount("IRS5695", "CentralAirCondCostAmt"), derived.line22c);
+  assertEquals(amount("IRS5695", "CentralAirCondCostStdPctCrAmt"), derived.line22d);
+  assertEquals(amount("IRS5695", "EgyEffcntImprvCreditSubtlAmt"), derived.line27);
+  assertEquals(amount("IRS5695", "EnergyEffcntImprvAllwblCostAmt"), derived.line28);
+  assertEquals(amount("IRS5695", "TaxesLessCreditsAmt"), derived.line31TaxLimit);
+  assertEquals(amount("IRS5695", "EgyEffcntHmImprvCrAmt"), derived.line32);
+  assertEquals(amount("IRS1040", "TaxAmt"), derived.line31TaxLimit);
+  assertEquals(amount("IRS1040Schedule3", "EgyEffcntHmImprvCrAmt"), derived.line32);
+}, 120_000);

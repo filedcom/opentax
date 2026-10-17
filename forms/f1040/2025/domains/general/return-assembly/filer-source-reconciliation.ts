@@ -10,6 +10,7 @@ import {
   eicChildSourceProjection,
   filedDependentsFromGeneral,
   inputSchema as generalInputSchema,
+  survivingSpouseJointReturnReviewSchema,
 } from "../../../../nodes/inputs/general/filing/general/index.ts";
 import { inputSchema as form1099gSchema } from "../../../../nodes/inputs/income/other/f1099g/index.ts";
 import { inputSchema as form1099necSchema } from "../../../../nodes/inputs/income/business/f1099nec/index.ts";
@@ -1622,6 +1623,42 @@ export function assertF1040FinalHeader(
   }
 }
 
+/**
+ * A joint return whose only deceased filer is the spouse, dead in 2025, signed
+ * by the reviewed surviving spouse with no personal representative.
+ */
+export function isReviewedSurvivingSpouseJointReturn(
+  fields?: Record<string, unknown>,
+  general?: Record<string, unknown>,
+  filer?: FilerIdentity,
+): boolean {
+  const sources = [fields, general].filter((
+    source,
+  ): source is Record<string, unknown> => source !== undefined);
+  const deathDate = sources[0]?.spouse_death_date ?? filer?.spouse?.deathDate;
+  if (
+    typeof deathDate !== "string" || !/^2025-\d{2}-\d{2}$/.test(deathDate) ||
+    Number.isNaN(Date.parse(deathDate))
+  ) {
+    return false;
+  }
+  const sourced = sources.length > 0 && sources.every((source) =>
+    source.filing_status === "mfj" &&
+    source.spouse_deceased === true &&
+    source.spouse_death_date === deathDate &&
+    source.taxpayer_deceased !== true &&
+    source.taxpayer_death_date === undefined &&
+    survivingSpouseJointReturnReviewSchema.safeParse(
+      source.surviving_spouse_joint_return_review,
+    ).success
+  );
+  return sourced && (filer === undefined || (
+    filer.filingStatus === FilingStatus.MarriedFilingJointly &&
+    filer.deceased !== true && !filer.deathDate &&
+    filer.spouse?.deathDate === deathDate
+  ));
+}
+
 /** Deceased returns need signer, representative, and refund review before export. */
 export function assertNoUnsupportedDeceasedReturn(
   fields?: Record<string, unknown>,
@@ -1635,9 +1672,10 @@ export function assertNoUnsupportedDeceasedReturn(
     (typeof source?.spouse_death_date === "string" &&
       source.spouse_death_date.trim().length > 0);
   if (
-    hasDeceasedFacts(fields) || hasDeceasedFacts(general) ||
-    filer?.deceased === true || Boolean(filer?.deathDate) ||
-    filer?.spouse?.deceased === true || Boolean(filer?.spouse?.deathDate)
+    (hasDeceasedFacts(fields) || hasDeceasedFacts(general) ||
+      filer?.deceased === true || Boolean(filer?.deathDate) ||
+      filer?.spouse?.deceased === true || Boolean(filer?.spouse?.deathDate)) &&
+    !isReviewedSurvivingSpouseJointReturn(fields, general, filer)
   ) {
     throw new Error(
       "TY2025 deceased Form 1040 needs reviewed signer, representative, and refund facts before filing",

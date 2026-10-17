@@ -52,6 +52,41 @@ test("direct Form 1040 MeF descriptor rejects deceased source and filer facts", 
   );
 });
 
+test("a reviewed surviving-spouse joint return files the spouse's 2025 death", () => {
+  const survivor = {
+    filing_status: "mfj",
+    taxpayer_ssn: "400001038",
+    spouse_ssn: "400001071",
+    spouse_deceased: true,
+    spouse_death_date: "2025-09-11",
+    surviving_spouse_joint_return_review: {
+      death_record_reference: "death certificate",
+      no_personal_representative_appointed_verified: true,
+      surviving_spouse_signs_verified: true,
+    },
+  };
+  const xml = irs1040.build(survivor, { pending: { general: survivor } });
+  assertStringIncludes(
+    xml,
+    "<DeceasedInd>X</DeceasedInd><SpouseDeathDt>2025-09-11</SpouseDeathDt>",
+  );
+  assertStringIncludes(xml, "<SurvivingSpouseInd>X</SurvivingSpouseInd>");
+  for (
+    const changed of [
+      { ...survivor, filing_status: "single" },
+      { ...survivor, spouse_death_date: "2024-12-31" },
+      { ...survivor, taxpayer_deceased: true },
+      { ...survivor, surviving_spouse_joint_return_review: undefined },
+    ]
+  ) {
+    assertThrows(
+      () => irs1040.build(changed, { pending: { general: changed } }),
+      Error,
+      "deceased Form 1040",
+    );
+  }
+});
+
 test("Form 1040 MeF rejects a positive Schedule 1-A deduction without its document", () => {
   assertThrows(
     () => irs1040.build({ line13b_additional_deductions: 6_000 }),
