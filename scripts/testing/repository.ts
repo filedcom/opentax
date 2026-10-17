@@ -113,6 +113,7 @@ export function moduleGraph(root: string, paths: string[]): GraphModule[] {
 export async function graphPreflight(
   root: string,
   evidenceDirectory: string,
+  typecheck = true,
 ): Promise<number> {
   const paths = (await repositoryFiles(root)).filter((path) =>
     path.endsWith(".ts")
@@ -128,7 +129,8 @@ export async function graphPreflight(
     paths.map((path) => toFileUrl(join(root, path)).href),
     graph,
   );
-  const typecheck = await new sys.Command(process.execPath, {
+  if (!typecheck) return count;
+  const checked = await new sys.Command(process.execPath, {
     args: [
       join(root, "node_modules/typescript/bin/tsc"),
       "--project",
@@ -142,11 +144,11 @@ export async function graphPreflight(
   }).output();
   await sys.writeBytes(
     join(evidenceDirectory, "typecheck.log"),
-    new Uint8Array([...typecheck.stdout, ...typecheck.stderr]),
+    new Uint8Array([...checked.stdout, ...checked.stderr]),
     { createNew: true, mode: 0o600 },
   );
-  if (!typecheck.success) {
-    const errors = new TextDecoder().decode(typecheck.stdout)
+  if (!checked.success) {
+    const errors = new TextDecoder().decode(checked.stdout)
       .split("\n").filter((line) => line.includes("error TS"));
     throw new Error(
       `Type check failed with ${errors.length} error(s): ${

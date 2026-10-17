@@ -20,6 +20,7 @@ import {
   testInventory,
 } from "./repository.ts";
 import { acquireFullRunLock, releaseFullRunLock } from "./full-lock.ts";
+import { selectAffected } from "./affected.ts";
 
 const root = dirname(dirname(dirname(fromFileUrl(import.meta.url))));
 const FORMS_BASELINE = "scripts/testing/forms-failure-baseline.json";
@@ -69,6 +70,19 @@ const mode = process.argv.slice(2)[0] ?? "full";
 if (!["full", "unit", "forms", "harness", "preflight"].includes(mode)) {
   throw new Error(`Unknown test mode: ${mode}`);
 }
+const changedFlag = process.argv.indexOf("--changed");
+// Local fast path: only tests whose imports reach a change since this base.
+const changedBase = changedFlag === -1
+  ? null
+  : process.argv[changedFlag + 1]?.replace(/^--.*/, "") || "origin/main";
+if (changedBase !== null && !["unit", "forms"].includes(mode)) {
+  throw new Error("--changed applies to the unit and forms modes");
+}
+// verify:changed type-checks once in the unit run, then passes this to the forms run.
+const typecheck = !process.argv.includes("--typechecked");
+if (!typecheck && changedBase === null) {
+  throw new Error("--typechecked applies only with --changed");
+}
 const directory = join(root, ".state/research/testing");
 await fs.mkdir(directory, { recursive: true, mode: 0o700 });
 const evidence = await sys.makeTempDir({ dir: directory, prefix: `${mode}-` });
@@ -115,7 +129,7 @@ try {
     lockOwned = true;
   }
   const all = await testInventory(root);
-  const selected = mode === "harness"
+  const candidates = mode === "harness"
     ? all.filter((path) =>
       path.startsWith("scripts/testing/") ||
       path === "benchmark/harness.test.ts"
@@ -130,7 +144,21 @@ try {
       path === "benchmark/harness.test.ts"
     )
     : all;
-  assertTestInventory(selected, selected);
+  const gate = changedBase === null
+    ? null
+    : await selectAffected(root, changedBase, candidates);
+  const selected = gate?.tests ?? candidates;
+  if (gate) {
+    console.log(
+      `${selected.length} of ${candidates.length} ${mode} tests reach the ${gate.changed.length} file(s) changed since ${changedBase}${
+        gate.everything ? " (a shared input changed, so all run)" : ""
+      }`,
+    );
+  }
+  // An empty changed-only selection is reported, never run as a passing test run.
+  if (selected.length > 0 || gate === null) {
+    assertTestInventory(selected, selected);
+  }
   await sys.writeText(
     join(evidence, "discovery.json"),
     JSON.stringify(
@@ -172,7 +200,7 @@ try {
     ),
     { createNew: true, mode: 0o600 },
   );
-  const graphModules = await graphPreflight(root, evidence);
+  const graphModules = await graphPreflight(root, evidence, typecheck);
   if (mode === "preflight") {
     assertRuntimeUnchanged(before, await runtimeSnapshot(root));
     await sys.writeText(
@@ -188,6 +216,12 @@ try {
         runtimeUnchanged: true,
       }),
       { createNew: true, mode: 0o600 },
+    );
+    code = 0;
+  } else if (selected.length === 0) {
+    assertRuntimeUnchanged(before, await runtimeSnapshot(root));
+    console.log(
+      "No tests reach the change; module graph and type check passed",
     );
     code = 0;
   } else {
@@ -267,10 +301,11 @@ try {
         summary.failedTests,
         failureBaselineSchema.parse(
           JSON.parse(await fs.readFile(join(root, FORMS_BASELINE), "utf8")),
+        ).filter((entry) =>
+          selected.includes(entry.module)
         ),
         new Date().toISOString().slice(0, 10),
-        await fs.access(join(root, IRS_CACHE_XSD)).then(() =>
-          true, () =>
+        await fs.access(join(root, IRS_CACHE_XSD)).then(() => true, () =>
           false),
       );
       for (const problem of open) {

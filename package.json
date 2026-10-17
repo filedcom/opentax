@@ -34,6 +34,8 @@
     "check:cli": "bun scripts/testing/cli.ts",
     "typecheck": "tsc --project tsconfig.json",
     "bench": "bun benchmark/run_benchmark.ts",
+    "bench:cached": "bun scripts/testing/bench-cached.ts",
+    "verify:changed": "bun scripts/testing/changed.ts",
     "compile": "bun build cli/main.ts --compile --outfile opentax",
     "fmt": "dprint fmt",
     "fmt:check": "dprint check",

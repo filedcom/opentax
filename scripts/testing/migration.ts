@@ -9,7 +9,10 @@ import {
   prerequisiteGuardSchema,
 } from "./migration-guards.ts";
 import { dirname, join, normalize } from "node:path";
-import { fileURLToPath as fromFileUrl, pathToFileURL as toFileUrl } from "node:url";
+import {
+  fileURLToPath as fromFileUrl,
+  pathToFileURL as toFileUrl,
+} from "node:url";
 import {
   assertHealthyModuleGraph,
   assertTestInventory,

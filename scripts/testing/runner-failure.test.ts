@@ -14,6 +14,7 @@ test("runner retains terminal failure when a tracked runtime file is missing bef
   for (
     const name of [
       "./run.ts",
+      "./affected.ts",
       "./contracts.ts",
       "./repository.ts",
       "./full-lock.ts",
