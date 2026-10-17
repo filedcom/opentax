@@ -5,11 +5,11 @@ import { assert, assertEquals, assertRejects } from "@std/assert";
 import { f1040_2025 } from "../../../../index.ts";
 import { extractFilerIdentity } from "../../../../../mef/filer.ts";
 import { buildPdfBytes } from "../../../../pdf/builder.ts";
-import { aggregationInvestmentFixture } from "./form8995a_aggregation_investments_fixture.ts";
+import { aggregationInvestmentFixture } from "./form8995a_aggregation_investments.fixture.ts";
 import {
   jointAggregationInvestmentCases,
   jointAggregationInvestmentFixture,
-} from "./form8995a_aggregation_joint_investments_fixture.ts";
+} from "./form8995a_aggregation_joint_investments.fixture.ts";
 type Row = Record<string, any>;
 // Independent decimal joint-return ledger, including short-term netting.
 const expected: Record<string, number[]> = {

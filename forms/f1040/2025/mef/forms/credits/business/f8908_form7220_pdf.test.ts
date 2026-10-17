@@ -4,7 +4,7 @@ import { PDFDocument } from "pdf-lib";
 import {
   form7220ReviewedFixture,
   form7220StatementFixture,
-} from "../../../../domains/credits/business/form8908/form8908_form7220_fixture.ts";
+} from "../../../../domains/credits/business/form8908/form8908_form7220.fixture.ts";
 import {
   form8908NoAlterationsStatementDescription,
   form8908PwaAttachmentDescription,

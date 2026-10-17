@@ -29,8 +29,6 @@ Traps:
   `f8854/constants.ts` (`MARK_TO_MARKET_EXCLUSION_2025`) and the `f8938`
   thresholds.
 - A second CFC fails the `f5471` tuple schema instead of being summed.
-- `f8938/eligibility_fixture.ts` is a fixture without the `.fixture.ts`
-  suffix.
 
 ## Verify
 

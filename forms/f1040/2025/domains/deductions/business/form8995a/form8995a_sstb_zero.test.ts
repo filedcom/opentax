@@ -8,11 +8,11 @@ import { buildPdfBytes } from "../../../../pdf/builder.ts";
 import {
   sstbZeroCases,
   sstbZeroFixture,
-} from "./form8995a_sstb_zero_fixture.ts";
+} from "./form8995a_sstb_zero.fixture.ts";
 import {
   sstbZeroExpected as expected,
   sstbZeroExpectedNiit as expectedNiit,
-} from "./form8995a_sstb_zero_expected.ts";
+} from "./form8995a_sstb_zero.expected.ts";
 type Row = Record<string, any>;
 for (const c of sstbZeroCases) {
   const name = c.name;

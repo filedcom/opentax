@@ -3,7 +3,7 @@ import { test } from "bun:test";
 import * as sys from "../../../../../../../scripts/support/sys.ts";
 import { assertEquals } from "@std/assert";
 import { buildForm8874Document } from "./f8874.ts";
-import { withReviewedForm8874A } from "../../../../../nodes/inputs/credits/business/f8874/issuance_fixture.ts";
+import { withReviewedForm8874A } from "../../../../../nodes/inputs/credits/business/f8874/issuance.fixture.ts";
 
 const XSD_PATH = new URL(
   "../../../../../../../.state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/CorporateIncomeTax/Common/IRS8874/IRS8874.xsd",

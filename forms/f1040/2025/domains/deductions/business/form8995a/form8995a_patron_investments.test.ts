@@ -8,7 +8,7 @@ import { buildPdfBytes } from "../../../../pdf/builder.ts";
 import {
   patronInvestmentCases,
   patronInvestmentFixture,
-} from "./form8995a_patron_investments_fixture.ts";
+} from "./form8995a_patron_investments.fixture.ts";
 // Independent Decimal source proof and IRS Tax Computation Worksheet.
 const patronInvestmentExpected: Record<string, number[]> = {
   "single-farm": [26226, 254111, 57826, 79632, 69632],

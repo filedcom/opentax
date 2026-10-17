@@ -1,7 +1,7 @@
 import { test } from "bun:test";
 import { assertEquals } from "@std/assert";
 import { calculateForm8994, f8994, inputSchema } from "./index.ts";
-import { form8994DirectEmployer } from "./fixture.ts";
+import { form8994DirectEmployer } from "./f8994.fixture.ts";
 
 test("Form 8994 direct employer computes reviewed 75% and 100% leave rates", () => {
   const lines = calculateForm8994(form8994DirectEmployer);

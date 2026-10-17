@@ -4,8 +4,8 @@ import { f1040_2025 } from "../../../../index.ts";
 import {
   profitableBonusCases,
   profitableBonusInput,
-} from "./form8911_profit_fixture.ts";
-import { bonusFilerFixture } from "./form8911_bonus_fixture.ts";
+} from "./form8911_profit.fixture.ts";
+import { bonusFilerFixture } from "./form8911_bonus.fixture.ts";
 
 test("Profitable refueling assets reconcile depreciation, SE, QBI, credit limits and overflow through full return", async () => {
   for (const scenario of profitableBonusCases) {

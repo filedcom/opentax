@@ -10,7 +10,7 @@ import {
   calculateCurrentYearInventory,
   filedCurrentYearSchema,
 } from "../../../../../nodes/intermediate/forms/deductions/business/form4562/current_year.ts";
-import { bonusFilerFixture } from "../../../credits/business/form3800/form8911_bonus_fixture.ts";
+import { bonusFilerFixture } from "../../../credits/business/form3800/form8911_bonus.fixture.ts";
 import {
   section179Cases,
   section179InventoryInput,

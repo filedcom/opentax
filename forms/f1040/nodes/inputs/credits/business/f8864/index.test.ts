@@ -4,7 +4,7 @@ import { fieldsOf } from "../../../../../../../core/test-utils/output.ts";
 import { form6251 } from "../../../../intermediate/forms/taxes/amt/form6251/index.ts";
 import { f3800 } from "../f3800/index.ts";
 import { calculateForm8864, f8864, inputSchema } from "./index.ts";
-import { directAgriBiodieselSource } from "./fixture.ts";
+import { directAgriBiodieselSource } from "./f8864.fixture.ts";
 
 test("Form 8864 computes the dated 2025 small producer credit", () => {
   assertEquals(calculateForm8864(directAgriBiodieselSource), {

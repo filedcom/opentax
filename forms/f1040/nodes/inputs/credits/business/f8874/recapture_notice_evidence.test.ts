@@ -1,6 +1,6 @@
 import { test } from "bun:test";
 import { assertEquals, assertThrows } from "@std/assert";
-import { withReviewedForm8874A } from "./issuance_fixture.ts";
+import { withReviewedForm8874A } from "./issuance.fixture.ts";
 import { calculateForm8874Recapture } from "./recapture_node.ts";
 import { schedule2 } from "../../../../../2025/mef/forms/taxes/other/schedule2.ts";
 import { schedule2Pdf } from "../../../../../2025/pdf/forms/taxes/other/schedule2.ts";

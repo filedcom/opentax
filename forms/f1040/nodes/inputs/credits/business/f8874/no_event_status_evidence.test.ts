@@ -1,6 +1,6 @@
 import { test } from "bun:test";
 import { assertEquals, assertRejects } from "@std/assert";
-import { withReviewedForm8874A } from "./issuance_fixture.ts";
+import { withReviewedForm8874A } from "./issuance.fixture.ts";
 import {
   form8874NoEventStatusSchema,
   reconcileForm8874NoEventStatus,

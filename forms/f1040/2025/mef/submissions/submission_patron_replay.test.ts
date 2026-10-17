@@ -8,15 +8,15 @@ import { extractFilerIdentity } from "../../../mef/filer.ts";
 import {
   patronStatusCases,
   patronStatusFixture,
-} from "../../domains/deductions/business/form8995a/form8995a_patron_status_fixture.ts";
+} from "../../domains/deductions/business/form8995a/form8995a_patron_status.fixture.ts";
 import {
   patronWageCases,
   patronWageFixture,
-} from "../../domains/deductions/business/form8995a/form8995a_patron_wages_fixture.ts";
+} from "../../domains/deductions/business/form8995a/form8995a_patron_wages.fixture.ts";
 import {
   patronInvestmentCases,
   patronInvestmentFixture,
-} from "../../domains/deductions/business/form8995a/form8995a_patron_investments_fixture.ts";
+} from "../../domains/deductions/business/form8995a/form8995a_patron_investments.fixture.ts";
 import { pdfReviewFixtures } from "../../pdf/review_fixtures.ts";
 import { spouseOwnedPatronFixture } from "../../pdf/reviews/general/composed-returns/review_8995a_patron_joint.fixture.ts";
 import { sha256Hex } from "../../return-processing/prepared_source.ts";

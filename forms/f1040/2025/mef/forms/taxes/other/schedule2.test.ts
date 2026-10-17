@@ -1,7 +1,7 @@
 import { test } from "bun:test";
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import { calculateForm8874Recapture } from "../../../../../nodes/inputs/credits/business/f8874/recapture_node.ts";
-import { withReviewedForm8874RecaptureEvidence } from "../../../../../nodes/inputs/credits/business/f8874/recapture_fixture.ts";
+import { withReviewedForm8874RecaptureEvidence } from "../../../../../nodes/inputs/credits/business/f8874/recapture.fixture.ts";
 import { FilingStatus } from "../../../../../mef/header.ts";
 import { FIELD_MAP, schedule2 } from "./schedule2.ts";
 

@@ -20,7 +20,7 @@ the graph, MeF and PDF (`execute` → `buildPending` → `buildMefBundle` →
 ## Conventions verified here
 
 - Most review returns are defined in `../../review_fixtures.ts` or next to the
-  input nodes (`nodes/inputs/credits/business/f8864/fixture.ts`, ...), not in
+  input nodes (`nodes/inputs/credits/business/f8864/f8864.fixture.ts`, ...), not in
   this folder. Find a case by its `id`.
 - `form8863_*.fixture.ts` are imported outside this folder too: by
   `../../forms/credits/individual/f8863.test.ts`,

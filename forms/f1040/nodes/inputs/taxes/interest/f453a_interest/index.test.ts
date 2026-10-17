@@ -1,7 +1,7 @@
 import { test } from "bun:test";
 import { assertEquals, assertThrows } from "@std/assert";
 import { calculateSection453aInterest, f453a_interest } from "./index.ts";
-import { twoObligation453aFixture } from "./fixture.ts";
+import { twoObligation453aFixture } from "./f453a_interest.fixture.ts";
 
 test("section 453A two-obligation workpaper fixes origin percentage and deposits Schedule 2 line 15", () => {
   const amount = calculateSection453aInterest(twoObligation453aFixture);

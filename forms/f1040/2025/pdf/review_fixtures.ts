@@ -63,9 +63,9 @@ import { twoSchoolEducationFixture } from "./reviews/general/composed-returns/re
 import {
   directAgriBiodieselPending,
   directAgriBiodieselSource,
-} from "../../nodes/inputs/credits/business/f8864/fixture.ts";
+} from "../../nodes/inputs/credits/business/f8864/f8864.fixture.ts";
 import { type FilerIdentity, FilingStatus } from "../../mef/header.ts";
-import { withReviewedForm8874A } from "../../nodes/inputs/credits/business/f8874/issuance_fixture.ts";
+import { withReviewedForm8874A } from "../../nodes/inputs/credits/business/f8874/issuance.fixture.ts";
 import {
   DistributionCode,
   RolloverCode,
@@ -84,7 +84,7 @@ import { agreedJointPayment } from "../../nodes/inputs/payments/estimated/f1040e
 import {
   form8882Fixture,
   form8882ScheduleCFixture,
-} from "../../nodes/inputs/credits/business/f8882/fixture.ts";
+} from "../../nodes/inputs/credits/business/f8882/f8882.fixture.ts";
 import { withSyntheticForm1098Copy } from "./reviews/deductions/mortgage/review_1098_copy.fixture.ts";
 import type { MefPdfAttachment } from "../mef/form_descriptor.ts";
 import {

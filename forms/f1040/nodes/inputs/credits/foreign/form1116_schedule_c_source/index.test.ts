@@ -5,7 +5,7 @@ import {
   IncomeCategory,
 } from "../../../../intermediate/forms/credits/foreign/form_1116/index.ts";
 import { form1116_schedule_c_source, inputSchema } from "./index.ts";
-import { scheduleCLedger } from "./test_fixture.ts";
+import { scheduleCLedger } from "./form1116_schedule_c_source.fixture.ts";
 
 const ctx = { taxYear: 2025, formType: "f1040" };
 

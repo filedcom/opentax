@@ -2,7 +2,7 @@ import { test } from "bun:test";
 import { inputSchema as scheduleCSchema } from "../../../../../nodes/inputs/income/business/schedule_c/model.ts";
 import { assertEquals, assertRejects, assertStringIncludes } from "@std/assert";
 import { f1040_2025 } from "../../../../index.ts";
-import { bonusFilerFixture } from "../../../credits/business/form3800/form8911_bonus_fixture.ts";
+import { bonusFilerFixture } from "../../../credits/business/form3800/form8911_bonus.fixture.ts";
 import {
   currentYearInput,
   currentYearMultiInput,

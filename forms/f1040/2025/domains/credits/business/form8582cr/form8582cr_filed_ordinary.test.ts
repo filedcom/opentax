@@ -12,7 +12,7 @@ import {
   assertThrows,
 } from "@std/assert";
 import { FilingStatus } from "../../../../../nodes/types.ts";
-import { withReviewedForm8874A } from "../../../../../nodes/inputs/credits/business/f8874/issuance_fixture.ts";
+import { withReviewedForm8874A } from "../../../../../nodes/inputs/credits/business/f8874/issuance.fixture.ts";
 import { ordinaryTax2025 } from "../../../../../nodes/intermediate/worksheets/taxes/calculation/tax_table_2025.ts";
 import {
   calculateForm8582CR,

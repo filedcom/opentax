@@ -12,7 +12,7 @@ import {
 import {
   aggregationPhaseInCases,
   aggregationPhaseInFixture,
-} from "./form8995a_aggregation_phasein_fixture.ts";
+} from "./form8995a_aggregation_phasein.fixture.ts";
 type Row = Record<string, any>;
 
 for (const c of aggregationPhaseInCases) {

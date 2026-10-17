@@ -1,4 +1,4 @@
-import { form8941DirectFixture } from "../../../../../nodes/inputs/credits/health/f8941/fixture.ts";
+import { form8941DirectFixture } from "../../../../../nodes/inputs/credits/health/f8941/f8941.fixture.ts";
 import { monthCoverageDates } from "../../../../../nodes/inputs/credits/health/f8941/shop_evidence.ts";
 import { form8941OwnedInputs } from "./review_8941_owned.fixture.ts";
 import { calculateForm8941 } from "../../../../../nodes/inputs/credits/health/f8941/index.ts";

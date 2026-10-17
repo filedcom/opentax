@@ -5,15 +5,15 @@ import { assert, assertEquals, assertRejects } from "@std/assert";
 import { f1040_2025 } from "../../../../index.ts";
 import { extractFilerIdentity } from "../../../../../mef/filer.ts";
 import { buildPdfBytes } from "../../../../pdf/builder.ts";
-import { sstbZeroCases } from "./form8995a_sstb_zero_fixture.ts";
+import { sstbZeroCases } from "./form8995a_sstb_zero.fixture.ts";
 import {
   sstbZeroExpected,
   sstbZeroExpectedNiit,
-} from "./form8995a_sstb_zero_expected.ts";
+} from "./form8995a_sstb_zero.expected.ts";
 import {
   sstbServiceZeroFixture,
   sstbServiceZeroSources,
-} from "./form8995a_sstb_service_zero_fixture.ts";
+} from "./form8995a_sstb_service_zero.fixture.ts";
 
 // Persisted pending data are an untrusted boundary, so mutations deliberately
 // bypass input types and change every retained copy of the source together.

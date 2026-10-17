@@ -8,7 +8,7 @@ import { buildPdfBytes } from "../../../../pdf/builder.ts";
 import {
   patronWageCases,
   patronWageFixture,
-} from "./form8995a_patron_wages_fixture.ts";
+} from "./form8995a_patron_wages.fixture.ts";
 // Independent Decimal source proof and IRS Tax Computation Worksheet.
 const patronWageExpected: Record<string, number[]> = {
   "single-farm": [26226, 247611, 56299, 77858, 67858],

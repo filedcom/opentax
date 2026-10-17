@@ -14,7 +14,7 @@ import {
   recaptureSchema,
 } from "./recapture.ts";
 import { f8874_recapture } from "./recapture_node.ts";
-import { withReviewedForm8874RecaptureEvidence } from "./recapture_fixture.ts";
+import { withReviewedForm8874RecaptureEvidence } from "./recapture.fixture.ts";
 
 const source: NewMarketsRecaptureInput = withReviewedForm8874RecaptureEvidence({
   notice_reference: "CDE 2025 Form 8874-B",

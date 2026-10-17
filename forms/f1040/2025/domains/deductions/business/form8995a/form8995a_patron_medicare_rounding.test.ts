@@ -3,7 +3,7 @@ import { assertEquals, assertRejects, assertThrows } from "@std/assert";
 import { f1040_2025 } from "../../../../index.ts";
 import { extractFilerIdentity } from "../../../../../mef/filer.ts";
 import { form8995aPdf } from "../../../../pdf/forms/deductions/business/f8995a.ts";
-import { patronWageFixture } from "./form8995a_patron_wages_fixture.ts";
+import { patronWageFixture } from "./form8995a_patron_wages.fixture.ts";
 import { independentPatronFixture } from "../../../../pdf/reviews/general/composed-returns/review_8995a_independent_patron.fixture.ts";
 
 // Untrusted persisted values are deliberately altered to exercise export guards.

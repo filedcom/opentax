@@ -13,7 +13,7 @@ import {
   form1116,
   IncomeCategory,
 } from "../../../../../../nodes/intermediate/forms/credits/foreign/form_1116/index.ts";
-import { scheduleCLedger } from "../../../../../../nodes/inputs/credits/foreign/form1116_schedule_c_source/test_fixture.ts";
+import { scheduleCLedger } from "../../../../../../nodes/inputs/credits/foreign/form1116_schedule_c_source/form1116_schedule_c_source.fixture.ts";
 import { k1Partnership } from "../../../../../../nodes/inputs/income/rental-passthrough/k1_partnership/index.ts";
 import { k1SCorpNode } from "../../../../../../nodes/inputs/income/rental-passthrough/k1_s_corp/index.ts";
 import { buildExecutionPlan } from "../../../../../../../../core/runtime/planner.ts";

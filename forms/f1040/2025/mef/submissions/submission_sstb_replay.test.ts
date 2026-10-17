@@ -8,35 +8,35 @@ import { extractFilerIdentity } from "../../../mef/filer.ts";
 import {
   sstbStatusCases,
   sstbStatusFixture,
-} from "../../domains/deductions/business/form8995a/form8995a_sstb_status_fixture.ts";
+} from "../../domains/deductions/business/form8995a/form8995a_sstb_status.fixture.ts";
 import {
   sstbJointOwnerCases,
   sstbJointOwnerFixture,
-} from "../../domains/deductions/business/form8995a/form8995a_sstb_joint_owner_fixture.ts";
+} from "../../domains/deductions/business/form8995a/form8995a_sstb_joint_owner.fixture.ts";
 import {
   sstbInvestmentCases,
   sstbInvestmentFixture,
-} from "../../domains/deductions/business/form8995a/form8995a_sstb_investments_fixture.ts";
+} from "../../domains/deductions/business/form8995a/form8995a_sstb_investments.fixture.ts";
 import {
   sstbZeroCases,
   sstbZeroFixture,
-} from "../../domains/deductions/business/form8995a/form8995a_sstb_zero_fixture.ts";
+} from "../../domains/deductions/business/form8995a/form8995a_sstb_zero.fixture.ts";
 import {
   sstbServiceCases,
   sstbServiceFixture,
-} from "../../domains/deductions/business/form8995a/form8995a_sstb_services_fixture.ts";
+} from "../../domains/deductions/business/form8995a/form8995a_sstb_services.fixture.ts";
 import {
   sstbFinancialCases,
   sstbFinancialFixture,
-} from "../../domains/deductions/business/form8995a/form8995a_sstb_financial_fixture.ts";
+} from "../../domains/deductions/business/form8995a/form8995a_sstb_financial.fixture.ts";
 import {
   sstbProfessionalCases,
   sstbProfessionalFixture,
-} from "../../domains/deductions/business/form8995a/form8995a_sstb_professional_fixture.ts";
+} from "../../domains/deductions/business/form8995a/form8995a_sstb_professional.fixture.ts";
 import {
   sstbIdentityCases,
   sstbIdentityFixture,
-} from "../../domains/deductions/business/form8995a/form8995a_sstb_identity_fixture.ts";
+} from "../../domains/deductions/business/form8995a/form8995a_sstb_identity.fixture.ts";
 import { sha256Hex } from "../../return-processing/prepared_source.ts";
 import {
   buildMefSubmissionArchive,

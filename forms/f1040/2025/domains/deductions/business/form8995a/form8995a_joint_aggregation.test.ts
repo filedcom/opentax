@@ -12,7 +12,7 @@ import { FilingStatus } from "../../../../../mef/header.ts";
 import {
   jointAggregationCases,
   jointAggregationFixture,
-} from "./form8995a_joint_aggregation_fixture.ts";
+} from "./form8995a_joint_aggregation.fixture.ts";
 type Row = Record<string, any>;
 
 for (const c of jointAggregationCases) {

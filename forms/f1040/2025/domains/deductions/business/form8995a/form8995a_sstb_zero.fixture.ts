@@ -1,4 +1,4 @@
-import { sstbInvestmentFixture } from "./form8995a_sstb_investments_fixture.ts";
+import { sstbInvestmentFixture } from "./form8995a_sstb_investments.fixture.ts";
 
 export const sstbZeroCases = [
   { name: "single-rounded-qbi", base: "single-payroll", kind: "near" },

@@ -1,9 +1,9 @@
-import { bonusInventoryInput } from "./form8911_inventory_fixture.ts";
-import { bonusCreditInput } from "./form8911_bonus_fixture.ts";
+import { bonusInventoryInput } from "./form8911_inventory.fixture.ts";
+import { bonusCreditInput } from "./form8911_bonus.fixture.ts";
 import {
   profitableBonusCases,
   profitableBonusInput,
-} from "./form8911_profit_fixture.ts";
+} from "./form8911_profit.fixture.ts";
 
 export function constructionCreditInput(cost = 10000, physicalWork = true) {
   const input = profitableBonusInput(profitableBonusCases[0]);

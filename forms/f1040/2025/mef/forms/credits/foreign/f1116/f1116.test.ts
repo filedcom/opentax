@@ -15,7 +15,7 @@ import {
   CONVERSION_EXPLANATION_FILE,
 } from "./f1116_conversion_explanation.ts";
 import { FilingStatus } from "../../../../types.ts";
-import { scheduleCLedger } from "../../../../../../nodes/inputs/credits/foreign/form1116_schedule_c_source/test_fixture.ts";
+import { scheduleCLedger } from "../../../../../../nodes/inputs/credits/foreign/form1116_schedule_c_source/form1116_schedule_c_source.fixture.ts";
 
 const passive = {
   category: IncomeCategory.Passive,

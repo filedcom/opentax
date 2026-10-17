@@ -8,7 +8,7 @@ import { buildPdfBytes } from "../../../../pdf/builder.ts";
 import {
   aggregationInvestmentCases,
   aggregationInvestmentFixture,
-} from "./form8995a_aggregation_investments_fixture.ts";
+} from "./form8995a_aggregation_investments.fixture.ts";
 type Row = Record<string, any>;
 // Independently checked decimal source ledger; QSS stays below the NIIT threshold.
 const expected: Record<string, number[]> = {

@@ -7,7 +7,7 @@ import { form6251 } from "../../../taxes/amt/form6251/index.ts";
 import { f1040 } from "../../../../../outputs/general/return-assembly/f1040/index.ts";
 import { FilingStatus } from "../../../../../types.ts";
 import { qualifiedDividendTax2025 } from "../../../../worksheets/taxes/calculation/tax_table_2025.ts";
-import { scheduleCLedger } from "../../../../../inputs/credits/foreign/form1116_schedule_c_source/test_fixture.ts";
+import { scheduleCLedger } from "../../../../../inputs/credits/foreign/form1116_schedule_c_source/form1116_schedule_c_source.fixture.ts";
 
 const ctx = { taxYear: 2025, formType: "f1040" };
 const zeroPriorPassive = {

@@ -2,7 +2,7 @@ import { test } from "bun:test";
 import { assertEquals } from "@std/assert";
 import { f3800 } from "../f3800/index.ts";
 import { calculateForm8874, f8874 } from "./index.ts";
-import { withReviewedForm8874A } from "./issuance_fixture.ts";
+import { withReviewedForm8874A } from "./issuance.fixture.ts";
 
 const investment = withReviewedForm8874A(
   {

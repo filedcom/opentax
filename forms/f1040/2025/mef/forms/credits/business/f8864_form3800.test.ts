@@ -2,7 +2,7 @@ import { test } from "bun:test";
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import { FilingStatus } from "../../../../../nodes/types.ts";
 import { ZERO_FORM3800_PASSIVE_ACTIVITY } from "../../../../../nodes/inputs/credits/business/f3800/calculation.ts";
-import { directAgriBiodieselPending } from "../../../../../nodes/inputs/credits/business/f8864/fixture.ts";
+import { directAgriBiodieselPending } from "../../../../../nodes/inputs/credits/business/f8864/f8864.fixture.ts";
 import { buildForm3800NonpassiveParts } from "./f3800/f3800_nonpassive.ts";
 import { form8864 } from "./f8864.ts";
 

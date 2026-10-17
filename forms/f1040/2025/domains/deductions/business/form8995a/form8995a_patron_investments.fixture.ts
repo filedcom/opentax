@@ -1,9 +1,9 @@
 import {
   patronWageCases,
   patronWageFixture,
-} from "./form8995a_patron_wages_fixture.ts";
-import { groupDividendFixture } from "./form8995a_group_dividend_fixture.ts";
-import { groupLossCases } from "./form8995a_group_loss_fixture.ts";
+} from "./form8995a_patron_wages.fixture.ts";
+import { groupDividendFixture } from "./form8995a_group_dividend.fixture.ts";
+import { groupLossCases } from "./form8995a_group_loss.fixture.ts";
 
 export const patronInvestmentCases = patronWageCases;
 export function patronInvestmentFixture(

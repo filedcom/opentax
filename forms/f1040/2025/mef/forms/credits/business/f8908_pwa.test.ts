@@ -2,7 +2,7 @@ import { test } from "bun:test";
 import {
   form7220ReviewedFixture,
   form7220StatementFixture,
-} from "../../../../domains/credits/business/form8908/form8908_form7220_fixture.ts";
+} from "../../../../domains/credits/business/form8908/form8908_form7220.fixture.ts";
 import { assertEquals, assertThrows } from "@std/assert";
 import {
   form8908NoAlterationsStatementDescription,

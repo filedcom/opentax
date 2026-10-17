@@ -1,7 +1,7 @@
 import { test } from "bun:test";
 import { assertEquals, assertRejects, assertStringIncludes } from "@std/assert";
 import { PDFDocument } from "pdf-lib";
-import { scheduleCLedger } from "../../../../../../nodes/inputs/credits/foreign/form1116_schedule_c_source/test_fixture.ts";
+import { scheduleCLedger } from "../../../../../../nodes/inputs/credits/foreign/form1116_schedule_c_source/form1116_schedule_c_source.fixture.ts";
 import type { ScheduleCFiledYearEvidence } from "./f1116_schedule_c.ts";
 import type { FilerIdentity } from "../../../../types.ts";
 import { form1116ScheduleCPdfCandidate } from "../../../../../pdf/forms/credits/foreign/f1116/f1116_schedule_c_candidate.ts";

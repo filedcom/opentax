@@ -3,7 +3,7 @@ import { assertEquals, assertThrows } from "@std/assert";
 import {
   directAgriBiodieselPending,
   directAgriBiodieselSource,
-} from "../../../../../nodes/inputs/credits/business/f8864/fixture.ts";
+} from "../../../../../nodes/inputs/credits/business/f8864/f8864.fixture.ts";
 import { FilingStatus } from "../../../../../nodes/types.ts";
 import { ZERO_FORM3800_PASSIVE_ACTIVITY } from "../../../../../nodes/inputs/credits/business/f3800/calculation.ts";
 import { buildForm3800NonpassiveParts } from "../../../../mef/forms/credits/business/f3800/f3800_nonpassive.ts";

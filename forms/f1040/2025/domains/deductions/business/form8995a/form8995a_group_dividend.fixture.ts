@@ -1,7 +1,7 @@
 import {
   type groupLossCases,
   groupLossFixture,
-} from "./form8995a_group_loss_fixture.ts";
+} from "./form8995a_group_loss.fixture.ts";
 type Row = Record<string, any>;
 
 /** Shared synthetic sources; no issuer or taxpayer authentication is claimed. */

@@ -9,8 +9,8 @@ import { f1040_2025 } from "../../../../index.ts";
 import {
   constructionCreditInput,
   constructionInventoryInput,
-} from "./form8911_construction_fixture.ts";
-import { bonusFilerFixture } from "./form8911_bonus_fixture.ts";
+} from "./form8911_construction.fixture.ts";
+import { bonusFilerFixture } from "./form8911_bonus.fixture.ts";
 import { assertConstructionReview } from "../../../../../nodes/inputs/credits/business/f8911/construction_review.ts";
 
 test("Construction-exception credits reconcile rate, cap, bonus basis, SE and QBI in full returns", async () => {

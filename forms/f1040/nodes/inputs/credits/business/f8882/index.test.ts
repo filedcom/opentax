@@ -1,6 +1,6 @@
 import { test } from "bun:test";
 import { assertEquals, assertThrows } from "@std/assert";
-import { form8882Fixture } from "./fixture.ts";
+import { form8882Fixture } from "./f8882.fixture.ts";
 import { calculateForm8882, f8882, inputSchema } from "./index.ts";
 
 test("f8882: direct Schedule C credit routes to typed Form 3800", () => {

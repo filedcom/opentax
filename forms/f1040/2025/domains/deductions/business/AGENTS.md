@@ -30,8 +30,8 @@ Section map: [../../../../nodes/inputs/deductions/AGENTS.md](../../../../nodes/i
 
 - `form8995` hands off to 8995-A above the threshold or for any patron review,
   so most QBI return tests live in `form8995a/`.
-- `form8995a/` uses `_fixture.ts` / `_expected.ts` suffixes and
-  `form8995a_rpe_*_source.json` inputs, not `.fixture.ts`;
+- `form8995a/` fixtures are `*.fixture.ts` / `*.expected.ts` plus
+  `form8995a_rpe_*_source.json` inputs;
   `form8995a_sstb_service_checks.ts` is a test registrar, not a guard.
 
 ## Verify

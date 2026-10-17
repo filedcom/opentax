@@ -23,7 +23,7 @@ computed; both look-back forms stop the return.
   (`2025/domains/taxes/other/section453a_reconciliation.ts`, called by the
   MeF and PDF Schedule 2) requires the retained workpaper, matches the seller
   SSN to the filer and the filed line 15 to the recomputed amount.
-- `f453a_interest/fixture.ts` (`twoObligation453aFixture`) is shared with that
+- `f453a_interest/f453a_interest.fixture.ts` (`twoObligation453aFixture`) is shared with that
   domain test and `2025/mef/xsd_validation.test.ts`.
 - Schedule 2 line 14 (§453(l)(3) dealer interest) has no input node and
   `schedule2` throws on any nonzero value.

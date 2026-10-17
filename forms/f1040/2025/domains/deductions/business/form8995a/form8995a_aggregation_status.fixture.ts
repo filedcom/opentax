@@ -2,11 +2,11 @@ import { pdfReviewFixtures } from "../../../../pdf/review_fixtures.ts";
 import {
   aggregationPhaseInCases,
   aggregationPhaseInFixture,
-} from "./form8995a_aggregation_phasein_fixture.ts";
+} from "./form8995a_aggregation_phasein.fixture.ts";
 import {
   jointRpeCases,
   jointRpeFixture,
-} from "./form8995a_joint_rpe_fixture.ts";
+} from "./form8995a_joint_rpe.fixture.ts";
 const statuses = [
   { status: "hoh", fixture: "hoh-w2-nonclaimed-custodial-release-child" },
   { status: "qss", fixture: "qss-w2-nonclaimed-joint-return-child" },

@@ -11,7 +11,7 @@ import {
   filedCurrentYearSchema,
 } from "../../../../../nodes/intermediate/forms/deductions/business/form4562/current_year.ts";
 import { DepreciationMethod } from "../../../../../nodes/intermediate/forms/deductions/business/form4562/method_elections.ts";
-import { bonusFilerFixture } from "../../../credits/business/form3800/form8911_bonus_fixture.ts";
+import { bonusFilerFixture } from "../../../credits/business/form3800/form8911_bonus.fixture.ts";
 import { methodCases, methodElectionInput } from "./methods.fixture.ts";
 
 test("Reviewed MACRS methods join bonus, business credit, Schedule C, SE/QBI and native returns", async () => {

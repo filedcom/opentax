@@ -8,8 +8,8 @@ import { buildPdfBytes } from "../../../../pdf/builder.ts";
 import {
   patronStatusCases,
   patronStatusFixture,
-} from "./form8995a_patron_status_fixture.ts";
-import { patronStatusExpected } from "./form8995a_patron_status_expected.ts";
+} from "./form8995a_patron_status.fixture.ts";
+import { patronStatusExpected } from "./form8995a_patron_status.expected.ts";
 // Mutations intentionally cross the untrusted persisted-data boundary.
 type Row = Record<string, any>;
 

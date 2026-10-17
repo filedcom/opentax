@@ -7,11 +7,11 @@ import {
 } from "@std/assert";
 import { form4562Pdf } from "../../../../pdf/forms/deductions/business/f4562.ts";
 import { f1040_2025 } from "../../../../index.ts";
-import { bonusFilerFixture } from "./form8911_bonus_fixture.ts";
+import { bonusFilerFixture } from "./form8911_bonus.fixture.ts";
 import { calculateBonusInventory } from "../../../../../nodes/intermediate/forms/deductions/business/form4562/bonus.ts";
 
-import { bonusInventoryInput } from "./form8911_inventory_fixture.ts";
-export { bonusInventoryInput } from "./form8911_inventory_fixture.ts";
+import { bonusInventoryInput } from "./form8911_inventory.fixture.ts";
+export { bonusInventoryInput } from "./form8911_inventory.fixture.ts";
 
 test("Form 8911 inventory groups depreciation per activity and limits only the current credit", async () => {
   for (

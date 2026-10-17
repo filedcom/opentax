@@ -7,7 +7,7 @@ import { normalizeAllPending } from "../../../../return-processing/pending.ts";
 import {
   groupLossCases,
   groupLossFixture,
-} from "./form8995a_group_loss_fixture.ts";
+} from "./form8995a_group_loss.fixture.ts";
 import { buildPdfBytes } from "../../../../pdf/builder.ts";
 import {
   calculateScheduleCLossLines,

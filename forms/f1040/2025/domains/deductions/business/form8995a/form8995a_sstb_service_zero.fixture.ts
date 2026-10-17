@@ -1,23 +1,23 @@
 import {
   sstbServiceCases,
   sstbServiceFixture,
-} from "./form8995a_sstb_services_fixture.ts";
+} from "./form8995a_sstb_services.fixture.ts";
 import {
   sstbFinancialCases,
   sstbFinancialFixture,
-} from "./form8995a_sstb_financial_fixture.ts";
+} from "./form8995a_sstb_financial.fixture.ts";
 import {
   sstbProfessionalCases,
   sstbProfessionalFixture,
-} from "./form8995a_sstb_professional_fixture.ts";
+} from "./form8995a_sstb_professional.fixture.ts";
 import {
   sstbIdentityCases,
   sstbIdentityFixture,
-} from "./form8995a_sstb_identity_fixture.ts";
+} from "./form8995a_sstb_identity.fixture.ts";
 import {
   type sstbZeroCases,
   sstbZeroFixture,
-} from "./form8995a_sstb_zero_fixture.ts";
+} from "./form8995a_sstb_zero.fixture.ts";
 
 // All previously reviewed classifications, codes, roles and income kinds.
 export const sstbServiceZeroSources = [

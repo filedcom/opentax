@@ -1,7 +1,7 @@
 import { test } from "bun:test";
 import { assertStringIncludes, assertThrows } from "@std/assert";
 import { buildForm8874Document, form8874 } from "./f8874.ts";
-import { withReviewedForm8874A } from "../../../../../nodes/inputs/credits/business/f8874/issuance_fixture.ts";
+import { withReviewedForm8874A } from "../../../../../nodes/inputs/credits/business/f8874/issuance.fixture.ts";
 
 const source = {
   investments: [withReviewedForm8874A(

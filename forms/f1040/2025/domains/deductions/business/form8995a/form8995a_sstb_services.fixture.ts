@@ -1,7 +1,7 @@
 import {
   sstbInvestmentCases,
   sstbInvestmentFixture,
-} from "./form8995a_sstb_investments_fixture.ts";
+} from "./form8995a_sstb_investments.fixture.ts";
 
 export const sstbServiceCases = [
   { name: "law-single", field: "law", code: "541100", base: "single-payroll" },

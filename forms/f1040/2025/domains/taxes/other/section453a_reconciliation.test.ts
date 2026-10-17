@@ -3,7 +3,7 @@ import * as fs from "node:fs/promises";
 import * as sys from "../../../../../../scripts/support/sys.ts";
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import { f1040_2025 } from "../../../index.ts";
-import { twoObligation453aFixture } from "../../../../nodes/inputs/taxes/interest/f453a_interest/fixture.ts";
+import { twoObligation453aFixture } from "../../../../nodes/inputs/taxes/interest/f453a_interest/f453a_interest.fixture.ts";
 import { schedule2Part2Total } from "../../../../nodes/intermediate/aggregation/taxes/other/schedule2/index.ts";
 import { schedule2 as nativeSchedule2 } from "../../../mef/forms/taxes/other/schedule2.ts";
 import { schedule2Pdf } from "../../../pdf/forms/taxes/other/schedule2.ts";

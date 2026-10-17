@@ -1,4 +1,4 @@
-import { withReviewedForm8874A } from "./issuance_fixture.ts";
+import { withReviewedForm8874A } from "./issuance.fixture.ts";
 
 /** Authored synthetic CDE Form 8874-A/B pair for recapture test fixtures. */
 export function withReviewedForm8874RecaptureEvidence<

@@ -1,10 +1,10 @@
 import {
   profitableBonusCases,
   profitableBonusInput,
-} from "../../../credits/business/form3800/form8911_profit_fixture.ts";
-import { bonusInventoryInput } from "../../../credits/business/form3800/form8911_inventory_fixture.ts";
-import { bonusCreditInput } from "../../../credits/business/form3800/form8911_bonus_fixture.ts";
-import { constructionCreditInput } from "../../../credits/business/form3800/form8911_construction_fixture.ts";
+} from "../../../credits/business/form3800/form8911_profit.fixture.ts";
+import { bonusInventoryInput } from "../../../credits/business/form3800/form8911_inventory.fixture.ts";
+import { bonusCreditInput } from "../../../credits/business/form3800/form8911_bonus.fixture.ts";
+import { constructionCreditInput } from "../../../credits/business/form3800/form8911_construction.fixture.ts";
 import { currentYearInventorySchema } from "../../../../../nodes/intermediate/forms/deductions/business/form4562/current_year.ts";
 
 export function currentYearInput(late = false, construction = false) {

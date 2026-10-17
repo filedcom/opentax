@@ -1,8 +1,8 @@
 import {
   bonusCreditInput,
   bonusFilerFixture,
-} from "./form8911_bonus_fixture.ts";
-import { bonusInventoryInput } from "./form8911_inventory_fixture.ts";
+} from "./form8911_bonus.fixture.ts";
+import { bonusInventoryInput } from "./form8911_inventory.fixture.ts";
 import { inputSchema as generalSchema } from "../../../../../nodes/inputs/general/filing/general/index.ts";
 
 // Independently worked examples using Schedule SE whole-dollar lines and the

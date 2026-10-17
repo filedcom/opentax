@@ -1,7 +1,7 @@
 import {
   form8882Fixture,
   form8882ScheduleCFixture,
-} from "../../../../../nodes/inputs/credits/business/f8882/fixture.ts";
+} from "../../../../../nodes/inputs/credits/business/f8882/f8882.fixture.ts";
 import { FilingStatus } from "../../../../../nodes/types.ts";
 
 export function form8882PreparedFixture() {

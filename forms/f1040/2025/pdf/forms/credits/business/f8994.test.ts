@@ -5,7 +5,7 @@ import { ZERO_FORM3800_PASSIVE_ACTIVITY } from "../../../../../nodes/inputs/cred
 import {
   form8994DirectEmployer,
   form8994MatchedPending,
-} from "../../../../../nodes/inputs/credits/business/f8994/fixture.ts";
+} from "../../../../../nodes/inputs/credits/business/f8994/f8994.fixture.ts";
 import { buildForm3800NonpassiveParts } from "../../../../mef/forms/credits/business/f3800/f3800_nonpassive.ts";
 import { form8994Pdf } from "./f8994.ts";
 

@@ -5,7 +5,7 @@ import { PDFDocument } from "pdf-lib";
 import { f1040_2025 } from "../../../../index.ts";
 import { buildPdfBytes } from "../../../../pdf/builder.ts";
 import { pdfReviewFixtures } from "../../../../pdf/review_fixtures.ts";
-import { withReviewedForm8874RecaptureEvidence } from "../../../../../nodes/inputs/credits/business/f8874/recapture_fixture.ts";
+import { withReviewedForm8874RecaptureEvidence } from "../../../../../nodes/inputs/credits/business/f8874/recapture.fixture.ts";
 
 const schema =
   ".state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd";

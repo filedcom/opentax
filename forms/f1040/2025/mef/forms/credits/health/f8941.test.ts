@@ -2,7 +2,7 @@ import { test } from "bun:test";
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import { ZERO_FORM3800_PASSIVE_ACTIVITY } from "../../../../../nodes/inputs/credits/business/f3800/calculation.ts";
 import { FilingStatus } from "../../../../../nodes/types.ts";
-import { form8941FiledFixture } from "../../../../../nodes/inputs/credits/health/f8941/fixture.ts";
+import { form8941FiledFixture } from "../../../../../nodes/inputs/credits/health/f8941/f8941.fixture.ts";
 import { form8941Pdf } from "../../../../pdf/forms/credits/health/f8941.ts";
 import { testFiler } from "../../../support/test_filer.ts";
 import { form8941 } from "./f8941.ts";

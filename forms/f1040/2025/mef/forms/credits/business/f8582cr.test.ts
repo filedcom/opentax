@@ -8,7 +8,7 @@ import {
   PassiveCreditSourceOrigin,
 } from "../../../../../nodes/intermediate/forms/credits/business/form8582cr/index.ts";
 import { form8582cr } from "./f8582cr.ts";
-import { withReviewedForm8874A } from "../../../../../nodes/inputs/credits/business/f8874/issuance_fixture.ts";
+import { withReviewedForm8874A } from "../../../../../nodes/inputs/credits/business/f8874/issuance.fixture.ts";
 
 const otherCredit = {
   activity_reference: "Clinical activity",

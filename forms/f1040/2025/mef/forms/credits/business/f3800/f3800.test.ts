@@ -2,7 +2,7 @@ import { test } from "bun:test";
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import { EnergyType } from "../../../../../../nodes/inputs/credits/business/f8835/index.ts";
 import { TargetGroup } from "../../../../../../nodes/inputs/credits/business/f5884/index.ts";
-import { withReviewedForm8874A } from "../../../../../../nodes/inputs/credits/business/f8874/issuance_fixture.ts";
+import { withReviewedForm8874A } from "../../../../../../nodes/inputs/credits/business/f8874/issuance.fixture.ts";
 import { FilingStatus } from "../../../../../../nodes/types.ts";
 import {
   PassiveCreditCategory,

@@ -14,11 +14,11 @@ import { form3800 } from "../../../../mef/forms/credits/business/f3800/f3800.ts"
 import {
   bonusCreditInput,
   bonusFilerFixture,
-} from "./form8911_bonus_fixture.ts";
+} from "./form8911_bonus.fixture.ts";
 export {
   bonusCreditInput,
   bonusFilerFixture,
-} from "./form8911_bonus_fixture.ts";
+} from "./form8911_bonus.fixture.ts";
 
 test("Form 8911 business credit and reduced bonus basis reach the prepared return together", async () => {
   for (

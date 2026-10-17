@@ -14,7 +14,7 @@ import { f1040_2025 } from "../../../../index.ts";
 import {
   directAgriBiodieselPending,
   type directAgriBiodieselSource,
-} from "../../../../../nodes/inputs/credits/business/f8864/fixture.ts";
+} from "../../../../../nodes/inputs/credits/business/f8864/f8864.fixture.ts";
 import { pdfReviewFixtures } from "../../../review_fixtures.ts";
 import { form8864Pdf } from "../../../forms/credits/business/f8864.ts";
 

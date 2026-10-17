@@ -1,4 +1,4 @@
-import { bonusFilerFixture } from "../../../credits/business/form3800/form8911_bonus_fixture.ts";
+import { bonusFilerFixture } from "../../../credits/business/form3800/form8911_bonus.fixture.ts";
 import { FilingStatus } from "../../../../../nodes/types.ts";
 import { inputSchema as w2Schema } from "../../../../../nodes/inputs/income/wages/w2/index.ts";
 import {

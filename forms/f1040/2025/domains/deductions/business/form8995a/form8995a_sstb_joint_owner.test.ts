@@ -8,7 +8,7 @@ import { buildPdfBytes } from "../../../../pdf/builder.ts";
 import {
   sstbJointOwnerCases,
   sstbJointOwnerFixture,
-} from "./form8995a_sstb_joint_owner_fixture.ts";
+} from "./form8995a_sstb_joint_owner.fixture.ts";
 type Row = Record<string, any>;
 // Independently calculated whole-dollar Schedule A, phase reduction and final tax.
 const expected: Record<string, number[]> = {

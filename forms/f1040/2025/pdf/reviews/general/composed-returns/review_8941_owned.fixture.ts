@@ -1,4 +1,4 @@
-import { form8941FiledFixture } from "../../../../../nodes/inputs/credits/health/f8941/fixture.ts";
+import { form8941FiledFixture } from "../../../../../nodes/inputs/credits/health/f8941/f8941.fixture.ts";
 import { extractFilerIdentity } from "../../../../../mef/filer.ts";
 import type { PdfReviewFixture } from "../../../review_fixtures.ts";
 

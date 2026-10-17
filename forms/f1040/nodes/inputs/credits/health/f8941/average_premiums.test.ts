@@ -1,7 +1,7 @@
 import { test } from "bun:test";
 import { assertEquals, assertThrows } from "@std/assert";
 import { form8941AveragePremiums } from "./average_premiums.ts";
-import { form8941DirectFixture } from "./fixture.ts";
+import { form8941DirectFixture } from "./f8941.fixture.ts";
 import { calculateForm8941 } from "./index.ts";
 import table from "./average_premiums_2025.json" with { type: "json" };
 

@@ -3,7 +3,7 @@ import { assertEquals, assertThrows } from "@std/assert";
 import {
   directAgriBiodieselPending,
   directAgriBiodieselSource,
-} from "../../../../../nodes/inputs/credits/business/f8864/fixture.ts";
+} from "../../../../../nodes/inputs/credits/business/f8864/f8864.fixture.ts";
 import {
   reconcileForm8864DirectProducer,
   reconcileForm8864DocumentSource,

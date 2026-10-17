@@ -15,8 +15,8 @@ test("entered Form 4547 election cannot disappear from either export", () => {
   }
 });
 import { form8992Pending } from "../domains/income/foreign/form8992/form8992.fixture.ts";
-import { form8882Fixture } from "../../nodes/inputs/credits/business/f8882/fixture.ts";
-import { form8941FiledFixture } from "../../nodes/inputs/credits/health/f8941/fixture.ts";
+import { form8882Fixture } from "../../nodes/inputs/credits/business/f8882/f8882.fixture.ts";
+import { form8941FiledFixture } from "../../nodes/inputs/credits/health/f8941/f8941.fixture.ts";
 
 test("reviewed no-distribution Category 4/5a Form 5471 stays gated at both exports", () => {
   for (const kind of ["mef", "pdf"] as const) {

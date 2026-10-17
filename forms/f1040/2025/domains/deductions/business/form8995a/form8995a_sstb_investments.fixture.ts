@@ -2,13 +2,13 @@ import { pdfReviewFixtures } from "../../../../pdf/review_fixtures.ts";
 import {
   sstbJointOwnerCases,
   sstbJointOwnerFixture,
-} from "./form8995a_sstb_joint_owner_fixture.ts";
+} from "./form8995a_sstb_joint_owner.fixture.ts";
 import {
   sstbStatusCases,
   sstbStatusFixture,
-} from "./form8995a_sstb_status_fixture.ts";
-import { groupDividendFixture } from "./form8995a_group_dividend_fixture.ts";
-import { groupLossCases } from "./form8995a_group_loss_fixture.ts";
+} from "./form8995a_sstb_status.fixture.ts";
+import { groupDividendFixture } from "./form8995a_group_dividend.fixture.ts";
+import { groupLossCases } from "./form8995a_group_loss.fixture.ts";
 
 export const sstbInvestmentCases = [
   "single-payroll",

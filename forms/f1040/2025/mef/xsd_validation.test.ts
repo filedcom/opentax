@@ -43,7 +43,7 @@ import { irs1040Pdf } from "../pdf/forms/general/return-assembly/f1040.ts";
 import { schedule3Pdf } from "../pdf/forms/general/return-assembly/schedule3.ts";
 import { scheduleDPdf } from "../pdf/forms/income/investments/schedule_d.ts";
 import { scheduleEPdf } from "../pdf/forms/income/rental-passthrough/schedule_e.ts";
-import { withReviewedForm8874RecaptureEvidence } from "../../nodes/inputs/credits/business/f8874/recapture_fixture.ts";
+import { withReviewedForm8874RecaptureEvidence } from "../../nodes/inputs/credits/business/f8874/recapture.fixture.ts";
 import {
   calculateForm8396,
   CertifiedInterestDocumentKind,
@@ -55,7 +55,7 @@ import { SS_WAGE_BASE_2025 } from "../../nodes/config/2025.ts";
 import { extractFilerIdentity } from "../../mef/filer.ts";
 import { agreedJointPayment } from "../../nodes/inputs/payments/estimated/f1040es/agreed_payment.fixture.ts";
 import { purchasePointsCrossLoanFixture } from "../../nodes/inputs/deductions/mortgage/f1098/purchase_points_cross_loan.fixture.ts";
-import { twoObligation453aFixture } from "../../nodes/inputs/taxes/interest/f453a_interest/fixture.ts";
+import { twoObligation453aFixture } from "../../nodes/inputs/taxes/interest/f453a_interest/f453a_interest.fixture.ts";
 import { priorIsoSaleFixture } from "../domains/taxes/amt/form6251/form6251_prior_iso_sale.fixture.ts";
 import { form6251Form4952Fixture } from "../domains/taxes/amt/form6251/form6251_4952.fixture.ts";
 import { Form7217PropertyTreatment } from "../../nodes/inputs/income/business/f7217/index.ts";

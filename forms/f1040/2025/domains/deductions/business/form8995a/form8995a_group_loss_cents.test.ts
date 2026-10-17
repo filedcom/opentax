@@ -8,7 +8,7 @@ import { buildPdfBytes } from "../../../../pdf/builder.ts";
 import {
   groupLossCases,
   groupLossFixture,
-} from "./form8995a_group_loss_fixture.ts";
+} from "./form8995a_group_loss.fixture.ts";
 type Row = Record<string, any>;
 for (const c of groupLossCases) {
   test(`Unequal cent payroll in QBI loss employer groups ${c.name}`, async () => {

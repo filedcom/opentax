@@ -2,7 +2,7 @@ import { test } from "bun:test";
 import { assertRejects, assertThrows } from "@std/assert";
 import { buildMefXml } from "../../../../../2025/mef/builder.ts";
 import { buildPdfBytes } from "../../../../../2025/pdf/builder.ts";
-import { form8994DirectEmployer } from "./fixture.ts";
+import { form8994DirectEmployer } from "./f8994.fixture.ts";
 
 test("Form 8994 direct XML export requires the validated attachment bundle", () => {
   assertThrows(

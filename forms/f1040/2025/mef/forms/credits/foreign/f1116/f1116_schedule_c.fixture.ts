@@ -1,4 +1,4 @@
-import { scheduleCLedger } from "../../../../../../nodes/inputs/credits/foreign/form1116_schedule_c_source/test_fixture.ts";
+import { scheduleCLedger } from "../../../../../../nodes/inputs/credits/foreign/form1116_schedule_c_source/form1116_schedule_c_source.fixture.ts";
 import { IncomeCategory } from "../../../../../../nodes/intermediate/forms/credits/foreign/form_1116/index.ts";
 import type { ScheduleCFiledYearEvidence } from "./f1116_schedule_c.ts";
 

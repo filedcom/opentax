@@ -29,7 +29,7 @@ the W-2 / 1099 sourced lines, and §453A interest. The node is
   (`line17k_golden_parachute_excise`) is not checked here.
 - `assertSection453aSchedule2Line` recomputes `calculateSection453aInterest`
   from the retained `f453a_interest` source; its test imports
-  `nodes/inputs/taxes/interest/f453a_interest/fixture.ts`.
+  `nodes/inputs/taxes/interest/f453a_interest/f453a_interest.fixture.ts`.
 
 ## Verify
 

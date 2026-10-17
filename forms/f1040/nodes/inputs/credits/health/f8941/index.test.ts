@@ -1,7 +1,7 @@
 import { test } from "bun:test";
 import { assertEquals, assertThrows } from "@std/assert";
 import { calculateForm8941, f8941 } from "./index.ts";
-import { form8941DirectFixture } from "./fixture.ts";
+import { form8941DirectFixture } from "./f8941.fixture.ts";
 import { f3800 } from "../../business/f3800/index.ts";
 
 test("Form 8941 derives the Albany SHOP credit from employee hours, wages and premium cap", () => {

@@ -1,8 +1,8 @@
-import { aggregationInvestmentFixture } from "./form8995a_aggregation_investments_fixture.ts";
+import { aggregationInvestmentFixture } from "./form8995a_aggregation_investments.fixture.ts";
 import {
   aggregationPhaseInCases,
   aggregationPhaseInFixture,
-} from "./form8995a_aggregation_phasein_fixture.ts";
+} from "./form8995a_aggregation_phasein.fixture.ts";
 export const jointAggregationInvestmentCases = [
   {
     name: "direct-primary-spouse-portfolio",

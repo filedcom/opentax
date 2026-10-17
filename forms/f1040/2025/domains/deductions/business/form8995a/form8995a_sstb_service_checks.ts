@@ -7,7 +7,7 @@ import { extractFilerIdentity } from "../../../../../mef/filer.ts";
 import { buildMefBundle } from "../../../../mef/builder.ts";
 import type { MefFormsPending } from "../../../../mef/types.ts";
 import { buildPdfBytes } from "../../../../pdf/builder.ts";
-import type { sstbServiceFixture } from "./form8995a_sstb_services_fixture.ts";
+import type { sstbServiceFixture } from "./form8995a_sstb_services.fixture.ts";
 // Mutations deliberately cross the untrusted saved-data boundary.
 type Row = Record<string, any>;
 // Independently reconciled investment cases retain their amounts for each reviewed field.

@@ -3,7 +3,7 @@ import { assertEquals, assertRejects } from "@std/assert";
 import {
   form8994DirectEmployer,
   form8994EvidenceFixtureDocuments,
-} from "./fixture.ts";
+} from "./f8994.fixture.ts";
 import { reconcileForm8994EvidenceBytes } from "./evidence_bytes.ts";
 
 const source = form8994DirectEmployer;

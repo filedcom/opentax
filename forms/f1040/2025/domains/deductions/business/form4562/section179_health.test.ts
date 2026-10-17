@@ -1,7 +1,7 @@
 import { test } from "bun:test";
 import { assertEquals, assertRejects, assertStringIncludes } from "@std/assert";
 import { f1040_2025 } from "../../../../index.ts";
-import { bonusFilerFixture } from "../../../credits/business/form3800/form8911_bonus_fixture.ts";
+import { bonusFilerFixture } from "../../../credits/business/form3800/form8911_bonus.fixture.ts";
 import {
   section179HealthCases,
   section179HealthInput,

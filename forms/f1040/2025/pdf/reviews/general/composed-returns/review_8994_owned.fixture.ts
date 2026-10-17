@@ -2,7 +2,7 @@ import { PDFDocument, StandardFonts } from "pdf-lib";
 import {
   form8994DirectEmployer,
   form8994MatchedPending,
-} from "../../../../../nodes/inputs/credits/business/f8994/fixture.ts";
+} from "../../../../../nodes/inputs/credits/business/f8994/f8994.fixture.ts";
 import { extractFilerIdentity } from "../../../../../mef/filer.ts";
 import { sha256Hex } from "../../../../return-processing/prepared_source.ts";
 import type { PdfReviewFixture } from "../../../review_fixtures.ts";

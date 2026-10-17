@@ -5,8 +5,8 @@ import { unzipSync, zipSync } from "fflate";
 import { XMLParser } from "fast-xml-parser";
 import { f1040_2025 } from "../../index.ts";
 import { pdfReviewFixtures } from "../../pdf/review_fixtures.ts";
-import { groupDividendFixture } from "../../domains/deductions/business/form8995a/form8995a_group_dividend_fixture.ts";
-import { groupLossCases } from "../../domains/deductions/business/form8995a/form8995a_group_loss_fixture.ts";
+import { groupDividendFixture } from "../../domains/deductions/business/form8995a/form8995a_group_dividend.fixture.ts";
+import { groupLossCases } from "../../domains/deductions/business/form8995a/form8995a_group_loss.fixture.ts";
 import { sha256Hex } from "../../return-processing/prepared_source.ts";
 import {
   buildMefSubmissionArchive,

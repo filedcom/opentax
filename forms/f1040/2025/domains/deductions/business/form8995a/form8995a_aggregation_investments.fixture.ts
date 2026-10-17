@@ -2,17 +2,17 @@ import * as fs from "node:fs/promises";
 import {
   aggregationPhaseInCases,
   aggregationPhaseInFixture,
-} from "./form8995a_aggregation_phasein_fixture.ts";
+} from "./form8995a_aggregation_phasein.fixture.ts";
 import {
   aggregationStatusCases,
   aggregationStatusFixture,
-} from "./form8995a_aggregation_status_fixture.ts";
+} from "./form8995a_aggregation_status.fixture.ts";
 import {
   jointRpeCases,
   jointRpeFixture,
-} from "./form8995a_joint_rpe_fixture.ts";
-import { groupDividendFixture } from "./form8995a_group_dividend_fixture.ts";
-import { groupLossCases } from "./form8995a_group_loss_fixture.ts";
+} from "./form8995a_joint_rpe.fixture.ts";
+import { groupDividendFixture } from "./form8995a_group_dividend.fixture.ts";
+import { groupLossCases } from "./form8995a_group_loss.fixture.ts";
 
 export const aggregationInvestmentCases = [
   "single-direct-three",

@@ -1,5 +1,5 @@
 import { ForeignAssetType } from "../../../../../nodes/inputs/general/foreign/f8938/index.ts";
-import { form8938UsEligibilityFixture } from "../../../../../nodes/inputs/general/foreign/f8938/eligibility_fixture.ts";
+import { form8938UsEligibilityFixture } from "../../../../../nodes/inputs/general/foreign/f8938/eligibility.fixture.ts";
 
 /** Reviewed-shape fixture only; no real taxpayer or institution identifiers. */
 export function form8938Fixture() {

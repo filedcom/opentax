@@ -1,7 +1,7 @@
 import { test } from "bun:test";
 import * as fs from "node:fs/promises";
 import * as sys from "../../../../../../../scripts/support/sys.ts";
-import { groupDividendFixture } from "./form8995a_group_dividend_fixture.ts";
+import { groupDividendFixture } from "./form8995a_group_dividend.fixture.ts";
 import { assert, assertEquals, assertRejects } from "@std/assert";
 import { f1040_2025 } from "../../../../index.ts";
 import { normalizeAllPending } from "../../../../return-processing/pending.ts";
@@ -9,7 +9,7 @@ import { buildPdfBytes } from "../../../../pdf/builder.ts";
 import {
   groupLossCases,
   groupLossFixture,
-} from "./form8995a_group_loss_fixture.ts";
+} from "./form8995a_group_loss.fixture.ts";
 type Row = Record<string, any>;
 for (const c of groupLossCases) {
   test(`Qualified dividends with QBI loss employer groups ${c.name}`, async () => {

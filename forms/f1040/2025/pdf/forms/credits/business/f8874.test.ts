@@ -3,7 +3,7 @@ import { assertEquals, assertRejects, assertThrows } from "@std/assert";
 import { PDFDocument } from "pdf-lib";
 import { pdfReviewFixtures } from "../../../review_fixtures.ts";
 import { form8874Pdf } from "./f8874.ts";
-import { withReviewedForm8874A } from "../../../../../nodes/inputs/credits/business/f8874/issuance_fixture.ts";
+import { withReviewedForm8874A } from "../../../../../nodes/inputs/credits/business/f8874/issuance.fixture.ts";
 
 const source = {
   investments: [withReviewedForm8874A(

@@ -1,4 +1,4 @@
-import { bonusCreditInput } from "./form8911_bonus_fixture.ts";
+import { bonusCreditInput } from "./form8911_bonus.fixture.ts";
 export function bonusInventoryInput(
   separateBusinesses = false,
   costs = [10000, 20000],
