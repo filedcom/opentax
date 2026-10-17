@@ -119,6 +119,14 @@ function assetName(): string {
 /** `tax update` -- download latest release and replace the running binary */
 export async function updateCommand(): Promise<void> {
   console.log(`Current version: ${VERSION}`);
+  // From source, process.execPath is the bun runtime, not an opentax binary:
+  // updating would overwrite bun.
+  if (VERSION === "dev") {
+    console.error(
+      "Running from source: update replaces a compiled opentax binary only.",
+    );
+    process.exit(1);
+  }
   console.log("Checking for updates...");
 
   const release = await fetchLatestRelease();
