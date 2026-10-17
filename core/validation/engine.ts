@@ -6,6 +6,7 @@
  */
 
 import { formRefFromPrefix, ruleFormPrefix } from "./rule-builder.ts";
+import { alwaysPass } from "./predicates.ts";
 import type {
   DiagnosticEntry,
   DiagnosticsReport,
@@ -62,8 +63,8 @@ export function evaluateRules(
       continue;
     }
 
-    // Skip stub rules (not yet implemented)
-    if (rule.check === null) {
+    // An unimplemented rule is not checked, never counted as passed.
+    if (rule.check === null || rule.check === alwaysPass) {
       skipped++;
       continue;
     }

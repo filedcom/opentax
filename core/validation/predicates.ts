@@ -470,6 +470,15 @@ export const eqSumOfAll = (target: string, ...addends: string[]): RuleCheck =>
     return Math.abs(ctx.num(target) - sum) < 0.01;
   };
 
+/** Target must not exceed the sum of (count of each field's values × its weight). */
+export const notGtWeightedCount = (
+  target: string,
+  ...weights: readonly (readonly [string, number])[]
+): RuleCheck =>
+  (ctx) =>
+    ctx.num(target) <=
+      weights.reduce((s, [field, w]) => s + ctx.fieldArray(field).length * w, 0);
+
 // ─── Cross-Instance Combinators ─────────────────────────
 
 /**

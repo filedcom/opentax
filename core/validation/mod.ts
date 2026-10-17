@@ -85,6 +85,7 @@ export {
   eqDiv,
   eqFieldProduct,
   countEq,
+  notGtWeightedCount,
   eqCountSum,
   eqPovertyPct,
   eqRoundedFieldProduct,

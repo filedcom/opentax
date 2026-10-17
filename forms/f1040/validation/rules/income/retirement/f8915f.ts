@@ -5,7 +5,12 @@
  */
 
 import type { RuleDef } from "../../../../../../core/validation/types.ts";
-import { rule, any, eqStr, not, notGtNum, } from "../../../../../../core/validation/mod.ts";
+import {
+  any,
+  eqStr,
+  not,
+  rule,
+} from "../../../../../../core/validation/mod.ts";
 
 export const F8915F_RULES: readonly RuleDef[] = [
   rule(
@@ -26,7 +31,7 @@ export const F8915F_RULES: readonly RuleDef[] = [
     "F8915F-003",
     "reject",
     "incorrect_data",
-    notGtNum("PriorYrNotRptDistributionAmt", 22000),
+    null,
     "Form 8915F 'PriorYrNotRptDistributionAmt' in 'TotalDistriAllRetirePlansGrp' must not be greater than 22000 times the number of qualified disasters.",
   ),
 ];

@@ -3,7 +3,7 @@ import { assertEquals } from "@std/assert";
 import { parseEmittedReturn } from "./emitted-documents.ts";
 import { createReturnContext } from "./context.ts";
 import { evaluateRules } from "./engine.ts";
-import { eqField, hasValue, rule, sumOfAll } from "./mod.ts";
+import { alwaysPass, eqField, hasValue, rule, sumOfAll } from "./mod.ts";
 
 const xml = `<Return><ReturnHeader><Filer><NameLine1Txt>ALEX&lt;EXAMPLE</NameLine1Txt></Filer></ReturnHeader><ReturnData>` +
   `<IRS1040 documentId="a"><TotalIncomeAmt>900</TotalIncomeAmt></IRS1040>` +
@@ -43,4 +43,14 @@ test("a repeated document is checked once per copy and sums across copies", () =
     rule("SA-F8992-T", "reject", "missing_data", hasValue("EIN")),
   ], context(), new Set(["SC", "S1", "SA"]));
   assertEquals(report.entries.map((entry) => entry.ruleNumber), ["SC-T-2"]);
+});
+
+test("an unimplemented rule is not checked rather than passed", () => {
+  const report = evaluateRules([
+    rule("IND-T-1", "reject", "missing_data", alwaysPass),
+    rule("IND-T-2", "reject", "missing_data", null),
+    rule("IND-T-3", "reject", "missing_data", hasValue("NameLine1Txt")),
+  ], context());
+  assertEquals(report.summary.passed, 1);
+  assertEquals(report.summary.skipped, 2);
 });

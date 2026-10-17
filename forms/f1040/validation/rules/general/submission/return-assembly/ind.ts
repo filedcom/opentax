@@ -38,9 +38,10 @@ import {
   ifThen,
   ifThenUnless,
   isZero,
+  noValue,
   not,
   notGtField,
-  noValue,
+  notGtWeightedCount,
   ssnNotEqual,
   validSSN,
 } from "../../../../../../../core/validation/mod.ts";
@@ -682,8 +683,8 @@ export const IND_RULES: readonly RuleDef[] = [
     "IND-098-01",
     "reject",
     "incorrect_data",
-    alwaysPass,
-    "If 'CTCODCAmt' in the return has a non-zero value, then it must not be greater than the sum of [ (the number of dependents with 'EligibleForChildTaxCreditInd' checked multiplied by 2000) and (the number of dependents with 'EligibleForODCInd' checked multiplied by 500) ].",
+    ifThen(hasNonZero("CTCODCAmt"), notGtWeightedCount("CTCODCAmt", ["EligibleForChildTaxCreditInd", 2200], ["EligibleForODCInd", 500])),
+    "If 'CTCODCAmt' in the return has a non-zero value, then it must not be greater than the sum of [ (the number of dependents with 'EligibleForChildTaxCreditInd' checked multiplied by 2200 for TY2025, P.L. 119-21 §70104) and (the number of dependents with 'EligibleForODCInd' checked multiplied by 500) ].",
   ),
   rule(
     "IND-100",
@@ -1011,7 +1012,7 @@ export const IND_RULES: readonly RuleDef[] = [
     "IND-241-04",
     "reject",
     "incorrect_data",
-    alwaysPass,
+    ifThen(gt("AdditionalChildTaxCreditAmt", 0), notGtWeightedCount("AdditionalChildTaxCreditAmt", ["EligibleForChildTaxCreditInd", 1700])),
     "If 'AdditionalChildTaxCreditAmt' in the return has a value greater than zero, then it must not be greater than [ the number of dependents in 'DependentDetail' with 'EligibleForChildTaxCreditInd' checked multiplied by 1700 ].",
   ),
   rule(

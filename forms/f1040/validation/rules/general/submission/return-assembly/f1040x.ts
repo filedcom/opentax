@@ -5,7 +5,25 @@
  */
 
 import type { RuleDef } from "../../../../../../../core/validation/types.ts";
-import { rule, all, alwaysPass, any, eqField, eqSum, formPresent, gt, hasNonZero, hasValue, ifThen, isZero, lt, not, notGtField, noValue, notGtNum, } from "../../../../../../../core/validation/mod.ts";
+import {
+  all,
+  alwaysPass,
+  any,
+  eqField,
+  eqSum,
+  formPresent,
+  gt,
+  hasNonZero,
+  hasValue,
+  ifThen,
+  isZero,
+  lt,
+  noValue,
+  not,
+  notGtField,
+  notGtNum,
+  rule,
+} from "../../../../../../../core/validation/mod.ts";
 
 export const F1040X_RULES: readonly RuleDef[] = [
   rule(
@@ -236,7 +254,7 @@ export const F1040X_RULES: readonly RuleDef[] = [
     "F1040X-101",
     "reject",
     "incorrect_data",
-    notGtNum("DepositorAccountNum", 999),
+    ifThen(hasValue("DepositorAccountNum"), notGtNum("RefundAmt", 999_999_999)),
     "If Form 1040-X, 'DepositorAccountNum' has a value, then 'RefundAmt' must not be greater than 999,999,999.",
   ),
   rule(
