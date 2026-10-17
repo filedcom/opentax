@@ -32,6 +32,7 @@ import {
 } from "../../../../../../nodes/intermediate/forms/income/business/form8582/index.ts";
 import {
   computePropertyNet,
+  isPassiveProperty,
   inputSchema as scheduleEInputSchema,
   qualifiedEntireDispositionGain,
   qualifiedFirstYearRetainedPropertySale,
@@ -364,7 +365,7 @@ function linkedActivities(context: MefBuildContext): Array<{
     );
   }
   const properties = scheduleE.schedule_es.filter((item) =>
-    (item.activity_type === "A" || item.activity_type === "B") &&
+    isPassiveProperty(item) &&
     ((item.current_property_source
       ? currentPropertyPassiveAmounts(item.current_property_source)
         .passiveOperating !== 0
