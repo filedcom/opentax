@@ -6,6 +6,11 @@
  */
 
 import type { FieldRegistry, ReturnContext } from "./types.ts";
+import {
+  type EmittedDocument,
+  type EmittedReturn,
+  rulePrefixForDocumentTag,
+} from "./emitted-documents.ts";
 
 export interface FilerInfo {
   readonly primarySSN: string;
@@ -23,6 +28,8 @@ export function createReturnContext(
   filer: FilerInfo,
   fieldRegistry: FieldRegistry,
   emittedFormCounts?: ReadonlyMap<string, number>,
+  emitted?: EmittedReturn,
+  ownDocument?: EmittedDocument,
 ): ReturnContext {
   // Pre-compute form presence set
   const formSet = new Set<string>();
@@ -52,9 +59,42 @@ export function createReturnContext(
     ...filer,
   };
 
+  // MeF rules name filed XML elements, so an emitted return answers them from
+  // the rule's own document, then the header, then Form 1040, then any
+  // document. Lower-case names are engine facts outside the XML.
+  function emittedValues(xmlName: string): readonly string[] | undefined {
+    if (!emitted || !/^[A-Z]/.test(xmlName)) return undefined;
+    // "Schedule1/Leaf" names a leaf in another document.
+    const [documentName, ...rest] = xmlName.split("/");
+    const named = rest.length > 0
+      ? [
+        ...[`IRS1040${documentName}`, `IRS${documentName}`]
+          .map(rulePrefixForDocumentTag),
+        documentName,
+      ]
+        .find((prefix) => emitted.documents.some((d) => d.prefix === prefix))
+      : undefined;
+    if (named) {
+      const leaf = rest.join("/");
+      return emitted.documents.filter((d) => d.prefix === named)
+        .flatMap((d) => d.values.get(leaf) ?? []);
+    }
+    const own = ownDocument?.values.get(xmlName);
+    if (own) return own;
+    const header = emitted.header.values.get(xmlName);
+    if (header) return header;
+    const f1040 = emitted.documents.find((d) => d.prefix === "F1040")?.values
+      .get(xmlName);
+    if (f1040) return f1040;
+    return emitted.documents.flatMap((d) => d.values.get(xmlName) ?? []);
+  }
+
   function resolveField(xmlName: string): unknown {
     // 1. Check header fields first
     if (xmlName in headerFields) return headerFields[xmlName];
+
+    const values = emittedValues(xmlName);
+    if (values) return values[0];
 
     // 2. Look up in field registry (XML element → pending dict location)
     const loc = fieldRegistry.get(xmlName);
@@ -71,7 +111,22 @@ export function createReturnContext(
     return undefined;
   }
 
-  return {
+  const context: ReturnContext = {
+    forRulePrefix(prefix: string): readonly ReturnContext[] {
+      const documents = emitted?.documents.filter((d) => d.prefix === prefix);
+      if (!documents?.length) return [context];
+      return documents.map((document) =>
+        createReturnContext(
+          pending,
+          filer,
+          fieldRegistry,
+          emittedFormCounts,
+          emitted,
+          document,
+        )
+      );
+    },
+
     field(xmlName: string): unknown {
       return resolveField(xmlName);
     },
@@ -132,10 +187,15 @@ export function createReturnContext(
     },
 
     fieldArray(xmlName: string): readonly unknown[] {
+      if (!(xmlName in headerFields)) {
+        const values = emittedValues(xmlName);
+        if (values) return values;
+      }
       const v = resolveField(xmlName);
       if (v === undefined || v === null || v === "") return [];
       if (Array.isArray(v)) return v;
       return [v];
     },
   };
+  return context;
 }

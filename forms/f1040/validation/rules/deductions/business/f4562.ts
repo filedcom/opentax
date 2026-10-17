@@ -12,14 +12,14 @@ export const F4562_RULES: readonly RuleDef[] = [
     "F4562-002-10",
     "reject",
     "incorrect_data",
-    notGtNum("MaximumDollarLimitationAmt", 1),
-    "If Form 4562, 'MaximumDollarLimitationAmt' has a non-zero value, then 'MaximumDollarLimitationAmt' must not be greater than 1,220,000.",
+    notGtNum("MaximumDollarLimitationAmt", 2_500_000),
+    "If Form 4562, 'MaximumDollarLimitationAmt' has a non-zero value, then 'MaximumDollarLimitationAmt' must not be greater than 2,500,000.",
   ),
   rule(
     "F4562-003-11",
     "reject",
     "incorrect_data",
-    notGtNum("ThresholdCostOfSect179PropAmt", 3),
-    "If Form 4562, 'ThresholdCostOfSect179PropAmt' has a non-zero value, then 'ThresholdCostOfSect179PropAmt' must not be greater than 3,050,000.",
+    notGtNum("ThresholdCostOfSect179PropAmt", 4_000_000),
+    "If Form 4562, 'ThresholdCostOfSect179PropAmt' has a non-zero value, then 'ThresholdCostOfSect179PropAmt' must not be greater than 4,000,000.",
   ),
 ];

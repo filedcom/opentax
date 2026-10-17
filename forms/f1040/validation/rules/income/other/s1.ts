@@ -40,7 +40,7 @@ export const S1_RULES: readonly RuleDef[] = [
     "S1-F1040-028",
     "reject",
     "incorrect_data",
-    ifThen(hasValue("RecipientSSN"), ssnNotEqual("RecipientSSN", "PrimarySSN")),
+    ifThen(hasValue("AlimonyAmountGrp/RecipientSSN"), ssnNotEqual("AlimonyAmountGrp/RecipientSSN", "PrimarySSN")),
     "Each 'RecipientSSN' in 'AlimonyAmountGrp' on Schedule 1 (Form 1040) must not be the same as 'PrimarySSN' in the Return Header.",
   ),
   rule(

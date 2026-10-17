@@ -45,9 +45,12 @@ test("CLI validation scopes rules to the emitted Form 1040 and W-2", async () =>
       returnId,
       baseDir,
     });
-    assertEquals(report.canFile, true);
-    assertEquals(report.summary.rejected, 0);
-    assertEquals(report.entries, []);
+    // Self-select PIN returns must file the birth date in the header
+    // (Pub 4164 §8.9.2); the header does not emit it yet.
+    assertEquals(report.canFile, false);
+    assertEquals(report.entries.map((entry) => entry.ruleNumber), [
+      "IND-021-01",
+    ]);
     assertEquals(JSON.parse(formatted), report);
   } finally {
     await sys.remove(baseDir, { recursive: true });

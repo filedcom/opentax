@@ -96,6 +96,7 @@ export async function validateReturnCommand(
     filerInfo,
     FIELD_REGISTRY,
     scope?.formCounts,
+    scope?.emitted,
   );
 
   // Only emitted documents have applicable return-level rules. A failed

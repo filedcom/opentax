@@ -8,6 +8,11 @@ import { extractFilerIdentity } from "../../forms/f1040/mef/filer.ts";
 import { returnHeaderNameLine1 } from "../../forms/f1040/mef/header.ts";
 import { createReturnContext } from "../../core/validation/context.ts";
 import { evaluateRules } from "../../core/validation/engine.ts";
+import {
+  type EmittedReturn,
+  parseEmittedReturn,
+  rulePrefixForDocumentTag,
+} from "../../core/validation/emitted-documents.ts";
 import { FIELD_REGISTRY } from "../../forms/f1040/validation/field-registry.ts";
 import { ALL_RULES } from "../../forms/f1040/validation/rules/index.ts";
 import type { DiagnosticEntry } from "../../core/validation/types.ts";
@@ -110,19 +115,10 @@ export function isTransmissionOnlyRule(ruleNumber: string): boolean {
   return number >= 189 && number <= 203;
 }
 
-function rulePrefixForDocumentTag(tag: string): string | undefined {
-  if (tag === "IRS1040") return "F1040";
-  if (tag === "IRSW2") return "FW2";
-  const schedule = /^IRS1040Schedule(.+)$/.exec(tag)?.[1];
-  if (schedule) return `S${schedule}`;
-  const form = /^IRS(.+)$/.exec(tag)?.[1];
-  return form ? `F${form}` : undefined;
-}
-
 function pendingFormIdsForPrefix(prefix: string): readonly string[] {
   if (prefix === "F1040") return ["f1040"];
   if (prefix === "FW2") return ["w2"];
-  if (prefix === "SEIC") return ["eitc"];
+  if (prefix === "SEIC") return ["schedule_eic", "eitc"];
   if (prefix === "SSE") return ["schedule_se"];
   if (/^S[123]$/.test(prefix)) return [`schedule${prefix.slice(1)}`];
   if (/^S[A-Z]$/.test(prefix)) {
@@ -139,6 +135,7 @@ interface EmittedValidationScope {
   readonly rulePrefixes: ReadonlySet<string>;
   readonly formCounts: ReadonlyMap<string, number>;
   readonly returnVersion?: string;
+  readonly emitted: EmittedReturn;
 }
 
 export function emittedValidationScope(xml: string): EmittedValidationScope {
@@ -152,9 +149,21 @@ export function emittedValidationScope(xml: string): EmittedValidationScope {
       formCounts.set(formId, (formCounts.get(formId) ?? 0) + 1);
     }
   }
+  // Supporting documents count as present forms: FECRecord → fec_record.
+  for (const match of xml.matchAll(/<([A-Z][A-Za-z0-9]+) documentId=/g)) {
+    if (match[1].startsWith("IRS")) continue;
+    const formId = match[1].replace(/([a-z0-9])([A-Z])/g, "$1_$2")
+      .replace(/([A-Z]+)([A-Z][a-z])/g, "$1_$2").toLowerCase();
+    formCounts.set(formId, (formCounts.get(formId) ?? 0) + 1);
+  }
   const returnVersion = /<Return\b[^>]*\breturnVersion="([^"]+)"/.exec(xml)
     ?.[1];
-  return { rulePrefixes: prefixes, formCounts, returnVersion };
+  return {
+    rulePrefixes: prefixes,
+    formCounts,
+    returnVersion,
+    emitted: parseEmittedReturn(xml),
+  };
 }
 
 export function validateBusinessRules(
@@ -179,6 +188,7 @@ export function validateBusinessRules(
     filerInfo,
     FIELD_REGISTRY,
     emittedScope?.formCounts,
+    emittedScope?.emitted,
   );
   const report = evaluateRules(
     ALL_RULES.filter((rule) => !isTransmissionOnlyRule(rule.ruleNumber)),

@@ -88,7 +88,7 @@ test("spouse zero-opening-basis contribution reconciles joint return, native own
   assert(typeof xml === "string");
   assertStringIncludes(
     xml,
-    "<Form8606IRANamelineTxt>Blair Saver</Form8606IRANamelineTxt>",
+    "<Form8606IRANamelineTxt>BLAIR&lt;SAVER</Form8606IRANamelineTxt>",
   );
   assertStringIncludes(
     xml,

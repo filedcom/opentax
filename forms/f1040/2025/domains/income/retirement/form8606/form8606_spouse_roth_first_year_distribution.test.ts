@@ -98,7 +98,7 @@ test("spouse-owned first-year Roth distribution keeps one owner through Form 860
   assert(typeof xml === "string");
   assertStringIncludes(
     xml,
-    "<Form8606IRANamelineTxt>Blair Saver</Form8606IRANamelineTxt>",
+    "<Form8606IRANamelineTxt>BLAIR&lt;SAVER</Form8606IRANamelineTxt>",
   );
   assertStringIncludes(
     xml,

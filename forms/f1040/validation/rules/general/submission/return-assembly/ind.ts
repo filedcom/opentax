@@ -107,7 +107,7 @@ export const IND_RULES: readonly RuleDef[] = [
     "IND-016",
     "reject",
     "missing_data",
-    ifThen(hasValue("USAddress"), hasValue("WorkPerformedResidingInUSInd")),
+    ifThen(hasValue("FECRecord/USAddress"), hasValue("FECRecord/WorkPerformedResidingInUSInd")),
     "If 'USAddress' has a value in [FECRecord], then checkbox 'WorkPerformedResidingInUSInd' must be checked.",
   ),
   rule(
@@ -583,7 +583,7 @@ export const IND_RULES: readonly RuleDef[] = [
     "IND-082",
     "reject",
     "incorrect_data",
-    ifThen(hasValue("OwedAmt"), eqField("OwedAmt", "RefundAmt")),
+    ifThen(gt("OwedAmt", 0), isZero("RefundAmt")),
     "If 'OwedAmt' in the return has a value greater than zero, then 'RefundAmt' must be equal to zero if an amount is entered.",
   ),
   rule(
@@ -611,9 +611,9 @@ export const IND_RULES: readonly RuleDef[] = [
     ifThen(
       formPresent("form8888"),
       all(
-        noValue("RoutingTransitNum"),
-        noValue("BankAccountTypeCd"),
-        noValue("DepositorAccountNum"),
+        noValue("1040/RoutingTransitNum"),
+        noValue("1040/BankAccountTypeCd"),
+        noValue("1040/DepositorAccountNum"),
       ),
     ),
     "If Form 8888 is present in the return, then the following must not have a value in the return: 'RoutingTransitNum' and 'BankAccountTypeCd' and 'DepositorAccountNum'.",

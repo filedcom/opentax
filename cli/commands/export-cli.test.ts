@@ -57,7 +57,7 @@ test("CLI force and draft cannot export an empty return with invented identity",
   }
 });
 
-test("CLI exports a signed W-2 return as MeF XML and a filled PDF without force", async () => {
+test("CLI blocks a signed W-2 return only on the header birth date and exports it with force", async () => {
   const cwd = await sys.makeTempDir();
   const main = fromFileUrl(new URL("../main.ts", import.meta.url));
   const run = (...args: string[]) =>
@@ -117,7 +117,9 @@ test("CLI exports a signed W-2 return as MeF XML and a filled PDF without force"
       );
       assertEquals(added.code, 0, new TextDecoder().decode(added.stderr));
     }
-    const mef = await run(
+    // The header does not file the self-select PIN birth date yet
+    // (Pub 4164 §8.9.2), so only --force exports this return.
+    const blocked = await run(
       "return",
       "export",
       "--returnId",
@@ -125,8 +127,24 @@ test("CLI exports a signed W-2 return as MeF XML and a filled PDF without force"
       "--type",
       "mef",
     );
+    assertEquals(blocked.code, 1);
+    const blockedRules = new TextDecoder().decode(blocked.stderr)
+      .match(/\[[A-Z0-9-]+\]/g);
+    assertEquals(blockedRules, ["[IND-021-01]"]);
+    const xmlPath = `${cwd}/return.xml`;
+    const mef = await run(
+      "return",
+      "export",
+      "--returnId",
+      returnId,
+      "--type",
+      "mef",
+      "--force",
+      "--output",
+      xmlPath,
+    );
     assertEquals(mef.code, 0, new TextDecoder().decode(mef.stderr));
-    const xml = new TextDecoder().decode(mef.stdout);
+    const xml = await fs.readFile(xmlPath, "utf8");
     assertStringIncludes(xml, "<IRS1040 ");
     assertStringIncludes(xml, "<IRSW2 ");
     assertStringIncludes(
@@ -137,7 +155,8 @@ test("CLI exports a signed W-2 return as MeF XML and a filled PDF without force"
       xml,
       "<PrimarySignatureDt>2026-09-29</PrimarySignatureDt>",
     );
-    assertStringIncludes(xml, "<NameLine1Txt>TAXPAYER&lt;TEST</NameLine1Txt>");
+    // Pub 4164 §12.5: first name, then "<", then last name.
+    assertStringIncludes(xml, "<NameLine1Txt>TEST&lt;TAXPAYER</NameLine1Txt>");
     const schema = fromFileUrl(
       new URL(
         "../../.state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd",
@@ -146,8 +165,6 @@ test("CLI exports a signed W-2 return as MeF XML and a filled PDF without force"
     );
     try {
       await sys.stat(schema);
-      const xmlPath = `${cwd}/return.xml`;
-      await fs.writeFile(xmlPath, xml);
       const validated = await new sys.Command("xmllint", {
         args: ["--noout", "--schema", schema, xmlPath],
         stdout: "piped",
@@ -169,6 +186,7 @@ test("CLI exports a signed W-2 return as MeF XML and a filled PDF without force"
       returnId,
       "--type",
       "pdf",
+      "--force",
       "--output",
       pdfPath,
     );

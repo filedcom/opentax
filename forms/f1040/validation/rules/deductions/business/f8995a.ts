@@ -33,8 +33,8 @@ export const F8995A_RULES: readonly RuleDef[] = [
     "F8995A-004-05",
     "reject",
     "incorrect_data",
-    ifThen(hasValue("FilingStatusThresholdCd"), any(all(filingStatusIs(2), eqStr("FilingStatusThresholdCd", "383900")), all(filingStatusNot(2), eqStr("FilingStatusThresholdCd", "191950")))),
-    "If Form 8995-A, 'FilingStatusThresholdCd' has a value, then it must be one of the following based on the filing status of the return: (1) \"383900\", if married filing jointly or (2) \"191950\" for all other filing status.",
+    ifThen(hasValue("8995A/FilingStatusThresholdCd"), any(all(filingStatusIs(2), eqStr("8995A/FilingStatusThresholdCd", "394600")), all(filingStatusNot(2), eqStr("8995A/FilingStatusThresholdCd", "197300")))),
+    "If Form 8995-A, 'FilingStatusThresholdCd' has a value, then it must be one of the following based on the filing status of the return: (1) \"394600\", if married filing jointly or (2) \"197300\" for all other filing status.",
   ),
   rule(
     "F8995A-007",

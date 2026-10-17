@@ -46,6 +46,16 @@ export function evaluateRules(
       continue;
     }
 
+    // "SA-F8992-…" is a schedule of Form 8992, not Schedule A of Form 1040.
+    const parentForm = /^S[A-Z0-9]*-F([0-9A-Z]+)-/.exec(rule.ruleNumber)?.[1];
+    if (
+      applicableFormPrefixes && parentForm && parentForm !== "1040" &&
+      !applicableFormPrefixes.has(`F${parentForm}`)
+    ) {
+      skipped++;
+      continue;
+    }
+
     // Skip server-side-only rules
     if (SERVER_SIDE_CATEGORIES.has(rule.category)) {
       skipped++;
@@ -59,7 +69,10 @@ export function evaluateRules(
     }
 
     // Evaluate the rule
-    const passes = rule.check(ctx);
+    // A rule for a repeated document applies to each emitted copy.
+    const check = rule.check;
+    const scopes = ctx.forRulePrefix?.(prefix) ?? [ctx];
+    const passes = scopes.every((scope) => check(scope));
 
     if (passes) {
       passed++;

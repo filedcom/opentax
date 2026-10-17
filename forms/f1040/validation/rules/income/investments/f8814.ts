@@ -5,7 +5,19 @@
  */
 
 import type { RuleDef } from "../../../../../../core/validation/types.ts";
-import { rule, alwaysPass, all, eqField, formCountAtMost, gt, hasNonZero, hasValue, ifThen, lt, noValue, validSSN, } from "../../../../../../core/validation/mod.ts";
+import {
+  all,
+  alwaysPass,
+  eqNum,
+  formCountAtMost,
+  gt,
+  hasNonZero,
+  ifThen,
+  lt,
+  noValue,
+  rule,
+  validSSN,
+} from "../../../../../../core/validation/mod.ts";
 
 export const F8814_RULES: readonly RuleDef[] = [
   rule(
@@ -40,7 +52,7 @@ export const F8814_RULES: readonly RuleDef[] = [
     "F8814-006-07",
     "reject",
     "incorrect_data",
-    ifThen(hasValue("ChildInterestAndDivTaxBasisAmt"), eqField("ChildInterestAndDivTaxBasisAmt", "ChildInterestAndDividendTaxAmt")),
+    ifThen(gt("ChildInterestAndDivTaxBasisAmt", 1349), eqNum("ChildInterestAndDividendTaxAmt", 135)),
     "If Form 8814, 'ChildInterestAndDivTaxBasisAmt' is greater than 1349, then 'ChildInterestAndDividendTaxAmt' must be equal to 135.",
   ),
   rule(

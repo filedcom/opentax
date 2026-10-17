@@ -47,7 +47,7 @@ export const F3468_RULES: readonly RuleDef[] = [
     "F3468-029-01",
     "reject",
     "incorrect_data",
-    ifThen(hasValue("NetOutLss1MWACOrStsfdWgReqPct"), any(all(any(eqStr("NetOutLess1MWOrThermalEgyCd", "Yes"), hasValue("ProjWageRqrSect48a10And11Ind")), eqNum("NetOutLss1MWACOrStsfdWgReqPct", 0.10)), eqNum("NetOutLss1MWACOrStsfdWgReqPct", 0.02))),
+    ifThen(hasValue("QualifiedMicroturbinePropCrGrp/NetOutLss1MWACOrStsfdWgReqPct"), any(all(any(eqStr("QualifiedMicroturbinePropCrGrp/NetOutLess1MWOrThermalEgyCd", "Yes"), hasValue("QualifiedMicroturbinePropCrGrp/ProjWageRqrSect48a10And11Ind")), eqNum("QualifiedMicroturbinePropCrGrp/NetOutLss1MWACOrStsfdWgReqPct", 0.10)), eqNum("QualifiedMicroturbinePropCrGrp/NetOutLss1MWACOrStsfdWgReqPct", 0.02))),
     "If Form 3468, 'NetOutLss1MWACOrStsfdWgReqPct' has a value in the 'QualifiedMicroturbinePropCrGrp' then it must be [.10 if 'NetOutLess1MWOrThermalEgyCd' is yes or 'ProjWageRqrSect48a10And11Ind' is checked] or [otherwise .02].",
   ),
   rule(

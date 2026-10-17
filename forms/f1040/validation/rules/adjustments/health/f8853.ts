@@ -12,7 +12,7 @@ export const F8853_RULES: readonly RuleDef[] = [
     "F8853-001-01",
     "reject",
     "incorrect_data",
-    validSSN("LTCInsurancePolicyHolderSSN"),
+    ifThen(hasValue("LTCInsurancePolicyHolderSSN"), validSSN("LTCInsurancePolicyHolderSSN")),
     "Form 8853 'LTCInsurancePolicyHolderSSN' must be within the valid range of SSN/ITIN and must not be an ATIN.",
   ),
   rule(
@@ -47,7 +47,7 @@ export const F8853_RULES: readonly RuleDef[] = [
     "F8853-006-01",
     "reject",
     "incorrect_data",
-    validSSN("LTCInsuredSSN"),
+    ifThen(hasValue("LTCInsuredSSN"), validSSN("LTCInsuredSSN")),
     "Form 8853, 'LTCInsuredSSN' must be within the valid range of SSN/ITIN and must not be an ATIN.",
   ),
   rule(

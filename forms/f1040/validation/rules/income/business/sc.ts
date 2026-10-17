@@ -75,7 +75,7 @@ export const SC_RULES: readonly RuleDef[] = [
     "SC-F1040-017",
     "reject",
     "missing_data",
-    ifThen(hasNonZero("TotalAreaOfHomeCnt"), hasNonZero("HomeBusinessUseSquareFeetCnt")),
+    ifThen(hasNonZero("ScheduleC/TotalAreaOfHomeCnt"), hasNonZero("ScheduleC/HomeBusinessUseSquareFeetCnt")),
     "If Schedule C (Form 1040), Line 30a 'TotalAreaOfHomeCnt' has a non-zero value, then Line 30b 'HomeBusinessUseSquareFeetCnt' must have a non-zero value.",
   ),
   rule(

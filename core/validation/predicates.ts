@@ -57,8 +57,19 @@ export const eqSum = (target: string, ...addends: string[]): RuleCheck =>
   };
 
 /** Field string value equals expected string. */
+const YES = new Set(["yes", "true", "1", "x"]);
+const NO = new Set(["no", "false", "0"]);
+
+/** String equality; "Yes"/"No" also match the XML booleans true/false. */
 export const eqStr = (xml: string, expected: string): RuleCheck =>
-  (ctx) => String(ctx.field(xml) ?? "") === expected;
+  (ctx) => {
+    const actual = String(ctx.field(xml) ?? "");
+    if (actual === expected) return true;
+    const want = expected.toLowerCase(), got = actual.toLowerCase();
+    if (want === "yes") return YES.has(got);
+    if (want === "no") return NO.has(got);
+    return false;
+  };
 
 /** Field value does not have a value (must be absent). */
 export const noValue = (xml: string): RuleCheck =>
@@ -416,6 +427,47 @@ export const eqDiv = (target: string, numerator: string, denominator: string): R
     const d = ctx.num(denominator);
     if (d === 0) return true;
     return Math.abs(ctx.num(target) - ctx.num(numerator) / d) < 0.001;
+  };
+
+/** Target = a × rate within whole-dollar rounding. */
+export const eqRoundedProduct = (target: string, a: string, rate: number): RuleCheck =>
+  (ctx) => Math.abs(ctx.num(target) - ctx.num(a) * rate) < 1;
+
+/** The number of values a field has equals n (absent counts as zero). */
+export const countEq = (xml: string, n: number): RuleCheck =>
+  (ctx) => ctx.fieldArray(xml).length === n;
+
+/** Target equals the number of values a field has. */
+export const eqCount = (target: string, counted: string): RuleCheck =>
+  (ctx) => ctx.num(target) === ctx.fieldArray(counted).length;
+
+/** Target equals how many of the named checkboxes are checked. */
+export const eqCheckedCount = (target: string, ...boxes: string[]): RuleCheck =>
+  (ctx) => ctx.num(target) === boxes.filter((box) => ctx.hasValue(box)).length;
+
+/** Target = field a × field b within whole-dollar rounding. */
+export const eqRoundedFieldProduct = (target: string, a: string, b: string): RuleCheck =>
+  (ctx) => Math.abs(ctx.num(target) - ctx.num(a) * ctx.num(b)) < 1;
+
+/** Form 8962 line 5: income ÷ poverty line × 100 with the fraction dropped; above 400 enter 401. */
+export const eqPovertyPct = (target: string, income: string, poverty: string): RuleCheck =>
+  (ctx) => {
+    const line4 = ctx.num(poverty);
+    if (line4 === 0) return true;
+    const pct = Math.floor(ctx.num(income) / line4 * 100);
+    return ctx.num(target) === (pct > 400 ? 401 : pct);
+  };
+
+/** The number of values a field has equals the sum of other fields. */
+export const eqCountSum = (counted: string, ...addends: string[]): RuleCheck =>
+  (ctx) => ctx.fieldArray(counted).length === addends.reduce((s, f) => s + ctx.num(f), 0);
+
+/** Target equals the sum of every value of each addend (repeated groups included). */
+export const eqSumOfAll = (target: string, ...addends: string[]): RuleCheck =>
+  (ctx) => {
+    const sum = addends.flatMap((f) => ctx.fieldArray(f))
+      .reduce<number>((s, v) => s + (Number(v) || 0), 0);
+    return Math.abs(ctx.num(target) - sum) < 0.01;
   };
 
 // ─── Cross-Instance Combinators ─────────────────────────

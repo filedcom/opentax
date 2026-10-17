@@ -1,3 +1,4 @@
+import { writeFile } from "node:fs/promises";
 import process from "node:process";
 import {
   exportForm8886OtsaCommand,
@@ -214,7 +215,7 @@ const COMMANDS: readonly CommandDef[] = [
       {
         flag: "--output",
         description:
-          "Output file path (pdf only; default: returns/<id>/export.pdf)",
+          "Output file path (pdf default: returns/<id>/export.pdf; mef default: stdout)",
         required: false,
       },
     ],
@@ -230,7 +231,13 @@ const COMMANDS: readonly CommandDef[] = [
             force,
             draft,
           });
-          console.log(xml);
+          const outputPath = args.output as string | undefined;
+          if (outputPath) {
+            await writeFile(outputPath, xml);
+            console.log(`MeF XML written to ${outputPath}`);
+          } else {
+            console.log(xml);
+          }
         });
       } else if (args.type === "pdf") {
         await run(async () => {

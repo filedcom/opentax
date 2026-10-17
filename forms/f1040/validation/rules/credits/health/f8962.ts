@@ -5,7 +5,30 @@
  */
 
 import type { RuleDef } from "../../../../../../core/validation/types.ts";
-import { rule, all, alwaysPass, any, eqDiff, eqDiffFloorZero, eqDiv, eqField, eqFieldProduct, eqMin, eqStr, eqSum, filingStatusIs, hasNonZero, hasValue, ifThen, isZero, noValue, not, notGtField, notGtNum, } from "../../../../../../core/validation/mod.ts";
+import {
+  all,
+  alwaysPass,
+  any,
+  eqDiff,
+  eqDiffFloorZero,
+  eqField,
+  eqMin,
+  eqPovertyPct,
+  eqRoundedFieldProduct,
+  eqRoundedProduct,
+  eqStr,
+  eqSum,
+  filingStatusIs,
+  hasNonZero,
+  hasValue,
+  ifThen,
+  isZero,
+  noValue,
+  not,
+  notGtField,
+  notGtNum,
+  rule,
+} from "../../../../../../core/validation/mod.ts";
 
 export const F8962_RULES: readonly RuleDef[] = [
   rule(
@@ -40,28 +63,28 @@ export const F8962_RULES: readonly RuleDef[] = [
     "F8962-006-01",
     "reject",
     "incorrect_data",
-    ifThen(hasNonZero("TotalExemptionsCnt"), eqDiv("FederalPovertyLevelPct", "HouseholdIncomeAmt", "PovertyLevelAmt")),
+    ifThen(hasNonZero("TotalExemptionsCnt"), eqPovertyPct("FederalPovertyLevelPct", "HouseholdIncomeAmt", "PovertyLevelAmt")),
     "If Form 8962, Line 1 'TotalExemptionsCnt' has a non-zero value, then Line 5 'FederalPovertyLevelPct' must be equal to Line 3 'HouseholdIncomeAmt' divided by Line 4 'PovertyLevelAmt'.",
   ),
   rule(
     "F8962-007-02",
     "reject",
     "incorrect_data",
-    ifThen(hasValue("ApplicableFigureRt"), eqField("ApplicableFigureRt", "FederalPovertyLevelPct")),
+    null,
     "Form 8962, Line 7 'ApplicableFigureRt' must be equal to the figure from the Applicable Figure table (see Form 8962 instructions) based on Line 5 'FederalPovertyLevelPct'.",
   ),
   rule(
     "F8962-008",
     "reject",
     "math_error",
-    ifThen(hasNonZero("TotalExemptionsCnt"), eqFieldProduct("AnnualContributionAmt", "HouseholdIncomeAmt", "ApplicableFigureRt")),
+    ifThen(hasNonZero("TotalExemptionsCnt"), eqRoundedFieldProduct("AnnualContributionAmt", "HouseholdIncomeAmt", "ApplicableFigureRt")),
     "Form 8962, Line 8a 'AnnualContributionAmt' must be equal to Line 3 'HouseholdIncomeAmt' multiplied by Line 7 'ApplicableFigureRt'.",
   ),
   rule(
     "F8962-009-01",
     "reject",
     "math_error",
-    ifThen(hasValue("MonthlyContriHealthCareCvrAmt"), eqField("MonthlyContriHealthCareCvrAmt", "AnnualContributionAmt")),
+    ifThen(hasValue("MonthlyContriHealthCareCvrAmt"), eqRoundedProduct("MonthlyContriHealthCareCvrAmt", "AnnualContributionAmt", 1 / 12)),
     "Form 8962, Line 8b 'MonthlyContriHealthCareCvrAmt' must be equal to Line 8a 'AnnualContributionAmt' divided by 12.",
   ),
   rule(
@@ -593,14 +616,14 @@ export const F8962_RULES: readonly RuleDef[] = [
     "F8962-341",
     "reject",
     "math_error",
-    eqDiff("ReconciledPremiumTaxCreditAmt", "TotalPremiumTaxCreditAmt", "TotalAdvancedPTCAmt"),
+    ifThen(hasValue("ReconciledPremiumTaxCreditAmt"), eqDiff("ReconciledPremiumTaxCreditAmt", "TotalPremiumTaxCreditAmt", "TotalAdvancedPTCAmt")),
     "Form 8962, Line 26 'ReconciledPremiumTaxCreditAmt' must be equal to Line 24 'TotalPremiumTaxCreditAmt' minus (-) Line 25 'TotalAdvancedPTCAmt'.",
   ),
   rule(
     "F8962-344",
     "reject",
     "incorrect_data",
-    eqMin("PremiumTaxCreditTaxLiabAmt", "ExcessAdvncPaymentAmt", "AdditionalTaxLimitationAmt"),
+    ifThen(hasValue("AdditionalTaxLimitationAmt"), eqMin("PremiumTaxCreditTaxLiabAmt", "ExcessAdvncPaymentAmt", "AdditionalTaxLimitationAmt")),
     "Form 8962, Line 29 'PremiumTaxCreditTaxLiabAmt' must be equal to the smaller of Line 27 'ExcessAdvncPaymentAmt' or Line 28 'AdditionalTaxLimitationAmt'.",
   ),
 ];

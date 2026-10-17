@@ -5,7 +5,17 @@
  */
 
 import type { RuleDef } from "../../../../../../core/validation/types.ts";
-import { rule, alwaysPass, all, eqField, eqStr, hasValue, ifThen, isZero, noValue, } from "../../../../../../core/validation/mod.ts";
+import {
+  all,
+  alwaysPass,
+  eqCount,
+  eqStr,
+  hasValue,
+  ifThen,
+  isZero,
+  noValue,
+  rule,
+} from "../../../../../../core/validation/mod.ts";
 
 export const S8812_RULES: readonly RuleDef[] = [
   rule(
@@ -19,7 +29,7 @@ export const S8812_RULES: readonly RuleDef[] = [
     "S8812-F1040-005",
     "reject",
     "incorrect_data",
-    ifThen(hasValue("QlfyChildUnderAgeSSNCnt"), eqField("QlfyChildUnderAgeSSNCnt", "EligibleForChildTaxCreditInd")),
+    ifThen(hasValue("QlfyChildUnderAgeSSNCnt"), eqCount("QlfyChildUnderAgeSSNCnt", "EligibleForChildTaxCreditInd")),
     "Schedule 8812 (Form 1040), 'QlfyChildUnderAgeSSNCnt' must be equal to the number of dependents with 'EligibleForChildTaxCreditInd' checked in the return.",
   ),
   rule(
@@ -33,7 +43,7 @@ export const S8812_RULES: readonly RuleDef[] = [
     "S8812-F1040-014",
     "reject",
     "incorrect_data",
-    ifThen(hasValue("OtherDependentCnt"), eqField("OtherDependentCnt", "EligibleForODCInd")),
+    ifThen(hasValue("OtherDependentCnt"), eqCount("OtherDependentCnt", "EligibleForODCInd")),
     "Schedule 8812 (Form 1040), 'OtherDependentCnt' must be equal to the number of dependents with 'EligibleForODCInd' checked in the return.",
   ),
 ];

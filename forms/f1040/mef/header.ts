@@ -123,16 +123,119 @@ export interface FilerIdentity {
   readonly timestamp?: string;
 }
 
-/** IRS header name uses < separators; keep nameLine1 readable for PDFs. */
+interface NameParts {
+  readonly first: string;
+  readonly middle?: string;
+  readonly last: string;
+  readonly suffix?: string;
+}
+
+const MAX_NAME_LINE = 35;
+
+/** Pub 4164 §12.5 keeps only letters, hyphens and single spaces. */
+function nameToken(value: string | undefined): string | undefined {
+  const cleaned = value?.toUpperCase().replace(/[^A-Z -]/g, "")
+    .replace(/\s+/g, " ").trim();
+  return cleaned || undefined;
+}
+
+function given(person: NameParts): string {
+  return person.middle ? `${person.first} ${person.middle}` : person.first;
+}
+
+/**
+ * Pub 4164 §12.5 Table 12-1: "JOHN A<SMITH<III", joint "JOHN A & JANE B<SMITH",
+ * and a spouse with another last name "CARL A<JONES<& ANGIE MYER".
+ */
+export function irsNameLine1(
+  primary: NameParts,
+  spouse?: NameParts,
+): string {
+  const build = (p: NameParts, s: NameParts | undefined): string => {
+    const suffix = p.suffix ? `<${p.suffix}` : "";
+    if (!s) return `${given(p)}<${p.last}${suffix}`;
+    if (s.last === p.last) {
+      return `${given(p)} & ${given(s)}<${p.last}${suffix}`;
+    }
+    const spouseName = `& ${given(s)} ${s.last}`;
+    return suffix
+      ? `${given(p)}<${p.last}${suffix} ${spouseName}`
+      : `${given(p)}<${p.last}<${spouseName}`;
+  };
+  // Shorten in the Pub 4164 order until the line fits in 35 characters.
+  const steps: Array<[NameParts, NameParts | undefined]> = [
+    [primary, spouse],
+    [primary, spouse && { ...spouse, middle: spouse.middle?.slice(0, 1) }],
+    [{ ...primary, middle: primary.middle?.slice(0, 1) }, spouse && {
+      ...spouse,
+      middle: spouse.middle?.slice(0, 1),
+    }],
+    [{ ...primary, middle: primary.middle?.slice(0, 1) }, spouse && {
+      ...spouse,
+      middle: undefined,
+    }],
+    [{ ...primary, middle: undefined }, spouse && {
+      ...spouse,
+      middle: undefined,
+    }],
+    [{ ...primary, middle: undefined }, spouse && {
+      ...spouse,
+      first: spouse.first.slice(0, 1),
+      middle: undefined,
+    }],
+    [{ ...primary, first: primary.first.slice(0, 1), middle: undefined },
+      spouse && { ...spouse, first: spouse.first.slice(0, 1), middle: undefined }],
+  ];
+  for (const [p, s] of steps) {
+    const line = build(p, s);
+    if (line.length <= MAX_NAME_LINE) return line;
+  }
+  return build(...steps.at(-1)!).slice(0, MAX_NAME_LINE);
+}
+
+function nameParts(
+  first: string | undefined,
+  middle: string | undefined,
+  last: string | undefined,
+  suffix?: string,
+): NameParts | undefined {
+  const f = nameToken(first), l = nameToken(last);
+  return f && l
+    ? { first: f, middle: nameToken(middle), last: l, suffix: nameToken(suffix) }
+    : undefined;
+}
+
+/** IRS header name per Pub 4164 §12.5; nameLine1 stays readable for PDFs. */
 export function returnHeaderNameLine1(filer: FilerIdentity): string {
-  const last = filer.lastName?.trim().toUpperCase();
-  const first = filer.firstName?.trim().toUpperCase();
-  if (last && first) {
-    return [last, first, filer.middleInitial?.trim().toUpperCase()]
-      .filter(Boolean).join("<");
+  const primary = nameParts(
+    filer.firstName,
+    filer.middleInitial,
+    filer.lastName,
+    filer.suffix,
+  );
+  if (primary) {
+    const spouse = filer.filingStatus === FilingStatus.MarriedFilingJointly &&
+        filer.spouse
+      ? nameParts(
+        filer.spouse.firstName,
+        filer.spouse.middleInitial,
+        filer.spouse.lastName,
+      )
+      : undefined;
+    return irsNameLine1(primary, spouse);
   }
   // Direct FilerIdentity callers can supply only a display name.
   return filer.nameLine1.trim().replace(/\s+/g, "<");
+}
+
+/** One person's NameLine1Type value, e.g. an IRA owner on Form 8606. */
+export function personNameLine1(
+  first: string | undefined,
+  middle: string | undefined,
+  last: string | undefined,
+): string | undefined {
+  const person = nameParts(first, middle, last);
+  return person ? irsNameLine1(person) : undefined;
 }
 
 // ─── Address builders ─────────────────────────────────────────────────────────

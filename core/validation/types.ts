@@ -60,6 +60,9 @@ export interface ReturnContext {
    * - If absent, null, or empty string, return [].
    */
   fieldArray(xmlName: string): readonly unknown[];
+
+  /** One context per emitted document governed by a rule prefix. */
+  forRulePrefix?(prefix: string): readonly ReturnContext[];
 }
 
 /** A rule check function. Returns true if the rule PASSES (no violation). */

@@ -360,6 +360,15 @@ function buildIRS1040ScheduleA(
     returnFields?.line12e_itemized_deductions,
   );
   const filedItemized = returnFields?.line12e_itemized_deductions;
+  // Line 14 adds lines 11 through 13.
+  const charitable = [
+    fields.line_11_cash_contributions,
+    fields.line_12_noncash_contributions,
+    fields.line_13_contribution_carryover,
+  ].filter((value): value is number => typeof value === "number");
+  const charitableTotal = charitable.length > 0
+    ? charitable.reduce((sum, value) => sum + value, 0)
+    : undefined;
 
   // Elements must follow the XSD sequence order defined in IRS1040ScheduleA.xsd:
   //   MedicalAndDentalExpensesAmt → TaxReturnAGIAmt → ... → StateAndLocalTaxAmt → RealEstateTaxesAmt → ...
@@ -411,6 +420,9 @@ function buildIRS1040ScheduleA(
     mapField(["line_11_cash_contributions", "GiftsByCashOrCheckAmt"]),
     mapField(["line_12_noncash_contributions", "OtherThanByCashOrCheckAmt"]),
     mapField(["line_13_contribution_carryover", "CarryoverFromPriorYearAmt"]),
+    charitableTotal === undefined
+      ? ""
+      : element("TotalCharitableContriAmt", charitableTotal),
     mapField(["line_15_casualty_theft_loss", "CasualtyAndTheftLossesAmt"]),
     typeof fields.line_16_other_deductions === "number"
       ? element(
@@ -424,7 +436,7 @@ function buildIRS1040ScheduleA(
           : undefined,
       )
       : "",
-    fields.force_itemized === true && typeof filedItemized === "number"
+    typeof filedItemized === "number"
       ? element("TotalItemizedDeductionsAmt", filedItemized)
       : "",
     itemizeBelowStandard ? element("ItmzdDedLessThanStdDedInd", "X") : "",

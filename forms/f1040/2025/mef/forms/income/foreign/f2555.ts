@@ -90,8 +90,8 @@ function buildIRS2555(fields: Input, context?: MefBuildContext): string {
     ]),
     foreignAddress("EmployerForeignAddress", filing.employer_foreign_address),
     element("EmployerForeignEntityInd", "X"),
+    // Line 6b checked leaves line 6c blank (F2555-012-01).
     element("NoFrgnEarnIncExclPrevFiledInd", "X"),
-    element("ForeignEarnIncExclRevokedInd", "false"),
     element("CitizenCountryNm", filing.citizenship_country),
     element("SeparateForeignResidenceInd", "false"),
     elements("TaxHomeGroup", [

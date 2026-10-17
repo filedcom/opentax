@@ -5,7 +5,20 @@
  */
 
 import type { RuleDef } from "../../../../../../core/validation/types.ts";
-import { rule, alwaysPass, any, eqField, everyItem, hasNonZero, hasValue, ifThen, notGtNum, validSSN, } from "../../../../../../core/validation/mod.ts";
+import {
+  all,
+  alwaysPass,
+  any,
+  eqField,
+  everyItem,
+  hasNonZero,
+  hasValue,
+  ifThen,
+  isZero,
+  notGtNum,
+  rule,
+  validSSN,
+} from "../../../../../../core/validation/mod.ts";
 
 export const F8863_RULES: readonly RuleDef[] = [
   rule(
@@ -68,7 +81,7 @@ export const F8863_RULES: readonly RuleDef[] = [
     "F8863-023",
     "reject",
     "incorrect_data",
-    ifThen(hasValue("AmerOppQualifiedExpensesAmt"), eqField("AmerOppQualifiedExpensesAmt", "AmerOppCreditNetCalcExpnssAmt")),
+    ifThen(all(hasValue("AmerOppQualifiedExpensesAmt"), isZero("AmerOppQualifiedExpensesAmt")), isZero("AmerOppCreditNetCalcExpnssAmt")),
     "If Form 8863, Line 27 'AmerOppQualifiedExpensesAmt' has a zero value, then Line 30 'AmerOppCreditNetCalcExpnssAmt' must be equal to zero if an amount is entered.",
   ),
   rule(

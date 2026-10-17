@@ -84,4 +84,12 @@ export {
   dateYearEqConst,
   eqDiv,
   eqFieldProduct,
+  countEq,
+  eqCountSum,
+  eqPovertyPct,
+  eqRoundedFieldProduct,
+  eqSumOfAll,
+  eqCheckedCount,
+  eqCount,
+  eqRoundedProduct,
 } from "./predicates.ts";

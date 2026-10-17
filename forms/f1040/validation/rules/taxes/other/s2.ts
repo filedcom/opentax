@@ -89,7 +89,7 @@ export const S2_RULES: readonly RuleDef[] = [
     "S2-F1040-014",
     "reject",
     "math_error",
-    sumOfAll("TotalRecaptureOtherCreditsAmt", "OtherCreditsAmt"),
+    sumOfAll("TotalRecaptureOtherCreditsAmt", "RecaptureOtherCreditsGrp/OtherCreditsAmt"),
     "Schedule 2 (Form 1040), 'TotalRecaptureOtherCreditsAmt' must be equal to the sum of all 'OtherCreditsAmt' in 'RecaptureOtherCreditsGrp'.",
   ),
   rule(
