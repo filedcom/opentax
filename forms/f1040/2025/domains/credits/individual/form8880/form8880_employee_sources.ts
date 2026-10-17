@@ -66,7 +66,7 @@ export function assertPublicEmployeeContributionSources(
   }
 
   assertEmployeeContributionW2Sources(
-    general.form8880_employee_contribution_review,
+    review,
     z.array(w2Schema).parse(rawW2 ?? []),
     general.taxpayer_ssn,
     general.spouse_ssn,
