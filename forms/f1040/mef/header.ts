@@ -39,6 +39,9 @@ export interface SpouseIdentity {
   readonly ipPin?: string;
   readonly signaturePin?: string;
   readonly signatureDate?: string;
+  readonly birthDate?: string;
+  readonly priorYearAgi?: number;
+  readonly priorYearPin?: string;
   readonly deceased?: boolean;
   readonly deathDate?: string;
   readonly occupation?: string;
@@ -98,6 +101,8 @@ export interface FilerIdentity {
   readonly signaturePin?: string;
   readonly signatureDate?: string;
   readonly priorYearAgi?: number;
+  readonly priorYearPin?: string;
+  readonly birthDate?: string;
 
   // Spouse (MFJ / MFS)
   readonly spouse?: SpouseIdentity;
@@ -323,6 +328,18 @@ function buildOnlineFilerBlock(filer: FilerIdentity): string {
  * Formats a JS Date (or ISO string) as an IRS TimestampType: "YYYY-MM-DDTHH:MM:SS-05:00".
  * Uses a fixed UTC offset of -05:00 (EST) as a reasonable default for tests/offline use.
  */
+/** Pub 4164 §8.9.2: Self-Select PIN signers are authenticated by birth date and prior-year AGI or PIN. */
+function selfSelectPinGroup(filer: FilerIdentity): string {
+  return elements("SelfSelectPINGrp", [
+    element("PrimaryBirthDt", filer.birthDate),
+    element("SpouseBirthDt", filer.spouse?.birthDate),
+    element("PrimaryPriorYearAGIAmt", filer.priorYearAgi),
+    element("SpousePriorYearAGIAmt", filer.spouse?.priorYearAgi),
+    element("PrimaryPriorYearPIN", filer.priorYearPin),
+    element("SpousePriorYearPIN", filer.spouse?.priorYearPin),
+  ]);
+}
+
 function irsTimestamp(ts?: string): string {
   const d = ts ? new Date(ts) : new Date();
   const pad = (n: number) => String(n).padStart(2, "0");
@@ -378,6 +395,7 @@ export function buildReturnHeader(
   // XSD-required sequence (ReturnHeader1040x.xsd):
   //   ReturnTs → TaxYr → TaxPeriodBeginDt → TaxPeriodEndDt →
   //   SoftwareId → [SoftwareVersionNum] → OriginatorGrp →
+  //   [SelfSelectPINGrp] → [IdentityProtectionPIN] → [SpouseIdentityProtectionPIN] →
   //   PINTypeCd → JuratDisclosureCd → ReturnType → Filer →
   //   [PaidPreparerInformationGrp] → [OnlineFilerInformation]
   const headerChildren = [
@@ -397,6 +415,9 @@ export function buildReturnHeader(
         ])]
         : []),
     ]),
+    selfSelectPinGroup(filer),
+    element("IdentityProtectionPIN", filer.ipPin),
+    element("SpouseIdentityProtectionPIN", filer.spouse?.ipPin),
     element("PINTypeCd", "Self-Select On-Line"),
     element("JuratDisclosureCd", "Online Self Select PIN"),
     element(

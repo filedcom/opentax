@@ -371,6 +371,8 @@ export const inputSchema = z.object({
   taxpayer_death_date: z.string().optional(), // ISO date YYYY-MM-DD
   taxpayer_ip_pin: z.string().length(6).optional(), // 6-digit IP PIN from IRS
   taxpayer_prior_year_agi: z.number().optional(),
+  // Prior-year Self-Select PIN, an alternative to prior-year AGI for signing.
+  taxpayer_prior_year_pin: z.string().regex(/^\d{5}$/).optional(),
   // Spouse identity (MFJ / MFS)
   spouse_first_name: z.string().optional(),
   spouse_last_name: z.string().optional(),
@@ -400,6 +402,7 @@ export const inputSchema = z.object({
   spouse_death_date: z.string().optional(),
   spouse_ip_pin: z.string().length(6).optional(),
   spouse_prior_year_agi: z.number().optional(),
+  spouse_prior_year_pin: z.string().regex(/^\d{5}$/).optional(),
   // Mailing address
   address_line1: z.string().optional(),
   address_line2: z.string().optional(), // Apt/unit number
@@ -429,6 +432,8 @@ export const inputSchema = z.object({
   // Filing/return metadata
   extension_filed: z.boolean().optional(),
   taxpayer_signature_pin: z.string().length(5).optional(),
+  // Pub 1436: an Assurance Testing System return, held to the ATS test-identity rules.
+  ats_test_submission: z.literal(true).optional(),
   taxpayer_signature_date: z.string().date().optional(),
   spouse_signature_pin: z.string().length(5).optional(),
   spouse_signature_date: z.string().date().optional(),
@@ -1140,6 +1145,16 @@ function buildF1040Input(input: GeneralInput): Record<string, unknown> {
   addIfDefined(fields, "taxpayer_deceased", input.taxpayer_deceased);
   addIfDefined(fields, "taxpayer_death_date", input.taxpayer_death_date);
   addIfDefined(fields, "taxpayer_ip_pin", input.taxpayer_ip_pin);
+  addIfDefined(
+    fields,
+    "taxpayer_prior_year_agi",
+    input.taxpayer_prior_year_agi,
+  );
+  addIfDefined(
+    fields,
+    "taxpayer_prior_year_pin",
+    input.taxpayer_prior_year_pin,
+  );
 
   // Spouse info pass-throughs
   addIfDefined(fields, "spouse_first_name", input.spouse_first_name);
@@ -1168,6 +1183,8 @@ function buildF1040Input(input: GeneralInput): Record<string, unknown> {
   addIfDefined(fields, "spouse_deceased", input.spouse_deceased);
   addIfDefined(fields, "spouse_death_date", input.spouse_death_date);
   addIfDefined(fields, "spouse_ip_pin", input.spouse_ip_pin);
+  addIfDefined(fields, "spouse_prior_year_agi", input.spouse_prior_year_agi);
+  addIfDefined(fields, "spouse_prior_year_pin", input.spouse_prior_year_pin);
 
   // Address pass-throughs
   addIfDefined(fields, "address_line1", input.address_line1);
@@ -1247,6 +1264,7 @@ function buildF1040Input(input: GeneralInput): Record<string, unknown> {
 
   // Signature PINs
   addIfDefined(fields, "taxpayer_signature_pin", input.taxpayer_signature_pin);
+  addIfDefined(fields, "ats_test_submission", input.ats_test_submission);
   addIfDefined(
     fields,
     "taxpayer_signature_date",

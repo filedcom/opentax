@@ -299,3 +299,32 @@ test("output with filer still wrapped in ReturnHeader with binaryAttachmentCnt a
   assertStringIncludes(result, '<ReturnHeader binaryAttachmentCnt="0">');
   assertStringIncludes(result, "</ReturnHeader>");
 });
+
+test("files the Self-Select PIN authentication group before PINTypeCd, in XSD order", () => {
+  const filer: FilerIdentity = {
+    ...sampleFiler(),
+    filingStatus: FilingStatus.MarriedFilingJointly,
+    signaturePin: "12345",
+    birthDate: "1980-02-03",
+    priorYearAgi: 0,
+    ipPin: "123456",
+    spouse: {
+      ssn: "987654321",
+      firstName: "JANE",
+      lastName: "SMITH",
+      nameControl: "SMIT",
+      signaturePin: "54321",
+      birthDate: "1982-04-05",
+      priorYearPin: "11111",
+    },
+  };
+  const header = buildReturnHeader(filer);
+  assertStringIncludes(
+    header,
+    "</OriginatorGrp><SelfSelectPINGrp><PrimaryBirthDt>1980-02-03</PrimaryBirthDt><SpouseBirthDt>1982-04-05</SpouseBirthDt><PrimaryPriorYearAGIAmt>0</PrimaryPriorYearAGIAmt><SpousePriorYearPIN>11111</SpousePriorYearPIN></SelfSelectPINGrp><IdentityProtectionPIN>123456</IdentityProtectionPIN><PINTypeCd>",
+  );
+});
+
+test("omits the Self-Select PIN group when nothing authenticates the signer", () => {
+  assertEquals(buildReturnHeader(sampleFiler()).includes("SelfSelectPINGrp"), false);
+});

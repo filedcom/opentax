@@ -5,7 +5,7 @@
  */
 
 import type { RuleDef } from "../../../../../../core/validation/types.ts";
-import { rule, alwaysPass, hasValue, hasNonZero, validSSN, eqStr, eqField, formPresent, ifThen, any, all, not, charAfterIsAlpha, charCountAtMost, contains, dateMonthDayEq, dateYearEq, validRTN, } from "../../../../../../core/validation/mod.ts";
+import { rule, alwaysPass, hasValue, hasNonZero, validSSN, eqStr, eqField, formPresent, ifThen, any, all, not, charAfterIsAlpha, charCountAtMost, contains, dateMonthDayEq, dateYearEq, validRTN, isAtsTest, ssnMiddleDigitsEq, } from "../../../../../../core/validation/mod.ts";
 
 export const R0000_RULES: readonly RuleDef[] = [
   rule(
@@ -278,14 +278,17 @@ export const R0000_RULES: readonly RuleDef[] = [
     "R0000-129-01",
     "reject",
     "incorrect_data",
-    alwaysPass,
+    ifThen(isAtsTest, ssnMiddleDigitsEq("PrimarySSN", "00")),
     "The 4th and 5th digits of the 'PrimarySSN' in the Return Header must be equal to \"00\" for testing.",
   ),
   rule(
     "R0000-130-01",
     "reject",
     "incorrect_data",
-    alwaysPass,
+    ifThen(
+      all(isAtsTest, hasValue("SpouseSSN")),
+      ssnMiddleDigitsEq("SpouseSSN", "00"),
+    ),
     "The 4th and 5th digits of Spouse SSN in the return must be equal to \"00\" for testing.",
   ),
   rule(

@@ -57,7 +57,7 @@ test("CLI force and draft cannot export an empty return with invented identity",
   }
 });
 
-test("CLI blocks a signed W-2 return only on the header birth date and exports it with force", async () => {
+test("CLI exports a signed W-2 return without force once the header authenticates the signer", async () => {
   const cwd = await sys.makeTempDir();
   const main = fromFileUrl(new URL("../main.ts", import.meta.url));
   const run = (...args: string[]) =>
@@ -80,6 +80,7 @@ test("CLI blocks a signed W-2 return only on the header birth date and exports i
       taxpayer_last_name: "Taxpayer",
       taxpayer_ssn: "111-22-3333",
       taxpayer_dob: "1985-06-01",
+      taxpayer_prior_year_agi: 28_400,
       digital_assets: false,
       taxpayer_signature_pin: "12345",
       taxpayer_signature_date: "2026-09-29",
@@ -117,20 +118,6 @@ test("CLI blocks a signed W-2 return only on the header birth date and exports i
       );
       assertEquals(added.code, 0, new TextDecoder().decode(added.stderr));
     }
-    // The header does not file the self-select PIN birth date yet
-    // (Pub 4164 §8.9.2), so only --force exports this return.
-    const blocked = await run(
-      "return",
-      "export",
-      "--returnId",
-      returnId,
-      "--type",
-      "mef",
-    );
-    assertEquals(blocked.code, 1);
-    const blockedRules = new TextDecoder().decode(blocked.stderr)
-      .match(/\[[A-Z0-9-]+\]/g);
-    assertEquals(blockedRules, ["[IND-021-01]"]);
     const xmlPath = `${cwd}/return.xml`;
     const mef = await run(
       "return",
@@ -139,12 +126,15 @@ test("CLI blocks a signed W-2 return only on the header birth date and exports i
       returnId,
       "--type",
       "mef",
-      "--force",
       "--output",
       xmlPath,
     );
     assertEquals(mef.code, 0, new TextDecoder().decode(mef.stderr));
     const xml = await fs.readFile(xmlPath, "utf8");
+    assertStringIncludes(
+      xml,
+      "<SelfSelectPINGrp><PrimaryBirthDt>1985-06-01</PrimaryBirthDt><PrimaryPriorYearAGIAmt>28400</PrimaryPriorYearAGIAmt></SelfSelectPINGrp>",
+    );
     assertStringIncludes(xml, "<IRS1040 ");
     assertStringIncludes(xml, "<IRSW2 ");
     assertStringIncludes(

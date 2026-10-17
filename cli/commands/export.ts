@@ -182,6 +182,7 @@ export function businessRuleReport(
     ...filer,
     NameLine1Txt: filer ? returnHeaderNameLine1(filer) : undefined,
     returnVersion: emittedScope?.returnVersion,
+    ats_test_submission: f1040["ats_test_submission"] === true,
   };
   const ctx = createReturnContext(
     pending,

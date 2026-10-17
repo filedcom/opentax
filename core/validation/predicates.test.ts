@@ -5,7 +5,7 @@ import { test } from "bun:test";
 
 import { assertEquals } from "@std/assert";
 import { createReturnContext } from "./context.ts";
-import { allDistinct, betweenNum, diffLteNum, everyItem, forEach, notGtPctOfField, sumOfAll, validEIN } from "./predicates.ts";
+import { allDistinct, betweenNum, diffLteNum, everyItem, forEach, notGtPctOfField, ssnMiddleDigitsEq, sumOfAll, validEIN } from "./predicates.ts";
 
 /** Build a ReturnContext with the given flat fields under "f1040". */
 function ctx(fields: Record<string, unknown>) {
@@ -28,6 +28,21 @@ test("validEIN: passes for '271234567' (valid prefix 27)", () => {
 
 test("validEIN: fails for '001234567' (invalid prefix 00)", () => {
   assertEquals(validEIN("EIN")(ctx({ EIN: "001234567" })), false);
+});
+
+test("validEIN: accepts the ATS test prefix 00 only on an ATS test submission", () => {
+  const ats = createReturnContext(
+    { f1040: { EIN: "00-0000014" } },
+    { primarySSN: "123006789", filingStatus: 1, ats_test_submission: true },
+    new Map(),
+  );
+  assertEquals(validEIN("EIN")(ats), true);
+  assertEquals(validEIN("EIN")(ctx({ EIN: "00-0000014" })), false);
+});
+
+test("ssnMiddleDigitsEq: Pub 1436 ATS SSNs have 00 as the 4th and 5th digits", () => {
+  assertEquals(ssnMiddleDigitsEq("SSN", "00")(ctx({ SSN: "400-00-1234" })), true);
+  assertEquals(ssnMiddleDigitsEq("SSN", "00")(ctx({ SSN: "400-12-1234" })), false);
 });
 
 test("validEIN: fails for '071234567' (invalid prefix 07)", () => {

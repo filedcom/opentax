@@ -120,13 +120,25 @@ const VALID_EIN_PREFIXES = new Set([
 ]);
 
 /** EIN is 9 numeric digits with a valid IRS-assigned prefix (Pub 1586). */
+/** An Assurance Testing System return (Pub 1436), not a production filing. */
+export const isAtsTest: RuleCheck = (ctx) =>
+  ctx.field("ats_test_submission") === true;
+
 export const validEIN = (xml: string): RuleCheck =>
   (ctx) => {
     const v = String(ctx.field(xml) ?? "").replace(/\D/g, "");
     if (!v) return true; // absent — nothing to validate
     if (v.length !== 9) return false;
+    // ATS scenario packets issue their test EINs in the 00 prefix.
+    if (isAtsTest(ctx) && v.startsWith("00")) return true;
     return VALID_EIN_PREFIXES.has(v.substring(0, 2));
   };
+
+/** The 4th and 5th SSN digits equal `digits`; Pub 1436 ATS test SSNs use "00". */
+export const ssnMiddleDigitsEq = (xml: string, digits: string): RuleCheck =>
+  (ctx) =>
+    String(ctx.field(xml) ?? "").replace(/\D/g, "").substring(3, 5) ===
+      digits;
 
 // ─── SSN / TIN Validation ───────────────────────────────
 
