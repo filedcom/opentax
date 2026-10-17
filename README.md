@@ -185,6 +185,11 @@ opentax return validate --returnId a1b2c3
 # This does not transmit a return or prove IRS acceptance.
 opentax return export --returnId a1b2c3 --type mef > return.xml
 
+# Package it as a Pub 4164 submission ZIP (manifest/, xml/, attachment/) named
+# by its Submission ID. Needs the originator EFIN, the IRS-assigned Software ID
+# and a reviewed residency JSON (default returns/<id>/residency-review.json).
+opentax return export --returnId a1b2c3 --type mef-submission --efin 123456 --software-id 25000000
+
 # Add a PDF filed with the return, under the file name its inputs use;
 # --description when the form needs a specific MeF attachment description
 opentax return attach --returnId a1b2c3 --file ./policy.pdf --name 2025-leave-policy.pdf

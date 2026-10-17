@@ -21,6 +21,10 @@ export type ParsedArgs = {
   readonly "export-dir"?: string;
   readonly record?: string;
   readonly evidence?: string;
+  readonly efin?: string;
+  readonly "software-id"?: string;
+  readonly sequence?: string;
+  readonly "residency-review"?: string;
   readonly file?: string;
   readonly name?: string;
   readonly description?: string;

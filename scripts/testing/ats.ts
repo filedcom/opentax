@@ -35,14 +35,14 @@ export function passes(score: ScenarioScore): boolean {
 type Conflict = { page: number; printed: unknown; current: unknown };
 type ScenarioModule = Record<string, unknown>;
 
-async function scenarioModule(id: string): Promise<ScenarioModule> {
+export async function scenarioModule(id: string): Promise<ScenarioModule> {
   return await import(
     `../../forms/f1040/e2e/ats/scenario_${id.replace("-", "_")}_input.ts`
   );
 }
 
 /** The files a scenario files with its return: `*Attachments()` and `*RetainedSourceDocuments()`. */
-async function scenarioFiles(module: ScenarioModule) {
+export async function scenarioFiles(module: ScenarioModule) {
   const call = async <T>(suffix: string): Promise<T[]> =>
     (await Promise.all(
       Object.entries(module)
