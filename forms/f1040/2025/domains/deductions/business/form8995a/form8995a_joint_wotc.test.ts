@@ -10,6 +10,7 @@ import {
 } from "../../../../../nodes/intermediate/forms/deductions/business/form8995a/index.ts";
 import { form8995a } from "../../../../mef/forms/deductions/business/f8995a/f8995a.ts";
 import { form8995aPdf } from "../../../../pdf/forms/deductions/business/f8995a.ts";
+import { roundWholeDollars } from "../../../../../whole-dollars.ts";
 const fixtures = pdfReviewFixtures.filter((f) =>
   f.id.startsWith("joint-primary-wotc-")
 );
@@ -32,10 +33,12 @@ test("joint primary WOTC preserves spouse W2 and full wage reduction through pha
       (p.w2.w2s as any[])[0].box1_wages,
       (fixture.inputs.w2 as any[])[0].box1_wages,
     );
+    // Line 9 adds whole-dollar lines 1z and 8 before line 10 is subtracted.
     assertEquals(
       p.f1040.line11_agi,
-      Number(p.f1040.line1a_wages) + Number(p.schedule1.line3_schedule_c) -
-        Number(p.schedule1.line15_se_deduction),
+      roundWholeDollars(Number(p.f1040.line1a_wages)) +
+        roundWholeDollars(Number(p.schedule1.line3_schedule_c)) -
+        roundWholeDollars(Number(p.schedule1.line15_se_deduction)),
     );
     if (fixture.id.endsWith("threshold-edge")) {
       assertEquals(q.taxable_income, 394601);

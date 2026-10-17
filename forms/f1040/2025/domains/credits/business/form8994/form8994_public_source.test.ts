@@ -193,7 +193,7 @@ test("Form8994 partial-use public receipts retain cents through filed SE/QBI/nat
       26250 + cents,
       0.000001,
     );
-    assertAlmostEquals(p.f1040.line11_agi as number, 24395 + cents, 0.000001);
+    assertEquals(p.f1040.line11_agi, 24395 + Math.round(cents));
     assertEquals(p.f1040.line13_qbi_deduction, 1729);
     assertEquals(p.f3800.form8994_applied_credit, 693);
     const b = await bundle(p, f);

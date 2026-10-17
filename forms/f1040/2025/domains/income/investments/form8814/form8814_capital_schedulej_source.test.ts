@@ -45,7 +45,7 @@ const cases = [
     taxable: 314054,
     scheduleJTax: 69277,
     line16: 72180,
-    line24: 142615.6,
+    line24: 142616,
     amtRegular: 72919,
     capital: 2626,
   },

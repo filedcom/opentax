@@ -302,7 +302,7 @@ for (const item of cases) {
     const pending = buildPending(result.pending);
     assertEquals(
       pending.f1040?.line11_agi,
-      item.joint ? 50000 : item.wages.reduce((s, w) => s + w, 0),
+      item.joint ? 50000 : Math.round(item.wages.reduce((s, w) => s + w, 0)),
     );
     assertEquals(pending.f1040?.line20_nonrefundable_credits ?? 0, item.credit);
     assertEquals(pending.f1040?.line24_total_tax, item.tax);

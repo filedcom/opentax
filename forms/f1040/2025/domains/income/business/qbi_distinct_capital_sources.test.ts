@@ -247,13 +247,15 @@ test("distinct equal dividend and capital contributions file through simplified 
     const rawCapital = id === "broker-net-gain"
       ? (3500.25 - 2000) + (300.12 + 200.12) - 200
       : 1800.49;
+    // Schedule D sends its whole-dollar net capital gain.
+    const filedCapital = Math.round(rawCapital);
     assertEquals(qbi.qbi_capital_sources, [
       { source: "f1099div.qualified_dividends", amount: 1800.49 },
-      { source: "schedule_d.net_capital_gain", amount: rawCapital },
+      { source: "schedule_d.net_capital_gain", amount: filedCapital },
     ], id);
     if (simple) {
       assertEquals(qbi.line12, 3600);
-      assertEquals(qbi.net_capital_gain, 1800.49 + rawCapital);
+      assertEquals(qbi.net_capital_gain, 1800.49 + filedCapital);
       assertEquals(form8995Pdf.projectFields!(qbi, pending).line12, 3600);
       form8995.build(qbi, { filer: base.filer, pending });
     } else {

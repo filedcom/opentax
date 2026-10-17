@@ -17,7 +17,7 @@ async function literal(
   return JSON.parse(
     await fs.readFile(
       new URL(
-        "./fixtures/form8995a-rpe-" + count +
+        "./form8995a-rpe-" + count +
           (events
             ? "-business-formation-acquisition-source.json"
             : shared

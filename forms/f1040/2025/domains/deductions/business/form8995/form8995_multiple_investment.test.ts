@@ -38,7 +38,7 @@ const cases = [
     line12: 3602,
     deduction: 16017,
     tax: 9551,
-    rawAgi: 99438.94,
+    agi: 99439,
     filedTaxable: 67672,
   },
   {
@@ -51,9 +51,9 @@ const cases = [
     capital: [10000.49, 5500.49],
     line12: 34002,
     deduction: 15799,
-    tax: 22618,
-    rawAgi: 168298.46,
-    filedTaxable: 136749,
+    tax: 22619,
+    agi: 168299,
+    filedTaxable: 136750,
   },
   {
     id: "zero-rate-income-limit",
@@ -66,8 +66,8 @@ const cases = [
     line12: 28002,
     deduction: 4256,
     tax: 1805,
-    rawAgi: 65030.45,
-    filedTaxable: 45024,
+    agi: 65031,
+    filedTaxable: 45025,
   },
   {
     id: "net-loss-investment",
@@ -80,7 +80,7 @@ const cases = [
     line12: 3602,
     deduction: 0,
     tax: 3023,
-    rawAgi: 46502.95,
+    agi: 46503,
     filedTaxable: 30753,
   },
 ];
@@ -204,9 +204,9 @@ test("owned multi-payer investment income combines with multi-business QBI, loss
     assertEquals(result.diagnostics, [], scenario.id);
     const pending = normalizeAllPending(result.pending);
     const qbi = pending.form8995;
-    assert(
-      Math.abs((pending.f1040.line11_agi as number) - scenario.rawAgi) < 1e-8,
-    );
+    // Line 9 adds whole-dollar lines 1z through 8, so line 11 is not the
+    // rounded cent AGI.
+    assertEquals(pending.f1040.line11_agi, scenario.agi);
     assertEquals(
       Math.round(pending.f1040.line15_taxable_income as number),
       scenario.filedTaxable,
@@ -225,7 +225,7 @@ test("owned multi-payer investment income combines with multi-business QBI, loss
     const qualified = scenario.qualified.reduce((sum, value) => sum + value, 0);
     const capital = scenario.capital.reduce((sum, value) => sum + value, 0);
     assertEquals(pending.f1040.line3a_qualified_dividends, qualified);
-    assertEquals(pending.f1040.line7a_cap_gain_distrib, capital);
+    assertEquals(pending.f1040.line7a_cap_gain_distrib, Math.round(capital));
     const tax = qualifiedDividendTax2025(
       pending.f1040.line15_taxable_income as number,
       qualified,
@@ -260,9 +260,7 @@ test("owned multi-payer investment income combines with multi-business QBI, loss
     await validate(prepared.bundle.xml);
     assertStringIncludes(
       prepared.bundle.xml,
-      `<AdjustedGrossIncomeAmt>${
-        Math.round(scenario.rawAgi)
-      }</AdjustedGrossIncomeAmt>`,
+      `<AdjustedGrossIncomeAmt>${scenario.agi}</AdjustedGrossIncomeAmt>`,
     );
     assertStringIncludes(
       prepared.bundle.xml,
@@ -413,7 +411,7 @@ test("multi-business QBI line 12 adds entered qualified dividend and distributio
   assertEquals(result.diagnostics, []);
   const pending = normalizeAllPending(result.pending);
   assertEquals(pending.f1040.line3a_qualified_dividends, 1800.49);
-  assertEquals(pending.f1040.line7a_cap_gain_distrib, 1800.49);
+  assertEquals(pending.f1040.line7a_cap_gain_distrib, 1800);
   assertEquals(pending.form8995.line12, 3600);
   assertEquals(pending.form8995.line13, 80088);
   assertEquals(pending.form8995.line15, 16018);

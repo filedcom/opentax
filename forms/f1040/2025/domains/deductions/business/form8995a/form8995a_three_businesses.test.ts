@@ -90,7 +90,8 @@ for (const c of cases) {
       f.line37_amount_owed,
     ], [
       c.profit - c.losses[0] - c.losses[1],
-      300000 + c.profit - c.losses[0] - c.losses[1],
+      // Line 9 adds the whole-dollar line 8.
+      300000 + Math.round(c.profit - c.losses[0] - c.losses[1]),
       c.deduction,
       c.tax,
       c.tax - 60000,

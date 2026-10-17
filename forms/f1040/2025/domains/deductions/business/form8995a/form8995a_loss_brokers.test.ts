@@ -188,7 +188,8 @@ for (const c of cases) {
     assertEquals(pending.f1040.line7_capital_gain, 2800);
     assertEquals(pending.schedule2.line12_niit, 285);
     if (c.id === "mfs") {
-      // Deferred160: public loss limit is wrong; the final filing guard must reject.
+      // Schedule D line 21 limits a married-filing-separately net capital
+      // loss to $1,500 (2025 Schedule D, line 21).
       const loss = structuredClone(inputs);
       const sales = loss.f1099b as Row[];
       sales[0].proceeds = 1000;
@@ -196,15 +197,21 @@ for (const c of cases) {
       sales[1].proceeds = 3000;
       const lossResult = f1040_2025.executeReturn(loss);
       assertEquals(lossResult.diagnostics, []);
-      await assertRejects(
-        () => f1040_2025.prepareReturn(lossResult.pending, filer),
-        Error,
-        "Form 1040 line 7",
+      const lossPending = normalizeAllPending(lossResult.pending);
+      assertEquals(lossPending.schedule_d.print_line16_combined, -2200);
+      assertEquals(lossPending.schedule_d.print_line21_loss, -1500);
+      assertEquals(lossPending.f1040.line7_capital_gain, -1500);
+      const lossPrepared = await f1040_2025.prepareReturn(
+        lossResult.pending,
+        filer,
       );
-      await assertRejects(
-        () => buildPdfBytes(lossResult.pending, filer, ".pdf-cache"),
-        Error,
-        "Form 1040 line 7",
+      assert(
+        (await buildPdfBytes(
+          lossPrepared.bundle.pending,
+          filer,
+          ".pdf-cache",
+          lossPrepared.bundle,
+        )).length > 0,
       );
     }
     const reversed = f1040_2025.executeReturn({

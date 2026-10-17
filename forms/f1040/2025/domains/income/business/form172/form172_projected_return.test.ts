@@ -977,7 +977,8 @@ test("Form172 sourced interest and retained AMT review reconcile raw tentative t
   assertEquals(r.form8990NolOrderingReconciled, true);
   assertEquals(r.currentAmtTentativeTotalReconciled, true);
   assertEquals(r.currentAmtTentativeGraphReconciled, true);
-  assertEquals(r.calculated_tentative_amt_unrounded, 111158.8);
+  // Line 1b comes from whole-dollar Form 1040 line 15.
+  assertEquals(r.calculated_tentative_amt_unrounded, 111159);
   assertEquals(r.projected_pending.form6251.amti_before_mfs_addition, 111159);
   assertEquals(r.independent_amt_review.tentativeAmtiBeforeAtnold, 111159);
   assertEquals(r.independent_amt_review.ordinary90PercentLimit, 100043);
@@ -1151,10 +1152,9 @@ test("Form172 carry-use medical deduction stays distinct from post-NOL itemized 
   assertEquals(r.deduction, 24420);
   assertEquals(r.currentAnnualCalculation.absorbed, 27645);
   assertEquals(r.projected_form1040.line11_agi, 22580);
-  assertEquals(
-    Math.round(Number(r.projected_form1040.line12c_deduction_total)),
-    18307,
-  );
+  // Schedule A line 3 files 7.5% of $22,580 AGI as $1,694, so line 4 is
+  // $20,000 - $1,694.
+  assertEquals(r.projected_form1040.line12c_deduction_total, 18306);
   assertEquals(r.currentModifiedIncomeGraphReconciled, true);
   assertEquals(r.filingReady, false);
   a.refigured_itemized_deduction.amount = 16475;

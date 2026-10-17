@@ -230,7 +230,7 @@ test("prepared trust K-1 review pages keep independent joint-owner copies withou
     pdf_reference: spouseReference,
     person_name: "Sam Example",
   }]);
-  assertEquals(pending.f1040.line25c_total, 350.75);
+  assertEquals(pending.f1040.line25c_total, 351);
   const review = await prepared.buildReviewPdf(pending, joint);
   const pdf = await PDFDocument.load(review.pdfBytes);
   assertEquals(pdf.getPageCount(), 4);

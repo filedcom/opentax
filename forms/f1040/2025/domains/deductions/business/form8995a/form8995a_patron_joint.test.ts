@@ -19,6 +19,7 @@ import {
   inputSchema,
 } from "../../../../../nodes/intermediate/forms/deductions/business/form8995a/index.ts";
 import { patronSourceAmounts } from "../../../../../nodes/inputs/deductions/business/qbi_patron/calculation.ts";
+import { roundWholeDollars } from "../../../../../whole-dollars.ts";
 
 function prepared(kind: string) {
   const fixture = pdfReviewFixtures.find((f) =>
@@ -93,10 +94,11 @@ test("owned MFJ patron C/F sources and spouse wages phase in with actual SE/heal
       input.patron_business_source!.se_tax_deduction,
     );
     assertEquals(pending.f1040.line1a_wages, 230000.49);
+    // Line 9 adds whole-dollar lines 1z and 8 before line 10 is subtracted.
     assertEquals(
       pending.f1040.line11_agi,
-      amounts.profit + 230000.49 -
-        input.patron_business_source!.se_tax_deduction -
+      roundWholeDollars(amounts.profit) + roundWholeDollars(230000.49) -
+        roundWholeDollars(input.patron_business_source!.se_tax_deduction) -
         (kind === "c-health" ? 6000 : 0),
     );
     if (kind === "c-health") {
