@@ -98,7 +98,8 @@ function centsSource(
       amount: i === 0 ? Math.round((support - 4500) * 100) / 100 : s.amount,
     })),
   });
-  const agi = 37881 + (payroll ? total : Math.round(total));
+  // Line 11 adds the whole-dollar line 1z or line 8r amount.
+  const agi = 37881 + Math.round(total);
   const inputs = {
     ...base.inputs,
     w2: wages,

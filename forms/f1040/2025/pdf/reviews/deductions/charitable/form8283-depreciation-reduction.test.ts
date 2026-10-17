@@ -67,8 +67,9 @@ const expected = {
     agi: 141395,
     half: 3147,
     qbi: 8279,
-    itemized: 66418.5,
-    taxable: 66697.5,
+    // Schedule A line 17 and Form 1040 line 15 are whole dollars.
+    itemized: 66419,
+    taxable: 66697,
     tax: 9583,
     se: 6294,
   },

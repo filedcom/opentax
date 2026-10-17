@@ -212,7 +212,8 @@ test("two elected children retain two Form 8814 copies and one Schedule D gain t
     );
     if (!scheduleDPage) throw new Error("Missing printed Schedule D page");
     const scheduleDText = pages[scheduleDPage.pageNumber - 1];
-    assertStringIncludes(scheduleDText, "Form. 8814");
+    // pdftotext versions break the line 13 label across lines and leader dots.
+    assertEquals(/Form[\s.]+8814/.test(scheduleDText), true);
     assertStringIncludes(scheduleDText, "$358");
     assertEquals(/\b13\s+358\b/.test(scheduleDText), true);
   } finally {

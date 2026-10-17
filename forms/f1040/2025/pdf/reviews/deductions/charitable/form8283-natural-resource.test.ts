@@ -73,11 +73,11 @@ for (const kind of Object.keys(expected) as ResourceCase[]) {
         : kind === "active_soil_water_limited"
         ? [141821, 52400, 81057, 12751]
         : ["active_idc_oil", "producing_recovered"].includes(kind)
-        ? [127881, 62364.3, 59940.7, 8098]
+        ? [127881, 62364, 59941, 8098]
         : kind === "active_soil_water"
         ? [144608, 54800, 80886, 12707]
         : ["active_oil", "legacy_oil", "producing_exploration"].includes(kind)
-        ? [137174, 65152.2, 64586.8, 9121]
+        ? [137174, 65152, 64587, 9121]
         : [100000, 54000, 46000, 5285],
     );
     assertEquals(
