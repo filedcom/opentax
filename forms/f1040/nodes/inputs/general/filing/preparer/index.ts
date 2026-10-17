@@ -10,7 +10,8 @@ import type { NodeContext } from "../../../../../../../core/types/node-context.t
 // Captures paid preparer and Electronic Return Originator (ERO) information
 // for professionally-prepared returns. Fields are routed to the f1040 pending
 // dict as preparer_* pass-throughs, where extractFilerIdentity() picks them
-// up to populate the MeF return header's <PaidPreparerInfo> and <OriginatorGrp>.
+// up to populate the MeF return header's <PaidPreparerInformationGrp> and
+// <OriginatorGrp>.
 
 // ─── Enums ────────────────────────────────────────────────────────────────────
 
@@ -25,6 +26,11 @@ export enum OriginatorType {
 export const inputSchema = z.object({
   // IRS Preparer Tax Identification Number (P followed by 8 digits)
   ptin: z.string().regex(/^P\d{8}$/).optional(),
+  // As signed in the Form 1040 Paid Preparer Use Only area.
+  name: z.string().trim().min(1).max(35).optional(),
+  self_employed: z.boolean().optional(),
+  signature_date: z.string().date().optional(),
+  phone: z.string().regex(/^\d{10}$/).optional(),
   // Firm info
   firm_name: z.string().max(35).optional(),
   firm_ein: z.string().regex(/^\d{9}$/).optional(),
@@ -58,6 +64,14 @@ function buildF1040Fields(input: PreparerInput): Record<string, unknown> {
   if (input.ptin !== undefined) {
     fields["preparer_ptin"] = input.ptin;
   }
+  if (input.name !== undefined) fields["preparer_name"] = input.name;
+  if (input.self_employed !== undefined) {
+    fields["preparer_self_employed"] = input.self_employed;
+  }
+  if (input.signature_date !== undefined) {
+    fields["preparer_signature_date"] = input.signature_date;
+  }
+  if (input.phone !== undefined) fields["preparer_phone"] = input.phone;
   if (input.firm_name !== undefined) {
     fields["preparer_firm_name"] = input.firm_name;
   }

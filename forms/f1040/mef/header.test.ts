@@ -328,3 +328,36 @@ test("files the Self-Select PIN authentication group before PINTypeCd, in XSD or
 test("omits the Self-Select PIN group when nothing authenticates the signer", () => {
   assertEquals(buildReturnHeader(sampleFiler()).includes("SelfSelectPINGrp"), false);
 });
+
+test("files the in-care-of name after NameLine1Txt with the required % prefix", () => {
+  const header = buildReturnHeader({ ...sampleFiler(), inCareOf: "Jane Doe" });
+  assertStringIncludes(header, "</NameLine1Txt><InCareOfNm>% Jane Doe</InCareOfNm><PrimaryNameControlTxt>");
+});
+
+test("files the paid preparer as PaidPreparerInformationGrp in XSD order", () => {
+  const header = buildReturnHeader({
+    ...sampleFiler(),
+    preparedBy: {
+      signatureDate: "2026-04-05",
+      selfEmployed: true,
+      ptin: "P00000001",
+      firmEin: "00-0000079",
+      personName: "Walter Young",
+      firmName: "Youngs Tax Service",
+      firmAddressLine1: "1111 New York Avenue",
+      firmCity: "New York",
+      firmState: "NY",
+      firmZip: "10022",
+      phone: "800-123-4567",
+    },
+  });
+  assertStringIncludes(
+    header,
+    "<PaidPreparerInformationGrp><SignatureDt>2026-04-05</SignatureDt><SelfEmployedInd>X</SelfEmployedInd><PTIN>P00000001</PTIN><PreparerFirmEIN>000000079</PreparerFirmEIN><PreparerPersonNm>Walter Young</PreparerPersonNm><PreparerFirmName><BusinessNameLine1Txt>Youngs Tax Service</BusinessNameLine1Txt></PreparerFirmName><PreparerUSAddress><AddressLine1Txt>1111 New York Avenue</AddressLine1Txt><CityNm>New York</CityNm><StateAbbreviationCd>NY</StateAbbreviationCd><ZIPCd>10022</ZIPCd></PreparerUSAddress><PhoneNum>8001234567</PhoneNum></PaidPreparerInformationGrp>",
+  );
+});
+
+test("a self-prepared return files no preparer group", () => {
+  const header = buildReturnHeader({ ...sampleFiler(), preparedBy: { selfPrepared: true } });
+  assertEquals(header.includes("Preparer"), false);
+});

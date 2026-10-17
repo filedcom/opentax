@@ -62,13 +62,17 @@ export interface OriginatorInfo {
 export interface PreparedByInfo {
   // IRS PTIN (P + 8 digits). Absent when self_prepared is true.
   readonly ptin?: string;
+  readonly personName?: string;
+  readonly selfEmployed?: boolean;
+  readonly signatureDate?: string;
+  readonly phone?: string;
   readonly firmName?: string;
   readonly firmEin?: string;
   readonly firmAddressLine1?: string;
   readonly firmCity?: string;
   readonly firmState?: string;
   readonly firmZip?: string;
-  // When true the IRS SelfPreparedReturnIndicator is emitted instead of PaidPreparerInfo
+  // A self-prepared return files no preparer group in the header.
   readonly selfPrepared?: boolean;
 }
 
@@ -103,6 +107,7 @@ export interface FilerIdentity {
   readonly priorYearAgi?: number;
   readonly priorYearPin?: string;
   readonly birthDate?: string;
+  readonly inCareOf?: string;
 
   // Spouse (MFJ / MFS)
   readonly spouse?: SpouseIdentity;
@@ -287,6 +292,7 @@ function buildFilerBlock(filer: FilerIdentity): string {
     element("PrimarySSN", filer.primarySSN),
     element("SpouseSSN", filer.spouse?.ssn),
     element("NameLine1Txt", returnHeaderNameLine1(filer)),
+    element("InCareOfNm", inCareOfName(filer.inCareOf)),
     element("PrimaryNameControlTxt", filer.nameControl),
     element("SpouseNameControlTxt", filer.spouse?.nameControl),
     buildAddress(filer.address),
@@ -295,21 +301,36 @@ function buildFilerBlock(filer: FilerIdentity): string {
   return elements("Filer", children);
 }
 
+/** InCareOfNameType begins with "% " (ReturnHeader1040x.xsd Filer/InCareOfNm). */
+function inCareOfName(name: string | undefined): string | undefined {
+  const trimmed = name?.trim();
+  if (!trimmed) return undefined;
+  return trimmed.startsWith("% ") ? trimmed : `% ${trimmed}`;
+}
+
+const digits = (value: string | undefined) => value?.replace(/\D/g, "");
+
 function buildPaidPreparerBlock(filer: FilerIdentity): string {
-  if (!filer.preparedBy) return "";
-  if (filer.preparedBy.selfPrepared === true) {
-    return element("SelfPreparedReturnIndicator", "X");
-  }
-  const children = [
-    element("PTIN", filer.preparedBy.ptin),
-    element("FirmName", filer.preparedBy.firmName),
-    element("FirmEIN", filer.preparedBy.firmEin),
-    element("FirmAddressLine1", filer.preparedBy.firmAddressLine1),
-    element("FirmCityNm", filer.preparedBy.firmCity),
-    element("FirmStateAbbreviationCd", filer.preparedBy.firmState),
-    element("FirmZIPCd", filer.preparedBy.firmZip),
-  ];
-  return elements("PaidPreparerInfo", children);
+  const preparer = filer.preparedBy;
+  if (!preparer || preparer.selfPrepared === true) return "";
+  // ReturnHeader1040x.xsd PaidPreparerInformationGrp sequence.
+  return elements("PaidPreparerInformationGrp", [
+    element("SignatureDt", preparer.signatureDate),
+    element("SelfEmployedInd", preparer.selfEmployed ? "X" : undefined),
+    element("PTIN", preparer.ptin),
+    element("PreparerFirmEIN", digits(preparer.firmEin)),
+    element("PreparerPersonNm", preparer.personName),
+    elements("PreparerFirmName", [
+      element("BusinessNameLine1Txt", preparer.firmName),
+    ]),
+    elements("PreparerUSAddress", [
+      element("AddressLine1Txt", preparer.firmAddressLine1),
+      element("CityNm", preparer.firmCity),
+      element("StateAbbreviationCd", preparer.firmState),
+      element("ZIPCd", preparer.firmZip),
+    ]),
+    element("PhoneNum", digits(preparer.phone)),
+  ]);
 }
 
 function buildOnlineFilerBlock(filer: FilerIdentity): string {

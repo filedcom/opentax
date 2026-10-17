@@ -1188,6 +1188,7 @@ function buildF1040Input(input: GeneralInput): Record<string, unknown> {
 
   // Address pass-throughs
   addIfDefined(fields, "address_line1", input.address_line1);
+  addIfDefined(fields, "address_in_care_of", input.address_in_care_of);
   addIfDefined(fields, "address_line2", input.address_line2);
   addIfDefined(fields, "address_city", input.address_city);
   addIfDefined(fields, "address_state", input.address_state);
