@@ -7,7 +7,7 @@ import { f1040_2025 } from "../../forms/f1040/2025/index.ts";
 import { normalizeAllPending } from "../../forms/f1040/2025/return-processing/pending.ts";
 import { signed } from "./mef.ts";
 
-/** Diverse returns whose only MeF blocker is the header birth date (IND-021/022). */
+/** Diverse sample returns that pass every implemented MeF business rule. */
 export const CLI_RETURNS = [
   "form4972-annuity-primary-3-spouse-0-nua-1",
   "owned-mixed-cf-health-full",
@@ -22,8 +22,27 @@ export const CLI_RETURNS = [
   "independent-primary-spouse-c-health-different-owner-eligible-months",
 ] as const;
 
-const KNOWN_BLOCKERS = new Set(["IND-021-01", "IND-022-01"]);
 const MAIN = new URL("../../cli/main.ts", import.meta.url).pathname;
+// The private IRS schema cache; CI has none, so the XSD check runs locally only.
+const RETURN_XSD = new URL(
+  "../../.state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd",
+  import.meta.url,
+).pathname;
+
+/** xmllint's first complaints, or null when the XML validates against `xsd`. */
+async function schemaProblem(
+  xmlPath: string,
+  xsd: string,
+): Promise<string | null> {
+  const out = await new sys.Command("xmllint", {
+    args: ["--noout", "--schema", xsd, xmlPath],
+    stdout: "piped",
+    stderr: "piped",
+  }).output();
+  if (out.code === 0) return null;
+  return new TextDecoder().decode(out.stderr).trim().split("\n").slice(0, 3)
+    .join("; ");
+}
 
 type Run = { code: number; stdout: string; stderr: string };
 
@@ -121,31 +140,10 @@ export async function checkReturn(id: string, home: string): Promise<string[]> {
   try {
     const report = JSON.parse(validated.stdout);
     for (const entry of report.entries ?? []) {
-      if (!KNOWN_BLOCKERS.has(entry.ruleNumber)) {
-        problems.push(`validate rejects ${entry.ruleNumber}`);
-      }
+      problems.push(`validate rejects ${entry.ruleNumber}`);
     }
   } catch {
     problems.push(`validate printed no JSON report (exit ${validated.code})`);
-  }
-  const blocked = await cli(
-    home,
-    "return",
-    "export",
-    "--returnId",
-    returnId,
-    "--type",
-    "mef",
-  );
-  const rules = [...blocked.stderr.matchAll(/\[([A-Z0-9-]+)\]/g)].map((m) =>
-    m[1]
-  );
-  if (blocked.code === 0 || rules.some((rule) => !KNOWN_BLOCKERS.has(rule))) {
-    problems.push(
-      `export without --force: exit ${blocked.code}, rules ${
-        rules.join(" ") || "none"
-      }`,
-    );
   }
   const xmlPath = join(home, `${id}.xml`), pdfPath = join(home, `${id}.pdf`);
   if (
@@ -159,7 +157,6 @@ export async function checkReturn(id: string, home: string): Promise<string[]> {
         returnId,
         "--type",
         "mef",
-        "--force",
         "--output",
         xmlPath,
       ),
@@ -172,6 +169,10 @@ export async function checkReturn(id: string, home: string): Promise<string[]> {
       problems.push(
         `MeF AdjustedGrossIncomeAmt ${agi}, engine ${engine.line11_agi}`,
       );
+    }
+    if (xml && await fs.access(RETURN_XSD).then(() => true, () => false)) {
+      const invalid = await schemaProblem(xmlPath, RETURN_XSD);
+      if (invalid) problems.push(`MeF XML fails the IRS schema: ${invalid}`);
     }
   }
   if (

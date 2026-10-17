@@ -77,6 +77,8 @@ export {
   ssnNotEqual,
   sumOfAll,
   validEIN,
+  isAtsTest,
+  ssnMiddleDigitsEq,
   validRTN,
   validSSN,
   decimalPlacesEq,

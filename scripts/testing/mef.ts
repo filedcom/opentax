@@ -33,10 +33,15 @@ export function signed(
       ...general,
       taxpayer_signature_pin: general.taxpayer_signature_pin ?? "12345",
       taxpayer_signature_date: general.taxpayer_signature_date ?? "2026-02-01",
+      // Self-Select PIN authentication (Pub 4164 §8.9.2); 0 is the prior-year AGI of a first-time filer.
+      taxpayer_dob: general.taxpayer_dob ?? "1980-01-01",
+      taxpayer_prior_year_agi: general.taxpayer_prior_year_agi ?? 0,
       ...(general.filing_status === "mfj"
         ? {
           spouse_signature_pin: general.spouse_signature_pin ?? "54321",
           spouse_signature_date: general.spouse_signature_date ?? "2026-02-01",
+          spouse_dob: general.spouse_dob ?? "1980-01-01",
+          spouse_prior_year_agi: general.spouse_prior_year_agi ?? 0,
         }
         : {}),
     },
