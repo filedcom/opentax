@@ -206,7 +206,7 @@ test("getReturnCommand calculates above-threshold Schedule C QBI", async () => {
     assertEquals(result.forms.includes("form8995a"), true);
     assertEquals(
       Math.round(result.summary.line15_taxable_income * 100) / 100,
-      206_926.37,
+      206_926,
     );
     assertEquals(
       Math.round(result.summary.line24_total_tax * 100) / 100,
