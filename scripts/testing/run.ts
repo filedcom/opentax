@@ -8,7 +8,9 @@ import {
   assertRuntimeUnchanged,
   assertTestInventory,
   classifiedIgnoredTests,
+  failureBaselineSchema,
   junitSummary,
+  openFailures,
   skipPolicySchema,
   testRunExitCode,
 } from "./contracts.ts";
@@ -20,6 +22,15 @@ import {
 import { acquireFullRunLock, releaseFullRunLock } from "./full-lock.ts";
 
 const root = dirname(dirname(dirname(fromFileUrl(import.meta.url))));
+const FORMS_BASELINE = "scripts/testing/forms-failure-baseline.json";
+const IRS_CACHE_XSD =
+  ".state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd";
+
+/** Node, export and return-processing tests: hermetic and fast enough for every pull request. */
+function isFormsGateTest(path: string): boolean {
+  return /^forms\/[^/]+\/(nodes|mef|validation)\//.test(path) ||
+    /^forms\/[^/]+\/\d{4}\/(mef|return-processing)\//.test(path);
+}
 // PDF and XSD round trips can take minutes; a test is only stopped when hung.
 const TEST_TIMEOUT_MS = 30 * 60 * 1000;
 
@@ -55,7 +66,7 @@ async function testEnvironmentInputs(
   return [...names].sort();
 }
 const mode = process.argv.slice(2)[0] ?? "full";
-if (!["full", "unit", "harness", "preflight"].includes(mode)) {
+if (!["full", "unit", "forms", "harness", "preflight"].includes(mode)) {
   throw new Error(`Unknown test mode: ${mode}`);
 }
 const directory = join(root, ".state/research/testing");
@@ -109,6 +120,8 @@ try {
       path.startsWith("scripts/testing/") ||
       path === "benchmark/harness.test.ts"
     )
+    : mode === "forms"
+    ? all.filter(isFormsGateTest)
     : mode === "unit"
     ? all.filter((path) =>
       path.startsWith("core/") || path.startsWith("cli/utils/") ||
@@ -183,7 +196,9 @@ try {
       args: [
         "test",
         // Each file gets a fresh global and module registry.
-        mode === "full" ? `--parallel=${availableParallelism()}` : "--isolate",
+        mode === "full" || mode === "forms"
+          ? `--parallel=${availableParallelism()}`
+          : "--isolate",
         `--timeout=${TEST_TIMEOUT_MS}`,
         "--reporter=junit",
         `--reporter-outfile=${junitPath}`,
@@ -247,7 +262,25 @@ try {
       true,
       mode === "full",
     );
-    if (summary.failures !== 0) {
+    if (mode === "forms") {
+      const open = openFailures(
+        summary.failedTests,
+        failureBaselineSchema.parse(
+          JSON.parse(await fs.readFile(join(root, FORMS_BASELINE), "utf8")),
+        ),
+        new Date().toISOString().slice(0, 10),
+        await fs.access(join(root, IRS_CACHE_XSD)).then(() =>
+          true, () =>
+          false),
+      );
+      for (const problem of open) {
+        console.error(problem);
+      }
+      console.log(
+        `${summary.executed} form tests, ${summary.failedTests.length} failing, ${open.length} not in ${FORMS_BASELINE}`,
+      );
+      code = summary.executed > 0 && open.length === 0 ? 0 : 1;
+    } else if (summary.failures !== 0) {
       code = 1;
     }
     await fs.chmod(junitPath, 0o600);

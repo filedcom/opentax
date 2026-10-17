@@ -270,6 +270,7 @@ bun run check:cases       # benchmark cases fit their node schemas and cite a so
 bun run check:oracle      # expected values changed only with a cited ledger entry
 bun run check:sandbox     # the binary reaches the network only through restricted fetch
 bun run test:unit         # module graph, type check and typed tests
+bun run test:forms        # node, export and return-processing tests
 
 # Run the full test suite and the accuracy benchmark
 bun run test

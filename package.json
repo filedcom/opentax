@@ -23,6 +23,7 @@
     "tax": "bun cli/main.ts",
     "test": "bun scripts/testing/run.ts full",
     "test:unit": "bun scripts/testing/run.ts unit",
+    "test:forms": "bun scripts/testing/run.ts forms",
     "test:harness": "bun scripts/testing/run.ts harness",
     "test:preflight": "bun scripts/testing/run.ts preflight",
     "check:structure": "bun scripts/testing/structure.ts",

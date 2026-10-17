@@ -9,14 +9,15 @@ as a graph of pure nodes. Two CLIs, kept apart:
   `bun run check:cases` (benchmark cases fit their node schemas and cite a
   publication), `bun run check:sandbox` (the binary reaches the network only
   through restricted fetch), `bun run bench` (engine output against IRS ground
-  truth) and `bun run test:unit` (module graph, type check and typed tests).
+  truth), `bun run test:unit` (module graph, type check and typed tests) and
+  `bun run test:forms` (node, export and return-processing tests).
 
 ## Before a pull request
 
 A change ships with proof, not a description of it:
 
-- `bun run check:structure`, `bun run check:sandbox` and `bun run test:unit`
-  pass.
+- `bun run check:structure`, `bun run check:sandbox`, `bun run test:unit` and
+  `bun run test:forms` pass.
 - `bun run bench --form <form> --year <year>` passes for every form:year the
   change touches, and `bun run check:oracle` passes: an expected value changes
   only with a publication cited in that product's `ledger.json`.

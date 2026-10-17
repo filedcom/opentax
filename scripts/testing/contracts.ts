@@ -160,8 +160,13 @@ export function junitSummary(xml: string) {
       name: test["@_name"],
     }))
   );
+  const failedTests = suites.flatMap((suite) =>
+    suiteCases(suite).filter((test) => "failure" in test || "error" in test)
+      .map((test) => ({ module: module(suite), name: test["@_name"] }))
+  );
   return {
     modules: suites.map(module),
+    failedTests,
     executed: suites.reduce(
       (sum, suite) => sum + suite["@_tests"] - suite["@_skipped"],
       0,
@@ -230,4 +235,46 @@ export function assertGraphCoverage(
   if (expectedSpecifiers.length === 0 || missing.length) {
     throw new Error(`Incomplete module graph: ${missing.join(", ")}`);
   }
+}
+
+export const failureBaselineSchema = z.array(
+  z.object({
+    module: z.string().min(1),
+    name: z.string().min(1),
+    reason: z.string().min(1),
+    /** Passes when the private IRS schema/PDF cache is present. */
+    requires: z.literal("irs-cache").optional(),
+    expires: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "expected YYYY-MM-DD"),
+    approvedBy: z.string().min(1),
+  }).strict(),
+);
+export type FailureBaseline = z.infer<typeof failureBaselineSchema>;
+
+/** Known failures are allowed until they expire; new failures and stale entries are not. */
+export function openFailures(
+  failed: ReadonlyArray<{ module: string; name: string }>,
+  baseline: FailureBaseline,
+  today: string,
+  irsCache: boolean,
+): string[] {
+  const key = (t: { module: string; name: string }) => `${t.module}: ${t.name}`;
+  const known = new Map(baseline.map((entry) => [key(entry), entry]));
+  if (known.size !== baseline.length) {
+    throw new Error("Duplicate failure baseline entry");
+  }
+  const failing = new Set(failed.map(key));
+  const open = failed.flatMap((test) => {
+    const entry = known.get(key(test));
+    if (!entry) return [`New failure: ${key(test)}`];
+    if (entry.expires < today) {
+      return [`Baseline expired on ${entry.expires}: ${key(test)}`];
+    }
+    return [];
+  });
+  const stale = baseline
+    .filter((entry) =>
+      !failing.has(key(entry)) && !(entry.requires === "irs-cache" && irsCache)
+    )
+    .map((entry) => `Stale baseline entry, the test passes: ${key(entry)}`);
+  return [...open, ...stale];
 }

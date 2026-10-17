@@ -1,0 +1,309 @@
+[
+  {
+    "module": "forms/f1040/2025/mef/forms/credits/business/f3800/f3800_current_rows.test.ts",
+    "name": "Form 3800 mixed current-year row follows TY2025v5.4 IRS3800 XSD",
+    "reason": "Validates against the private IRS TY2025 schema or PDF cache in .state/research, which CI and clean checkouts do not have.",
+    "requires": "irs-cache",
+    "expires": "2027-01-31",
+    "approvedBy": "pending-review"
+  },
+  {
+    "module": "forms/f1040/2025/mef/forms/credits/business/f3800/f3800_join.test.ts",
+    "name": "Form 3800 joins passive and nonpassive carryovers on one Part IV line",
+    "reason": "Validates against the private IRS TY2025 schema or PDF cache in .state/research, which CI and clean checkouts do not have.",
+    "requires": "irs-cache",
+    "expires": "2027-01-31",
+    "approvedBy": "pending-review"
+  },
+  {
+    "module": "forms/f1040/2025/mef/forms/credits/business/f3800/f3800_nonpassive.test.ts",
+    "name": "Form 3800 XML: mixed Form 8826 and Form 8835 follows TY2025 source schema",
+    "reason": "Validates against the private IRS TY2025 schema or PDF cache in .state/research, which CI and clean checkouts do not have.",
+    "requires": "irs-cache",
+    "expires": "2027-01-31",
+    "approvedBy": "pending-review"
+  },
+  {
+    "module": "forms/f1040/2025/mef/forms/credits/business/f3800/f3800_passive_rows.test.ts",
+    "name": "Form 3800 passive carryover fragments follow TY2025v5.4 IRS3800 XSD",
+    "reason": "Validates against the private IRS TY2025 schema or PDF cache in .state/research, which CI and clean checkouts do not have.",
+    "requires": "irs-cache",
+    "expires": "2027-01-31",
+    "approvedBy": "pending-review"
+  },
+  {
+    "module": "forms/f1040/2025/mef/forms/credits/business/f8826_draft.test.ts",
+    "name": "Form 8826 draft: local TY2025 MeF source schema",
+    "reason": "Validates against the private IRS TY2025 schema or PDF cache in .state/research, which CI and clean checkouts do not have.",
+    "requires": "irs-cache",
+    "expires": "2027-01-31",
+    "approvedBy": "pending-review"
+  },
+  {
+    "module": "forms/f1040/2025/mef/forms/credits/individual/f8912.test.ts",
+    "name": "Form 8912 MeF draft validates its IRS source schema",
+    "reason": "Validates against the private IRS TY2025 schema or PDF cache in .state/research, which CI and clean checkouts do not have.",
+    "requires": "irs-cache",
+    "expires": "2027-01-31",
+    "approvedBy": "pending-review"
+  },
+  {
+    "module": "forms/f1040/2025/mef/forms/deductions/additional/schedule1a/schedule1a.test.ts",
+    "name": "Schedule 1-A emits all four deductions in schema order with one total",
+    "reason": "Validates against the private IRS TY2025 schema or PDF cache in .state/research, which CI and clean checkouts do not have.",
+    "requires": "irs-cache",
+    "expires": "2027-01-31",
+    "approvedBy": "pending-review"
+  },
+  {
+    "module": "forms/f1040/2025/mef/forms/deductions/business/f8995/f8995.test.ts",
+    "name": "one sourced Schedule F farm reaches Form 8995 MeF, PDF, and full-return XSD",
+    "reason": "Validates against the private IRS TY2025 schema or PDF cache in .state/research, which CI and clean checkouts do not have.",
+    "requires": "irs-cache",
+    "expires": "2027-01-31",
+    "approvedBy": "pending-review"
+  },
+  {
+    "module": "forms/f1040/2025/mef/forms/deductions/business/f8995/f8995.test.ts",
+    "name": "profitable accrual Schedule F farm reaches Form 8995 MeF, PDF, and full-return XSD",
+    "reason": "Validates against the private IRS TY2025 schema or PDF cache in .state/research, which CI and clean checkouts do not have.",
+    "requires": "irs-cache",
+    "expires": "2027-01-31",
+    "approvedBy": "pending-review"
+  },
+  {
+    "module": "forms/f1040/2025/mef/forms/deductions/business/f8995/f8995.test.ts",
+    "name": "single-filer farm without EIN uses the sourced SSN on Form 8995",
+    "reason": "Validates against the private IRS TY2025 schema or PDF cache in .state/research, which CI and clean checkouts do not have.",
+    "requires": "irs-cache",
+    "expires": "2027-01-31",
+    "approvedBy": "pending-review"
+  },
+  {
+    "module": "forms/f1040/2025/mef/forms/deductions/business/f8995/f8995.test.ts",
+    "name": "two distinct held REIT dividend issuers reconcile to Form 8995, Form 1040, native MeF, and PDF",
+    "reason": "Validates against the private IRS TY2025 schema or PDF cache in .state/research, which CI and clean checkouts do not have.",
+    "requires": "irs-cache",
+    "expires": "2027-01-31",
+    "approvedBy": "pending-review"
+  },
+  {
+    "module": "forms/f1040/2025/mef/forms/deductions/charitable/f8283/f8283.test.ts",
+    "name": "Form 8283 Section B high-value vehicle requires both its donee copy and full appraisal",
+    "reason": "Validates against the private IRS TY2025 schema or PDF cache in .state/research, which CI and clean checkouts do not have.",
+    "requires": "irs-cache",
+    "expires": "2027-01-31",
+    "approvedBy": "pending-review"
+  },
+  {
+    "module": "forms/f1040/2025/mef/forms/deductions/charitable/f8283/f8283.test.ts",
+    "name": "Form 8283 Section B material-improvement vehicle links appraisal, donee, and 1098-C evidence",
+    "reason": "Validates against the private IRS TY2025 schema or PDF cache in .state/research, which CI and clean checkouts do not have.",
+    "requires": "irs-cache",
+    "expires": "2027-01-31",
+    "approvedBy": "pending-review"
+  },
+  {
+    "module": "forms/f1040/2025/mef/forms/deductions/charitable/f8283/f8283.test.ts",
+    "name": "Form 8283 Section B needy transfer vehicle emits its exception certification",
+    "reason": "Validates against the private IRS TY2025 schema or PDF cache in .state/research, which CI and clean checkouts do not have.",
+    "requires": "irs-cache",
+    "expires": "2027-01-31",
+    "approvedBy": "pending-review"
+  },
+  {
+    "module": "forms/f1040/2025/mef/forms/deductions/charitable/f8283/f8283.test.ts",
+    "name": "Form 8283 Section B over $500,000 attaches the complete qualified appraisal separately from signatures",
+    "reason": "Validates against the private IRS TY2025 schema or PDF cache in .state/research, which CI and clean checkouts do not have.",
+    "requires": "irs-cache",
+    "expires": "2027-01-31",
+    "approvedBy": "pending-review"
+  },
+  {
+    "module": "forms/f1040/2025/mef/forms/deductions/charitable/f8283/f8283.test.ts",
+    "name": "Form 8283 Section B return validates against TY2025 IRS XSD",
+    "reason": "Validates against the private IRS TY2025 schema or PDF cache in .state/research, which CI and clean checkouts do not have.",
+    "requires": "irs-cache",
+    "expires": "2027-01-31",
+    "approvedBy": "pending-review"
+  },
+  {
+    "module": "forms/f1040/2025/mef/forms/deductions/charitable/f8283/f8283.test.ts",
+    "name": "Form 8283 Section B significant use vehicle emits its exception certification",
+    "reason": "Validates against the private IRS TY2025 schema or PDF cache in .state/research, which CI and clean checkouts do not have.",
+    "requires": "irs-cache",
+    "expires": "2027-01-31",
+    "approvedBy": "pending-review"
+  },
+  {
+    "module": "forms/f1040/2025/mef/forms/deductions/charitable/f8283/f8283.test.ts",
+    "name": "Form 8283 links a separate donee PDF for each Section A vehicle over $500",
+    "reason": "Validates against the private IRS TY2025 schema or PDF cache in .state/research, which CI and clean checkouts do not have.",
+    "requires": "irs-cache",
+    "expires": "2027-01-31",
+    "approvedBy": "pending-review"
+  },
+  {
+    "module": "forms/f1040/2025/mef/forms/deductions/charitable/f8283/f8283.test.ts",
+    "name": "Form 8283 links both native vehicle statement and donee-issued PDF",
+    "reason": "Validates against the private IRS TY2025 schema or PDF cache in .state/research, which CI and clean checkouts do not have.",
+    "requires": "irs-cache",
+    "expires": "2027-01-31",
+    "approvedBy": "pending-review"
+  },
+  {
+    "module": "forms/f1040/2025/mef/forms/deductions/charitable/f8283/f8283.test.ts",
+    "name": "Form 8283 material-improvement vehicle emits donee's box 5c detail",
+    "reason": "Validates against the private IRS TY2025 schema or PDF cache in .state/research, which CI and clean checkouts do not have.",
+    "requires": "irs-cache",
+    "expires": "2027-01-31",
+    "approvedBy": "pending-review"
+  },
+  {
+    "module": "forms/f1040/2025/mef/forms/deductions/charitable/f8283/f8283.test.ts",
+    "name": "Form 8283 significant-use vehicle links donee PDF and emits boxes 5a and 5c",
+    "reason": "Validates against the private IRS TY2025 schema or PDF cache in .state/research, which CI and clean checkouts do not have.",
+    "requires": "irs-cache",
+    "expires": "2027-01-31",
+    "approvedBy": "pending-review"
+  },
+  {
+    "module": "forms/f1040/2025/mef/forms/deductions/charitable/f8283/f8283_carryover_route.test.ts",
+    "name": "Form 8283 carryover binds native Section A, FMV statement, prior PDF and Schedule A",
+    "reason": "Validates against the private IRS TY2025 schema or PDF cache in .state/research, which CI and clean checkouts do not have.",
+    "requires": "irs-cache",
+    "expires": "2027-01-31",
+    "approvedBy": "pending-review"
+  },
+  {
+    "module": "forms/f1040/2025/mef/forms/deductions/charitable/f8283/f8283_carryover_route.test.ts",
+    "name": "Form 8283 multiple carried gifts each have a native form, statement, prior PDF, and preview",
+    "reason": "Validates against the private IRS TY2025 schema or PDF cache in .state/research, which CI and clean checkouts do not have.",
+    "requires": "irs-cache",
+    "expires": "2027-01-31",
+    "approvedBy": "pending-review"
+  },
+  {
+    "module": "forms/f1040/2025/mef/forms/deductions/charitable/f8283/f8283_carryover_route.test.ts",
+    "name": "exchange-listed stock above $5,000 retains Section A prior PDF and current carryover",
+    "reason": "Validates against the private IRS TY2025 schema or PDF cache in .state/research, which CI and clean checkouts do not have.",
+    "requires": "irs-cache",
+    "expires": "2027-01-31",
+    "approvedBy": "pending-review"
+  },
+  {
+    "module": "forms/f1040/2025/mef/forms/deductions/charitable/f8283/f8283_intellectual_property.test.ts",
+    "name": "Form 8283 reports a purchased patent above $5,000 in Section A",
+    "reason": "Validates against the private IRS TY2025 schema or PDF cache in .state/research, which CI and clean checkouts do not have.",
+    "requires": "irs-cache",
+    "expires": "2027-01-31",
+    "approvedBy": "pending-review"
+  },
+  {
+    "module": "forms/f1040/2025/mef/forms/general/foreign/f5471/f5471-linkage.test.ts",
+    "name": "Linked actual Category4/5a parent satisfies canonical v5.4 XSD fixed reference names",
+    "reason": "Validates against the private IRS TY2025 schema or PDF cache in .state/research, which CI and clean checkouts do not have.",
+    "requires": "irs-cache",
+    "expires": "2027-01-31",
+    "approvedBy": "pending-review"
+  },
+  {
+    "module": "forms/f1040/2025/mef/forms/income/business/f8582/f8582-current-loss-review.test.ts",
+    "name": "source-bound current ordinary loss review projects Parts V VII VIII IX and validates standalone IRS8582",
+    "reason": "Validates against the private IRS TY2025 schema or PDF cache in .state/research, which CI and clean checkouts do not have.",
+    "requires": "irs-cache",
+    "expires": "2027-01-31",
+    "approvedBy": "pending-review"
+  },
+  {
+    "module": "forms/f1040/2025/mef/forms/income/foreign/foreign_employer_wages.test.ts",
+    "name": "two FEC employer sources keep owner and document identity through native and PDF export",
+    "reason": "Validates against the private IRS TY2025 schema or PDF cache in .state/research, which CI and clean checkouts do not have.",
+    "requires": "irs-cache",
+    "expires": "2027-01-31",
+    "approvedBy": "pending-review"
+  },
+  {
+    "module": "forms/f1040/2025/mef/forms/income/investments/schedule_b.test.ts",
+    "name": "schedule_b: source interest detail follows the IRS 2025 schema",
+    "reason": "Validates against the private IRS TY2025 schema or PDF cache in .state/research, which CI and clean checkouts do not have.",
+    "requires": "irs-cache",
+    "expires": "2027-01-31",
+    "approvedBy": "pending-review"
+  },
+  {
+    "module": "forms/f1040/2025/mef/forms/income/retirement/f8915f.test.ts",
+    "name": "bounded Form 8915-F native document matches source and TY2025 XSD",
+    "reason": "Validates against the private IRS TY2025 schema or PDF cache in .state/research, which CI and clean checkouts do not have.",
+    "requires": "irs-cache",
+    "expires": "2027-01-31",
+    "approvedBy": "pending-review"
+  },
+  {
+    "module": "forms/f1040/2025/mef/submissions/submission-patron-replay.test.ts",
+    "name": "Patron saved returns preserve all 58 source packets in mixed submission archives",
+    "reason": "Replayed Patron saved returns fail return-wide arithmetic: Form 1040 line 1z differs from lines 1a through 1h. Fails on main before PR #86.",
+    "expires": "2027-01-31",
+    "approvedBy": "pending-review"
+  },
+  {
+    "module": "forms/f1040/2025/mef/submissions/submission-sstb-replay.test.ts",
+    "name": "SSTB saved returns preserve all 68 source packets in mixed submission archives",
+    "reason": "Replayed SSTB saved returns fail return-wide arithmetic: Form 1040 line 24 differs from lines 22 and 23 (and line 1z). Fails on main before PR #86.",
+    "expires": "2027-01-31",
+    "approvedBy": "pending-review"
+  },
+  {
+    "module": "forms/f1040/2025/mef/support/current-loss-original-form-review.test.ts",
+    "name": "current loss original-form native reviews reconcile original deductions and validate three reporting schemas",
+    "reason": "Validates against the private IRS TY2025 schema or PDF cache in .state/research, which CI and clean checkouts do not have.",
+    "requires": "irs-cache",
+    "expires": "2027-01-31",
+    "approvedBy": "pending-review"
+  },
+  {
+    "module": "forms/f1040/2025/mef/tests/xsd-validation.test.ts",
+    "name": "XSD: returnVersion matches 2025v5.4",
+    "reason": "Validates against the private IRS TY2025 schema or PDF cache in .state/research, which CI and clean checkouts do not have.",
+    "requires": "irs-cache",
+    "expires": "2027-01-31",
+    "approvedBy": "pending-review"
+  },
+  {
+    "module": "forms/f1040/2025/return-processing/calculated_return_replay.test.ts",
+    "name": "calculated Form 1040 and Schedule 1-3 amounts cannot change native XML without source replay",
+    "reason": "owned-two-farm-wotc-below unexpectedly cannot export XML. Fails on main before PR #86.",
+    "expires": "2027-01-31",
+    "approvedBy": "pending-review"
+  },
+  {
+    "module": "forms/f1040/nodes/inputs/general/foreign/f5471/worksheet-source.test.ts",
+    "name": "Separate unrelated-note diagnostic preserves sixteen category obligations; original shareholder-note native operands remain guarded",
+    "reason": "Validates against the private IRS TY2025 schema or PDF cache in .state/research, which CI and clean checkouts do not have.",
+    "requires": "irs-cache",
+    "expires": "2027-01-31",
+    "approvedBy": "pending-review"
+  },
+  {
+    "module": "forms/f1040/nodes/inputs/general/foreign/f5471/worksheet-source.test.ts",
+    "name": "Supported owned category documents validate canonical XSD; US-source Q unit explicitly remains guarded",
+    "reason": "Validates against the private IRS TY2025 schema or PDF cache in .state/research, which CI and clean checkouts do not have.",
+    "requires": "irs-cache",
+    "expires": "2027-01-31",
+    "approvedBy": "pending-review"
+  },
+  {
+    "module": "forms/f1040/nodes/intermediate/forms/deductions/business/form8990/run-two-pass.test.ts",
+    "name": "2025 Form 8990 bounded two-pass recomputes Schedule C after a sourced disallowance",
+    "reason": "Form 8990 finalized signed taxable income is not source-reconciled. Fails on main before PR #86.",
+    "expires": "2027-01-31",
+    "approvedBy": "pending-review"
+  },
+  {
+    "module": "forms/f1040/nodes/intermediate/forms/deductions/business/form8995a/aggregation_source.test.ts",
+    "name": "staged Schedule B refuses missing companion, changed Schedule C, and wrong filer",
+    "reason": "Guard order changed: the aggregation capital-limit guard now fires before the expected income-limit/dividends message. Fails on main before PR #86.",
+    "expires": "2027-01-31",
+    "approvedBy": "pending-review"
+  }
+]

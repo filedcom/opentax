@@ -9,6 +9,7 @@ import {
   classifiedIgnoredTests,
   discoveredTestModules,
   junitSummary,
+  openFailures,
   testRunExitCode,
 } from "./contracts.ts";
 
@@ -146,4 +147,47 @@ test("verification includes source and oracle JSON and detects changed fixture b
       "forms/source.json": "b".repeat(64),
     })
   );
+});
+
+test("known failures pass the gate until they expire; new failures and stale entries do not", () => {
+  const report = junitSummary(
+    '<testsuites tests="3" failures="2" skipped="0"><testsuite name="./a.test.ts" tests="3" skipped="0" failures="2"><testcase name="ok"/><testcase name="xsd"><failure/></testcase><testcase name="bug"><failure/></testcase></testsuite></testsuites>',
+  );
+  assertEquals(report.failedTests, [
+    { module: "a.test.ts", name: "xsd" },
+    { module: "a.test.ts", name: "bug" },
+  ]);
+  const entry = (name: string, requires?: "irs-cache") => ({
+    module: "a.test.ts",
+    name,
+    reason: "known",
+    ...(requires ? { requires } : {}),
+    expires: "2027-01-31",
+    approvedBy: "a7ul",
+  });
+  const baseline = [entry("xsd", "irs-cache"), entry("bug")];
+  assertEquals(
+    openFailures(report.failedTests, baseline, "2026-10-17", false),
+    [],
+  );
+  assertEquals(
+    openFailures(
+      report.failedTests,
+      [entry("xsd", "irs-cache")],
+      "2026-10-17",
+      false,
+    ),
+    [
+      "New failure: a.test.ts: bug",
+    ],
+  );
+  assertEquals(
+    openFailures(report.failedTests, baseline, "2027-02-01", false).length,
+    2,
+  );
+  // With the cache present, an irs-cache entry may pass; a fixed bug must leave the baseline.
+  assertEquals(openFailures([], baseline, "2026-10-17", true), [
+    "Stale baseline entry, the test passes: a.test.ts: bug",
+  ]);
+  assertEquals(openFailures([], baseline, "2026-10-17", false).length, 2);
 });

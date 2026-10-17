@@ -14,10 +14,11 @@ in [AGENTS.md](../../AGENTS.md); the rule each check owns is in the table in
 | `bun run bench --form f1040 --year 2025`    | the engine matches IRS ground truth                              | a supported line outside the $5 legacy tolerance, an unmapped oracle, a diagnostic, a skipped case                                                                                                                          |
 | `bun run check:sandbox`                     | the binary can reach the network only through restricted fetch   | a module `cli/main.ts` loads, dependencies included, that imports `child_process`, `net`, `http`, `worker_threads`, `vm`, `bun:ffi` or similar, or calls `Bun.spawn`, `eval` or a non-literal `import()`                    |
 | `bun run test:unit`                         | the module graph resolves, type-checks, and the typed tests pass | an unresolved import, a `tsc` error (strict, no unused locals or parameters), a missing or duplicate test module, a failing test, a runtime change during the run                                                           |
+| `bun run test:forms`                        | the node, MeF, validation and return-processing tests pass       | a failing test not in `scripts/testing/forms-failure-baseline.json`, an expired entry, an entry whose test now passes                                                                                                       |
 
 Every check prints each problem with its fix, takes `--json`, and exits 1 on any
-problem. `.github/workflows/test.yml` runs the first three, `check:sandbox` and
-`test:unit` on every pull request. `bench` runs locally until the baselined
+problem. `.github/workflows/test.yml` runs the first three, `check:sandbox`,
+`test:unit` and `test:forms` on every pull request. `bench` runs locally until the baselined
 cases below are fixed, then joins them.
 
 ## Ratchets
@@ -26,11 +27,12 @@ Existing debt is allowed with a reason, an expiry date and an approver; new debt
 fails. An expired entry fails, and an entry that no longer matches a problem
 fails until it is removed, so a baseline only shrinks.
 
-| File                                        | Keyed by               | Holds                                               |
-| ------------------------------------------- | ---------------------- | --------------------------------------------------- |
-| `scripts/testing/structure-baseline.json`   | path, node type        | nodes outside the tree, registry and reach problems |
-| `benchmark/cases/baseline.json`             | `<form>/<year>/<case>` | cases whose inputs no longer fit their node schema  |
-| `benchmark/cases/<form>/<year>/ledger.json` | case, line             | every expected-value change, with its publication   |
+| File                                          | Keyed by               | Holds                                               |
+| --------------------------------------------- | ---------------------- | --------------------------------------------------- |
+| `scripts/testing/structure-baseline.json`     | path, node type        | nodes outside the tree, registry and reach problems |
+| `benchmark/cases/baseline.json`               | `<form>/<year>/<case>` | cases whose inputs no longer fit their node schema  |
+| `scripts/testing/forms-failure-baseline.json` | test file, test name   | form tests known to fail                            |
+| `benchmark/cases/<form>/<year>/ledger.json`   | case, line             | every expected-value change, with its publication   |
 
 The ledger is history, not debt: it is append-only and never expires. An entry
 that cites the engine, its output or a reference calculator does not count.
@@ -51,6 +53,11 @@ rule and its enforcer in the STRUCTURE.md table.
 modules after resolving every runtime import of every TypeScript module and
 type-checking the tree with `tsc`. Tests run under `bun test --isolate`, a fresh
 global and module registry per file, with a 30-minute per-test limit.
+`test:forms` runs every test under `forms/<form>/{nodes,mef,validation}` and
+`forms/<form>/<year>/{mef,return-processing}` in parallel workers; tests marked
+`requires: "irs-cache"` in its baseline may pass when the private IRS schema
+cache is present. The domain, PDF and e2e suites are too slow for every pull
+request and stay in `bun run test`.
 `test:harness` selects the verification contracts and benchmark harness.
 `test:preflight` checks discovery and graph resolution without executing tests.
 Reports explicitly list excluded modules; a selected run does not prove complete
