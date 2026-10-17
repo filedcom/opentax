@@ -174,6 +174,11 @@ test("only provably inactive CLI balances become zero", () => {
     { line24_total_tax: 10, line33_total_payments: 9 },
   );
   assertEquals(benchmarkActualLines({}, {}), {});
+  // A break-even return writes a zero refund and leaves line 37 blank.
+  assertEquals(benchmarkActualLines({ line35a_refund: 0 }, {}), {
+    line35a_refund: 0,
+    line37_amount_owed: 0,
+  });
   assertEquals(
     benchmarkActualLines({ line35a_refund: null }, { line37_amount_owed: 10 }),
     { line35a_refund: null, line37_amount_owed: 10 },

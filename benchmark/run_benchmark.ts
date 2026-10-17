@@ -117,8 +117,9 @@ export function benchmarkActualLines(
   const owed = actual.line37_amount_owed;
   const noRefund = !("line35a_refund" in actual);
   const noOwed = !("line37_amount_owed" in actual);
-  if (noRefund && isFiniteNumber(owed) && owed > 0) actual.line35a_refund = 0;
-  if (noOwed && isFiniteNumber(refund) && refund > 0) {
+  // A return has a refund or an amount owed, never both; the blank side is zero.
+  if (noRefund && isFiniteNumber(owed) && owed >= 0) actual.line35a_refund = 0;
+  if (noOwed && isFiniteNumber(refund) && refund >= 0) {
     actual.line37_amount_owed = 0;
   }
   if (
