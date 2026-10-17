@@ -340,7 +340,10 @@ test("staged Schedule B and aggregated parent derive matching native and PDF val
   );
   assertStringIncludes(scheduleXml, "<EIN>123456789</EIN>");
   assertStringIncludes(scheduleXml, "<EIN>987654321</EIN>");
-  assertStringIncludes(scheduleXml, "<PriorYearChangeDesc>South Store acquired 2025-01-01</PriorYearChangeDesc>");
+  assertStringIncludes(
+    scheduleXml,
+    "<PriorYearChangeDesc>South Store acquired 2025-01-01</PriorYearChangeDesc>",
+  );
   assertStringIncludes(
     scheduleXml,
     "<TotQlfyBusinessIncomeOrLossAmt>171000</TotQlfyBusinessIncomeOrLossAmt>",
@@ -414,6 +417,23 @@ test("staged Schedule B refuses missing companion, changed Schedule C, and wrong
         pending: {
           ...pending,
           f1040: { ...pending.f1040, line3a_qualified_dividends: 100 },
+        },
+      }),
+    Error,
+    // Dividends with no retained investment source fail before reconciliation.
+    "Aggregation capital limit needs retained investment sources",
+  );
+  assertThrows(
+    () =>
+      buildStagedIRS8995AScheduleB(input, {
+        ...context,
+        pending: {
+          ...pending,
+          f1040: {
+            ...pending.f1040,
+            line15_taxable_income:
+              (pending.f1040?.line15_taxable_income as number) + 1,
+          },
         },
       }),
     Error,

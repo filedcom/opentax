@@ -291,19 +291,5 @@
     "requires": "irs-cache",
     "expires": "2027-01-31",
     "approvedBy": "pending-review"
-  },
-  {
-    "module": "forms/f1040/nodes/intermediate/forms/deductions/business/form8990/run-two-pass.test.ts",
-    "name": "2025 Form 8990 bounded two-pass recomputes Schedule C after a sourced disallowance",
-    "reason": "Form 8990 finalized signed taxable income is not source-reconciled. Fails on main before PR #86.",
-    "expires": "2027-01-31",
-    "approvedBy": "pending-review"
-  },
-  {
-    "module": "forms/f1040/nodes/intermediate/forms/deductions/business/form8995a/aggregation_source.test.ts",
-    "name": "staged Schedule B refuses missing companion, changed Schedule C, and wrong filer",
-    "reason": "Guard order changed: the aggregation capital-limit guard now fires before the expected income-limit/dividends message. Fails on main before PR #86.",
-    "expires": "2027-01-31",
-    "approvedBy": "pending-review"
   }
 ]

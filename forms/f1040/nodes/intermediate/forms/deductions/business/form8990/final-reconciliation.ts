@@ -167,7 +167,8 @@ export function reconcileBoundedForm8990FinalReturn(args: {
   const qbi = numberAt(result, "form8995", "qbi_deduction");
   const agi = profit - seDeduction - nol;
   const standardDeduction = provisionalAti.line7NonbusinessDeduction;
-  const taxable = agi - standardDeduction - qbi;
+  // Form 1040 line 15 subtracts the whole-dollar deduction lines.
+  const taxable = agi - standardDeduction - Math.round(qbi);
   if (taxable <= 0) {
     throw new Error(
       "Form 8990 finalized taxable income is outside the bounded positive route",
