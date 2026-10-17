@@ -12,8 +12,8 @@ export const inputSchema = z.object({
   reviews: z.array(carryoverReviewSchema).min(1),
 }).strict();
 
-class Form1116CarryoverReviewNode extends TaxNode<typeof inputSchema> {
-  readonly nodeType = "form1116_carryover_review";
+class F1116CarryoverReviewNode extends TaxNode<typeof inputSchema> {
+  readonly nodeType = "f1116_carryover_review";
   readonly inputSchema = inputSchema;
   readonly outputNodes = new OutputNodes([form_1116]);
 
@@ -27,4 +27,4 @@ class Form1116CarryoverReviewNode extends TaxNode<typeof inputSchema> {
   }
 }
 
-export const form1116_carryover_review = new Form1116CarryoverReviewNode();
+export const f1116_carryover_review = new F1116CarryoverReviewNode();

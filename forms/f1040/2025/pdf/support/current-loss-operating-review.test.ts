@@ -5,7 +5,7 @@ import { assertEquals, assertStringIncludes } from "@std/assert";
 import { PDFDocument } from "pdf-lib";
 import { f1040_2025 } from "../../index.ts";
 import { normalizeAllPending } from "../../return-processing/pending.ts";
-import { passivePropertyInputs } from "../../domains/credits/earned-income/earned-income/eic_passive_property.fixture.ts";
+import { passivePropertyInputs } from "../../domains/credits/earned-income/eic/eic_passive_property.fixture.ts";
 import { buildCurrentLossOperatingReviewPdfs } from "./current-loss-operating-review.ts";
 import { form4835Pdf } from "../forms/income/business/f4835.ts";
 

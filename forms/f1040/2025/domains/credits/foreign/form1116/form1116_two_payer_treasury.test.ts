@@ -60,7 +60,7 @@ function filedReturn() {
       foreign_trust_question: false,
     },
     f1099int: [foreignPayer, treasuryPayer],
-    form1116_review: {
+    f1116_review: {
       all_foreign_sources_reviewed: true,
       foreign_qualified_dividends: 0,
       foreign_capital_gains_or_losses_present: false,
@@ -68,7 +68,7 @@ function filedReturn() {
       no_amt_liability_verified: true,
       single_source_pdf_review: review,
     },
-    form1116_carryover_review: {
+    f1116_carryover_review: {
       reviews: [{
         income_category: "passive",
         prior_year_form1116_line23_limit: 700,

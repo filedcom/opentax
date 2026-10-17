@@ -33,7 +33,7 @@ export async function transferFixture(c: typeof transferCases[number]) {
   let remaining = 23049;
   for (const [index, f] of input.f8835.entries()) {
     const credit = credits[index];
-    const a = input.form3800_current_production_allocation.facilities[index];
+    const a = input.f3800_current_production_allocation.facilities[index];
     a.transfer_out_amount = f.transfer_election_amount;
     a.applied_credit = Math.min(remaining, credit - f.transfer_election_amount);
     remaining -= a.applied_credit;

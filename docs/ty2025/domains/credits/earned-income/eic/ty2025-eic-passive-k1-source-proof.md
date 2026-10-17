@@ -154,7 +154,7 @@ modules): `/tmp/opentax-eic-passive-k1-standard-files-final-oct6.txt`.
 
 ```sh
 deno task test $(cat /tmp/opentax-eic-passive-k1-standard-files-final-oct6.txt)
-deno task test forms/f1040/2025/domains/credits/earned-income/earned-income/eic_passive_k1_source.test.ts -- \
+deno task test forms/f1040/2025/domains/credits/earned-income/eic/eic_passive_k1_source.test.ts -- \
   --write-review-artifacts /tmp/NEW-IMMUTABLE-SOURCE-OUTPUT
 ```
 

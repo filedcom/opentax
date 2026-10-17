@@ -12,8 +12,8 @@ export const inputSchema = z.object({
   carryovers: z.array(priorYearCarryoverSchema).min(1),
 }).strict();
 
-class Form1116PriorCarryoverNode extends TaxNode<typeof inputSchema> {
-  readonly nodeType = "form1116_prior_carryover";
+class F1116PriorCarryoverNode extends TaxNode<typeof inputSchema> {
+  readonly nodeType = "f1116_prior_carryover";
   readonly inputSchema = inputSchema;
   readonly outputNodes = new OutputNodes([form_1116]);
 
@@ -27,4 +27,4 @@ class Form1116PriorCarryoverNode extends TaxNode<typeof inputSchema> {
   }
 }
 
-export const form1116_prior_carryover = new Form1116PriorCarryoverNode();
+export const f1116_prior_carryover = new F1116PriorCarryoverNode();

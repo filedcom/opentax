@@ -1,6 +1,6 @@
 import { withHealthPolicyRecords } from "../../nodes/intermediate/forms/adjustments/health/form7206/policy-records.fixture.ts";
 import { withRentedHomeEvidence } from "../../nodes/intermediate/forms/deductions/business/form_8829/source.fixture.ts";
-import { form8582crReviewFixtures } from "../domains/credits/business/form8582c/form8582cr_k1.fixture.ts";
+import { form8582crReviewFixtures } from "../domains/credits/business/form8582cr/form8582cr_k1.fixture.ts";
 import { ordinaryRothSubstituteReviewFixture } from "./reviews/general/composed-returns/review-4852-ordinary-roth.fixture.ts";
 import type { Form4852RetainedDocument } from "../domains/income/wages/form4852/form4852_source.ts";
 import { form8621QefReviewFixture } from "../domains/income/foreign/form8621/form8621_qef.fixture.ts";
@@ -6658,7 +6658,7 @@ const basePdfReviewFixtures: readonly PdfReviewFixture[] = [
         foreign_tax_source_document_reference:
           "synthetic-2025-canadian-1099-int",
       }],
-      form1116_review: {
+      f1116_review: {
         all_foreign_sources_reviewed: true,
         foreign_qualified_dividends: 0,
         foreign_capital_gains_or_losses_present: false,
@@ -6679,7 +6679,7 @@ const basePdfReviewFixtures: readonly PdfReviewFixture[] = [
           no_other_category_credit_confirmed: true,
         },
       },
-      form1116_carryover_review: {
+      f1116_carryover_review: {
         reviews: [{
           income_category: "passive",
           prior_year_form1116_line23_limit: 700,

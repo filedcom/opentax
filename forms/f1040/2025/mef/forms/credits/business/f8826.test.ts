@@ -5,7 +5,7 @@ import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import { calculateForm8826, f8826 } from "../../../../../nodes/inputs/credits/business/f8826/index.ts";
 import { f3800 } from "../../../../../nodes/inputs/credits/business/f3800/index.ts";
 import { disabledAccessLimit } from "../../../../../nodes/intermediate/forms/credits/business/disabled_access_limit/index.ts";
-import { buildForm8826Document, form8826 } from "./f8826_draft.ts";
+import { buildForm8826Document, form8826 } from "./f8826.ts";
 
 const source = {
   eligible_expenditures: 20_000,

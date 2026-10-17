@@ -122,11 +122,11 @@ test("Form 1116 source edges remain acyclic before credit calculation", () => {
     true,
   );
   assertEquals(
-    plan.indexOf("form1116_review") < plan.indexOf("form_1116"),
+    plan.indexOf("f1116_review") < plan.indexOf("form_1116"),
     true,
   );
   assertEquals(
-    plan.indexOf("form1116_prior_carryover") < plan.indexOf("form_1116"),
+    plan.indexOf("f1116_prior_carryover") < plan.indexOf("form_1116"),
     true,
   );
   assertEquals(plan.indexOf("form_1116") < plan.indexOf("f1040"), true);
@@ -183,7 +183,7 @@ test.skipIf(!xsdAvailable)("XSD: domestic qualified dividends adjust Form 1116 l
       foreign_source_interest_usd: 1_000,
       foreign_tax_irs_country_code: "CA",
     }],
-    form1116_review: {
+    f1116_review: {
       all_foreign_sources_reviewed: true,
       foreign_qualified_dividends: 0,
       foreign_capital_gains_or_losses_present: false,
@@ -325,7 +325,7 @@ test.skipIf(!xsdAvailable)("XSD: German 1099 interest reaches Form 1116 with IRS
       foreign_source_interest_usd: 1_000,
       foreign_tax_irs_country_code: "GM",
     }],
-    form1116_review: {
+    f1116_review: {
       all_foreign_sources_reviewed: true,
       foreign_qualified_dividends: 0,
       foreign_capital_gains_or_losses_present: false,
@@ -593,7 +593,7 @@ test.skipIf(!xsdAvailable)("XSD: Form 1116 uses sourced 2021-2024 carryovers wit
       digital_assets: false,
       taxpayer_ssn: "123456789",
     },
-    form1116_prior_carryover: { carryovers: [carryover] },
+    f1116_prior_carryover: { carryovers: [carryover] },
     form_1116: formFields as Parameters<typeof form1116.build>[0],
     form1116_schedule_b: scheduleBFieldsSchema.parse(scheduleBFields),
     schedule3: {

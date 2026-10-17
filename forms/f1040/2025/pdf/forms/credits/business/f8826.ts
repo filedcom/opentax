@@ -3,7 +3,7 @@ import type {
   PdfFormDescriptor,
 } from "../../../form-descriptor.ts";
 import { assertForm3800FinalCreditJoin } from "../../../../domains/credits/business/form3800/form3800_final_credit_join.ts";
-import { form8826 } from "../../../../mef/forms/credits/business/f8826_draft.ts";
+import { form8826 } from "../../../../mef/forms/credits/business/f8826.ts";
 import { reconcileDisabledAccessK1Credits } from "../../../../mef/forms/credits/business/f8826_credit_evidence.ts";
 import {
   calculateForm8826,

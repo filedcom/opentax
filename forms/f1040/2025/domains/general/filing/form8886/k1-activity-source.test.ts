@@ -14,7 +14,7 @@ import { extractFilerIdentity } from "../../../../../mef/filer.ts";
 import {
   passiveSCorpCombinedLossReturnInputs,
   passiveSCorpLossReturnInputs,
-} from "../../../credits/earned-income/earned-income/eic_passive_s_corp_loss.fixture.ts";
+} from "../../../credits/earned-income/eic/eic_passive_s_corp_loss.fixture.ts";
 import { disclosureFixture } from "./source.fixture.ts";
 import {
   EntityType,

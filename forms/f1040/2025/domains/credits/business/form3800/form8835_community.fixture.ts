@@ -279,7 +279,7 @@ export async function communityFixture(c: typeof communityCases[number]) {
   }
   let remaining = 23049;
   const allocation =
-    fixture.input.form3800_current_production_allocation.facilities;
+    fixture.input.f3800_current_production_allocation.facilities;
   for (let i = 0; i < allocation.length; i++) {
     const f = fixture.input.f8835[i];
     const base = Math.round(f.kwh_sold * .006) * (c.reason === "none" ? 1 : 5);

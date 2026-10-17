@@ -844,7 +844,7 @@ review, test logs and the checksum manifest. Work continues on draft PR70.
 
 ## October 10 reviewed current K-1 partial-use allocation checkpoint
 
-The public `form3800_current_orphan_allocation` input now accepts a complete
+The public `f3800_current_orphan_allocation` input now accepts a complete
 reviewed inventory of current nonpassive partnership/S-corporation orphan-drug
 credits. Records identify the reporting year, primary filer, review reference,
 source type, EIN, source document, gross credit and amount used. The independent
@@ -998,7 +998,7 @@ No numeric change or fresh benchmark claim.
 
 ## October 10 reviewed multiple-facility allocation checkpoint
 
-A public `form3800_current_production_allocation` record now supplies reviewed
+A public `f3800_current_production_allocation` record now supplies reviewed
 per-facility tax use when the Form 3800 limit cuts across multiple current
 Form 8835 credits. Its complete inventory binds the tax year, primary filer,
 review reference, facility address/coordinates/service date, description,

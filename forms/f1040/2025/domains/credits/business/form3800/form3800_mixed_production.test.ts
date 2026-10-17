@@ -496,7 +496,7 @@ function reviewedFixture(test: typeof cases[number]) {
         test.lessee,
       ),
     })),
-    form3800_current_orphan_allocation: {
+    f3800_current_orphan_allocation: {
       tax_year: 2025 as const,
       return_primary_ssn: "111223333",
       review_reference:
@@ -547,7 +547,7 @@ function reviewedFixture(test: typeof cases[number]) {
     ...combined,
     ...(test.review
       ? {
-        form3800_current_production_allocation: {
+        f3800_current_production_allocation: {
           tax_year: 2025 as const,
           return_primary_ssn: "111223333",
           review_reference: "Synthetic complete facility tax-use review",
@@ -703,7 +703,7 @@ for (const test of cases) {
         row.appliedCredit
       ),
       parts.currentDetails.filter((row) => row.line === "1h").map((row) =>
-        input.form3800_current_orphan_allocation.sources.find((source) =>
+        input.f3800_current_orphan_allocation.sources.find((source) =>
           source.source_ein === row.passThroughEin
         )!.applied_credit
       ),
@@ -803,13 +803,13 @@ for (const test of cases) {
         Reflect.deleteProperty(p.f3800, "current_orphan_allocation_review");
       },
       (p) => {
-        Reflect.deleteProperty(p, "form3800_current_orphan_allocation");
+        Reflect.deleteProperty(p, "f3800_current_orphan_allocation");
       },
       (p) => {
-        p.form3800_current_orphan_allocation.return_primary_ssn = "999887777";
+        p.f3800_current_orphan_allocation.return_primary_ssn = "999887777";
       },
       (p) => {
-        p.form3800_current_orphan_allocation.review_reference =
+        p.f3800_current_orphan_allocation.review_reference =
           "Changed retained review";
       },
       (p) => {
@@ -829,7 +829,7 @@ for (const test of cases) {
     if (test.review) {
       mutations.push(
         (p) => {
-          Reflect.deleteProperty(p, "form3800_current_production_allocation");
+          Reflect.deleteProperty(p, "f3800_current_production_allocation");
         },
         (p) => {
           Reflect.deleteProperty(
@@ -838,11 +838,11 @@ for (const test of cases) {
           );
         },
         (p) => {
-          p.form3800_current_production_allocation.return_primary_ssn =
+          p.f3800_current_production_allocation.return_primary_ssn =
             "999887777";
         },
         (p) => {
-          p.form3800_current_production_allocation.review_reference =
+          p.f3800_current_production_allocation.review_reference =
             "Changed review";
         },
         (p) => {
@@ -852,7 +852,7 @@ for (const test of cases) {
           >;
           const rows = review.facilities as Array<Record<string, unknown>>;
           rows.pop();
-          p.form3800_current_production_allocation = structuredClone(review);
+          p.f3800_current_production_allocation = structuredClone(review);
         },
         (p) => {
           const review = p.f3800.current_production_allocation_review as Record<
@@ -861,7 +861,7 @@ for (const test of cases) {
           >;
           const rows = review.facilities as Array<Record<string, unknown>>;
           rows[0].applied_credit = Number(rows[0].applied_credit) + 1;
-          p.form3800_current_production_allocation = structuredClone(review);
+          p.f3800_current_production_allocation = structuredClone(review);
         },
         (p) => {
           const review = p.f3800.current_production_allocation_review as Record<
@@ -870,7 +870,7 @@ for (const test of cases) {
           >;
           const rows = review.facilities as Array<Record<string, unknown>>;
           rows[0].facility_description = "Changed facility";
-          p.form3800_current_production_allocation = structuredClone(review);
+          p.f3800_current_production_allocation = structuredClone(review);
         },
         (p) => {
           const review = p.f3800.current_production_allocation_review as Record<
@@ -879,7 +879,7 @@ for (const test of cases) {
           >;
           const rows = review.facilities as Array<Record<string, unknown>>;
           rows[0].facility_latitude = 40;
-          p.form3800_current_production_allocation = structuredClone(review);
+          p.f3800_current_production_allocation = structuredClone(review);
         },
         (p) => {
           const review = p.f3800.current_production_allocation_review as Record<
@@ -888,11 +888,11 @@ for (const test of cases) {
           >;
           const rows = review.facilities as Array<Record<string, unknown>>;
           rows[0] = structuredClone(rows[1]);
-          p.form3800_current_production_allocation = structuredClone(review);
+          p.f3800_current_production_allocation = structuredClone(review);
         },
         (p) => {
           p.f3800.form8835_applied_credits_by_facility = input
-            .form3800_current_production_allocation!.facilities.map((r) =>
+            .f3800_current_production_allocation!.facilities.map((r) =>
               r.applied_credit + 1
             );
         },

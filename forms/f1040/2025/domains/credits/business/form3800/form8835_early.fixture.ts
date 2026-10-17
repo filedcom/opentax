@@ -170,7 +170,7 @@ export async function earlyFixture(c: typeof earlyCases[number]) {
     f.increased_credit_reason = "construction_before_2023_01_29";
     f.facility_construction_start_date = c.start;
     f.facility_placed_in_service_date = c.service;
-    fixture.input.form3800_current_production_allocation.facilities[i]
+    fixture.input.f3800_current_production_allocation.facilities[i]
       .facility_placed_in_service_date = c.service;
     const pdf = await PDFDocument.load(fixture.attachments[i].bytes);
     const form = pdf.getForm();

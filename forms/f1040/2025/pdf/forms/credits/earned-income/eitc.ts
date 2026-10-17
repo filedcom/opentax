@@ -1,7 +1,7 @@
 import type { PdfFieldEntry, PdfFormDescriptor } from "../../../form-descriptor.ts";
 import { rgb, StandardFonts } from "pdf-lib";
 import { qualifyingChildDetailSchema } from "../../../../../nodes/intermediate/forms/credits/earned-income/eitc/index.ts";
-import { scheduleEicLine6Months } from "../../../../domains/credits/earned-income/earned-income/eic-birth-residency.ts";
+import { scheduleEicLine6Months } from "../../../../domains/credits/earned-income/eic/eic-birth-residency.ts";
 
 // The 2025 Schedule EIC filing page has child columns, not income summaries.
 // AcroForm fields 24-26 are each child's line 6 months lived in the U.S.

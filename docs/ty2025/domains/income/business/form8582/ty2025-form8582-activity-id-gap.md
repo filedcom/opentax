@@ -188,7 +188,7 @@ review, and IRS filing acceptance remain open.
 
 ## Reviewed 2024 record joined to the 2025 return graph, unrun
 
-The public `form8582_prior_year_record` source now carries one typed, reviewed
+The public `f8582_prior_year_record` source now carries one typed, reviewed
 filed-2024 Form 8582 record into the existing Schedule E activity node. It names
 the accepted-return reference, filed Form 8582 reference, durable activity IDs,
 Part VII column (c) balances, and Part VIII/IX reporting form and loss

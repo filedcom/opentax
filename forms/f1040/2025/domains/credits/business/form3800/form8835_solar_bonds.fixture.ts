@@ -87,7 +87,7 @@ export async function solarBondFixture(c: typeof solarBondCases[number]) {
       (f.energy_community_bonus ? Math.round(increased / 10) : 0);
     credits.push(credit);
     const allocation =
-      input.form3800_current_production_allocation.facilities[index];
+      input.f3800_current_production_allocation.facilities[index];
     allocation.credit_amount = credit;
     allocation.applied_credit = Math.min(available, credit);
     available -= allocation.applied_credit;

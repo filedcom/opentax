@@ -49,7 +49,7 @@ function reviewedFixture(test: typeof cases[number]) {
   // The review deliberately uses a different order than either node's K-1 list.
   return {
     ...input,
-    form3800_current_orphan_allocation: {
+    f3800_current_orphan_allocation: {
       tax_year: 2025 as const,
       return_primary_ssn: "111223333",
       review_reference:
@@ -159,7 +159,7 @@ for (const test of cases) {
     assertEquals(
       parts.currentDetails.map((row) => row.appliedCredit),
       parts.currentDetails.map((row) =>
-        input.form3800_current_orphan_allocation.sources.find((source) =>
+        input.f3800_current_orphan_allocation.sources.find((source) =>
           source.source_ein === row.passThroughEin
         )!.applied_credit
       ),
@@ -217,13 +217,13 @@ for (const test of cases) {
         Reflect.deleteProperty(p.f3800, "current_orphan_allocation_review");
       },
       (p) => {
-        Reflect.deleteProperty(p, "form3800_current_orphan_allocation");
+        Reflect.deleteProperty(p, "f3800_current_orphan_allocation");
       },
       (p) => {
-        p.form3800_current_orphan_allocation.return_primary_ssn = "999887777";
+        p.f3800_current_orphan_allocation.return_primary_ssn = "999887777";
       },
       (p) => {
-        p.form3800_current_orphan_allocation.review_reference =
+        p.f3800_current_orphan_allocation.review_reference =
           "Changed retained review";
       },
       (p) => {

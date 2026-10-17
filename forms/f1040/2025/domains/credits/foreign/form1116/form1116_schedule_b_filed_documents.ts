@@ -118,7 +118,7 @@ export async function reviewForm1116ScheduleBFiledDocuments(
   const currentOwner = digits(currentFilerSsn);
   assertForm1116CarryoverSource({
     general: { taxpayer_ssn: currentOwner },
-    form1116_prior_carryover: { carryovers: [source] },
+    f1116_prior_carryover: { carryovers: [source] },
   }, source);
   if (
     !filed || !/^\d{9}$/.test(currentOwner) ||

@@ -312,7 +312,7 @@ export async function communityBocFixture(c: typeof communityBocCases[number]) {
       }
     }
     Object.assign(
-      fixture.input.form3800_current_production_allocation.facilities[i],
+      fixture.input.f3800_current_production_allocation.facilities[i],
       {
         facility_us_address: f.facility_us_address,
         facility_latitude: f.facility_latitude,

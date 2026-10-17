@@ -4,7 +4,7 @@ import {
   IncomeCategory,
   priorYearCarryoverSchema,
 } from "../../../../intermediate/forms/credits/foreign/form_1116/index.ts";
-import { form1116_prior_carryover, inputSchema } from "./index.ts";
+import { f1116_prior_carryover, inputSchema } from "./index.ts";
 
 const originated2020 = {
   income_category: IncomeCategory.Passive,
@@ -76,7 +76,7 @@ const originated2015 = {
 };
 
 test("Form 1116 prior-year source retains a 2020-origin credit", () => {
-  const result = form1116_prior_carryover.compute(
+  const result = f1116_prior_carryover.compute(
     { taxYear: 2025, formType: "f1040" },
     { carryovers: [originated2020] },
   );
@@ -103,7 +103,7 @@ test("Form 1116 prior-year source retains a 2020-origin credit", () => {
 });
 
 test("Form 1116 prior-year source retains a 2019-origin credit", () => {
-  const result = form1116_prior_carryover.compute(
+  const result = f1116_prior_carryover.compute(
     { taxYear: 2025, formType: "f1040" },
     { carryovers: [originated2019] },
   );
@@ -114,7 +114,7 @@ test("Form 1116 prior-year source retains a 2019-origin credit", () => {
 });
 
 test("Form 1116 prior-year source retains a 2018-origin credit", () => {
-  const result = form1116_prior_carryover.compute(
+  const result = f1116_prior_carryover.compute(
     { taxYear: 2025, formType: "f1040" },
     { carryovers: [originated2018] },
   );
@@ -125,7 +125,7 @@ test("Form 1116 prior-year source retains a 2018-origin credit", () => {
 });
 
 test("Form 1116 prior-year source retains passive 2017 origin and rejects unsourced general allocation", () => {
-  const result = form1116_prior_carryover.compute(
+  const result = f1116_prior_carryover.compute(
     { taxYear: 2025, formType: "f1040" },
     { carryovers: [originated2017] },
   );
@@ -144,7 +144,7 @@ test("Form 1116 prior-year source retains passive 2017 origin and rejects unsour
 });
 
 test("Form 1116 prior-year source retains passive 2016 origin and rejects unsourced general allocation", () => {
-  const result = form1116_prior_carryover.compute(
+  const result = f1116_prior_carryover.compute(
     { taxYear: 2025, formType: "f1040" },
     { carryovers: [originated2016] },
   );
@@ -163,7 +163,7 @@ test("Form 1116 prior-year source retains passive 2016 origin and rejects unsour
 });
 
 test("Form 1116 prior-year source retains passive 2015 origin and rejects unsourced general allocation", () => {
-  const result = form1116_prior_carryover.compute(
+  const result = f1116_prior_carryover.compute(
     { taxYear: 2025, formType: "f1040" },
     { carryovers: [originated2015] },
   );

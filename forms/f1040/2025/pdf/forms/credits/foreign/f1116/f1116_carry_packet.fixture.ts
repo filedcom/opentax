@@ -59,7 +59,7 @@ export async function verifyCarryoverPacket(
   }
   for (
     const altered of [
-      { ...pending, form1116_prior_carryover: undefined },
+      { ...pending, f1116_prior_carryover: undefined },
       { ...pending, form1116_schedule_b: undefined },
       {
         ...pending,

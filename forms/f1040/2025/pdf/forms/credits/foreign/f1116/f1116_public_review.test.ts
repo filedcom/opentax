@@ -83,7 +83,7 @@ function inputs() {
       foreign_tax_irs_country_code: "CA",
       foreign_tax_source_document_reference: bankReference,
     }],
-    form1116_review: {
+    f1116_review: {
       all_foreign_sources_reviewed: true as const,
       foreign_qualified_dividends: 0 as const,
       foreign_capital_gains_or_losses_present: false as const,
@@ -91,7 +91,7 @@ function inputs() {
       no_amt_liability_verified: true as const,
       single_source_pdf_review: singleSourceReview,
     },
-    form1116_carryover_review: {
+    f1116_carryover_review: {
       reviews: [{
         income_category: "passive",
         prior_year_form1116_line23_limit: 700,
@@ -157,20 +157,20 @@ test("Form 1116 passive 2015 carryover expires while 2025 excess reaches native 
       .filer;
   const result = execute(buildExecutionPlan(registry), registry, {
     ...source,
-    form1116_review: {
-      ...source.form1116_review,
+    f1116_review: {
+      ...source.f1116_review,
       single_source_pdf_review: {
         ...singleSourceReview,
         no_prior_year_carryover_or_carryback_confirmed: false,
       },
     },
-    form1116_carryover_review: {
+    f1116_carryover_review: {
       reviews: [{
-        ...source.form1116_carryover_review.reviews[0],
+        ...source.f1116_carryover_review.reviews[0],
         prior_year_schedule_b_line8_balance: 100,
       }],
     },
-    form1116_prior_carryover: {
+    f1116_prior_carryover: {
       carryovers: [{
         income_category: "passive",
         vintages: [{
@@ -259,9 +259,9 @@ test("Form 1116 passive 2015 carryover expires while 2025 excess reaches native 
       },
       {
         ...pending,
-        form1116_prior_carryover: {
+        f1116_prior_carryover: {
           carryovers: [{
-            ...((pending.form1116_prior_carryover as {
+            ...((pending.f1116_prior_carryover as {
               carryovers: Array<Record<string, unknown>>;
             }).carryovers[0]),
             filed_2024_schedule_b: {
@@ -273,9 +273,9 @@ test("Form 1116 passive 2015 carryover expires while 2025 excess reaches native 
       },
       {
         ...pending,
-        form1116_prior_carryover: {
+        f1116_prior_carryover: {
           carryovers: [{
-            ...((pending.form1116_prior_carryover as {
+            ...((pending.f1116_prior_carryover as {
               carryovers: Array<Record<string, unknown>>;
             }).carryovers[0]),
             filed_2024_schedule_b: {
@@ -466,18 +466,18 @@ test("Form 1116 sole 1099-INT PDF rejects other payer amounts that contradict th
 });
 
 test("Form 1116 single-source passive credit uses and expires a reviewed 2015 vintage", async () => {
-  const { form1116_carryover_review: _excessReview, ...source } = inputs();
+  const { f1116_carryover_review: _excessReview, ...source } = inputs();
   const result = execute(buildExecutionPlan(registry), registry, {
     ...source,
     f1099int: [{ ...source.f1099int[0], box6: 100 }],
-    form1116_review: {
-      ...source.form1116_review,
+    f1116_review: {
+      ...source.f1116_review,
       single_source_pdf_review: {
         ...singleSourceReview,
         no_prior_year_carryover_or_carryback_confirmed: false,
       },
     },
-    form1116_prior_carryover: {
+    f1116_prior_carryover: {
       carryovers: [{
         income_category: "passive",
         vintages: [{
@@ -563,7 +563,7 @@ test("Form 1116 single-source passive credit uses and expires a reviewed 2015 vi
 });
 
 test("Form 1116 2016 passive carryover needs filed 2024 eighth-preceding identity at native and PDF export", async () => {
-  const { form1116_carryover_review: _excessReview, ...source } = inputs();
+  const { f1116_carryover_review: _excessReview, ...source } = inputs();
   const filed2024 = {
     taxpayer_ssn: "111223333",
     tax_year: 2024 as const,
@@ -591,14 +591,14 @@ test("Form 1116 2016 passive carryover needs filed 2024 eighth-preceding identit
   const result = execute(buildExecutionPlan(registry), registry, {
     ...source,
     f1099int: [{ ...source.f1099int[0], box6: 100 }],
-    form1116_review: {
-      ...source.form1116_review,
+    f1116_review: {
+      ...source.f1116_review,
       single_source_pdf_review: {
         ...singleSourceReview,
         no_prior_year_carryover_or_carryback_confirmed: false,
       },
     },
-    form1116_prior_carryover: { carryovers: [carryover] },
+    f1116_prior_carryover: { carryovers: [carryover] },
   }, { taxYear: 2025, formType: "f1040" });
   assertEquals(result.diagnostics, []);
   await verifyCarryoverPacket(result.pending, "2016-use", {
@@ -663,7 +663,7 @@ test("Form 1116 2016 passive carryover needs filed 2024 eighth-preceding identit
   for (const filed of changed) {
     const tampered = {
       ...pending,
-      form1116_prior_carryover: {
+      f1116_prior_carryover: {
         carryovers: [{ ...carryover, filed_2024_schedule_b: filed }],
       },
     };
@@ -676,7 +676,7 @@ test("Form 1116 2016 passive carryover needs filed 2024 eighth-preceding identit
   }
   const noFiled = {
     ...pending,
-    form1116_prior_carryover: {
+    f1116_prior_carryover: {
       carryovers: [{ ...carryover, filed_2024_schedule_b: undefined }],
     },
   };
@@ -689,7 +689,7 @@ test("Form 1116 2016 passive carryover needs filed 2024 eighth-preceding identit
 });
 
 test("Form 1116 2017 passive carryover joins filed 2024 seventh-preceding column through native and PDF", async () => {
-  const { form1116_carryover_review: _excessReview, ...source } = inputs();
+  const { f1116_carryover_review: _excessReview, ...source } = inputs();
   const filed2024 = {
     taxpayer_ssn: "111223333",
     tax_year: 2024 as const,
@@ -717,14 +717,14 @@ test("Form 1116 2017 passive carryover joins filed 2024 seventh-preceding column
   const result = execute(buildExecutionPlan(registry), registry, {
     ...source,
     f1099int: [{ ...source.f1099int[0], box6: 100 }],
-    form1116_review: {
-      ...source.form1116_review,
+    f1116_review: {
+      ...source.f1116_review,
       single_source_pdf_review: {
         ...singleSourceReview,
         no_prior_year_carryover_or_carryback_confirmed: false,
       },
     },
-    form1116_prior_carryover: { carryovers: [carryover] },
+    f1116_prior_carryover: { carryovers: [carryover] },
   }, { taxYear: 2025, formType: "f1040" });
   assertEquals(result.diagnostics, []);
   await verifyCarryoverPacket(result.pending, "2017-use", {
@@ -790,7 +790,7 @@ test("Form 1116 2017 passive carryover joins filed 2024 seventh-preceding column
   ) {
     const altered = {
       ...pending,
-      form1116_prior_carryover: {
+      f1116_prior_carryover: {
         carryovers: [{ ...carryover, filed_2024_schedule_b: changed }],
       },
     };
@@ -804,7 +804,7 @@ test("Form 1116 2017 passive carryover joins filed 2024 seventh-preceding column
 });
 
 test("Form 1116 filed 2024 line 8 binds every 2018-2024 vintage to native and PDF Schedule B", async () => {
-  const { form1116_carryover_review: _excessReview, ...source } = inputs();
+  const { f1116_carryover_review: _excessReview, ...source } = inputs();
   const filed2024 = {
     taxpayer_ssn: "111223333",
     tax_year: 2024 as const,
@@ -839,14 +839,14 @@ test("Form 1116 filed 2024 line 8 binds every 2018-2024 vintage to native and PD
   const result = execute(buildExecutionPlan(registry), registry, {
     ...source,
     f1099int: [{ ...source.f1099int[0], box6: 100 }],
-    form1116_review: {
-      ...source.form1116_review,
+    f1116_review: {
+      ...source.f1116_review,
       single_source_pdf_review: {
         ...singleSourceReview,
         no_prior_year_carryover_or_carryback_confirmed: false,
       },
     },
-    form1116_prior_carryover: { carryovers: [filedScheduleB] },
+    f1116_prior_carryover: { carryovers: [filedScheduleB] },
   }, { taxYear: 2025, formType: "f1040" });
   assertEquals(result.diagnostics, []);
   await verifyCarryoverPacket(result.pending, "2018-through-2024-use", {
@@ -948,7 +948,7 @@ test("Form 1116 filed 2024 line 8 binds every 2018-2024 vintage to native and PD
   for (const key of filedKeys) {
     const altered = {
       ...pending,
-      form1116_prior_carryover: {
+      f1116_prior_carryover: {
         carryovers: [{
           ...filedScheduleB,
           filed_2024_schedule_b: { ...filed2024, [key]: 101 },
@@ -972,7 +972,7 @@ test("Form 1116 filed 2024 line 8 binds every 2018-2024 vintage to native and PD
   }
   const extraYear = {
     ...pending,
-    form1116_prior_carryover: {
+    f1116_prior_carryover: {
       carryovers: [{
         ...filedScheduleB,
         filed_2024_schedule_b: {
@@ -999,7 +999,7 @@ test("Form 1116 filed 2024 line 8 binds every 2018-2024 vintage to native and PD
 });
 
 test("Form 1116 uses filed 2023 before 2024 carryover through return, native forms, and PDFs", async () => {
-  const { form1116_carryover_review: _excessReview, ...source } = inputs();
+  const { f1116_carryover_review: _excessReview, ...source } = inputs();
   const filedScheduleB = {
     income_category: "passive",
     vintages: [
@@ -1033,14 +1033,14 @@ test("Form 1116 uses filed 2023 before 2024 carryover through return, native for
   const result = execute(buildExecutionPlan(registry), registry, {
     ...source,
     f1099int: [{ ...source.f1099int[0], box6: 100 }],
-    form1116_review: {
-      ...source.form1116_review,
+    f1116_review: {
+      ...source.f1116_review,
       single_source_pdf_review: {
         ...singleSourceReview,
         no_prior_year_carryover_or_carryback_confirmed: false,
       },
     },
-    form1116_prior_carryover: { carryovers: [filedScheduleB] },
+    f1116_prior_carryover: { carryovers: [filedScheduleB] },
   }, { taxYear: 2025, formType: "f1040" });
   assertEquals(result.diagnostics, []);
   await verifyCarryoverPacket(result.pending, "oldest-first-partial-use", {
@@ -1154,7 +1154,7 @@ test("Form 1116 uses filed 2023 before 2024 carryover through return, native for
   );
   const changedIntake = {
     ...pending,
-    form1116_prior_carryover: {
+    f1116_prior_carryover: {
       carryovers: [
         changedSplit.form1116_schedule_b.prior_year_carryover_source,
       ],

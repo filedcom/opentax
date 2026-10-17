@@ -76,7 +76,7 @@ test("Form 1116: 1099-INT box 6 credit is capped by the §904 ratio, not taken w
       foreign_source_interest_usd: 1_000,
       foreign_tax_irs_country_code: "CA",
     }],
-    form1116_carryover_review: {
+    f1116_carryover_review: {
       reviews: [{
         income_category: "passive",
         prior_year_form1116_line23_limit: 500,
@@ -140,7 +140,7 @@ test("Form 1116: public 2024 Schedule B input uses only available 2025 passive l
       foreign_source_interest_usd: 1_000,
       foreign_tax_irs_country_code: "CA",
     }],
-    form1116_prior_carryover: {
+    f1116_prior_carryover: {
       carryovers: [{
         income_category: "passive",
         vintages: [{

@@ -147,7 +147,7 @@ export const form1116ScheduleBPdf: PdfFormDescriptor = {
     if (
       presentation.case !== "current_year_excess" &&
       (allPending.f1040 !== undefined ||
-        allPending.form1116_prior_carryover !== undefined)
+        allPending.f1116_prior_carryover !== undefined)
     ) {
       assertForm1116CarryoverSource(
         allPending,

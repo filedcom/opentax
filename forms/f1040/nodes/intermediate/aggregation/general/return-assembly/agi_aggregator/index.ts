@@ -30,7 +30,7 @@ import type { FilingStatus } from "../../../../../types.ts";
 import { CONFIG_BY_YEAR } from "../../../../../config/index.ts";
 import { schedule1a } from "../../../../forms/deductions/additional/schedule1a/index.ts";
 import { agi_final } from "../agi_final/index.ts";
-import { schedule_j_calculation } from "../../../../forms/taxes/income-averaging/schedule_j/index.ts";
+import { schedule_j_calculation } from "../../../../forms/taxes/income-averaging/schedule_j_calculation/index.ts";
 import { box11CodeJSourceSchema } from "../../../../../inputs/income/rental-passthrough/k1_partnership/box11_code_j.ts";
 import { box11CodeESourceSchema } from "../../../../../inputs/income/rental-passthrough/k1_partnership/box11_code_e.ts";
 import { box11CodeKSourceSchema } from "../../../../../inputs/income/rental-passthrough/k1_partnership/box11_code_k.ts";

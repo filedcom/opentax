@@ -103,7 +103,7 @@ function filedReturn() {
     },
     f1099int: [canada, germany],
     f1099div: [france],
-    form1116_review: {
+    f1116_review: {
       all_foreign_sources_reviewed: true,
       foreign_qualified_dividends: 0,
       foreign_capital_gains_or_losses_present: false,
@@ -111,7 +111,7 @@ function filedReturn() {
       no_amt_liability_verified: true,
       three_country_mixed_pdf_review: review,
     },
-    form1116_carryover_review: {
+    f1116_carryover_review: {
       reviews: [{
         income_category: "passive",
         prior_year_form1116_line23_limit: 500,

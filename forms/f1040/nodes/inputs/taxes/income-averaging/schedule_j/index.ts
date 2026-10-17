@@ -4,11 +4,11 @@ import { TaxNode } from "../../../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../../../core/types/output-nodes.ts";
 import type { NodeContext } from "../../../../../../../core/types/node-context.ts";
 import { baseYearSourceSchema } from "./base_years.ts";
-import { schedule_j_calculation } from "../../../../intermediate/forms/taxes/income-averaging/schedule_j/index.ts";
+import { schedule_j_calculation } from "../../../../intermediate/forms/taxes/income-averaging/schedule_j_calculation/index.ts";
 import { income_tax_calculation } from "../../../../intermediate/worksheets/taxes/calculation/income_tax_calculation/index.ts";
 
-import { ordinaryYearFactsSchema } from "../../../../intermediate/forms/taxes/income-averaging/schedule_j/calculation.ts";
-import { scheduleJTaxSourceSchema } from "../../../../intermediate/forms/taxes/income-averaging/schedule_j/tax-source.ts";
+import { ordinaryYearFactsSchema } from "../../../../intermediate/forms/taxes/income-averaging/schedule_j_calculation/calculation.ts";
+import { scheduleJTaxSourceSchema } from "../../../../intermediate/forms/taxes/income-averaging/schedule_j_calculation/tax-source.ts";
 
 const nonfarmWageSourceSchema = z.object({
   document_id: z.string().trim().min(1),

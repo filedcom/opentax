@@ -9,7 +9,7 @@ import type {
   PdfFormDescriptor,
 } from "../../../../form-descriptor.ts";
 import { assertForm3800FinalCreditJoin } from "../../../../../domains/credits/business/form3800/form3800_final_credit_join.ts";
-import { reconcileFiledForm8582CROrdinary } from "../../../../../domains/credits/business/form8582c/form8582cr_filed_ordinary.ts";
+import { reconcileFiledForm8582CROrdinary } from "../../../../../domains/credits/business/form8582cr/form8582cr_filed_ordinary.ts";
 import {
   calculateForm8820,
   inputSchema as f8820InputSchema,
@@ -150,19 +150,19 @@ export const form3800Pdf: PdfFormDescriptor = {
     const source = f3800InputSchema.parse(pending3800);
     assertCurrentProductionAllocationSource(
       source.current_production_allocation_review,
-      all.form3800_current_production_allocation,
+      all.f3800_current_production_allocation,
     );
     assertCurrentProductionAllocationSource(
       raw.current_production_allocation_review,
-      all.form3800_current_production_allocation,
+      all.f3800_current_production_allocation,
     );
     assertCurrentOrphanAllocationSource(
       source.current_orphan_allocation_review,
-      all.form3800_current_orphan_allocation,
+      all.f3800_current_orphan_allocation,
     );
     assertCurrentOrphanAllocationSource(
       raw.current_orphan_allocation_review,
-      all.form3800_current_orphan_allocation,
+      all.f3800_current_orphan_allocation,
     );
     if (source.f8864_direct_producer_credit) {
       const { lines } = reconcileForm8864DocumentSource(all.f8864, all);

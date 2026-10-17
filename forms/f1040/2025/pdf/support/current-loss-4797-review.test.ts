@@ -4,7 +4,7 @@ import * as sys from "../../../../../scripts/support/sys.ts";
 import { assertEquals, assertStringIncludes } from "@std/assert";
 import { PDFDocument } from "pdf-lib";
 import { f1040_2025 } from "../../index.ts";
-import { passivePropertyInputs } from "../../domains/credits/earned-income/earned-income/eic_passive_property.fixture.ts";
+import { passivePropertyInputs } from "../../domains/credits/earned-income/eic/eic_passive_property.fixture.ts";
 import { normalizeAllPending } from "../../return-processing/pending.ts";
 import { form4797Pdf } from "../forms/income/business/f4797.ts";
 import { buildCurrentLoss4797ReviewPdf } from "./current-loss-4797-review.ts";

@@ -817,11 +817,11 @@ export function prepareForm3800DocumentParts(
   const { tax, parsed, passiveActivity, lines, allowedCredit } = base;
   assertCurrentProductionAllocationSource(
     parsed.current_production_allocation_review,
-    context.pending?.form3800_current_production_allocation,
+    context.pending?.f3800_current_production_allocation,
   );
   assertCurrentOrphanAllocationSource(
     parsed.current_orphan_allocation_review,
-    context.pending?.form3800_current_orphan_allocation,
+    context.pending?.f3800_current_orphan_allocation,
   );
   const carryforwardEntries = parsed.carryforward_vintages ?? [];
   const empowermentCarryforward = reconcileForm3800NonpassiveCarryforwards(

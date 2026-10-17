@@ -1,7 +1,7 @@
 import { test } from "bun:test";
 import { assertEquals, assertRejects, assertThrows } from "@std/assert";
 import { stageForm172ProjectedReturn } from "./form172_projected_return.ts";
-import { passiveK1Inputs, passiveK1Item } from "../../../credits/earned-income/earned-income/eic_passive_k1.fixture.ts";
+import { passiveK1Inputs, passiveK1Item } from "../../../credits/earned-income/eic/eic_passive_k1.fixture.ts";
 import { assertAttachmentCoverage } from "../../../../return-processing/attachment-coverage.ts";
 import educationSource from "../../../../pdf/reviews/general/composed-returns/review-8863-scholarship-source.json" with {
   type: "json",

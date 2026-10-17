@@ -107,7 +107,7 @@ function sources(
       foreign_trust_question: false,
     },
     ...source,
-    form1116_review: {
+    f1116_review: {
       all_foreign_sources_reviewed: true,
       foreign_qualified_dividends: 0,
       foreign_capital_gains_or_losses_present: false,
@@ -128,7 +128,7 @@ function sources(
         no_other_category_credit_confirmed: true,
       },
     },
-    form1116_carryover_review: {
+    f1116_carryover_review: {
       reviews: [{
         income_category: IncomeCategory.Passive,
         prior_year_form1116_line23_limit: 700,
@@ -192,8 +192,8 @@ for (const kind of ["partnership", "corporation"] as const) {
       const {
         single_source_pdf_review: _unsupportedReview,
         ...calculationReview
-      } = input.form1116_review;
-      const calculationInput = { ...input, form1116_review: calculationReview };
+      } = input.f1116_review;
+      const calculationInput = { ...input, f1116_review: calculationReview };
       const result = f1040_2025.executeReturn(calculationInput);
       assertEquals(result.diagnostics, []);
       const pending = normalizeAllPending(result.pending);

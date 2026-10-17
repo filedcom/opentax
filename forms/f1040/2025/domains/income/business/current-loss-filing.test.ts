@@ -5,7 +5,7 @@ import { assertEquals, assertRejects, assertStringIncludes } from "@std/assert";
 import { PDFDocument } from "pdf-lib";
 import { f1040_2025 } from "../../../index.ts";
 import { normalizeAllPending } from "../../../return-processing/pending.ts";
-import { passivePropertyInputs } from "../../credits/earned-income/earned-income/eic_passive_property.fixture.ts";
+import { passivePropertyInputs } from "../../credits/earned-income/eic/eic_passive_property.fixture.ts";
 import { buildPending } from "../../../mef/execution/pending.ts";
 import { buildMefBundle } from "../../../mef/builder.ts";
 import { buildPdfBytes, type PdfPageOrigin } from "../../../pdf/builder.ts";

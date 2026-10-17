@@ -99,7 +99,7 @@ Form 4797.
 Final source command (standard task permissions):
 
 ```sh
-PATH=/tmp/opentax-poppler-env/bin:/Users/atul/.deno/bin:$PATH deno task test forms/f1040/2025/domains/credits/earned-income/earned-income/eic_passive_line10_source.test.ts -- --write-review-artifacts /tmp/opentax-eic-passive-line10-evidence-v6-oct6
+PATH=/tmp/opentax-poppler-env/bin:/Users/atul/.deno/bin:$PATH deno task test forms/f1040/2025/domains/credits/earned-income/eic/eic_passive_line10_source.test.ts -- --write-review-artifacts /tmp/opentax-eic-passive-line10-evidence-v6-oct6
 ```
 
 Final source v6 is terminal **2 passed / 0 failed (56s)**, with nine complete

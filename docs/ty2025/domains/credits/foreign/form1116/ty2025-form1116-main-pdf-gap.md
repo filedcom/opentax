@@ -4,7 +4,7 @@
 
 The partnership and S-corporation paths were replayed through public inputs
 with six synthetic source cases. **No complete PDF packet passed.** All six
-complete inputs reject at `start`: `form1116_review.single_source_pdf_review`
+complete inputs reject at `start`: `f1116_review.single_source_pdf_review`
 accepts only the ordinary review requiring `no_foreign_tax_reduction_confirmed`,
 while the K-3 projector needs `only_identified_k3_line12_reduction_confirmed`.
 The intermediate schema supports that union but the public review does not.
@@ -478,7 +478,7 @@ authenticated filing bytes. See the [2025 Form 1116 instructions](https://www.ir
 and [Schedule B instructions](https://www.irs.gov/instructions/i1116sb).
 
 Build-first public intake and standard-deduction route (2026-09-29):
-`form1116_review` now carries the typed affirmative single-source PDF review
+`f1116_review` now carries the typed affirmative single-source PDF review
 directly into the Form 1116 calculation. One documented Form 1099-INT can be the
 sole income and foreign-tax source on a single Form 1040. For a filer taking the
 standard deduction, the PDF reconciles that sourced deduction to Form 1040 lines

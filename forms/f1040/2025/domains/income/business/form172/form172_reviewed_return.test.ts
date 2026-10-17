@@ -1,7 +1,7 @@
 import { test } from "bun:test";
 import { assertEquals, assertRejects } from "@std/assert";
 import { stageForm172ReviewedReturnCalculation } from "./form172_reviewed_return.ts";
-import { passiveK1Inputs } from "../../../credits/earned-income/earned-income/eic_passive_k1.fixture.ts";
+import { passiveK1Inputs } from "../../../credits/earned-income/eic/eic_passive_k1.fixture.ts";
 function origin() {
   const item = (id: string, amount: number, business: boolean) => ({
     item_id: id,

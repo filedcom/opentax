@@ -66,7 +66,7 @@ function filedReturn() {
     general,
     w2: [{ box1_wages: 50_000, box2_fed_withheld: 8_000 }],
     schedule_e: [rental],
-    form8582_prior_year_record: { record: filed2024 },
+    f8582_prior_year_record: { record: filed2024 },
   });
 }
 
@@ -143,7 +143,7 @@ test("reviewed 2024 activity record mismatch stops the 2025 return graph", () =>
     general,
     w2: [{ box1_wages: 50_000, box2_fed_withheld: 8_000 }],
     schedule_e: [rental],
-    form8582_prior_year_record: {
+    f8582_prior_year_record: {
       record: {
         ...filed2024,
         activities: [{

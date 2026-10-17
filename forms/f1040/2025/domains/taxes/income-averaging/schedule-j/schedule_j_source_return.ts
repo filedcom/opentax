@@ -12,7 +12,7 @@ import {
 } from "../../../../../../../core/runtime/executor.ts";
 import { buildExecutionPlan } from "../../../../../../../core/runtime/planner.ts";
 import { publicInputSchema } from "../../../../../nodes/inputs/taxes/income-averaging/schedule_j/index.ts";
-import { scheduleJTaxSourceSchema } from "../../../../../nodes/intermediate/forms/taxes/income-averaging/schedule_j/tax-source.ts";
+import { scheduleJTaxSourceSchema } from "../../../../../nodes/intermediate/forms/taxes/income-averaging/schedule_j_calculation/tax-source.ts";
 import {
   assertForm8814CalculatedLines,
   form8814EicLine4,

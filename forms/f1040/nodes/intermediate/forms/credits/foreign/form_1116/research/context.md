@@ -136,7 +136,7 @@ method and pre-additional-item tax; Form 1116 recomputes those worksheet lines
 and line 18. The Form 1040 sink still independently reconciles the signed base
 to filed lines, then checks the computed adjustment.
 
-This slice requires a documented public `form1116_review` input verifying zero
+This slice requires a documented public `f1116_review` input verifying zero
 foreign-source qualified dividends and no foreign-source capital gains or losses
 (zero net gain alone could hide a loss). That keeps each foreign-category line
 17 numerator unadjusted; positive foreign-source preferential income needs its
@@ -185,7 +185,7 @@ line 4, and leave unused vintage balances on line 8. The local TY2025 v5.4 IRS
 schema has the matching second-preceding, first-preceding, and total elements in
 that order.
 
-The public `form1116_prior_carryover` input accepts one filed 2024 Schedule B
+The public `f1116_prior_carryover` input accepts one filed 2024 Schedule B
 line 8 balance for a passive or general category with one or both 2023/2024
 vintages. The vintage entries must add exactly to the filed line 8 total, all
 other vintages must be reviewed as zero, and no intervening adjustment may be

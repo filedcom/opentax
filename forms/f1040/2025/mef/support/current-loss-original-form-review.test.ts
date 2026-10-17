@@ -3,7 +3,7 @@ import * as fs from "node:fs/promises";
 import * as sys from "../../../../../scripts/support/sys.ts";
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import { f1040_2025 } from "../../index.ts";
-import { passivePropertyInputs } from "../../domains/credits/earned-income/earned-income/eic_passive_property.fixture.ts";
+import { passivePropertyInputs } from "../../domains/credits/earned-income/eic/eic_passive_property.fixture.ts";
 import { normalizeAllPending } from "../../return-processing/pending.ts";
 import { reviewCurrentLossOriginalForms } from "./current-loss-original-form-review.ts";
 import { form4797 } from "../forms/income/business/f4797.ts";

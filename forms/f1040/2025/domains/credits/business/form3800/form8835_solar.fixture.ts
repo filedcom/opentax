@@ -80,7 +80,7 @@ export async function solarFixture(id: string, onlyFirst = false) {
     }
   }
   for (
-    const [index, f] of input.form3800_current_production_allocation.facilities
+    const [index, f] of input.f3800_current_production_allocation.facilities
       .entries()
   ) {
     if (onlyFirst && index !== 0) continue;

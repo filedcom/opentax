@@ -171,7 +171,7 @@ export async function increasedFixture(
     input: {
       ...base,
       f8835: facilities,
-      form3800_current_orphan_allocation: {
+      f3800_current_orphan_allocation: {
         tax_year: 2025,
         return_primary_ssn: "111223333",
         review_reference: "Synthetic current orphan source review",
@@ -190,7 +190,7 @@ export async function increasedFixture(
           applied_credit: 1001,
         }],
       },
-      form3800_current_production_allocation: {
+      f3800_current_production_allocation: {
         tax_year: 2025,
         return_primary_ssn: "111223333",
         review_reference: "Synthetic complete increased-credit allocation",

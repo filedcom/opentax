@@ -16,7 +16,7 @@ import { schedule_se } from "../../../taxes/self-employment/schedule_se/index.ts
 import { form8995 } from "../../../deductions/business/form8995/index.ts";
 import { form8582 } from "../form8582/index.ts";
 import { form461 } from "../form461/index.ts";
-import { schedule_j_calculation } from "../../../taxes/income-averaging/schedule_j/index.ts";
+import { schedule_j_calculation } from "../../../taxes/income-averaging/schedule_j_calculation/index.ts";
 import type { NodeContext } from "../../../../../../../../core/types/node-context.ts";
 import { CONFIG_BY_YEAR } from "../../../../../config/index.ts";
 

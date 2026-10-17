@@ -1,4 +1,4 @@
-import { inputSchema as priorCarryoverInputSchema } from "../../../../../nodes/inputs/credits/foreign/form1116_prior_carryover/index.ts";
+import { inputSchema as priorCarryoverInputSchema } from "../../../../../nodes/inputs/credits/foreign/f1116_prior_carryover/index.ts";
 import { priorYearCarryoverSchema } from "../../../../../nodes/intermediate/forms/credits/foreign/form_1116/index.ts";
 
 /** Match Schedule B's embedded vintage ledger to the retained filed-year review. */
@@ -7,7 +7,7 @@ export function assertForm1116CarryoverSource(
   scheduleBSource: unknown,
 ): void {
   const intake = priorCarryoverInputSchema.safeParse(
-    pending?.form1116_prior_carryover,
+    pending?.f1116_prior_carryover,
   );
   const embedded = priorYearCarryoverSchema.safeParse(scheduleBSource);
   const retained = intake.success && intake.data.carryovers.length === 1

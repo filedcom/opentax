@@ -21,7 +21,7 @@ import { form461 } from "../../../../intermediate/forms/income/business/form461/
 import { eitc } from "../../../../intermediate/forms/credits/earned-income/eitc/index.ts";
 import { f8812 } from "../../../credits/child/f8812/index.ts";
 import { form7206 } from "../../../../intermediate/forms/adjustments/health/form7206/index.ts";
-import { schedule_j_calculation } from "../../../../intermediate/forms/taxes/income-averaging/schedule_j/index.ts";
+import { schedule_j_calculation } from "../../../../intermediate/forms/taxes/income-averaging/schedule_j_calculation/index.ts";
 import { scheduleJFishingScheduleCSource } from "../../../../../2025/domains/taxes/income-averaging/schedule-j/schedule_j_activity_sources.ts";
 import { assertDistinctMiningSources, miningCostAdjustment } from "./mining.ts";
 import {

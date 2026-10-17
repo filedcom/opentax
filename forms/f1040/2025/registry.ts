@@ -8,10 +8,10 @@ import { buildStartNode, inputNodes } from "./return-processing/start.ts";
 
 // ── Inputs ────────────────────────────────────────────────────────────────────
 import { ext } from "../nodes/inputs/payments/estimated/ext/index.ts";
-import { form1116_review } from "../nodes/inputs/credits/foreign/form1116_review/index.ts";
-import { form1116_carryover_review } from "../nodes/inputs/credits/foreign/form1116_carryover_review/index.ts";
-import { form1116_prior_carryover } from "../nodes/inputs/credits/foreign/form1116_prior_carryover/index.ts";
-import { form8582_prior_year_record } from "../nodes/inputs/income/business/form8582_prior_year_record/index.ts";
+import { f1116_review } from "../nodes/inputs/credits/foreign/f1116_review/index.ts";
+import { f1116_carryover_review } from "../nodes/inputs/credits/foreign/f1116_carryover_review/index.ts";
+import { f1116_prior_carryover } from "../nodes/inputs/credits/foreign/f1116_prior_carryover/index.ts";
+import { f8582_prior_year_record } from "../nodes/inputs/income/business/f8582_prior_year_record/index.ts";
 import { f1098 } from "../nodes/inputs/deductions/mortgage/f1098/index.ts";
 import { mortgage_refinance_points } from "../nodes/inputs/deductions/mortgage/mortgage_refinance_points/index.ts";
 import { f1099b } from "../nodes/inputs/income/investments/f1099b/index.ts";
@@ -91,7 +91,7 @@ import { f2439 } from "../nodes/inputs/payments/investments/f2439/index.ts";
 import { f3921 } from "../nodes/inputs/income/investments/f3921/index.ts";
 import { f8997 } from "../nodes/inputs/general/investments/f8997/index.ts";
 import { schedule_j } from "../nodes/inputs/taxes/income-averaging/schedule_j/index.ts";
-import { schedule_j_calculation } from "../nodes/intermediate/forms/taxes/income-averaging/schedule_j/index.ts";
+import { schedule_j_calculation } from "../nodes/intermediate/forms/taxes/income-averaging/schedule_j_calculation/index.ts";
 import { f8609 } from "../nodes/inputs/credits/business/f8609/index.ts";
 import { f4852 } from "../nodes/inputs/income/wages/f4852/index.ts";
 import { clergy } from "../nodes/inputs/income/wages/clergy/index.ts";
@@ -260,10 +260,10 @@ export const registry: NodeRegistry = {
   education_income,
   f8949: f8949InputNode,
   general,
-  form1116_review,
-  form1116_carryover_review,
-  form1116_prior_carryover,
-  form8582_prior_year_record,
+  f1116_review,
+  f1116_carryover_review,
+  f1116_prior_carryover,
+  f8582_prior_year_record,
   k1_trust,
   k1_s_corp: k1SCorpNode,
   k1_partnership: k1Partnership,
@@ -333,8 +333,8 @@ export const registry: NodeRegistry = {
   f8915f,
   f8915d,
   f3800,
-  form3800_current_production_allocation: currentProductionAllocationNode,
-  form3800_current_orphan_allocation: currentOrphanAllocationNode,
+  f3800_current_production_allocation: currentProductionAllocationNode,
+  f3800_current_orphan_allocation: currentOrphanAllocationNode,
   f2106,
   f5405,
   nol_carryforward,

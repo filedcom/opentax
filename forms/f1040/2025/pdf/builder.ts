@@ -72,7 +72,7 @@ import { assertForm8915FSourceLinks } from "../../nodes/inputs/income/retirement
 import { assertExtensionPaymentSource } from "../domains/payments/settlement/extension-payment-reconciliation.ts";
 import { assert1099RRecipientOwner } from "../domains/income/retirement/f1099r/f1099r-recipient-owner.ts";
 import { assertNecWithholdingRecipient } from "../domains/payments/withholding/f1099n/f1099nec-withholding-owner.ts";
-import { assert1099BRecipientOwner } from "../domains/income/other/f1099b/f1099b-recipient-owner.ts";
+import { assert1099BRecipientOwner } from "../domains/income/investments/f1099b/f1099b-recipient-owner.ts";
 import {
   assertCapitalSaleSourceRows,
   assertNoRepeatedBrokerSaleSources,
@@ -121,7 +121,7 @@ import {
   assertFinalBalanceProjection,
   assertQualifiedDividendSubset,
 } from "../return-processing/return-wide-arithmetic.ts";
-import { assertDividendIncomeSources } from "../domains/income/other/f1099d/f1099div-income-reconciliation.ts";
+import { assertDividendIncomeSources } from "../domains/income/investments/f1099div/f1099div-income-reconciliation.ts";
 import {
   assertScheduleBInterestJoin,
   assertScheduleBPreparedProjection,

@@ -10,8 +10,8 @@ export const inputSchema = z.object({
   record: filed2024Form8582RecordSchema,
 }).strict();
 
-class Form8582PriorYearRecordNode extends TaxNode<typeof inputSchema> {
-  readonly nodeType = "form8582_prior_year_record";
+class F8582PriorYearRecordNode extends TaxNode<typeof inputSchema> {
+  readonly nodeType = "f8582_prior_year_record";
   readonly inputSchema = inputSchema;
   readonly outputNodes = new OutputNodes([scheduleE]);
 
@@ -25,4 +25,4 @@ class Form8582PriorYearRecordNode extends TaxNode<typeof inputSchema> {
   }
 }
 
-export const form8582_prior_year_record = new Form8582PriorYearRecordNode();
+export const f8582_prior_year_record = new F8582PriorYearRecordNode();

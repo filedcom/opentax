@@ -70,7 +70,7 @@ function preparedReturn() {
     general,
     w2: [{ box1_wages: 50_000, box2_fed_withheld: 8_000 }],
     schedule_e: [rental],
-    form8582_prior_year_record: { record: filed2024 },
+    f8582_prior_year_record: { record: filed2024 },
   });
   assertEquals(result.diagnostics, []);
   return result;

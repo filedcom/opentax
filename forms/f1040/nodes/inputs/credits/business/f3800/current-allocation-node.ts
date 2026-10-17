@@ -9,7 +9,7 @@ import type { NodeContext } from "../../../../../../../core/types/node-context.t
 
 class CurrentOrphanAllocationNode
   extends TaxNode<typeof currentOrphanAllocationSchema> {
-  readonly nodeType = "form3800_current_orphan_allocation";
+  readonly nodeType = "f3800_current_orphan_allocation";
   readonly inputSchema = currentOrphanAllocationSchema;
   readonly outputNodes = new OutputNodes([f3800]);
   compute(_ctx: NodeContext, input: CurrentOrphanAllocation) {

@@ -52,7 +52,7 @@ This metadata-only enumeration contains all188 public registry entries at base0d
 | `f8949` | `f8949` | existing-parent entered source reconciliation guard; no silent omission |
 | `schedule_c` | `schedule_c` | existing-parent entered source reconciliation guard; no silent omission |
 | `schedule_e` | `schedule_e` | existing-parent entered source reconciliation guard; no silent omission |
-| `form8582_prior_year_record` | `form8582_prior_year_record` | existing-parent entered source reconciliation guard; no silent omission |
+| `f8582_prior_year_record` | `f8582_prior_year_record` | existing-parent entered source reconciliation guard; no silent omission |
 | `personal_property_rental` | `personal_property_rental` | existing-parent entered source reconciliation guard; no silent omission |
 | `rrb1099r` | `rrb1099r` | existing-parent entered source reconciliation guard; no silent omission |
 | `ssa1099` | `ssa1099` | owned ordinary benefit join; see October 9 full-return proof below |
@@ -81,9 +81,9 @@ This metadata-only enumeration contains all188 public registry entries at base0d
 | `general` | `general` | owned joined route, special branches separately guarded |
 | `form4562` | `form4562` | existing-parent entered source reconciliation guard; no silent omission |
 | `form4797_investment_1245` | `form4797` | existing-parent entered source reconciliation guard; no silent omission |
-| `form1116_review` | `form1116_review` | existing-parent entered source reconciliation guard; no silent omission |
-| `form1116_carryover_review` | `form1116_carryover_review` | existing-parent entered source reconciliation guard; no silent omission |
-| `form1116_prior_carryover` | `form1116_prior_carryover` | existing-parent entered source reconciliation guard; no silent omission |
+| `f1116_review` | `f1116_review` | existing-parent entered source reconciliation guard; no silent omission |
+| `f1116_carryover_review` | `f1116_carryover_review` | existing-parent entered source reconciliation guard; no silent omission |
+| `f1116_prior_carryover` | `f1116_prior_carryover` | existing-parent entered source reconciliation guard; no silent omission |
 | `form1116_schedule_c_source` | `form1116_schedule_c_source` | existing-parent entered source reconciliation guard; no silent omission |
 | `schedule1a` | `schedule1a` | existing-parent entered source reconciliation guard; no silent omission |
 | `form4684` | `form4684` | existing-parent entered source reconciliation guard; no silent omission |

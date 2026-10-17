@@ -52,7 +52,7 @@ PATH=/tmp/opentax-poppler-env/bin:/Users/atul/.deno/bin:$PATH deno task test \
   $(cat /tmp/opentax-eic-passive-property-standard-files-oct6.txt)
 
 PATH=/tmp/opentax-poppler-env/bin:/Users/atul/.deno/bin:$PATH deno task test \
-  forms/f1040/2025/domains/credits/earned-income/earned-income/eic_passive_property_source.test.ts
+  forms/f1040/2025/domains/credits/earned-income/eic/eic_passive_property_source.test.ts
 
 PATH=/tmp/opentax-poppler-env/bin:/Users/atul/.deno/bin:$PATH deno run \
   --config deno.json --allow-read --allow-write --allow-net=www.irs.gov \

@@ -20,7 +20,7 @@ import { form8962 } from "../../../../forms/credits/health/form8962/index.ts";
 import { form8880 } from "../../../../forms/credits/individual/form8880/index.ts";
 import { form_1116 } from "../../../../forms/credits/foreign/form_1116/index.ts";
 import { schedule1a } from "../../../../forms/deductions/additional/schedule1a/index.ts";
-import { schedule_j_calculation } from "../../../../forms/taxes/income-averaging/schedule_j/index.ts";
+import { schedule_j_calculation } from "../../../../forms/taxes/income-averaging/schedule_j_calculation/index.ts";
 
 export const inputSchema = z.object({
   pre_pal_input: z.lazy(() => agiInputSchema),

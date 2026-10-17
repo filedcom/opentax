@@ -1,4 +1,4 @@
-import { passiveK1Inputs } from "../../earned-income/earned-income/eic_passive_k1.fixture.ts";
+import { passiveK1Inputs } from "../../earned-income/eic/eic_passive_k1.fixture.ts";
 import { sha256Hex } from "../../../../return-processing/prepared-source.ts";
 
 // Constructed review facts and public records, not accepted prior filing.

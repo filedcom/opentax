@@ -77,7 +77,7 @@ const inputs = {
     foreign_tax_currency: currency,
     alternative_compensation_sourcing: alternative,
   }],
-  form1116_review: {
+  f1116_review: {
     all_foreign_sources_reviewed: true,
     foreign_qualified_dividends: 0,
     foreign_capital_gains_or_losses_present: false,

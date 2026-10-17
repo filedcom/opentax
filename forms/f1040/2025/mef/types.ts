@@ -52,7 +52,7 @@ import type { inputSchema as form59eSourceInputSchema } from "../../nodes/inputs
 import type { inputSchema as form8908InputSchema } from "../../nodes/inputs/credits/business/f8908/index.ts";
 import type { inputSchema as f453aInterestInputSchema } from "../../nodes/inputs/taxes/interest/f453a_interest/index.ts";
 import type { inputSchema as f8858InputSchema } from "../../nodes/inputs/general/foreign/f8858/index.ts";
-import type { inputSchema as form1116PriorCarryoverInputSchema } from "../../nodes/inputs/credits/foreign/form1116_prior_carryover/index.ts";
+import type { inputSchema as form1116PriorCarryoverInputSchema } from "../../nodes/inputs/credits/foreign/f1116_prior_carryover/index.ts";
 import type { IsoAmtBasisLot } from "../../nodes/inputs/income/investments/f3921/index.ts";
 import type { PublicForm8839Source } from "../../nodes/intermediate/forms/credits/individual/form8839/public_source.ts";
 
@@ -144,7 +144,7 @@ export type MefFormsPending =
     // Category 1 foreign-activity filing facts remain identifiable at export.
     f8858?: z.infer<typeof f8858InputSchema>;
     // Accepted prior Form 1116 Schedule B rows remain available for carryover replay.
-    form1116_prior_carryover?: z.infer<
+    f1116_prior_carryover?: z.infer<
       typeof form1116PriorCarryoverInputSchema
     >;
     /** Internal replay record from the one public Form 8839 source. */

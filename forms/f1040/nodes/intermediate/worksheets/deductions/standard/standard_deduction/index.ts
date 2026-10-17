@@ -10,7 +10,7 @@ import type { NodeContext } from "../../../../../../../../core/types/node-contex
 import { FilingStatus } from "../../../../../types.ts";
 import { f1040 } from "../../../../../outputs/general/return-assembly/f1040/index.ts";
 import { income_tax_calculation } from "../../../taxes/calculation/income_tax_calculation/index.ts";
-import { schedule_j_calculation } from "../../../../forms/taxes/income-averaging/schedule_j/index.ts";
+import { schedule_j_calculation } from "../../../../forms/taxes/income-averaging/schedule_j_calculation/index.ts";
 import { form_1116 } from "../../../../forms/credits/foreign/form_1116/index.ts";
 import { form8960 } from "../../../../forms/taxes/investments/form8960/index.ts";
 import { CONFIG_BY_YEAR } from "../../../../../config/index.ts";

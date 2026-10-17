@@ -8,7 +8,7 @@ import {
   buildFirstYearPassiveSCorp7203,
   projectFirstYearPassiveSCorp7203,
 } from "./form7203-passive-loss-projection.ts";
-import { passiveSCorpLossRecords } from "../../../credits/earned-income/earned-income/eic_passive_s_corp_loss.fixture.ts";
+import { passiveSCorpLossRecords } from "../../../credits/earned-income/eic/eic_passive_s_corp_loss.fixture.ts";
 import { form7203StockLossPdf } from "../../../../pdf/forms/income/business/f7203_stock_loss.ts";
 
 const filer: FilerIdentity = {

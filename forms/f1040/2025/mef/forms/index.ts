@@ -92,7 +92,7 @@ import { form8814 } from "./income/investments/f8814.ts";
 import { childTaxableInterestStatement } from "./income/investments/child_taxable_interest_statement.ts";
 import { form8815 } from "./income/investments/f8815.ts";
 import { form8824 } from "./income/business/f8824.ts";
-import { form8826 } from "./credits/business/f8826_draft.ts";
+import { form8826 } from "./credits/business/f8826.ts";
 import { form8820 } from "./credits/business/f8820.ts";
 import { form8820ControlledGroupStatement } from "./credits/business/f8820_controlled_group_statement.ts";
 import { form8829 } from "./deductions/business/f8829.ts";

@@ -6,7 +6,7 @@ import {
 } from "./form8826_inventory.fixture.ts";
 import { f1040_2025 } from "../../../../index.ts";
 import { normalizeAllPending } from "../../../../return-processing/pending.ts";
-import { form8826 } from "../../../../mef/forms/credits/business/f8826_draft.ts";
+import { form8826 } from "../../../../mef/forms/credits/business/f8826.ts";
 import {
   form3800,
   prepareForm3800DocumentParts,

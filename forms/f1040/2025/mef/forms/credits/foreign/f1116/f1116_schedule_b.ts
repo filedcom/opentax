@@ -180,7 +180,7 @@ export const form1116ScheduleB: MefFormDescriptor<
     if (
       presentation.case !== "current_year_excess" &&
       (pending?.f1040 !== undefined ||
-        pending?.form1116_prior_carryover !== undefined)
+        pending?.f1116_prior_carryover !== undefined)
     ) {
       const parsed = scheduleBFieldsSchema.parse(raw);
       if (parsed.case === "current_year_excess") {

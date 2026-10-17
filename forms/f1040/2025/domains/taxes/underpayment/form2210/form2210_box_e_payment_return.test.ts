@@ -17,7 +17,7 @@ import {
 import { f1040_2025 } from "../../../../index.ts";
 import { normalizeAllPending } from "../../../../return-processing/pending.ts";
 import { sha256Hex } from "../../../../return-processing/prepared-source.ts";
-import { passiveK1Inputs } from "../../../credits/earned-income/earned-income/eic_passive_k1.fixture.ts";
+import { passiveK1Inputs } from "../../../credits/earned-income/eic/eic_passive_k1.fixture.ts";
 import { assertAttachmentCoverage } from "../../../../return-processing/attachment-coverage.ts";
 
 function priorXml(ssn: string, agi: number, tax: number) {

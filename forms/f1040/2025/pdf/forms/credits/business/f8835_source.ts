@@ -207,7 +207,7 @@ export function form8835PdfSources(
   }
   assertCurrentProductionAllocationSource(
     form3800.current_production_allocation_review,
-    allPending.form3800_current_production_allocation,
+    allPending.f3800_current_production_allocation,
   );
   const reviewedTaxUse = form3800.current_production_allocation_review
     ? reconcileCurrentProductionAllocation(

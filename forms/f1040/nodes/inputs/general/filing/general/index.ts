@@ -83,17 +83,17 @@ import {
   eicBirthResidencyReviewSchema,
   reviewedEicBirthResidence,
   scheduleEicLine6Months,
-} from "../../../../../2025/domains/credits/earned-income/earned-income/eic-birth-residency.ts";
+} from "../../../../../2025/domains/credits/earned-income/eic/eic-birth-residency.ts";
 
 import {
   eicDatedResidencyReviewSchema,
   reviewedEicDatedResidence,
-} from "../../../../../2025/domains/credits/earned-income/earned-income/eic-dated-residency.ts";
+} from "../../../../../2025/domains/credits/earned-income/eic/eic-dated-residency.ts";
 
 import {
   eicDeathResidencyReviewSchema,
   reviewedEicDeathResidence,
-} from "../../../../../2025/domains/credits/earned-income/earned-income/eic-death-residency.ts";
+} from "../../../../../2025/domains/credits/earned-income/eic/eic-death-residency.ts";
 
 // ─── Enums ────────────────────────────────────────────────────────────────────
 

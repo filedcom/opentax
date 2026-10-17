@@ -1,12 +1,12 @@
 import {
   scheduleJCurrentYearTax,
   scheduleJTaxSourceSchema,
-} from "../../../../../nodes/intermediate/forms/taxes/income-averaging/schedule_j/tax-source.ts";
+} from "../../../../../nodes/intermediate/forms/taxes/income-averaging/schedule_j_calculation/tax-source.ts";
 import {
   AMT_EXEMPTION_2025,
   AMT_PHASE_OUT_START_2025,
 } from "../../../../../nodes/config/2025.ts";
-import { scheduleJLinesSchema } from "../../../../../nodes/intermediate/forms/taxes/income-averaging/schedule_j/calculation.ts";
+import { scheduleJLinesSchema } from "../../../../../nodes/intermediate/forms/taxes/income-averaging/schedule_j_calculation/calculation.ts";
 import { ordinaryTax2025 } from "../../../../../nodes/intermediate/worksheets/taxes/calculation/tax_table_2025.ts";
 import { filingStatusSchema } from "../../../../../nodes/types.ts";
 import { scheduleJChildElectionTax } from "../../income-averaging/schedule-j/schedule_j_child_tax_join.ts";

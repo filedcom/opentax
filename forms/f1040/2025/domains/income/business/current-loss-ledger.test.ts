@@ -3,7 +3,7 @@ import * as sys from "../../../../../../scripts/support/sys.ts";
 import { assertEquals, assertThrows } from "@std/assert";
 import { f1040_2025 } from "../../../index.ts";
 import { normalizeAllPending } from "../../../return-processing/pending.ts";
-import { passivePropertyInputs } from "../../credits/earned-income/earned-income/eic_passive_property.fixture.ts";
+import { passivePropertyInputs } from "../../credits/earned-income/eic/eic_passive_property.fixture.ts";
 import { reviewCurrentLossOriginalForms } from "../../../mef/support/current-loss-original-form-review.ts";
 import {
   buildForm8582Ledger,

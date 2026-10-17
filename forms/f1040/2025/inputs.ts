@@ -30,21 +30,21 @@ import {
   publicInputSchema as form4562InputSchema,
 } from "../nodes/intermediate/forms/deductions/business/form4562/index.ts";
 import {
-  form1116_prior_carryover,
+  f1116_prior_carryover,
   inputSchema as form1116PriorCarryoverInputSchema,
-} from "../nodes/inputs/credits/foreign/form1116_prior_carryover/index.ts";
+} from "../nodes/inputs/credits/foreign/f1116_prior_carryover/index.ts";
 import {
-  form8582_prior_year_record,
+  f8582_prior_year_record,
   inputSchema as form8582PriorYearRecordInputSchema,
-} from "../nodes/inputs/income/business/form8582_prior_year_record/index.ts";
+} from "../nodes/inputs/income/business/f8582_prior_year_record/index.ts";
 import {
-  form1116_carryover_review,
+  f1116_carryover_review,
   inputSchema as form1116CarryoverReviewInputSchema,
-} from "../nodes/inputs/credits/foreign/form1116_carryover_review/index.ts";
+} from "../nodes/inputs/credits/foreign/f1116_carryover_review/index.ts";
 import {
-  form1116_review,
-  inputSchema as form1116ReviewInputSchema,
-} from "../nodes/inputs/credits/foreign/form1116_review/index.ts";
+  f1116_review,
+  inputSchema as f1116ReviewInputSchema,
+} from "../nodes/inputs/credits/foreign/f1116_review/index.ts";
 import {
   form1116_schedule_c_source,
   inputSchema as form1116ScheduleCSourceInputSchema,
@@ -827,7 +827,7 @@ export const inputNodes: readonly InputNodeEntry[] = [
   { node: scheduleC, itemSchema: scheduleCItemSchema, isArray: true },
   { node: scheduleE, itemSchema: scheduleEItemSchema, isArray: true },
   {
-    node: form8582_prior_year_record,
+    node: f8582_prior_year_record,
     inputSchema: form8582PriorYearRecordInputSchema,
     isArray: false,
   },
@@ -897,17 +897,17 @@ export const inputNodes: readonly InputNodeEntry[] = [
     isArray: false,
   },
   {
-    node: form1116_review,
-    inputSchema: form1116ReviewInputSchema,
+    node: f1116_review,
+    inputSchema: f1116ReviewInputSchema,
     isArray: false,
   },
   {
-    node: form1116_carryover_review,
+    node: f1116_carryover_review,
     inputSchema: form1116CarryoverReviewInputSchema,
     isArray: false,
   },
   {
-    node: form1116_prior_carryover,
+    node: f1116_prior_carryover,
     inputSchema: form1116PriorCarryoverInputSchema,
     isArray: false,
   },

@@ -71,7 +71,7 @@ function filedReturn() {
       foreign_trust_question: false,
     },
     f1099int: [canada, france],
-    form1116_review: {
+    f1116_review: {
       all_foreign_sources_reviewed: true,
       foreign_qualified_dividends: 0,
       foreign_capital_gains_or_losses_present: false,
@@ -79,7 +79,7 @@ function filedReturn() {
       no_amt_liability_verified: true,
       two_country_interest_pdf_review: review,
     },
-    form1116_carryover_review: {
+    f1116_carryover_review: {
       reviews: [{
         income_category: "passive",
         prior_year_form1116_line23_limit: 500,
@@ -259,7 +259,7 @@ test("two-country passive interest uses a filed 2024 vintage through both Form 1
       foreign_trust_question: false,
     },
     f1099int: [{ ...canada, box6: 100 }, { ...france, box6: 100 }],
-    form1116_review: {
+    f1116_review: {
       all_foreign_sources_reviewed: true,
       foreign_qualified_dividends: 0,
       foreign_capital_gains_or_losses_present: false,
@@ -270,7 +270,7 @@ test("two-country passive interest uses a filed 2024 vintage through both Form 1
         no_prior_year_carryover_or_carryback_confirmed: false,
       },
     },
-    form1116_prior_carryover: { carryovers: [carryoverSource] },
+    f1116_prior_carryover: { carryovers: [carryoverSource] },
   });
   assertEquals(result.diagnostics, []);
   const parent = result.pending.form_1116;

@@ -266,7 +266,7 @@ export async function pwaFixture(c: typeof pwaCases[number]) {
     f.facility_placed_in_service_date = c.service;
     f.ac_nameplate_kw = 1800;
     f.maximum_net_output_mw = 1.8;
-    fixture.input.form3800_current_production_allocation.facilities[i]
+    fixture.input.f3800_current_production_allocation.facilities[i]
       .facility_placed_in_service_date = c.service;
     if (f.energy_community_source) {
       f.energy_community_source.generating_units.forEach((u: any) =>

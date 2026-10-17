@@ -3534,7 +3534,7 @@ explicit expense-free boundary. New discoveries are future rows37–38,
 unworked. Do not classify this evidence as positive filing support.
 
 Typed focused command: `deno test --allow-read --allow-write
---allow-net=www.irs.gov forms/f1040/2025/domains/credits/earned-income/earned-income/eic_combined_investment.test.ts --
+--allow-net=www.irs.gov forms/f1040/2025/domains/credits/earned-income/eic/eic_combined_investment.test.ts --
 --write-review-artifacts <private-evidence-directory>`; terminal2/0 in1s
 (whole invocation5.61s),2026-10-07T22:09:52.378844Z–22:09:57.992218Z.
 The initial focused attempt was1/1 because the fixture omitted the portfolio
@@ -3781,7 +3781,7 @@ Command: `deno test --allow-read --allow-write --allow-run=xmllint
 forms/f1040/2025/mef/forms/income/rental-passthrough/schedule_e.test.ts
 forms/f1040/2025/mef/forms/income/business/f4835.test.ts
 forms/f1040/2025/mef/forms/income/business/f4797.test.ts
-forms/f1040/2025/domains/credits/earned-income/earned-income/eic_passive_property_source.test.ts --
+forms/f1040/2025/domains/credits/earned-income/eic/eic_passive_property_source.test.ts --
 --write-review-artifacts <private-directory>`.
 Existing positive property/native/source cases passed; eight existing positive
 PDF packets/99 pages were regenerated, with no additional filing-support count.

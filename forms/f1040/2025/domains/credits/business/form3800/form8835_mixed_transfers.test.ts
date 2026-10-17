@@ -53,14 +53,14 @@ for (const c of mixedTransferCases) {
     }
     const mutations: Array<(p: any) => void> = [
       (p) =>
-        p.form3800_current_production_allocation.facilities[0]
+        p.f3800_current_production_allocation.facilities[0]
           .transfer_out_amount++,
       (p) =>
-        p.form3800_current_production_allocation.facilities[0].applied_credit++,
+        p.f3800_current_production_allocation.facilities[0].applied_credit++,
       (p) =>
-        p.form3800_current_production_allocation.facilities[0].form3800_line =
+        p.f3800_current_production_allocation.facilities[0].form3800_line =
           "4z",
-      (p) => p.form3800_current_orphan_allocation.sources[0].applied_credit++,
+      (p) => p.f3800_current_orphan_allocation.sources[0].applied_credit++,
       (p) => p.f8835.f8835s[0].transfer_source.transfers[0].credit_amount++,
       (p) => p.f8835.f8835s[0].registration_number = "CAABC25ZZZZZ",
       (p) =>

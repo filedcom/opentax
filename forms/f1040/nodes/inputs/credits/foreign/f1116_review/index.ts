@@ -38,8 +38,8 @@ export const inputSchema = z.object({
   two_country_treasury_pdf_review: twoCountryTreasuryPdfReviewSchema.optional(),
 }).strict();
 
-class Form1116ReviewNode extends TaxNode<typeof inputSchema> {
-  readonly nodeType = "form1116_review";
+class F1116ReviewNode extends TaxNode<typeof inputSchema> {
+  readonly nodeType = "f1116_review";
   readonly inputSchema = inputSchema;
   readonly outputNodes = new OutputNodes([form_1116]);
 
@@ -94,4 +94,4 @@ class Form1116ReviewNode extends TaxNode<typeof inputSchema> {
   }
 }
 
-export const form1116_review = new Form1116ReviewNode();
+export const f1116_review = new F1116ReviewNode();

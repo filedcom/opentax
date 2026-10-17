@@ -9,7 +9,7 @@ import type { NodeContext } from "../../../../../../../core/types/node-context.t
 
 class CurrentProductionAllocationNode
   extends TaxNode<typeof currentProductionAllocationSchema> {
-  readonly nodeType = "form3800_current_production_allocation";
+  readonly nodeType = "f3800_current_production_allocation";
   readonly inputSchema = currentProductionAllocationSchema;
   readonly outputNodes = new OutputNodes([f3800]);
   compute(_ctx: NodeContext, input: CurrentProductionAllocation) {

@@ -8,7 +8,7 @@ import {
 import { execute } from "../../../../../../../core/runtime/executor.ts";
 import { buildExecutionPlan } from "../../../../../../../core/runtime/planner.ts";
 import { FilingStatus } from "../../../../../nodes/types.ts";
-import { form8826 } from "../../../../mef/forms/credits/business/f8826_draft.ts";
+import { form8826 } from "../../../../mef/forms/credits/business/f8826.ts";
 import {
   form3800,
   prepareForm3800DocumentParts,
