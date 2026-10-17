@@ -1,11 +1,20 @@
 /**
  * MeF Business Rules: SR
  * Auto-generated from 1040_Business_Rules_2025v3.0.csv
- * 4 rules (3 implemented, 1 stub)
+ * 4 rules (4 implemented)
  */
 
 import type { RuleDef } from "../../../../../../core/validation/types.ts";
-import { rule, alwaysPass, any, hasNonZero, hasValue, ifThen, } from "../../../../../../core/validation/mod.ts";
+import {
+  any,
+  hasNonZero,
+  hasValue,
+  ifThen,
+  rule,
+} from "../../../../../../core/validation/mod.ts";
+import {
+  scheduleReferencedOnce,
+} from "../../../../../../core/validation/predicates.ts";
 
 export const SR_RULES: readonly RuleDef[] = [
   rule(
@@ -26,7 +35,7 @@ export const SR_RULES: readonly RuleDef[] = [
     "SR-F5471-001",
     "reject",
     "incorrect_data",
-    alwaysPass,
+    scheduleReferencedOnce("F5471ScheduleR", "F5471"),
     "If Schedule R (Form 5471) is present in the return, then it must be referenced from one and only one Form 5471.",
   ),
   rule(

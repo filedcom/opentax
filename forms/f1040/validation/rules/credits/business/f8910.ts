@@ -1,11 +1,24 @@
 /**
  * MeF Business Rules: F8910
  * Auto-generated from 1040_Business_Rules_2025v3.0.csv
- * 9 rules (8 implemented, 1 stubs)
+ * 9 rules (9 implemented)
  */
 
 import type { RuleDef } from "../../../../../../core/validation/types.ts";
-import { rule, alwaysPass, hasNonZero, hasValue, ifThen, isZero, all, } from "../../../../../../core/validation/mod.ts";
+import {
+  all,
+  dateGteField,
+  dateLteField,
+  eachGroup,
+  hasNonZero,
+  hasValue,
+  ifThen,
+  isZero,
+  rule,
+} from "../../../../../../core/validation/mod.ts";
+import {
+  everyDocument,
+} from "../../../../../../core/validation/predicates.ts";
 
 export const F8910_RULES: readonly RuleDef[] = [
   rule(
@@ -54,7 +67,20 @@ export const F8910_RULES: readonly RuleDef[] = [
     "F8910-013-07",
     "reject",
     "incorrect_data",
-    alwaysPass,
+    everyDocument(
+      "F8910",
+      eachGroup(
+        "VehicleDescriptionGrp",
+        ifThen(
+          hasValue("VehiclePlacedInServiceDt"),
+          all(
+            dateGteField("VehiclePlacedInServiceDt", "ReturnHeader/TaxPeriodBeginDt"),
+            dateLteField("VehiclePlacedInServiceDt", "ReturnHeader/TaxPeriodEndDt"),
+          ),
+        ),
+        "VehiclePlacedInServiceDt",
+      ),
+    ),
     "For each vehicle listed in 'VehicleDescriptionGrp' of Form 8910, if 'VehiclePlacedInServiceDt' has a value, it must be on or after 'TaxPeriodBeginDt' and on or before 'TaxPeriodEndDt' in the Return Header.",
   ),
   rule(

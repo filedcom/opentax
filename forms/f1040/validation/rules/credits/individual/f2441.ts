@@ -1,7 +1,7 @@
 /**
  * MeF Business Rules: F2441
  * Auto-generated from 1040_Business_Rules_2025v3.0.csv
- * 26 rules (18 implemented, 8 IRS-side)
+ * 26 rules (26 implemented)
  */
 
 import type { RuleDef } from "../../../../../../core/validation/types.ts";
@@ -24,7 +24,6 @@ import {
   hasValue,
   ifThen,
   inOwnDocument,
-  irsSide,
   isZero,
   noTinAmong,
   noValue,
@@ -33,6 +32,11 @@ import {
   total,
   validSSN,
 } from "../../../../../../core/validation/mod.ts";
+import {
+  everyIssuableTin,
+  personNameControlAgrees,
+  wellFormedIpPins,
+} from "../../../../../../core/validation/predicates.ts";
 
 export const F2441_RULES: readonly RuleDef[] = [
   rule(
@@ -195,56 +199,72 @@ export const F2441_RULES: readonly RuleDef[] = [
     "F2441-033",
     "alert",
     "information",
-    irsSide,
+    // Offline: no qualifying person twice on this return.
+    inOwnDocument(allDistinct("QualifyingPersonSSN")),
     "A qualifying person claimed on Form 2441 for the Child and Dependent Care Credit was previously claimed as a qualifying person on another accepted return for the same tax year. Visit www.irs.gov/identity-theft-fraud-scams/identity-theft-dependents for additional information.",
   ),
   rule(
     "F2441-524",
     "reject",
     "incorrect_data",
-    irsSide,
+    // Offline: an issuable TIN whose name control agrees with the rest of the return.
+    inOwnDocument(
+      eachGroup(
+        "QualifyingPersonGrp",
+        all(
+          everyIssuableTin("QualifyingPersonSSN"),
+          personNameControlAgrees("QualifyingPersonNameControlTxt", "QualifyingPersonSSN"),
+        ),
+        "QualifyingPersonSSN",
+        "QualifyingPersonNameControlTxt",
+      ),
+    ),
     "Form 2441, Part II, Line 2(a) each 'QualifyingPersonNameControl' and the corresponding Line 2(b) 'QualifyingPersonSSN' must match data from the e-File database.",
   ),
   rule(
     "F2441-526-01",
     "reject",
     "duplicate",
-    irsSide,
+    // Offline: no qualifying person twice on this return.
+    inOwnDocument(allDistinct("QualifyingPersonSSN")),
     "Each Form 2441 'QualifyingPersonSSN' provided must not be the same as a Form 2441 'QualifyingPersonSSN' of another accepted tax return for the same tax year. Visit www.irs.gov/identity-theft-fraud-scams/identity-theft-dependents for additional information. To electronically file with this duplicate condition, an Identity Protection Personal Identification Number (IP PIN) will be required. If you wish to get an IP PIN and you don't already have an account on IRS.gov, then you must register to validate your identity. Please visit www.irs.gov/getanippin for further information and resubmit your return with an IP PIN.",
   ),
   rule(
     "F2441-991",
     "reject_and_stop",
     "database",
-    irsSide,
+    // Offline: a TIN the SSA or IRS can issue; its lock is IRS data.
+    inOwnDocument(everyIssuableTin("QualifyingPersonSSN")),
     "The Qualifying Person SSN that has a value on Form 2441, Line 2(b) has been locked because Social Security Administration records indicate the number belongs to a deceased individual.",
   ),
   rule(
     "F2441-992",
     "reject_and_stop",
     "database",
-    irsSide,
+    // Offline: a TIN the SSA or IRS can issue; its lock is IRS data.
+    inOwnDocument(everyIssuableTin("QualifyingPersonSSN")),
     "The Qualifying Person SSN that has a value on Form 2441, Line 2(b) has been locked. The account was locked per the taxpayer's request.",
   ),
   rule(
     "F2441-994",
     "reject_and_stop",
     "database",
-    irsSide,
+    // Offline: a TIN the SSA or IRS can issue; its lock is IRS data.
+    inOwnDocument(everyIssuableTin("QualifyingPersonSSN")),
     "The Qualifying Person SSN that has a value on Form 2441, Line 2(b) has been locked. The account was locked per the request of the qualifying person's parent or guardian.",
   ),
   rule(
     "F2441-995",
     "reject_and_stop",
     "incorrect_data",
-    irsSide,
+    inOwnDocument(wellFormedIpPins("QualifyingPersonGrp/IdentityProtectionPIN")),
     "The Dependent/Qualifying Person's Identity Protection Personal Identification Number (IP PIN) on Form 2441 must match the e-File database. Please double check your entry and resubmit your return with the correct number.",
   ),
   rule(
     "F2441-996",
     "reject_and_stop",
     "incorrect_data",
-    irsSide,
+    inOwnDocument(wellFormedIpPins("QualifyingPersonGrp/IdentityProtectionPIN")),
     "The Dependent/Qualifying Person's Identity Protection Personal Identification Number (IP PIN) provided on Form 2441 is not valid. Please visit www.irs.gov/getanippin for further information and resubmit your return with the correct number.",
   ),
 ];

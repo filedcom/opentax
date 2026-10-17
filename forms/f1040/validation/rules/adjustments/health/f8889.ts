@@ -1,11 +1,24 @@
 /**
  * MeF Business Rules: F8889
  * Auto-generated from 1040_Business_Rules_2025v3.0.csv
- * 15 rules (15 implemented, 0 stubs)
+ * 15 rules (15 implemented)
  */
 
 import type { RuleDef } from "../../../../../../core/validation/types.ts";
-import { rule, allDistinct, alwaysPass, eqDiffFloorZero, eqField, eqProduct, eqSum, hasValue, ifThen, matchesHeaderSSN, not, notGtField, notGtNum, } from "../../../../../../core/validation/mod.ts";
+import {
+  allDistinct,
+  eqDiffFloorZero,
+  eqField,
+  eqProduct,
+  eqSum,
+  hasValue,
+  ifThen,
+  matchesHeaderSSN,
+  not,
+  notGtField,
+  notGtNum,
+  rule,
+} from "../../../../../../core/validation/mod.ts";
 
 export const F8889_RULES: readonly RuleDef[] = [
   rule(
@@ -110,7 +123,22 @@ export const F8889_RULES: readonly RuleDef[] = [
     "F8889-016",
     "reject",
     "incorrect_data",
-    alwaysPass,
+    (ctx) => {
+      const own = ctx.ownDocumentOnly?.() ?? ctx;
+      if (!(own.num("HSAContributionAmt") < own.num("HSALimitedContributionAmt"))) return true;
+      const ssn = String(own.field("RecipientSSN") ?? "");
+      const f5329 = (ctx.emittedDocuments?.("F5329") ?? [])
+        .find((d) => String(d.field("SSN") ?? "") === ssn);
+      const entered = f5329 !== undefined &&
+        (f5329.hasValue("HSAExcessContriCreditAmt") || f5329.hasValue("TaxableHSADistributionAmt"));
+      const credited = entered
+        ? Math.min(
+          f5329.num("HSAExcessContriCreditAmt"),
+          f5329.num("TaxableHSADistributionAmt") - f5329.num("HSAExcessContriPriorYearAmt"),
+        )
+        : 0;
+      return Math.abs(own.num("TotalHSADeductionAmt") - (own.num("HSAContributionAmt") + credited)) < 0.01;
+    },
     "If Form 8889, 'HSAContributionAmt' is less than 'HSALimitedContributionAmt', then 'TotalHSADeductionAmt' must be equal to 'HSAContributionAmt' plus (+) the smaller of [ Form 5329, 'HSAExcessContriCreditAmt' ] or [ Form 5329, 'TaxableHSADistributionAmt' minus (-) 'HSAExcessContriPriorYearAmt' ] if an amount is entered.",
   ),
 ];

@@ -21,3 +21,34 @@ test("F2441-011-02 needs every CPYE detail once any is given", () => {
   assertEquals(emittedRulePasses(F2441_RULES, "F2441-011-02", { documents: ret("", statement(full)) }), true);
   assertEquals(emittedRulePasses(F2441_RULES, "F2441-011-02", { documents: ret("", statement("<CPYECreditAmt>300</CPYECreditAmt>")) }), false);
 });
+
+test("F2441-524 needs one name control per qualifying person SSN", () => {
+  const person = (nc: string) =>
+    `<QualifyingPersonGrp><QualifyingPersonNameControlTxt>${nc}</QualifyingPersonNameControlTxt>` +
+    "<QualifyingPersonSSN>400001057</QualifyingPersonSSN></QualifyingPersonGrp>";
+  const dependent = '<IRS1040 documentId="a"><DependentDetail><DependentNameControlTxt>BARK</DependentNameControlTxt>' +
+    "<DependentSSN>400001057</DependentSSN></DependentDetail></IRS1040>";
+  const header = "<Filer><PrimarySSN>400001039</PrimarySSN></Filer>";
+  const check = (nc: string) =>
+    emittedRulePasses(F2441_RULES, "F2441-524", {
+      header,
+      documents: dependent + `<IRS2441 documentId="d">${person(nc)}</IRS2441>`,
+    });
+  assertEquals(check("BARK"), false); // group 00 is only an ATS test SSN
+  assertEquals(
+    emittedRulePasses(F2441_RULES, "F2441-524", {
+      header,
+      documents: dependent.replaceAll("400001057", "400011057") +
+        `<IRS2441 documentId="d">${person("BARK").replace("400001057", "400011057")}</IRS2441>`,
+    }),
+    true,
+  );
+  assertEquals(
+    emittedRulePasses(F2441_RULES, "F2441-524", {
+      header,
+      documents: dependent.replaceAll("400001057", "400011057") +
+        `<IRS2441 documentId="d">${person("BARR").replace("400001057", "400011057")}</IRS2441>`,
+    }),
+    false,
+  );
+});

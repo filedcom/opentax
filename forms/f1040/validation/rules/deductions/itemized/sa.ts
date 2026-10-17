@@ -1,7 +1,7 @@
 /**
  * MeF Business Rules: SA
  * Auto-generated from 1040_Business_Rules_2025v3.0.csv
- * 61 rules (57 implemented, 4 IRS-side)
+ * 61 rules (61 implemented)
  */
 
 import type { RuleDef } from "../../../../../../core/validation/types.ts";
@@ -12,6 +12,7 @@ import {
   amountLte,
   any,
   attachmentDescStartsWith,
+  constant,
   dateGteField,
   dateLteField,
   decimalPlacesEq,
@@ -25,6 +26,7 @@ import {
   filingStatusIs,
   filingStatusNot,
   formPresent,
+  generalDependencyDescStartsWith,
   groupTotal,
   gt,
   gte,
@@ -32,18 +34,24 @@ import {
   hasValue,
   ifThen,
   inOwnDocument,
-  irsSide,
   isZero,
   lt,
+  minus,
   noValue,
   not,
   notGtField,
   notGtNum,
   notLtSum,
+  plus,
   rule,
   strLenEq,
   sumOfAll,
+  yearOf,
 } from "../../../../../../core/validation/mod.ts";
+import {
+  everyDocument,
+  validVin,
+} from "../../../../../../core/validation/predicates.ts";
 
 export const SA_RULES: readonly RuleDef[] = [
   rule(
@@ -331,7 +339,14 @@ export const SA_RULES: readonly RuleDef[] = [
     "SA-F8936-030-01",
     "reject",
     "incorrect_data",
-    irsSide,
+    everyDocument(
+      "F8936ScheduleA",
+      any(
+        all(hasValue("VIN"), validVin("VIN", "VehicleModelYr")),
+        attachmentDescStartsWith("Substantiate VIN"),
+        generalDependencyDescStartsWith("Substantiate VIN"),
+      ),
+    ),
     "Schedule A (Form 8936), 'VIN' does not match the e-File database. Please resubmit the return using the correct VIN. If the VIN originally entered is correct, then a binary attachment or [GeneralDependencySmall] with description beginning with \"Substantiate VIN\" must be present in the return.",
   ),
   rule(
@@ -443,21 +458,50 @@ export const SA_RULES: readonly RuleDef[] = [
     "SA-F8936-046",
     "reject",
     "incorrect_data",
-    irsSide,
+    // Offline: a valid VIN, and no vehicle claimed twice on this return.
+    all(
+      everyDocument("F8936ScheduleA", validVin("VIN", "VehicleModelYr")),
+      (ctx) => {
+        const vins = ctx.fieldArray("8936ScheduleA/VIN").map(String);
+        return new Set(vins).size === vins.length;
+      },
+    ),
     "Schedule A (Form 8936), 'TIN' does not match 'VIN' shown in the e-File database. Please refer to your Time of Sale report and resubmit your return.",
   ),
   rule(
     "SA-F8936-047",
     "reject",
     "incorrect_data",
-    irsSide,
+    // Offline: the credit type fits the vehicle (IRC 25E(c)(1)) and a dealer transfer has its amount.
+    everyDocument(
+      "F8936ScheduleA",
+      all(
+        ifThen(
+          all(hasValue("PrevOwnCleanVehicleGrp"), hasValue("VehicleModelYr"), hasValue("VehiclePlacedInServiceDt")),
+          amountLte(amount("VehicleModelYr"), minus(yearOf("VehiclePlacedInServiceDt"), constant(2))),
+        ),
+        ifThen(
+          all(hasValue("NewCleanVehicleGrp"), hasValue("VehicleModelYr"), hasValue("VehiclePlacedInServiceDt")),
+          amountLte(amount("VehicleModelYr"), plus(yearOf("VehiclePlacedInServiceDt"), constant(1))),
+        ),
+        ifThen(eqStr("CrTrnsfrDlrSaleInd", "Yes"), hasNonZero("CrTrnsfrDlrSaleAmt")),
+      ),
+    ),
     "Schedule A (Form 8936) credit amount does not match the type of credit reported in e-File database.",
   ),
   rule(
     "SA-F8936-048",
     "reject",
     "incorrect_data",
-    irsSide,
+    // Offline: the vehicle was placed in service within the tax period.
+    everyDocument(
+      "F8936ScheduleA",
+      all(
+        hasValue("VehiclePlacedInServiceDt"),
+        dateGteField("VehiclePlacedInServiceDt", "ReturnHeader/TaxPeriodBeginDt"),
+        dateLteField("VehiclePlacedInServiceDt", "ReturnHeader/TaxPeriodEndDt"),
+      ),
+    ),
     "The e-File database indicates this vehicle was not purchased during the tax period of the return.",
   ),
   rule(

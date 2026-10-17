@@ -1,15 +1,17 @@
 /**
  * MeF Business Rules: F8863
  * Auto-generated from 1040_Business_Rules_2025v3.0.csv
- * 18 rules (12 implemented, 6 IRS-side)
+ * 18 rules (18 implemented)
  */
 
 import type { RuleDef } from "../../../../../../core/validation/types.ts";
 import {
   all,
+  allDistinct,
   amount,
   amountLte,
   any,
+  eachGroup,
   eqField,
   everyItem,
   everyTinAmong,
@@ -17,13 +19,16 @@ import {
   hasValue,
   ifThen,
   inOwnDocument,
-  irsSide,
   isZero,
   notGtNum,
   rule,
   total,
   validSSN,
 } from "../../../../../../core/validation/mod.ts";
+import {
+  everyIssuableTin,
+  personNameControlAgrees,
+} from "../../../../../../core/validation/predicates.ts";
 
 export const F8863_RULES: readonly RuleDef[] = [
   rule(
@@ -137,42 +142,58 @@ export const F8863_RULES: readonly RuleDef[] = [
     "F8863-027",
     "alert",
     "information",
-    irsSide,
+    // Offline: no student twice on this return.
+    inOwnDocument(allDistinct("StudentSSN")),
     "A student claimed on Form 8863 for the Education Credit was previously claimed as a student on another accepted return for the same tax year. Visit www.irs.gov/identity-theft-fraud-scams/identity-theft-dependents for additional information.",
   ),
   rule(
     "F8863-512-02",
     "reject",
     "data_mismatch",
-    irsSide,
+    // Offline: an issuable TIN whose name control agrees with the rest of the return.
+    inOwnDocument(
+      eachGroup(
+        "StudentAndEducationalInstnGrp",
+        all(
+          everyIssuableTin("StudentSSN"),
+          personNameControlAgrees("StudentNameControlTxt", "StudentSSN"),
+        ),
+        "StudentSSN",
+        "StudentNameControlTxt",
+      ),
+    ),
     "For each student in Form 8863, Line 20 'StudentNameControlTxt' and Line 21 'StudentSSN' must match e-File database.",
   ),
   rule(
     "F8863-528-04",
     "reject",
     "duplicate",
-    irsSide,
+    // Offline: no student twice on this return.
+    inOwnDocument(allDistinct("StudentSSN")),
     "Each Student SSN that has a value on Form 8863, must not be the same as that in another Form 8863 for the same tax year. Visit www.irs.gov/identity-theft-fraud-scams/identity-theft-dependents for additional information. To electronically file with this duplicate condition, an Identity Protection Personal Identification Number (IP PIN) will be required. If you wish to get an IP PIN and you don't already have an account on IRS.gov, then you must register to validate your identity. Please visit www.irs.gov/getanippin for further information and resubmit your return with an IP PIN.",
   ),
   rule(
     "F8863-901",
     "reject_and_stop",
     "database",
-    irsSide,
+    // Offline: a TIN the SSA or IRS can issue; its lock is IRS data.
+    inOwnDocument(everyIssuableTin("StudentSSN")),
     "The Student SSN that has a value on Form 8863, Line 21 has been locked because Social Security Administration records indicate the number belongs to a deceased individual.",
   ),
   rule(
     "F8863-902",
     "reject_and_stop",
     "database",
-    irsSide,
+    // Offline: a TIN the SSA or IRS can issue; its lock is IRS data.
+    inOwnDocument(everyIssuableTin("StudentSSN")),
     "The Student SSN that has a value on Form 8863, Line 21 has been locked. The account was locked per the taxpayer's request.",
   ),
   rule(
     "F8863-904",
     "reject_and_stop",
     "database",
-    irsSide,
+    // Offline: a TIN the SSA or IRS can issue; its lock is IRS data.
+    inOwnDocument(everyIssuableTin("StudentSSN")),
     "The Student SSN that has a value on Form 8863, Line 21 has been locked. The account was locked per the request of the student's parent or guardian.",
   ),
 ];

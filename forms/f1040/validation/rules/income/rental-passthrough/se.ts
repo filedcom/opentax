@@ -1,11 +1,22 @@
 /**
  * MeF Business Rules: SE
  * Auto-generated from 1040_Business_Rules_2025v3.0.csv
- * 6 rules (6 implemented, 0 stubs)
+ * 6 rules (6 implemented)
  */
 
 import type { RuleDef } from "../../../../../../core/validation/types.ts";
-import { rule, alwaysPass, all, any, formPresent, hasNonZero, hasValue, ifThen, } from "../../../../../../core/validation/mod.ts";
+import {
+  all,
+  any,
+  formPresent,
+  hasNonZero,
+  hasValue,
+  ifThen,
+  rule,
+} from "../../../../../../core/validation/mod.ts";
+import {
+  scheduleReferencedOnce,
+} from "../../../../../../core/validation/predicates.ts";
 
 export const SE_RULES: readonly RuleDef[] = [
   rule(
@@ -40,7 +51,7 @@ export const SE_RULES: readonly RuleDef[] = [
     "SE-F5471-002",
     "reject",
     "incorrect_data",
-    alwaysPass, // requires cross-form reference count: Schedule E (Form 5471) must be referenced from exactly one Form 5471
+    scheduleReferencedOnce("F5471ScheduleE", "F5471"),
     "If Schedule E (Form 5471) is present in the return, then it must be referenced from one and only one Form 5471.",
   ),
   rule(

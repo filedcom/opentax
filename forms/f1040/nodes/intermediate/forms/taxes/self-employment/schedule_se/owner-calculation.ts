@@ -141,6 +141,10 @@ export function ownedScheduleSE(raw: unknown, ssWageBase: number) {
     instances,
     tax: instances.reduce((sum, row) => sum + row.line12, 0),
     deduction: instances.reduce((sum, row) => sum + row.line13, 0),
-    medicareEarnings: instances.reduce((sum, row) => sum + row.line6, 0),
+    // Form 8959 line 8 adds each filed Schedule SE line 6 (whole dollars).
+    medicareEarnings: instances.reduce(
+      (sum, row) => sum + Math.round(row.line6),
+      0,
+    ),
   };
 }

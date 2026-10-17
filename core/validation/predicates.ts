@@ -790,6 +790,140 @@ export const isItinOrAtin = (v: unknown): boolean => {
   return d.length === 9 && d.startsWith("9");
 };
 
+// ─── Forms and schedules: offline checks of e-File database rules ───
+
+/**
+ * A number the SSA or IRS can issue: an SSN outside area 000, 666 and 9XX,
+ * group 00 and serial 0000, or a 9XX ITIN or ATIN whose 4th and 5th digits are
+ * 50-65, 70-88 or 90-99. Pub 1436 ATS packets use group 00.
+ */
+export const issuableTin = (v: unknown, ats = false): boolean => {
+  const d = digits(v);
+  if (d.length !== 9) return false;
+  const group = Number(d.slice(3, 5));
+  if (d.startsWith("9")) {
+    return (group >= 50 && group <= 65) || (group >= 70 && group <= 88) ||
+      group >= 90;
+  }
+  if (d.startsWith("000") || d.startsWith("666")) return false;
+  if (d.endsWith("0000")) return false;
+  return group !== 0 || ats;
+};
+
+/** Every value of the fields is an issuable SSN, ITIN or ATIN. */
+export const everyIssuableTin = (...xml: string[]): RuleCheck =>
+  (ctx) =>
+    xml.flatMap((f) => ctx.fieldArray(f))
+      .every((v) => issuableTin(v, isAtsTest(ctx)));
+
+const PERSON_NAME_CONTROL = /^[A-Z][A-Z\- ]{0,3}$/;
+
+/**
+ * The name control has the IRS person format and, when the return names the
+ * same TIN as a filer or a Form 1040 dependent, equals the name control given
+ * there: the e-File database holds one name control per TIN.
+ */
+export const personNameControlAgrees = (
+  nameControlXml: string,
+  tinXml: string,
+): RuleCheck =>
+  (ctx) => {
+    const nc = String(ctx.field(nameControlXml) ?? "");
+    if (!nc) return true;
+    if (!PERSON_NAME_CONTROL.test(nc)) return false;
+    const tin = digits(ctx.field(tinXml));
+    if (!tin) return true;
+    const header = (leaf: string) => ctx.field(`ReturnHeader/${leaf}`);
+    const known: (readonly [string, unknown])[] = [
+      [digits(header("PrimarySSN")), header("PrimaryNameControlTxt")],
+      [digits(header("SpouseSSN")), header("SpouseNameControlTxt")],
+      ...(ctx.groupInstances?.("1040/DependentDetail") ?? []).map((d) =>
+        [digits(d.field("DependentSSN")), d.field("DependentNameControlTxt")] as const
+      ),
+    ];
+    return known.every(([ssn, other]) =>
+      ssn !== tin || !other || String(other).trim() === nc.trim()
+    );
+  };
+
+/** Every value is a six-digit IP PIN other than 000000. */
+export const wellFormedIpPins = (xml: string): RuleCheck =>
+  (ctx) =>
+    ctx.fieldArray(xml).every((v) => /^\d{6}$/.test(String(v)) && v !== "000000");
+
+/** Every emitted document with the prefix satisfies `check`, read from that document only. */
+export const everyDocument = (prefix: string, check: RuleCheck): RuleCheck =>
+  (ctx) =>
+    (ctx.emittedDocuments?.(prefix) ?? [])
+      .every((d) => check(d.ownDocumentOnly?.() ?? d));
+
+/** How many emitted documents with the prefix satisfy `check`, read from that document only. */
+export const documentCountWhere = (
+  prefix: string,
+  check: RuleCheck = () => true,
+): Amount =>
+  (ctx) =>
+    (ctx.emittedDocuments?.(prefix) ?? [])
+      .filter((d) => check(d.ownDocumentOnly?.() ?? d)).length;
+
+/**
+ * A schedule of another form is referenced from one and only one copy of
+ * that form: each copy references at most one such schedule.
+ */
+export const scheduleReferencedOnce = (
+  schedulePrefix: string,
+  formPrefix: string,
+): RuleCheck =>
+  (ctx) => {
+    const schedules = documentCountWhere(schedulePrefix)(ctx);
+    return schedules === 0 ||
+      schedules <= documentCountWhere(formPrefix)(ctx);
+  };
+
+/** The element references a document and one of the named statements is emitted. */
+export const statementAttached = (
+  element: string,
+  ...statements: string[]
+): RuleCheck =>
+  all(
+    hasValue(`${element}@referenceDocumentId`),
+    any(...statements.map(documentPresent)),
+  );
+
+const VIN_VALUE: Readonly<Record<string, number>> = Object.fromEntries([
+  ..."0123456789".split("").map((c, i) => [c, i]),
+  ..."ABCDEFGH".split("").map((c, i) => [c, i + 1]),
+  ..."JKLMN".split("").map((c, i) => [c, i + 1]),
+  ["P", 7],
+  ["R", 9],
+  ..."STUVWXYZ".split("").map((c, i) => [c, i + 2]),
+]);
+const VIN_WEIGHTS = [8, 7, 6, 5, 4, 3, 2, 10, 0, 9, 8, 7, 6, 5, 4, 3, 2];
+const VIN_YEAR_CODES = "ABCDEFGHJKLMNPRSTVWXY123456789";
+
+/**
+ * A 17-character VIN for a vehicle made for sale in the US (49 CFR 565): no
+ * I, O or Q, a valid position-9 check digit, and, when the model year field
+ * has a value, the position-10 code for that model year. Pub 1436 ATS
+ * packets use VINs that only need the 17-character format.
+ */
+export const validVin = (vinXml: string, modelYearXml?: string): RuleCheck =>
+  (ctx) => {
+    const vin = String(ctx.field(vinXml) ?? "");
+    if (!vin) return true;
+    if (isAtsTest(ctx)) return /^[A-Z0-9]{17}$/.test(vin);
+    if (!/^[A-HJ-NPR-Z0-9]{17}$/.test(vin)) return false;
+    const sum = vin.split("").reduce(
+      (s, c, i) => s + VIN_VALUE[c] * VIN_WEIGHTS[i],
+      0,
+    );
+    const check = sum % 11 === 10 ? "X" : String(sum % 11);
+    if (vin[8] !== check) return false;
+    const year = modelYearXml ? Number(ctx.field(modelYearXml)) : NaN;
+    if (!Number.isInteger(year) || year < 1980) return true;
+    return vin[9] === VIN_YEAR_CODES[(year - 1980) % 30];
+  };
+
 // ─── Rule Builder Helper ────────────────────────────────
 
 /** Convenience: build a RuleDef with less boilerplate. */

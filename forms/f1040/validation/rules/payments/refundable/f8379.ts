@@ -1,11 +1,29 @@
 /**
  * MeF Business Rules: F8379
  * Auto-generated from 1040_Business_Rules_2025v3.0.csv
- * 17 rules (16 implemented, 1 stub)
+ * 17 rules (17 implemented)
  */
 
 import type { RuleDef } from "../../../../../../core/validation/types.ts";
-import { rule, all, alwaysPass, eqField, eqStr, eqSum, filingStatusIs, formAbsent, formPresent, hasNonZero, hasValue, ifThen, noValue, not, } from "../../../../../../core/validation/mod.ts";
+import {
+  all,
+  amountLte,
+  constant,
+  eqField,
+  eqStr,
+  eqSum,
+  filingStatusIs,
+  formAbsent,
+  formPresent,
+  groupCount,
+  hasNonZero,
+  hasValue,
+  ifThen,
+  inOwnDocument,
+  noValue,
+  not,
+  rule,
+} from "../../../../../../core/validation/mod.ts";
 
 export const F8379_RULES: readonly RuleDef[] = [
   rule(
@@ -19,7 +37,7 @@ export const F8379_RULES: readonly RuleDef[] = [
     "F8379-002",
     "reject",
     "incorrect_data",
-    alwaysPass,
+    inOwnDocument(amountLte(groupCount("InjuredSpouseInformationGrp", hasValue("InjuredSpouseInd"), "InjuredSpouseInd"), constant(1))),
     "There must be no more than one checkbox 'InjuredSpouseInd' checked on Form 8379, Line 10.",
   ),
   rule(

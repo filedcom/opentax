@@ -1,11 +1,20 @@
 /**
  * MeF Business Rules: F172
  * Auto-generated from 1040_Business_Rules_2025v3.0.csv
- * 4 rules (2 implemented, 2 stubs)
+ * 4 rules (4 implemented)
  */
 
 import type { RuleDef } from "../../../../../../core/validation/types.ts";
-import { rule, alwaysPass, any, eqStr, hasValue, ifThen, notGtNum, } from "../../../../../../core/validation/mod.ts";
+import {
+  allDistinct,
+  any,
+  eqStr,
+  hasValue,
+  ifThen,
+  inOwnDocument,
+  notGtNum,
+  rule,
+} from "../../../../../../core/validation/mod.ts";
 
 export const F172_RULES: readonly RuleDef[] = [
   rule(
@@ -19,14 +28,17 @@ export const F172_RULES: readonly RuleDef[] = [
     "F172-004",
     "reject",
     "incorrect_data",
-    alwaysPass,
+    inOwnDocument(allDistinct("NOLCarryoverPrecYrGrp/PrecedingYearNum")),
     "On Form 172, there must not be two or more instances of 'NOLCarryoverPrecYrGrp' having the same 'PrecedingYearNum'.",
   ),
   rule(
     "F172-005",
     "reject",
     "incorrect_data",
-    alwaysPass,
+    inOwnDocument((ctx) => {
+      const years = ctx.fieldArray("NOLCarryoverPrecYrGrp/PrecedingYearNum").map(Number);
+      return years.every((year, i) => i === 0 || years[i - 1] >= year);
+    }),
     "On Form 172, instances of 'NOLCarryoverPrecYrGrp' must be provided in descending order based on the value of 'PrecedingYearNum'.",
   ),
   rule(

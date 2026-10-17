@@ -533,7 +533,11 @@ test("farm_optional_combines_nonfarm_regular_earnings_without_double_counting_fa
   });
   // Part I line4a = $1,000 × 92.35%; line4b = $3,000 × 2/3.
   const expectedLine6 = 923.5 + 2_000;
-  assertEquals(findOutput(result, "form8959")!.fields.se_income, expectedLine6);
+  // Form 8959 line 8 takes line 6 as filed, in whole dollars.
+  assertEquals(
+    findOutput(result, "form8959")!.fields.se_income,
+    Math.round(expectedLine6),
+  );
   assertEquals(
     round2(findOutput(result, "schedule2")!.fields.line4_se_tax as number),
     Math.round(Math.round(expectedLine6) * SS_RATE) +
