@@ -36,6 +36,9 @@ export const itemSchema = z.object({
   activity_name: z.string().min(1),
   ein: z.string().regex(/^\d{9}$/).optional(),
   actively_participated: z.boolean().optional(),
+  // Schedule E Part I lines A and B, filed with the Form 4835 total on line 40.
+  schedule_e_1099_payments_made: z.boolean().optional(),
+  schedule_e_1099_filed: z.boolean().optional(),
   livestock_crop_income: amount.default(0), // line 1
   cooperative_distributions_gross: amount.optional(), // 2a
   cooperative_distributions_taxable: amount.optional(), // 2b
@@ -213,6 +216,36 @@ export function calculateForm4835Lines(item: F4835Item) {
   return { gross, expenses, preliminaryNet };
 }
 
+/** One Schedule E lines A/B answer for every farm rental, or none. */
+export function scheduleE1099Answers(
+  items: readonly F4835Item[],
+): { form_1099_payments_made?: boolean; form_1099_filed?: boolean } {
+  const answered = items.filter((item) =>
+    item.schedule_e_1099_payments_made !== undefined
+  );
+  if (answered.length === 0) {
+    if (items.some((item) => item.schedule_e_1099_filed !== undefined)) {
+      throw new Error("Schedule E line B needs a line A answer");
+    }
+    return {};
+  }
+  if (answered.length !== items.length) {
+    throw new Error(
+      "Every Form 4835 activity needs the same Schedule E Form 1099 answers",
+    );
+  }
+  const payments = items.some((item) => item.schedule_e_1099_payments_made);
+  return payments
+    ? {
+      form_1099_payments_made: true,
+      form_1099_filed: items.every((item) =>
+        !item.schedule_e_1099_payments_made ||
+        item.schedule_e_1099_filed === true
+      ),
+    }
+    : { form_1099_payments_made: false };
+}
+
 export function calculateForm4835AtRiskNet(item: F4835Item): {
   preliminaryNet: number;
   atRiskNet: number;
@@ -252,6 +285,7 @@ class F4835Node extends TaxNode<typeof inputSchema> {
         output(scheduleE, {
           farm_rental_net: farmRentalNet,
           farm_rental_gross: farmRentalGross,
+          ...scheduleE1099Answers(f4835s),
           farm_rental_activities: f4835s.map((item, index) => ({
             activity_id: item.activity_id,
             name: item.activity_name,

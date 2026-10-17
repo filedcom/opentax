@@ -59,8 +59,11 @@ function buildSchedule(raw: Input, context?: MefBuildContext): string {
     throw new Error("Schedule 1-A Part I reviews cannot conflict");
   }
   if (!input.senior_zero_exclusions_review && !positive2555) {
-    const hasDeductionSource = input.taxpayer_age_65_or_older === true ||
-      input.spouse_age_65_or_older === true ||
+    // A married-filing-separately filer has no senior deduction to source.
+    const seniorSource = input.filing_status !== FilingStatus.MFS &&
+      (input.taxpayer_age_65_or_older === true ||
+        input.spouse_age_65_or_older === true);
+    const hasDeductionSource = seniorSource ||
       (input.qualified_employee_tips?.length ?? 0) > 0 ||
       (input.qualified_form4137_tips?.length ?? 0) > 0 ||
       (input.form4070_reports?.length ?? 0) > 0 ||

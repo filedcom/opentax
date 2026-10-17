@@ -14,6 +14,7 @@ import {
 } from "../../../../../nodes/inputs/income/rental-passthrough/schedule_e/index.ts";
 import {
   scheduleE,
+  scheduleEReturn1099Answer,
   validatePassiveActivityLink,
 } from "../../../../mef/forms/income/rental-passthrough/schedule_e.ts";
 import { verifyMiscRoyaltySource } from "../../../../mef/forms/income/rental-passthrough/schedule_e.ts";
@@ -395,7 +396,11 @@ export const scheduleEPdf: PdfFormDescriptor = {
           "Schedule E PDF farm rental needs a native Form 4835 join",
         );
       }
+      const answer = scheduleEReturn1099Answer(input, 0);
       return {
+        ...(answer
+          ? { payments_made: answer.payments, forms_1099_filed: answer.filed }
+          : {}),
         ...farmFields,
         trust_line41: farmNet,
       };

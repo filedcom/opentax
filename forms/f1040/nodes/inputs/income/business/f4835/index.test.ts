@@ -371,3 +371,23 @@ test("Form 4835 rejects old override and withholding shortcuts", () => {
   assertThrows(() => compute([item({ federal_withheld: 100 })]), Error);
   assertThrows(() => compute([item({ gross_farm_rental_income: 100 })]), Error);
 });
+
+test("Form 4835 carries one Schedule E Form 1099 answer for every farm rental", () => {
+  const answered = item({
+    livestock_crop_income: 5000,
+    schedule_e_1099_payments_made: true,
+    schedule_e_1099_filed: true,
+  });
+  const fields = compute([answered]).outputs[0].fields;
+  assertEquals(fields.form_1099_payments_made, true);
+  assertEquals(fields.form_1099_filed, true);
+  const unanswered = compute([item({ livestock_crop_income: 5000 })])
+    .outputs[0].fields;
+  assertEquals("form_1099_payments_made" in unanswered, false);
+  assertThrows(
+    () =>
+      compute([answered, item({ activity_id: "farm-2", activity_name: "B" })]),
+    Error,
+    "same Schedule E Form 1099 answers",
+  );
+});

@@ -62,14 +62,14 @@ test("ATS public-entry matrix retains missing prerequisites and printed conflict
     ledger.sourceReconciliations.filter((s) =>
       s.preparationResult === PreparationResult.PartialPrepared
     ).map((s) => s.scenario),
-    ["1040-04", "1040-05", "1040-12", "1040-13"],
+    ["1040-03", "1040-04", "1040-05", "1040-08", "1040-12", "1040-13"],
   );
   const retirement = ledger.sourceReconciliations.find((s) =>
     s.scenario === "1040-08"
   )!;
   assertEquals(
-    retirement.firstPreparationReason.includes("box 2 recipient"),
-    true,
+    retirement.preparationResult,
+    PreparationResult.PartialPrepared,
   );
   assertEquals(retirement.notes.some((n) => n.includes("QCD")), true);
   assertEquals(retirement.notes.some((n) => n.includes("1099-DIV")), true);
@@ -77,11 +77,11 @@ test("ATS public-entry matrix retains missing prerequisites and printed conflict
   assertEquals(ledger.byKind, {
     calculation: {
       count: 90,
-      counts: { different: 21, match: 66, "not-produced": 3 },
+      counts: { different: 19, match: 69, "not-produced": 2 },
     },
     "document-copy": {
       count: 56,
-      counts: { "not-evaluated": 26, present: 30 },
+      counts: { "not-evaluated": 14, present: 42 },
     },
     "binary-attachment": {
       count: 2,
@@ -89,7 +89,7 @@ test("ATS public-entry matrix retains missing prerequisites and printed conflict
     },
     "native-retirement-value": {
       count: 30,
-      counts: { "not-evaluated": 30 },
+      counts: { match: 30 },
     },
     "native-w2-value": {
       count: 80,
@@ -99,17 +99,17 @@ test("ATS public-entry matrix retains missing prerequisites and printed conflict
       count: 85,
       counts: {
         different: 17,
-        match: 37,
+        match: 60,
         "missing-field": 2,
-        "not-evaluated": 29,
+        "not-evaluated": 6,
       },
     },
   });
-  assertEquals(ledger.calculationAnchor.matching, 61);
-  assertEquals(ledger.calculationAnchor.evaluated, 82);
-  assertEquals(ledger.calculationAnchor.notProduced, 3);
+  assertEquals(ledger.calculationAnchor.matching, 64);
+  assertEquals(ledger.calculationAnchor.evaluated, 83);
+  assertEquals(ledger.calculationAnchor.notProduced, 2);
   assertEquals(ledger.calculationAnchor.provisional, 5);
-  assertEquals(ledger.calculationAnchor.percent, 100 * 61 / 82);
+  assertEquals(ledger.calculationAnchor.percent, 100 * 64 / 83);
   assertEquals(ledger.attachmentRequirementsNotInventoried.length, 0);
   // Distinct W2 copy identities survive; blocked copies are not labeled missing.
   assertEquals(
@@ -188,7 +188,11 @@ test("ATS public-entry matrix retains missing prerequisites and printed conflict
       /^[a-f0-9]{64}$/.test(coverage.coverSheetReview!.sourceSha256),
       true,
     );
-    if (!["1040-04", "1040-05", "1040-12", "1040-13"].includes(scenario.id)) {
+    if (
+      !["1040-03", "1040-04", "1040-05", "1040-08", "1040-12", "1040-13"].includes(
+        scenario.id,
+      )
+    ) {
       assertEquals(coverage.allKnownRequiredPresent, null);
     }
   }
@@ -209,10 +213,10 @@ test("ATS public-entry matrix retains missing prerequisites and printed conflict
   assertEquals(documents, [
     { id: "1040-01", observed: 0, required: 7, present: false },
     { id: "1040-02", observed: 0, required: 7, present: false },
-    { id: "1040-03", observed: 0, required: 9, present: false },
+    { id: "1040-03", observed: 9, required: 9, present: true },
     { id: "1040-04", observed: 7, required: 7, present: true },
     { id: "1040-05", observed: 9, required: 9, present: true },
-    { id: "1040-08", observed: 0, required: 3, present: false },
+    { id: "1040-08", observed: 3, required: 3, present: true },
     { id: "1040-12", observed: 8, required: 8, present: true },
     { id: "1040-13", observed: 6, required: 6, present: true },
   ]);
@@ -246,29 +250,25 @@ test("ATS public-entry matrix retains missing prerequisites and printed conflict
     report.scenarios.find((s) => s.id === "1040-01")!.preparation.result,
     PreparationResult.NativeBlocked,
   );
-  for (const id of ["1040-02", "1040-03"]) {
+  const singleWage = report.scenarios.find((s) => s.id === "1040-02")!;
+  assertEquals(singleWage.diagnostics, []);
+  assertEquals(
+    singleWage.checks.every((c) => c.result === CheckResult.Match),
+    true,
+  );
+  assertEquals(
+    singleWage.preparation.result,
+    PreparationResult.NativeBlocked,
+  );
+  assertEquals(report.counts, { match: 69, different: 19, "not-produced": 2 });
+  for (const id of ["1040-03", "1040-08"]) {
     const scenario = report.scenarios.find((s) => s.id === id)!;
     assertEquals(scenario.diagnostics, []);
-    if (id === "1040-02") {
-      assertEquals(
-        scenario.checks.every((c) => c.result === CheckResult.Match),
-        true,
-      );
-    }
-    assertEquals(scenario.preparation.result, PreparationResult.NativeBlocked);
+    assertEquals(
+      scenario.checks.every((c) => c.result === CheckResult.Match),
+      true,
+    );
   }
-  assertEquals(report.counts, { match: 66, different: 21, "not-produced": 3 });
-  const farm = report.scenarios.find((s) => s.id === "1040-03")!;
-  assertEquals(
-    farm.checks.filter((c) => c.result !== CheckResult.Match).map(
-      (c) => [c.path, c.expected, c.actual, c.result],
-    ),
-    [
-      ["schedule1.line1_state_refund", 3110, null, CheckResult.NotProduced],
-      ["f1040.line8_additional_income", 17422, 14312, CheckResult.Different],
-      ["f1040.line9_total_income", 72235, 69125, CheckResult.Different],
-    ],
-  );
   assertEquals(
     transfer.checks.map((c) => [c.path, c.expected, c.result]),
     [

@@ -331,6 +331,8 @@ export const inputSchema = z.object({
   qbi_no_prior_loss_or_suspended_loss_confirmed: z.literal(true).optional(),
   qbi_not_patron_of_specified_cooperative_confirmed: z.literal(true)
     .optional(),
+  // The return omits Form 8995/8995-A; current-year QBI losses still need filing.
+  qbi_deduction_not_claimed: z.literal(true).optional(),
   form461_scope_review: form461ScopeReviewSchema.optional(),
   // Required for the Form 3800 line 13 limit when filing separately.
   spouse_has_business_credit: z.boolean().optional(),
@@ -1713,6 +1715,9 @@ class GeneralNode extends TaxNode<typeof inputSchema> {
         ...(parsed.qbi_not_patron_of_specified_cooperative_confirmed ===
             true && {
           qbi_not_patron_of_specified_cooperative_confirmed: true,
+        }),
+        ...(parsed.qbi_deduction_not_claimed === true && {
+          qbi_deduction_not_claimed: true,
         }),
         ...(taxpayerAge65 !== undefined &&
           { taxpayer_age_65_or_older: taxpayerAge65 }),

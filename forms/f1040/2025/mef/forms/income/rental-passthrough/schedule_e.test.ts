@@ -5,7 +5,7 @@ import { PDFDocument } from "pdf-lib";
 import { itemSchema } from "../../../../../nodes/inputs/income/rental-passthrough/schedule_e/index.ts";
 import { buildMefBundle, buildMefXml } from "../../../builder.ts";
 import { FilingStatus } from "../../../types.ts";
-import { scheduleE } from "./schedule_e.ts";
+import { scheduleE, scheduleEReturn1099Answer } from "./schedule_e.ts";
 import { SCHEDULE_E_TYPE8_STATEMENT_FILE } from "./schedule_e_type8_statement.ts";
 
 function property(overrides: Record<string, unknown> = {}) {
@@ -513,4 +513,29 @@ test("Schedule E actual issued RPE K1 keeps legal source identity while native b
     "<NonpassiveIncomeAmt>240000</NonpassiveIncomeAmt>",
   );
   assertEquals(item, original);
+});
+
+test("Schedule E return-level Form 1099 answers apply only without property rows", () => {
+  assertEquals(scheduleEReturn1099Answer({}, 0), undefined);
+  assertEquals(
+    scheduleEReturn1099Answer(
+      { form_1099_payments_made: true, form_1099_filed: true },
+      0,
+    ),
+    { payments: true, filed: true },
+  );
+  assertEquals(
+    scheduleEReturn1099Answer({ form_1099_payments_made: false }, 0),
+    { payments: false, filed: undefined },
+  );
+  assertThrows(
+    () => scheduleEReturn1099Answer({ form_1099_payments_made: true }, 0),
+    Error,
+    "line B is answered only when line A is Yes",
+  );
+  assertThrows(
+    () => scheduleEReturn1099Answer({ form_1099_payments_made: false }, 1),
+    Error,
+    "belong on each property row",
+  );
 });

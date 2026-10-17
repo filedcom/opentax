@@ -2,6 +2,33 @@ import { DistributionCode } from "../../nodes/inputs/income/retirement/f1099r/in
 import { FilingStatus, TS } from "../../nodes/types.ts";
 import { SCENARIO_1040_08_FACTS } from "./ty2025_cases.ts";
 
+const ASSUMED = {
+  dividendPayerName: "Real Estate Investment Trust",
+  ssaCopyReference: "irs-ty2025-ats-1040-08-ssa1099-cover",
+  priorYearAgi: 0,
+} as const;
+
+/** Facts export requires that the packet does not print; none changes tax. */
+export const SCENARIO_1040_08_ASSUMPTIONS = [
+  {
+    field: "ssa1099[0].source_document_reference / recipient_tin",
+    value: `${ASSUMED.ssaCopyReference} / taxpayer SSN`,
+    why:
+      "The cover says the taxpayer received the $1,000 benefits but issues no SSA-1099 copy.",
+  },
+  {
+    field: "f1099div[0].payerName",
+    value: ASSUMED.dividendPayerName,
+    why:
+      "The cover names the payer only as a Real Estate Investment Trust and issues no 1099-DIV copy.",
+  },
+  {
+    field: "general.taxpayer_prior_year_agi",
+    value: String(ASSUMED.priorYearAgi),
+    why: "The packet gives no 2024 AGI for the Self-Select PIN.",
+  },
+] as const;
+
 /**
  * Source-backed calculation fixture for TY2025 Form 1040 ATS Scenario 8.
  *
@@ -9,16 +36,17 @@ import { SCENARIO_1040_08_FACTS } from "./ty2025_cases.ts";
  * printed QCD election; no direct charitable payment or QCD amount is given.
  * The code-G 1099-R supports the printed direct-rollover checkbox. The source
  * facts retain both marks without inventing a QCD or a rollover destination.
- * It is not an IRS-accepted ATS transmission.
  */
 export function scenario104008Input(): Record<string, unknown> {
   const facts = SCENARIO_1040_08_FACTS;
   return {
     general: {
+      ats_test_submission: true,
       taxpayer_first_name: facts.taxpayer.firstName,
       taxpayer_last_name: facts.taxpayer.lastName,
       taxpayer_ssn: facts.taxpayer.ssn,
       taxpayer_dob: facts.taxpayer.dateOfBirth,
+      taxpayer_prior_year_agi: ASSUMED.priorYearAgi,
       address_line1: facts.taxpayer.address.line1,
       address_city: facts.taxpayer.address.city,
       address_state: facts.taxpayer.address.state,
@@ -59,9 +87,9 @@ export function scenario104008Input(): Record<string, unknown> {
       direct_rollover_confirmed: form.distributionCode === "G" &&
         facts.form1040.line5cRolloverChecked,
     })),
-    // The cover sheet reports this 1099-DIV amount but the PDF contains no
-    // payer copy, so only the amount and no invented payer identity are used.
+    // The cover sheet reports this 1099-DIV amount without a payer copy.
     f1099div: [{
+      payerName: ASSUMED.dividendPayerName,
       isNominee: false,
       recipient_tin: facts.taxpayer.ssn.replace(/\D/g, ""),
       box11: false,
@@ -69,17 +97,19 @@ export function scenario104008Input(): Record<string, unknown> {
       box2a: facts.realEstateInvestmentTrustCapitalGainDistribution,
     }],
     ssa1099: [{
+      source_document_reference: ASSUMED.ssaCopyReference,
+      recipient_tin: facts.taxpayer.ssn,
       box3_gross_benefits: facts.socialSecurityBenefits.gross,
       box5_net_benefits: facts.socialSecurityBenefits.gross,
     }],
   };
 }
 
-/** Known source gaps remain separate from whichever export guard fires first. */
+/** Current export state and the documented packet conflict. */
 export const SCENARIO_1040_08_RECONCILIATION = {
   missing: [
-    "The printed blank IRA gross amount and checked QCD box conflict with the code-Q distribution; obtain corrected source facts or IRS clarification without inventing a charity payment.",
-    "The cover supplies Social Security benefits but no issued SSA-1099 copy reference and box 2 recipient required by full export.",
-    "The cover supplies a REIT capital-gain distribution but no identified Form 1099-DIV payer copy.",
+    "Exports without --force once the shared ATS header and test-EIN mode land. The XML validates against the TY2025 v5.4 XSD.",
+    "Answer-key conflict: Form 1040 p. 2 leaves line 4a blank and checks QCD on line 4c, but the only IRA source is a $35,800 code-Q Roth distribution. The return files 35,800 on line 4a, 0 on line 4b and no QCD box; IRS clarification is requested.",
+    "The SSA-1099 copy reference and 1099-DIV payer name are recorded assumptions; the cover gives only the amounts.",
   ],
 } as const;
