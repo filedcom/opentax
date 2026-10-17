@@ -51,7 +51,7 @@ XML or PDF stay in `../2025/mef/` and `../2025/pdf/`.
 ## Verify
 
 - `bun run check:structure`
-- `bun test forms/f1040/nodes/<role>/…/<name> --timeout=1800000`
+- `bun test --timeout=1800000 ./forms/f1040/nodes/<role>/…/<name>`
 - `bun run test:unit` (tsc), `bun run bench --form f1040 --year 2025`
 
 ## Read next

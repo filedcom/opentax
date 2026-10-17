@@ -16,7 +16,7 @@ User-supplied documents belong in `../inputs/`; final 1040/Schedule 1 lines in
 - `aggregation/<section>/<group>/<name>/` — 7 aggregators: `agi_aggregator`,
   `agi_final`, `schedule3` (`general/return-assembly/`), `schedule_b`,
   `schedule_d`, `schedule_d_final` (`income/investments/`), `schedule2`.
-- Each section folder has a `README.md` index. Larger nodes split logic into
+- Each section folder has an `AGENTS.md`. Larger nodes split logic into
   `calculation.ts` and `*_review.ts` beside `index.ts`.
 
 ## Rules
@@ -44,7 +44,7 @@ feeds it; otherwise `check:structure` reports it unreachable.
 
 ## Verify
 
-- `bun test forms/f1040/nodes/intermediate/<kind>/<section>/<group>/<name> --timeout=1800000`
+- `bun test --timeout=1800000 ./forms/f1040/nodes/intermediate/<kind>/<section>/<group>/<name>`
 - `bun run check:structure`
 - `bun run bench --form f1040 --year 2025` — any change here can move lines.
 

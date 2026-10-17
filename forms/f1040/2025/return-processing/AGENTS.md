@@ -4,7 +4,7 @@ TY2025 whole-return wiring that is neither a node nor one form's serializer:
 the generated `start` input node, the staged execution order, pending
 normalization shared by MeF and PDF, and return-wide export guards. Form-level
 checks go in `../domains/`; calculations in `../../nodes/`. The file index is
-[README.md](./README.md).
+[README.md](AGENTS.md).
 
 ## Layout
 - `start.ts` — `buildStartNode(inputNodes)`: builds the strict public input

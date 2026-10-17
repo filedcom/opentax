@@ -35,7 +35,7 @@ and MeF schema version are in `../../2025/config.ts`.
 ## Verify
 
 - `bun run test:unit` (`tsc` catches a missing `F1040Config` field)
-- `bun test forms/f1040/nodes/intermediate/worksheets --timeout=1800000`
+- `bun test --timeout=1800000 ./forms/f1040/nodes/intermediate/worksheets`
 - `bun run bench --form f1040 --year 2025`
 
 ## Read next

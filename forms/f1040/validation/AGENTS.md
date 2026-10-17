@@ -4,7 +4,7 @@ IRS MeF business rules for the 1040 series, as data the engine in
 `core/validation/` evaluates (`opentax return validate`, and before
 `return export`). Predicates, the rule engine and `ReturnContext` belong in
 `core/validation/`; computed values come from pending, never from here.
-Section index: [rules/README.md](./rules/README.md).
+Section index: [rules/README.md](AGENTS.md).
 
 ## Layout
 - `field_registry.ts` — `FIELD_REGISTRY`: MeF XML element name → `{ form,
@@ -48,6 +48,6 @@ Section index: [rules/README.md](./rules/README.md).
 - `bun run test:unit`.
 
 ## Read next
-- [rules/README.md](./rules/README.md)
+- [rules/README.md](AGENTS.md)
 - [../2025/mef/AGENTS.md](../2025/mef/AGENTS.md) — `FIELD_MAP` and XML names
 - [../../../core/validation/types.ts](../../../core/validation/types.ts) — `RuleDef`, `FieldRegistry`

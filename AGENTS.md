@@ -25,6 +25,14 @@ A change ships with proof, not a description of it:
 The layout the checks enforce, and which check owns each rule, is in
 `docs/architecture/STRUCTURE.md`.
 
+## Folder context
+
+Each major folder has an `AGENTS.md` (loaded through the `CLAUDE.md` beside
+it) with that folder's layout, rules and verify commands. Each tax section's
+map is `forms/f1040/nodes/inputs/<section>/AGENTS.md`: where every form's
+input, calculation, MeF, PDF, tests, rules and research live. A change that
+makes one of these files wrong updates it in the same pull request.
+
 ## Nodes
 
 - Input shapes are Zod schemas; infer their types, never redeclare them. Finite

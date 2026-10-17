@@ -52,6 +52,6 @@ belongs in `core/`; return persistence and commands in `cli/`.
 
 - [nodes/AGENTS.md](nodes/AGENTS.md), [2025/AGENTS.md](2025/AGENTS.md), [mef/AGENTS.md](mef/AGENTS.md), [validation/AGENTS.md](validation/AGENTS.md)
 - [FORM.md](FORM.md)
-- [2025/domains/README.md](2025/domains/README.md), [2025/return-processing/README.md](2025/return-processing/README.md)
-- [2025/mef/forms/README.md](2025/mef/forms/README.md), [2025/pdf/forms/README.md](2025/pdf/forms/README.md)
-- [validation/rules/README.md](validation/rules/README.md), [e2e/AGENTS.md](e2e/AGENTS.md)
+- [2025/domains/README.md](2025/domains/AGENTS.md), [2025/return-processing/README.md](2025/return-processing/AGENTS.md)
+- [2025/mef/forms/README.md](2025/mef/AGENTS.md), [2025/pdf/forms/README.md](2025/pdf/AGENTS.md)
+- [validation/rules/README.md](validation/AGENTS.md), [e2e/AGENTS.md](e2e/AGENTS.md)

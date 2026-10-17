@@ -4,7 +4,7 @@ TY2025 native MeF output: one serializer per IRS XML document, the return
 bundle that orders and links them, and submission/attachment packaging.
 Calculations stay in `../../nodes/`; source checks shared with the PDF live in
 `../domains/`; year-independent header and XML helpers live in `../../mef/`.
-Index of serializers: [forms/README.md](./forms/README.md).
+Index of serializers: [forms/README.md](AGENTS.md).
 
 ## Layout
 
@@ -54,7 +54,7 @@ Index of serializers: [forms/README.md](./forms/README.md).
 
 ## Read next
 
-- [forms/README.md](./forms/README.md), [support/AGENTS.md](./support/AGENTS.md)
+- [forms/README.md](AGENTS.md), [support/AGENTS.md](./support/AGENTS.md)
 - [../../mef/AGENTS.md](../../mef/AGENTS.md) — header, filer and XML helpers
 - [../../validation/AGENTS.md](../../validation/AGENTS.md) — rules over `FIELD_MAP` names
 - [../domains/AGENTS.md](../domains/AGENTS.md)

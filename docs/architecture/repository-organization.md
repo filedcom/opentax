@@ -21,10 +21,10 @@ These sections reflect familiar tax-software navigation rather than a universal 
 | Engine and CLI | `core/runtime`, `core/types`, `core/validation`; `cli/commands`, `cli/store`, `cli/utils` |
 | Source and calculation nodes | `forms/f1040/nodes/inputs/<section>/<group>/<family>` and `intermediate/{forms,worksheets,aggregation}/<section>/<group>/<family>` |
 | Final assembly nodes | `forms/f1040/nodes/outputs/general/return-assembly` |
-| Year-specific source contracts | [TY2025 domains](../../forms/f1040/2025/domains/README.md) |
-| Native and printed forms | [MeF forms](../../forms/f1040/2025/mef/forms/README.md), [PDF forms](../../forms/f1040/2025/pdf/forms/README.md) |
-| Review fixtures and complete returns | [PDF reviews](../../forms/f1040/2025/pdf/reviews/README.md), [E2E scenarios](../../forms/f1040/e2e/README.md); ATS stays together |
-| Business-rule registry | [Rule sections](../../forms/f1040/validation/rules/README.md) |
+| Year-specific source contracts | [TY2025 domains](../../forms/f1040/2025/domains/AGENTS.md) |
+| Native and printed forms | [MeF forms](../../forms/f1040/2025/mef/AGENTS.md), [PDF forms](../../forms/f1040/2025/pdf/AGENTS.md) |
+| Review fixtures and complete returns | [PDF reviews](../../forms/f1040/2025/pdf/AGENTS.md), [E2E scenarios](../../forms/f1040/e2e/AGENTS.md); ATS stays together |
+| Business-rule registry | [Rule sections](../../forms/f1040/validation/AGENTS.md) |
 | Research evidence | [TY2025 documents](../ty2025/README.md) |
 | Testing, research, maintenance and release tools | [Scripts](../../scripts/README.md) |
 

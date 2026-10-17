@@ -3,11 +3,11 @@
 End-to-end return contracts for Form 1040: inputs run through the real
 registry, planner and executor, and the result is checked in MeF XML, PDF or
 return lines. Unit tests for a single node stay beside that node, not here.
-Index: [README.md](./README.md).
+Index: [README.md](AGENTS.md).
 
 ## Layout
 - `income/`, `adjustments/`, `deductions/`, `credits/`, `taxes/`, `payments/` —
-  return sections, each with a README; subfolders are the tax group, then the
+  return sections, each with an AGENTS.md; subfolders are the tax group, then the
   form (e.g. `adjustments/health/form8853/`).
 - `ats/` — IRS TY2025 MeF ATS scenarios, kept together: `scenario_1040_NN_input.ts`
   is the transcribed source slice of packet NN and its `.test.ts` reconciles it;
@@ -30,10 +30,10 @@ Index: [README.md](./README.md).
   code uses `node:` directly).
 - ATS facts cite the IRS packet URL and page; a `partial-facts` scenario is not
   an ATS-ready return and must not be described as one.
-- Some tests are gated on private evidence through `process.env.*` inputs
-  (e.g. `FORM8941_RATING_EVIDENCE`); `scripts/testing/run.ts` reports those as
-  external inputs, and the full run fails on ignored tests without a
-  `scripts/testing/skip-policy.json` reason.
+- Some tests read `process.env.*` paths (e.g. `FORM8941_RATING_EVIDENCE`) that
+  only name where to write XML/PDF evidence; they gate nothing.
+  `scripts/testing/run.ts` reports them as external inputs, and the full run
+  fails on ignored tests without a `scripts/testing/skip-policy.json` reason.
 - These modules are not in `bun run test:unit`; only `bun run test` (full) runs
   them all.
 
@@ -43,7 +43,7 @@ Index: [README.md](./README.md).
 - `bun run test:unit` still passes (type-checks every module, including these).
 
 ## Read next
-- [README.md](./README.md) and each section README, e.g. [income](./income/README.md)
+- [README.md](AGENTS.md) and each section README, e.g. [income](income/AGENTS.md)
 - [../../../docs/architecture/STRUCTURE.md](../../../docs/architecture/STRUCTURE.md)
 - [../../../docs/architecture/repository-organization.md](../../../docs/architecture/repository-organization.md)
 - [../../../scripts/testing/README.md](../../../scripts/testing/README.md) — test runner modes

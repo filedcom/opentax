@@ -9,7 +9,7 @@ fields belongs in `../intermediate/`.
 
 - `<section>/<group>/<name>/` — the seven sections; groups such as
   `income/wages`, `income/rental-passthrough`, `credits/foreign`,
-  `payments/estimated`. Each section has a `README.md` index.
+  `payments/estimated`. Each section has an `AGENTS.md` map.
 - 159 node classes; most in `index.ts`, a few extra per folder
   (`credits/business/f3800/current_allocation_node.ts`).
 - Shared review/source schemas sit beside the node (`f8615/schema.ts`,
@@ -47,12 +47,12 @@ to every node it feeds.
 
 - `bun run check:structure` (unreachable: not in `inputNodes` and not routed)
 - `bun run check:cases`
-- `bun test forms/f1040/nodes/inputs/<section>/<group>/<name> --timeout=1800000`
+- `bun test --timeout=1800000 ./forms/f1040/nodes/inputs/<section>/<group>/<name>`
 - `bun run tax node inspect --node_type <type>` shows the accepted schema.
 
 ## Read next
 
 - [../AGENTS.md](../AGENTS.md) — placement and the add-a-node checklist
 - [../intermediate/AGENTS.md](../intermediate/AGENTS.md)
-- [../../2025/return-processing/README.md](../../2025/return-processing/README.md)
+- [../../2025/return-processing/README.md](../../2025/return-processing/AGENTS.md)
 - [../../../../benchmark/AGENTS.md](../../../../benchmark/AGENTS.md)

@@ -7,7 +7,7 @@ documents together for one form or effect. Calculations belong in
 ones in `general/filing/form8886/` and `income/business/form172/` are baselined
 in `scripts/testing/structure-baseline.json` — move, don't add); XML element and PDF
 field mapping belong in `../mef/forms/` and `../pdf/forms/`. Index:
-[README.md](./README.md) and one README per section.
+[README.md](AGENTS.md) and one README per section.
 
 ## Layout
 - `<section>/<group>/<form>/` — section is one of the seven return sections,
@@ -36,9 +36,10 @@ field mapping belong in `../mef/forms/` and `../pdf/forms/`. Index:
   publications, never from engine output; say so in the test, as
   `taxes/amt/form6251/form6251_basis_returns.test.ts` does.
 - Tests that validate XML read the 2025v5.4 XSD under
-  `.state/research/docs/IMF_Series_2025v5.4/` (private, may be absent) and
-  throw `Missing verification prerequisite` without it; that is a missing
-  input, not a pass.
+  `.state/research/docs/IMF_Series_2025v5.4/` (private, may be absent) and fail
+  without it — some throw `Missing verification prerequisite`, others fail in
+  xmllint ("failed to load external entity") or with `ENOENT`. Each is a
+  missing input, not a pass and not a regression.
 
 ## Verify
 - `bun test ./forms/f1040/2025/domains/<section>/<group>/<form>/ --timeout=1800000`
@@ -48,7 +49,7 @@ field mapping belong in `../mef/forms/` and `../pdf/forms/`. Index:
   computed line.
 
 ## Read next
-- [README.md](./README.md), e.g. [taxes/README.md](./taxes/README.md)
+- [README.md](AGENTS.md), e.g. [taxes/README.md](taxes/AGENTS.md)
 - [../AGENTS.md](../AGENTS.md) — how the year calls these modules
 - [../mef/AGENTS.md](../mef/AGENTS.md), [../pdf/AGENTS.md](../pdf/AGENTS.md)
 - [../../../../docs/architecture/repository-organization.md](../../../../docs/architecture/repository-organization.md)

@@ -10,8 +10,8 @@ these lines belongs in `../../2025/mef/` and `../../2025/pdf/`.
 - `general/return-assembly/f1040/` — node type `f1040`: `index.ts`,
   `index.test.ts`, `schedule_r_limit.test.ts`.
 - `general/return-assembly/schedule1/` — node type `schedule1`: `index.ts`,
-  `index.test.ts`, `research/context.md`.
-- `general/README.md` — links to the canonical MeF assemblies.
+  `index.test.ts`.
+- `general/AGENTS.md` — links to the canonical MeF assemblies.
 
 ## Rules
 
@@ -30,7 +30,7 @@ these lines belongs in `../../2025/mef/` and `../../2025/pdf/`.
 
 ## Verify
 
-- `bun test forms/f1040/nodes/outputs --timeout=1800000`
+- `bun test --timeout=1800000 ./forms/f1040/nodes/outputs`
 - `bun run check:structure`
 - `bun run bench --form f1040 --year 2025` and `bun run check:oracle`
 
@@ -38,5 +38,5 @@ these lines belongs in `../../2025/mef/` and `../../2025/pdf/`.
 
 - [../AGENTS.md](../AGENTS.md)
 - [../intermediate/AGENTS.md](../intermediate/AGENTS.md)
-- [general/README.md](general/README.md)
+- [general/README.md](general/AGENTS.md)
 - [../../../../benchmark/AGENTS.md](../../../../benchmark/AGENTS.md)

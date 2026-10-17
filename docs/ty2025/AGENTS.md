@@ -11,8 +11,8 @@ code those notes describe lives in `forms/f1040/` (shared nodes, and
 - `domains/<section>/<group>/` — source proofs, gaps and checkpoints by the
   seven tax sections; groups follow `forms/f1040/2025/domains/` where one
   exists (e.g. `taxes/household-employment/`). A form with several notes gets
-  its own `form<number>/` folder (`taxes/amt/form6251/`). Each section has a
-  `README.md` with per-group file counts.
+  its own `form<number>/` folder (`taxes/amt/form6251/`). Each section has an
+  `AGENTS.md` describing its research folders.
 - `inventory/` — coverage inventories and root/attachment audits
   (`coverage-inventory*.md`, `ty2025-unregistered-roots-*.md`).
 - `readiness/` — product-board status, checkpoint handoffs and readiness
@@ -38,8 +38,8 @@ code those notes describe lives in `forms/f1040/` (shared nodes, and
 - Add a new dated `## <Month day> …` section for a new checkpoint; keep earlier
   ones as history. `product_board.md` at the repo root links into these files
   by path and heading anchor, so a rename or heading change must update it.
-- When adding or moving files, update the counts in `README.md` here and in the
-  affected `domains/<section>/README.md`.
+- When adding or moving files, update the counts in `README.md` here and the
+  folder list in the affected `domains/<section>/AGENTS.md`.
 
 ## Verify
 
@@ -54,4 +54,4 @@ code those notes describe lives in `forms/f1040/` (shared nodes, and
 - [ats/ty2025.md](ats/ty2025.md)
 - [../architecture/repository-organization.md](../architecture/repository-organization.md)
 - [../../product_board.md](../../product_board.md)
-- [../../forms/f1040/2025/domains/README.md](../../forms/f1040/2025/domains/README.md)
+- [../../forms/f1040/2025/domains/README.md](../../forms/f1040/2025/domains/AGENTS.md)
