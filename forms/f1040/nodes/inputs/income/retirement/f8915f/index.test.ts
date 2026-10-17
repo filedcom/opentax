@@ -96,6 +96,21 @@ test("Form 8915-F bounds repayment to income and the reviewed filing deadline", 
     }).success,
     false,
   );
+  // i8915f: a repayment can be made beginning the day after the distribution.
+  assertEquals(
+    itemSchema.safeParse({
+      ...source,
+      repayment: { ...repayment, date: "2025-06-01" },
+    }).success,
+    false,
+  );
+  assertEquals(
+    itemSchema.safeParse({
+      ...source,
+      repayment: { ...repayment, date: "2025-06-02" },
+    }).success,
+    true,
+  );
   assertEquals(
     itemSchema.safeParse({
       ...source,

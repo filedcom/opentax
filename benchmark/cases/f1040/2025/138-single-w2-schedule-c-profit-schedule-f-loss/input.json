@@ -1,0 +1,71 @@
+{
+  "year": 2025,
+  "scenario": "Single filer with W-2 wages, a $210,000 Schedule C profit and a $200,000 Schedule F loss; the farm loss offsets the shop on Schedule SE and in qualified business income",
+  "forms": [
+    {
+      "node_type": "start",
+      "data": {
+        "general": {
+          "filing_status": "single",
+          "taxpayer_first_name": "Jordan",
+          "taxpayer_last_name": "Hale",
+          "taxpayer_dob": "1979-05-20",
+          "address_city": "Ames",
+          "address_state": "IA",
+          "address_zip": "50010",
+          "form461_scope_review": {
+            "only_schedule_c_and_f_business_items": true,
+            "other_part_i_lines_zero": true,
+            "part_ii_adjustments_zero": true,
+            "post_at_risk_and_passive_limits_confirmed": true,
+            "line2_schedule_c_amount": 210000,
+            "line6_schedule_f_amount": -200000,
+            "source_document_refs": [
+              "schedule-c-retail-shop",
+              "schedule-f-grain-farm"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "node_type": "w2",
+      "data": {
+        "box1_wages": 120000,
+        "box2_fed_withheld": 15000,
+        "box3_ss_wages": 120000,
+        "box4_ss_withheld": 7440,
+        "box5_medicare_wages": 120000,
+        "box6_medicare_withheld": 1740
+      }
+    },
+    {
+      "node_type": "schedule_c",
+      "data": {
+        "line_a_principal_business": "Retail Shop",
+        "line_b_business_code": "453990",
+        "line_f_accounting_method": "cash",
+        "line_g_material_participation": true,
+        "line_1_gross_receipts": 310000,
+        "line_26_wages": 100000
+      }
+    },
+    {
+      "node_type": "schedule_f",
+      "data": {
+        "schedule_fs": [
+          {
+            "line_a_principal_crop_activity": "GRAIN FARMING",
+            "line_b_agricultural_activity_code": "111100",
+            "line_e_material_participation": true,
+            "line_f_made_1099_payments": false,
+            "accounting_method": "cash",
+            "line2_sales_products_raised": 50000,
+            "line16_feed": 250000,
+            "line1_sales_livestock_resale": 0
+          }
+        ]
+      }
+    }
+  ]
+}

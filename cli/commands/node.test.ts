@@ -3,7 +3,7 @@ import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import type { GraphNode } from "../../core/runtime/graph.ts";
 import { catalog } from "../../catalog.ts";
 import { formatMermaid, graphViewCommand } from "./graph.ts";
-import { nodeInspectCommand, nodeListCommand } from "./node.ts";
+import { nodeInspectCommand, nodeListCommand, nodeListLines } from "./node.ts";
 
 const registry = catalog["f1040:2025"].registry;
 
@@ -326,4 +326,14 @@ test("graphViewCommand: json=true returns GraphNode object", () => {
   assertEquals(node.registered, true);
   assertEquals(typeof node.depth, "number");
   assertEquals(Array.isArray(node.children), true);
+});
+
+test("nodeListCommand: every label stays separated, however long", () => {
+  const out = captureLog(() => nodeListCommand());
+  const labels = out.split("\n").slice(1).join(" ").trim().split(/\s+/)
+    .filter(Boolean);
+  assertEquals(labels.length, Object.keys(registry).length);
+  assertEquals(nodeListLines(["a".repeat(40), "b"]), [
+    `${"a".repeat(40)}  b`,
+  ]);
 });

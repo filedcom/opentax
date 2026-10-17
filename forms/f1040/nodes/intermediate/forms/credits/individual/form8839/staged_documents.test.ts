@@ -215,7 +215,7 @@ test("Form 8839 staged income phaseout settles credit before native/PDF projecti
   );
   assertStringIncludes(
     projected.xml,
-    "<AdoptionCrModifAGIGrtrAmtInd>X</AdoptionCrModifAGIGrtrAmtInd>",
+    "<AdoptionCrModifAGIGrtrAmtInd>true</AdoptionCrModifAGIGrtrAmtInd>",
   );
   assertStringIncludes(
     projected.xml,

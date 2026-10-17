@@ -270,8 +270,12 @@ export const form1116ScheduleB: MefFormDescriptor<
             element("TotalAmt", currentExcess),
           ])
           : "",
+        // The tenth preceding year expires this year, so IRS1116ScheduleB.xsd
+        // has no column (i) in the following-year carryover group.
         elements("ForeignTxCyovFollowingTYGrp", [
-          ...rows.map((row) => element(row.tag, row.remaining)),
+          ...rows.filter((row) => row.tag !== "TenthPrecedingTYAmt").map((
+            row,
+          ) => element(row.tag, row.remaining)),
           ...(currentExcess > 0
             ? [element("CurrentTaxYearAmt", currentExcess)]
             : []),

@@ -93,7 +93,7 @@ export const itemSchema = z.object({
       : "2026-10-15";
     const extension = item.repayment.filing_deadline;
     if (
-      item.repayment.date < item.distribution_date ||
+      item.repayment.date <= item.distribution_date ||
       item.repayment.return_filing_date.slice(0, 4) !== "2026" ||
       item.repayment.date >= item.repayment.return_filing_date ||
       item.repayment.date > deadline ||

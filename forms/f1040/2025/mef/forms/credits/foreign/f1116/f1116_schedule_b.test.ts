@@ -849,7 +849,7 @@ test("Form 1116 Schedule B expires unused 2015 passive tax on line 5 and exclude
   );
   assertStringIncludes(
     xml,
-    "<ForeignTxCyovFollowingTYGrp><TenthPrecedingTYAmt>0</TenthPrecedingTYAmt><NinthPrecedingTYAmt>200</NinthPrecedingTYAmt><TotalAmt>200</TotalAmt></ForeignTxCyovFollowingTYGrp>",
+    "<ForeignTxCyovFollowingTYGrp><NinthPrecedingTYAmt>200</NinthPrecedingTYAmt><TotalAmt>200</TotalAmt></ForeignTxCyovFollowingTYGrp>",
   );
   assertThrows(
     () =>
@@ -902,6 +902,6 @@ test("Form 1116 Schedule B expires 2015 balance even when 2025 creates new exces
   );
   assertStringIncludes(
     xml,
-    "<ForeignTxCyovFollowingTYGrp><TenthPrecedingTYAmt>0</TenthPrecedingTYAmt><CurrentTaxYearAmt>50</CurrentTaxYearAmt><TotalAmt>50</TotalAmt></ForeignTxCyovFollowingTYGrp>",
+    "<ForeignTxCyovFollowingTYGrp><CurrentTaxYearAmt>50</CurrentTaxYearAmt><TotalAmt>50</TotalAmt></ForeignTxCyovFollowingTYGrp>",
   );
 });

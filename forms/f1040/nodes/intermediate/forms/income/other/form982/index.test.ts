@@ -249,6 +249,29 @@ test("qpri: MFS flag lowers cap to $375,000", () => {
   assertEquals(input.line8c_cod_income, 125000);
 });
 
+test("qpri: debt above the cap is nonqualified and discharged first (Pub 4681)", () => {
+  // MFS: QPRI limited to $375,000 of a $600,000 loan, so $225,000 is
+  // nonqualified; $400,000 canceled leaves $175,000 excluded, $225,000 taxable.
+  const separate = compute({
+    line2_excluded_cod: 400_000,
+    exclusion_type: ExclusionType.Qpri,
+    ...fullyQualifiedQpri(600_000),
+    qpri_mfs: true,
+  });
+  assertEquals(
+    fieldsOf(separate.outputs, schedule1)!.line8c_cod_income,
+    225_000,
+  );
+  // Joint: $750,000 of a $1,000,000 loan; $800,000 canceled leaves $550,000
+  // excluded and $250,000 taxable.
+  const joint = compute({
+    line2_excluded_cod: 800_000,
+    exclusion_type: ExclusionType.Qpri,
+    ...fullyQualifiedQpri(1_000_000),
+  });
+  assertEquals(fieldsOf(joint.outputs, schedule1)!.line8c_cod_income, 250_000);
+});
+
 test("qpri: MFS flag, COD at exactly $375,000 — fully excluded", () => {
   const result = compute({
     line2_excluded_cod: 375000,
@@ -295,7 +318,7 @@ test("qpri: mixed-use loan discharges nonqualified balance first", () => {
   );
 });
 
-test("qpri: Form 982 instructions ordering example keeps the pre-cap loan split", () => {
+test("qpri: Form 982 instructions ordering example under the $750,000 QPRI limit", () => {
   const result = compute({
     line2_excluded_cod: 300_000,
     exclusion_type: ExclusionType.Qpri,
@@ -307,11 +330,12 @@ test("qpri: Form 982 instructions ordering example keeps the pre-cap loan split"
     qpri_discharge_reason: "financial_condition",
     qpri_discharge_reason_source: "Lender workout letter",
   });
-  // The IRS line 1e example subtracts $200,000 nonqualified debt first,
-  // leaving $100,000 excluded from a $300,000 discharge.
+  // The i982 line 1e example subtracts nonqualified debt first. Its $800,000
+  // of qualified debt predates the limit: IRC 108(h)(2) now caps QPRI at
+  // $750,000, so $250,000 is nonqualified and $50,000 of $300,000 is excluded.
   assertEquals(
     fieldsOf(result.outputs, schedule1)?.line8c_cod_income,
-    200_000,
+    250_000,
   );
 });
 

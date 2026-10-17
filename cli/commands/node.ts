@@ -15,14 +15,21 @@ export function nodeListCommand(): void {
   const types = Object.keys(defaultDef.registry).sort();
   console.log(`Registered Nodes (${types.length})\n`);
 
-  const COL_WIDTH = 28;
-  const COLS = 4;
-  for (let i = 0; i < types.length; i += COLS) {
-    const row = types.slice(i, i + COLS);
-    const line = row.map((t) => t.padEnd(COL_WIDTH)).join("").trimEnd();
-    console.log(`  ${line}`);
-  }
+  for (const line of nodeListLines(types)) console.log(`  ${line}`);
   console.log("");
+}
+
+/** Four columns sized to the longest label, so every label keeps a separator. */
+export function nodeListLines(types: readonly string[]): string[] {
+  const COLS = 4;
+  const width = Math.max(0, ...types.map((t) => t.length)) + 2;
+  const lines: string[] = [];
+  for (let i = 0; i < types.length; i += COLS) {
+    lines.push(
+      types.slice(i, i + COLS).map((t) => t.padEnd(width)).join("").trimEnd(),
+    );
+  }
+  return lines;
 }
 
 /**

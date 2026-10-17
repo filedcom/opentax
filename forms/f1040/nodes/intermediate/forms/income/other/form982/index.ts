@@ -1,6 +1,9 @@
 import { z } from "zod";
 import type { NodeResult } from "../../../../../../../../core/types/tax-node.ts";
-import { output, TaxNode } from "../../../../../../../../core/types/tax-node.ts";
+import {
+  output,
+  TaxNode,
+} from "../../../../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../../../../core/types/output-nodes.ts";
 import { schedule1 } from "../../../../../outputs/general/return-assembly/schedule1/index.ts";
 import { agi_aggregator } from "../../../../aggregation/general/return-assembly/agi_aggregator/index.ts";
@@ -96,14 +99,11 @@ export function qpriExcludedAmount(
       "Form 982 QPRI qualified balance and discharge cannot exceed the pre-discharge loan balance",
     );
   }
-  // Under the Form 982 line 1e instructions, the nonqualified part of a
-  // mixed-use loan is discharged first for purposes of this exclusion.
-  const nonqualified = total - qualified;
-  const qualifyingDischarge = Math.max(
-    0,
-    input.line2_excluded_cod - nonqualified,
-  );
-  return Math.min(qualifyingDischarge, cap);
+  // Pub 4681: qualified principal residence indebtedness can't exceed the
+  // $750,000 ($375,000 MFS) limit, and the exclusion applies only to the
+  // canceled amount above the part of the loan that isn't QPRI.
+  const nonqualified = total - Math.min(qualified, cap);
+  return Math.max(0, input.line2_excluded_cod - nonqualified);
 }
 
 // ─── Cap Helpers ─────────────────────────────────────────────────────────────

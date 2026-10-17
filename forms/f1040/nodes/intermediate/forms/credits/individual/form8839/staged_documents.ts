@@ -209,7 +209,7 @@ export function projectStagedForm8839Documents(
     ...(phased
       ? [
         element("AdoptionCreditModifAGILimitAmt", line8),
-        element("AdoptionCrModifAGIGrtrAmtInd", "X"),
+        element("AdoptionCrModifAGIGrtrAmtInd", "true"),
         element("AdoptionCreditAdjModifAGIPct", fraction),
       ]
       : []),

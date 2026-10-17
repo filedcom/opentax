@@ -43,8 +43,8 @@ function perItemOutputs(
 ): NodeOutput[] {
   const outputs: NodeOutput[] = [];
 
-  // Form 8995 (QBI): only when net profit > 0
-  if (netProfit > 0 || item.qbi_wotc_filing_review) {
+  // Form 8995 (QBI): a farm loss is QBI too and offsets other businesses.
+  if (netProfit !== 0 || item.qbi_wotc_filing_review) {
     outputs.push(output(form8995, {
       schedule_f_qbi_businesses: [{
         business_reference: item.farm_id,
@@ -191,7 +191,7 @@ class ScheduleFNode extends TaxNode<typeof inputSchema> {
     const qualified = filedItems.map((item, index) => ({
       item,
       profit: netProfits[index],
-    })).filter((row) => row.profit > 0 || row.item.qbi_wotc_filing_review);
+    })).filter((row) => row.profit !== 0 || row.item.qbi_wotc_filing_review);
     if (qualified.length) {
       outputs.push(output(form8995, {
         schedule_f_qbi_businesses: routed.filter((row) =>
