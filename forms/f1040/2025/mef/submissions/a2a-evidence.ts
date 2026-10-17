@@ -68,7 +68,10 @@ export interface A2aArchivedSubmissionEvidence
 export interface A2aSendEvidenceInput {
   readonly messageId: string;
   readonly submissionIds: ReadonlyArray<string>;
-  readonly package: MefTransmissionPackage;
+  readonly package: Pick<
+    MefTransmissionPackage,
+    "sendSubmissionsRequestXml" | "containerZipBytes"
+  >;
   readonly recordedAt: Date;
 }
 
@@ -172,18 +175,13 @@ function returnPrimarySsn(source: string): string | undefined {
   const parsed = xmlParser.parse(source) as Record<string, unknown>;
   const roots = Object.keys(parsed).filter((name) => name !== "?xml");
   if (roots.length !== 1 || roots[0] !== "Return") return undefined;
-  const returnData = (parsed.Return as Record<string, unknown> | undefined)
-    ?.ReturnData;
-  if (
-    returnData === null || Array.isArray(returnData) ||
-    typeof returnData !== "object"
-  ) return undefined;
-  const form1040 = (returnData as Record<string, unknown>).IRS1040;
-  if (
-    form1040 === null || Array.isArray(form1040) ||
-    typeof form1040 !== "object"
-  ) return undefined;
-  const primarySsn = (form1040 as Record<string, unknown>).PrimarySSN;
+  const object = (value: unknown): Record<string, unknown> | undefined =>
+    value !== null && typeof value === "object" && !Array.isArray(value)
+      ? value as Record<string, unknown>
+      : undefined;
+  // IND-052: the manifest TIN joins Return/ReturnHeader/Filer/PrimarySSN.
+  const filer = object(object(object(parsed.Return)?.ReturnHeader)?.Filer);
+  const primarySsn = filer?.PrimarySSN;
   return typeof primarySsn === "string" ? primarySsn : undefined;
 }
 

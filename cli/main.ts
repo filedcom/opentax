@@ -20,6 +20,7 @@ import { createReturnCommand, getReturnCommand } from "./commands/return.ts";
 import {
   exportForm4972PaperCommand,
   exportMefCommand,
+  exportMefSubmissionCommand,
   exportPdfCommand,
 } from "./commands/export.ts";
 import { validateReturnCommand } from "./commands/validate.ts";
@@ -195,14 +196,15 @@ const COMMANDS: readonly CommandDef[] = [
     cmd: "return",
     sub: "export",
     description:
-      "Export a return as MeF XML, filled IRS PDF, or Form 4972 paper packet",
+      "Export a return as MeF XML, an MeF submission ZIP, filled IRS PDF, or Form 4972 paper packet",
     usage:
-      "opentax return export --returnId <id> --type mef|pdf|form4972-paper [--force] [--draft] [--output <path>]",
+      "opentax return export --returnId <id> --type mef|mef-submission|pdf|form4972-paper [--force] [--draft] [--output <path>] [--efin <efin> --software-id <id> [--sequence <7 chars>] [--residency-review <json-file>]]",
     options: [
       { flag: "--returnId", description: "Return identifier", required: true },
       {
         flag: "--type",
-        description: "Export format: mef, pdf, or form4972-paper",
+        description:
+          "Export format: mef, mef-submission, pdf, or form4972-paper",
         required: true,
       },
       {
@@ -219,7 +221,30 @@ const COMMANDS: readonly CommandDef[] = [
       {
         flag: "--output",
         description:
-          "Output file path (pdf default: returns/<id>/export.pdf; mef default: stdout)",
+          "Output file path (pdf default: returns/<id>/export.pdf; mef default: stdout; mef-submission: directory, default returns/<id>/submissions)",
+        required: false,
+      },
+      {
+        flag: "--efin",
+        description:
+          "mef-submission: originator EFIN when the return has no preparer EFIN",
+        required: false,
+      },
+      {
+        flag: "--software-id",
+        description: "mef-submission: IRS-assigned eight-digit Software ID",
+        required: false,
+      },
+      {
+        flag: "--sequence",
+        description:
+          "mef-submission: seven-character Submission ID sequence (default: random)",
+        required: false,
+      },
+      {
+        flag: "--residency-review",
+        description:
+          "mef-submission: reviewed filer residency JSON (default: returns/<id>/residency-review.json)",
         required: false,
       },
     ],
@@ -243,6 +268,20 @@ const COMMANDS: readonly CommandDef[] = [
             console.log(xml);
           }
         });
+      } else if (args.type === "mef-submission") {
+        await run(() =>
+          exportMefSubmissionCommand({
+            returnId,
+            baseDir: RETURNS_DIR,
+            force,
+            draft,
+            efin: args.efin,
+            softwareId: args["software-id"],
+            sequence: args.sequence,
+            residencyReviewPath: args["residency-review"],
+            outputDir: args.output,
+          })
+        );
       } else if (args.type === "pdf") {
         await run(async () => {
           const outputPath = args.output as string | undefined;
@@ -270,7 +309,7 @@ const COMMANDS: readonly CommandDef[] = [
         });
       } else {
         console.error(
-          "Error: --type must be 'mef', 'pdf', or 'form4972-paper'",
+          "Error: --type must be 'mef', 'mef-submission', 'pdf', or 'form4972-paper'",
         );
         process.exit(1);
       }
@@ -477,6 +516,10 @@ async function main(): Promise<void> {
       "export-dir",
       "record",
       "evidence",
+      "efin",
+      "software-id",
+      "sequence",
+      "residency-review",
     ],
     boolean: ["json", "help", "draft"],
     alias: { h: "help" },

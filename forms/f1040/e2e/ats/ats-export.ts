@@ -25,8 +25,15 @@ export const RETURN_1040_XSD = new URL(
   import.meta.url,
 ).pathname;
 
-export async function xsdAvailable(): Promise<boolean> {
-  return await fs.stat(RETURN_1040_XSD).then(() => true, () => false);
+export const SUBMISSION_MANIFEST_XSD = new URL(
+  "../../../../irs/mef/2025v5.4/Common/efileAttachments.xsd",
+  import.meta.url,
+).pathname;
+
+export async function xsdAvailable(
+  xsd: string = RETURN_1040_XSD,
+): Promise<boolean> {
+  return await fs.stat(xsd).then(() => true, () => false);
 }
 
 /** Build the return as export does; reject-level rule ids, sorted. */
@@ -59,13 +66,16 @@ export async function exportedReturn(
   return { result, xml: bundle.xml, rejects };
 }
 
-/** xmllint against the official TY2025 v5.4 Return1040.xsd. */
-export async function validateAgainstXsd(xml: string): Promise<string> {
+/** xmllint against an official TY2025 v5.4 schema, Return1040.xsd by default. */
+export async function validateAgainstXsd(
+  xml: string | Uint8Array,
+  xsd: string = RETURN_1040_XSD,
+): Promise<string> {
   const path = await sys.makeTempFile({ suffix: ".xml" });
   try {
     await fs.writeFile(path, xml);
     const output = await new sys.Command("xmllint", {
-      args: ["--noout", "--schema", RETURN_1040_XSD, path],
+      args: ["--noout", "--schema", xsd, path],
       stdout: "piped",
       stderr: "piped",
     }).output();
@@ -83,6 +93,21 @@ export async function cliExport(
   attachments: readonly MefPdfAttachment[] = [],
   retained: readonly RetainedDocument[] = [],
 ): Promise<string> {
+  return await withCliReturn(
+    inputs,
+    attachments,
+    retained,
+    (returnId, baseDir) => exportMefCommand({ returnId, baseDir }),
+  );
+}
+
+/** Run `fn` against the fixture saved as a temporary CLI return with its files. */
+export async function withCliReturn<T>(
+  inputs: Record<string, unknown>,
+  attachments: readonly MefPdfAttachment[],
+  retained: readonly RetainedDocument[],
+  fn: (returnId: string, baseDir: string) => Promise<T>,
+): Promise<T> {
   const baseDir = await sys.makeTempDir();
   try {
     const { returnId } = await createReturnCommand({ year: 2025, baseDir });
@@ -92,17 +117,22 @@ export async function cliExport(
         await appendInput(returnPath, nodeType, fields);
       }
     }
-    for (const [folder, files] of [
-      ["attachments", attachments.map((a) => [a.fileName, a.bytes] as const)],
-      ["retained", retained.map((d) => [d.document_reference, d.bytes] as const)],
-    ] as const) {
+    for (
+      const [folder, files] of [
+        ["attachments", attachments.map((a) => [a.fileName, a.bytes] as const)],
+        [
+          "retained",
+          retained.map((d) => [d.document_reference, d.bytes] as const),
+        ],
+      ] as const
+    ) {
       if (files.length === 0) continue;
       await fs.mkdir(join(returnPath, folder), { recursive: true });
       for (const [name, bytes] of files) {
         await fs.writeFile(join(returnPath, folder, name), bytes);
       }
     }
-    return await exportMefCommand({ returnId, baseDir });
+    return await fn(returnId, baseDir);
   } finally {
     await sys.remove(baseDir, { recursive: true });
   }

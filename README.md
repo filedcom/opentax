@@ -178,6 +178,11 @@ opentax return validate --returnId a1b2c3
 # This does not transmit a return or prove IRS acceptance.
 opentax return export --returnId a1b2c3 --type mef > return.xml
 
+# Package it as a Pub 4164 submission ZIP (manifest/, xml/, attachment/) named
+# by its Submission ID. Needs the originator EFIN, the IRS-assigned Software ID
+# and a reviewed residency JSON (default returns/<id>/residency-review.json).
+opentax return export --returnId a1b2c3 --type mef-submission --efin 123456 --software-id 25000000
+
 # List entries in a return
 opentax form list --returnId a1b2c3
 

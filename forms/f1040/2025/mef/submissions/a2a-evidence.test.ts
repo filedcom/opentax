@@ -42,7 +42,7 @@ function packageFor(id = submissionId) {
       `<IRSSubmissionManifest><SubmissionId>${id}</SubmissionId><EFIN>123456</EFIN><TaxYr>2025</TaxYr><GovernmentCd>IRS</GovernmentCd><FederalSubmissionTypeCd>1040</FederalSubmissionTypeCd><TaxPeriodBeginDt>2025-01-01</TaxPeriodBeginDt><TaxPeriodEndDt>2025-12-31</TaxPeriodEndDt><TIN>111223333</TIN></IRSSubmissionManifest>`,
     ),
     "xml/submission.xml": encoder.encode(
-      `<Return><ReturnHeader binaryAttachmentCnt="0"></ReturnHeader><ReturnData documentCnt="1"><IRS1040 documentId="IRS10400"><PrimarySSN>111223333</PrimarySSN></IRS1040></ReturnData></Return>`,
+      `<Return><ReturnHeader binaryAttachmentCnt="0"><Filer><PrimarySSN>111223333</PrimarySSN></Filer></ReturnHeader><ReturnData documentCnt="1"><IRS1040 documentId="IRS10400"></IRS1040></ReturnData></Return>`,
     ),
   });
   return {
@@ -436,7 +436,7 @@ test("A2A Send evidence requires manifest identity in direct IRS manifest fields
   }
 });
 
-test("A2A Send evidence requires PrimarySSN on the archived Form 1040", async () => {
+test("A2A Send evidence requires PrimarySSN in the archived Return Header", async () => {
   const root = await sys.makeTempDir();
   try {
     const source = packageFor();
@@ -500,7 +500,7 @@ test("A2A outbound evidence binds one archived Submission ID to exact XML and ta
       `<IRSSubmissionManifest><SubmissionId>${submissionId}</SubmissionId><EFIN>123456</EFIN><TaxYr>2025</TaxYr><GovernmentCd>IRS</GovernmentCd><FederalSubmissionTypeCd>1040</FederalSubmissionTypeCd><TaxPeriodBeginDt>2025-01-01</TaxPeriodBeginDt><TaxPeriodEndDt>2025-12-31</TaxPeriodEndDt><TIN>111223333</TIN></IRSSubmissionManifest>`,
     );
     const xml = encoder.encode(
-      `<Return><ReturnHeader binaryAttachmentCnt="0"></ReturnHeader><ReturnData documentCnt="2"><IRS1040 documentId="IRS10400"><PrimarySSN>111223333</PrimarySSN></IRS1040><IRS8990 documentId="IRS89901"><DisallowedBusInterestExpnsAmt>250</DisallowedBusInterestExpnsAmt></IRS8990></ReturnData></Return>`,
+      `<Return><ReturnHeader binaryAttachmentCnt="0"><Filer><PrimarySSN>111223333</PrimarySSN></Filer></ReturnHeader><ReturnData documentCnt="2"><IRS1040 documentId="IRS10400"></IRS1040><IRS8990 documentId="IRS89901"><DisallowedBusInterestExpnsAmt>250</DisallowedBusInterestExpnsAmt></IRS8990></ReturnData></Return>`,
     );
     const archive = zipSync({
       "manifest/manifest.xml": manifest,
@@ -570,56 +570,56 @@ test("A2A archived outbound evidence rejects broken document and PDF ZIP parity"
     }> = [
       {
         xml:
-          `<Return><ReturnHeader binaryAttachmentCnt="0"></ReturnHeader><ReturnData documentCnt="1"><IRS1040 documentId="IRS10400"><PrimarySSN>111223333</PrimarySSN><Statement referenceDocumentId="missing"/></IRS1040></ReturnData></Return>`,
+          `<Return><ReturnHeader binaryAttachmentCnt="0"><Filer><PrimarySSN>111223333</PrimarySSN></Filer></ReturnHeader><ReturnData documentCnt="1"><IRS1040 documentId="IRS10400"><Statement referenceDocumentId="missing"/></IRS1040></ReturnData></Return>`,
         attachments: {},
       },
       {
         xml:
-          `<Return><ReturnHeader binaryAttachmentCnt="0"></ReturnHeader><ReturnData documentCnt="1"><IRS1040 documentId="IRS10400"><PrimarySSN>111223333</PrimarySSN><Statement referenceDocumentId='missing'/></IRS1040></ReturnData></Return>`,
+          `<Return><ReturnHeader binaryAttachmentCnt="0"><Filer><PrimarySSN>111223333</PrimarySSN></Filer></ReturnHeader><ReturnData documentCnt="1"><IRS1040 documentId="IRS10400"><Statement referenceDocumentId='missing'/></IRS1040></ReturnData></Return>`,
         attachments: {},
       },
       {
         xml:
-          `<Return><ReturnHeader binaryAttachmentCnt="0"></ReturnHeader><ReturnData documentCnt="2"><IRS1040 documentId="IRS10400"><PrimarySSN>111223333</PrimarySSN></IRS1040><IRS8990 documentId="IRS8990WRONG"><DisallowedBusInterestExpnsAmt>250</DisallowedBusInterestExpnsAmt></IRS8990></ReturnData></Return>`,
+          `<Return><ReturnHeader binaryAttachmentCnt="0"><Filer><PrimarySSN>111223333</PrimarySSN></Filer></ReturnHeader><ReturnData documentCnt="2"><IRS1040 documentId="IRS10400"></IRS1040><IRS8990 documentId="IRS8990WRONG"><DisallowedBusInterestExpnsAmt>250</DisallowedBusInterestExpnsAmt></IRS8990></ReturnData></Return>`,
         attachments: {},
       },
       {
         xml:
-          `<Return><ReturnHeader binaryAttachmentCnt="0"></ReturnHeader><ReturnData documentCnt="2"><IRS1040 documentId="IRS10400"><PrimarySSN>111223333</PrimarySSN><Decoy documentId="Decoy1"/></IRS1040></ReturnData></Return>`,
+          `<Return><ReturnHeader binaryAttachmentCnt="0"><Filer><PrimarySSN>111223333</PrimarySSN></Filer></ReturnHeader><ReturnData documentCnt="2"><IRS1040 documentId="IRS10400"><Decoy documentId="Decoy1"/></IRS1040></ReturnData></Return>`,
         attachments: {},
       },
       {
         xml:
-          `<Return><ReturnHeader binaryAttachmentCnt="0"></ReturnHeader><ReturnData documentCnt="3"><IRS1040 documentId="IRS10400"><PrimarySSN>111223333</PrimarySSN><Statement referenceDocumentId="IRS24391 IRS24392" referenceDocumentName="IRS1099G"/></IRS1040><IRS2439 documentId="IRS24391"/><IRS2439 documentId="IRS24392"/></ReturnData></Return>`,
+          `<Return><ReturnHeader binaryAttachmentCnt="0"><Filer><PrimarySSN>111223333</PrimarySSN></Filer></ReturnHeader><ReturnData documentCnt="3"><IRS1040 documentId="IRS10400"><Statement referenceDocumentId="IRS24391 IRS24392" referenceDocumentName="IRS1099G"/></IRS1040><IRS2439 documentId="IRS24391"/><IRS2439 documentId="IRS24392"/></ReturnData></Return>`,
         attachments: {},
       },
       {
         xml:
-          `<Return><ReturnHeader binaryAttachmentCnt="0"></ReturnHeader><ReturnData documentCnt="3"><IRS1040 documentId="IRS10400"><PrimarySSN>111223333</PrimarySSN><Statement referenceDocumentId="IRS24391 IRS24392"/></IRS1040><IRS2439 documentId="IRS24391"/><IRS2439 documentId="IRS24392"/></ReturnData></Return>`,
+          `<Return><ReturnHeader binaryAttachmentCnt="0"><Filer><PrimarySSN>111223333</PrimarySSN></Filer></ReturnHeader><ReturnData documentCnt="3"><IRS1040 documentId="IRS10400"><Statement referenceDocumentId="IRS24391 IRS24392"/></IRS1040><IRS2439 documentId="IRS24391"/><IRS2439 documentId="IRS24392"/></ReturnData></Return>`,
         attachments: {},
       },
       {
         xml:
-          `<Return><ReturnHeader binaryAttachmentCnt="1"></ReturnHeader><ReturnData documentCnt="2"><IRS1040 documentId="IRS10400"><PrimarySSN>111223333</PrimarySSN></IRS1040><BinaryAttachment documentId="BinaryAttachment1"><DocumentTypeCd>PDF</DocumentTypeCd><Desc>Evidence</Desc><AttachmentLocationTxt>evidence.pdf</AttachmentLocationTxt></BinaryAttachment></ReturnData></Return>`,
+          `<Return><ReturnHeader binaryAttachmentCnt="1"><Filer><PrimarySSN>111223333</PrimarySSN></Filer></ReturnHeader><ReturnData documentCnt="2"><IRS1040 documentId="IRS10400"></IRS1040><BinaryAttachment documentId="BinaryAttachment1"><DocumentTypeCd>PDF</DocumentTypeCd><Desc>Evidence</Desc><AttachmentLocationTxt>evidence.pdf</AttachmentLocationTxt></BinaryAttachment></ReturnData></Return>`,
         attachments: {},
       },
       {
         xml:
-          `<Return><ReturnHeader binaryAttachmentCnt="0"></ReturnHeader><ReturnData documentCnt="1"><IRS1040 documentId="IRS10400"><PrimarySSN>111223333</PrimarySSN></IRS1040></ReturnData></Return>`,
+          `<Return><ReturnHeader binaryAttachmentCnt="0"><Filer><PrimarySSN>111223333</PrimarySSN></Filer></ReturnHeader><ReturnData documentCnt="1"><IRS1040 documentId="IRS10400"></IRS1040></ReturnData></Return>`,
         attachments: {
           "attachment/unlisted.pdf": encoder.encode("%PDF-unlisted"),
         },
       },
       {
         xml:
-          `<Return><ReturnHeader binaryAttachmentCnt="1"></ReturnHeader><ReturnData documentCnt="2"><IRS1040 documentId="IRS10400"><PrimarySSN>111223333</PrimarySSN><Statement referenceDocumentId="BinaryAttachment1" referenceDocumentName="BinaryAttachment"/></IRS1040><BinaryAttachment documentId="BinaryAttachment1"><DocumentTypeCd>PDF</DocumentTypeCd><Desc>Evidence</Desc><AttachmentLocationTxt>bad..pdf</AttachmentLocationTxt></BinaryAttachment></ReturnData></Return>`,
+          `<Return><ReturnHeader binaryAttachmentCnt="1"><Filer><PrimarySSN>111223333</PrimarySSN></Filer></ReturnHeader><ReturnData documentCnt="2"><IRS1040 documentId="IRS10400"><Statement referenceDocumentId="BinaryAttachment1" referenceDocumentName="BinaryAttachment"/></IRS1040><BinaryAttachment documentId="BinaryAttachment1"><DocumentTypeCd>PDF</DocumentTypeCd><Desc>Evidence</Desc><AttachmentLocationTxt>bad..pdf</AttachmentLocationTxt></BinaryAttachment></ReturnData></Return>`,
         attachments: {
           "attachment/bad..pdf": encoder.encode("%PDF-invalid-name"),
         },
       },
       {
         xml:
-          `<Return><ReturnHeader binaryAttachmentCnt="2"></ReturnHeader><ReturnData documentCnt="3"><IRS1040 documentId="IRS10400"><PrimarySSN>111223333</PrimarySSN><Statement referenceDocumentId="BinaryAttachment1 BinaryAttachment2" referenceDocumentName="BinaryAttachment"/></IRS1040><BinaryAttachment documentId="BinaryAttachment1"><DocumentTypeCd>PDF</DocumentTypeCd><Desc>Same description</Desc><AttachmentLocationTxt>first.pdf</AttachmentLocationTxt></BinaryAttachment><BinaryAttachment documentId="BinaryAttachment2"><DocumentTypeCd>PDF</DocumentTypeCd><Desc>Same description</Desc><AttachmentLocationTxt>second.pdf</AttachmentLocationTxt></BinaryAttachment></ReturnData></Return>`,
+          `<Return><ReturnHeader binaryAttachmentCnt="2"><Filer><PrimarySSN>111223333</PrimarySSN></Filer></ReturnHeader><ReturnData documentCnt="3"><IRS1040 documentId="IRS10400"><Statement referenceDocumentId="BinaryAttachment1 BinaryAttachment2" referenceDocumentName="BinaryAttachment"/></IRS1040><BinaryAttachment documentId="BinaryAttachment1"><DocumentTypeCd>PDF</DocumentTypeCd><Desc>Same description</Desc><AttachmentLocationTxt>first.pdf</AttachmentLocationTxt></BinaryAttachment><BinaryAttachment documentId="BinaryAttachment2"><DocumentTypeCd>PDF</DocumentTypeCd><Desc>Same description</Desc><AttachmentLocationTxt>second.pdf</AttachmentLocationTxt></BinaryAttachment></ReturnData></Return>`,
         attachments: {
           "attachment/first.pdf": encoder.encode("%PDF-first"),
           "attachment/second.pdf": encoder.encode("%PDF-second"),
@@ -627,14 +627,14 @@ test("A2A archived outbound evidence rejects broken document and PDF ZIP parity"
       },
       {
         xml:
-          `<Return><ReturnHeader binaryAttachmentCnt="1"></ReturnHeader><ReturnData documentCnt="2"><IRS1040 documentId="IRS10400"><PrimarySSN>111223333</PrimarySSN><Statement referenceDocumentId="BinaryAttachment1 BinaryAttachment1"/></IRS1040><BinaryAttachment documentId="BinaryAttachment1"><DocumentTypeCd>PDF</DocumentTypeCd><Desc>Evidence</Desc><AttachmentLocationTxt>evidence.pdf</AttachmentLocationTxt></BinaryAttachment></ReturnData></Return>`,
+          `<Return><ReturnHeader binaryAttachmentCnt="1"><Filer><PrimarySSN>111223333</PrimarySSN></Filer></ReturnHeader><ReturnData documentCnt="2"><IRS1040 documentId="IRS10400"><Statement referenceDocumentId="BinaryAttachment1 BinaryAttachment1"/></IRS1040><BinaryAttachment documentId="BinaryAttachment1"><DocumentTypeCd>PDF</DocumentTypeCd><Desc>Evidence</Desc><AttachmentLocationTxt>evidence.pdf</AttachmentLocationTxt></BinaryAttachment></ReturnData></Return>`,
         attachments: {
           "attachment/evidence.pdf": encoder.encode("%PDF-duplicate-ref"),
         },
       },
       {
         xml:
-          `<Return><ReturnHeader binaryAttachmentCnt="1"></ReturnHeader><ReturnData documentCnt="2"><IRS1040 documentId="IRS10400"><PrimarySSN>111223333</PrimarySSN><Statement referenceDocumentId="BinaryAttachment1" referenceDocumentName="BinaryAttachment"/></IRS1040><BinaryAttachment documentId="BinaryAttachment1"><DocumentTypeCd>PDF</DocumentTypeCd><Desc>Evidence</Desc><Extra>unprepared metadata</Extra><AttachmentLocationTxt>evidence.pdf</AttachmentLocationTxt></BinaryAttachment></ReturnData></Return>`,
+          `<Return><ReturnHeader binaryAttachmentCnt="1"><Filer><PrimarySSN>111223333</PrimarySSN></Filer></ReturnHeader><ReturnData documentCnt="2"><IRS1040 documentId="IRS10400"><Statement referenceDocumentId="BinaryAttachment1" referenceDocumentName="BinaryAttachment"/></IRS1040><BinaryAttachment documentId="BinaryAttachment1"><DocumentTypeCd>PDF</DocumentTypeCd><Desc>Evidence</Desc><Extra>unprepared metadata</Extra><AttachmentLocationTxt>evidence.pdf</AttachmentLocationTxt></BinaryAttachment></ReturnData></Return>`,
         attachments: {
           "attachment/evidence.pdf": encoder.encode("%PDF-extra-metadata"),
         },
@@ -664,7 +664,7 @@ test("A2A archived outbound evidence rejects broken document and PDF ZIP parity"
       );
     }
     const validXml = encoder.encode(
-      `<Return><ReturnHeader binaryAttachmentCnt="1"></ReturnHeader><ReturnData documentCnt="2"><IRS1040 documentId="IRS10400"><PrimarySSN>111223333</PrimarySSN><Statement referenceDocumentId="BinaryAttachment1" referenceDocumentName="BinaryAttachment"/></IRS1040><BinaryAttachment documentId="BinaryAttachment1"><DocumentTypeCd>PDF</DocumentTypeCd><Desc>Evidence &amp; copy</Desc><AttachmentLocationTxt>evidence.pdf</AttachmentLocationTxt></BinaryAttachment></ReturnData></Return>`,
+      `<Return><ReturnHeader binaryAttachmentCnt="1"><Filer><PrimarySSN>111223333</PrimarySSN></Filer></ReturnHeader><ReturnData documentCnt="2"><IRS1040 documentId="IRS10400"><Statement referenceDocumentId="BinaryAttachment1" referenceDocumentName="BinaryAttachment"/></IRS1040><BinaryAttachment documentId="BinaryAttachment1"><DocumentTypeCd>PDF</DocumentTypeCd><Desc>Evidence &amp; copy</Desc><AttachmentLocationTxt>evidence.pdf</AttachmentLocationTxt></BinaryAttachment></ReturnData></Return>`,
     );
     await assertRejects(
       () =>
@@ -891,7 +891,7 @@ test("A2A Send reopen rejects a duplicate attachment reference in stored XML", a
       unzipSync(request.containerZipBytes)[`${submissionId}.zip`],
     );
     inner["xml/submission.xml"] = encoder.encode(
-      `<Return><ReturnHeader binaryAttachmentCnt="1"></ReturnHeader><ReturnData documentCnt="2"><IRS1040 documentId="IRS10400"><PrimarySSN>111223333</PrimarySSN><Statement referenceDocumentId="BinaryAttachment1 BinaryAttachment1"/></IRS1040><BinaryAttachment documentId="BinaryAttachment1"><DocumentTypeCd>PDF</DocumentTypeCd><Desc>Evidence</Desc><AttachmentLocationTxt>evidence.pdf</AttachmentLocationTxt></BinaryAttachment></ReturnData></Return>`,
+      `<Return><ReturnHeader binaryAttachmentCnt="1"><Filer><PrimarySSN>111223333</PrimarySSN></Filer></ReturnHeader><ReturnData documentCnt="2"><IRS1040 documentId="IRS10400"><Statement referenceDocumentId="BinaryAttachment1 BinaryAttachment1"/></IRS1040><BinaryAttachment documentId="BinaryAttachment1"><DocumentTypeCd>PDF</DocumentTypeCd><Desc>Evidence</Desc><AttachmentLocationTxt>evidence.pdf</AttachmentLocationTxt></BinaryAttachment></ReturnData></Return>`,
     );
     inner["attachment/evidence.pdf"] = encoder.encode("%PDF-test");
     const changedContainer = zipSync({
@@ -943,7 +943,7 @@ test("A2A Send read and inbound evidence reject a changed inner document invento
     const originalContainer = unzipSync(request.containerZipBytes);
     const inner = unzipSync(originalContainer[`${submissionId}.zip`]);
     inner["xml/submission.xml"] = encoder.encode(
-      `<Return><ReturnHeader binaryAttachmentCnt="0"></ReturnHeader><ReturnData documentCnt="1"><IRS1040 documentId="IRS10400"><PrimarySSN>111223333</PrimarySSN><Statement referenceDocumentId="missing"/></IRS1040></ReturnData></Return>`,
+      `<Return><ReturnHeader binaryAttachmentCnt="0"><Filer><PrimarySSN>111223333</PrimarySSN></Filer></ReturnHeader><ReturnData documentCnt="1"><IRS1040 documentId="IRS10400"><Statement referenceDocumentId="missing"/></IRS1040></ReturnData></Return>`,
     );
     const changedContainer = zipSync({
       [`${submissionId}.zip`]: zipSync(inner),

@@ -19,6 +19,11 @@ import {
   assertFilingResidencyReview,
   type FilingResidencyReview,
 } from "./residency-review.ts";
+import {
+  julianDay,
+  MefTestCd,
+  submissionManifestFindings,
+} from "./submission-manifest.ts";
 
 const XML_DECLARATION = '<?xml version="1.0" encoding="UTF-8"?>\n';
 const encoder = new TextEncoder();
@@ -39,6 +44,8 @@ export interface MefSubmissionArchive {
   readonly bundle: MefBundle;
   readonly filer: FilerIdentity;
   readonly residencyReview: FilingResidencyReview;
+  /** ATS returns (`general.ats_test_submission`) go to the IRS test environment. */
+  readonly testCd: MefTestCd;
 }
 
 export interface MefTransmissionSubmission {
@@ -49,6 +56,7 @@ export interface MefTransmissionSubmission {
 export interface MefTransmissionPackage {
   readonly sendSubmissionsRequestXml: string;
   readonly containerZipBytes: Uint8Array;
+  readonly testCd: MefTestCd;
 }
 
 function sameBytes(
@@ -275,7 +283,9 @@ function assertPreparedArchiveContents(archive: MefSubmissionArchive): void {
     ?.[1];
   if (
     !efin || !tin || efin !== returnEfin || tin !== returnTin ||
-    archive.manifestXml !== buildManifestXml(archive.submissionId, efin, tin)
+    archive.manifestXml !==
+      buildManifestXml(archive.submissionId, efin, tin) ||
+    archive.testCd !== submissionTestCd(archive.bundle)
   ) {
     throw new Error(
       "MeF transmission submission manifest differs from its ID or prepared return",
@@ -296,9 +306,10 @@ function assertPreparedArchiveContents(archive: MefSubmissionArchive): void {
   );
 }
 
-function dayOfYear(date: Date): number {
-  const start = Date.UTC(date.getUTCFullYear(), 0, 1);
-  return Math.floor((date.getTime() - start) / 86_400_000) + 1;
+function submissionTestCd(bundle: MefBundle): MefTestCd {
+  return bundle.pending.f1040?.ats_test_submission === true
+    ? MefTestCd.Test
+    : MefTestCd.Production;
 }
 
 function validateSubmissionIdentity(options: MefSubmissionArchiveOptions): {
@@ -326,7 +337,7 @@ function validateSubmissionIdentity(options: MefSubmissionArchiveOptions): {
     throw new Error("MeF submission ZIP needs a valid processing date");
   }
   const expectedPrefix = efin + String(processingDate.getUTCFullYear()) +
-    String(dayOfYear(processingDate)).padStart(3, "0");
+    String(julianDay(processingDate)).padStart(3, "0");
   if (
     !/^[0-9]{13}[a-z0-9]{7}$/.test(submissionId) ||
     !submissionId.startsWith(expectedPrefix)
@@ -389,6 +400,18 @@ export async function buildMefSubmissionArchive(
   );
   await assertPreparedAttachmentManifest(bundle);
   const manifestXml = buildManifestXml(options.submissionId, efin, tin);
+  const findings = submissionManifestFindings(
+    manifestXml,
+    bundle.xml,
+    options.processingDate,
+  );
+  if (findings.length > 0) {
+    throw new Error(
+      `MeF submission manifest fails ${
+        findings.map((finding) => finding.ruleNumber).join(", ")
+      }: ${findings[0].message}`,
+    );
+  }
   const files: Record<string, Uint8Array> = {
     "manifest/manifest.xml": encoder.encode(manifestXml),
     "xml/submission.xml": encoder.encode(XML_DECLARATION + bundle.xml),
@@ -405,6 +428,7 @@ export async function buildMefSubmissionArchive(
     bundle,
     filer: options.filer,
     residencyReview,
+    testCd: submissionTestCd(bundle),
   };
   assertPreparedArchiveContents(archive);
   return archive;
@@ -416,6 +440,12 @@ export function buildMefTransmissionPackage(
 ): MefTransmissionPackage {
   if (submissions.length < 1 || submissions.length > 100) {
     throw new Error("MeF transmission needs 1 to 100 submissions");
+  }
+  const testCd = submissions[0].archive.testCd;
+  if (submissions.some(({ archive }) => archive.testCd !== testCd)) {
+    throw new Error(
+      "MeF transmission cannot mix ATS test and production submissions",
+    );
   }
   const files: Record<string, Uint8Array> = {};
   const requestEntries: string[] = [];
@@ -455,5 +485,6 @@ export function buildMefTransmissionPackage(
   return {
     sendSubmissionsRequestXml,
     containerZipBytes: zipSync(files, { level: 0 }),
+    testCd,
   };
 }

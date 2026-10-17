@@ -1,4 +1,4 @@
-import { writeFile } from "node:fs/promises";
+import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { PDFDocument, rgb, StandardFonts } from "pdf-lib";
 import { catalog } from "../../catalog.ts";
@@ -29,6 +29,19 @@ import { normalizeAllPending } from "../../forms/f1040/2025/return-processing/pe
 import { buildForm4972PaperPdfBytes } from "../../forms/f1040/2025/pdf/builder.ts";
 import { reconcileForm4972Collection } from "../../forms/f1040/2025/domains/taxes/retirement/form4972/form4972_collection_reconciliation.ts";
 import { sha256Hex } from "../../forms/f1040/2025/return-processing/prepared-source.ts";
+import type {
+  FilerIdentity,
+  OriginatorInfo,
+} from "../../forms/f1040/mef/header.ts";
+import { OriginatorType } from "../../forms/f1040/nodes/inputs/general/filing/preparer/index.ts";
+import { buildMefSubmissionArchive } from "../../forms/f1040/2025/mef/submissions/submission-archive.ts";
+import { filingResidencyReviewSchema } from "../../forms/f1040/2025/mef/submissions/residency-review.ts";
+import {
+  isOnlineFilerEfin,
+  mefSubmissionId,
+  type MefTestCd,
+  randomSubmissionSequence,
+} from "../../forms/f1040/2025/mef/submissions/submission-manifest.ts";
 
 function getCatalogEntry(formType: string, year: number) {
   const key = `${formType}:${year}`;
@@ -443,4 +456,132 @@ export async function exportForm4972PaperCommand(
     ),
   );
   return outPath;
+}
+
+export type ExportMefSubmissionArgs = ExportReturnArgs & {
+  /** Originator EFIN; must agree with the return's preparer EFIN when both exist. */
+  readonly efin?: string;
+  /** IRS-assigned eight-digit Software ID for the return header. */
+  readonly softwareId?: string;
+  /** Seven-character Submission ID sequence; random when omitted. */
+  readonly sequence?: string;
+  readonly processingDate?: Date;
+  /** Defaults to <baseDir>/<returnId>/residency-review.json. */
+  readonly residencyReviewPath?: string;
+  /** Defaults to <baseDir>/<returnId>/submissions. */
+  readonly outputDir?: string;
+};
+
+export type MefSubmissionExport = {
+  readonly submissionId: string;
+  readonly path: string;
+  readonly sha256: string;
+  readonly testCd: MefTestCd;
+  readonly entries: readonly string[];
+};
+
+/** Put the transmitter's originator and Software ID into the return header. */
+export function withSubmissionOriginator(
+  filer: FilerIdentity,
+  efin: string | undefined,
+  softwareId: string | undefined,
+): FilerIdentity & { readonly originator: OriginatorInfo } {
+  const returnEfin = filer.originator?.efin;
+  if (efin !== undefined && returnEfin !== undefined && efin !== returnEfin) {
+    throw new Error(
+      `--efin ${efin} differs from the return's preparer EFIN ${returnEfin}`,
+    );
+  }
+  const originatorEfin = returnEfin ?? efin;
+  if (!originatorEfin) {
+    throw new Error(
+      "MeF submission needs the originator EFIN: pass --efin or enter preparer.efin",
+    );
+  }
+  if (!softwareId) {
+    throw new Error(
+      "MeF submission needs the IRS-assigned Software ID: pass --software-id",
+    );
+  }
+  return {
+    ...filer,
+    softwareId,
+    originator: filer.originator ?? {
+      efin: originatorEfin,
+      originatorType: isOnlineFilerEfin(originatorEfin)
+        ? OriginatorType.OnlineFiler
+        : OriginatorType.ERO,
+    },
+  };
+}
+
+/** Pub 4164 submission ZIP: manifest/manifest.xml, xml/submission.xml, attachment/*.pdf. */
+export async function exportMefSubmissionCommand(
+  args: ExportMefSubmissionArgs,
+): Promise<MefSubmissionExport> {
+  if (args.force || args.draft) {
+    throw new Error(
+      "MeF submission export cannot bypass filing checks or export a draft",
+    );
+  }
+  const { pending, def, filer: returnFiler } = await runReturnPipeline(args);
+  if (def.formType !== "f1040" || def.taxYear !== 2025) {
+    throw new Error("MeF submission export requires a TY2025 Form 1040");
+  }
+  if (!returnFiler) {
+    throw new Error("MeF submission export needs the identified taxpayer");
+  }
+  const filer = withSubmissionOriginator(
+    returnFiler,
+    args.efin,
+    args.softwareId,
+  );
+  const returnPath = join(args.baseDir, args.returnId);
+  const prepared = await def.prepareReturn(
+    pending,
+    filer,
+    [
+      ...await loadForm8839Attachments(returnPath, pending),
+      ...await loadForm8835PurchaseAttachments(returnPath, pending),
+    ],
+    await loadForm8862RetainedNotices(returnPath, pending),
+  );
+  validateBusinessRules(
+    pending,
+    filer,
+    false,
+    emittedValidationScope(prepared.bundle.xml),
+  );
+  const processingDate = args.processingDate ?? new Date();
+  const residencyReview = filingResidencyReviewSchema.parse(JSON.parse(
+    await readFile(
+      args.residencyReviewPath ?? join(returnPath, "residency-review.json"),
+      "utf8",
+    ),
+  ));
+  const archive = await buildMefSubmissionArchive(prepared.bundle, {
+    filer,
+    submissionId: mefSubmissionId(
+      filer.originator.efin,
+      processingDate,
+      args.sequence ?? randomSubmissionSequence(),
+    ),
+    processingDate,
+    residencyReview,
+  });
+  const outputDir = args.outputDir ?? join(returnPath, "submissions");
+  await mkdir(outputDir, { recursive: true });
+  const path = join(outputDir, archive.fileName);
+  await writeFile(path, archive.bytes, { flag: "wx" });
+  return {
+    submissionId: archive.submissionId,
+    path,
+    sha256: await sha256Hex(archive.bytes),
+    testCd: archive.testCd,
+    entries: [
+      "manifest/manifest.xml",
+      "xml/submission.xml",
+      ...archive.bundle.attachments.map((a) => `attachment/${a.fileName}`),
+    ],
+  };
 }
