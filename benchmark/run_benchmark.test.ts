@@ -4,6 +4,7 @@ import * as sys from "../scripts/support/sys.ts";
 import { assertEquals, assertThrows } from "@std/assert";
 import { join } from "node:path";
 import {
+  baselinedReport,
   benchmarkActualLines,
   compareExpectedNumericLines,
   taxCommandOutputOrThrow,
@@ -184,5 +185,33 @@ test("only provably inactive CLI balances become zero", () => {
   assertEquals(
     benchmarkActualLines({ line35a_refund: 10, line37_amount_owed: 20 }, {}),
     { line35a_refund: 10, line37_amount_owed: 20 },
+  );
+});
+
+test("baselinedReport names every excluded case with its reason and expiry, and is silent when none", () => {
+  assertEquals(baselinedReport([]), "");
+  const report = baselinedReport([
+    {
+      case: "f1040/2025/01-a",
+      reason: "renamed field",
+      expires: "2027-01-31",
+      approvedBy: "a7ul",
+    },
+    {
+      case: "f1040/2025/02-b",
+      reason: "removed node",
+      expires: "2027-01-31",
+      approvedBy: "a7ul",
+    },
+  ]);
+  assertEquals(report.includes("2 BASELINED"), true);
+  assertEquals(report.includes("not counted as passing"), true);
+  assertEquals(
+    report.includes("f1040/2025/01-a (expires 2027-01-31): renamed field"),
+    true,
+  );
+  assertEquals(
+    report.includes("f1040/2025/02-b (expires 2027-01-31): removed node"),
+    true,
   );
 });

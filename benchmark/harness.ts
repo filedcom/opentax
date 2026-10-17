@@ -250,15 +250,17 @@ export async function discoverBenchmarkCases(
   products: Readonly<Record<string, FormDefinition>> = catalog,
 ): Promise<string[]> {
   const { found, problems } = await inspectBenchmarkCases(root, products);
-  if (problems.length > 0) {
-    throw new Error(
-      `${problems.length} invalid benchmark case${
-        problems.length === 1 ? "" : "s"
-      }:\n${problems.map((problem) => problem.message).join("\n")}`,
-    );
-  }
+  if (problems.length > 0) throw invalidCasesError(problems);
   if (found.length === 0) throw new Error(`No benchmark cases: ${root}`);
   return [...found];
+}
+
+function invalidCasesError(problems: readonly CaseProblem[]): Error {
+  return new Error(
+    `${problems.length} invalid benchmark case${
+      problems.length === 1 ? "" : "s"
+    }:\n${problems.map((problem) => problem.message).join("\n")}`,
+  );
 }
 
 export const CASE_BASELINE_PATH = "benchmark/cases/baseline.json";
@@ -289,12 +291,21 @@ export function applyCaseBaseline(
   problems: readonly CaseProblem[],
   baseline: CaseBaseline,
   today: string,
-): { readonly open: readonly CaseProblem[]; readonly allowed: number } {
+): {
+  readonly open: readonly CaseProblem[];
+  readonly allowed: number;
+  /** Entries that excused a still-invalid case today (unexpired, matched). */
+  readonly excused: CaseBaseline;
+} {
   const name = (directory: string) => relative(root, directory);
+  const entryFor = (problem: CaseProblem) =>
+    baseline.find((candidate) => candidate.case === name(problem.directory));
+  const excused = problems.flatMap((problem) => {
+    const entry = entryFor(problem);
+    return entry && entry.expires >= today ? [entry] : [];
+  });
   const open = problems.flatMap((problem) => {
-    const entry = baseline.find((candidate) =>
-      candidate.case === name(problem.directory)
-    );
+    const entry = entryFor(problem);
     if (!entry) return [problem];
     if (entry.expires < today) {
       return [{
@@ -314,7 +325,40 @@ export function applyCaseBaseline(
       message:
         `${entry.case}: baseline entry no longer matches an invalid case; remove it from ${CASE_BASELINE_PATH}`,
     }));
-  return { open: [...open, ...stale], allowed: baseline.length - stale.length };
+  return {
+    open: [...open, ...stale],
+    allowed: baseline.length - stale.length,
+    excused,
+  };
+}
+
+/**
+ * Bench discovery under the same baseline rule as `check:cases`, scoped to one
+ * form/year directory: valid cases are returned to run, baselined known-invalid
+ * cases are returned separately (never run, never scored), and any open problem
+ * (an invalid case without an entry, an expired entry, or an entry in this
+ * scope that matches no invalid case) throws.
+ */
+export async function discoverBaselinedBenchmarkCases(
+  root: string,
+  scope: string,
+  baseline: CaseBaseline,
+  today: string,
+  products: Readonly<Record<string, FormDefinition>> = catalog,
+): Promise<
+  { readonly found: readonly string[]; readonly baselined: CaseBaseline }
+> {
+  const { found, problems } = await inspectBenchmarkCases(scope, products);
+  const prefix = `${relative(root, scope)}/`;
+  const { open, excused } = applyCaseBaseline(
+    root,
+    problems,
+    baseline.filter((entry) => entry.case.startsWith(prefix)),
+    today,
+  );
+  if (open.length > 0) throw invalidCasesError(open);
+  if (found.length === 0) throw new Error(`No benchmark cases: ${scope}`);
+  return { found: [...found], baselined: excused };
 }
 
 export function checkedCommandOutput(

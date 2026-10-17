@@ -14,8 +14,10 @@ import {
   benchmarkInputSchema,
   benchmarkReturnSchema,
   benchmarkSourceIssues,
+  type CaseBaseline,
   createdReturnSchema,
-  discoverBenchmarkCases,
+  discoverBaselinedBenchmarkCases,
+  readCaseBaseline,
 } from "./harness.ts";
 
 const SCRIPT_DIR = dirname(fromFileUrl(import.meta.url));
@@ -33,7 +35,8 @@ const formFlag = getFlag("--form", "f1040");
 const yearFlag = getFlag("--year", "2025");
 const jsonFlag = args.includes("--json");
 
-const CASES_DIR = join(SCRIPT_DIR, "cases", formFlag, yearFlag);
+const CASES_ROOT = join(SCRIPT_DIR, "cases");
+const CASES_DIR = join(CASES_ROOT, formFlag, yearFlag);
 
 const RED = "\x1b[31m",
   GRN = "\x1b[32m",
@@ -434,6 +437,21 @@ function progressLine(done: number, total: number, running: number): string {
   return `${CLEAR_LINE}  ${bar}  ${DIM}${done}/${total}${RST} ${pct}%${spin}`;
 }
 
+// ── Baseline report ───────────────────────────────────────────────────────────
+
+/** Baselined known-invalid cases are excluded from scoring and named, never passed. */
+export function baselinedReport(baselined: CaseBaseline): string {
+  if (baselined.length === 0) return "";
+  return [
+    `  ${YEL}${baselined.length} BASELINED${RST} known-invalid case${
+      baselined.length === 1 ? "" : "s"
+    } excluded from scoring (benchmark/cases/baseline.json; not counted as passing):`,
+    ...baselined.map((entry) =>
+      `    ${entry.case} (expires ${entry.expires}): ${entry.reason}`
+    ),
+  ].join("\n") + "\n";
+}
+
 // ── Orchestrator ──────────────────────────────────────────────────────────────
 
 const CONCURRENCY = 8;
@@ -488,7 +506,19 @@ async function runAll(caseNames: string[]): Promise<CaseResult[]> {
 }
 
 if (import.meta.main) {
-  const paths = await discoverBenchmarkCases(CASES_DIR);
+  let discovered;
+  try {
+    discovered = await discoverBaselinedBenchmarkCases(
+      CASES_ROOT,
+      CASES_DIR,
+      await readCaseBaseline(TAX_DIR),
+      new Date().toISOString().slice(0, 10),
+    );
+  } catch (error) {
+    console.error(error instanceof Error ? error.message : String(error));
+    process.exit(1);
+  }
+  const { found: paths, baselined } = discovered;
   const names = paths.map((path) => path.slice(CASES_DIR.length + 1));
 
   const results = await runAll(names);
@@ -503,8 +533,9 @@ if (import.meta.main) {
   const emptyCaseSet = results.length === 0;
 
   write(
-    `\n  ${GRN}${pass} PASS${RST}  ${RED}${fail} FAIL${RST}  ${YEL}${skipped} SKIP${RST}  ${DIM}out of ${results.length} runnable cases  ·  green = within $${ROUNDING_TOLERANCE} legacy benchmark tolerance${RST}\n\n`,
+    `\n  ${GRN}${pass} PASS${RST}  ${RED}${fail} FAIL${RST}  ${YEL}${skipped} SKIP${RST}  ${YEL}${baselined.length} BASELINED${RST}  ${DIM}out of ${results.length} runnable cases  ·  green = within $${ROUNDING_TOLERANCE} legacy benchmark tolerance${RST}\n\n`,
   );
+  write(baselinedReport(baselined));
   if (emptyCaseSet) {
     console.error(
       "No runnable benchmark cases found; failing instead of reporting an empty success.",
@@ -523,6 +554,11 @@ if (import.meta.main) {
       JSON.stringify({
         total: results.length,
         skipped,
+        baselined: baselined.map(({ case: name, reason, expires }) => ({
+          case: name,
+          reason,
+          expires,
+        })),
         pass,
         fail,
         failing,

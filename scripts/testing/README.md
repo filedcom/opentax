@@ -17,8 +17,8 @@ in [AGENTS.md](../../AGENTS.md); the rule each check owns is in the table in
 
 Every check prints each problem with its fix, takes `--json`, and exits 1 on any
 problem. `.github/workflows/test.yml` runs the first three, `check:sandbox` and
-`test:unit` on every pull request. `bench` runs locally until the baselined
-cases below are fixed, then joins them.
+`test:unit` on every pull request. `bench` skips and lists the baselined cases
+below; it runs locally until its valid cases pass, then joins them.
 
 ## Ratchets
 

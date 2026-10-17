@@ -11,6 +11,7 @@ import {
   caseProduct,
   checkedCommandOutput,
   createdReturnSchema,
+  discoverBaselinedBenchmarkCases,
   discoverBenchmarkCases,
   inspectBenchmarkCases,
 } from "./harness.ts";
@@ -309,6 +310,7 @@ test("known-invalid cases are allowed by the baseline until it expires, and a st
   assertEquals(applyCaseBaseline(root, problems, [entry], "2026-10-16"), {
     open: [],
     allowed: 1,
+    excused: [entry],
   });
   const expired = applyCaseBaseline(root, problems, [entry], "2027-02-01");
   assertEquals(expired.open.length, 1);
@@ -322,4 +324,80 @@ test("known-invalid cases are allowed by the baseline until it expires, and a st
     true,
   ]);
   assertEquals(stale.allowed, 0);
+});
+
+test("bench discovery honours the baseline like check:cases: baselined cases are excluded and reported, everything else fails", async () => {
+  const root = await sys.makeTempDir();
+  const scope = join(root, "f1040/2025");
+  await caseWith(root, "f1040/2025/01", [start, {
+    node_type: "f1099int",
+    data: { box1_interest: 1 },
+  }]);
+  const valid = await caseWith(root, "f1040/2025/02", [start]);
+  const entry = {
+    case: "f1040/2025/01",
+    reason: "renamed field",
+    expires: "2027-01-31",
+    approvedBy: "a7ul",
+  };
+  const elsewhere = { ...entry, case: "f1041/2025/09" };
+
+  // Baselined: excluded from the runnable set and returned with its reason;
+  // an entry for another form/year is out of scope, not stale.
+  assertEquals(
+    await discoverBaselinedBenchmarkCases(
+      root,
+      scope,
+      [entry, elsewhere],
+      "2026-10-16",
+    ),
+    { found: [valid], baselined: [entry] },
+  );
+
+  // Not baselined: the invalid case fails discovery.
+  const unlisted = await assertRejects(
+    () => discoverBaselinedBenchmarkCases(root, scope, [], "2026-10-16"),
+    Error,
+  );
+  assertEquals(
+    unlisted.message.startsWith("1 invalid benchmark case:\n"),
+    true,
+  );
+  assertEquals(unlisted.message.includes("box1_interest"), true);
+
+  // Expired entry: fails with the expiry named.
+  await assertRejects(
+    () => discoverBaselinedBenchmarkCases(root, scope, [entry], "2027-02-01"),
+    Error,
+    "expired on 2027-01-31",
+  );
+
+  // In-scope entry matching no invalid case: fails until removed.
+  await assertRejects(
+    () =>
+      discoverBaselinedBenchmarkCases(root, scope, [
+        entry,
+        { ...entry, case: "f1040/2025/02" },
+      ], "2026-10-16"),
+    Error,
+    "f1040/2025/02: baseline entry no longer matches an invalid case",
+  );
+
+  // Only baselined cases left: nothing runnable is still a failure.
+  const lonely = await sys.makeTempDir();
+  await caseWith(lonely, "f1040/2025/01", [start, {
+    node_type: "f1099int",
+    data: { box1_interest: 1 },
+  }]);
+  await assertRejects(
+    () =>
+      discoverBaselinedBenchmarkCases(
+        lonely,
+        join(lonely, "f1040/2025"),
+        [entry],
+        "2026-10-16",
+      ),
+    Error,
+    "No benchmark cases",
+  );
 });

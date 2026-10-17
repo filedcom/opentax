@@ -105,9 +105,15 @@ input and expected-value schemas, the product read from `<form>/<year>/<case>`,
 each form entry against the node schema `form add` applies (unknown fields
 rejected, required fields named), and any `source`, which must cite a
 publication and never the engine. Every invalid case is reported in one error;
-`bun run check:cases` runs only this step, without the engine, allowing the
-known-invalid cases listed in `benchmark/cases/baseline.json` (with a reason,
-an expiry and an approver) until their entry expires. Empty or
+`bun run check:cases` runs only this step, without the engine. Both it and
+`bun run bench` allow the known-invalid cases listed in
+`benchmark/cases/baseline.json` (with a reason, an expiry and an approver)
+until their entry expires; `bench` considers only the entries for the
+requested form:year, does not run or score a baselined case, never counts it
+as passing, and lists each one (id, expiry, reason) after the totals as
+`BASELINED` and under `baselined` in `--json`. An invalid case without an
+entry, an expired entry, or an entry that matches no invalid case fails
+discovery. Empty or
 incomplete directories and malformed fixtures terminate with an error; no
 partial-success JSON report is emitted. Each valid expected record includes
 total tax, refund and amount owed. CLI output must pass the shared

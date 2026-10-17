@@ -46,9 +46,11 @@ Single case: `bun benchmark/run_case.ts benchmark/cases/f1040/{year}/<case>`
 
 ## Known Failure Modes (TY2025)
 
-- `bench` stops before running the engine while any case is invalid: it does not
-  apply `benchmark/cases/baseline.json`, which lists 28 TY2025 cases whose inputs no
-  longer fit their node schemas (`bun run check:cases`).
+- 28 TY2025 cases whose inputs no longer fit their node schemas are listed in
+  `benchmark/cases/baseline.json`; `bench` (like `bun run check:cases`) excludes
+  them from scoring and lists them as `BASELINED` until each is fixed from its
+  cited source or its entry expires. Any other invalid case still stops `bench`
+  before the engine runs.
 
 ## Adding a New Tax Year
 

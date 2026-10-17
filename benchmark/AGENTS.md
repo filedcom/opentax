@@ -13,8 +13,9 @@ criteria, output-key mapping and the $5 legacy tolerance are in
   case baseline (`applyCaseBaseline`).
 - `check_cases.ts` — `bun run check:cases`: validates every case without the
   engine; honours `cases/baseline.json`.
-- `run_benchmark.ts` — `bun run bench`: runs every case of a form:year
-  (`--form`, `--year`, `--json`) and scores supported keys.
+- `run_benchmark.ts` — `bun run bench`: runs every valid case of a form:year
+  (`--form`, `--year`, `--json`) and scores supported keys; honours
+  `cases/baseline.json` like `check:cases`.
 - `run_case.ts` — runs one case directory and prints the computed return JSON;
   writes nothing to the case.
 - `reference/2025/` — Issue 77 reconciliation record (README, change ledger,
@@ -28,10 +29,14 @@ criteria, output-key mapping and the $5 legacy tolerance are in
 - A failing case is fixed in the engine or escalated with its citation; never
   edit `correct.json`, widen the tolerance or add an output alias to pass.
 - Every changed scored value needs a ledger entry (`check:oracle`).
-- `run_benchmark.ts` does not apply `cases/baseline.json`: discovery throws if
-  any case is invalid, so `bench` exits 1 before running the engine while
-  baselined cases remain (28 for f1040/2025 as of this writing). Use
-  `check:cases` and `run_case.ts` meanwhile.
+- `bench` applies `cases/baseline.json` through the same `applyCaseBaseline`
+  as `check:cases` (`discoverBaselinedBenchmarkCases`), scoped to the
+  form:year: a baselined known-invalid case is not run, not scored and never
+  counted as passing; it is listed as `BASELINED` with its id, expiry and
+  reason (and under `baselined` in `--json`). An invalid case without an
+  entry, an expired entry, or an entry matching no invalid case still makes
+  discovery exit 1 before the engine runs (28 baselined for f1040/2025 as of
+  this writing).
 - Only `harness.test.ts` is in `bun run test:unit` / `test:harness`; the other
   tests here run in the full suite or directly.
 
