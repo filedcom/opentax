@@ -42,16 +42,18 @@ async function scenarioModule(id: string): Promise<ScenarioModule> {
 }
 
 /** The files a scenario files with its return: `*Attachments()` and `*RetainedSourceDocuments()`. */
-function scenarioFiles(module: ScenarioModule) {
-  const call = <T>(suffix: string): T[] =>
-    Object.entries(module)
-      .filter(([name, value]) =>
-        name.endsWith(suffix) && typeof value === "function"
-      )
-      .flatMap(([, value]) => (value as () => T[])());
+async function scenarioFiles(module: ScenarioModule) {
+  const call = async <T>(suffix: string): Promise<T[]> =>
+    (await Promise.all(
+      Object.entries(module)
+        .filter(([name, value]) =>
+          name.endsWith(suffix) && typeof value === "function"
+        )
+        .map(([, value]) => (value as () => T[] | Promise<T[]>)()),
+    )).flat();
   return {
-    attachments: call<MefPdfAttachment>("Attachments"),
-    retained: call<RetainedDocument>("RetainedSourceDocuments"),
+    attachments: await call<MefPdfAttachment>("Attachments"),
+    retained: await call<RetainedDocument>("RetainedSourceDocuments"),
   };
 }
 
@@ -71,7 +73,7 @@ async function filing(
   inputs: Record<string, unknown>,
   module: ScenarioModule,
 ): Promise<{ findings: string[]; schemaValid: boolean | null }> {
-  const { attachments, retained } = scenarioFiles(module);
+  const { attachments, retained } = await scenarioFiles(module);
   try {
     const { xml, rejects } = await exportedReturn(
       inputs,
@@ -95,7 +97,7 @@ export async function scoreScenarios(): Promise<ScenarioScore[]> {
   const replay = await replayAtsChecks();
   return await Promise.all(
     Object.entries(ATS_SCENARIO_INPUTS).map(async ([id, factory]) => {
-      const inputs = factory() as Record<string, unknown>;
+      const inputs = await factory() as Record<string, unknown>;
       const checks = replay.scenarios.find((s) => s.id === id)?.checks ?? [];
       const module = await scenarioModule(id);
       const conflicts = documentedConflicts(module);

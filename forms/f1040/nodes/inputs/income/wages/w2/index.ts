@@ -926,11 +926,13 @@ function scheduleAOutput(w2s: W2Items): NodeOutput[] {
     .flatMap((item) => item.box14_entries ?? [])
     .filter((entry) => entry.is_state_sdi_pfml)
     .reduce((sum, entry) => sum + entry.amount, 0);
-  const line5b = regularItems(w2s).reduce(
+  // A statutory employee's box 1 moves to Schedule C; boxes 17 and 19 remain
+  // personal state and local income tax.
+  const line5b = w2s.reduce(
     (sum, item) => sum + (item.box17_state_withheld ?? 0),
     0,
   );
-  const line5c = regularItems(w2s).reduce(
+  const line5c = w2s.reduce(
     (sum, item) => sum + (item.box19_local_withheld ?? 0),
     0,
   );

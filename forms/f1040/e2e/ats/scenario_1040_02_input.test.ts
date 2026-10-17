@@ -1,9 +1,5 @@
 import { test } from "bun:test";
-import { f1040_2025 } from "../../2025/index.ts";
-import { extractFilerIdentity } from "../../mef/filer.ts";
-import { scheduleA } from "../../2025/mef/forms/deductions/itemized/schedule_a.ts";
-import { scheduleAPdf } from "../../2025/pdf/forms/deductions/itemized/schedule_a.ts";
-import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
+import { assertEquals, assertStringIncludes } from "@std/assert";
 import { PDFDocument } from "pdf-lib";
 import { w2 } from "../../nodes/inputs/income/wages/w2/index.ts";
 import { scheduleC as scheduleCNode } from "../../nodes/inputs/income/business/schedule_c/index.ts";
@@ -12,13 +8,23 @@ import { scheduleCPdf } from "../../2025/pdf/forms/income/business/schedule_c.ts
 import { fillFormPdf } from "../../2025/pdf/builder.ts";
 import { testFiler } from "../../2025/mef/execution/test-filer.ts";
 import {
+  scenario104002Attachments,
+  SCENARIO_1040_02_ASSUMPTIONS,
   scenario104002Input,
   SCENARIO_1040_02_RECONCILIATION,
 } from "./scenario_1040_02_input.ts";
+import {
+  exportAtsReturn,
+  validateReturn1040Xsd,
+  xmlAmount,
+  xmlDocuments,
+  xmlValues,
+  xsdAvailable,
+} from "./ty2025-export.ts";
 import { SCENARIO_1040_02_FACTS } from "./ty2025_cases.ts";
 
 test("ATS 1040 Scenario 2 issued W-2s reconcile to statutory Schedule C", async () => {
-  const input = scenario104002Input();
+  const input = await scenario104002Input();
   const forms = input.w2 as Array<Record<string, unknown>>;
   const business = (input.schedule_c as Array<Record<string, unknown>>)[0];
   assertEquals(forms.length, 2);
@@ -99,41 +105,80 @@ test("ATS 1040 Scenario 2 issued W-2s reconcile to statutory Schedule C", async 
   assertEquals((await PDFDocument.load(bytes!)).getPageCount(), 2);
 });
 
-test("ATS 1040 Scenario 2 retains missing return and attachment evidence", () => {
-  const input = scenario104002Input();
-  const general = input.general as Record<string, unknown>;
-  assertEquals(Object.keys(input).sort(), [
-    "general",
-    "schedule_a",
-    "schedule_c",
-    "w2",
-  ]);
-  assertEquals(general.filing_status, "mfj");
-  assertEquals(general.digital_assets, false);
-  assertEquals(input.f8283, undefined);
-  assertEquals(input.estimated_tax_payments, undefined);
-  assertEquals(SCENARIO_1040_02_RECONCILIATION.missing.length, 5);
+test("ATS 1040 Scenario 2 records each assumption once", () => {
+  const fields = SCENARIO_1040_02_ASSUMPTIONS.map((item) => item.field);
+  assertEquals(new Set(fields).size, fields.length);
 });
 
-test("ATS 1040 Scenario 2 retains its printed below-standard itemizing election and interest entries", () => {
-  const result = f1040_2025.executeReturn(scenario104002Input());
-  assertEquals(result.diagnostics, []);
-  const p = result.pending;
-  assertEquals(p.schedule_a?.force_itemized, true);
-  assertEquals(p.schedule_a?.line_5b_real_estate_tax, 8_972);
-  assertEquals(p.schedule_a?.line_8a_mortgage_interest_1098, 11_000);
-  assertEquals(p.schedule_a?.line_8c_points_no_1098, 251);
-  assertEquals(p.f1040?.line12a_standard_deduction, undefined);
-  const filer = extractFilerIdentity(p.f1040)!;
-  assertThrows(
-    () => scheduleA.build(p.schedule_a, { filer, pending: p }),
-    Error,
-    "Schedule A line 8a needs retained Form 1098 source",
+test("ATS 1040 Scenario 2 exports without force, XSD-valid, with the packet values", async () => {
+  const exported = await exportAtsReturn(
+    await scenario104002Input(),
+    await scenario104002Attachments(),
   );
-  assertThrows(
-    () => scheduleAPdf.instances!(p.schedule_a, filer, p),
-    Error,
-    "Schedule A line 8a needs retained Form 1098 source",
+  assertEquals(exported.diagnostics, []);
+  assertEquals(exported.rejects, []);
+  assertEquals(exported.attachments, ["NonresidentSpouseChoiceStatement.pdf"]);
+  if (xsdAvailable()) {
+    const { success, stderr } = await validateReturn1040Xsd(exported.xml);
+    assertEquals(success, true, stderr);
+  }
+  const { xml } = exported;
+  const facts = SCENARIO_1040_02_FACTS;
+  const a = SCENARIO_1040_02_RECONCILIATION.scheduleA;
+  const f = SCENARIO_1040_02_RECONCILIATION.form1040;
+  const amount = (root: string, tag: string) => xmlAmount(xml, root, tag);
+  assertEquals(xmlValues(xml, "NameLine1Txt")[0], "JOHN &amp; JUDY DECD&lt;JONES");
+  assertEquals(xmlValues(xml, "InCareOfNm"), ["% John Jones"]);
+  assertEquals(xmlValues(xml, "SpouseIdentityProtectionPIN"), ["876543"]);
+  assertEquals(xmlValues(xml, "PTIN"), [facts.preparer.ptin]);
+  assertEquals(xmlValues(xml, "PreparerPersonNm"), [facts.preparer.name]);
+  assertEquals(xmlValues(xml, "PreparerFirmEIN"), [facts.preparer.firmEin]);
+  assertEquals(xmlValues(xml, "SpouseDeathDt"), [facts.spouse.dateOfDeath]);
+  assertEquals(xmlValues(xml, "SurvivingSpouseInd"), ["X"]);
+  assertEquals(xmlValues(xml, "PECFPrimaryInd"), ["X"]);
+  assertEquals(xmlValues(xml, "IndividualReturnFilingStatusCd"), ["2"]);
+  assertEquals(xmlValues(xml, "NRASpouseTreatedAsResidentInd"), ["X"]);
+  assertEquals(xmlValues(xml, "SpouseNm"), ["Judy Jones"]);
+  assertEquals(xmlValues(xml, "VirtualCurAcquiredDurTYInd"), ["false"]);
+  assertEquals(xmlValues(xml, "DependentSSN"), [facts.dependent.ssn]);
+  assertEquals(xmlValues(xml, "ChildIsAStudentUnder24Ind"), ["X"]);
+  assertEquals(xmlValues(xml, "DoNotClaimEICInd"), ["X"]);
+  assertStringIncludes(
+    xml,
+    `<EstimatedTaxPaymentsAmt divorcedSpouseSSN="${facts.formerSpouseSsn}">${f.line26}</EstimatedTaxPaymentsAmt>`,
   );
-  // No native/PDF total or final-tax pass: mortgage evidence, statutory-W2 SALT and gifts remain open.
-});
+  assertEquals(xmlValues(xml, "StateIncomeTaxAmt"), ["927", "101"]);
+  assertEquals(amount("IRS1040", "WagesAmt"), 8_513);
+  assertEquals(amount("IRS1040", "TotalIncomeAmt"), f.line9);
+  assertEquals(amount("IRS1040", "AdjustedGrossIncomeAmt"), f.line11);
+  assertEquals(amount("IRS1040", "TotalItemizedOrStandardDedAmt"), f.line12e);
+  assertEquals(amount("IRS1040", "TaxableIncomeAmt"), f.line15);
+  assertEquals(amount("IRS1040", "TaxAmt"), f.line16);
+  assertEquals(amount("IRS1040", "CTCODCAmt"), f.line19);
+  assertEquals(amount("IRS1040", "TotalTaxAmt"), f.line24);
+  assertEquals(amount("IRS1040", "WithholdingTaxAmt"), f.line25d);
+  assertEquals(amount("IRS1040", "TotalPaymentsAmt"), f.line33);
+  assertEquals(amount("IRS1040", "OverpaidAmt"), f.line34);
+  assertEquals(amount("IRS1040Schedule1", "BusinessIncomeLossAmt"), 26_979);
+  assertEquals(amount("IRS1040ScheduleA", "StateAndLocalTaxAmt"), a.line5a);
+  assertEquals(amount("IRS1040ScheduleA", "RealEstateTaxesAmt"), a.line5b);
+  assertEquals(amount("IRS1040ScheduleA", "RptHomeMortgIntAndPointsAmt"), a.line8a);
+  assertEquals(amount("IRS1040ScheduleA", "Form1098PointsNotReportedAmt"), a.line8c);
+  assertStringIncludes(
+    xml,
+    `<GiftsByCashOrCheckAmt qualifiedContributionsAmt="${a.line11QualifiedContributions}">${a.line11}</GiftsByCashOrCheckAmt>`,
+  );
+  assertEquals(amount("IRS1040ScheduleA", "OtherThanByCashOrCheckAmt"), a.line12);
+  assertEquals(amount("IRS1040ScheduleA", "TotalItemizedDeductionsAmt"), a.line17);
+  assertEquals(xmlValues(xml, "ItmzdDedLessThanStdDedInd"), ["X"]);
+  assertEquals(amount("IRS1040ScheduleC", "TotalGrossReceiptsAmt"), 29_513);
+  assertEquals(amount("IRS1040ScheduleC", "NetProfitOrLossAmt"), 26_979);
+  assertEquals(xmlValues(xml, "DonorAcquiredDt"), ["VARIOUS"]);
+  assertEquals(xmlValues(xml, "DonorAcquisitionDesc"), [facts.form8283.howAcquired]);
+  assertEquals(xmlValues(xml, "FairMarketValueMethodDesc"), [
+    facts.form8283.fairMarketValueMethod,
+  ]);
+  assertEquals(amount("IRS8283", "DonorCostOrAdjustedBasisAmt"), facts.form8283.costBasis);
+  assertEquals(amount("IRS8283", "FairMarketValueAmt"), facts.form8283.fairMarketValue);
+  assertEquals(xmlDocuments(xml, "IRS8995").length, 0);
+}, 120_000);

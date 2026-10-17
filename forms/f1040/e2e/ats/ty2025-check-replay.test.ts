@@ -62,7 +62,16 @@ test("ATS public-entry matrix retains missing prerequisites and printed conflict
     ledger.sourceReconciliations.filter((s) =>
       s.preparationResult === PreparationResult.PartialPrepared
     ).map((s) => s.scenario),
-    ["1040-03", "1040-04", "1040-05", "1040-08", "1040-12", "1040-13"],
+    [
+      "1040-01",
+      "1040-02",
+      "1040-03",
+      "1040-04",
+      "1040-05",
+      "1040-08",
+      "1040-12",
+      "1040-13",
+    ],
   );
   const retirement = ledger.sourceReconciliations.find((s) =>
     s.scenario === "1040-08"
@@ -81,11 +90,11 @@ test("ATS public-entry matrix retains missing prerequisites and printed conflict
     },
     "document-copy": {
       count: 56,
-      counts: { "not-evaluated": 14, present: 42 },
+      counts: { present: 56 },
     },
     "binary-attachment": {
       count: 2,
-      counts: { "not-evaluated": 1, "present-in-verified-manifest": 1 },
+      counts: { "present-in-verified-manifest": 2 },
     },
     "native-retirement-value": {
       count: 30,
@@ -93,15 +102,14 @@ test("ATS public-entry matrix retains missing prerequisites and printed conflict
     },
     "native-w2-value": {
       count: 80,
-      counts: { match: 40, "not-evaluated": 40 },
+      counts: { match: 80 },
     },
     "native-value": {
       count: 85,
       counts: {
         different: 17,
-        match: 60,
+        match: 66,
         "missing-field": 2,
-        "not-evaluated": 6,
       },
     },
   });
@@ -116,7 +124,7 @@ test("ATS public-entry matrix retains missing prerequisites and printed conflict
     ledger.rows.filter((r) => r.id.startsWith("1040-01:document:W-2:")).map((
       r,
     ) => r.result),
-    ["not-evaluated", "not-evaluated"],
+    ["present", "present"],
   );
 
   const native13 = report.scenarios.find((s) => s.id === "1040-13")!
@@ -189,7 +197,16 @@ test("ATS public-entry matrix retains missing prerequisites and printed conflict
       true,
     );
     if (
-      !["1040-03", "1040-04", "1040-05", "1040-08", "1040-12", "1040-13"].includes(
+      ![
+        "1040-01",
+        "1040-02",
+        "1040-03",
+        "1040-04",
+        "1040-05",
+        "1040-08",
+        "1040-12",
+        "1040-13",
+      ].includes(
         scenario.id,
       )
     ) {
@@ -200,8 +217,14 @@ test("ATS public-entry matrix retains missing prerequisites and printed conflict
     report.scenarios.find((s) => s.id === "1040-02")!.attachmentCoverage.rows,
     [{
       description: "Nonresident Spouse Choice Statement",
-      result: "not-evaluated",
-      observed: null,
+      result: "present-in-verified-manifest",
+      observed: [{
+        description: "Nonresident Spouse Choice Statement",
+        fileName: "NonresidentSpouseChoiceStatement.pdf",
+        byteLength: 1044,
+        sha256:
+          "9d8f56b1ba14a8b03818617a389123e88edda9761032a82adfa9183b7803e22f",
+      }],
     }],
   );
   const documents = report.scenarios.map((s) => ({
@@ -211,8 +234,8 @@ test("ATS public-entry matrix retains missing prerequisites and printed conflict
     present: s.documentCoverage.allRequiredCopiesPresent,
   }));
   assertEquals(documents, [
-    { id: "1040-01", observed: 0, required: 7, present: false },
-    { id: "1040-02", observed: 0, required: 7, present: false },
+    { id: "1040-01", observed: 7, required: 7, present: true },
+    { id: "1040-02", observed: 7, required: 7, present: true },
     { id: "1040-03", observed: 9, required: 9, present: true },
     { id: "1040-04", observed: 7, required: 7, present: true },
     { id: "1040-05", observed: 9, required: 9, present: true },
@@ -246,20 +269,18 @@ test("ATS public-entry matrix retains missing prerequisites and printed conflict
       "BinaryAttachment",
     ],
   );
-  assertEquals(
-    report.scenarios.find((s) => s.id === "1040-01")!.preparation.result,
-    PreparationResult.NativeBlocked,
-  );
-  const singleWage = report.scenarios.find((s) => s.id === "1040-02")!;
-  assertEquals(singleWage.diagnostics, []);
-  assertEquals(
-    singleWage.checks.every((c) => c.result === CheckResult.Match),
-    true,
-  );
-  assertEquals(
-    singleWage.preparation.result,
-    PreparationResult.NativeBlocked,
-  );
+  for (const id of ["1040-01", "1040-02"]) {
+    const scenario = report.scenarios.find((s) => s.id === id)!;
+    assertEquals(scenario.diagnostics, []);
+    assertEquals(
+      scenario.checks.every((c) => c.result === CheckResult.Match),
+      true,
+    );
+    assertEquals(
+      scenario.preparation.result,
+      PreparationResult.PartialPrepared,
+    );
+  }
   assertEquals(report.counts, { match: 69, different: 19, "not-produced": 2 });
   for (const id of ["1040-03", "1040-08"]) {
     const scenario = report.scenarios.find((s) => s.id === id)!;

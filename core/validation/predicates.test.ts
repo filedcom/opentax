@@ -5,7 +5,7 @@ import { test } from "bun:test";
 
 import { assertEquals } from "@std/assert";
 import { createReturnContext } from "./context.ts";
-import { allDistinct, betweenNum, diffLteNum, everyItem, forEach, notGtPctOfField, ssnMiddleDigitsEq, sumOfAll, validEIN } from "./predicates.ts";
+import { allDistinct, betweenNum, diffLteNum, eqCappedProduct, everyItem, forEach, notGtPctOfField, ssnMiddleDigitsEq, sumOfAll, validEIN } from "./predicates.ts";
 
 /** Build a ReturnContext with the given flat fields under "f1040". */
 function ctx(fields: Record<string, unknown>) {
@@ -226,4 +226,13 @@ test("allDistinct: passes on single value (not array)", () => {
 
 test("allDistinct: passes on empty/absent field", () => {
   assertEquals(allDistinct("SSN")(ctx({})), true);
+});
+
+test("eqCappedProduct: a capped form line equals the smaller of the product and its cap", () => {
+  const check = eqCappedProduct("Credit", "Cost", 0.30, 250);
+  assertEquals(check(ctx({ Cost: 1_020, Credit: 250 })), true);
+  assertEquals(check(ctx({ Cost: 1_020, Credit: 306 })), false);
+  assertEquals(check(ctx({ Cost: 600, Credit: 180 })), true);
+  assertEquals(check(ctx({ Cost: 685, Credit: 206 })), true);
+  assertEquals(check(ctx({ Cost: 600, Credit: 250 })), false);
 });

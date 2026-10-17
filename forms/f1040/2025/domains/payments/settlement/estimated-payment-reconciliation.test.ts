@@ -200,6 +200,50 @@ test("prior-year applied credit stays guarded without accepted filing and accoun
   }
 });
 
+test("a reviewed prior-year applied credit files on line 26 with the former spouse SSN", () => {
+  const review = {
+    accepted_2024_return_reference: "2024 joint return acknowledgment",
+    irs_account_credit_record_reference: "2025 account transcript credit",
+    applied_amount: 250,
+    joint_2024_former_spouse_ssn: "222334444",
+  };
+  const attached = {
+    f1040es: {
+      ...source,
+      applied_from_prior_year: 250,
+      prior_year_applied_credit_review: review,
+    },
+  };
+  const claim = { ...filed, line26_estimated_tax: 1_250 };
+  assertStringIncludes(
+    irs1040.build(claim, { pending: attached }),
+    '<EstimatedTaxPaymentsAmt divorcedSpouseSSN="222334444">1250</EstimatedTaxPaymentsAmt>',
+  );
+  for (
+    const [changed, reason] of [
+      [{ ...review, applied_amount: 200 }, "accepted 2024 return"],
+      [
+        { ...review, joint_2024_former_spouse_ssn: "111223333" },
+        "former spouse SSN must differ",
+      ],
+    ] as const
+  ) {
+    assertThrows(
+      () =>
+        irs1040.build(claim, {
+          pending: {
+            f1040es: {
+              ...attached.f1040es,
+              prior_year_applied_credit_review: changed,
+            },
+          },
+        }),
+      Error,
+      reason,
+    );
+  }
+});
+
 test("both Form 1040 exports reject unsourced or changed estimated payments", () => {
   for (
     const [changed, attached, reason] of [

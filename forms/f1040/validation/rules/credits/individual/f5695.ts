@@ -5,7 +5,7 @@
  */
 
 import type { RuleDef } from "../../../../../../core/validation/types.ts";
-import { rule, all, allDistinct, alwaysPass, any, eqField, eqMin, eqMinNum, eqProduct, eqStr, eqSum, filingStatusIs, gt, hasNonZero, hasValue, ifThen, isZero, lt, matchesHeaderSSN, noValue, not, notGtNum, } from "../../../../../../core/validation/mod.ts";
+import { rule, all, allDistinct, alwaysPass, any, eqCappedProduct, eqField, eqMin, eqMinNum, eqProduct, eqStr, eqSum, filingStatusIs, gt, hasNonZero, hasValue, ifThen, isZero, lt, matchesHeaderSSN, noValue, not, notGtNum, } from "../../../../../../core/validation/mod.ts";
 
 export const F5695_RULES: readonly RuleDef[] = [
   rule(
@@ -110,28 +110,28 @@ export const F5695_RULES: readonly RuleDef[] = [
     "F5695-038-01",
     "reject",
     "incorrect_data",
-    ifThen(noValue("JointOccupancyInd"), eqProduct("InsulationOrSysHtStdPctCrAmt", "InsulationOrSysHtGnLossCostAmt", 0.30)),
+    ifThen(noValue("JointOccupancyInd"), eqCappedProduct("InsulationOrSysHtStdPctCrAmt", "InsulationOrSysHtGnLossCostAmt", 0.30, 1200)),
     "If Form 5695, ['JointOccupancyInd' in 'EgyEffcntHmImprvCrGrp'] is not checked, then 'InsulationOrSysHtStdPctCrAmt' must be equal to 30% (0.30) of 'InsulationOrSysHtGnLossCostAmt'.",
   ),
   rule(
     "F5695-039-02",
     "reject",
     "incorrect_data",
-    ifThen(noValue("JointOccupancyInd"), eqProduct("MostExpnsExtrDoorsStdPctCrAmt", "MostExpnsExtrDoorCostAmt", 0.30)),
+    ifThen(noValue("JointOccupancyInd"), eqCappedProduct("MostExpnsExtrDoorsStdPctCrAmt", "MostExpnsExtrDoorCostAmt", 0.30, 250)),
     "If Form 5695, [ 'JointOccupancyInd' in 'EgyEffcntHmImprvCrGrp' ] is not checked, then [ 'MostExpnsExtrDoorsStdPctCrAmt' in 'ExteriorDoorEgyStarRqrGrp' from 'EgyEffcntHmImprvCrGrp' ] must be equal to 30% (0.30) of [ 'MostExpnsExtrDoorCostAmt' in 'ExteriorDoorEgyStarRqrGrp' from 'EgyEffcntHmImprvCrGrp' ].",
   ),
   rule(
     "F5695-040-02",
     "reject",
     "incorrect_data",
-    ifThen(noValue("JointOccupancyInd"), eqProduct("OtherQlfyExtrDoorsStdPctCrAmt", "OtherQlfyExtrDoorsCostAmt", 0.30)),
-    "If Form 5695, [ 'JointOccupancyInd' in 'EgyEffcntHmImprvCrGrp' ] is not checked, then [ 'OtherQlfyExtrDoorsStdPctCrAmt' in 'OthExteriorDoorEgyStarRqrGrp' from 'ExteriorDoorEgyStarRqrGrp' from 'EgyEffcntHmImprvCrGrp' ] must be equal to 30% (0.30) of [ 'OtherQlfyExtrDoorsCostAmt' in 'OthExteriorDoorEgyStarRqrGrp' from 'ExteriorDoorEgyStarRqrGrp' from 'EgyEffcntHmImprvCrGrp' ].",
+    ifThen(noValue("JointOccupancyInd"), eqProduct("OtherQlfyExtrDoorsStdPctCrAmt", "TotalOtherQlfyExtrDoorsCostAmt", 0.30)),
+    "If Form 5695, [ 'JointOccupancyInd' in 'EgyEffcntHmImprvCrGrp' ] is not checked, then [ 'OtherQlfyExtrDoorsStdPctCrAmt' in 'OthExteriorDoorEgyStarRqrGrp' from 'ExteriorDoorEgyStarRqrGrp' from 'EgyEffcntHmImprvCrGrp' ] must be equal to 30% (0.30) of [ 'TotalOtherQlfyExtrDoorsCostAmt' in 'OthExteriorDoorEgyStarRqrGrp' from 'ExteriorDoorEgyStarRqrGrp' from 'EgyEffcntHmImprvCrGrp' ].",
   ),
   rule(
     "F5695-041-02",
     "reject",
     "incorrect_data",
-    ifThen(noValue("JointOccupancyInd"), eqProduct("ExtrWndwSkylightStdPctCrAmt", "ExteriorWndwOrSkylightCostAmt", 0.30)),
+    ifThen(noValue("JointOccupancyInd"), eqCappedProduct("ExtrWndwSkylightStdPctCrAmt", "ExteriorWndwOrSkylightCostAmt", 0.30, 600)),
     "If Form 5695, [ 'JointOccupancyInd' in 'EgyEffcntHmImprvCrGrp' ] is not checked, then [ 'ExtrWndwSkylightStdPctCrAmt' in 'ExtrWndwSkyltEgyStarRqrGrp' from 'EgyEffcntHmImprvCrGrp' ] must be equal to 30% (0.30) of [ 'ExteriorWndwOrSkylightCostAmt' in 'ExtrWndwSkyltEgyStarRqrGrp' from 'EgyEffcntHmImprvCrGrp' ].",
   ),
   rule(
@@ -166,28 +166,28 @@ export const F5695_RULES: readonly RuleDef[] = [
     "F5695-046-02",
     "reject",
     "incorrect_data",
-    ifThen(noValue("JointOccupancyInd"), eqProduct("CentralAirCondCostStdPctCrAmt", "CentralAirCondCostAmt", 0.30)),
+    ifThen(noValue("JointOccupancyInd"), eqCappedProduct("CentralAirCondCostStdPctCrAmt", "CentralAirCondCostAmt", 0.30, 600)),
     "If Form 5695, [ 'JointOccupancyInd' in 'EgyEffcntHmImprvCrGrp' ] is not checked, then [ 'CentralAirCondCostStdPctCrAmt' in 'CentralAirConditionerGrp' from 'EgyEffcntHmImprvCrGrp' ] must be equal to 30% (0.30) of  [ 'CentralAirCondCostAmt' in 'CentralAirConditionerGrp' from 'EgyEffcntHmImprvCrGrp' ].",
   ),
   rule(
     "F5695-047-02",
     "reject",
     "incorrect_data",
-    ifThen(noValue("JointOccupancyInd"), eqProduct("NatGasPrpnOilWtrHtrStdPctCrAmt", "NatGasPrpnOilWtrHtrCostAmt", 0.30)),
+    ifThen(noValue("JointOccupancyInd"), eqCappedProduct("NatGasPrpnOilWtrHtrStdPctCrAmt", "NatGasPrpnOilWtrHtrCostAmt", 0.30, 600)),
     "If Form 5695, [ 'JointOccupancyInd' in 'EgyEffcntHmImprvCrGrp' ] is not checked, then [ 'NatGasPrpnOilWtrHtrStdPctCrAmt' in 'WaterHeaterGrp' from 'EgyEffcntHmImprvCrGrp' ] must be equal to 30% (0.30) of [ 'NatGasPrpnOilWtrHtrCostAmt' in 'WaterHeaterGrp' from 'EgyEffcntHmImprvCrGrp' ].",
   ),
   rule(
     "F5695-048-02",
     "reject",
     "incorrect_data",
-    ifThen(noValue("JointOccupancyInd"), eqProduct("NatGasPrpnOilHotWtrBlrPctAmt", "NatGasPrpnOilHotWtrBlrCostAmt", 0.30)),
+    ifThen(noValue("JointOccupancyInd"), eqCappedProduct("NatGasPrpnOilHotWtrBlrPctAmt", "NatGasPrpnOilHotWtrBlrCostAmt", 0.30, 600)),
     "If Form 5695, [ 'JointOccupancyInd' in 'EgyEffcntHmImprvCrGrp' ] is not checked, then [ 'NatGasPrpnOilHotWtrBlrPctAmt' in 'FrncHotWtrBlrGrp' from 'EgyEffcntHmImprvCrGrp' ] must be equal to 30% (0.30) of [ 'NatGasPrpnOilHotWtrBlrCostAmt' in 'FrncHotWtrBlrGrp' from 'EgyEffcntHmImprvCrGrp' ].",
   ),
   rule(
     "F5695-049-02",
     "reject",
     "incorrect_data",
-    ifThen(noValue("JointOccupancyInd"), eqProduct("PanelboardCktFeederStdPctCrAmt", "PanelboardCktFeederCostAmt", 0.30)),
+    ifThen(noValue("JointOccupancyInd"), eqCappedProduct("PanelboardCktFeederStdPctCrAmt", "PanelboardCktFeederCostAmt", 0.30, 600)),
     "If Form 5695, [ 'JointOccupancyInd' in 'EgyEffcntHmImprvCrGrp' ] is not checked, then [ 'PanelboardCktFeederStdPctCrAmt' in 'EnablingPropertyGrp' from 'EgyEffcntHmImprvCrGrp' ] must be equal to 30% (0.30) of [ 'PanelboardCktFeederCostAmt' in 'EnablingPropertyGrp' from 'EgyEffcntHmImprvCrGrp' ].",
   ),
   rule(
@@ -201,7 +201,7 @@ export const F5695_RULES: readonly RuleDef[] = [
     "F5695-051-01",
     "reject",
     "incorrect_data",
-    ifThen(noValue("JointOccupancyInd"), eqProduct("MainHomeEgyAuditStdPctCrAmt", "MainHomeEgyAuditCostAmt", 0.30)),
+    ifThen(noValue("JointOccupancyInd"), eqCappedProduct("MainHomeEgyAuditStdPctCrAmt", "MainHomeEgyAuditCostAmt", 0.30, 150)),
     "If Form 5695, ['JointOccupancyInd' in 'EgyEffcntHmImprvCrGrp'] is not checked, then 'MainHomeEgyAuditStdPctCrAmt' must be equal to 30% (0.30) of 'MainHomeEgyAuditCostAmt'.",
   ),
   rule(
@@ -222,7 +222,7 @@ export const F5695_RULES: readonly RuleDef[] = [
     "F5695-054-02",
     "reject",
     "incorrect_data",
-    ifThen(noValue("JointOccupancyInd"), eqProduct("HtPumpWtrHeaterBmssStdPctCrAmt", "HtPumpWtrHeaterBmssCostAmt", 0.30)),
+    ifThen(noValue("JointOccupancyInd"), eqCappedProduct("HtPumpWtrHeaterBmssStdPctCrAmt", "HtPumpWtrHeaterBmssCostAmt", 0.30, 2000)),
     "If Form 5695, [ 'JointOccupancyInd' in 'EgyEffcntHmImprvCrGrp' ] is not checked, then [ 'HtPumpWtrHeaterBmssStdPctCrAmt' in 'HtPumpWtrHeaterBmssStoveBlrGrp' from 'EgyEffcntHmImprvCrGrp' ] must be equal to 30% (0.30) of [ 'HtPumpWtrHeaterBmssCostAmt' in 'HtPumpWtrHeaterBmssStoveBlrGrp' from 'EgyEffcntHmImprvCrGrp' ].",
   ),
   rule(

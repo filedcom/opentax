@@ -76,9 +76,15 @@ function donorLineDetail(item: SectionAItem): string {
   ) {
     throw new Error("Form 8283 date acquired must be YYYY-MM-DD");
   }
+  if (item.date_acquired_various && item.date_acquired !== undefined) {
+    throw new Error("Form 8283 date acquired cannot be both a date and Various");
+  }
   return elements("DonorLineDetail", [
     element("ContributionDt", item.date_contributed),
-    element("DonorAcquiredDt", item.date_acquired?.slice(0, 7)),
+    element(
+      "DonorAcquiredDt",
+      item.date_acquired_various ? "VARIOUS" : item.date_acquired?.slice(0, 7),
+    ),
     element("DonorAcquisitionDesc", item.donor_acquisition_description),
     element("DonorCostOrAdjustedBasisAmt", item.cost_or_adjusted_basis),
   ]);

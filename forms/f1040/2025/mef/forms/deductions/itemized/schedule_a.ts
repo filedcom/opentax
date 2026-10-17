@@ -55,6 +55,7 @@ export interface Fields {
   form8396_interest_reporting_line?: "8a" | "8b" | null;
   line_9_investment_interest?: number | null;
   line_11_cash_contributions?: number | null;
+  line_11_qualified_contributions?: number | null;
   line_12_noncash_contributions?: number | null;
   line_13_contribution_carryover?: number | null;
   charitable_limits_finalized?: boolean;
@@ -417,7 +418,19 @@ function buildIRS1040ScheduleA(
       : "",
     mapField(["line_8c_points_no_1098", "Form1098PointsNotReportedAmt"]),
     mapField(["line_9_investment_interest", "InvestmentInterestAmt"]),
-    mapField(["line_11_cash_contributions", "GiftsByCashOrCheckAmt"]),
+    typeof fields.line_11_cash_contributions === "number"
+      ? element(
+        "GiftsByCashOrCheckAmt",
+        fields.line_11_cash_contributions,
+        typeof fields.line_11_qualified_contributions === "number"
+          ? {
+            qualifiedContributionsAmt: String(
+              Math.round(fields.line_11_qualified_contributions),
+            ),
+          }
+          : undefined,
+      )
+      : "",
     mapField(["line_12_noncash_contributions", "OtherThanByCashOrCheckAmt"]),
     mapField(["line_13_contribution_carryover", "CarryoverFromPriorYearAmt"]),
     charitableTotal === undefined

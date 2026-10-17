@@ -100,6 +100,14 @@ export const inputSchema = z.object({
     .describe(
       "Overpayment from prior year applied to current year estimated tax (Form 1040 line 26)",
     ),
+  // The accepted 2024 return elected the credit and the IRS account shows it
+  // posted to 2025. A credit from a joint 2024 return names the former spouse.
+  prior_year_applied_credit_review: z.object({
+    accepted_2024_return_reference: reference,
+    irs_account_credit_record_reference: reference,
+    applied_amount: z.number().positive(),
+    joint_2024_former_spouse_ssn: ssn.optional(),
+  }).strict().optional(),
   joint_estimated_payment_allocation: jointAllocationSchema.optional(),
 });
 

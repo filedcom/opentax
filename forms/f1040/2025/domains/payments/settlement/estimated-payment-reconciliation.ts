@@ -25,11 +25,7 @@ export function assertEstimatedPaymentLine26(
     );
   }
   const input = inputSchema.parse(raw);
-  if ((input.applied_from_prior_year ?? 0) > 0) {
-    throw new Error(
-      "Form 1040 line 26 prior-year applied credit needs the accepted 2024 return and IRS-account credit evidence",
-    );
-  }
+  const appliedFormerSsn = appliedCreditFormerSpouse(input, fields, pending);
   const review = reviewedJointAllocation(input);
   if (!review) {
     const hasQuarterPayment = (["q1", "q2", "q3", "q4"] as const).some(
@@ -57,7 +53,7 @@ export function assertEstimatedPaymentLine26(
         "Form 1040 line 26 payment record payer must be the taxpayer or joint spouse",
       );
     }
-    return;
+    return appliedFormerSsn;
   }
   const general = pending?.general as Record<string, unknown> | undefined;
   const taxpayerSsn = String(general?.taxpayer_ssn ?? "").replaceAll("-", "");
@@ -91,4 +87,41 @@ export function assertEstimatedPaymentLine26(
     );
   }
   return formerSsn;
+}
+
+function appliedCreditFormerSpouse(
+  input: ReturnType<typeof inputSchema.parse>,
+  fields: Readonly<Record<string, unknown>>,
+  pending: Readonly<Record<string, unknown>> | undefined,
+): string | undefined {
+  const applied = input.applied_from_prior_year ?? 0;
+  const review = input.prior_year_applied_credit_review;
+  if (applied <= 0) {
+    if (review) {
+      throw new Error(
+        "Form 1040 line 26 prior-year credit review needs a positive applied amount",
+      );
+    }
+    return undefined;
+  }
+  if (!review || review.applied_amount !== applied) {
+    throw new Error(
+      "Form 1040 line 26 prior-year applied credit needs the accepted 2024 return and IRS-account credit evidence",
+    );
+  }
+  const former = review.joint_2024_former_spouse_ssn?.replaceAll("-", "");
+  if (former === undefined) return undefined;
+  const general = pending?.general as Record<string, unknown> | undefined;
+  const current = [
+    fields.taxpayer_ssn,
+    general?.taxpayer_ssn,
+    fields.spouse_ssn,
+    general?.spouse_ssn,
+  ].map((value) => String(value ?? "").replaceAll("-", ""));
+  if (current.includes(former)) {
+    throw new Error(
+      "Form 1040 line 26 former spouse SSN must differ from both current filers",
+    );
+  }
+  return former;
 }

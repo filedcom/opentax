@@ -787,6 +787,17 @@ test("statutory_employee_withholding_included_in_f1040_line25a: withholding stil
   assertEquals(fieldsOf(result.outputs, f1040)!.line25a_w2_withheld, 5000);
 });
 
+test("statutory_employee_state_withholding_stays_on_schedule_a_line_5a", () => {
+  const result = compute([
+    statutoryItem({ box1_wages: 29_513, box17_state_withheld: 927 }),
+    minimalItem({ box1_wages: 8_513, box17_state_withheld: 101 }),
+  ]);
+  assertEquals(
+    fieldsOf(result.outputs, scheduleA)!.line_5a_state_income_tax,
+    1_028,
+  );
+});
+
 test("non_statutory_wages_stay_on_f1040_not_schedule_c: regular W2 does not go to schedule_c", () => {
   const result = compute([minimalItem({ box1_wages: 50000 })]);
   assertEquals(findOutput(result, "schedule_c"), undefined);

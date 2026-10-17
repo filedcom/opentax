@@ -69,6 +69,7 @@ export {
   eqDiffFloorZero,
   eqMax,
   eqMin,
+  eqCappedProduct,
   eqProduct,
   isITIN,
   matchesHeaderSSN,

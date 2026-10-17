@@ -54,3 +54,20 @@ test("an unimplemented rule is not checked rather than passed", () => {
   assertEquals(report.summary.passed, 1);
   assertEquals(report.summary.skipped, 2);
 });
+
+test("a ReturnHeader/ path reads only the header", () => {
+  const withW2 = xml.replace(
+    "</IRS1040>",
+    "</IRS1040><IRSW2 documentId=\"w\"><AddressLine2Txt>Suite 7</AddressLine2Txt></IRSW2>",
+  );
+  const ctx = createReturnContext(
+    {},
+    { primarySSN: "111223333", filingStatus: 1 },
+    new Map(),
+    new Map([["f1040", 1]]),
+    parseEmittedReturn(withW2),
+  );
+  assertEquals(ctx.hasValue("AddressLine2Txt"), true);
+  assertEquals(ctx.hasValue("ReturnHeader/AddressLine2Txt"), false);
+  assertEquals(ctx.field("ReturnHeader/NameLine1Txt"), "ALEX<EXAMPLE");
+});
