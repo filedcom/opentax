@@ -23,13 +23,34 @@ export type ScenarioScore = {
   /** null when the XML was not built or no local IRS schema is available. */
   readonly schemaValid: boolean | null;
   readonly valuesMatched: number;
+  /** Mismatches recorded as packet errors, with page, in the scenario's reconciliation. */
+  readonly valuesConflicting: number;
   readonly valuesCompared: number;
 };
 
-/** A scenario passes when it files cleanly, validates, and matches every packet value. */
+/**
+ * A scenario passes when it files cleanly, validates, and every packet value either
+ * matches or is a documented packet conflict.
+ */
 export function passes(score: ScenarioScore): boolean {
   return score.findings.length === 0 && score.schemaValid !== false &&
-    score.valuesMatched === score.valuesCompared;
+    score.valuesMatched + score.valuesConflicting === score.valuesCompared;
+}
+
+type Conflict = { page: number; printed: unknown; current: unknown };
+
+/** A scenario's documented packet conflicts: `SCENARIO_1040_NN_RECONCILIATION.conflicts`. */
+async function documentedConflicts(id: string): Promise<readonly Conflict[]> {
+  const module: Record<string, unknown> = await import(
+    `../../forms/f1040/e2e/ats/scenario_${id.replace("-", "_")}_input.ts`
+  );
+  return Object.entries(module)
+    .filter(([name]) => name.endsWith("_RECONCILIATION"))
+    .flatMap(([, value]) => {
+      const conflicts = (value as { conflicts?: unknown }).conflicts;
+      return Array.isArray(conflicts) ? conflicts as Conflict[] : [];
+    })
+    .filter((c) => typeof c.page === "number");
 }
 
 async function schemaValid(
@@ -66,6 +87,7 @@ export async function scoreScenarios(): Promise<ScenarioScore[]> {
       Object.entries(ATS_SCENARIO_INPUTS).map(async ([id, factory]) => {
         const inputs = factory() as Record<string, unknown>;
         const checks = replay.scenarios.find((s) => s.id === id)?.checks ?? [];
+        const conflicts = await documentedConflicts(id);
         const findings = await returnFindings(inputs);
         return {
           id,
@@ -73,7 +95,17 @@ export async function scoreScenarios(): Promise<ScenarioScore[]> {
           schemaValid: findings.some((f) => !f.startsWith("rule "))
             ? null
             : await schemaValid(inputs, dir, id),
-          valuesMatched: checks.filter((c) => c.result === "match").length,
+          // MeF omits zero amounts, so an unproduced value the packet prints as 0 matches.
+          valuesMatched: checks.filter((c) =>
+            c.result === "match" ||
+            (c.result === "not-produced" && c.expected === 0)
+          ).length,
+          valuesConflicting: checks.filter((c) =>
+            c.result === "different" &&
+            conflicts.some((k) =>
+              k.printed === c.expected && k.current === c.actual
+            )
+          ).length,
           valuesCompared: checks.length,
         };
       }),
@@ -93,7 +125,11 @@ function row(score: ScenarioScore): string {
     ? "none"
     : score.findings.slice(0, 3).join("; ") +
       (score.findings.length > 3 ? ` (+${score.findings.length - 3})` : "");
-  return `${passes(score) ? "PASS" : "FAIL"}  ${score.id}  values ${score.valuesMatched}/${score.valuesCompared}  xsd ${schema}  blockers: ${findings}`;
+  const unexplained = score.valuesCompared - score.valuesMatched -
+    score.valuesConflicting;
+  return `${
+    passes(score) ? "PASS" : "FAIL"
+  }  ${score.id}  values ${score.valuesMatched}/${score.valuesCompared} match, ${score.valuesConflicting} packet conflicts, ${unexplained} unexplained  xsd ${schema}  blockers: ${findings}`;
 }
 
 async function main(args: string[]): Promise<number> {
@@ -103,9 +139,12 @@ async function main(args: string[]): Promise<number> {
   } else {
     for (const score of scores) console.log(row(score));
     const matched = scores.reduce((n, s) => n + s.valuesMatched, 0);
+    const conflicting = scores.reduce((n, s) => n + s.valuesConflicting, 0);
     const compared = scores.reduce((n, s) => n + s.valuesCompared, 0);
     console.log(
-      `${scores.filter(passes).length} of ${scores.length} TY2025 ATS scenarios pass; ${matched}/${compared} packet values match`,
+      `${
+        scores.filter(passes).length
+      } of ${scores.length} TY2025 ATS scenarios pass; ${matched}/${compared} packet values match, ${conflicting} are documented packet conflicts`,
     );
   }
   // A readiness report, not a gate: scenarios are still being completed.

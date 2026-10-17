@@ -9,6 +9,7 @@ const clean = {
   findings: [],
   schemaValid: true,
   valuesMatched: 3,
+  valuesConflicting: 0,
   valuesCompared: 3,
 };
 
@@ -18,11 +19,16 @@ test("a scenario passes only when it files cleanly, validates and matches every 
   assertEquals(passes({ ...clean, findings: ["rule FW2-499"] }), false);
   assertEquals(passes({ ...clean, schemaValid: false }), false);
   assertEquals(passes({ ...clean, valuesMatched: 2 }), false);
+  assertEquals(
+    passes({ ...clean, valuesMatched: 2, valuesConflicting: 1 }),
+    true,
+  );
 });
 
 test("every TY2025 Form 1040 ATS scenario is scored", () => {
   assertEquals(
     Object.keys(ATS_SCENARIO_INPUTS).sort(),
-    TY2025_ATS_CASES.filter((c) => c.returnType === "1040").map((c) => c.id).sort(),
+    TY2025_ATS_CASES.filter((c) => c.returnType === "1040").map((c) => c.id)
+      .sort(),
   );
 });
