@@ -39,6 +39,8 @@ jobs:
         run: bun run test:forms
       - name: Sample returns gain no new MeF blockers
         run: bun run check:mef
+      - name: Complete returns work end to end through the product CLI
+        run: bun run check:cli
       - name: Preserve verification report
         if: always()
         uses: actions/upload-artifact@v4

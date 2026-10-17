@@ -15,11 +15,12 @@ in [AGENTS.md](../../AGENTS.md); the rule each check owns is in the table in
 | `bun run check:sandbox`                     | the binary can reach the network only through restricted fetch   | a module `cli/main.ts` loads, dependencies included, that imports `child_process`, `net`, `http`, `worker_threads`, `vm`, `bun:ffi` or similar, or calls `Bun.spawn`, `eval` or a non-literal `import()`                    |
 | `bun run test:unit`                         | the module graph resolves, type-checks, and the typed tests pass | an unresolved import, a `tsc` error (strict, no unused locals or parameters), a missing or duplicate test module, a failing test, a runtime change during the run                                                           |
 | `bun run test:forms`                        | the node, MeF, validation and return-processing tests pass       | a failing test not in `scripts/testing/forms-failure-baseline.json`, an expired entry, an entry whose test now passes                                                                                                       |
+| `bun run check:cli`                         | complete sample returns work end to end through the product CLI: create, add, get, validate, export MeF and PDF | a failing command, `return get` or MeF AGI differing from the engine, a reject other than the known header birth date, or an export that writes no file |
 | `bun run check:mef [--update]`              | every signed PDF review fixture computes, builds MeF XML and passes the IRS business rules export applies | a calculation, XML or reject-level rule finding not in `scripts/testing/mef-baseline.json`, or a baselined finding that no longer occurs; `--update` rewrites the baseline |
 
 Every check prints each problem with its fix, takes `--json`, and exits 1 on any
 problem. `.github/workflows/test.yml` runs the first three, `check:sandbox`,
-`test:unit`, `test:forms` and `check:mef` on every pull request. `bench` runs locally until the baselined
+`test:unit`, `test:forms`, `check:mef` and `check:cli` on every pull request. `bench` runs locally until the baselined
 cases below are fixed, then joins them.
 
 ## Ratchets

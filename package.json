@@ -31,6 +31,7 @@
     "check:oracle": "bun scripts/testing/oracle.ts",
     "check:sandbox": "bun scripts/testing/sandbox.ts",
     "check:mef": "bun scripts/testing/mef.ts",
+    "check:cli": "bun scripts/testing/cli.ts",
     "typecheck": "tsc --project tsconfig.json",
     "bench": "bun benchmark/run_benchmark.ts",
     "compile": "bun build cli/main.ts --compile --outfile opentax",

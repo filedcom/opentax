@@ -10,15 +10,16 @@ as a graph of pure nodes. Two CLIs, kept apart:
   publication), `bun run check:sandbox` (the binary reaches the network only
   through restricted fetch), `bun run bench` (engine output against IRS ground
   truth), `bun run test:unit` (module graph, type check and typed tests),
-  `bun run test:forms` (node, export and return-processing tests) and
-  `bun run check:mef` (sample returns build MeF XML and pass the IRS rules).
+  `bun run test:forms` (node, export and return-processing tests),
+  `bun run check:mef` (sample returns build MeF XML and pass the IRS rules) and
+  `bun run check:cli` (complete returns work end to end through the CLI).
 
 ## Before a pull request
 
 A change ships with proof, not a description of it:
 
 - `bun run check:structure`, `bun run check:sandbox`, `bun run test:unit`,
-  `bun run test:forms` and `bun run check:mef` pass.
+  `bun run test:forms`, `bun run check:mef` and `bun run check:cli` pass.
 - `bun run bench --form <form> --year <year>` passes for every form:year the
   change touches, and `bun run check:oracle` passes: an expected value changes
   only with a publication cited in that product's `ledger.json`.
