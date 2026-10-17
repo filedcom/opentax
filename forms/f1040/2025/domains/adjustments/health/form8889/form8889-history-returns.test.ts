@@ -59,7 +59,8 @@ for (const id of Object.keys(fixtures) as Array<keyof typeof fixtures>) {
     assertEquals(f.line15_taxable_income, e.taxable_income);
     assertEquals(f.line16_income_tax, e.regular_tax);
     assertAlmostEquals(f.line23_other_taxes!, e.additional_tax);
-    assertAlmostEquals(f.line24_total_tax!, e.total_tax);
+    // Line 24 is a whole-dollar Form 1040 total.
+    assertEquals(f.line24_total_tax!, Math.round(e.total_tax));
     assertEquals(f.line35a_refund, e.refund);
     const filer = extractFilerIdentity(f)!;
     const prepared = await f1040_2025.prepareReturn(result.pending, filer);
