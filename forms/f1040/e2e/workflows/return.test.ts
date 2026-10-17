@@ -229,12 +229,12 @@ test("E2E Scenario 2: self-employed Schedule C — SE income and SE deduction fl
   );
 
   // ── Income tax calculation node inputs ────────────────────────────────────
-  // Taxable income = 74,348 − 15,750 (std ded) − 11,719.60 (QBI deduction) = 46,878.40
+  // Taxable income = 74,348 − 15,750 (std ded) − 11,720 (line 13) = 46,878
   const itcPending = result.pending["income_tax_calculation"] ?? {};
   assertEquals(
     Math.round((itcPending["taxable_income"] as number) * 100) / 100,
-    46_878.4,
-    "income_tax_calculation should receive taxable_income = $46,878.40",
+    46_878,
+    "income_tax_calculation should receive taxable_income = $46,878",
   );
 
   // ── F1040 final scalar summary ─────────────────────────────────────────────
@@ -521,7 +521,7 @@ test("E2E Schedule A: computed context replaces duplicate direct inputs", () => 
     }],
     schedule_a: {
       filing_status: FilingStatus.Single,
-      agi: 349_154,
+      agi: 300_000,
       line_8a_mortgage_interest_1098: 46_984.65,
     },
   });
@@ -531,13 +531,15 @@ test("E2E Schedule A: computed context replaces duplicate direct inputs", () => 
     result.pending["schedule_a"]?.["filing_status"],
     FilingStatus.Single,
   );
-  assertEquals(result.pending["schedule_a"]?.["agi"], 349_154.37);
+  // The computed whole-dollar AGI (Form 1040 line 11) replaces the direct entry.
+  assertEquals(result.pending["schedule_a"]?.["agi"], 349_154);
   assertEquals(
     result.pending["schedule_a"]?.["line_8a_mortgage_interest_1098"],
     46_984.65,
   );
+  // Schedule A line 17 is entered in whole dollars.
   assertEquals(
     result.pending["standard_deduction"]?.["itemized_deductions"],
-    46_984.65,
+    46_985,
   );
 });

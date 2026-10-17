@@ -148,7 +148,8 @@ test("positive employee-business deduction cannot file without Form 2106", () =>
   assertThrows(
     () => buildMefXml(pending, filer),
     Error,
-    "Form 2106 needs the sourced one-job fee-basis filing route",
+    // Unsourced expenses fail attachment coverage before the filing route.
+    "Form 2106 needs sourced qualified employee expenses",
   );
 });
 

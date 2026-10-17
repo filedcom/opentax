@@ -384,8 +384,8 @@ test("Scenario 7: Single, self-employed Schedule C $80K — owes ~$16,691", () =
   // Income tax calculation receives correct taxable income (after QBI deduction)
   assertEquals(
     r2(result.pending["income_tax_calculation"]?.["taxable_income"] as number),
-    46_878.4,
-    "taxable income = AGI − $15,750 std ded − QBI deduction",
+    46_878,
+    "taxable income = AGI − $15,750 std ded − whole-dollar QBI deduction",
   );
 
   // F1040 scalar summary (total tax = income tax + SE tax via schedule 2)
@@ -913,8 +913,8 @@ test("Scenario 15: MFJ, Schedule C $150K + interest — QBI reduced by the SE de
   );
   assertEquals(
     r2(result.pending["income_tax_calculation"]?.["taxable_income"] as number),
-    180_022.4,
-    "taxable income = $207,903 pre-QBI − $27,880.60",
+    180_022,
+    "taxable income = $207,903 pre-QBI − $27,881 (Form 1040 line 13)",
   );
 });
 
