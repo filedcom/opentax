@@ -702,10 +702,12 @@ test("routing_profit_400_triggers_se: net_profit=400 → schedule_se with exact 
   );
 });
 
-test("routing_profit_below_400_no_se: net_profit=399 → no schedule_se output", () => {
+test("routing_profit_below_400_still_sent: Schedule SE applies the $400 test after adding Schedule F", () => {
   const result = compute([minimalItem({ line_1_gross_receipts: 399 })]);
-  const se = findOutput(result, "schedule_se");
-  assertEquals(se, undefined);
+  assertEquals(
+    findOutput(result, "schedule_se")?.fields.net_profit_schedule_c,
+    399,
+  );
 });
 
 test("routing_profit_routes_form8995: net_profit > 0 → form8995 with exact qbi amount", () => {
@@ -972,9 +974,14 @@ test("agg_part_v_other_expenses_flows_to_line27b: two items [500,300] → reduce
 // 4. Thresholds
 // ============================================================
 
-test("threshold_se_below_400: net_profit=399 → no schedule_se", () => {
-  const result = compute([minimalItem({ line_1_gross_receipts: 399 })]);
-  assertEquals(findOutput(result, "schedule_se"), undefined);
+test("threshold_se_loss: a net Schedule C loss reaches Schedule SE line 2", () => {
+  const result = compute([
+    minimalItem({ line_1_gross_receipts: 100, line_11_contract_labor: 300 }),
+  ]);
+  assertEquals(
+    findOutput(result, "schedule_se")?.fields.net_profit_schedule_c,
+    -200,
+  );
 });
 
 test("threshold_se_at_400: net_profit=400 → triggers schedule_se", () => {
@@ -987,14 +994,17 @@ test("threshold_se_above_400: net_profit=500 → triggers schedule_se", () => {
   assertEquals(findOutput(result, "schedule_se") !== undefined, true);
 });
 
-test("threshold_se_combined_below_400: profit 500 + loss 200 \u2192 no schedule_se", () => {
+test("threshold_se_combined_below_400: profit 500 + loss 200 \u2192 one schedule_se for 300", () => {
   // i1040sse, Who Must File Schedule SE: "The amount on line 4c of Schedule SE is $400 or
-  // more" \u2014 the test is on the combined figure, not on each business separately.
+  // more" \u2014 the test is on the combined figure, which Schedule SE applies.
   const result = compute([
     minimalItem({ line_1_gross_receipts: 500 }),
     minimalItem({ line_1_gross_receipts: 100, line_11_contract_labor: 300 }),
   ]);
-  assertEquals(findOutput(result, "schedule_se"), undefined);
+  assertEquals(
+    findOutput(result, "schedule_se")?.fields.net_profit_schedule_c,
+    300,
+  );
 });
 
 test("threshold_se_combined_at_400_from_two_businesses: 300 + 100 \u2192 schedule_se for 400", () => {
@@ -1009,13 +1019,15 @@ test("threshold_se_combined_at_400_from_two_businesses: 300 + 100 \u2192 schedul
   );
 });
 
-test("threshold_clergy_se_below_108_28: clergy=true, net_profit=108 → no schedule_se", () => {
-  // AMBIGUITY: verify clergy_schedule_c exact field name and SE threshold logic
+test("threshold_clergy_se_small_profit: clergy=true, net_profit=108 → sent to Schedule SE", () => {
   const result = compute([minimalItem({
     line_1_gross_receipts: 108,
     clergy_schedule_c: true,
   })]);
-  assertEquals(findOutput(result, "schedule_se"), undefined);
+  assertEquals(
+    findOutput(result, "schedule_se")?.fields.net_profit_schedule_c,
+    108,
+  );
 });
 
 test("threshold_clergy_se_at_108_28: clergy=true, net_profit=108.28 → triggers schedule_se", () => {

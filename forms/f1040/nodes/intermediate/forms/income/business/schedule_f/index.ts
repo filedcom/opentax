@@ -23,7 +23,6 @@ import { CONFIG_BY_YEAR } from "../../../../../config/index.ts";
 // ── TY2025 Constants ──────────────────────────────────────────────────────────
 
 // IRC §1402(b) — minimum net farm profit to owe SE tax
-const SE_TAX_THRESHOLD = 400;
 
 export * from "./model.ts";
 import {
@@ -261,8 +260,9 @@ class ScheduleFNode extends TaxNode<typeof inputSchema> {
         gross_farm_income: Math.max(0, grossFarmIncome),
         net_profit_schedule_f: line34NetFarmProfit,
       }));
-    } else if (totalNetProfit >= SE_TAX_THRESHOLD) {
-      // Schedule SE line 1a takes the net of all Schedule F activities.
+    } else if (totalNetProfit !== 0) {
+      // Schedule SE line 1a takes the signed net of all Schedule F activities;
+      // Schedule SE adds Schedule C before its line 4c $400 test.
       outputs.push(this.outputNodes.output(schedule_se, {
         net_profit_schedule_f: totalNetProfit,
       }));

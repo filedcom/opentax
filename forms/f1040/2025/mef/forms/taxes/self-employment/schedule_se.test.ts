@@ -56,11 +56,15 @@ test("schedule_se: all unknown keys returns empty string", () => {
 // Section 3: Zero value emitted (tag name verified against IRS1040ScheduleSE.xsd)
 // ---------------------------------------------------------------------------
 
-test("schedule_se: net_profit_schedule_c at zero is emitted", () => {
-  const result = scheduleSE.build({ net_profit_schedule_c: 0 });
-  assertStringIncludes(
-    result,
-    "<NetNonFarmProfitLossAmt>0</NetNonFarmProfitLossAmt>",
+test("schedule_se: not filed when lines 1a and 2 total less than $434", () => {
+  assertEquals(scheduleSE.build({ net_profit_schedule_c: 0 }), "");
+  assertEquals(scheduleSE.build({ net_profit_schedule_c: 433 }), "");
+  assertEquals(
+    scheduleSE.build({
+      net_profit_schedule_c: -200_000,
+      net_profit_schedule_f: 200_300,
+    }),
+    "",
   );
 });
 
@@ -112,7 +116,10 @@ test("schedule_se: net_profit_schedule_f maps to NetFarmProfitLossAmt", () => {
 });
 
 test("schedule_se: unreported_tips_4137 maps to UnreportedTipsAmt", () => {
-  const result = scheduleSE.build({ unreported_tips_4137: 2000 });
+  const result = scheduleSE.build({
+    net_profit_schedule_c: 30000,
+    unreported_tips_4137: 2000,
+  });
   assertStringIncludes(
     result,
     "<UnreportedTipsAmt>2000</UnreportedTipsAmt>",
@@ -120,7 +127,10 @@ test("schedule_se: unreported_tips_4137 maps to UnreportedTipsAmt", () => {
 });
 
 test("schedule_se: wages_8919 maps to WagesSubjectToSSTAmt", () => {
-  const result = scheduleSE.build({ wages_8919: 8000 });
+  const result = scheduleSE.build({
+    net_profit_schedule_c: 30000,
+    wages_8919: 8000,
+  });
   assertStringIncludes(
     result,
     "<WagesSubjectToSSTAmt>8000</WagesSubjectToSSTAmt>",

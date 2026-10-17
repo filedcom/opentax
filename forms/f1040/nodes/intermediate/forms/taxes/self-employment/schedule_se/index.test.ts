@@ -571,3 +571,23 @@ test("farm_optional_line4c_below_threshold: elected method can still yield no ta
   });
   assertEquals(result.outputs.map((item) => item.nodeType), ["form7206"]);
 });
+
+test("combine_signed_c_and_f: a Schedule C loss offsets a Schedule F profit before line 4c", () => {
+  // i1040sse, More Than One Business: a loss in one business reduces the income from another.
+  const result = compute({
+    net_profit_schedule_c: -200_000,
+    net_profit_schedule_f: 210_000,
+    w2_ss_wages: 120_000,
+  });
+  assertEquals(findOutput(result, "schedule2")?.fields.line4_se_tax, 1_413);
+  assertEquals(findOutput(result, "form8959")?.fields.se_income, 9_235);
+});
+
+test("combine_small_c_and_f: two profits under $400 each owe SE tax once combined", () => {
+  const result = compute({
+    net_profit_schedule_c: 300,
+    net_profit_schedule_f: 300,
+  });
+  // Line 4a = 600 x 92.35% = 554.10; line 10 = 69, line 11 = 16.
+  assertEquals(findOutput(result, "schedule2")?.fields.line4_se_tax, 85);
+});

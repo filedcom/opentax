@@ -73,16 +73,6 @@ export type { ScheduleCItem };
 
 // ── TY2025 Constants ────────────────────────────────────────────────────────
 
-const SE_TAX_THRESHOLD = 400; // Net profit >= $400 → Schedule SE
-const CLERGY_SE_THRESHOLD = 108.28; // Clergy SE threshold (no Form 4361)
-// Schedule SE line 4c threshold for the combined businesses. Clergy Schedule C income
-// carries the lower church-employee threshold, so it sets the test for the whole return.
-function seThreshold(items: readonly ScheduleCItem[]): number {
-  return items.some((item) => item.clergy_schedule_c === true)
-    ? CLERGY_SE_THRESHOLD
-    : SE_TAX_THRESHOLD;
-}
-
 function amtDepletionOutputs(item: ScheduleCItem): NodeOutput[] {
   const regularDepletion = item.line_12_depletion ?? 0;
   const amtWorksheet = item.amt_depletion_worksheet;
@@ -537,13 +527,13 @@ class ScheduleCNode extends TaxNode<typeof inputSchema> {
     // Schedule SE: combine the businesses first, then test the total.
     // i1040sse, More Than One Business: "If you had a loss in one business, it reduces the
     // income from another. Figure the combined SE tax on one Schedule SE." The $400 test is
-    // on the combined line 4c, not on each business on its own.
-    const seItems = items.filter((item) => !isSeExempt(item));
+    // on the combined line 4c, which Schedule SE applies after adding Schedule F, so the
+    // signed total is sent even when it is small or a loss.
     const seNetProfit = items.reduce(
       (sum, item, i) => isSeExempt(item) ? sum : sum + netProfits[i],
       0,
     );
-    if (seNetProfit >= seThreshold(seItems)) {
+    if (seNetProfit !== 0) {
       outputs.push(
         this.outputNodes.output(schedule_se, {
           net_profit_schedule_c: seNetProfit,

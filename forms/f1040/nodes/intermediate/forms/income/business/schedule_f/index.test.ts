@@ -118,7 +118,7 @@ test("schedule_f: net profit > 0 routes to form8995 as QBI", () => {
 
 // ── Net loss routes to schedule1 but not schedule_se ─────────────────────────
 
-test("schedule_f: net loss routes to schedule1 (negative line6) but not schedule_se", () => {
+test("schedule_f: net loss routes to schedule1 (negative line6) and Schedule SE line 1a", () => {
   const result = compute({
     schedule_fs: [
       minimalItem({
@@ -130,12 +130,12 @@ test("schedule_f: net loss routes to schedule1 (negative line6) but not schedule
   const s1 = findOutput(result, "schedule1");
   const se = findOutput(result, "schedule_se");
   assertEquals(s1?.fields.line6_schedule_f, -15_000);
-  assertEquals(se, undefined);
+  assertEquals(se?.fields.net_profit_schedule_f, -15_000);
 });
 
 // ── Small profit below SE threshold ($400) ───────────────────────────────────
 
-test("schedule_f: profit below $400 SE threshold — no schedule_se output", () => {
+test("schedule_f: profit below $400 still reaches Schedule SE, which tests the combined line 4c", () => {
   const result = compute({
     schedule_fs: [
       minimalItem({
@@ -145,7 +145,7 @@ test("schedule_f: profit below $400 SE threshold — no schedule_se output", () 
     ],
   });
   const se = findOutput(result, "schedule_se");
-  assertEquals(se, undefined);
+  assertEquals(se?.fields.net_profit_schedule_f, 300);
 });
 
 test("schedule_f: elected farm optional method routes gross income below the ordinary $400 threshold", () => {

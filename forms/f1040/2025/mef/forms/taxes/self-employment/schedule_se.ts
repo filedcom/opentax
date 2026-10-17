@@ -53,8 +53,9 @@ function buildIRS1040ScheduleSE(
     typeof fields[key] === "number"
   );
   if (!hasSeIncome) return "";
-  // The printed 2025 Schedule SE directs the filer to stop at line 4c.
-  if (optional && !lines) return "";
+  // Under $400 on line 4c the filer stops, and i1040sse says not to file
+  // Schedule SE when lines 1a and 2 total less than $434.
+  if (!lines) return "";
 
   const pending = context?.pending;
   const spouseOwned = fields.owner_recipient === "S" ||
