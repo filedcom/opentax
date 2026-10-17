@@ -43,6 +43,6 @@ and the XML-name → pending-field map are form data and live in
 
 ## Read next
 - [../AGENTS.md](../AGENTS.md)
-- [../../forms/f1040/validation/rules/README.md](../../forms/f1040/validation/rules/README.md)
+- [../../forms/f1040/validation/rules/README.md](../../forms/f1040/validation/AGENTS.md)
 - [../../cli/commands/validate.ts](../../cli/commands/validate.ts) — how the
   CLI builds the context and runs `ALL_RULES`
