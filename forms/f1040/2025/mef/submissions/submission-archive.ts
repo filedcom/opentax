@@ -1,4 +1,3 @@
-import { unzipSync, zipSync } from "fflate";
 import { createHash } from "node:crypto";
 import type { FilerIdentity } from "../../../mef/header.ts";
 import { element, elements } from "../../../mef/xml.ts";
@@ -24,6 +23,7 @@ import {
   MefTestCd,
   submissionManifestFindings,
 } from "./submission-manifest.ts";
+import { crc32, unzipEntries, zipEntries } from "./zip.ts";
 
 const XML_DECLARATION = '<?xml version="1.0" encoding="UTF-8"?>\n';
 const encoder = new TextEncoder();
@@ -69,22 +69,6 @@ function sameBytes(
 
 function sha256HexSync(bytes: Uint8Array): string {
   return createHash("sha256").update(bytes).digest("hex");
-}
-
-const CRC32_TABLE = Uint32Array.from({ length: 256 }, (_, index) => {
-  let value = index;
-  for (let bit = 0; bit < 8; bit++) {
-    value = value & 1 ? 0xedb88320 ^ (value >>> 1) : value >>> 1;
-  }
-  return value >>> 0;
-});
-
-function crc32(bytes: Uint8Array): number {
-  let value = 0xffffffff;
-  for (const byte of bytes) {
-    value = CRC32_TABLE[(value ^ byte) & 0xff] ^ (value >>> 8);
-  }
-  return (value ^ 0xffffffff) >>> 0;
 }
 
 /** Check physical ZIP entries and decoded payloads before filing. */
@@ -245,7 +229,7 @@ function assertPreparedArchiveContents(archive: MefSubmissionArchive): void {
   assertPreparedBundleProjection(archive.bundle, archive.filer);
   let entries: Record<string, Uint8Array>;
   try {
-    entries = unzipSync(archive.bytes);
+    entries = unzipEntries(archive.bytes);
   } catch {
     throw new Error("MeF transmission submission ZIP is unreadable");
   }
@@ -423,7 +407,7 @@ export async function buildMefSubmissionArchive(
     submissionId: options.submissionId,
     fileName: `${options.submissionId}.zip`,
     processingDate: options.processingDate,
-    bytes: zipSync(files, { level: 6 }),
+    bytes: zipEntries(files, true),
     manifestXml,
     bundle,
     filer: options.filer,
@@ -484,7 +468,7 @@ export function buildMefTransmissionPackage(
     `<SendSubmissionsRequest xmlns="http://www.irs.gov/a2a/mef/MeFTransmitterService.xsd">${list}</SendSubmissionsRequest>`;
   return {
     sendSubmissionsRequestXml,
-    containerZipBytes: zipSync(files, { level: 0 }),
+    containerZipBytes: zipEntries(files, false),
     testCd,
   };
 }
