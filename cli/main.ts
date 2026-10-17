@@ -467,7 +467,7 @@ async function main(): Promise<void> {
       "record",
       "evidence",
     ],
-    boolean: ["json", "help", "draft"],
+    boolean: ["json", "help", "draft", "force"],
     alias: { h: "help" },
   }) as unknown as ParsedArgs;
 
