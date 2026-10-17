@@ -10,7 +10,5 @@
   },
   "[typescriptreact]": {
     "editor.defaultFormatter": "dprint.dprint"
-  },
-
-  "biome.enabled": false
+  }
 }

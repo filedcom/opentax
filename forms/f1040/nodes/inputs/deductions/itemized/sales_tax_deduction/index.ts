@@ -6,7 +6,9 @@ import { scheduleA } from "../schedule_a/index.ts";
 import type { NodeContext } from "../../../../../../../core/types/node-context.ts";
 
 // IRC §164(b)(5) — Election to deduct general sales taxes instead of income taxes
-// TCJA §11042 — SALT cap ($10,000/$5,000 MFS) applied downstream by schedule_a
+// IRC §164(b)(6) as amended by P.L. 119-21: the SALT cap ($40,000/$20,000 MFS
+// for TY2025, phased down above $500,000 MAGI to a $10,000/$5,000 floor) is
+// applied downstream by schedule_a
 
 export enum SalesTaxMethod {
   Actual = "actual",

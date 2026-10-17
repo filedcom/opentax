@@ -4,7 +4,7 @@
 
 The Sales Tax Deduction Worksheet allows taxpayers to elect to deduct state and local general sales taxes instead of state and local income taxes on Schedule A, Line 5b. Two methods exist: (1) actual receipts, or (2) IRS Optional Sales Tax Tables (Publication 600). Major purchase sales taxes (car, boat, aircraft, home) can be added on top of the table amount.
 
-The deductible amount flows to Schedule A as a SALT (state and local taxes) item, subject to the combined $10,000/$5,000 (MFS) SALT cap under TCJA §11042.
+The deductible amount flows to Schedule A as a SALT (state and local taxes) item, subject to the combined SALT cap: $40,000 ($20,000 MFS) for TY2025 under IRC §164(b)(6) as amended by P.L. 119-21, phased down above $500,000 MAGI ($250,000 MFS) to a $10,000 ($5,000 MFS) floor.
 
 **IRS Form:** No standalone form — uses Schedule A Line 5b with IRS Pub. 600 optional table
 **Drake Screen:** STAX
@@ -41,7 +41,7 @@ base = table_amount + (major_purchase_tax ?? 0)
 Source: IRC §164(b)(5); Schedule A Instructions, Line 5b
 
 ### Step 2 — Route to Schedule A
-The computed base amount flows to `schedule_a.line_5a_tax_amount` (Schedule A Line 5a, sales tax election). Schedule A applies the $10,000 SALT cap combining line 5 + line 6.
+The computed base amount flows to `schedule_a.line_5a_tax_amount` (Schedule A Line 5a, sales tax election). Schedule A applies the SALT cap (line 5e) to lines 5a–5c.
 
 Source: IRC §164(b)(5); Schedule A Line 5b; TCJA §11042
 
@@ -59,7 +59,7 @@ Source: IRC §164(b)(5); Schedule A Line 5b; TCJA §11042
 
 | Constant | Value | Source | URL |
 | -------- | ----- | ------ | --- |
-| SALT cap (Single/MFJ/HOH/QSS) | $10,000 | TCJA §11042; IRC §164(b)(6) | https://www.irs.gov/instructions/i1040sca |
+| SALT cap (Single/MFJ/HOH/QSS), TY2025 | $40,000 ($20,000 MFS), phased down above $500,000 MAGI to a $10,000 floor | IRC §164(b)(6) as amended by P.L. 119-21 | https://www.irs.gov/instructions/i1040sca |
 | SALT cap (MFS) | $5,000 | TCJA §11042; IRC §164(b)(6) | https://www.irs.gov/instructions/i1040sca |
 
 Note: The SALT cap is applied by Schedule A, not by this node. This node only passes the raw sales tax amount.
@@ -97,7 +97,7 @@ flowchart LR
 
 2. **Major purchase tax: table method only.** The `major_purchase_tax` add-on applies ONLY to the table method. If method = "actual", all actual taxes (including major purchases) should already be included in `actual_sales_tax_paid`.
 
-3. **SALT cap applied downstream.** The $10,000/$5,000 cap on state/local taxes is applied by Schedule A (combining property taxes + income/sales taxes). This node passes the raw sales tax amount without capping.
+3. **SALT cap applied downstream.** The SALT cap ($40,000/$20,000 MFS for TY2025) is applied by Schedule A (combining property taxes + income/sales taxes). This node passes the raw sales tax amount without capping.
 
 4. **Zero output for zero amounts.** If the computed base is zero, no output is emitted.
 
