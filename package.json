@@ -37,6 +37,7 @@
     "typecheck": "tsc --project tsconfig.json",
     "bench": "bun benchmark/run_benchmark.ts",
     "bench:cached": "bun scripts/testing/bench-cached.ts",
+    "bench:llm": "bun scripts/testing/llm-bench.ts",
     "verify:changed": "bun scripts/testing/changed.ts",
     "compile": "bun build cli/main.ts --compile --outfile opentax",
     "lint": "oxlint --ignore-pattern '.state/**'"
