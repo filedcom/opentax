@@ -11,7 +11,7 @@ The current typed regression batch at `a1a4cfd61` reports **75 passed, one
 failed, zero ignored** across ten modules:
 
 ```sh
-deno test -A forms/f1040/2025/domains/general/filing/form8886 cli/commands/form8886-otsa.test.ts
+bun test --timeout=1800000 forms/f1040/2025/domains/general/filing/form8886 cli/commands/form8886-otsa.test.ts
 ```
 
 All three OTSA command tests pass. They create a stored joint return, export

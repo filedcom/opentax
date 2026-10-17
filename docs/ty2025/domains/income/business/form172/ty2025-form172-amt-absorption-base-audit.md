@@ -72,7 +72,7 @@ Candidate focused actual exit0 at10:10:17UTC:412/0, log SHA256 `cd8f3f15dec5b368
 
 Previous root full48127 actually ends0 at10:09:52UTC:12,668 passed/0 failed, log SHA256 `2e386dd255efacc778f961c33cfcd31650adcbd93b8c21fd5df755aedec94713`; independent terminal audit confirms all2,696 runtime paths unchanged. Only after that terminal result, all13 post-b1dfa candidate commits are integrated cleanly, ending root runtime commit `2698ceb02f580099b123e855d485cee1ab701ffe`. Complete integrated runtime matches the tested candidate's2,706 path/hash manifest exactly. Root focused actual exit0 at10:12:11UTC:412/0; log SHA256 `a2031d72281040ed09e617fe74245c34e69c3a5f91ff05a2fb0576da6cc673a6`.
 
-Required serial `deno task test` begins10:12:40UTC, tool session12505/PID23198, with8GB V8 setting and2,706 frozen runtime paths. Private `root-form172-history-full-regression-20261008-v1/` retains preflight/log. This new full run is live, not a terminal pass. Prior full success does not validate the newly integrated code or close the incomplete phase/main TODOs.
+Required serial `bun run test` begins10:12:40UTC, tool session12505/PID23198, with8GB V8 setting and2,706 frozen runtime paths. Private `root-form172-history-full-regression-20261008-v1/` retains preflight/log. This new full run is live, not a terminal pass. Prior full success does not validate the newly integrated code or close the incomplete phase/main TODOs.
 
 ## Complete history-package byte binding — October 8, 10:17 UTC
 

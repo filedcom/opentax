@@ -56,7 +56,7 @@ Manifest SHA256 `dd48537bbe308d32d4f6e62a5975f802083a4ee400bd3e298630f3ef28ed47b
 Original8/42cent packets'32files match source/pending values and PDF/text bytes;
 onlyJSON formatting andReturnTs differ. Original immutablee201 evidence is intact.
 
-Reproduce source gate with `deno test --allow-all forms/f1040/2025/domains/taxes/retirement/form4972/form4972_preferential_amt_source.test.ts`;
+Reproduce source gate with `bun test --timeout=1800000 forms/f1040/2025/domains/taxes/retirement/form4972/form4972_preferential_amt_source.test.ts`;
 setFORM4972_PREFERENTIAL_AMT_EVIDENCE_DIR to preserve separate output.
 Run `python3 scripts/maintenance/ty2025-form4972-preferential-amt-oracle.py ARTIFACT_DIR`
 to independently regenerate expected values from its sourceJSON files.

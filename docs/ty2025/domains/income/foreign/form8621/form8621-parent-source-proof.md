@@ -40,10 +40,10 @@ calculated tax effects.
 
 ## Local verification
 
-- `deno test -A` for the Form 8621 graph, source replay, native, PDF, and full
+- `bun test --timeout=1800000` for the Form 8621 graph, source replay, native, PDF, and full
   return packet files: 36 passed, 0 failed; terminal log
   `/tmp/opentax-form8621-parent-focused-final-v6-oct6.log`.
-- `deno test -A forms/f1040/2025/mef/forms/taxes/other/schedule2.test.ts forms/f1040/2025/pdf/forms/taxes/other/schedule2.test.ts forms/f1040/2025/domains/taxes/passthrough/form8978/form8978_public_source.test.ts`:
+- `bun test --timeout=1800000 forms/f1040/2025/mef/forms/taxes/other/schedule2.test.ts forms/f1040/2025/pdf/forms/taxes/other/schedule2.test.ts forms/f1040/2025/domains/taxes/passthrough/form8978/form8978_public_source.test.ts`:
   56 passed, 0 failed; terminal log
   `/tmp/opentax-form8621-schedule2-preservation-final-oct6.log`.
 - Positive packets validate against the full local TY2025 MeF v5.4

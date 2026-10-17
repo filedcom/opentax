@@ -153,8 +153,8 @@ isolated checkout. Standard source plus compatibility file list (50 actual
 modules): `/tmp/opentax-eic-passive-k1-standard-files-final-oct6.txt`.
 
 ```sh
-deno task test $(cat /tmp/opentax-eic-passive-k1-standard-files-final-oct6.txt)
-deno task test forms/f1040/2025/domains/credits/earned-income/eic/eic_passive_k1_source.test.ts -- \
+bun run test $(cat /tmp/opentax-eic-passive-k1-standard-files-final-oct6.txt)
+bun run test forms/f1040/2025/domains/credits/earned-income/eic/eic_passive_k1_source.test.ts -- \
   --write-review-artifacts /tmp/NEW-IMMUTABLE-SOURCE-OUTPUT
 ```
 
@@ -164,8 +164,7 @@ production checkout and takes `NEW_OUTPUT` followed by retained source archive
 directories. Run with the checkout's `deno.json`:
 
 ```sh
-deno run --config deno.json --allow-read --allow-write \
-  --allow-net=www.irs.gov --allow-run=xmllint \
+bun \
   /tmp/opentax-eic-passive-k1-retained-final-oct6.ts \
   /tmp/NEW-IMMUTABLE-RAW-OUTPUT \
   /tmp/opentax-eic-passive-k1-current-evidence-v18-oct6

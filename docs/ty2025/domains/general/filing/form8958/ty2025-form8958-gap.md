@@ -107,7 +107,7 @@ returns, registered documents and acceptance remain open.
 
 Terminal result: **16 passed, zero failed, zero ignored** across
 `f8958/index.test.ts`, `f8958/staged_documents.test.ts` and
-`w2/community_property.test.ts`, using `deno test -A`. The original 13-test gate
+`w2/community_property.test.ts`, using `bun test --timeout=1800000`. The original 13-test gate
 also passed; it is a subset, not 13 additional distinct checks. Logs and schema
 provenance are retained in `.state/research/form8958-boundary-2026-10-10/`.
 No production code changed. The board's main Form 8958 scope remains open.

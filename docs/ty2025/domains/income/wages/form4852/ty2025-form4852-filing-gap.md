@@ -305,8 +305,8 @@ completed form is automatically transmitted as an IRS binary attachment.
 Reproduce from this isolated checkout:
 
 ```sh
-PATH=/tmp/opentax-poppler-env/bin:/Users/atul/.deno/bin:$PATH deno test --allow-all forms/f1040/2025/domains/income/wages/form4852/form4852_filing.test.ts forms/f1040/nodes/inputs/income/wages/f4852/index.test.ts forms/f1040/2025/domains/income/wages/form4852/form4852_source.test.ts forms/f1040/2025/domains/income/wages/form4852/form4852_export_guard.test.ts
-PATH=/tmp/opentax-poppler-env/bin:/Users/atul/.deno/bin:$PATH deno run --allow-all .state/research/form4852-source/replay.ts
+PATH=/tmp/opentax-poppler-env/bin:/Users/atul/.deno/bin:$PATH bun test --timeout=1800000 forms/f1040/2025/domains/income/wages/form4852/form4852_filing.test.ts forms/f1040/nodes/inputs/income/wages/f4852/index.test.ts forms/f1040/2025/domains/income/wages/form4852/form4852_source.test.ts forms/f1040/2025/domains/income/wages/form4852/form4852_export_guard.test.ts
+PATH=/tmp/opentax-poppler-env/bin:/Users/atul/.deno/bin:$PATH bun .state/research/form4852-source/replay.ts
 PATH=/tmp/opentax-poppler-env/bin:$PATH /usr/bin/python3 .state/research/form4852-source/render.py
 ```
 
@@ -428,8 +428,8 @@ copy order, checkboxes, arithmetic and clipping were inspected. The earlier
 proof4 artifacts are separately preserved.
 
 ```sh
-PATH=/tmp/opentax-poppler-env/bin:/Users/atul/.deno/bin:$PATH deno test --allow-all forms/f1040/2025/domains/income/wages/form4852/form4852_roth.test.ts
-PATH=/tmp/opentax-poppler-env/bin:/Users/atul/.deno/bin:$PATH deno run --allow-all .state/research/form4852-roth-source/replay.ts
+PATH=/tmp/opentax-poppler-env/bin:/Users/atul/.deno/bin:$PATH bun test --timeout=1800000 forms/f1040/2025/domains/income/wages/form4852/form4852_roth.test.ts
+PATH=/tmp/opentax-poppler-env/bin:/Users/atul/.deno/bin:$PATH bun .state/research/form4852-roth-source/replay.ts
 PATH=/tmp/opentax-poppler-env/bin:$PATH /usr/bin/python3 .state/research/form4852-roth-source/render.py
 ```
 
@@ -523,7 +523,7 @@ when opening the next existing parent phase.
 Final held replay log: `/tmp/opentax-roth-inventory-replay-final6.log`; manifestSHA256
 `595ea6feb5b508e53a429df1ae7932b0f0fb168c31fc4470cdf8500764a8068f`;
 visual-reviewSHA256 `17b2bbbbf5c6ead2b3bde7ae48596bdbe6720c5f7dcc28472787a6ce0fdda549`.
-Replay command from the isolated checkout: `PATH=/tmp/opentax-poppler-env/bin:/Users/atul/.deno/bin:$PATH deno run --allow-all .state/research/form4852-roth-inventory/replay.ts`.
+Replay command from the isolated checkout: `PATH=/tmp/opentax-poppler-env/bin:/Users/atul/.deno/bin:$PATH bun .state/research/form4852-roth-inventory/replay.ts`.
 
 
 ## October6 retained conversion FIFO/recapture proof
@@ -576,7 +576,7 @@ Ignored artifact root `.state/research/form4852-roth-conversion`, manifestSHA256
 visual-reviewSHA256
 `184f5f59b1b047223f9eb6f71d1c5888e2d21ae580f79d26c3fffb8565a1670b`.
 Replay from the isolated checkout:
-`PATH=/tmp/opentax-poppler-env/bin:/Users/atul/.deno/bin:$PATH deno run --allow-all .state/research/form4852-roth-conversion/replay.ts`.
+`PATH=/tmp/opentax-poppler-env/bin:/Users/atul/.deno/bin:$PATH bun .state/research/form4852-roth-conversion/replay.ts`.
 
 ### Learning checkpoint and remaining existing parent
 
@@ -636,7 +636,7 @@ and asserts the actual parsed conversion8606 rejection. This corrects the
 depth claimed by the earlier conversion checkpoint without changing production.
 
 Terminal checked public2/0 (54s):
-`PATH=/tmp/opentax-poppler-env/bin:/Users/atul/.deno/bin:$PATH deno test --allow-all forms/f1040/2025/domains/income/wages/form4852/form4852_roth_history.test.ts`,
+`PATH=/tmp/opentax-poppler-env/bin:/Users/atul/.deno/bin:$PATH bun test --timeout=1800000 forms/f1040/2025/domains/income/wages/form4852/form4852_roth_history.test.ts`,
 log `/tmp/opentax-roth-history-final10.log`. Related25-module264/0 (2m29s),
 log `/tmp/opentax-roth-history-related11.log`; exact command retained in
 `.state/research/form4852-roth-history/compatibility-command.sh`.
@@ -650,7 +650,7 @@ visual-reviewSHA256
 `c238407410099935fb2eef24ad91aca550c5406274531f838752819ebd9517aa`.
 Preserved cache `.state/research/form4852-roth-history-pdf-cache-preserved`.
 Exact replay from the isolated checkout:
-`PATH=/tmp/opentax-poppler-env/bin:/Users/atul/.deno/bin:$PATH deno run --allow-all .state/research/form4852-roth-history/replay.ts`.
+`PATH=/tmp/opentax-poppler-env/bin:/Users/atul/.deno/bin:$PATH bun .state/research/form4852-roth-history/replay.ts`.
 
 Original33 packets258 pages (10/70 source,9/52 Roth,6/57 inventory,8/79
 conversion) remain byte unchanged and replay exactly against this production.
@@ -712,10 +712,10 @@ from the isolated checkout, with
 `PATH=/tmp/opentax-poppler-env/bin:/Users/atul/.deno/bin:$PATH`:
 
 ```
-deno run --allow-all .state/research/form4852-roth-source-checkbox-corrected/replay.ts
-deno run --allow-all .state/research/form4852-roth-inventory-checkbox-corrected/replay.ts
-deno run --allow-all .state/research/form4852-roth-conversion-checkbox-corrected/replay.ts
-deno run --allow-all .state/research/form4852-roth-history-checkbox-corrected/replay.ts
+bun .state/research/form4852-roth-source-checkbox-corrected/replay.ts
+bun .state/research/form4852-roth-inventory-checkbox-corrected/replay.ts
+bun .state/research/form4852-roth-conversion-checkbox-corrected/replay.ts
+bun .state/research/form4852-roth-history-checkbox-corrected/replay.ts
 ```
 
 Each root has its separately preserved `-pdf-cache-preserved` sibling. Terminal
@@ -853,7 +853,7 @@ unsealed phase. No main, board, catalog, PR or future scope was changed.
 Artifact replay (isolated checkout, real Poppler and Deno on PATH):
 
 ```
-deno run --allow-all .state/research/ira-margin-paper-audit/replay.ts
+bun .state/research/ira-margin-paper-audit/replay.ts
 ```
 
 The audit root retains verified manifest, source pixel comparison, all-page
@@ -864,7 +864,7 @@ The final immutable15/105 replay is `/tmp/opentax-ira-margin-held-final22.log`.
 Use the frozen source root for integration replay:
 
 ```
-deno run --allow-all .state/research/ira-margin-paper-audit/replay.ts .state/research/ira-margin-paper-audit/held15-preserved
+bun .state/research/ira-margin-paper-audit/replay.ts .state/research/ira-margin-paper-audit/held15-preserved
 ```
 
 Frozen manifest SHA256
@@ -972,7 +972,7 @@ Ignored evidence is under
 `/tmp/opentax-form4852-roth-current-main-oct6/.state/research/roth-current-main-audit/`,
 with `held13-preserved`, source pixel records, visual review, preserved old
 sources and caches, and replay.ts. Replay command from that checkout:
-`PATH=/tmp/opentax-poppler-env/bin:/Users/atul/.deno/bin:$PATH deno run --allow-all .state/research/roth-current-main-audit/replay.ts`.
+`PATH=/tmp/opentax-poppler-env/bin:/Users/atul/.deno/bin:$PATH bun .state/research/roth-current-main-audit/replay.ts`.
 Proof-index SHA256:
 `845e7e2273fc6c8c082ca08a79358fe5a00e6f3b41d8c657a7958710fad90b40`.
 This establishes the retained known-source routes and local schema/layout proof;
@@ -1070,7 +1070,7 @@ Ignored evidence root:
 It contains frozen `held10-preserved`, `held9-preserved`, preserved drafts,
 cache, source/visual/widget/pixel manifests, exact compatibility command,
 replay.ts and prior preservation scripts. Replay from this checkout:
-`PATH=/tmp/opentax-poppler-env/bin:/Users/atul/.deno/bin:$PATH deno run --allow-all .state/research/annual-traditional-audit/replay.ts .state/research/annual-traditional-audit/held10-preserved .state/research/annual-traditional-audit/pdf-cache-preserved .state/research/annual-traditional-audit/verified10-manifest.json`.
+`PATH=/tmp/opentax-poppler-env/bin:/Users/atul/.deno/bin:$PATH bun .state/research/annual-traditional-audit/replay.ts .state/research/annual-traditional-audit/held10-preserved .state/research/annual-traditional-audit/pdf-cache-preserved .state/research/annual-traditional-audit/verified10-manifest.json`.
 
 This proves regular nondeductible annual contribution/ordinary withdrawal/current
 conversion coexistence for the retained known-source owner routes. Outstanding

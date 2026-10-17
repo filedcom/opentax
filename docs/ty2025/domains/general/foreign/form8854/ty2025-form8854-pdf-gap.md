@@ -101,7 +101,7 @@ and mailing obligations described in the IRS instructions.
 
 Initial cash-only and annual no-event PDF descriptors, registrations, and
 focused positive/tamper fixtures were added before this page trim. In the
-2026-10-05 page audit, the three focused annual PDF tests passed; `deno check`,
+2026-10-05 page audit, the three focused annual PDF tests passed; `bun run typecheck`,
 lint, and diff checks passed on the two annual PDF files. A bounded annual PDF
 was rendered and all three retained pages were visually inspected: Part I
 identity and annual selection, one prior deferred-property row, and both

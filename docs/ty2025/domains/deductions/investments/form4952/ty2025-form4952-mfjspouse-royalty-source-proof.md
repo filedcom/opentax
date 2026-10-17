@@ -75,7 +75,7 @@ Primary authorities: [2025 Form 4952 and instructions](https://www.irs.gov/pub/i
 
 The original compatibility PID 2855 was absent at resume, and the retained
 `compat-v1` log had no terminal summary. The ordinary checked six-module
-`deno task test` rerun reached terminal exit 1: 29 passed and two failed solely
+`bun run test` rerun reached terminal exit 1: 29 passed and two failed solely
 because `pdftotext` was missing from the launch PATH. Both failure stacks and
 exit status are preserved. The unchanged final module was rerun with
 `/tmp/opentax-poppler-env/bin` on PATH and passed all three tests with terminal

@@ -453,7 +453,7 @@ Validation retained in `.state/research/form8962-dependent-thresholds-2026-10-09
 - The five existing domain files `form8962_no_aptc_three_person_monthly`,
   `form8962_not_required_wage_dependent`, `form8962_no_aptc_monthly_dependent`,
   `form8962_dependent_wages` and `form8962_dependent_mixed` pass 33/0 under
-  normal typed `deno test -A` with an 8GB heap.
+  normal typed `bun test --timeout=1800000` with an 8GB heap.
 
 Schedule 8812 line 10 still prints blank where its instructions specify zero;
 Form 8962 zero dependent-MAGI fields are blank as well. These observations
@@ -526,7 +526,7 @@ Evidence: `.state/research/form8962-annual-dependent-2026-10-09/` retains raw
 inputs, public execution/preparation, XML/PDF, the independent oracle, every
 negative result, the original failed assertion, typed-test logs and render
 review. The new annual public-return regression passes9/0 under normal typed
-`deno test -A` with an8GB heap. The existing two-dependent and multiple-source
+`bun test --timeout=1800000` with an8GB heap. The existing two-dependent and multiple-source
 domain files pass7/0;
 related wage/mixed domain checks passed in the preceding threshold batch.
 Source authentication, repayment/CTC deferred79, PDF guard deferred80, the

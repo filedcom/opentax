@@ -239,7 +239,7 @@ compatibility578/0: `/tmp/opentax-form8283-legacy-offset-compat-v1.log`.
 The exact33-file list remains
 `/tmp/opentax-form8283-natural-resource-compat-files.json`.
 Set `FORM8283_EVIDENCE_DIR` to a new directory and run the public
-`forms/f1040/2025/pdf/reviews/deductions/charitable/form8283_natural_resource.test.ts` test with `deno test -A`;
+`forms/f1040/2025/pdf/reviews/deductions/charitable/form8283_natural_resource.test.ts` test with `bun test --timeout=1800000`;
 reuse the retained v7 PDF cache and complete local XSD cache. Immutable-source
 replay must read the retained source JSON/attachment bytes rather than regenerate
 fixture financial-PDF modification metadata.
@@ -357,7 +357,7 @@ replay `/tmp/opentax-producing617-all-held-v14.log` verifies all267 files with
 only XMLReturnTs permitted. Run the outside-checkout replayer with:
 
 ```
-PATH=/tmp/opentax-poppler-env/bin:/Users/atul/.deno/bin:$PATH deno run -A --config deno.json \
+PATH=/tmp/opentax-poppler-env/bin:/Users/atul/.deno/bin:$PATH bun \
  /tmp/opentax-producing617-held-source-replay.ts <checkout> \
  /tmp/opentax-form8283-producing617-evidence-reviewed-v14 <fresh-output-dir>
 ```
@@ -484,7 +484,7 @@ changes. The authoritative original source archive remains untouched.
 Retained-input replayer (no fixture regeneration or generic field dropping):
 
 ```
-PATH=/tmp/opentax-poppler-env/bin:/Users/atul/.deno/bin:$PATH deno run -A --config deno.json \
+PATH=/tmp/opentax-poppler-env/bin:/Users/atul/.deno/bin:$PATH bun \
  /tmp/opentax-producing617-amt-charity-held-source-replay.ts <checkout> \
  /tmp/opentax-form8283-producing617-evidence-reviewed-v14 <fresh-output-dir>
 ```

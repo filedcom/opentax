@@ -6,7 +6,7 @@ remains open until scope, route, filled-page, and IRS acceptance work is done.
 The historical 2026-09-26 result (6,596 passed, 0 failed, 48 ignored)
 predates the current worktree.
 
-The 2026-10-03 diagnostic `deno task test` at `a5f4229c` reported **10,415
+The 2026-10-03 diagnostic `bun run test` at `a5f4229c` reported **10,415
 passed, 152 failed, 459 ignored** in 12m2s. The isolated worktree could not
 see the locally cached TY2025 v5.4 XSD (114 schema failures and one `stat`
 failure), and 25 PDF extraction cases could not spawn `pdftotext`. The
@@ -25,7 +25,7 @@ MAGI guard after the earlier 1099-INT/1040 source guard rejected the change.
 The four XSD fixtures and the Form 8962 case passed focused reruns after their
 fixture/assertion corrections. That interrupted run is diagnostic only.
 
-The subsequent complete `deno task test` on 2026-10-03 reported **11,027
+The subsequent complete `bun run test` on 2026-10-03 reported **11,027
 passed, one failed** in 51m24s, with no ignored tests reported. All 179
 source-fixture XML/XSD cases passed. The sole failure was an EIC negative test
 that changed Form 1040 line 2a but expected a later investment-income guard;
@@ -33,7 +33,7 @@ the earlier 1099-INT/1040 source guard rejected it. The corrected assertion
 passed a focused rerun. This complete diagnostic is still a failed gate;
 the final full rerun must pass before claiming local batch stability.
 
-The exact `PATH=/tmp/opentax-tools:$PATH deno task test` rerun at `a942dee4`
+The exact `PATH=/tmp/opentax-tools:$PATH bun run test` rerun at `a942dee4`
 completed on 2026-10-03 14:52 UTC in 50m44s: **11,028 passed, zero failed**,
 with no ignored tests reported. All 179 source-fixture XML/XSD cases passed.
 It used Deno 2.9.4 (V8 15.0.245.2-rusty, TypeScript 6.0.3), `xmllint`
@@ -46,7 +46,7 @@ This is a passing local automated gate for tested routes. Complete source and
 form coverage, human page review, IRS business rules, ATS acceptance, and a
 filing-ready release remain open.
 
-The frozen-head `PATH=/tmp/opentax-tools:$PATH deno task test` run at
+The frozen-head `PATH=/tmp/opentax-tools:$PATH bun run test` run at
 `59911414` completed on 2026-10-03 by 18:35 UTC in 51m19s: **11,034 passed,
 zero failed**, with no ignored tests reported. It used Deno 2.9.4 (V8
 15.0.245.2-rusty, TypeScript 6.0.3), `xmllint` libxml 2.9.13, and Poppler
@@ -58,7 +58,7 @@ are separate evidence; this full automated pass does not complete the remaining
 visual, business-rule, or IRS ATS gates.
 
 After the Form 4852 export guard, a focused seven-file run using the same
-`deno test` permissions and local Poppler launcher passed **91/91 tests**,
+`bun test --timeout=1800000` permissions and local Poppler launcher passed **91/91 tests**,
 including both native/PDF substitute rejection cases. This code change is
 newer than the frozen-head full run above; the bulk gate must be rerun after
 the remaining nonnamed implementation reaches its phase boundary.
@@ -76,18 +76,18 @@ TY2025 v5.4 XSD, and generated a filled PDF with $20,000 gross pension.
 Removing the payer-copy reference rejected in both exporters. The full suite
 predates this change, and the Form 4852 source remains guarded.
 
-The 2026-10-03 diagnostic `deno task test` at `8c53a6a3` finished in 49m30s
+The 2026-10-03 diagnostic `bun run test` at `8c53a6a3` finished in 49m30s
 with 10,889 passed, two failed, and no ignored tests reported. Both failures
 tried to fill the Form 1040 line 16 Form 8814 checkbox from a numeric tax
 amount. Commit `637dace9` derives boolean print fields for the Form 8814 and
 Form 4972 boxes while retaining the numeric tax amounts. Both failed cases
 passed in focused reruns and in the full rerun.
 
-The fixed-source `deno task test` at `637dace9` completed on 2026-10-03
+The fixed-source `bun run test` at `637dace9` completed on 2026-10-03
 02:19 UTC in 49m18s: **10,891 passed, zero failed**, with no ignored tests
 reported. It used Deno 2.9.4 (V8 15.0.245.2-rusty, TypeScript 6.0.3),
 `xmllint` libxml 2.9.13, and Poppler 26.09.0. The exact command was
-`PATH=/tmp/opentax-poppler-env/bin:$PATH deno task test`; the local log is
+`PATH=/tmp/opentax-poppler-env/bin:$PATH bun run test`; the local log is
 `.state/research/ty2025-full-test-637dace9.log` (SHA-256
 `6faee3fbc0e980f5d335d1450d347fc56d0d372722783786262bafa9c3f0fd48`).
 The locally cached TY2025 v5.4 XSDs and live IRS PDF templates were present,
@@ -96,7 +96,7 @@ for tested routes; it does not close complete route coverage, human filled-PDF
 review, IRS business rules, ATS acceptance, or the filing-ready release.
 
 At `8149198a` on 2026-10-03, the attachment-aware fixture command
-`deno test --allow-read --allow-write --allow-run=xmllint --allow-net=www.irs.gov forms/f1040/2025/pdf/reviews/general/composed-returns/review_fixtures.xsd.test.ts`
+`bun test --timeout=1800000 forms/f1040/2025/pdf/reviews/general/composed-returns/review_fixtures.xsd.test.ts`
 passed **178/178** in 11m9s. Deno was 2.9.4 (V8 15.0.245.2-rusty,
 TypeScript 6.0.3), and `xmllint` used libxml 2.9.13. The checked-in harness
 validated the 169 positive source returns against the cached TY2025 v5.4 XSD
@@ -105,7 +105,7 @@ built the required PDF attachments before native export. The separate
 household-wage (3/3) and partial-early-IRA (1/1) XML/PDF cases also passed with
 `PATH=/tmp/opentax-poppler-env/bin:$PATH` and their required test permissions.
 This is a fixture/XSD regression after the newer source guards, not a rerun of
-the full `deno task test`, visual review of all 178 filled PDFs, IRS business
+the full `bun run test`, visual review of all 178 filled PDFs, IRS business
 rules, or accepted ATS transmission.
 
 At the 2026-10-03 implementation checkpoint after the 1099-copy identity
@@ -259,7 +259,7 @@ evidence; the repository-wide command and issued-copy review remain open.
 
 After the 1099-MISC ambiguity guard on 2026-10-03, the selected input,
 withholding, and native/PDF builder files passed **291/291** with
-`deno test -A` on commit `0758d35d` plus the working change. It covers two
+`bun test --timeout=1800000` on commit `0758d35d` plus the working change. It covers two
 unidentified positive copies, an unidentified copy mixed with an identified
 one in either order, and separate identified accounts. The repository-wide
 command and issuer-copy verification remain open.
@@ -304,8 +304,8 @@ The same 101/101 and 199/199 selections passed again after enforcing the
 account number on a checked 1099-DIV FATCA copy.
 
 At the current implementation checkpoint on 2026-10-03, the focused
-`deno test -A forms/f1040/2025/pdf/reviews/general/composed-returns/builder.test.ts` passed **32/32** and
-`deno test -A forms/f1040/2025/mef/builder.test.ts` passed **148/148**. Their
+`bun test --timeout=1800000 forms/f1040/2025/pdf/reviews/general/composed-returns/builder.test.ts` passed **32/32** and
+`bun test --timeout=1800000 forms/f1040/2025/mef/builder.test.ts` passed **148/148**. Their
 positive routing and serialization fixtures now retain matching W-2,
 unemployment, dividend, and Schedule B source and owner facts. The production
 source guards were unchanged. These selected files are diagnostic preparation,
@@ -330,7 +330,7 @@ source-backed cases above cover full-export preflight.
 
 The subsequent IRA final-export replay passed two new sourced/tamper cases and
 seven existing IRA, disaster, and Form 8606 cases with
-`PATH=/tmp/opentax-poppler-env/bin:$PATH deno test -A` on their selected files.
+`PATH=/tmp/opentax-poppler-env/bin:$PATH bun test --timeout=1800000` on their selected files.
 Seven `single-ira-*` and two other early/disaster review fixtures passed their
 TY2025 v5.4 XML/XSD cases after the guard. A prior selected run without that
 Poppler path reached PDF text extraction and failed to spawn `pdftotext`; the
@@ -355,7 +355,7 @@ native/PDF builder cases, including a joint-owner broker positive and both
 exporters' rejection of changed broker proceeds, broker basis, and direct
 Form 8949 basis. A read-only graph audit found 177 clean review fixtures;
 five carried retained 1099-B or direct Form 8949 source rows and all five
-matched their Schedule D transactions. `deno check`, format, and lint passed
+matched their Schedule D transactions. `bun run typecheck`, format, and lint passed
 for the changed code. This does not establish issued-copy authenticity or
 complete capital-disposition route coverage.
 
@@ -418,14 +418,12 @@ validation, not IRS business-rule or ATS acceptance.
 After the build/scope checkpoint, run the one repository-wide test command:
 
 ```sh
-deno task test
+bun run test
 ```
 
 This is the `deno.json` task,
-`deno test --allow-read --allow-write
---allow-run=xmllint,deno,pdftotext,pdftoppm
---allow-env=OPENTAX_SCHEDULE1A_FEIE_REVIEW_PDF,SCHEDULE1A_2555_REVIEW_PDF,SCHEDULE1A_2555_VEHICLE_REVIEW_PDF
---allow-net=www.irs.gov`.
+`bun test --timeout=1800000
+`.
 It discovers all repository tests, including Form 1040 calculations,
 source-to-return/MeF/PDF cases, ATS fixture assertions, and local `xmllint`
 cases against `Return1040.xsd`. Record the commit, timestamp, Deno version,
@@ -434,7 +432,7 @@ failures and rerun the same full command; focused tests may help diagnose a
 failure but cannot replace the final full batch. Do not use `--force` or
 `--draft` to make an export pass.
 
-The 2026-09-29 06:03 UTC local `deno task test` run on source commit
+The 2026-09-29 06:03 UTC local `bun run test` run on source commit
 `cabcfdca703c6fb581dfee8b817afdb7c8f73f4f` passed 8,835/8,835 in
 13m30s, with no ignored tests reported. Deno was 2.7.7, `xmllint` used libxml
 2.9.13, and Poppler was 26.03.0. The log is retained at
@@ -461,14 +459,14 @@ XML files. The geothermal case's native return passes local v5.4 XSD, and all
 nine filled Form 3800 pages were rendered and inspected. The first full run on
 `afb11416` found one draft-PDF regression (8,848 passed, one failed); the
 unidentified preview now takes its explicit draft PDF path. The subsequent
-2026-09-29 07:30 UTC fixed-source `deno task test` run on `b32aa0ce` passed
+2026-09-29 07:30 UTC fixed-source `bun run test` run on `b32aa0ce` passed
 8,849/8,849 in 13m34s with zero failures and no ignored tests reported. Deno
 was 2.7.7, `xmllint` used libxml 2.9.13, and Poppler was 26.03.0. Logs are
 retained at `.state/research/ty2025-full-test-afb11416.log` and
 `.state/research/ty2025-full-test-b32aa0ce.log`. Source-route, IRS-rule, and
 ATS gates still need their release evidence.
 
-The 2026-09-29 07:53 UTC fixed-source `deno task test` run on `98466597`
+The 2026-09-29 07:53 UTC fixed-source `bun run test` run on `98466597`
 passed 8,851/8,851 in 13m37s with zero failures and no ignored tests
 reported. Deno was 2.7.7, `xmllint` used libxml 2.9.13, and Poppler was
 26.03.0. Its log is `.state/research/ty2025-full-test-98466597.log`. This
@@ -485,7 +483,7 @@ Schedule 3/Form 1040. Its native XML passes local TY2025 v5.4 XSD, and the
 after this route passed 8,852 tests and failed three older fixtures that
 repeated one physical facility identity; its log is
 `.state/research/ty2025-full-test-ecf61f3d.log`. The fixtures now use
-distinct facilities. The fixed-source `deno task test` run on `15d5430d`
+distinct facilities. The fixed-source `bun run test` run on `15d5430d`
 completed at 2026-09-29 08:38 UTC: 8,855/8,855 passed, zero failed, no
 ignored tests reported, in 14m11s. Deno was 2.7.7, `xmllint` used libxml
 2.9.13, and Poppler was 26.03.0. Its retained log is
@@ -504,7 +502,7 @@ files. Its geothermal and wind sources have reviewed 1.5 MW maximum net output,
 their no-increase answers. This set supersedes the earlier Form 8835 samples
 whose pre-cutoff construction dates and sub-1-MW AC capacities conflicted with
 those answers; the earlier generated packets remain diagnostic artifacts.
-The fixed-source `deno task test` run on `08786417` completed at 2026-09-29
+The fixed-source `bun run test` run on `08786417` completed at 2026-09-29
 11:04 UTC: 8,860/8,860 passed, zero failed, no ignored tests reported, in
 15m48s. Deno was 2.7.7, `xmllint` used libxml 2.9.13, and Poppler was
 26.03.0. Its retained log is `.state/research/ty2025-full-test-08786417.log`.
@@ -522,7 +520,7 @@ visually checked with Form 3800 Part III. The corrected
 CDE text, multiple investments, other credit combinations, and the final
 release batch remain open.
 
-The fixed-source `deno task test` run on `5eeb5e6b` completed at
+The fixed-source `bun run test` run on `5eeb5e6b` completed at
 2026-09-29 12:05 UTC: 8,862/8,862 passed, zero failed, no ignored tests
 reported, in 20m21s. Deno was 2.7.7, `xmllint` used libxml 2.9.13, and
 Poppler was 26.03.0. Its retained log is
@@ -539,7 +537,7 @@ Part III page were rendered and visually checked, including row 6. The
 Long CDE text, passive combinations, source authentication, and the final
 release batch remain open.
 
-The fixed-source `deno task test` run on `f0839295` completed at
+The fixed-source `bun run test` run on `f0839295` completed at
 2026-09-29 12:39 UTC: 8,866/8,866 passed, zero failed, no ignored tests
 reported, in 20m30s. Deno was 2.7.7, `xmllint` used libxml 2.9.13, and
 Poppler was 26.03.0. Its retained log is
@@ -555,7 +553,7 @@ and focused PDF tests pass. The 18-page packet's Form 3800 Part III, Form
 8835, and Form 8874 pages were rendered and reviewed; Schedule 3 line 6a
 and Form 1040 line 20 each print $1,100. The
 `2026-09-29-v26` review directory holds 24 PDFs (218 pages) and 24 XML files.
-The fixed-source `deno task test` run on `81a2c713` completed at 2026-09-29
+The fixed-source `bun run test` run on `81a2c713` completed at 2026-09-29
 13:37 UTC: 8,869/8,869 passed, zero failed, no ignored tests reported, in
 20m35s. Deno was 2.7.7, `xmllint` used libxml 2.9.13, and Poppler was
 26.03.0. Its retained log is
@@ -573,7 +571,7 @@ and all 25 review fixtures pass local TY2025 v5.4 XSD. The
 `2026-09-29-v27` review directory holds 25 PDFs (234 pages) and 25 XML files.
 The final all-routes PDF and release batch gates remain open.
 
-The fixed-source `deno task test` run on `bc556b01` completed at 2026-09-29
+The fixed-source `bun run test` run on `bc556b01` completed at 2026-09-29
 14:05 UTC: 8,873/8,873 passed, zero failed, no ignored tests reported, in
 16m39s. Deno was 2.7.7, `xmllint` used libxml 2.9.13, and Poppler was
 26.03.0. Its retained log is
@@ -599,7 +597,7 @@ passes the local TY2025 v5.4 XSD; the Form 8874 and statement pages in the
 The `2026-09-29-v29` directory holds 27 PDFs (271 pages) and 27 XML files.
 The broader filled-PDF and release gates remain open.
 
-The fixed-source `deno task test` run on `7318ed47` completed at 2026-09-29
+The fixed-source `bun run test` run on `7318ed47` completed at 2026-09-29
 15:04 UTC: 8,880/8,880 passed, zero failed, no ignored tests reported, in
 16m42s. Deno was 2.7.7, `xmllint` used libxml 2.9.13, and Poppler was
 26.03.0. Its retained log is
@@ -610,13 +608,13 @@ synthetic credit vintages over two letter-size pages. Both pages were visually
 inspected, and text extraction finds all nine source headings. It is a
 standalone statement proof, not one of the 27 prepared return packets; a
 carryover return still needs source binding, native Part IV/VI rows, and a
-linked attachment. The fixed-source `deno task test` run on `500bd115`
+linked attachment. The fixed-source `bun run test` run on `500bd115`
 completed at 2026-09-29 16:48 UTC: 8,886/8,886 passed, zero failed, no
 ignored tests reported, in 15m51s. Its retained log is
 `.state/research/ty2025-full-test-500bd115.log`. The later type-only import
 correction on `1087f488` passed focused lint and the two statement tests.
 
-The fixed-source `deno task test` run on `9175f7c1` completed at 2026-09-29
+The fixed-source `bun run test` run on `9175f7c1` completed at 2026-09-29
 14:29 UTC: 8,875/8,875 passed, zero failed, no ignored tests reported, in
 15m57s. Deno was 2.7.7, `xmllint` used libxml 2.9.13, and Poppler was
 26.03.0. Its retained log is
@@ -641,7 +639,7 @@ scenario packet PDF as if it were a generated return.
 
 ## Filled-PDF visual review
 
-The first post-implementation `deno task test` at `b168d9bb` on 2026-10-02
+The first post-implementation `bun run test` at `b168d9bb` on 2026-10-02
 stopped before test execution with 32 TypeScript errors. It used Deno 2.7.7,
 V8 14.6.202.9-rusty, and TypeScript 5.9.2; the log is retained locally at
 `.state/research/ty2025-pr59-bulk-test-2026-10-02.log`. The same full command
@@ -650,7 +648,7 @@ The type-repaired rerun at `f63302d8` completed in 27m05s with 10,287 passed
 and 216 failed (none ignored reported). Its local log is
 `.state/research/ty2025-pr59-bulk-test-retry-2026-10-02.log`. Failures are
 under source/fixture triage; the result does not pass the release gate.
-A second type-clean full `deno task test` at `c7b3be71` completed in 30m15s
+A second type-clean full `bun run test` at `c7b3be71` completed in 30m15s
 with 10,393 passed and 112 failed. Its local log is
 `.state/research/ty2025-pr59-bulk-test-retry2-2026-10-02.log`. The two
 1099-K review assertions failing in that run were subsequently repaired and
@@ -660,7 +658,7 @@ the Schedule E retained-sale allocation (33/33 passing). Most remaining
 failures concern the deferred named-form parents; a fresh full run is required
 to establish the exact residual count.
 At that checkpoint, the full gate still had no passing result.
-A later full `deno task test` at `b4e01e51` completed on 2026-10-02 in
+A later full `bun run test` at `b4e01e51` completed on 2026-10-02 in
 30m09s with 10,428 passed and 103 failed. It used Deno 2.7.7 (V8
 14.6.202.9-rusty, TypeScript 5.9.2), `xmllint` libxml 2.9.13, and Poppler
 26.03.0; its local log is
@@ -679,7 +677,7 @@ their fixtures. Three generic attachment-export cases concern Forms 8958,
 failure audit found no independent nonnamed return, payment, PDF assembly, or
 A2A production failure in this run. This is not a release pass.
 
-The later implementation-first phase command `deno task test` at `298e083a`
+The later implementation-first phase command `bun run test` at `298e083a`
 completed on 2026-10-02 in 25m11s with **10,454 passed and 429 failed**; no
 ignored tests were reported. Deno was 2.7.7 (V8 14.6.202.9-rusty, TypeScript
 5.9.2), `xmllint` was libxml 2.9.13, and Poppler `pdftotext` was 26.03.0.
@@ -692,7 +690,7 @@ or the complete failure classification. Nonnamed fixtures and shared
 references require repair before another full run; deferred named-form tests
 also remain. No release pass is claimed.
 
-The next full `deno task test` at `d59366ab` completed on 2026-10-02 in
+The next full `bun run test` at `d59366ab` completed on 2026-10-02 in
 32m54s with **10,662 passed and 221 failed**; no ignored tests were reported.
 It used Deno 2.7.7 (V8 14.6.202.9-rusty, TypeScript 5.9.2), `xmllint`
 libxml 2.9.13, and Poppler 26.03.0. The complete local log is
@@ -704,7 +702,7 @@ digital-asset answers, and Schedule C/F and reference-name mismatches. The
 fixed in a focused test and 15 deferred named-form routes. This is not a
 release pass; subsequent focused repairs need another full run.
 
-The third full `deno task test` at `f1820bca` completed on 2026-10-02 in
+The third full `bun run test` at `f1820bca` completed on 2026-10-02 in
 35m38s with **10,736 passed and 147 failed**; no ignored tests were reported.
 It used the same Deno 2.7.7, V8 14.6.202.9-rusty, TypeScript 5.9.2,
 `xmllint` libxml 2.9.13, and Poppler 26.03.0 tools. The complete local log is
@@ -745,7 +743,7 @@ existing output directory and stops on executor diagnostics. Rerun it after
 changes using a new output directory:
 
 ```sh
-deno run --allow-read scripts/research/plan-ty2025-pdf-review.ts > /absolute/new/review-plan.json
+bun scripts/research/plan-ty2025-pdf-review.ts > /absolute/new/review-plan.json
 ```
 
 The read-only plan enumerates all fixture IDs, expected PDF descriptor keys,
@@ -979,7 +977,7 @@ guarded or deferred. No unsupported source was turned into a positive fixture,
 and this classification does not close the 28-key coverage or full-review gate.
 
 ```sh
-deno run --allow-read --allow-write --allow-net=www.irs.gov --allow-run=xmllint scripts/research/generate-ty2025-pdf-review.ts /absolute/new/review-directory /absolute/path/Return1040.xsd
+bun scripts/research/generate-ty2025-pdf-review.ts /absolute/new/review-directory /absolute/path/Return1040.xsd
 ```
 
 For a bounded batch, pass a third argument naming a JSON file with an
@@ -1146,7 +1144,7 @@ corrected export, no PDF or XML digest changed; exactly one source JSON
 digest changed for the corrected review label. Sixteen pages have separately
 completed human checklists; the remaining pages have not.
 
-A full `PATH=/tmp/opentax-tools:$PATH deno task test` process launched before
+A full `PATH=/tmp/opentax-tools:$PATH bun run test` process launched before
 the review-focus edit ended with **11,034 passed, 0 failed** in 53m07s.
 Its log is `/tmp/opentax-pr62-full-test-68d5416d.log` with SHA-256
 `c21b122bf55b93a1caa44386e749f1055bbcdbacac6d1ae1d27098cd814d5628`.
@@ -1312,7 +1310,7 @@ at least one reviewed page, and rejects extra form keys or pages without an
 owner. Run it only after human review:
 
 ```sh
-deno run --allow-read --allow-run=xmllint scripts/research/check-ty2025-pdf-review.ts /absolute/review-directory /absolute/path/Return1040.xsd
+bun scripts/research/check-ty2025-pdf-review.ts /absolute/review-directory /absolute/path/Return1040.xsd
 ```
 
 The checker compares the manifest's expected forms, owners, and review focus
@@ -1356,8 +1354,8 @@ root, the focused copies ran with these exact command shapes and the local
 schema path below (the temporary copies were removed after the run):
 
 ```sh
-deno run --allow-read --allow-write --allow-run=xmllint --allow-net=www.irs.gov scripts/.withholding-generate.ts /tmp/ty2025-focused-review.BfPKB3/packet2 .state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd
-deno run --allow-read --allow-run=xmllint scripts/.withholding-check.ts /tmp/ty2025-focused-review.BfPKB3/packet2 .state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd
+bun scripts/.withholding-generate.ts /tmp/ty2025-focused-review.BfPKB3/packet2 .state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd
+bun scripts/.withholding-check.ts /tmp/ty2025-focused-review.BfPKB3/packet2 .state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd
 ```
 
 The packet and all four rendered page PNGs are retained locally at
@@ -1565,7 +1563,7 @@ The optional return-attached alternative-media preference now has a confirmed ta
 
 ## Interrupted implementation-checkpoint batch (2026-10-03)
 
-At `4a366f85`, `PATH=/tmp/opentax-tools:$PATH deno task test` was started with
+At `4a366f85`, `PATH=/tmp/opentax-tools:$PATH bun run test` was started with
 Deno 2.9.4 and Poppler `pdftotext` 26.09.0. It reached Form 1116 XSD tests
 without a reported failure, then was deliberately interrupted with SIGINT
 (exit 130) after a separate calculated-output replay probe found that changing
@@ -1589,7 +1587,7 @@ no failures; rerun the full command at the next frozen implementation head.
 
 ## Frozen-head full batch after issue #60 regression (2026-10-03)
 
-The exact `PATH=/tmp/opentax-tools:$PATH deno task test` command at
+The exact `PATH=/tmp/opentax-tools:$PATH bun run test` command at
 `f92a09e4` completed by 2026-10-03 21:30 UTC in 52m14s: **11,050 passed,
 zero failed**, with no ignored tests reported. It used Deno 2.9.4 (V8
 15.0.245.2-rusty, TypeScript 6.0.3), `xmllint` libxml 2.9.13, and Poppler
@@ -1788,7 +1786,7 @@ freeze.
 
 ## PR #62 bulk diagnostic and Form 8814 fixture repair (2026-10-04)
 
-The exact `PATH=/tmp/opentax-tools:$PATH deno task test` command at
+The exact `PATH=/tmp/opentax-tools:$PATH bun run test` command at
 `3e353bc7` finished in 52m47s with **11,057 passed and two failed**. Its log is
 `.state/research/ty2025-pr62-full-test-3e353bc7.log` (SHA-256
 `47ba6164f949b2a880bac95569ae181d8d17c7d633540e9fa62346b286df77c5`).
@@ -1803,7 +1801,7 @@ must be rerun on the fixed head before claiming a current-head pass.
 
 ## PR #62 fixed-head full automated pass (2026-10-04)
 
-The exact `PATH=/tmp/opentax-tools:$PATH deno task test` rerun at
+The exact `PATH=/tmp/opentax-tools:$PATH bun run test` rerun at
 `78d11d95` completed in 52m53s with **11,059 passed, zero failed** and no
 ignored tests reported. The retained local log is
 `.state/research/ty2025-pr62-full-test-78d11d95.log` (SHA-256
@@ -1924,7 +1922,7 @@ and IRS ATS acceptance remain open.
 ## PR #62 post-fixture full automated pass (2026-10-04)
 
 After the `3fa9c6fe` mixed line 8z review fixture landed, the exact
-`PATH=/tmp/opentax-tools:$PATH deno task test` command passed **11,060 tests,
+`PATH=/tmp/opentax-tools:$PATH bun run test` command passed **11,060 tests,
 zero failed** in 52m58s, with no ignored tests reported. The retained log is
 `.state/research/ty2025-pr62-full-test-3fa9c6fe.log` (SHA-256
 `c2885c449bca9b1fc039eaca773dabf3114b24425c74a64c581de87d2c7f408b`).
@@ -1937,7 +1935,7 @@ business-rule acceptance, or ATS transmission.
 
 ## PR #62 post-guard full automated pass (2026-10-04)
 
-The exact `PATH=/tmp/opentax-tools:$PATH deno task test` command ran on frozen
+The exact `PATH=/tmp/opentax-tools:$PATH bun run test` command ran on frozen
 code head `f2b2b545` from 02:54:56 to 03:47:34 UTC and passed **11,063 tests,
 zero failed** in 52m12s, with no ignored tests reported. This includes the
 Form 1040-ES payment-year, Form 1099-K recipient identity, and direct Form 8949
@@ -1981,7 +1979,7 @@ rerun below passed after this correction.
 
 ## PR #62 post-correction full automated pass (2026-10-04)
 
-The exact `PATH=/tmp/opentax-tools:$PATH deno task test` command ran on frozen
+The exact `PATH=/tmp/opentax-tools:$PATH bun run test` command ran on frozen
 code head `4efaf107` from 04:33:08 to 05:25:59 UTC and passed **11,064 tests,
 zero failed** in 52m23s, with no ignored tests reported. This includes the
 1099 payer-name duplicate guard and the Scenario 8 synthetic-EIN correction.
@@ -2219,7 +2217,7 @@ At `f072629e`, the two focused PDF files that previously failed when
 `pdftotext`, and `pdftoppm`. The local launcher reports Poppler 26.09.0.
 Calling the package-cache binary directly does not load its linked libraries;
 the existing launcher is the working test environment. This focused result
-does not replace a full `deno task test` run on the final implementation head.
+does not replace a full `bun run test` run on the final implementation head.
 
 ## Form 4547 pilot-only existing-account reference (2026-10-04)
 
@@ -2247,7 +2245,7 @@ current-head bulk testing, IRS business rules, and ATS acceptance remain open.
 
 ## Post-QSS bulk failure and source-fixture repair (2026-10-04)
 
-The first full `PATH=/tmp/opentax-tools:$PATH deno task test` on `3e72e410`
+The first full `PATH=/tmp/opentax-tools:$PATH bun run test` on `3e72e410`
 finished in 52m20s with **11,099 passed and 7 failed**. All seven failures
 were older fixtures missing payer identity under the existing positive
 1099-DIV/1099-G export guards. Two synthetic dividend replay rows and one
@@ -2261,7 +2259,7 @@ is `/tmp/opentax-pr62-current-head-test.log` (SHA-256
 `59ff9ef48a0b5a53ae704cae3e9287f635077368f04d48a72443e87ec5774a56`);
 the focused rerun log is `/tmp/opentax-pr62-failures-rerun.log` (SHA-256
 `45a0b749b242c73b254e875008cc7623e68ded9a3a17f2c8fb05145dce650e09`).
-The corrected full `PATH=/tmp/opentax-tools:$PATH deno task test` on
+The corrected full `PATH=/tmp/opentax-tools:$PATH bun run test` on
 `0bbf1fb0` passed **11,106/11,106** in 52m48s, including all seven formerly
 failing cases. Its log is `/tmp/opentax-pr62-final-head-test.log` (SHA-256
 `99f0c4816df34c30cc9b04b9bbbfe13782c70f59c1c5f538c4cf907f1b2c9b74`).
@@ -2323,7 +2321,7 @@ bulk testing, and IRS ATS remain open.
 
 ## PR-ready current-code regression gate (2026-10-04)
 
-`PATH=/tmp/opentax-tools:$PATH deno task test` passed **11,111/11,111** with
+`PATH=/tmp/opentax-tools:$PATH bun run test` passed **11,111/11,111** with
 zero failures on code commit `8f8ced89` in 53m4s. The run included both new
 QSS and HOH child source-to-native-XML/PDF fixtures. Its log is
 `/tmp/opentax-pr62-hoh-qss-final-test.log` (SHA-256
@@ -2688,7 +2686,7 @@ IRS business rules, and ATS acceptance remain open.
 
 ## Full test baseline after Form 5329 PDF repair (2026-10-04)
 
-At `a75f0bca`, `PATH=/tmp/opentax-poppler-env/bin:$PATH deno task test`
+At `a75f0bca`, `PATH=/tmp/opentax-poppler-env/bin:$PATH bun run test`
 completed with **11,112 passed, 0 failed, 0 ignored** in 53m24s (log created
 15:11:09 and modified 16:04:59 CEST). Deno was 2.9.4, V8
 15.0.245.2-rusty, and TypeScript 6.0.3. The retained log is
@@ -2875,7 +2873,7 @@ business rules, complete PDF review, and ATS acceptance remain open.
 ## Intermediate full batch after HSA and Form 5329 additions (2026-10-04)
 
 At `a75f0bca` with local changes, the exact
-`PATH=/tmp/opentax-poppler-env/bin:$PATH deno task test` command passed
+`PATH=/tmp/opentax-poppler-env/bin:$PATH bun run test` command passed
 **11,114 tests, zero failed and zero ignored** in 53m43s (log created 16:06:48
 and modified 17:00:35 CEST). Deno was 2.9.4 (V8 15.0.245.2-rusty,
 TypeScript 6.0.3), `xmllint` used libxml 2.9.13, and Poppler `pdftotext` was
@@ -3239,7 +3237,7 @@ ATS acceptance remain open.
 
 ## Full batch before Form 4684 PDF repair (2026-10-04)
 
-`PATH=/tmp/opentax-poppler-env/bin:$PATH deno task test` on `a75f0bca`
+`PATH=/tmp/opentax-poppler-env/bin:$PATH bun run test` on `a75f0bca`
 with local worktree changes finished at approximately 2026-10-04 15:57:37
 UTC: **11,116 passed, zero failed, zero ignored**, in 53m19s. Deno was 2.9.4
 (aarch64-apple-darwin), V8 15.0.245.2-rusty, TypeScript 6.0.3, and Poppler
@@ -3248,7 +3246,7 @@ UTC: **11,116 passed, zero failed, zero ignored**, in 53m19s. Deno was 2.9.4
 with SHA-256
 `c7d6c024a9a700be8a2ad2dd9b9ba528e213ef974978edae1119160fc592ebf0`.
 This run started before the Form 4684 PDF correction. A corrected-source
-full `deno task test` run stopped near the end amid disk pressure, with only
+full `bun run test` run stopped near the end amid disk pressure, with only
 114 MiB reported free and no valid final suite summary. Its retained log is
 `.state/research/ty2025-full-test-a75f0bca-form4684-repair-2026-10-04.log`
 (SHA-256 `ea451011b5afa4469b9ac34e0e7fd9b03253a1f19fbc2f67513318ca3e32eed9`).
@@ -3541,7 +3539,7 @@ filed-line totals; its return and health-plan command cases passed **10/10**.
 That log is `.state/research/ty2025-cli-se-rounding-batch-2026-10-04.log`
 (SHA-256 `9f2d86707a8475406d2ea416e11898b63a44bbd14f9d30c06564dfcc2bd7e8b7`).
 The prior full runs were stopped while reconciling the affected source fixture
-and expectations; a clean full `PATH=/tmp/opentax-poppler-env/bin:$PATH deno task test`
+and expectations; a clean full `PATH=/tmp/opentax-poppler-env/bin:$PATH bun run test`
 result remains pending. The other Scenario 12 source conflicts and ATS
 acceptance remain open.
 
@@ -3839,7 +3837,7 @@ The diagnostic full run found three old full-return assertions that still
 expected fractional half-SE deductions: two Form 7206 cases and one
 Schedule C/qualified-dividend case. Their filed-dollar expectations were
 corrected and each affected focused case passed. The subsequent clean
-`PATH=/tmp/opentax-poppler-env/bin:$PATH deno task test` run on `a5e0c448`
+`PATH=/tmp/opentax-poppler-env/bin:$PATH bun run test` run on `a5e0c448`
 passed **11,121 tests, zero failed**, in 33m33s. Deno was 2.9.4
 (aarch64-apple-darwin), with V8 15.0.245.2-rusty and TypeScript 6.0.3.
 The log is
@@ -4070,7 +4068,7 @@ all-page review, IRS business rules, and ATS acceptance remain open.
 An additional repeated-instance archive check reuses this source fixture. It
 asserts two distinct native Schedule C document IDs, two two-page PDF origins,
 and byte-identical return XML inside the local submission ZIP. On 2026-10-04,
-`deno test -A forms/f1040/2025/pdf/reviews/general/composed-returns/joint_mixed_source_return.test.ts` passed
+`bun test --timeout=1800000 forms/f1040/2025/pdf/reviews/general/composed-returns/joint_mixed_source_return.test.ts` passed
 **3/3** after correcting the test Submission ID to the processing date's
 Julian day. This is local source-to-package evidence for one two-business
 shape, not the remaining repeated-owner or IRS acceptance gate.
@@ -4143,7 +4141,7 @@ all-route PDF requirement or IRS business-rule and ATS acceptance gates.
 ## Source/PDF full regression checkpoint (2026-10-05)
 
 After the source-copy, Form 6781, and Form 4852 fixture corrections, the full
-`PATH=/tmp/opentax-poppler-env/bin:$PATH deno task test` command passed
+`PATH=/tmp/opentax-poppler-env/bin:$PATH bun run test` command passed
 **11,170/11,170**, zero failures, zero ignored, in 33m47s. The code commit was
 `a7666ae0`; the subsequent `fd3813f2` commit changed only ATS documentation
 during the run. The retained log is
@@ -4167,7 +4165,7 @@ has four pages total and one visually inspected Form 8839 page; PDF SHA-256 is
 The new Form 8880 W-2 source guard passed 22 focused native/PDF tests; the
 wider related batch covering Form 8880, Form 8839, and ATS cases passed
 **139/139**. Deno check, lint, formatting, and `git diff --check` passed on the
-edited code. A full `deno task test` rerun after the final code edits is in
+edited code. A full `bun run test` rerun after the final code edits is in
 progress; no full-batch pass is claimed for that head yet.
 
 ## Form 8396 corrected selected packet (2026-10-05)
@@ -4206,7 +4204,7 @@ Neither edit changes source, native MeF, or the positive-export gates described
 in the [Form 4255](../domains/taxes/credit-recapture/form4255/ty2025-form4255-pdf-gap.md) and
 [Form 8854](../domains/general/foreign/form8854/ty2025-form8854-pdf-gap.md) gap notes.
 
-The two focused test files passed **6/6** tests. `deno check`, `deno lint`, and
+The two focused test files passed **6/6** tests. `bun run typecheck`, `bun run lint`, and
 `git diff --check` passed on their four descriptor/test files. Direct staged
 descriptor PDFs were assembled with the same page selection used by the packet
 builder. Each has three pages; all six were rendered and visually inspected.
@@ -4255,7 +4253,7 @@ business-rule review, IRS ATS-effective schema validation, or IRS acceptance.
 
 ## Full regression after Schedule A source-presence guard (2026-10-05)
 
-The same `PATH=/tmp/opentax-poppler-env/bin:$PATH deno task test` command ran
+The same `PATH=/tmp/opentax-poppler-env/bin:$PATH bun run test` command ran
 against the Schedule A source-presence code later committed as `430dc5aa`.
 It finished with **11,181 passed, 2 failed, 0 ignored** in 33m47s. Its log is
 `.state/research/ty2025-full-test-2026-10-05-after-line8a-pages.log`, SHA-256
@@ -4297,7 +4295,7 @@ and IRS acceptance remain open.
 
 After sourcing the two rejected Schedule A fixtures and integrating exact Form
 1098 line 8a parity, Form 5329 page selection, and the partial NR2 ATS source
-correction, `PATH=/tmp/opentax-poppler-env/bin:$PATH deno task test` passed
+correction, `PATH=/tmp/opentax-poppler-env/bin:$PATH bun run test` passed
 **11,188 tests, 0 failed, 0 ignored** in 33m46s. The code snapshot was committed
 as `632d3a46`; subsequent commits through `c51194ea` changed only documentation.
 The log is `.state/research/ty2025-full-test-2026-10-05-integrated.log`,
@@ -4334,7 +4332,7 @@ and IRS acceptance remain open.
 
 After the prior clean integrated 11,188-test run, the Form 6251 page selector
 passed 14/14 focused tests. Manual Form 4835 at-risk inputs now fail closed;
-the related Form 6198 suite passed 10/10 and `deno check` passed. ATS Scenario 3
+the related Form 6198 suite passed 10/10 and `bun run typecheck` passed. ATS Scenario 3
 Form 4835 source facts passed 6/6 focused tests. ATS Scenario 5 education-source
 distinctions passed 32/32 focused source tests. These focused results do not
 replace a full regression or establish complete ATS scenario acceptance.
@@ -4346,9 +4344,9 @@ projection cases and three Schedule 3 line 6j cases. Its selected graph fixture
 passed the local TY2025 v5.4 XSD and now checks the native parent/Schedule A
 amounts against both registered PDF projections, including rejection when the
 finalized Schedule 3 credit changes. The focused graph/XSD command was
-`deno test --allow-read --allow-write --allow-run=xmllint --allow-net=www.irs.gov --filter='single-personal-home-charger-credit' forms/f1040/2025/pdf/reviews/general/composed-returns/review_fixtures.xsd.test.ts`
+`bun test --timeout=1800000 -t 'single-personal-home-charger-credit' forms/f1040/2025/pdf/reviews/general/composed-returns/review_fixtures.xsd.test.ts`
 (1 passed, 0 failed, 186 filtered out); the direct command
-`deno test forms/f1040/2025/pdf/forms/credits/business/f8911.test.ts forms/f1040/2025/pdf/forms/credits/individual/schedule3_line6d.test.ts`
+`bun test --timeout=1800000 forms/f1040/2025/pdf/forms/credits/business/f8911.test.ts forms/f1040/2025/pdf/forms/credits/individual/schedule3_line6d.test.ts`
 passed 7/7. Filled-page visual review, other Form 8911 shapes, the full batch,
 and ATS acceptance remain open.
 
@@ -4374,7 +4372,7 @@ broader source/duplicate/correction matrix or visual review.
 
 ## Integrated real-Poppler full regression (2026-10-05)
 
-The full `PATH=/tmp/opentax-poppler-env/bin:$PATH deno task test` run started
+The full `PATH=/tmp/opentax-poppler-env/bin:$PATH bun run test` run started
 at code commit `8c0cb4e2` on October 5 at 16:42 UTC and completed at 17:16
 UTC. It passed **11,197 tests, 0 failed, 0 ignored** in 34m04s. Tool versions:
 Deno 2.9.4, TypeScript 6.0.3, libxml 2.9.13, and Poppler 26.09.0. The
@@ -4425,10 +4423,10 @@ IRS business-rule/ATS acceptance are still unverified.
 
 ## Focused MFS two-loan mortgage-limit route (2026-10-05)
 
-`deno test -A forms/f1040/nodes/inputs/deductions/mortgage/f1098/index.test.ts` passed 59/59.
-`deno test -A --filter 'MFS two-loan interest uses' forms/f1040/2025/mef/xsd_validation.test.ts`
+`bun test --timeout=1800000 forms/f1040/nodes/inputs/deductions/mortgage/f1098/index.test.ts` passed 59/59.
+`bun test --timeout=1800000 -t 'MFS two-loan interest uses' forms/f1040/2025/mef/xsd_validation.test.ts`
 passed 1/1 against the local TY2025 v5.4 XSD and built a three-page filled
-PDF. `deno check` passed for both changed tests. The $900,000 average debt,
+PDF. `bun run typecheck` passed for both changed tests. The $900,000 average debt,
 $375,000 MFS limit, 0.417 ratio, and $36,000 reported interest produce
 $15,012 on Schedule A and Form 1040. Missing workpaper evidence rejects.
 The actual prepared packet `/tmp/opentax-f1098-mfs.pdf` has SHA-256
@@ -4462,7 +4460,7 @@ for visual inspection or other country-code coverage.
 
 ## Integrated follow-up and full-regression failure (2026-10-05)
 
-The full `PATH=/tmp/opentax-poppler-env/bin:$PATH deno task test` run at
+The full `PATH=/tmp/opentax-poppler-env/bin:$PATH bun run test` run at
 `45f51899` passed 11,210 tests and failed one in 34m24s. The only failure
 was an older positive W-2G end-to-end source fixture with no calendar year;
 the strengthened production guard correctly requires 2025. Its log is
@@ -4505,7 +4503,7 @@ repository-wide run on this later code has not yet been performed.
 The following isolated Form 8283, Form 6251/Form 59E, and Form 8962 source
 guards passed **25/25** combined focused tests after cherry-pick into one
 integration worktree at `96f9267d`. The command was
-`deno test -A forms/f1040/2025/pdf/reviews/deductions/charitable/form8283_unrelated_use_equipment.test.ts forms/f1040/2025/domains/taxes/amt/form6251/form6251_circulation_source.test.ts forms/f1040/nodes/inputs/deductions/business/f59e/index.test.ts forms/f1040/2025/domains/credits/health/form8962/form8962_two_dependent_magi.test.ts`.
+`bun test --timeout=1800000 forms/f1040/2025/pdf/reviews/deductions/charitable/form8283_unrelated_use_equipment.test.ts forms/f1040/2025/domains/taxes/amt/form6251/form6251_circulation_source.test.ts forms/f1040/nodes/inputs/deductions/business/f59e/index.test.ts forms/f1040/2025/domains/credits/health/form8962/form8962_two_dependent_magi.test.ts`.
 The full repository command is running separately at the preceding PR head
 `9d700e2d`; these later guards require a new current-head full rerun.
 
@@ -4564,7 +4562,7 @@ its EIC and Form 8962 focused suites pass **10/10** in
 Both runs used Deno 2.9.4, TypeScript 6.0.3, libxml 2.9.13, and Poppler
 26.09.0.
 
-The exact-code-head rerun of `PATH=/tmp/opentax-poppler-env/bin:$PATH deno task
+The exact-code-head rerun of `PATH=/tmp/opentax-poppler-env/bin:$PATH bun run
 test` at `a268f60c` began `2026-10-05T21:00:46Z` and ended
 `2026-10-05T21:41:29Z`: **11,233 passed, 0 failed, 0 ignored** in 40m17s.
 The one-shot job exited 0. Its log is
@@ -4596,9 +4594,9 @@ Later changes are committed in `/tmp/opentax-root-integration-oct6`, through
 code snapshot `2347f6ce0`. They have not changed the running main-checkout
 code. With real Poppler on PATH, these exact focused commands passed:
 
-- `deno test -A forms/f1040/2025/domains/taxes/retirement/form4972/form4972_two_spouse_nua_capital.test.ts forms/f1040/2025/pdf/reviews/deductions/investments/form4952_misc_royalty_interest_traced_debt_route.test.ts forms/f1040/2025/pdf/reviews/deductions/investments/form4952_misc_royalty_traced_debt_route.test.ts`: 4 passed, 0 failed.
-- `deno test -A forms/f1040/2025/domains/deductions/business/form8995a/form8995a_schedule_c_positive.test.ts forms/f1040/2025/pdf/reviews/general/return-assembly/form1040_required_zero_lines.test.ts forms/f1040/2025/pdf/forms/general/return-assembly/f1040.test.ts`: 34 passed, 0 failed.
-- `deno test -A forms/f1040/2025/domains/taxes/retirement/form4972/form4972_partial_nua_death_estate.test.ts forms/f1040/2025/domains/credits/individual/form8839/form8839_public.test.ts scripts/research/ty2025-pdf-review-source.test.ts`: 6 passed, 0 failed.
+- `bun test --timeout=1800000 forms/f1040/2025/domains/taxes/retirement/form4972/form4972_two_spouse_nua_capital.test.ts forms/f1040/2025/pdf/reviews/deductions/investments/form4952_misc_royalty_interest_traced_debt_route.test.ts forms/f1040/2025/pdf/reviews/deductions/investments/form4952_misc_royalty_traced_debt_route.test.ts`: 4 passed, 0 failed.
+- `bun test --timeout=1800000 forms/f1040/2025/domains/deductions/business/form8995a/form8995a_schedule_c_positive.test.ts forms/f1040/2025/pdf/reviews/general/return-assembly/form1040_required_zero_lines.test.ts forms/f1040/2025/pdf/forms/general/return-assembly/f1040.test.ts`: 34 passed, 0 failed.
+- `bun test --timeout=1800000 forms/f1040/2025/domains/taxes/retirement/form4972/form4972_partial_nua_death_estate.test.ts forms/f1040/2025/domains/credits/individual/form8839/form8839_public.test.ts scripts/research/ty2025-pdf-review-source.test.ts`: 6 passed, 0 failed.
 
 The Form 8995-A cents tests include negative half-dollar rounding and a valid
 $1 difference between individually rounded business rows and the rounded raw
@@ -4618,7 +4616,7 @@ hashes on two runs and passed complete source/XML/PDF/XSD replay after root
 inspected all four pages and completed its visual checklist. Retained packet:
 `.state/research/ty2025-filled-pdf-review/2026-10-06-reviewed-adoption/`;
 manifest SHA-256 `7594aee8e6a51487d98a994bb0afb70dcd466f2b76284729cbac5028c010531b`.
-The checker command was `deno run --allow-read --allow-run=xmllint
+The checker command was `bun
 scripts/research/check-ty2025-pdf-review.ts /tmp/opentax-8839-selected-review
 /Users/atul/projects/opentax/.state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd`;
 result: selected scope, 1 case, 4 pages, hashes and XSD confirmed. Altered
@@ -4631,7 +4629,7 @@ passes do not replace full regression, IRS business rules or ATS acceptance.
 
 ## October 6 combined isolated positive routes
 
-At isolated integration commit `a195fc374`, real-Poppler `deno test -A` of the Form 8853 partial-medical, Form 8995 WOTC, Form 4972 combined annuity, and two-school Form 8863 full-return tests passed **10/10**, zero failed, in 25 seconds. Log: `/tmp/opentax-four-route-integration-oct6.log`. These tests execute public return preparation, complete local TY2025 v5.4 XSD and PDF generation; the AOC case at this checkpoint had preparation evidence only, while the LLC case had full XSD. Agent rendered-packet reviews are recorded in the individual route notes; root additionally inspected the final cents Form 4972 and Archer MSA pages. This does not validate main code, source authenticity or IRS acceptance.
+At isolated integration commit `a195fc374`, real-Poppler `bun test --timeout=1800000` of the Form 8853 partial-medical, Form 8995 WOTC, Form 4972 combined annuity, and two-school Form 8863 full-return tests passed **10/10**, zero failed, in 25 seconds. Log: `/tmp/opentax-four-route-integration-oct6.log`. These tests execute public return preparation, complete local TY2025 v5.4 XSD and PDF generation; the AOC case at this checkpoint had preparation evidence only, while the LLC case had full XSD. Agent rendered-packet reviews are recorded in the individual route notes; root additionally inspected the final cents Form 4972 and Archer MSA pages. This does not validate main code, source authenticity or IRS acceptance.
 
 The main `8aa4beeec` full regression remains running under launchd PID 44462; no restart occurred. New code remains isolated pending its terminal result.
 
@@ -4641,7 +4639,7 @@ The two-school LLC/AOC selected reusable review packet at isolated `eb58acd69` p
 
 The eleven isolated completed slices were merged with main's documentation in `/tmp/opentax-release-integration-oct6` at `17462812a8dc47c30e50cbd0e0d8c1f2d701a222`. Only documentation conflicted; frozen checklist, ledger and current checkpoint were retained, and both validation evidence sections were preserved. Five concrete affected full-return suites passed **15/15**, zero failed, in 39 seconds (`/tmp/opentax-release-integration-oct6.log`).
 
-A new real-Poppler `deno task test` started on that stable isolated snapshot at **2026-10-05T22:33:26Z**, one-shot launchd job `opentax-full-regression-17462812a`, wrapper PID 59904, Deno test PID 59911 confirmed live. Tool versions remain Deno 2.9.4 / TypeScript 6.0.3 / libxml 2.9.13 / Poppler 26.09.0. Log: `/tmp/opentax-deno-task-test-17462812a.log`; terminal status and digest will be in `/tmp/opentax-full-regression-17462812a.status`. No completion claim yet. The original main-snapshot `8aa4beeec` run remains live under PID 44462 and was not restarted. Later agent work stays outside both stable code snapshots.
+A new real-Poppler `bun run test` started on that stable isolated snapshot at **2026-10-05T22:33:26Z**, one-shot launchd job `opentax-full-regression-17462812a`, wrapper PID 59904, Deno test PID 59911 confirmed live. Tool versions remain Deno 2.9.4 / TypeScript 6.0.3 / libxml 2.9.13 / Poppler 26.09.0. Log: `/tmp/opentax-deno-task-test-17462812a.log`; terminal status and digest will be in `/tmp/opentax-full-regression-17462812a.status`. No completion claim yet. The original main-snapshot `8aa4beeec` run remains live under PID 44462 and was not restarted. Later agent work stays outside both stable code snapshots.
 
 The assembled `17462812a` full run remains live but has five observed failures. Focused reproduction identified reviewed-adoption raw-executor diagnostics and optional Form 4972 artifact env permissions. In separate checkout `/tmp/opentax-next-root-oct6`, `4a29d8a94` and `c0bd2aa0f` fix them: public source execution and exact attachment bytes retain every calculation tamper probe, and optional artifact output checks permission before reading env. Restricted task-mode focused checks pass 7/7 and 3/3; the original full snapshot remains untouched and needs its terminal count. Root `c58fe2f81` multi-interest/royalty route passes 3/3, full XSD and eight-page review, including the repaired line 7 zero. Packet retained `.state/research/ty2025-filled-pdf-review/2026-10-06-form4952-multi-interest/`. No new full pass is asserted.
 
@@ -4649,7 +4647,7 @@ At isolated combined code `60ee0c1b8`, restricted task-mode integration of the p
 
 ## Completed stable main regression, October 5 22:47 UTC
 
-Snapshot `8aa4beeec` completed `deno task test` with real Poppler: **11,245 passed, 0 failed, 0 ignored**, reported duration 44m34s. Wrapper start `2026-10-05T22:02:12Z`, end `2026-10-05T22:47:12Z`, exit 0; launchd confirms not running and last exit code 0. Log `/tmp/opentax-deno-task-test-8aa4beeec.log`, SHA-256 `adf8354651854ec9ce9c3f8ca6d1594ea463107aaea19366a0027245786ff06c`. Versions: Deno 2.9.4, TypeScript 6.0.3, libxml 2.9.13, Poppler 26.09.0. No code changed in its checkout during the run. Later isolated code is not covered by this pass; its complete rerun remains required. The separate `17462812a` process remains live under PID 59904 and was not restarted.
+Snapshot `8aa4beeec` completed `bun run test` with real Poppler: **11,245 passed, 0 failed, 0 ignored**, reported duration 44m34s. Wrapper start `2026-10-05T22:02:12Z`, end `2026-10-05T22:47:12Z`, exit 0; launchd confirms not running and last exit code 0. Log `/tmp/opentax-deno-task-test-8aa4beeec.log`, SHA-256 `adf8354651854ec9ce9c3f8ca6d1594ea463107aaea19366a0027245786ff06c`. Versions: Deno 2.9.4, TypeScript 6.0.3, libxml 2.9.13, Poppler 26.09.0. No code changed in its checkout during the run. Later isolated code is not covered by this pass; its complete rerun remains required. The separate `17462812a` process remains live under PID 59904 and was not restarted.
 The QBI visual review also exposed required zero amounts omitted on Form
 8995-A Schedule C column (c)/line 6 and the parent's unmapped line 40. At
 `c246f53f1`, the supported loss-netting route prints these zeros using the
@@ -4663,7 +4661,7 @@ pending while the stable full run is live.
 
 ## Integrated repair regression started October 5 22:50 UTC
 
-Main merge `762db9012b0e273f7cd72595a2ef067d9da4b367` incorporates the fourteen recorded source/PDF slices and task-permission replay repairs. The board was compacted before integration. The merge preserved both unique validation sections and the frozen checklist. A separate stable checkout `/tmp/opentax-fixed-regression-oct6` started the same real-Poppler `deno task test` at `2026-10-05T22:50:51Z`; launchd job `opentax-full-regression-762db9012`, wrapper PID 66092 confirmed running. Log `/tmp/opentax-deno-task-test-762db9012.log`, terminal record `/tmp/opentax-full-regression-762db9012.status`. Earlier isolated `17462812a` continues unchanged; its known five failures have focused repairs in this newer snapshot. No new full-pass claim. Later Medicare, multi-business QBI and missing-1098-T work remains outside both stable running snapshots.
+Main merge `762db9012b0e273f7cd72595a2ef067d9da4b367` incorporates the fourteen recorded source/PDF slices and task-permission replay repairs. The board was compacted before integration. The merge preserved both unique validation sections and the frozen checklist. A separate stable checkout `/tmp/opentax-fixed-regression-oct6` started the same real-Poppler `bun run test` at `2026-10-05T22:50:51Z`; launchd job `opentax-full-regression-762db9012`, wrapper PID 66092 confirmed running. Log `/tmp/opentax-deno-task-test-762db9012.log`, terminal record `/tmp/opentax-full-regression-762db9012.status`. Earlier isolated `17462812a` continues unchanged; its known five failures have focused repairs in this newer snapshot. No new full-pass claim. Later Medicare, multi-business QBI and missing-1098-T work remains outside both stable running snapshots.
 
 ## Combined Medicare, multiple-business QBI and education income integration
 
@@ -4701,7 +4699,7 @@ The preserved older full snapshot `17462812a8dc47c30e50cbd0e0d8c1f2d701a222` fin
 
 ## Form 8863 claimant ownership main integration — October 6
 
-At `f644a8cc0`, the restricted real-Poppler owner, missing-1098-T, mixed-school and calculated-return replay suites passed **24 tests, zero failed**, in 51 seconds. Log: `/tmp/opentax-education-owner-integration.log`. Command: `deno test --allow-read --allow-write --allow-run=xmllint,deno,pdftotext,pdftoppm --allow-net=www.irs.gov forms/f1040/2025/pdf/reviews/credits/individual/form8863_claimant_owner.test.ts forms/f1040/2025/pdf/reviews/credits/individual/form8863_missing_1098t.test.ts forms/f1040/2025/pdf/reviews/credits/individual/form8863_mixed_schools.test.ts forms/f1040/2025/return-processing/calculated_return_replay.test.ts`. The five complete XSD/PDF packets and all-page review are detailed in the [claimant ownership evidence](../domains/credits/individual/form8863/ty2025-form8863-dependent-claimant-review.md). This does not prove the complete current-head regression or IRS acceptance.
+At `f644a8cc0`, the restricted real-Poppler owner, missing-1098-T, mixed-school and calculated-return replay suites passed **24 tests, zero failed**, in 51 seconds. Log: `/tmp/opentax-education-owner-integration.log`. Command: `bun test --timeout=1800000 forms/f1040/2025/pdf/reviews/credits/individual/form8863_claimant_owner.test.ts forms/f1040/2025/pdf/reviews/credits/individual/form8863_missing_1098t.test.ts forms/f1040/2025/pdf/reviews/credits/individual/form8863_mixed_schools.test.ts forms/f1040/2025/return-processing/calculated_return_replay.test.ts`. The five complete XSD/PDF packets and all-page review are detailed in the [claimant ownership evidence](../domains/credits/individual/form8863/ty2025-form8863-dependent-claimant-review.md). This does not prove the complete current-head regression or IRS acceptance.
 
 ## Public accounting SSTB main integration — October 6
 
@@ -4713,7 +4711,7 @@ At `b2c465c1a`, restricted typed real-Poppler SSTB, education owner and calculat
 
 ## Terminal fixed full regression — October 6
 
-Stable isolated commit `762db9012b0e273f7cd72595a2ef067d9da4b367` completed the exact full **`deno task test`** with real Poppler: **11,271 passed, 0 failed, 0 ignored**, exit0; Deno test elapsed48m0s, wrapper wall48m36s. Start2026-10-05T22:50:51Z; end2026-10-05T23:39:27Z. The launchd job `opentax-full-regression-762db9012` is terminal/not running with last exit0. Log `/tmp/opentax-deno-task-test-762db9012.log`, status `/tmp/opentax-full-regression-762db9012.status`; log SHA-256 `372b658aeb2da61d51b6ad7b50da6094f4f6ae6db39248534556a41eca9261c1`. Toolchain Deno2.9.4/TypeScript6.0.3, libxml2.9.13 and Poppler26.09.0. The wrapper retained full-command exit status and digest. All five previously failing4972 artifact-permission and calculated-return public adoption replay cases pass. This stable snapshot predates later source routes, so current-head full regression remains required; local XSD/tests do not prove IRS acceptance.
+Stable isolated commit `762db9012b0e273f7cd72595a2ef067d9da4b367` completed the exact full **`bun run test`** with real Poppler: **11,271 passed, 0 failed, 0 ignored**, exit0; Deno test elapsed48m0s, wrapper wall48m36s. Start2026-10-05T22:50:51Z; end2026-10-05T23:39:27Z. The launchd job `opentax-full-regression-762db9012` is terminal/not running with last exit0. Log `/tmp/opentax-deno-task-test-762db9012.log`, status `/tmp/opentax-full-regression-762db9012.status`; log SHA-256 `372b658aeb2da61d51b6ad7b50da6094f4f6ae6db39248534556a41eca9261c1`. Toolchain Deno2.9.4/TypeScript6.0.3, libxml2.9.13 and Poppler26.09.0. The wrapper retained full-command exit status and digest. All five previously failing4972 artifact-permission and calculated-return public adoption replay cases pass. This stable snapshot predates later source routes, so current-head full regression remains required; local XSD/tests do not prove IRS acceptance.
 
 ## Archer contributions and self-employed education main integration — October6
 
@@ -4735,7 +4733,7 @@ At5abcfba2b, typed restricted real-Poppler patron phase-in, prior patron sources
 
 Code snapshot `ea23fbb91` passes54/54 typed restricted real-Poppler builder, joint SSTB, patron phase-in, owned Form8941 and material-capital education checks in1m52s. Log `/tmp/opentax-joint-shop-patron-main-integration.log`. SHOP integration conflicts were two first-line imports; both patron filed-business and8941 source-reconciliation imports were retained. No tests ran during mutation. Joint source visual/replay proof is retained in `.state/research/ty2025-filled-pdf-review/2026-10-06-qbi-sstb-joint`; SHOP and material-capital packets also copied into main ignored research directories. Planner207 fixtures/116 descriptors/113 keys/92 covered/21 uncovered. Frozen main checklist remains52 open parents.
 
-Exact full `deno task test` launched from detached `/tmp/opentax-full-regression-current-oct6` at `ea23fbb91`, real-Poppler PATH, using launchd job `opentax-full-regression-ea23fbb91`. Status `/tmp/opentax-full-regression-ea23fbb91.status`, log `/tmp/opentax-deno-task-test-ea23fbb91.log`; wrapper records exact commit/start/end/exit/logSHA256. Running is not a pass. Previous11271 clean batch is a distinct older snapshot. No IRS business-rule or acceptance claim is made.
+Exact full `bun run test` launched from detached `/tmp/opentax-full-regression-current-oct6` at `ea23fbb91`, real-Poppler PATH, using launchd job `opentax-full-regression-ea23fbb91`. Status `/tmp/opentax-full-regression-ea23fbb91.status`, log `/tmp/opentax-deno-task-test-ea23fbb91.log`; wrapper records exact commit/start/end/exit/logSHA256. Running is not a pass. Previous11271 clean batch is a distinct older snapshot. No IRS business-rule or acceptance claim is made.
 
 ## Joint patron main integration (October6)
 
@@ -4754,7 +4752,7 @@ At `b056c59ae`, typed restricted real-Poppler service-scholarship, material-capi
 Code snapshot `6d53aa586` integrates family SHOP `f0ac40e72` as `0c5ae18df` and ordinary noncommunity MFS `da157ea5d`. The exact typed main command was:
 
 ```sh
-PATH=/tmp/opentax-poppler-env/bin:/Users/atul/.deno/bin:/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin deno test --allow-read --allow-write --allow-run=xmllint,deno,pdftotext,pdftoppm --allow-net=www.irs.gov forms/f1040/e2e/credits/health/form8941/form8941_family_2025.test.ts forms/f1040/e2e/credits/health/form8941/form8941_owned_2025.test.ts forms/f1040/e2e/credits/health/form8941/form8941_partyear_2025.test.ts forms/f1040/nodes/inputs/credits/health/f8941/index.test.ts forms/f1040/2025/domains/deductions/business/form8995a/form8995a_sstb_schedule_c.test.ts
+PATH=/tmp/opentax-poppler-env/bin:/Users/atul/.deno/bin:/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin bun test --timeout=1800000 forms/f1040/e2e/credits/health/form8941/form8941_family_2025.test.ts forms/f1040/e2e/credits/health/form8941/form8941_owned_2025.test.ts forms/f1040/e2e/credits/health/form8941/form8941_partyear_2025.test.ts forms/f1040/nodes/inputs/credits/health/f8941/index.test.ts forms/f1040/2025/domains/deductions/business/form8995a/form8995a_sstb_schedule_c.test.ts
 ```
 
 Terminal result: **36 passed, 0 failed**, no ignored tests, in1m24s; checked at00:19 UTC. Log `/tmp/opentax-family-noncommunity-main-integration.log`, SHA256 `46e673ba5b950c5ece7729941631839cf20343dfe7c6234eb1d5bb9477fda3a4`. This checks five new family full-XSD/PDF packets, six earlier employee-only packets, eleven Form8941 source units and eight SSTB source/native/PDF tests. It preserves the full determined premium-credit deduction reduction independently of tax use and verifies domicile/property records independently of mailing address. It is a focused integration result, not the full regression or IRS acceptance.
@@ -4763,11 +4761,11 @@ Isolated family proof retains34 passing tests,30 actual dual-export mutations,9 
 
 ## Reviewed Form8994 public main integration (2026-10-06T00:30:25+00:00)
 
-Code `6559e695b` incorporates isolated `a9671d69d`. Typed restricted real-Poppler command: `deno test --allow-read --allow-write --allow-run=xmllint,deno,pdftotext,pdftoppm --allow-net=www.irs.gov forms/f1040/2025/domains/credits/business/form8994/form8994_public_source.test.ts forms/f1040/e2e/credits/health/form8941/form8941_family_2025.test.ts forms/f1040/2025/domains/deductions/business/form8995/form8995_wotc_coexistence.test.ts forms/f1040/2025/domains/deductions/business/form8995a/form8995a_sstb_schedule_c.test.ts`, using the recorded Poppler/Deno PATH. Terminal **20 passed,0 failed**, no ignored,1m22s. Log `/tmp/opentax-form8994-main-integration.log` SHA256 `c4c736632ad4fb1f0fc612aed635c66d430b38092f24c3dd950adaad1f83d123`. Actual public Form8994 full/partial/zero and cent-valued credit packets preserve full determined1250 wage reduction before SE/QBI while current use1250/693/0 is independently allocated; source/byte/owner/totals rejects execute. Family SHOP, WOTC and SSTB compatibility pass. Isolated19 focused/232 related and held3 local-XSD packets/67 reviewed tax pages plus6 source pages are retained under ignored `.state/research/ty2025-filled-pdf-review/2026-10-06-form8994-direct/` with rendered neighbors. Public source/QBI/packet discovery corrections are described in the Form8994 gap. Full regression, wider employers/credits, external issuer authenticity and IRS acceptance remain open.
+Code `6559e695b` incorporates isolated `a9671d69d`. Typed restricted real-Poppler command: `bun test --timeout=1800000 forms/f1040/2025/domains/credits/business/form8994/form8994_public_source.test.ts forms/f1040/e2e/credits/health/form8941/form8941_family_2025.test.ts forms/f1040/2025/domains/deductions/business/form8995/form8995_wotc_coexistence.test.ts forms/f1040/2025/domains/deductions/business/form8995a/form8995a_sstb_schedule_c.test.ts`, using the recorded Poppler/Deno PATH. Terminal **20 passed,0 failed**, no ignored,1m22s. Log `/tmp/opentax-form8994-main-integration.log` SHA256 `c4c736632ad4fb1f0fc612aed635c66d430b38092f24c3dd950adaad1f83d123`. Actual public Form8994 full/partial/zero and cent-valued credit packets preserve full determined1250 wage reduction before SE/QBI while current use1250/693/0 is independently allocated; source/byte/owner/totals rejects execute. Family SHOP, WOTC and SSTB compatibility pass. Isolated19 focused/232 related and held3 local-XSD packets/67 reviewed tax pages plus6 source pages are retained under ignored `.state/research/ty2025-filled-pdf-review/2026-10-06-form8994-direct/` with rendered neighbors. Public source/QBI/packet discovery corrections are described in the Form8994 gap. Full regression, wider employers/credits, external issuer authenticity and IRS acceptance remain open.
 
 ## Paired parent/child scholarship main integration (2026-10-06T00:32:44+00:00)
 
-Code `5dfe1aa9a` integrates isolated `917b0d87c`. Exact typed restricted command with recorded real-Poppler PATH: `deno test --allow-read --allow-write --allow-run=xmllint,deno,pdftotext,pdftoppm --allow-net=www.irs.gov forms/f1040/2025/pdf/reviews/credits/individual/form8863_parent_child_scholarship.test.ts forms/f1040/2025/pdf/reviews/credits/individual/form8863_service_scholarship.test.ts forms/f1040/2025/pdf/reviews/credits/individual/form8863_material_capital.test.ts forms/f1040/2025/domains/credits/business/form8994/form8994_public_source.test.ts`. Terminal **24 passed,0 failed**, no ignored,1m26s. Log `/tmp/opentax-parent-child-main-integration.log` SHA256 `6a56b10719e51c128a3913506dd1afb2b6e45abaaf95705954de0f890e872b71`. Three actual parent/child pairs (serviceW2, service8r, student-bank-paid tuition) retain issued school/payment/award/support records, child-owned income13000 and derived dependent deduction13450, no duplicate credit, parentAGI75000 excluding child income, education1000/1500 and ODC500. Six complete local-XSD/PDF packets/33 pages were visually reviewed in isolated proof. Combined prior source regression421/0 and final focused5/0 are sequenced precisely in the paired review note; this main gate verifies final edits and prior service/material/8994 compatibility. Original ignored evidence copied to `.state/research/2026-10-06-form8863-parent-child/`. Positive child tax/Form8615, wider dependency/source branches and external authenticity/IRS acceptance remain open.
+Code `5dfe1aa9a` integrates isolated `917b0d87c`. Exact typed restricted command with recorded real-Poppler PATH: `bun test --timeout=1800000 forms/f1040/2025/pdf/reviews/credits/individual/form8863_parent_child_scholarship.test.ts forms/f1040/2025/pdf/reviews/credits/individual/form8863_service_scholarship.test.ts forms/f1040/2025/pdf/reviews/credits/individual/form8863_material_capital.test.ts forms/f1040/2025/domains/credits/business/form8994/form8994_public_source.test.ts`. Terminal **24 passed,0 failed**, no ignored,1m26s. Log `/tmp/opentax-parent-child-main-integration.log` SHA256 `6a56b10719e51c128a3913506dd1afb2b6e45abaaf95705954de0f890e872b71`. Three actual parent/child pairs (serviceW2, service8r, student-bank-paid tuition) retain issued school/payment/award/support records, child-owned income13000 and derived dependent deduction13450, no duplicate credit, parentAGI75000 excluding child income, education1000/1500 and ODC500. Six complete local-XSD/PDF packets/33 pages were visually reviewed in isolated proof. Combined prior source regression421/0 and final focused5/0 are sequenced precisely in the paired review note; this main gate verifies final edits and prior service/material/8994 compatibility. Original ignored evidence copied to `.state/research/2026-10-06-form8863-parent-child/`. Positive child tax/Form8615, wider dependency/source branches and external authenticity/IRS acceptance remain open.
 
 
 ## SHOP composite/list main integration — 2026-10-06
@@ -4777,7 +4775,7 @@ Code `35afc890a`, real Poppler and typed Deno focused command covering arrangeme
 
 ## Owner-specific ScheduleSE and ordinary joint QBI — 2026-10-06
 
-Isolated62747389e integrated at0cc6c8389. Final main typed integration **28 passed,0 failed**,1m40s; owner public/source/cents, pure calculations, public8994, joint patron, SSTB and held scope checks. Command: `deno test --allow-read --allow-write --allow-run=xmllint,deno,pdftotext,pdftoppm --allow-net=www.irs.gov forms/f1040/2025/domains/taxes/self-employment/schedule-se/schedule_se_owner_public.test.ts forms/f1040/nodes/intermediate/forms/taxes/self-employment/schedule_se/owner_calculation.test.ts forms/f1040/2025/domains/credits/business/form8994/form8994_public_source.test.ts forms/f1040/2025/domains/deductions/business/form8995a/form8995a_patron_joint.test.ts forms/f1040/2025/domains/deductions/business/form8995a/form8995a_sstb_schedule_c.test.ts scripts/research/ty2025-pdf-review-scope.test.ts`. Real Poppler PATH used.
+Isolated62747389e integrated at0cc6c8389. Final main typed integration **28 passed,0 failed**,1m40s; owner public/source/cents, pure calculations, public8994, joint patron, SSTB and held scope checks. Command: `bun test --timeout=1800000 forms/f1040/2025/domains/taxes/self-employment/schedule-se/schedule_se_owner_public.test.ts forms/f1040/nodes/intermediate/forms/taxes/self-employment/schedule_se/owner_calculation.test.ts forms/f1040/2025/domains/credits/business/form8994/form8994_public_source.test.ts forms/f1040/2025/domains/deductions/business/form8995a/form8995a_patron_joint.test.ts forms/f1040/2025/domains/deductions/business/form8995a/form8995a_sstb_schedule_c.test.ts scripts/research/ty2025-pdf-review-scope.test.ts`. Real Poppler PATH used.
 
 Log `/tmp/opentax-owned-se-main-integration.log`, SHA256 `96f2e20ec540ac0f06b66b4cdfe320279517f8575cd33d0d3c981b120a2f7cbd`.
 
@@ -4800,7 +4798,7 @@ Code72bd53a19, typed real-Poppler focused command covering paired positive child
 
 ## Terminal full batch at ea23fbb91 — 2026-10-06
 
-Exact isolated `deno task test`, real Poppler26.09.0/Deno2.9.4/TS6.0.3/libxml2.9.13. Commit `ea23fbb91f9f9be2710f534b59e42267041c87a7`, start2026-10-05T23:57:45Z, end2026-10-06T00:54:03Z, exit1. **11,386 passed,2 failed,0 ignored**,55m8s test duration/56m18s wall. Log `/tmp/opentax-deno-task-test-ea23fbb91.log`, SHA256 `3f3dca6c256779f1c97105d1eda3788c8e4eb56208f140908a2196cc0ee56ecf`; status `/tmp/opentax-full-regression-ea23fbb91.status`. Actual wrapper/Deno PIDs86079/86085 are terminal.
+Exact isolated `bun run test`, real Poppler26.09.0/Deno2.9.4/TS6.0.3/libxml2.9.13. Commit `ea23fbb91f9f9be2710f534b59e42267041c87a7`, start2026-10-05T23:57:45Z, end2026-10-06T00:54:03Z, exit1. **11,386 passed,2 failed,0 ignored**,55m8s test duration/56m18s wall. Log `/tmp/opentax-deno-task-test-ea23fbb91.log`, SHA256 `3f3dca6c256779f1c97105d1eda3788c8e4eb56208f140908a2196cc0ee56ecf`; status `/tmp/opentax-full-regression-ea23fbb91.status`. Actual wrapper/Deno PIDs86079/86085 are terminal.
 
 Failures: `2025 parent PDF marks Form8814 dividends and direct child gain` expects the old checkbox domain key; `Form8959 PDF rejects a print line that differs from upstream deposits` expects inapplicable SE/RRTA lines in a wage-only PDF. Verify source/template decisions and repair tests, then rerun the full exact command on a fresh stable snapshot. This earlier snapshot excludes later joint patron/partyear SHOP/service grants/MFS/arrangements/8994/education/owner-SE/8978/child tax changes; it is not a full pass for current code.
 
@@ -4820,14 +4818,14 @@ Main commit `1a490fc55`: **42 passed, 0 failed (55s)** across joint WOTC, owner-
 Code snapshot `51fd0f34c`, recorded at `04dba771b`: **35 passed, 0 failed (2m39s)** with type checking and real Poppler. Command:
 
 ```sh
-PATH=/tmp/opentax-poppler-env/bin:/Users/atul/.deno/bin:/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin deno test -A forms/f1040/2025/domains/taxes/self-employment/schedule-se/schedule_se_owned_farm_public.test.ts forms/f1040/2025/domains/deductions/business/form8995a/form8995a_joint_wotc.test.ts forms/f1040/e2e/credits/health/form8941/form8941_multiple_plans_2025.test.ts forms/f1040/e2e/credits/health/form8941/form8941_arrangements_2025.test.ts forms/f1040/2025/domains/taxes/self-employment/schedule-se/schedule_se_owner_public.test.ts scripts/research/ty2025-pdf-review-scope.test.ts
+PATH=/tmp/opentax-poppler-env/bin:/Users/atul/.deno/bin:/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin bun test --timeout=1800000 forms/f1040/2025/domains/taxes/self-employment/schedule-se/schedule_se_owned_farm_public.test.ts forms/f1040/2025/domains/deductions/business/form8995a/form8995a_joint_wotc.test.ts forms/f1040/e2e/credits/health/form8941/form8941_multiple_plans_2025.test.ts forms/f1040/e2e/credits/health/form8941/form8941_arrangements_2025.test.ts forms/f1040/2025/domains/taxes/self-employment/schedule-se/schedule_se_owner_public.test.ts scripts/research/ty2025-pdf-review-scope.test.ts
 ```
 
 Log `/tmp/opentax-cf-shop-wotc-main-integration.log`, SHA256 `e94a33f62a0ebc13ccb2a9b00f5a80ea61e93e69265d035435371ef9e444ecc4`. Source/XML/PDF packets, manifests and complete page images are retained in main ignored evidence under `.state/research/2026-10-06-owned-farm-se` and `.state/research/2026-10-06-form8941-multiplan`. Their final visual claims cover86 and143 pages respectively; broad parent and IRS gates remain open.
 
 ## Fresh repaired full regression launch — October 6
 
-Exact `deno task test` is running in the stable detached checkout `/tmp/opentax-full-regression-repaired-oct6` at `04dba771b`. It includes the two full-batch expectation repairs plus integrated later sources, ordinary mixed C/F, joint WOTC and multiple-QHP SHOP. Deno2.9.4, TypeScript6.0.3, libxml2.9.13 and real Poppler26.09.0 use the same task PATH. Launchd label `opentax-full-regression-repaired-oct6`; wrapper `/tmp/opentax-full-regression-repaired-oct6.zsh`, status `/tmp/opentax-full-regression-repaired-oct6.status`, log `/tmp/opentax-deno-task-test-repaired-oct6.log`.
+Exact `bun run test` is running in the stable detached checkout `/tmp/opentax-full-regression-repaired-oct6` at `04dba771b`. It includes the two full-batch expectation repairs plus integrated later sources, ordinary mixed C/F, joint WOTC and multiple-QHP SHOP. Deno2.9.4, TypeScript6.0.3, libxml2.9.13 and real Poppler26.09.0 use the same task PATH. Launchd label `opentax-full-regression-repaired-oct6`; wrapper `/tmp/opentax-full-regression-repaired-oct6.zsh`, status `/tmp/opentax-full-regression-repaired-oct6.status`, log `/tmp/opentax-deno-task-test-repaired-oct6.log`.
 
 Launch status:
 
@@ -4845,7 +4843,7 @@ The sibling family audit found Form8615 fractional ratios incorrectly rounded/bl
 
 ## Terminal repaired snapshot type check — October 6
 
-Stable `04dba771b` full `deno task test` exited1 before executing tests:45 TypeScript2345 errors, all in legacy `schedule_se.test.ts` and ATS `scenario_1040_03_input.test.ts`. Those single-document assertions did not narrow the new string-or-owner-document-array return type. Start01:04:29UTC/end01:05:14UTC; log SHA256 `7fff2e2be00b863f1b9689dc36ccb0b0b914b1b7d550b7a2a9d63a1d32c2df66`. Runtime pass/fail totals are unavailable because tests did not run. The old launch is terminal; a fresh full command is required after explicit shape assertion repair.
+Stable `04dba771b` full `bun run test` exited1 before executing tests:45 TypeScript2345 errors, all in legacy `schedule_se.test.ts` and ATS `scenario_1040_03_input.test.ts`. Those single-document assertions did not narrow the new string-or-owner-document-array return type. Start01:04:29UTC/end01:05:14UTC; log SHA256 `7fff2e2be00b863f1b9689dc36ccb0b0b914b1b7d550b7a2a9d63a1d32c2df66`. Runtime pass/fail totals are unavailable because tests did not run. The old launch is terminal; a fresh full command is required after explicit shape assertion repair.
 
 
 ## ScheduleSE full-batch test contract repair
@@ -4855,7 +4853,7 @@ Single-document legacy/ATS assertions now narrow the builder result explicitly. 
 
 ## Owner-contract repaired full regression launch
 
-Exact `deno task test` started in stable detached `/tmp/opentax-full-regression-repaired-v2-oct6` at `bc6cafec6`, using the same real Poppler/Deno/libxml PATH and task permissions. Launchd label `opentax-full-regression-repaired-v2-oct6`; wrapper/status/log use the same prefix, with log `/tmp/opentax-deno-task-test-repaired-v2-oct6.log`. Prior full process is authoritatively terminal. Launch status:
+Exact `bun run test` started in stable detached `/tmp/opentax-full-regression-repaired-v2-oct6` at `bc6cafec6`, using the same real Poppler/Deno/libxml PATH and task permissions. Launchd label `opentax-full-regression-repaired-v2-oct6`; wrapper/status/log use the same prefix, with log `/tmp/opentax-deno-task-test-repaired-v2-oct6.log`. Prior full process is authoritatively terminal. Launch status:
 
 ```
 commit=bc6cafec63f68ce91c9346d67f137a77fb6b3789 start=2026-10-06T01:08:44Z
@@ -4884,7 +4882,7 @@ Main1f42620dd:19 typed checks passed,0 failed (1m46s), with real Poppler; actual
 Main `173d3739b`:48 typed checks passed,0 failed (2m22s), with real Poppler. Exact command:
 
 ```sh
-deno test --allow-read --allow-write --allow-run=xmllint,deno,pdftotext,pdftoppm --allow-net=www.irs.gov forms/f1040/2025/domains/taxes/self-employment/schedule-se/schedule_se_owned_farm_optional.test.ts forms/f1040/2025/pdf/reviews/credits/individual/form8863_remarried_mfj_parent.test.ts forms/f1040/e2e/credits/health/form8941/form8941_workers_2025.test.ts forms/f1040/2025/domains/deductions/business/form8995a/form8995a_controlled_wotc.test.ts forms/f1040/2025/domains/deductions/business/form8995a/form8995a_joint_owner_wotc.test.ts forms/f1040/2025/mef/forms/taxes/self-employment/schedule_se.test.ts scripts/research/ty2025-pdf-review-scope.test.ts
+bun test --timeout=1800000 forms/f1040/2025/domains/taxes/self-employment/schedule-se/schedule_se_owned_farm_optional.test.ts forms/f1040/2025/pdf/reviews/credits/individual/form8863_remarried_mfj_parent.test.ts forms/f1040/e2e/credits/health/form8941/form8941_workers_2025.test.ts forms/f1040/2025/domains/deductions/business/form8995a/form8995a_controlled_wotc.test.ts forms/f1040/2025/domains/deductions/business/form8995a/form8995a_joint_owner_wotc.test.ts forms/f1040/2025/mef/forms/taxes/self-employment/schedule_se.test.ts scripts/research/ty2025-pdf-review-scope.test.ts
 ```
 
 Log `/tmp/opentax-farm-family-shop-controlled-main.log`, SHA256 `e4d991f371a8237bbe3e53a149fb1c6efb1155c9310fb48bba1162e984c81267`. Optional-farm nine full-XSD/replayed packets/all123 reviewed pages, remarried MFJ six full-XSD packets/all36 reviewed pages and seasonal SHOP three full-XSD packets/all69 reviewed pages are retained in ignored main research. Actual planner253 fixtures/116 descriptors/113 keys/95 covered/18 uncovered. This combined check includes controlled and independent joint-owner WOTC compatibility. The still-running full `bc6cafec6` batch predates these production/source repairs; latest-head full regression, broader parent completion and IRS acceptance remain unproven.
@@ -4895,7 +4893,7 @@ Log `/tmp/opentax-farm-family-shop-controlled-main.log`, SHA256 `e4d991f371a8237
 Main `2850dc05e`:24 typed checks passed,0 failed (1m28s), with real Poppler. Exact command:
 
 ```sh
-deno test --allow-read --allow-write --allow-run=xmllint,deno,pdftotext,pdftoppm --allow-net=www.irs.gov forms/f1040/2025/pdf/reviews/credits/individual/form8863_remarried_mfs_parent.test.ts forms/f1040/2025/pdf/reviews/credits/individual/form8863_remarried_mfj_parent.test.ts forms/f1040/2025/pdf/reviews/credits/individual/form8863_sibling_parent_selection.test.ts forms/f1040/2025/pdf/reviews/credits/individual/form8863_parent_child_kiddie_tax.test.ts
+bun test --timeout=1800000 forms/f1040/2025/pdf/reviews/credits/individual/form8863_remarried_mfs_parent.test.ts forms/f1040/2025/pdf/reviews/credits/individual/form8863_remarried_mfj_parent.test.ts forms/f1040/2025/pdf/reviews/credits/individual/form8863_sibling_parent_selection.test.ts forms/f1040/2025/pdf/reviews/credits/individual/form8863_parent_child_kiddie_tax.test.ts
 ```
 
 Log `/tmp/opentax-remarried-mfs-main-integration.log`, SHA256 `8d33cfe09d8d824bac34ee69743cd506503b62d1db6073890983059ebf65fbb0`. Eight complete local-XSD packets/all33 visually reviewed pages and24 matching source/XML/PDF hashes retained in ignored `.state/research/2026-10-06-remarried-mfs-parent`. Selected480/0 and final6/0 isolated checks are recorded in the route proof. Actual separate property-tax/standard-deduction returns and both parent identities are checked; prior MFJ/sibling/kiddie-tax compatibility passes. Stable fullbc6cafec6 still runs and predates this source work; two failures are now observed in CLI spouse SEHI and an older8995-A negative expectation, with final full totals and causes pending. No latest-head full pass or IRS acceptance is claimed.
@@ -4906,7 +4904,7 @@ Log `/tmp/opentax-remarried-mfs-main-integration.log`, SHA256 `8d33cfe09d8d824ba
 Main `6b3e9cbd1`:20 typed checks passed,0 failed (1m22s), with real Poppler. Exact command:
 
 ```sh
-deno test --allow-read --allow-write --allow-run=xmllint,deno,pdftotext,pdftoppm --allow-net=www.irs.gov forms/f1040/e2e/credits/health/form8941/form8941_common_control_2025.test.ts forms/f1040/e2e/credits/health/form8941/form8941_workers_2025.test.ts forms/f1040/e2e/credits/health/form8941/form8941_multiple_plans_2025.test.ts forms/f1040/2025/domains/deductions/business/form8995/form8995_multiple_schedule_c.test.ts scripts/research/ty2025-pdf-review-scope.test.ts
+bun test --timeout=1800000 forms/f1040/e2e/credits/health/form8941/form8941_common_control_2025.test.ts forms/f1040/e2e/credits/health/form8941/form8941_workers_2025.test.ts forms/f1040/e2e/credits/health/form8941/form8941_multiple_plans_2025.test.ts forms/f1040/2025/domains/deductions/business/form8995/form8995_multiple_schedule_c.test.ts scripts/research/ty2025-pdf-review-scope.test.ts
 ```
 
 Log `/tmp/opentax-aggregate-shop-main-integration.log`, SHA256 `78feebe323d2be6514b60dc8dc90d53b0d8e5ab76a02ec2bd06ca44afd30d9e5`. One complete local-XSD packet/all25 visually reviewed pages plus actual source/math/limits proof retained in ignored `.state/research/2026-10-06-form8941-common-control/PROOF.md`. Group source/person/coverage and allocation mutations reject; seasonal, multiple-QHP and multiple-ScheduleC compatibility passes. Stable fullbc6cafec6 remains running, predates these changes and has two observed failures; no latest-head full pass or IRS acceptance is claimed.
@@ -4918,7 +4916,7 @@ At68f876474, the exact21-case selected main integration batch passed21/0 in2m16s
 
 ## Full regression checkpoint bc6cafec6 (terminal October6)
 
-Stable detached checkout `/tmp/opentax-full-regression-repaired-v2-oct6` ran the unchanged `deno task test` with Deno2.9.4/TypeScript6.0.3, libxml2.9.13 and real Poppler26.09.0 on PATH. Commit `bc6cafec63f68ce91c9346d67f137a77fb6b3789`; started2026-10-06T01:08:44Z, ended02:14:42Z, exit1; terminal result **11,494 passed,8 failed,0 ignored**,65m24s test time. The stable checkout predates later source/production changes and does not prove latest-head regression.
+Stable detached checkout `/tmp/opentax-full-regression-repaired-v2-oct6` ran the unchanged `bun run test` with Deno2.9.4/TypeScript6.0.3, libxml2.9.13 and real Poppler26.09.0 on PATH. Commit `bc6cafec63f68ce91c9346d67f137a77fb6b3789`; started2026-10-06T01:08:44Z, ended02:14:42Z, exit1; terminal result **11,494 passed,8 failed,0 ignored**,65m24s test time. The stable checkout predates later source/production changes and does not prove latest-head regression.
 
 Failures: CLIissue60 spouse Medicare7206; Form8995A stale negative error wording (already repaired); three Form7206 MFJ policy/Medicare/mixed-month E2E cases; MFJ scenarios15/16 owner-source calculations; ATS02 XSD fixture’s nonstatutory spouse W2 lacks issued-source identity. Current-source investigations and repairs remain in progress; rerun the same full command after phase changes/repairs are integrated. No passing full checkpoint is claimed.
 
@@ -4940,7 +4938,7 @@ At0ca0b85cc, six-file gate `/tmp/opentax-interpreter-zero-tier-main.log`:33 pass
 
 ## Fresh full regression, source-v3 October6 (running)
 
-Stable detached checkout `/tmp/opentax-full-regression-source-v3-oct6`, commit `fbacc539ce451cf4d627085edf33f240a11f6335`, exact `deno task test`, start `2026-10-06T02:29:48Z`. LaunchAgent `opentax-full-regression-source-v3-oct6`; confirmed wrapper26565 and child26572 live. Log `/tmp/opentax-deno-task-test-source-v3-oct6.log`, status `/tmp/opentax-full-regression-source-v3-oct6.status`. Real PATH includes Poppler26.09.0, Deno2.9.4 and libxml2.9.13. Local cached IRS schema tree is linked read-only by convention; checkout stays fixed. Final totals/log digest are pending; prior11,494/8 remains authoritative full result.
+Stable detached checkout `/tmp/opentax-full-regression-source-v3-oct6`, commit `fbacc539ce451cf4d627085edf33f240a11f6335`, exact `bun run test`, start `2026-10-06T02:29:48Z`. LaunchAgent `opentax-full-regression-source-v3-oct6`; confirmed wrapper26565 and child26572 live. Log `/tmp/opentax-deno-task-test-source-v3-oct6.log`, status `/tmp/opentax-full-regression-source-v3-oct6.status`. Real PATH includes Poppler26.09.0, Deno2.9.4 and libxml2.9.13. Local cached IRS schema tree is linked read-only by convention; checkout stays fixed. Final totals/log digest are pending; prior11,494/8 remains authoritative full result.
 
 ## Independent farm and daily-billed SHOP main verification
 
@@ -4999,7 +4997,7 @@ The exact six old public-source failures now pass6/0(16s),342 filtered in `/tmp/
 
 ## Immutable full regression V3 terminal result
 
-Commitfbacc539ce451cf4d627085edf33f240a11f6335 exact `deno task test`:11,577 passed/14 failed,82m15s, exit1, start2026-10-06T02:29:48Z/end03:52:41Z. Wrapper/PIDs26565/26572 are gone. Final log `/tmp/opentax-deno-task-test-source-v3-oct6.log` SHA256 `63f952cccb1fc91d4babb95a6a2e4b5146c051b2d290d6319fcd7946c7e5ab8c`. Terminal adds qbi_aggregation/index.test.ts and intermediateform8995a/index.test.ts initialization failures to12 already mapped. Exactcurrent-main two-module gate running;12 prior targeted repairs passed. No ignored total is printed in full summary; ignored reasons will be audited from log. Latest samefullcommand remains required.
+Commitfbacc539ce451cf4d627085edf33f240a11f6335 exact `bun run test`:11,577 passed/14 failed,82m15s, exit1, start2026-10-06T02:29:48Z/end03:52:41Z. Wrapper/PIDs26565/26572 are gone. Final log `/tmp/opentax-deno-task-test-source-v3-oct6.log` SHA256 `63f952cccb1fc91d4babb95a6a2e4b5146c051b2d290d6319fcd7946c7e5ab8c`. Terminal adds qbi_aggregation/index.test.ts and intermediateform8995a/index.test.ts initialization failures to12 already mapped. Exactcurrent-main two-module gate running;12 prior targeted repairs passed. No ignored total is printed in full summary; ignored reasons will be audited from log. Latest samefullcommand remains required.
 
 Final14failure audit: exact last two module files currentmain44/0(49ms), `/tmp/opentax-v3-final-module-failures-current-main.log`; all14 have targeted repaired-main proof. FullV3 contains0 actual ignored result lines (test names mentioning ignored are passing tests). Toolversions verified Deno2.9.4/TS6.0.3/libxml2.9.13/Poppler26.09.0. Same fullcommand launches on a fresh immutable current checkout next.
 
@@ -5007,7 +5005,7 @@ Repaired same-command V4 launched immutable181575242db2afcb5fcceb25088e3311f7aa9
 
 ## October 6 current registry and planner reconciliation
 
-At code `2899d051b`, live imports contain **150 native descriptors (146 unique pending keys)** and **116 PDF descriptors (113 unique keys)**. Exact source-only planner: **365 fixtures, 96 expected keys, 17 uncovered keys**. Commands: `deno run --allow-read scripts/research/plan-ty2025-pdf-review.ts` and live `ALL_MEF_FORMS`/`ALL_PDF_FORMS` imports. Planner evidence `/tmp/opentax-pdf-planner-2899.json`, SHA-256 `95d99e58c4c2ed8e1895a9c1e1d0fc941dffdc4340a5e55452e549687d34e6ad`; key comparison `/tmp/opentax-registry-parity-2899.json`, SHA-256 `5f7b509b6b5d2f4bf101d902fdb6b9fb9934d72f4558ff9e6aea781bd73356d4`.
+At code `2899d051b`, live imports contain **150 native descriptors (146 unique pending keys)** and **116 PDF descriptors (113 unique keys)**. Exact source-only planner: **365 fixtures, 96 expected keys, 17 uncovered keys**. Commands: `bun scripts/research/plan-ty2025-pdf-review.ts` and live `ALL_MEF_FORMS`/`ALL_PDF_FORMS` imports. Planner evidence `/tmp/opentax-pdf-planner-2899.json`, SHA-256 `95d99e58c4c2ed8e1895a9c1e1d0fc941dffdc4340a5e55452e549687d34e6ad`; key comparison `/tmp/opentax-registry-parity-2899.json`, SHA-256 `5f7b509b6b5d2f4bf101d902fdb6b9fb9934d72f4558ff9e6aea781bd73356d4`.
 
 Uncovered keys: `f4255`, `f5471_parent`, `f5471_schedule_e`, `f5471_schedule_h`, `f5471_schedule_i1`, `f5471_schedule_j`, `f5471_schedule_m`, `f5471_schedule_p`, `f5471_schedule_q`, `f5471_schedule_r`, `f8854`, `f8854_annual`, `f965`, `form8582cr`, `form8990`, `form8992`, `form8992_schedule_a`. Key comparison still identifies `form8621` as a native parent without a matching PDF descriptor; statement/source keys require individual packet review. `f4835_at_risk` emits Form6198 using the existing PDF route, and native `f8911` has the separate PDF companion key `f8911_schedule_a`; key names alone are not absence/support decisions. These counts establish inventory only. Named-form parents are part of the current goal; none is deferred from execution or approved for exclusion.
 
@@ -5045,11 +5043,11 @@ Preservation log SHA256: `d4cfcc6c5c8e8b6f9f52faba17583ef3705a36199bd4b7fa0cdea2
 
 ## Separate paired beneficiary current-main gate
 
-Main df66b8386: deno test --allow-all forms/f1040/2025/domains/taxes/retirement/form4972/form4972_paired_beneficiary_source.test.ts terminal4/0(57s). Prior36file preservation2dd06b857 terminal298/0(3m7s), exit0.17publicreturns/fulllocalv5.4XSD/68reviewedpageinstances/64issuedcopies; source/PDF exactoriginal, XMLexceptReturnTs.16finalnative/PDFconflicts reject. Logs and comparison in paired source proof. Full regression181575242 remainslive44964/44970 at61m53s; latestfullpassing suite/IRSack stillrequired.
+Main df66b8386: bun test --timeout=1800000 forms/f1040/2025/domains/taxes/retirement/form4972/form4972_paired_beneficiary_source.test.ts terminal4/0(57s). Prior36file preservation2dd06b857 terminal298/0(3m7s), exit0.17publicreturns/fulllocalv5.4XSD/68reviewedpageinstances/64issuedcopies; source/PDF exactoriginal, XMLexceptReturnTs.16finalnative/PDFconflicts reject. Logs and comparison in paired source proof. Full regression181575242 remainslive44964/44970 at61m53s; latestfullpassing suite/IRSack stillrequired.
 
 ## Shared-participant beneficiary source integration — October6
 
-Main4f99acaa0 commands: `PATH=/tmp/opentax-poppler-env/bin:/Users/atul/.deno/bin:$PATH deno test --allow-all --filter "shared participant" forms/f1040/2025/domains/taxes/retirement/form4972/form4972_shared_participant_source.test.ts` passed4/0(17s), four earlier imported paired tests filtered; single-copy file filtered to the beneficiary annuity ten-year-only case passed1/0(3s), five filtered. Logs /tmp/opentax-form4972-shared-main-focused.log and /tmp/opentax-form4972-single-part3-main-focused.log. These filters do not claim a full suite. Same37-file isolated preservation08ba52b14 passed303/0(4m12s), exit0, /tmp/opentax-form4972-shared-participant-preservation-v2.log. Main production exactly matches the tested isolated source. Six complete prepared returns validate localv5.4XSD and produce23 visually reviewed PDF pages/26 native issued copies. All main source/pending/PDF bytes equal reviewed snapshots; XML onlyReturnTs; comparison /tmp/opentax-form4972-shared-single-main-comparison.json. The outside-beneficiary inventory record is not transmitted. Parent/full latest regression/IRS business rules/ATS gates remain open.
+Main4f99acaa0 commands: `PATH=/tmp/opentax-poppler-env/bin:/Users/atul/.deno/bin:$PATH bun test --timeout=1800000 -t "shared participant" forms/f1040/2025/domains/taxes/retirement/form4972/form4972_shared_participant_source.test.ts` passed4/0(17s), four earlier imported paired tests filtered; single-copy file filtered to the beneficiary annuity ten-year-only case passed1/0(3s), five filtered. Logs /tmp/opentax-form4972-shared-main-focused.log and /tmp/opentax-form4972-single-part3-main-focused.log. These filters do not claim a full suite. Same37-file isolated preservation08ba52b14 passed303/0(4m12s), exit0, /tmp/opentax-form4972-shared-participant-preservation-v2.log. Main production exactly matches the tested isolated source. Six complete prepared returns validate localv5.4XSD and produce23 visually reviewed PDF pages/26 native issued copies. All main source/pending/PDF bytes equal reviewed snapshots; XML onlyReturnTs; comparison /tmp/opentax-form4972-shared-single-main-comparison.json. The outside-beneficiary inventory record is not transmitted. Parent/full latest regression/IRS business rules/ATS gates remain open.
 
 ## Form8621 registered parent current-main proof
 
@@ -5058,7 +5056,7 @@ Maina2ae96eba seven focused files (`f8621` node, nativeXSD/fx, parentPDF/source/
 
 ## Full V4 terminal and age-derived QBI expectation repair
 
-Immutable181575242 `deno task test`: 11,794 passed / 1 failed, exit1, 95m00s runner, start2026-10-06T03:53:35Z/end05:29:40Z. Log `/tmp/opentax-deno-task-test-source-v4-oct6.log`, SHA2568bb441d743001c8f067474a04385b8b92fbe41544570744abb66c5d0e6a678a4. Sole failure was the e2e age-derived Form8995 expectation: sourced dividends26,000 minus standard17,750 and actual senior6,000 equals pre-QBI2,250; 20% cap450, taxable1,800. Corrected expectations explicitly assert the senior deduction. Focused actual-main test1/0,17 filtered,19ms; `/tmp/opentax-form8995-age-terminal-repair-v1.log`. Production unchanged. Latest full passing gate still required.
+Immutable181575242 `bun run test`: 11,794 passed / 1 failed, exit1, 95m00s runner, start2026-10-06T03:53:35Z/end05:29:40Z. Log `/tmp/opentax-deno-task-test-source-v4-oct6.log`, SHA2568bb441d743001c8f067474a04385b8b92fbe41544570744abb66c5d0e6a678a4. Sole failure was the e2e age-derived Form8995 expectation: sourced dividends26,000 minus standard17,750 and actual senior6,000 equals pre-QBI2,250; 20% cap450, taxable1,800. Corrected expectations explicitly assert the senior deduction. Focused actual-main test1/0,17 filtered,19ms; `/tmp/opentax-form8995-age-terminal-repair-v1.log`. Production unchanged. Latest full passing gate still required.
 
 
 ## Current-main retained substitute proof
@@ -5145,7 +5143,7 @@ Inventory: **151 native / 117 PDF descriptors**, **365 fixtures**, **114 PDF key
 
 Latest verified work: QEF Election B refigures actual education/dependent credits and tax-limited business credits (**8/0 + 41/0**). Four full-XSD packets / 54 reviewed pages preserve all 16 source/pending/PDF/origin files exactly, with XML only timestamp changes. Earlier Roth conversion, donated-asset and simultaneous-QEF proofs remain archived. Wider parents remain open.
 
-Full `deno task test` at immutable181575242 finished **11,794 passed / 1 failed**; the sole senior/QBI fixture expectation was repaired with focused1/0. The immutable **4a45410da** rerun started05:41:11UTC; wrapper65945/Deno65949 were verified live at89m56s. It predates the latest production changes. Its terminal result and a passing latest-source full run remain required.
+Full `bun run test` at immutable181575242 finished **11,794 passed / 1 failed**; the sole senior/QBI fixture expectation was repaired with focused1/0. The immutable **4a45410da** rerun started05:41:11UTC; wrapper65945/Deno65949 were verified live at89m56s. It predates the latest production changes. Its terminal result and a passing latest-source full run remain required.
 
 Publication checkpoint: draft [PR63](https://github.com/filedcom/opentax/pull/63), **0feee220b**, verified published with the new credit changes.
 
@@ -5273,7 +5271,7 @@ W2codeW5000, owner-paid employer excess700+earnings50, trusteecode2gross750 reco
 
 ## Owned current shareholder notes and qualified-loss source integration sealed
 
-Agent0ccc2693fb4bbbfb719dfa2c2b551a29d7182dd9 integrated main dec391d8b aftercompact7f72d1131. Fresh standard deno task test combined11modules208/0 (39s), /tmp/opentax-form7203-main-combined-oct6.log; stricter standard task permissions than isolated-A gates. Four actual immutable full-v5.4-XSD retained-source packets32pages replay wholepending/carry/origins/PDF exactly, nativeXMLonlyReturnTs, /tmp/opentax-form7203-main-retained-oct6.log. Private copiedPDFcache; no sourcefactory called. Root reviewed all32pages acrossfourcontacts; reviewmanifestSHA6085197528ae406fccc910c328c56d5ab80373e8b9c7c0b02d46d97ac24b85ae verified. Originals independently copied to .state/research/form7203-owned-debt-source-oct6-preserved and prior24files to form7203-owned-debt-prior-oct6-preserved.
+Agent0ccc2693fb4bbbfb719dfa2c2b551a29d7182dd9 integrated main dec391d8b aftercompact7f72d1131. Fresh standard bun run test combined11modules208/0 (39s), /tmp/opentax-form7203-main-combined-oct6.log; stricter standard task permissions than isolated-A gates. Four actual immutable full-v5.4-XSD retained-source packets32pages replay wholepending/carry/origins/PDF exactly, nativeXMLonlyReturnTs, /tmp/opentax-form7203-main-retained-oct6.log. Private copiedPDFcache; no sourcefactory called. Root reviewed all32pages acrossfourcontacts; reviewmanifestSHA6085197528ae406fccc910c328c56d5ab80373e8b9c7c0b02d46d97ac24b85ae verified. Originals independently copied to .state/research/form7203-owned-debt-source-oct6-preserved and prior24files to form7203-owned-debt-prior-oct6-preserved.
 
 Actual oldest7page legacy packet executed main before and after integration: source/pending/carry/origins/PDF exact and XMLonlyReturnTs. Against oldarchivedpending, only preexisting removed8960 belowthreshold remains; archivedXMLonlyhistoricfinalnewline apartfromTs. Both explicit deltas independentlyasserted; alloriginal24files/eightoccurrences/threeuniquedigests checked against originalpaths andpreservedcopies. /tmp/opentax-form7203-main-source-preservation-manifest-oct6.json. Initial baseline replayers correctlyexit1 against archivedqualifieddifferences, not cleanoriginalpending assertions.
 
@@ -5287,7 +5285,7 @@ Employer5000 annualcap4300/excess700, trusteepaid750 includingearnings50 toemplo
 
 ## Compaction and latest immutable full regression V21
 
-Previous goal turn supplied daemon/version/cache evidence but did not change board production. Entire board re-read; existing52 main and future section byte-exact to adf3612ee/e1af772d7. Pre-2017 mortgage main94/0 and actual15/48 proof remains sealedf27b39a9a; broader parents remain open. V21 standard `deno task test` launched immutablef27b39a9a76bf390e0f56d15b1361e024f7a1a56 at2026-10-06T13:35:51Z, Deno2.9.4/V8 15.0.245.2-rusty/TypeScript6.0.3. Independently live wrapper75019/task75030/actualtest75031; physical private research/cache clones, zero symlinks, nonexistent initial status, one-shotlaunchd/status restart guard. Log `/tmp/opentax-deno-task-test-source-v21-oct6.log`, status `/tmp/opentax-full-regression-source-v21-oct6.status`, immutabletree `/tmp/opentax-full-regression-source-v21-oct6`. Includes latestdebt/EIC/8814/pre-2017 mortgage; excludes pendingK1/8582/RPE and generalmortgage candidates. OlderV17test49982/V18test59733/V19test66717/V20test70213 independentlylive, no terminalfullpass. Existing isolated agents continue full positive source paths under existingparents; no futuretaskexecution or broadcompletion.
+Previous goal turn supplied daemon/version/cache evidence but did not change board production. Entire board re-read; existing52 main and future section byte-exact to adf3612ee/e1af772d7. Pre-2017 mortgage main94/0 and actual15/48 proof remains sealedf27b39a9a; broader parents remain open. V21 standard `bun run test` launched immutablef27b39a9a76bf390e0f56d15b1361e024f7a1a56 at2026-10-06T13:35:51Z, Deno2.9.4/V8 15.0.245.2-rusty/TypeScript6.0.3. Independently live wrapper75019/task75030/actualtest75031; physical private research/cache clones, zero symlinks, nonexistent initial status, one-shotlaunchd/status restart guard. Log `/tmp/opentax-deno-task-test-source-v21-oct6.log`, status `/tmp/opentax-full-regression-source-v21-oct6.status`, immutabletree `/tmp/opentax-full-regression-source-v21-oct6`. Includes latestdebt/EIC/8814/pre-2017 mortgage; excludes pendingK1/8582/RPE and generalmortgage candidates. OlderV17test49982/V18test59733/V19test66717/V20test70213 independentlylive, no terminalfullpass. Existing isolated agents continue full positive source paths under existingparents; no futuretaskexecution or broadcompletion.
 
 ## Sealed complete-worker FICA-only payroll and employer-name parity
 
@@ -5297,7 +5295,7 @@ Initialsource TS errors (testcontext/carryfield) and oldliteralassertions retain
 
 ## Sealed current passive K-1, PAL/EIC and qualified farm QBI integration
 
-Candidate891bcb21 integrated2bd7ad887 after whole-board compaction. Root51-module standard deno task test621/0/0ignored(3m58s), `/tmp/opentax-eic-passive-k1-main-standard-oct6.log`, session12220 terminal0. Independent actual original33returns/271pages replay terminal0, `/tmp/opentax-eic-passive-k1-main-retained33-oct6/report.json`, session2785: wholepending/preparedpending/carry/origins/source/PDF exact, XMLonlyReturnTs/fullv5.4XSD. No sourcefactory called. All141newpages already rootreviewed with full-size QBI positive2000/ded400 and zero3000−3000, sameissuer jointowners and two-loss allocation; `/tmp/opentax-eic-passive-k1-root-review-oct6.json`. All54new and45prior originalfiles independently copied and source/private hashes checked before/after at `.state/research/eic-passive-k1-{current,prior15}-oct6-preserved`; rootpreservation manifests retained.
+Candidate891bcb21 integrated2bd7ad887 after whole-board compaction. Root51-module standard bun run test621/0/0ignored(3m58s), `/tmp/opentax-eic-passive-k1-main-standard-oct6.log`, session12220 terminal0. Independent actual original33returns/271pages replay terminal0, `/tmp/opentax-eic-passive-k1-main-retained33-oct6/report.json`, session2785: wholepending/preparedpending/carry/origins/source/PDF exact, XMLonlyReturnTs/fullv5.4XSD. No sourcefactory called. All141newpages already rootreviewed with full-size QBI positive2000/ded400 and zero3000−3000, sameissuer jointowners and two-loss allocation; `/tmp/opentax-eic-passive-k1-root-review-oct6.json`. All54new and45prior originalfiles independently copied and source/private hashes checked before/after at `.state/research/eic-passive-k1-{current,prior15}-oct6-preserved`; rootpreservation manifests retained.
 
 Original wages5000/taxexempt11950/farm2000−7000/K1income3000 now gives AGI5000/investment11950/EIC384 and suspended2000. Box1/2/3 partnerships and SCorps keep actual ScheduleE PartII identity; finalized PAL pool and mandatory zero/positive qualified RPE/farm8995 source joins reject contradictory sources. Sourcecontracts/hashes do not establish issuer/authentication/acceptedhistory. Broad parent and latest-production full/IRS gates remain open. Ledger1521; frozen52main and future exact. Mortgage finalv3 chronology/grandfathered-source gates remain isolated. Next ordinary K1 Form4797line10 audit proves missing current PAL income deposits and continues under existing Worksheet1 parent.
 
@@ -5309,13 +5307,13 @@ Rootall20pages/fullsizedage17Hreview `/tmp/opentax-scheduleh-child-age-root-revi
 
 ## Sealed complete mortgage inventory integration
 
-After fullboard compactiondb0078d2b, candidateeaafc806a integratedc5e7ce479. Root seven-module standard `deno task test`95/0/0ignored(2m56s), `/tmp/opentax-1098-general-main-standard-v4-oct6.log`, session3199 terminal0. Independent original19packets/60pages saved-source replay `/tmp/opentax-1098-general-main-retained19-v4-oct6/comparison.json`, configuredlog `/tmp/opentax-1098-general-main-retained19-v4-configured-oct6.log`, session70745 terminal0: exactPDF/nativeonlyReturnTs/fullTY2025v5.4XSD;17comparablepreparedpending and retained priororigins exact. No-points originals lack historicalpending/carry/origins and those equalities are not inferred. Initial unconfigured raw invocation failed module-resolution before calculation; preserved diagnostic, corrected explicitmain deno.json config without code changes.
+After fullboard compactiondb0078d2b, candidateeaafc806a integratedc5e7ce479. Root seven-module standard `bun run test`95/0/0ignored(2m56s), `/tmp/opentax-1098-general-main-standard-v4-oct6.log`, session3199 terminal0. Independent original19packets/60pages saved-source replay `/tmp/opentax-1098-general-main-retained19-v4-oct6/comparison.json`, configuredlog `/tmp/opentax-1098-general-main-retained19-v4-configured-oct6.log`, session70745 terminal0: exactPDF/nativeonlyReturnTs/fullTY2025v5.4XSD;17comparablepreparedpending and retained priororigins exact. No-points originals lack historicalpending/carry/origins and those equalities are not inferred. Initial unconfigured raw invocation failed module-resolution before calculation; preserved diagnostic, corrected explicitmain deno.json config without code changes.
 
 Four finalv4 new five-copy source packets apply one Pub936 Table1 across grandfathered/pre-2017/post-2017 and personal mixed refinance balances. Main/second titles share consistent acquisitiondate/owners, allreferences required, securedimprovement dates/payment/invoice join. MFJinterest38907/points341/ded39248/tax3816/refund7184; MFS25913/227/26140/tax5667/refund5333. All12newpages rootreviewedv3 plus byte-exactv4 output proof; `/tmp/opentax-1098-general-root-v4-pdf-parity-oct6.json` also confirms all24 physical/outputPDFs unchanged. All130archivefiles plusmanifest privately preserved and original/private hashes rechecked after standard/raw, `/tmp/opentax-1098-general-root-preservation-v4-oct6.json`. Sourceconsistency does not authenticate issuers/signatures/acceptedhistory. Ledger1523; frozen52main/future unchanged. Ordinarypassivegain candidate finaljointheaders reviewed; finalstandard readiness pending, not integrated. Existingmortgage datedpayoff/advance work continues separately; latestfull/IRS gates remainopen.
 
 ## Sealed current ordinary passive-gain integration
 
-Wholeboardcompaction757300323 preceded candidatecf5f5e48e integration0d153ed24. Root56-module standard `deno task test`690/0/0ignored(8m12s), `/tmp/opentax-eic-passive-line10-main-standard-oct6.log`, session65620 terminal0; includes54finalcandidate modules pluscurrentchildpayroll source andcomplete mortgage inventory tests. Independent actualsaved42returns/374pages replay `/tmp/opentax-eic-passive-line10-main-retained42-oct6/report.json`, session11105 terminal0: wholepending/preparedpending/carry/origins/source/PDF exact, XMLonlyReturnTs/fullcachedTY2025v5.4XSD. Portable script readsheldpublicinputs, never callsfixtures; preparedpending is independently asserted in script line29 although report has no separateprepared flag. Initialverification helper used a nonexistentpendingExact key; corrected toactualwholePendingExact plus auditedprepared assertion, no production/test changes.
+Wholeboardcompaction757300323 preceded candidatecf5f5e48e integration0d153ed24. Root56-module standard `bun run test`690/0/0ignored(8m12s), `/tmp/opentax-eic-passive-line10-main-standard-oct6.log`, session65620 terminal0; includes54finalcandidate modules pluscurrentchildpayroll source andcomplete mortgage inventory tests. Independent actualsaved42returns/374pages replay `/tmp/opentax-eic-passive-line10-main-retained42-oct6/report.json`, session11105 terminal0: wholepending/preparedpending/carry/origins/source/PDF exact, XMLonlyReturnTs/fullcachedTY2025v5.4XSD. Portable script readsheldpublicinputs, never callsfixtures; preparedpending is independently asserted in script line29 although report has no separateprepared flag. Initialverification helper used a nonexistentpendingExact key; corrected toactualwholePendingExact plus auditedprepared assertion, no production/test changes.
 
 Original3000 ordinary gain and5000farm loss now sourcecomplete toactual8582income/PAL: allowedfarm3000/suspended2000, AGI5000/investment11950/EIC384; actual qualifiedRPE3000−allowedfarm3000 yieldsrequiredzero8995. Positive7000−farm5000 gives2000QBI/400ded. Nine source packets103pages includecombined11950/11951, genuinebox1+ordinarygain199A statement, income-only nofiled8582 andsameissuerjointowners. Rootall103pages visualreview: priorv5 allpages plusfinalv6 threechangedjointheaders fullsize; eightotherPDFs byteexact/allotherjointpages text/rasterexact; sourceJSON/pending/carry/origins/nativeexceptTs unchanged. Reviews `/tmp/opentax-eic-passive-line10-root-review{-v6,}-oct6.json`, headercomparison `/tmp/opentax-eic-passive-line10-header-comparison-oct6/report.json`. Originalv5 remainspreserved; finalv6 derivedfromheldv5sources insteadnewfacts.
 
@@ -5369,7 +5367,7 @@ All12 new packet pages were root-reviewed, including full-size four ScheduleH pa
 
 ## Immutable full regression V23 and property/payroll publication
 
-Full ordinary `deno task test` launched2026-10-06T15:59:36Z at sealedproduction **ee63eaedfd58adb91a001ce35fc9e912b98c4d98** in `/tmp/opentax-full-regression-source-v23-oct6`. The snapshot includes current parent/midmonth/property/turning21 implementations. It was prepared but never launched at4e, then retargeted before its first launch. There are24,807physical private research/cache files, no symlinks or hardlinks, distinctinodes and exactsizes;619packet/diagnostic SHA256 entries verify. Manifests are `/tmp/opentax-full-regression-source-v23-oct6-preservation.json` and `...-packet-hashes.json`.
+Full ordinary `bun run test` launched2026-10-06T15:59:36Z at sealedproduction **ee63eaedfd58adb91a001ce35fc9e912b98c4d98** in `/tmp/opentax-full-regression-source-v23-oct6`. The snapshot includes current parent/midmonth/property/turning21 implementations. It was prepared but never launched at4e, then retargeted before its first launch. There are24,807physical private research/cache files, no symlinks or hardlinks, distinctinodes and exactsizes;619packet/diagnostic SHA256 entries verify. Manifests are `/tmp/opentax-full-regression-source-v23-oct6-preservation.json` and `...-packet-hashes.json`.
 
 Tool versions: Deno2.9.4, V815.0.245.2-rusty, TypeScript6.0.3. Status `/tmp/opentax-full-regression-source-v23-oct6.status`, wrapper `...zsh`, plist `...plist`, full log `/tmp/opentax-deno-task-test-source-v23-oct6.log`. Actual wrapper97530/task97537/test97539 were inspected live; no terminal pass/fail/ignored total is claimed. Earlier V17–V22 test processes49982/59733/66717/70213/75031/86983 also remained live at inspection. Their snapshots predate later production and are not restarted for observation timeout or elapsed time.
 
@@ -5389,12 +5387,12 @@ All49 state pages and5 FICA pages were root-reviewed; final eight PDFs are byte-
 
 ## Immutable full regression V24
 
-The full ordinary `deno task test` started2026-10-06T16:33:20Z in immutable `/tmp/opentax-full-regression-source-v24-oct6` atsealedcommit4813ea6d145f54fcc1ed447e52867f431b4d631b, including combined payroll production5e5d78b7f. Actualwrapper888/task895/test896 were inspected live. Deno2.9.4/V815.0.245.2-rusty/TypeScript6.0.3. Private research/cache copy has24,866files with distinct inodes, equal sizes and no symlinks/hardlinks;665preserved packet/gate/diagnostic SHA entries verify. Preparation `/tmp/opentax-prepare-full-v24-oct6.py`; manifests `/tmp/opentax-full-regression-source-v24-oct6-{preservation,packet-hashes}.json`; status `/tmp/opentax-full-regression-source-v24-oct6.status`; log `/tmp/opentax-deno-task-test-source-v24-oct6.log`. No terminal pass/fail/ignored totals are available. V17–V23 actual test handles remained live at inspection and are version-qualified. The initial status read raced launcher startup; reread confirmed live896, with no restart. Quarterly state contribution work runs in a separate checkout; broader52parents and IRS acceptance remain open.
+The full ordinary `bun run test` started2026-10-06T16:33:20Z in immutable `/tmp/opentax-full-regression-source-v24-oct6` atsealedcommit4813ea6d145f54fcc1ed447e52867f431b4d631b, including combined payroll production5e5d78b7f. Actualwrapper888/task895/test896 were inspected live. Deno2.9.4/V815.0.245.2-rusty/TypeScript6.0.3. Private research/cache copy has24,866files with distinct inodes, equal sizes and no symlinks/hardlinks;665preserved packet/gate/diagnostic SHA entries verify. Preparation `/tmp/opentax-prepare-full-v24-oct6.py`; manifests `/tmp/opentax-full-regression-source-v24-oct6-{preservation,packet-hashes}.json`; status `/tmp/opentax-full-regression-source-v24-oct6.status`; log `/tmp/opentax-deno-task-test-source-v24-oct6.log`. No terminal pass/fail/ignored totals are available. V17–V23 actual test handles remained live at inspection and are version-qualified. The initial status read raced launcher startup; reread confirmed live896, with no restart. Quarterly state contribution work runs in a separate checkout; broader52parents and IRS acceptance remain open.
 
 
 ## Quarterly state contributions and complete cash-cent payroll
 
-Main production `c2c950cbf657181e7cd3e94510c11592799b6746` passed the ordinary14module payroll `deno task test` command retained in `/tmp/opentax-scheduleh-quarterly-main-standard-oct6.zsh`: **71 passed/0 failed**,6m5s runtime, noignoredsummary. Log `/tmp/opentax-scheduleh-quarterly-main-standard-oct6.log`; root session66674 terminal0. Independent actualsaved `/tmp/opentax-scheduleh-quarterly-main-final41-oct6/report.json`, session72441 terminal0: **41returns/238pages**,38fresh exact pending/prepared/carry/origins/PDF/nativeexceptReturnTs plus3historicallyqualified priorarchives; everyinput unchanged and output fullTY2025v5.4XSD valid. It includes allprior34, three new state packets, the correctedlegacy rate baseline and three preserved original-input variants.
+Main production `c2c950cbf657181e7cd3e94510c11592799b6746` passed the ordinary14module payroll `bun run test` command retained in `/tmp/opentax-scheduleh-quarterly-main-standard-oct6.zsh`: **71 passed/0 failed**,6m5s runtime, noignoredsummary. Log `/tmp/opentax-scheduleh-quarterly-main-standard-oct6.log`; root session66674 terminal0. Independent actualsaved `/tmp/opentax-scheduleh-quarterly-main-final41-oct6/report.json`, session72441 terminal0: **41returns/238pages**,38fresh exact pending/prepared/carry/origins/PDF/nativeexceptReturnTs plus3historicallyqualified priorarchives; everyinput unchanged and output fullTY2025v5.4XSD valid. It includes allprior34, three new state packets, the correctedlegacy rate baseline and three preserved original-input variants.
 
 Source timing now accepts actualQ2/Q3 receipts before the last wage date of their shared notice, without prepaying unaccrued tax. Quarter-cent assessments require explicit retained rows/quarter joins: two100.01 taxes reconcile200.02, whereas an unsupported period-only product200.01 remains rejected. Zero-taxableQ3 follows real wages after the CA wage base; no phantomquarter/nonzeroassessment is permitted. General completepayroll integer-cent joins repair the independent FICAonly2802.49quarter source while preserving478filedtax. The separate minorfixture has0withholding and correct428; finalfocus13/1 expectation error was test-only, correctedFICA3/0/state11/0, with main71/0 superseding.
 
@@ -5403,7 +5401,7 @@ All21newstate pages root reviewed: firsttwo packets exact priorreviewedtimelyPDF
 
 ## Immutable full regression V25
 
-The full ordinary `deno task test` started **2026-10-06T17:04:59Z** in immutable `/tmp/opentax-full-regression-source-v25-oct6` at **8501326a405774c091ec500c84352d48eca4f88d**, including settled quarterly/cash-cent productionc2 and preparedW2G fixture repair961. Actual launcher9790/task9794/test9795 inspected live. Deno2.9.4/V815.0.245.2-rusty/TypeScript6.0.3. **25,083 private files** have distinct inodes/equal sizes, no symlinks/hardlinks; **882 packet/gate/diagnostic hashes** verified. Three original timing-before diagnostic files were separately copied and verified before launch, included in final preservation counts. Preparation `/tmp/opentax-prepare-full-v25-oct6.py`; manifests `/tmp/opentax-full-regression-source-v25-oct6-{preservation,packet-hashes}.json`; one-shot status `/tmp/opentax-full-regression-source-v25-oct6.status`; log `/tmp/opentax-deno-task-test-source-v25-oct6.log`. No terminal pass/fail/ignored totals. Earlier V23test97539 andV24test896 inspected live and remain version-qualified; no elapsed-time restart. Unpaid/partial contribution source work is in a separatecheckout. Frozen52/future exact, ledger1534; fullcurrentproduction and IRS acceptance remainopen.
+The full ordinary `bun run test` started **2026-10-06T17:04:59Z** in immutable `/tmp/opentax-full-regression-source-v25-oct6` at **8501326a405774c091ec500c84352d48eca4f88d**, including settled quarterly/cash-cent productionc2 and preparedW2G fixture repair961. Actual launcher9790/task9794/test9795 inspected live. Deno2.9.4/V815.0.245.2-rusty/TypeScript6.0.3. **25,083 private files** have distinct inodes/equal sizes, no symlinks/hardlinks; **882 packet/gate/diagnostic hashes** verified. Three original timing-before diagnostic files were separately copied and verified before launch, included in final preservation counts. Preparation `/tmp/opentax-prepare-full-v25-oct6.py`; manifests `/tmp/opentax-full-regression-source-v25-oct6-{preservation,packet-hashes}.json`; one-shot status `/tmp/opentax-full-regression-source-v25-oct6.status`; log `/tmp/opentax-deno-task-test-source-v25-oct6.log`. No terminal pass/fail/ignored totals. Earlier V23test97539 andV24test896 inspected live and remain version-qualified; no elapsed-time restart. Unpaid/partial contribution source work is in a separatecheckout. Frozen52/future exact, ledger1534; fullcurrentproduction and IRS acceptance remainopen.
 
 
 ## Schedule H reviewed unpaid account balances
@@ -5413,17 +5411,17 @@ Main118c279a7 ordinary14module task terminal74/0 (6m35s), session11127; actualsa
 
 ## Immutable full regression V26
 
-Ordinary `deno task test` started2026-10-06T17:28:06Z in immutable `/tmp/opentax-full-regression-source-v26-oct6` at **a210386e3ecae72151f6389b9cf93188b31a49c9**, including settled unpaid118c, quarterlyc2 and W2Gfixture961. Actualwrapper13139/task13143/test13144 inspectedlive. Deno2.9.4/V815.0.245.2-rusty/TS6.0.3. **25,309 physicalprivate research/cache files**, distinctinodes/equalsizes/nosymlinks orhardlinks; **1,108 preserved hashes** verified. Preparation `/tmp/opentax-prepare-full-v26-oct6.py`, matching snapshotpreservation/packet-hash manifests, status andlog `/tmp/opentax-deno-task-test-source-v26-oct6.log`. LaunchAgent gui/501/com.opentax.regression.v26.oct6 has one-shot statusguard. No terminalpass/fail/ignoredtotals. EarlierV23/V24/V25 remainlive/versionqualified; no elapsedrestart. Current payroll74/0 andsaved46/272 are sealed bounded evidence, ledger1535; broader52parents and IRSacceptance remainopen. Mixed-family/state candidate remainsisolated and is not included.
+Ordinary `bun run test` started2026-10-06T17:28:06Z in immutable `/tmp/opentax-full-regression-source-v26-oct6` at **a210386e3ecae72151f6389b9cf93188b31a49c9**, including settled unpaid118c, quarterlyc2 and W2Gfixture961. Actualwrapper13139/task13143/test13144 inspectedlive. Deno2.9.4/V815.0.245.2-rusty/TS6.0.3. **25,309 physicalprivate research/cache files**, distinctinodes/equalsizes/nosymlinks orhardlinks; **1,108 preserved hashes** verified. Preparation `/tmp/opentax-prepare-full-v26-oct6.py`, matching snapshotpreservation/packet-hash manifests, status andlog `/tmp/opentax-deno-task-test-source-v26-oct6.log`. LaunchAgent gui/501/com.opentax.regression.v26.oct6 has one-shot statusguard. No terminalpass/fail/ignoredtotals. EarlierV23/V24/V25 remainlive/versionqualified; no elapsedrestart. Current payroll74/0 andsaved46/272 are sealed bounded evidence, ledger1535; broader52parents and IRSacceptance remainopen. Mixed-family/state candidate remainsisolated and is not included.
 
 
 ## October6 irregular household payroll main gate
 
-Main ordinary fourteen-module `deno task test` passed **84/0**, `/tmp/opentax-scheduleh-noordinary-main-standard-oct6.log`. Actual saved65-record replay verified **63 positive returns/386 pages** (60fresh exact and3historically qualified), plus2unchanged historical missing-period sources rejected, `/tmp/opentax-scheduleh-noordinary-main-source65-oct6/report.json`. Native XML differs only byReturnTs; every positive has exact retained source rates, fullv5.4 XSD, source/PDF preservation and corresponding graph evidence. Production SHA06a954 remained unchanged through both gates. All27newpageinstances reviewed or exact-byte transferred;47candidate/control/review and133final main files physically copied and hash-verified. No factories or original source rewrites were used. The52 broader parents, latest full batch and IRS acceptance remain open.
+Main ordinary fourteen-module `bun run test` passed **84/0**, `/tmp/opentax-scheduleh-noordinary-main-standard-oct6.log`. Actual saved65-record replay verified **63 positive returns/386 pages** (60fresh exact and3historically qualified), plus2unchanged historical missing-period sources rejected, `/tmp/opentax-scheduleh-noordinary-main-source65-oct6/report.json`. Native XML differs only byReturnTs; every positive has exact retained source rates, fullv5.4 XSD, source/PDF preservation and corresponding graph evidence. Production SHA06a954 remained unchanged through both gates. All27newpageinstances reviewed or exact-byte transferred;47candidate/control/review and133final main files physically copied and hash-verified. No factories or original source rewrites were used. The52 broader parents, latest full batch and IRS acceptance remain open.
 
 
 ## Immutable full regression V32
 
-Ordinary `deno task test` started **2026-10-06T21:47:13Z** at immutable **4ea6902e474d4f7ce82127d4ba4653f9c7124e6c**, with child-tax AMT, child-capital and owned SEP production. Snapshot `/tmp/opentax-full-regression-source-v32-oct6` contains **30,815 physically separate files**, **4,567 verified source/evidence hashes** and 42 held code hashes; normal task permissions and recorded8GBheap. Wrapper64163/task64168/test64169 verifiedlive; Deno2.9.4/V815.0.245.2-rusty/TypeScript6.0.3. Preparation script/log/preservation/hashlist/one-shotwrapper/plist physicallypreserved. V31 excludes these three main-verified production routes; ownedprocess andcommit checked before supersession, partialresults/reason andterminal143 preserved. No full-runtimepass/fail/ignoredtotals for V32. Source and IRSacceptance gates remainopen.
+Ordinary `bun run test` started **2026-10-06T21:47:13Z** at immutable **4ea6902e474d4f7ce82127d4ba4653f9c7124e6c**, with child-tax AMT, child-capital and owned SEP production. Snapshot `/tmp/opentax-full-regression-source-v32-oct6` contains **30,815 physically separate files**, **4,567 verified source/evidence hashes** and 42 held code hashes; normal task permissions and recorded8GBheap. Wrapper64163/task64168/test64169 verifiedlive; Deno2.9.4/V815.0.245.2-rusty/TypeScript6.0.3. Preparation script/log/preservation/hashlist/one-shotwrapper/plist physicallypreserved. V31 excludes these three main-verified production routes; ownedprocess andcommit checked before supersession, partialresults/reason andterminal143 preserved. No full-runtimepass/fail/ignoredtotals for V32. Source and IRSacceptance gates remainopen.
 
 
 ### Investment-interest main seal — October6
@@ -5433,17 +5431,17 @@ Mainac5fd2bde/f6cb044a1:normal28modules100/0(24m44s), isolated1/0; actual4/102fr
 
 ## Main terminal verification — October7
 
-Main checked direct `deno test --v8-flags=--max-old-space-size=8192` eight-module gate passed **66/0 (10m53s)**, terminal0, distinct from full `deno task test`. Actual17 saved returns/348returnpages plus3annualpages passed fresh full XSD and exact saved buildPending/prepared/carry/origins/PDF/native exceptReturnTs; no complete normalizeAllPending equality claim. Captured ordinary21returns/425pages plus2annualpages match retained sources and outputs; two generated cases without saved artifacts are excluded. Combined distinct inventory22returns/443pages plus3annualpages. All54 actual originals and56 runtime/test hashes remain exact, including docs-only HEAD changes. FinalV2 manifest270entries SHA f812811a97316628d9a47ac970e9dd160880ea22a8b4350dc7056027eb9137ea was physically copied with its manifest (271files) under `.state/research/qbi-aggregation-main-final-v2-oct7`; root transfer `/tmp/opentax-aggregation-final-v2-root-transfer-oct7.json`. Earlier empty redirected seal log is explicitly qualified and retained beside its completed version. Existing integration529 and immediate actual-terminal172 files remain separate retained evidence. Ledger1549 records only complete directly owned annual-election disclosure; RPE/history/other ownership/source authentication/latest full batch/IRS acceptance remain open.
+Main checked direct `bun test --timeout=1800000` eight-module gate passed **66/0 (10m53s)**, terminal0, distinct from full `bun run test`. Actual17 saved returns/348returnpages plus3annualpages passed fresh full XSD and exact saved buildPending/prepared/carry/origins/PDF/native exceptReturnTs; no complete normalizeAllPending equality claim. Captured ordinary21returns/425pages plus2annualpages match retained sources and outputs; two generated cases without saved artifacts are excluded. Combined distinct inventory22returns/443pages plus3annualpages. All54 actual originals and56 runtime/test hashes remain exact, including docs-only HEAD changes. FinalV2 manifest270entries SHA f812811a97316628d9a47ac970e9dd160880ea22a8b4350dc7056027eb9137ea was physically copied with its manifest (271files) under `.state/research/qbi-aggregation-main-final-v2-oct7`; root transfer `/tmp/opentax-aggregation-final-v2-root-transfer-oct7.json`. Earlier empty redirected seal log is explicitly qualified and retained beside its completed version. Existing integration529 and immediate actual-terminal172 files remain separate retained evidence. Ledger1549 records only complete directly owned annual-election disclosure; RPE/history/other ownership/source authentication/latest full batch/IRS acceptance remain open.
 
 
 ## Main verification complete — October7
 
-Integrated0689d76e5/acb375097/ffe0458fc passed checked direct four-module `deno test --v8-flags=--max-old-space-size=8192` **95/0 (3m37s)**, not a full-phase `deno task test`. Actual three literal sources/15pages replay with full normalized JSON projection, prepared graph, carryforwards, origins and PDF bytes exact; native differs onlyReturnTs and every packet passes fresh full official XSD. Captured ordinary three packets/15pages also match retained originals exactly. All60 held runtime/test files and22 original/reference files remain unchanged. Three additional compatibility modules physically captured after launch match launchHEAD committed blobs; broader ordinary PDF packet capture is not claimed. Final233entries+manifest=234 physical root copies under `.state/research/form8962-main-final-v2-oct7`; source manifestSHA9553a7f2b1ec05695f79ae45eed52e7a928838d4c9bd2b45ce152c72c6c148fa, roottransfer `/tmp/opentax-8962-final-v2-root-transfer-oct7.json`. Initial prepared runner failed only its in-memory undefined-versus-JSON comparison and is preserved in86 qualified files; corrected runner/output is separate. Existing158 integration+33portable copies remain distinct. Ledger1550 records this bounded mixed-source/age/blind/threshold route. Larger/joint household and coverage eligibility, other income and policy configurations, source authentication, latest full phase and IRS acceptance remain open.
+Integrated0689d76e5/acb375097/ffe0458fc passed checked direct four-module `bun test --timeout=1800000` **95/0 (3m37s)**, not a full-phase `bun run test`. Actual three literal sources/15pages replay with full normalized JSON projection, prepared graph, carryforwards, origins and PDF bytes exact; native differs onlyReturnTs and every packet passes fresh full official XSD. Captured ordinary three packets/15pages also match retained originals exactly. All60 held runtime/test files and22 original/reference files remain unchanged. Three additional compatibility modules physically captured after launch match launchHEAD committed blobs; broader ordinary PDF packet capture is not claimed. Final233entries+manifest=234 physical root copies under `.state/research/form8962-main-final-v2-oct7`; source manifestSHA9553a7f2b1ec05695f79ae45eed52e7a928838d4c9bd2b45ce152c72c6c148fa, roottransfer `/tmp/opentax-8962-final-v2-root-transfer-oct7.json`. Initial prepared runner failed only its in-memory undefined-versus-JSON comparison and is preserved in86 qualified files; corrected runner/output is separate. Existing158 integration+33portable copies remain distinct. Ledger1550 records this bounded mixed-source/age/blind/threshold route. Larger/joint household and coverage eligibility, other income and policy configurations, source authentication, latest full phase and IRS acceptance remain open.
 
 
 ## Main terminal PAB verification — October7
 
-Integrated169dfcdb3/b923a30f6 passed checked eight-module deno test -A86/0(4m40s), typechecking enabled, DENO_V8_FLAGS=--max-old-space-size=8192; this is distinct from standard restricted-permission task or full-phase success. ActualninePABreturns147pages andthree8962returns15pages replay exact originalsource/normalizedJSON/carry/origins/PDF/nativeexceptReturnTs andfreshfullXSD. Form8962preparedoriginals exact;PABoriginalprepared absent, currentpreparedoutputs preservedwithoutoriginalparityclaim. Typedsharedtop-level newmulti packet overwrittenbyoldsingle; literalreplay0 retainsnew9pagepacket byteexact, threeordinarymulti subdirPDFs exact. All70heldfiles unchanged. Final233entries+manifest234files SHA bf43c622e8e078db97af5adb5221a765e16d86fa50b08de089ee9bbeed559db6 physicallycopied/rehashed under .state/research/pab-main12-final-oct7, roottransfer /tmp/opentax-pab-main12-root-transfer-oct7.json. Existing260 integration files remain separate. Independent36page sourceDecimal/native approval/paymentguardtransfer retained. Ledger1551 records only current-year multi-issuer/PABpaid-debt/netpreference/AMT4952refigure; broadercarryovers/ownership/elections/authentication/fullbatch/IRSparents stayopen.
+Integrated169dfcdb3/b923a30f6 passed checked eight-module bun test --timeout=1800000 -A86/0(4m40s), typechecking enabled, DENO_V8_FLAGS=--max-old-space-size=8192; this is distinct from standard restricted-permission task or full-phase success. ActualninePABreturns147pages andthree8962returns15pages replay exact originalsource/normalizedJSON/carry/origins/PDF/nativeexceptReturnTs andfreshfullXSD. Form8962preparedoriginals exact;PABoriginalprepared absent, currentpreparedoutputs preservedwithoutoriginalparityclaim. Typedsharedtop-level newmulti packet overwrittenbyoldsingle; literalreplay0 retainsnew9pagepacket byteexact, threeordinarymulti subdirPDFs exact. All70heldfiles unchanged. Final233entries+manifest234files SHA bf43c622e8e078db97af5adb5221a765e16d86fa50b08de089ee9bbeed559db6 physicallycopied/rehashed under .state/research/pab-main12-final-oct7, roottransfer /tmp/opentax-pab-main12-root-transfer-oct7.json. Existing260 integration files remain separate. Independent36page sourceDecimal/native approval/paymentguardtransfer retained. Ledger1551 records only current-year multi-issuer/PABpaid-debt/netpreference/AMT4952refigure; broadercarryovers/ownership/elections/authentication/fullbatch/IRSparents stayopen.
 
 
 ## Main family integration — October7
@@ -5453,4 +5451,4 @@ Private3140e5281/cf1dc1fd5 integrated withoutconflict as e2c4eb36f/0d2980527. Pr
 
 ## Main family verification complete — October7
 
-Runtimee2c4eb36f/0d2980527 passed ordinarychecked six-module DENO_V8_FLAGS=--max-old-space-size=8192 PATH=/tmp/opentax-poppler-env/bin:$PATH deno task test99/0(8m46s), terminal0; this targetedtaskisnotfullphasepass. Exactmodulelist/log /tmp/opentax-family-main6-ordinary-oct7.log. Literalfamily5/36, priormixed8962three/15 andPABnine/147=17returns198pages passedfreshfullXSD, originalsource/normalizedJSON/carry/origins/PDFexact andnativeonlyReturnTs. Savedfamily/mixedpreparedexact;PABpriorprepared originalsabsent, no parityclaim. Ordinaryallfivefamily source/pending/prepared/carry/origins/PDF byteexact,XMLonlyReturnTs /tmp/opentax-family-main-ordinary-full-parity-oct7.json. All77heldfiles and35familyoriginals unchanged. Final228entries+manifest229physicalcopies SHA c610be2972622394619a418aa7a1d101f748b13d67675b53f8b737393cd515f5 rehashed main .state/research/form8962-family-main-final-oct7; roottransfer /tmp/opentax-family-main-root-transfer-oct7.json. Earlierauthor206+independent104=310integrationfiles retainedseparately. Rootindependentall36page/sourceDecimal/native/person-monthreview remainsapproved, includingcorrectcheckedoverflow, regionalFPLandHIwithholdingrounding. Ledger1552recordscomplete currentreviewedone-policylargerSingle/zero-income-spouseMFJfamilyroute, notallForm8962. Positive-spouseincome,otherpolicy/eligibilityroutes,source/agencyauthentication,latestfullphaseandIRSAcceptanceremainopen.
+Runtimee2c4eb36f/0d2980527 passed ordinarychecked six-module DENO_V8_FLAGS=--max-old-space-size=8192 PATH=/tmp/opentax-poppler-env/bin:$PATH bun run test99/0(8m46s), terminal0; this targetedtaskisnotfullphasepass. Exactmodulelist/log /tmp/opentax-family-main6-ordinary-oct7.log. Literalfamily5/36, priormixed8962three/15 andPABnine/147=17returns198pages passedfreshfullXSD, originalsource/normalizedJSON/carry/origins/PDFexact andnativeonlyReturnTs. Savedfamily/mixedpreparedexact;PABpriorprepared originalsabsent, no parityclaim. Ordinaryallfivefamily source/pending/prepared/carry/origins/PDF byteexact,XMLonlyReturnTs /tmp/opentax-family-main-ordinary-full-parity-oct7.json. All77heldfiles and35familyoriginals unchanged. Final228entries+manifest229physicalcopies SHA c610be2972622394619a418aa7a1d101f748b13d67675b53f8b737393cd515f5 rehashed main .state/research/form8962-family-main-final-oct7; roottransfer /tmp/opentax-family-main-root-transfer-oct7.json. Earlierauthor206+independent104=310integrationfiles retainedseparately. Rootindependentall36page/sourceDecimal/native/person-monthreview remainsapproved, includingcorrectcheckedoverflow, regionalFPLandHIwithholdingrounding. Ledger1552recordscomplete currentreviewedone-policylargerSingle/zero-income-spouseMFJfamilyroute, notallForm8962. Positive-spouseincome,otherpolicy/eligibilityroutes,source/agencyauthentication,latestfullphaseandIRSAcceptanceremainopen.

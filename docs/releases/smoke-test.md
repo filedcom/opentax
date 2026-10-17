@@ -90,7 +90,7 @@ the compiled-asset smoke with
 expected version `2.0.6`:
 
 ```sh
-deno run --allow-read --allow-write --allow-run --allow-net=www.irs.gov \
+bun \
   scripts/release/smoke-release-binary.ts ./opentax-macos-arm64 2.0.6
 ```
 

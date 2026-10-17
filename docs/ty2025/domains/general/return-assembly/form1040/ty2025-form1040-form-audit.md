@@ -62,8 +62,8 @@ which proposed workflow boundaries still need the user's approval. The
 [TY2025 schema-root census](../../../../inventory/ty2025-xsd-document-root-census.md) lists all 211
 IRS document roots permitted by the locally cached Form 1040 return schema,
 including unregistered roots awaiting applicability review. The current worktree
-had an earlier fixed-source repository-wide `deno task test` pass on the
-`11d5047d` source snapshot (8,897/8,897). A later full `deno task test` pass at `637dace9` recorded 10,891/10,891
+had an earlier fixed-source repository-wide `bun run test` pass on the
+`11d5047d` source snapshot (8,897/8,897). A later full `bun run test` pass at `637dace9` recorded 10,891/10,891
 passed on 2026-10-03. The latest completed full run and newer integrated focused/live-full evidence
 are recorded above. None proves each row's entire positive source route, filled PDF, IRS business rule,
 or ATS acceptance.

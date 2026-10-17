@@ -388,7 +388,7 @@ synthetic three-copy case passes final native export, local TY2025 v5.4 XSD,
 and a three-page filled-PDF text check. The exact test is
 `one or more sourced mortgages apply one reviewed Pub. 936 limit in native and PDF exports`
 in `forms/f1040/2025/domains/deductions/mortgage/f1098/f1098_three_loan_limit.test.ts`, run with
-`PATH=/tmp/opentax-pdf-tools:$PATH deno test --allow-read --allow-write --allow-run=xmllint,pdftotext --allow-net=www.irs.gov forms/f1040/2025/domains/deductions/mortgage/f1098/f1098_three_loan_limit.test.ts`
+`PATH=/tmp/opentax-pdf-tools:$PATH bun test --timeout=1800000 forms/f1040/2025/domains/deductions/mortgage/f1098/f1098_three_loan_limit.test.ts`
 (1 passed). Pub. 936 says to complete one Table 1 for both main and second
 homes regardless of mortgage count, and its lender-statement method includes
 zero balances for months a mortgage did not secure a qualified home.
@@ -440,9 +440,9 @@ v5.4 XSD validation: the source calculation carries $21,000 to Schedule A
 line 8a and Form 1040 itemized deductions. The direct Schedule A PDF projection
 case also passed, checking the same $21,000 amount and rejecting a changed
 filed total or a second-loan recipient that is not the filer. Focused commands:
-`deno test --allow-read --allow-write --allow-run=xmllint --allow-net=www.irs.gov --filter='2025 purchase points and an existing mortgage' forms/f1040/2025/mef/xsd_validation.test.ts`
+`bun test --timeout=1800000 -t '2025 purchase points and an existing mortgage' forms/f1040/2025/mef/xsd_validation.test.ts`
 (1 passed) and
-`deno test --filter='Schedule A PDF replays purchase points and the second mortgage' forms/f1040/2025/pdf/forms/deductions/itemized/schedule_a.test.ts`
+`bun test --timeout=1800000 -t 'Schedule A PDF replays purchase points and the second mortgage' forms/f1040/2025/pdf/forms/deductions/itemized/schedule_a.test.ts`
 (1 passed). The later capped-ratio case also generated a three-page packet;
 all pages were visually inspected and its Schedule A/Form 1040 amounts match
 native XML. Issuer provenance, loan and points records, other loan counts,

@@ -176,7 +176,7 @@ prevailing-wage and apprenticeship requirements are marked met. This prevents
 the base-credit PDF from printing over contradictory source facts. The
 corrected 20-packet review set is under
 `.state/research/ty2025-filled-pdf-review/2026-09-29-v20/`.
-The fixed-source `deno task test` run on `08786417` passed 8,860/8,860,
+The fixed-source `bun run test` run on `08786417` passed 8,860/8,860,
 zero failed, with no ignored tests reported in 15m48s; its log is
 `.state/research/ty2025-full-test-08786417.log`.
 

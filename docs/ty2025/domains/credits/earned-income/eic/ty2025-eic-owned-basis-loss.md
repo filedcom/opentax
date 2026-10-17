@@ -21,7 +21,7 @@ All four have zero taxable income/tax and no withholding; allowed losses remain 
 
 ## Verification and retained artifacts
 
-Focused typed gate1/0(17s) includes all four complete native/fullTY2025v5.4XSD/PDF returns and conflicting-source cases, `/tmp/opentax-eic-owned-loss-focused-v3-oct6.log`. Standard five-module `deno task test` EIC compatibility is terminal30passed/0failed/0ignored(1m24s), `/tmp/opentax-eic-owned-loss-main-standard-oct6.log`.
+Focused typed gate1/0(17s) includes all four complete native/fullTY2025v5.4XSD/PDF returns and conflicting-source cases, `/tmp/opentax-eic-owned-loss-focused-v3-oct6.log`. Standard five-module `bun run test` EIC compatibility is terminal30passed/0failed/0ignored(1m24s), `/tmp/opentax-eic-owned-loss-main-standard-oct6.log`.
 
 Original final archive `/tmp/opentax-eic-owned-loss-final-oct6` retains actual public input/filer, normalized wholepending, preparedpending, carryforwards, origins, independent expected values, XML and PDF. Raw replay `/tmp/opentax-eic-owned-loss-main-raw-oct6.ts` reads those saved inputs without fixture factories; terminal report `/tmp/opentax-eic-owned-loss-main-raw-oct6/report.json` verifies four packets/34pages exact wholepending/preparedpending/carry/origins/source/PDF, XML onlyReturnTs and fullXSD. All34pages visually reviewed, plus full-size joint1040/E showing distinct losses and649EIC; root review `/tmp/opentax-eic-owned-loss-root-review-oct6.json`. All12original files independently copied/hash-compared to `.state/research/eic-owned-basis-loss-oct6-preserved`, manifest `/tmp/opentax-eic-owned-loss-root-preservation-oct6.json`.
 

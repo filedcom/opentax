@@ -673,7 +673,7 @@ After the previous full regression's verified exit zero, all thirteen
 Form 8801 commits applied to root without conflicts. Runtime head
 `46cac16e5412ba92caf5707bd7ad128b371d2851` exactly matches the focused-tested
 integration checkout on all **2,658 runtime paths**. The next normal
-`deno task test` started at **05:58:56 UTC**, serially after the earlier run.
+`bun run test` started at **05:58:56 UTC**, serially after the earlier run.
 Private `root-form8801-full-regression-20261008-v1/` retains the startup
 commit, runtime manifest, command, Deno/Poppler versions, environment and
 integration review. Its live session is 88611; there is no terminal result

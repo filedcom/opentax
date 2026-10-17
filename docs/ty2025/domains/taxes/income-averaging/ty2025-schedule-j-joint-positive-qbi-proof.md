@@ -22,7 +22,7 @@ The separate fishing Form 8995-A column retains a zero wage/property limit. Each
 - `/tmp/opentax-schedulej-joint-positive-futa-final-focused-oct6.log`: 3 passed, 0 failed; eight corrected packets, full TY2025 v5.4 XSD, native XML and real PDFs, 152 pages.
 - `futa-rendered/`: all six changed wage-bearing PDFs (116 pages, 30 contact sheets) visually reviewed. The two property-only PDFs (36 pages) have hashes identical to the original fully reviewed drafts. All revised pages are legible, with Schedule F $1,815 line 29 and $478,185 profit, distinct owner SE copies, Form 8995-A first column zero and farm column $10,000 or $15,000, and 1040/J/no-J tax joins.
 - `/tmp/opentax-schedulej-joint-positive-futa-final-replay-oct6.log`: raw archived `source-pending.json` inputs read without fixture regeneration, full return/export/XSD replay, source/pending/PDF/origins exact and XML only `ReturnTs`: **28 packets, 528 pages exact**. This includes new 8/152 and unchanged earlier zero-limit 4/76, phase-in 4/76, lower-income 4/72, and prior fishing 8/152.
-- `deno check`, targeted `deno lint`, and `git diff --check` passed. No main, board, or future-todo edit.
+- `bun run typecheck`, targeted `bun run lint`, and `git diff --check` passed. No main, board, or future-todo edit.
 
 ## Main integration verification
 

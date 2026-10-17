@@ -69,14 +69,14 @@ the held artifact hashes.
 
 The final normal-permissions typed module gate passed **3/0** (log
 `/tmp/opentax-form4972-paper-normal-permissions-oct6.log`). It used
-`deno test --allow-read --allow-write --allow-run=deno --allow-net=www.irs.gov`
+`bun test --timeout=1800000`
 with an 8 GB V8 heap allowance and no special environment permission.
 Its fresh `/tmp/opentax-form4972-paper-evidence-final-v2-oct6` outputs have
 the same three reviewed PDF bytes and the same source/graph facts apart from
 filer timestamps; comparison:
 `/tmp/opentax-form4972-paper-normal-final-comparison-oct6.json`. The CLI
 subprocess within the test uses `--no-check`; the module and CLI entrypoint
-separately passed `deno check` before this typed test. No local XSD result is
+separately passed `bun run typecheck` before this typed test. No local XSD result is
 claimed for the three paper packets because this path emits no native XML.
 
 The six previously supported collection packets still pass their ordinary
@@ -92,6 +92,6 @@ made; it was not a tax or projection failure.
 
 ## Main terminal verification
 
-Integrated production40a89f5d2. Main ordinary typed four-module `deno task test` passed **55/0 (2m34s)**, terminalexit0, with recorded8GB V8 and normal task permissions. `/tmp/opentax-form4972-paper-main-standard-oct6.log`; all nine ordinary PDFs exactly match reviewed23paper and36electronic pages. The paper wrappers remain intact; staged inputs use separate `.staged.json` names. `/tmp/opentax-form4972-paper-main-standard-source-transfer-oct6.json` records byte transfer and12heldruntime/test hashes. Thirty ordinary artifact/log/transfer/held files physically copied and independently rehashed.
+Integrated production40a89f5d2. Main ordinary typed four-module `bun run test` passed **55/0 (2m34s)**, terminalexit0, with recorded8GB V8 and normal task permissions. `/tmp/opentax-form4972-paper-main-standard-oct6.log`; all nine ordinary PDFs exactly match reviewed23paper and36electronic pages. The paper wrappers remain intact; staged inputs use separate `.staged.json` names. `/tmp/opentax-form4972-paper-main-standard-source-transfer-oct6.json` records byte transfer and12heldruntime/test hashes. Thirty ordinary artifact/log/transfer/held files physically copied and independently rehashed.
 
 Main actual saved-input replay passed3paperreturns/23pages with full graph/carry/origins/PDF parity and native/defaultPDFmax2 negatives; all original six JSON/PDF files unchanged. Main prior6electronic replay passed36pages with full graph/prepared/carry/origins/PDF parity, native changes onlyReturnTs, freshfullv5.4 XSD and18original sourcefiles unchanged. These replays call no source fixture factory and rewrite no source. Main13paper/34prior/candidate21/rootreview33 physical files rehashed before seal; combined12code hashes exact. Ledger1543 records this paper-only channel, not IRS acceptance, source authentication, broader ScheduleJ/AMT coverage or full regression completion.

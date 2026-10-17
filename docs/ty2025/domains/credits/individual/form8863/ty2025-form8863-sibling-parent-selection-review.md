@@ -147,8 +147,8 @@ outside the reviewed complete family inventory.
   zero fields/widgets, 21 matching source/XML/PDF hashes and seven complete
   Return1040 XSD validations. All-page visual proof is retained in the evidence
   directory, including the corrected `.431`/`.569` ratio fields.
-- Production source helpers and Form 8615 PDF descriptor pass `deno lint`;
-  all 11 edited TypeScript files pass `deno fmt --check`; `git diff --check`
+- Production source helpers and Form 8615 PDF descriptor pass `bun run lint`;
+  all 11 edited TypeScript files pass `bun run fmt:check`; `git diff --check`
   passes. Fixture mutation types retain the existing test convention.
 
 The preliminary 27-file run recorded 467 passes and one PDF text assertion

@@ -191,7 +191,7 @@ fixture row or prove authentic prior filing, issuer source, business-rule
 compatibility, final tax treatment, or an accepted return.
 
 The normal typed focused command
-`PATH=/tmp/opentax-poppler-env/bin:$PATH deno test --allow-read --allow-write --allow-run=pdftotext forms/f1040/2025/mef/forms/general/investments/f8997.staged.test.ts forms/f1040/nodes/inputs/f8997`
+`PATH=/tmp/opentax-poppler-env/bin:$PATH bun test --timeout=1800000 forms/f1040/2025/mef/forms/general/investments/f8997.staged.test.ts forms/f1040/nodes/inputs/f8997`
 passes **24/0**, including multi-page retention in all parts, exact five-row
 holding boundary, changed totals/rows/checkboxes, missing source joins, and
 missing identity. Initial tool-PATH and fixture type errors were corrected

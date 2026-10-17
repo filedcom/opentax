@@ -137,7 +137,7 @@ This is local source-to-return evidence, not external eligibility proof or IRS
 acceptance.
 
 The focused Form 8874/Form 3800/review-fixture tests passed 31/31. The
-fixed-source `deno task test` run on `5eeb5e6b` passed 8,862/8,862, zero failed,
+fixed-source `bun run test` run on `5eeb5e6b` passed 8,862/8,862, zero failed,
 with no ignored tests reported in 20m21s; its log is
 `.state/research/ty2025-full-test-5eeb5e6b.log`.
 
@@ -156,7 +156,7 @@ values are `1c11943707c83a04b2d764b17943340322737afd772749c1d94c84797194a050`
 `18297b5ffd6ffb8c58e07a0f15539dd247008397045a9a9006e0f4cc3bb1d9f4` (six rows).
 The focused prepared-return and 23-fixture XSD suite passes 30/30.
 
-The fixed-source `deno task test` run on `f0839295` passed 8,866/8,866, zero
+The fixed-source `bun run test` run on `f0839295` passed 8,866/8,866, zero
 failed, with no ignored tests reported in 20m30s; its log is
 `.state/research/ty2025-full-test-f0839295.log`.
 

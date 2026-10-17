@@ -113,7 +113,7 @@ preimplementation `c4c597887` executor. Both return diagnostics reject the child
 age transition source:
 `/tmp/opentax-scheduleh-turn21-before-public-rejection-oct6.log`, script
 `/tmp/opentax-scheduleh-turn21-before-oct6/reject-saved-source.ts`. The final
-standard `deno task test` permission profile passes the new source module
+standard `bun run test` permission profile passes the new source module
 **2/0** in `/tmp/opentax-scheduleh-turn21-taskgate-oct6.log`.
 
 

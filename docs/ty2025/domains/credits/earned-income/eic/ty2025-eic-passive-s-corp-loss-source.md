@@ -22,7 +22,7 @@ The admitted cash at-risk amount equals the reconciled stock cash, so the basis-
 
 ## Validation and remaining original work
 
-Normal typed `deno test forms/f1040/2025/domains/credits/earned-income/eic/eic_passive_s_corp_loss_source.test.ts` completed at **12:51:15 UTC October 8, actual exit 0, 33 passed / 0 failed**. Tests cover the three basis cases, spouse participation/operator conflicts, wrong owner/issuer/statement joins, bank/share mismatch, protected or borrowed funding, prior/predecessor activity, inconsistent timing, missing/duplicate months, reference reuse, ordinary/QBI totals and exact-integer overflow. The preliminary 31-case run was superseded after two additional hostile cases; these counts are not additive.
+Normal typed `bun test --timeout=1800000 forms/f1040/2025/domains/credits/earned-income/eic/eic_passive_s_corp_loss_source.test.ts` completed at **12:51:15 UTC October 8, actual exit 0, 33 passed / 0 failed**. Tests cover the three basis cases, spouse participation/operator conflicts, wrong owner/issuer/statement joins, bank/share mismatch, protected or borrowed funding, prior/predecessor activity, inconsistent timing, missing/duplicate months, reference reuse, ordinary/QBI totals and exact-integer overflow. The preliminary 31-case run was superseded after two additional hostile cases; these counts are not additive.
 
 Private evidence: `.state/research/board-execution-2026-10-07/eic-passive-s-corp-loss-source-20261008-v1/`, including preflight source hashes, actual command log and terminal status. Log SHA-256: `ce1085a1055b6da1874ba1e2b5e045b20726b35c2cccce31eaea0c8a1435b29f`.
 

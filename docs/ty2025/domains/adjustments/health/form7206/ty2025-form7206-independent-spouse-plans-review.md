@@ -332,7 +332,7 @@ generator argument, and restore the catalog afterward. The exact completed
 checker command was:
 
 ```sh
-PATH=/tmp/opentax-poppler-env/bin:/Users/atul/.deno/bin:$PATH deno run -A scripts/research/check-ty2025-pdf-review.ts .state/research/ty2025-filled-pdf-review/2026-10-06-mixed-cf-loss-health /Users/atul/projects/opentax/.state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd
+PATH=/tmp/opentax-poppler-env/bin:/Users/atul/.deno/bin:$PATH bun scripts/research/check-ty2025-pdf-review.ts .state/research/ty2025-filled-pdf-review/2026-10-06-mixed-cf-loss-health /Users/atul/projects/opentax/.state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd
 ```
 
 Final direct-factory test with explicit XML netloss−11201/carryforward11201

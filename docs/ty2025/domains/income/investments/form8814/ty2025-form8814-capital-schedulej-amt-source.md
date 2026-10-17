@@ -65,7 +65,7 @@ final PDFs are byte-identical to v2. The third PDF has SHA-256
 `096d6ea603e0238480269cdce095ae413ae03d59940b1e07a49e0203edb57110`. The no-check
 source gate passed 3/0 with full local XSD, and exact saved-source replay passed
 all three: source bytes, normalized pending, carry, page origins, PDF, and
-native XML except `ReturnTs`. `deno check` passed, and the ordinary typechecked
+native XML except `ReturnTs`. `bun run typecheck` passed, and the ordinary typechecked
 three-case source gate passed 3/0 in 1m19s; its three PDF hashes match the
 reviewed v4 packet byte for byte. The prior positive and zero-child- tax Form
 8814/Schedule J packets and both old Form 8814 packets were replayed against
@@ -80,7 +80,7 @@ establishes IRS acceptance.
 
 ## Main integration verification
 
-Production `226bb645e` passed the normal ten-module `deno task test` gate: **26 passed / 0 failed (7m41s)** with the recorded 8 GB heap and normal task permissions. All fifteen ordinary PDFs match **236 reviewed pages**; source/graph/carry/origin JSON agrees with the final three-case archive or prior ordinary gate, and native XML differs only by `ReturnTs`. The current thirteen-file held manifest updates overlapping child-tax files without rewriting their earlier manifest.
+Production `226bb645e` passed the normal ten-module `bun run test` gate: **26 passed / 0 failed (7m41s)** with the recorded 8 GB heap and normal task permissions. All fifteen ordinary PDFs match **236 reviewed pages**; source/graph/carry/origin JSON agrees with the final three-case archive or prior ordinary gate, and native XML differs only by `ReturnTs`. The current thirteen-file held manifest updates overlapping child-tax files without rewriting their earlier manifest.
 
 Main actual saved-source replay passed **three returns / 76 pages**, with exact normalized pending, carry, origins, PDF bytes and timestamp-only native changes plus fresh full local XSD. Twelve older saved-source returns passed **126 pages** with fresh XSD and unchanged reviewed PDFs. Eight AMT and two Schedule J wrappers have no saved carry values; two earlier child returns retain the separately qualified added source-derived dividend QBI provenance and exact saved carry values. All original packet hashes remain unchanged.
 

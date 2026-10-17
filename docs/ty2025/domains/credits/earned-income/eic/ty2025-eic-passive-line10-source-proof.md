@@ -99,7 +99,7 @@ Form 4797.
 Final source command (standard task permissions):
 
 ```sh
-PATH=/tmp/opentax-poppler-env/bin:/Users/atul/.deno/bin:$PATH deno task test forms/f1040/2025/domains/credits/earned-income/eic/eic_passive_line10_source.test.ts -- --write-review-artifacts /tmp/opentax-eic-passive-line10-evidence-v6-oct6
+PATH=/tmp/opentax-poppler-env/bin:/Users/atul/.deno/bin:$PATH bun run test forms/f1040/2025/domains/credits/earned-income/eic/eic_passive_line10_source.test.ts -- --write-review-artifacts /tmp/opentax-eic-passive-line10-evidence-v6-oct6
 ```
 
 Final source v6 is terminal **2 passed / 0 failed (56s)**, with nine complete
@@ -111,7 +111,7 @@ only.
 
 The held-code 54-module file list is
 `/tmp/opentax-eic-passive-line10-standard-files-oct6.txt`; run
-`deno task test $(cat /tmp/opentax-eic-passive-line10-standard-files-oct6.txt)`.
+`bun run test $(cat /tmp/opentax-eic-passive-line10-standard-files-oct6.txt)`.
 Logs are `/tmp/opentax-eic-passive-line10-source-v6-oct6.log` and
 `/tmp/opentax-eic-passive-line10-standard-v2-oct6.log`. Earlier standard v1 was
 678/0 but predates the final joint header correction; v5 source was 2/0. These
@@ -140,7 +140,7 @@ raster/text identity. Hash inventory
 Portable exact replay:
 
 ```sh
-PATH=/tmp/opentax-poppler-env/bin:/Users/atul/.deno/bin:$PATH deno run --config deno.json --allow-read --allow-write --allow-net=www.irs.gov --allow-run=xmllint /tmp/opentax-eic-passive-k1-retained-portable-final-oct6.ts CHECKOUT PRIVATE_PDF_CACHE NEW_OUTPUT RETAINED_ARCHIVE...
+PATH=/tmp/opentax-poppler-env/bin:/Users/atul/.deno/bin:$PATH bun /tmp/opentax-eic-passive-k1-retained-portable-final-oct6.ts CHECKOUT PRIVATE_PDF_CACHE NEW_OUTPUT RETAINED_ARCHIVE...
 ```
 
 Final new nine packets use the final-retained-v6 archive. Prior 33 packets / 271

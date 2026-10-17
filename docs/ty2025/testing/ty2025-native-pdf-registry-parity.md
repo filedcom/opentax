@@ -102,7 +102,7 @@ reports 187 fixtures, 113 unique registered PDF keys, 85 expected keys, and 28
 uncovered keys. The additional fixture is the MFS mortgage case. These figures
 describe inventory, not support or inspected pages.
 
-Commands: `deno run --allow-read scripts/research/plan-ty2025-pdf-review.ts` and a
+Commands: `bun scripts/research/plan-ty2025-pdf-review.ts` and a
 `deno eval` import of `ALL_MEF_FORMS`. The full regression log
 `/tmp/opentax-deno-task-test-a268f60c.log` records the native/PDF suites for
 Forms 5471 and companions, 8992, 8611, 965-A, 8911, 8978, 982, and 8582-CR,
@@ -289,7 +289,7 @@ Final focused verification passed **55/55** with type checking, including all 47
 
 ## October 6 current registry and planner reconciliation
 
-At code `2899d051b`, live imports contain **150 native descriptors (146 unique pending keys)** and **116 PDF descriptors (113 unique keys)**. Exact source-only planner: **365 fixtures, 96 expected keys, 17 uncovered keys**. Commands: `deno run --allow-read scripts/research/plan-ty2025-pdf-review.ts` and live `ALL_MEF_FORMS`/`ALL_PDF_FORMS` imports. Planner evidence `/tmp/opentax-pdf-planner-2899.json`, SHA-256 `95d99e58c4c2ed8e1895a9c1e1d0fc941dffdc4340a5e55452e549687d34e6ad`; key comparison `/tmp/opentax-registry-parity-2899.json`, SHA-256 `5f7b509b6b5d2f4bf101d902fdb6b9fb9934d72f4558ff9e6aea781bd73356d4`.
+At code `2899d051b`, live imports contain **150 native descriptors (146 unique pending keys)** and **116 PDF descriptors (113 unique keys)**. Exact source-only planner: **365 fixtures, 96 expected keys, 17 uncovered keys**. Commands: `bun scripts/research/plan-ty2025-pdf-review.ts` and live `ALL_MEF_FORMS`/`ALL_PDF_FORMS` imports. Planner evidence `/tmp/opentax-pdf-planner-2899.json`, SHA-256 `95d99e58c4c2ed8e1895a9c1e1d0fc941dffdc4340a5e55452e549687d34e6ad`; key comparison `/tmp/opentax-registry-parity-2899.json`, SHA-256 `5f7b509b6b5d2f4bf101d902fdb6b9fb9934d72f4558ff9e6aea781bd73356d4`.
 
 Uncovered keys: `f4255`, `f5471_parent`, `f5471_schedule_e`, `f5471_schedule_h`, `f5471_schedule_i1`, `f5471_schedule_j`, `f5471_schedule_m`, `f5471_schedule_p`, `f5471_schedule_q`, `f5471_schedule_r`, `f8854`, `f8854_annual`, `f965`, `form8582cr`, `form8990`, `form8992`, `form8992_schedule_a`. Key comparison still identifies `form8621` as a native parent without a matching PDF descriptor; statement/source keys require individual packet review. `f4835_at_risk` emits Form6198 using the existing PDF route, and native `f8911` has the separate PDF companion key `f8911_schedule_a`; key names alone are not absence/support decisions. These counts establish inventory only. Named-form parents are part of the current goal; none is deferred from execution or approved for exclusion.
 
@@ -333,7 +333,7 @@ The current canonical descriptors now use [IRS Form4852 September2020 archive](h
 
 ## October 6 child-tax AMT inventory reconciliation
 
-Live descriptor imports after the child-tax AMT seal contain **152 native descriptors / 148 keys** and **118 PDF descriptors / 115 keys**. The source-only PDF planner now lists **372 fixtures**, **99 covered keys** and **16 uncovered keys**. This updates the earlier 369-fixture inventory without changing a registered descriptor or promoting any filing route. The actual planner output and registry import counts are retained at `/tmp/opentax-current-pdf-planner-child-amt-seal-oct6.json` and `/tmp/opentax-current-registry-child-amt-seal-oct6.json`, with physical copies under main research. Commands were `deno run --allow-read scripts/research/plan-ty2025-pdf-review.ts` and direct live imports of both descriptor arrays; session83514 completed exit0. Fixture inventory does not prove executed positive routes or visual review. Wider applicability, source authentication, business rules, full regression and IRS acceptance remain open.
+Live descriptor imports after the child-tax AMT seal contain **152 native descriptors / 148 keys** and **118 PDF descriptors / 115 keys**. The source-only PDF planner now lists **372 fixtures**, **99 covered keys** and **16 uncovered keys**. This updates the earlier 369-fixture inventory without changing a registered descriptor or promoting any filing route. The actual planner output and registry import counts are retained at `/tmp/opentax-current-pdf-planner-child-amt-seal-oct6.json` and `/tmp/opentax-current-registry-child-amt-seal-oct6.json`, with physical copies under main research. Commands were `bun scripts/research/plan-ty2025-pdf-review.ts` and direct live imports of both descriptor arrays; session83514 completed exit0. Fixture inventory does not prove executed positive routes or visual review. Wider applicability, source authentication, business rules, full regression and IRS acceptance remain open.
 
 ## October 7: current uncovered PDF keys and filing boundaries
 

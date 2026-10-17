@@ -9,7 +9,6 @@ import * as sys from "../../../../scripts/support/sys.ts";
  * type mismatch) surfaces as a test failure before it can reach the IRS.
  *
  * Requires: xmllint (pre-installed on macOS/Linux via libxml2)
- * Permissions: --allow-read --allow-write --allow-run=xmllint
  */
 
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";

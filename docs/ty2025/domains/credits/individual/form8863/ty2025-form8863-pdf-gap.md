@@ -44,7 +44,7 @@ stays46/133, with every one of133 case rows identical to the prior checkpoint.
 Private evidence: `.state/research/form8863-foreign-school-2026-10-09/` retains
 sources, expected/finalized records, XML, full PDFs, all52 renders, review/hash
 reports, test logs, and the benchmark comparison. The committed regression is
-`form8863_foreign_school_source.test.ts`; run with `deno test -A` and
+`form8863_foreign_school_source.test.ts`; run with `bun test --timeout=1800000` and
 `-- --write-review-artifacts` to retain the eight packets. These synthetic
 amounts are already U.S. dollars; the checkpoint does not verify currency
 conversion, source authenticity, wider eligibility, or IRS acceptance.
@@ -110,7 +110,7 @@ source authentication and IRS acceptance remain open.
 Private evidence: `.state/research/form8863-prior-school-2026-10-09/` retains
 source/pending/expected records, native XML, full PDFs, renders, page hashes,
 verification report, focused/grouped/replay logs and benchmark comparison.
-Run the `form8863_prior_school_source.test.ts` review with `deno test -A` and
+Run the `form8863_prior_school_source.test.ts` review with `bun test --timeout=1800000` and
 `-- --write-review-artifacts`; the retained verifier checks XSD and full packets.
 
 ## October 9 school-continuation source checkpoint

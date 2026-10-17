@@ -240,7 +240,7 @@ multi-source Schedule SE, wider source coverage and IRS acceptance remain
 open; no broad board task is closed.
 
 Reproduce with
-`deno test -A forms/f1040/e2e/taxes/employment/form8959/form8959_employment_sources.test.ts`.
+`bun test --timeout=1800000 forms/f1040/e2e/taxes/employment/form8959/form8959_employment_sources.test.ts`.
 The local IRS schema and `xmllint` are required; these tests do not silently
 skip. Add `-- --evidence-dir=<directory>` to retain the three source/pending
 JSON records, XML returns and generated PDFs. Private artifacts, both passing

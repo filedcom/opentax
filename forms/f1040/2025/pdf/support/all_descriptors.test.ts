@@ -13,7 +13,7 @@ import { test } from "bun:test";
  *   7. No exact duplicate field mappings within a form.
  *   8. Row descriptors have {row} placeholder in pdfFieldPattern.
  *
- * Network existence tests require --allow-net=www.irs.gov and validate the
+ * Network existence tests need network access to www.irs.gov and validate the
  * mapped field names, types and widget presence against the referenced IRS PDFs.
  */
 import { assert, assertEquals, assertMatch } from "@std/assert";

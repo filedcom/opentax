@@ -109,7 +109,7 @@ accounts: `/tmp/opentax-prior-mining-charity-retained-prerequisite-replay-v1.log
 No source factory, issuer regeneration or acceptance substitute is used:
 
 ```
-PATH=/tmp/opentax-poppler-env/bin:/Users/atul/.deno/bin:$PATH deno run -A --config deno.json \
+PATH=/tmp/opentax-poppler-env/bin:/Users/atul/.deno/bin:$PATH bun \
  /tmp/opentax-prior-mining-charity-retained-prerequisite-replay.ts <checkout> \
  /tmp/opentax-prior-mining-charity-prerequisite-evidence-terminal-v6 <fresh-output-dir>
 ```

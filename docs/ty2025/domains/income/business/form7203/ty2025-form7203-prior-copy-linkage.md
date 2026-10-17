@@ -39,7 +39,7 @@ after comparison and retains `issuerAuthenticated: false`.
 Before-control evidence at unchanged2fef4f068 is retained in
 `/tmp/opentax-7203-prior-history-before-control-oct6.log`: the changed separate
 copy is accepted and the new rejection assertion fails0/1. This is the expected
-before failure, not a regression pass. Final candidate runtime control (`deno test --no-check` with the retained
+before failure, not a regression pass. Final candidate runtime control (`bun test --timeout=1800000` with the retained
 prior-reduced test filter) is terminal **1passed/0failed/8filtered**. It verifies
 byte retention, candidate $200 gain, the three synchronized-content controls,
 and continuing public/direct/native/PDF rejection. That runtime log predates
@@ -54,7 +54,7 @@ The initial two-module check was superseded and canceled after the metadata
 production correction (exit143), with no pass claim. The final production ordinary two-module typed gate is terminal **14passed/
 0failed** (28seconds), log `/tmp/opentax-7203-prior-history-final-broad-oct6.log`,
 with production SHAc5e68cf207e2b2bf2c6056714f90d17efb0d45ca10af43c0e691e347788288fb
-held. The latest test-source `deno check` for the optional exporter is terminal
+held. The latest test-source `bun run typecheck` for the optional exporter is terminal
 **exit0**, log `/tmp/opentax-7203-prior-history-final-test-check-oct6.log`. This
 checks the actual retained exporter added after that broad gate began. An optional `--write-prior7203-evidence`
 argument retains actual final plain and schema-metadata inputs, ten source bytes

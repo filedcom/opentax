@@ -202,7 +202,7 @@ final preservation manifest; it does not rewrite or subsume it.
 
 ## Main completion evidence
 
-Productiona673724d4/evidence4c184d961. Ordinary typed two-module `deno task test` main57721 terminalexit0: **6/0 (3m6s)** with recorded8GB V8. Sevenhealth145pages andfivecompat95pages regenerateexact reviewed PDFs; theirsourcewrappers differonlyfiler timestamp andnativeXMLonlyReturnTs.39ordinaryphysicalfiles plusfinalindependentauditcopy retained; `/tmp/opentax-patron-health-main-standard-source-transfer-oct6.json`.
+Productiona673724d4/evidence4c184d961. Ordinary typed two-module `bun run test` main57721 terminalexit0: **6/0 (3m6s)** with recorded8GB V8. Sevenhealth145pages andfivecompat95pages regenerateexact reviewed PDFs; theirsourcewrappers differonlyfiler timestamp andnativeXMLonlyReturnTs.39ordinaryphysicalfiles plusfinalindependentauditcopy retained; `/tmp/opentax-patron-health-main-standard-source-transfer-oct6.json`.
 
 Mainactual7 replay93848 terminal0: exact savedbuildPending/prepared/carry/origins/PDF/nativeonlyTs/freshfullv5.4 XSD, all21originalsourcefiles unchanged, eightv5runtime/testhashesheld. Fullnormalizedgraph equalsimmutablefinalcandidate execution of actualsourceinputs; savedarchivesstorebuildPending, notrawgraph. Firstrootreplay22532 incorrectlycomparedthose representations; onlyunusedzeroForm8960differed, failedscript/logretained. Corrected `/tmp/opentax-patron-health-main7-v2-oct6/report.json` retains explicitrepresentationqualification.
 

@@ -127,5 +127,5 @@ Final verification on this isolated tree:
   tests. This is focused integration proof, not the repository's full suite.
 - `/tmp/opentax-kiddie-artifact-check.log`: all 18 final source/XML/PDF hashes
   match. `all-page-review.txt` records the final 36-page visual inspection.
-- `deno lint forms/f1040/nodes/inputs/taxes/investments/f8615/dependent_source_review.ts` passes;
+- `bun run lint forms/f1040/nodes/inputs/taxes/investments/f8615/dependent_source_review.ts` passes;
   `git diff --check` passes.

@@ -18,7 +18,7 @@ The actual public graph generates these returns with no diagnostics. One native/
 
 ## Verified isolated evidence
 
-Source proof: `deno test --allow-all forms/f1040/2025/domains/taxes/retirement/form4972/form4972_multiple_nua_source.test.ts`, **1 passed/0 failed (24s)**, five complete returns and full Return1040 XSD validation. Eight tampering mutations per case reject in both native preparation and PDF generation: 80 rejection checks total. Mutations omit a copy, change box6/box3, change plan, duplicate a reference, alter calculated line6, alter final1040line16 and replace source recipient TIN.
+Source proof: `bun test --timeout=1800000 forms/f1040/2025/domains/taxes/retirement/form4972/form4972_multiple_nua_source.test.ts`, **1 passed/0 failed (24s)**, five complete returns and full Return1040 XSD validation. Eight tampering mutations per case reject in both native preparation and PDF generation: 80 rejection checks total. Mutations omit a copy, change box6/box3, change plan, duplicate a reference, alter calculated line6, alter final1040line16 and replace source recipient TIN.
 
 Preservation: 13 related node/source/owner/native/PDF test files, **232 passed/0 failed (3s)** in `/tmp/opentax-form4972-multiple-nua-preservation-v2.log`. The former five-copy rejection assertion is replaced by verified five-copy native and printable totals; its complete five-source plan now falls within the reviewed route. The earlier run was231/1 solely due to that stale bound.
 

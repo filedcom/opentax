@@ -49,7 +49,7 @@ amount cells0, blank date, no native dated distribution group.
 Repeat the native proof from an isolated checkout with local docs read-cache:
 
 ```
-FORM5471_LINKAGE_EVIDENCE_DIR=<fresh-output> PATH=/tmp/opentax-poppler-env/bin:/Users/atul/.deno/bin:$PATH deno test -A forms/f1040/2025/mef/forms/general/foreign/f5471/f5471_linkage.test.ts
+FORM5471_LINKAGE_EVIDENCE_DIR=<fresh-output> PATH=/tmp/opentax-poppler-env/bin:/Users/atul/.deno/bin:$PATH bun test --timeout=1800000 forms/f1040/2025/mef/forms/general/foreign/f5471/f5471_linkage.test.ts
 ```
 
 The retained-source PDF replay script is

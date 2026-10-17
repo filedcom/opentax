@@ -86,7 +86,7 @@ Evidence is retained privately in
 XML/PDF, component and final-public logs, page inventory, contact sheets,
 independent verifier, packet-verification, visual-review and SHA256SUMS.
 The earlier component XSD test is separate from these seven new public packets.
-Run the public module with `deno test -A` and optional
+Run the public module with `bun test --timeout=1800000` and optional
 `-- --evidence-dir=<directory>`; full XSD needs the local authorized schema
 cache and `xmllint`, and PDFs need the template cache/network.
 Synthetic lender/loan-use references do not authenticate real source documents.

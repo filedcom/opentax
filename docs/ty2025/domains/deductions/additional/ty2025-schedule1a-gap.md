@@ -235,7 +235,7 @@ $5,400 for each spouse in Part V, and $10,800 on line 38 and Form 1040 line
 local XSD. The remaining positive Part I exclusions, other Part II sources,
 other Part III/IV sources, source authentication, IRS business rules,
 and ATS acceptance remain open.
-The source commit `89b972c6` passed the complete `deno task test` run at
+The source commit `89b972c6` passed the complete `bun run test` run at
 8,932/8,932 with zero failures; the log is retained at
 `.state/research/ty2025-full-test-schedule1a-pdf.log`.
 
@@ -252,7 +252,7 @@ Form 1040 line 13b prints $5,000. The page review and SHA-256 are in the
 [filled-PDF notes](../../../testing/ty2025-filled-pdf-review-2026-09-29.md). This is a
 synthetic source check; payer-issued bytes and IRS business-rule acceptance
 remain open.
-Source commit `46d7d080` passed `deno task test` at 8,938/8,938 with zero
+Source commit `46d7d080` passed `bun run test` at 8,938/8,938 with zero
 failures; retain `.state/research/ty2025-full-test-schedule1a-tips.log`.
 
 The `single-two-w2-qualified-tips-schedule1a` source has $3,000 and $2,000
@@ -279,7 +279,7 @@ graph, and XML. The [filled-PDF notes](../../../testing/ty2025-filled-pdf-review
 retain the page review and SHA-256. Source references are review assertions;
 payer-issued W-2 and payroll bytes, IRS business rules, and ATS acceptance
 remain open.
-Source commit `b2182cc1` passed `deno task test` at 8,947/8,947 with zero
+Source commit `b2182cc1` passed `bun run test` at 8,947/8,947 with zero
 failures; retain `.state/research/ty2025-full-test-schedule1a-overtime.log`.
 
 The `single-reviewed-car-loan-schedule1a` fixture has a synthetic $80,000 W-2
@@ -294,7 +294,7 @@ PDF were rendered and inspected; the Part IV rows, filer identity, and Form
 retain the page review and SHA-256. The references are review assertions,
 not authentication of the underlying lender or purchase documents. IRS
 business rules and ATS acceptance remain open.
-Source commit `44282e25` passed `deno task test` at 8,951/8,951 with zero
+Source commit `44282e25` passed `bun run test` at 8,951/8,951 with zero
 failures; retain `.state/research/ty2025-full-test-schedule1a-vehicle.log`.
 
 The `single-three-car-loan-schedule1a` source has three distinct VINs and

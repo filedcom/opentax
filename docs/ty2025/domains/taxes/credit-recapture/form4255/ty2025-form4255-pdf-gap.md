@@ -62,7 +62,7 @@ penalties and unproved recapture events closed until each has its own route.
 
 Source-staging and PDF projection positive/tamper fixtures were written before
 this page trim. In the 2026-10-05 page audit, the three focused Form 4255 PDF
-tests passed; `deno check`, lint, and diff checks passed on the two Form 4255
+tests passed; `bun run typecheck`, lint, and diff checks passed on the two Form 4255
 files. A staged EP-only PDF was rendered and all three retained Part I pages
 were visually inspected, including the line 1d/2a entries and line 3 totals.
 The native positive-export gate still rejects unauthenticated source bytes, so

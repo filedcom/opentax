@@ -142,10 +142,10 @@ rendered individual pages and contact sheets are under `rendered/`.
 Reproduction from this isolated checkout:
 
 ```sh
-PATH=/tmp/opentax-poppler-env/bin:/Users/atul/.deno/bin:$PATH deno test -A \
+PATH=/tmp/opentax-poppler-env/bin:/Users/atul/.deno/bin:$PATH bun test --timeout=1800000 \
   forms/f1040/2025/pdf/reviews/adjustments/health/form7206_spouse_medicare.test.ts \
   cli/commands/issue60-sehi.test.ts -- --write-review-artifacts
-PATH=/tmp/opentax-poppler-env/bin:/Users/atul/.deno/bin:$PATH deno test -A \
+PATH=/tmp/opentax-poppler-env/bin:/Users/atul/.deno/bin:$PATH bun test --timeout=1800000 \
   $(cat /tmp/opentax-medicare-regression-files.txt)
 ```
 

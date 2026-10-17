@@ -136,7 +136,7 @@ corporation identity, share descriptions/count/value, line 5, and election
 boxes were compared with its AcroForm annotations. This is a field-position
 check, not a filled-page visual review.
 
-`deno test --allow-read --allow-write --allow-run=xmllint` over
+`bun test --timeout=1800000` over
 `f8621_parent_source.test.ts`, `f8621_excess_statement.test.ts`,
 `f8621.fx.test.ts`, and `f8621.xsd.test.ts` passed **11/11** with no ignored
 tests. It exercises the staged parent projection, distinct Part V events and

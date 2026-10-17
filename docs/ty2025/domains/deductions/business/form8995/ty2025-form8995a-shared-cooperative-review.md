@@ -52,7 +52,7 @@ JSON/XML/PDF/report: `/tmp/opentax-shared-cooperative-actual-source-oct6`.
 
 Final ordinary four-module gate reached terminalexit0: **16passed,0failed**
 (8m57s), holding80ea6d0b8 and19code/test/fixture hashes. Command:
-`deno task test forms/f1040/2025/domains/deductions/business/form8995a/form8995a_independent_patron.test.ts forms/f1040/2025/domains/deductions/business/form8995a/form8995a_patron_spouse.test.ts forms/f1040/2025/domains/deductions/business/form8995/form8995_two_farm_wotc.test.ts forms/f1040/nodes/intermediate/forms/taxes/self-employment/schedule_se/owner_calculation.test.ts`.
+`bun run test forms/f1040/2025/domains/deductions/business/form8995a/form8995a_independent_patron.test.ts forms/f1040/2025/domains/deductions/business/form8995a/form8995a_patron_spouse.test.ts forms/f1040/2025/domains/deductions/business/form8995/form8995_two_farm_wotc.test.ts forms/f1040/nodes/intermediate/forms/taxes/self-employment/schedule_se/owner_calculation.test.ts`.
 Log: `/tmp/opentax-shared-cooperative-standard-oct6.log`.
 All five final-gate input/graph/prepared/carry/filer/origin/expected JSON wrappers
 and PDF bytes exactly match the independently reviewed original five packets;

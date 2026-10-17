@@ -102,9 +102,9 @@ Run from the isolated checkout with
 `PATH=/tmp/opentax-poppler-env/bin:/Users/atul/.deno/bin:$PATH`:
 
 ```sh
-deno test -A forms/f1040/2025/domains/income/business/form7203/form7203_owned_debt_source.test.ts
+bun test --timeout=1800000 forms/f1040/2025/domains/income/business/form7203/form7203_owned_debt_source.test.ts
 
-deno test -A forms/f1040/nodes/inputs/income/rental-passthrough/k1_s_corp/index.test.ts forms/f1040/nodes/intermediate/forms/income/business/form7203/debt_note.test.ts forms/f1040/nodes/intermediate/forms/income/business/form7203/index.test.ts forms/f1040/nodes/intermediate/forms/deductions/business/form8995/index.test.ts forms/f1040/2025/domains/income/business/form7203/form7203_capital_and_debt.test.ts forms/f1040/2025/mef/forms/income/business/f7203_stock_loss.test.ts forms/f1040/2025/pdf/forms/income/business/f7203_stock_loss.test.ts forms/f1040/2025/mef/forms/deductions/business/f8995/f8995.test.ts forms/f1040/2025/mef/forms/deductions/business/f8995/f8995_reit_only.test.ts forms/f1040/2025/domains/deductions/business/form8995/form8995_zero_source.test.ts
+bun test --timeout=1800000 forms/f1040/nodes/inputs/income/rental-passthrough/k1_s_corp/index.test.ts forms/f1040/nodes/intermediate/forms/income/business/form7203/debt_note.test.ts forms/f1040/nodes/intermediate/forms/income/business/form7203/index.test.ts forms/f1040/nodes/intermediate/forms/deductions/business/form8995/index.test.ts forms/f1040/2025/domains/income/business/form7203/form7203_capital_and_debt.test.ts forms/f1040/2025/mef/forms/income/business/f7203_stock_loss.test.ts forms/f1040/2025/pdf/forms/income/business/f7203_stock_loss.test.ts forms/f1040/2025/mef/forms/deductions/business/f8995/f8995.test.ts forms/f1040/2025/mef/forms/deductions/business/f8995/f8995_reit_only.test.ts forms/f1040/2025/domains/deductions/business/form8995/form8995_zero_source.test.ts
 ```
 
 `FORM7203_OWNED_DEBT_EVIDENCE_DIR` optionally writes the four packets to a new
@@ -117,7 +117,7 @@ are checkout, retained archive, fresh output, `owned` (or `baseline` for the
 legacy archive), and optional PDF cache directory:
 
 ```sh
-deno run -A --config CHECKOUT/deno.json /tmp/opentax-form7203-owned-debt-retained-replay.ts CHECKOUT /tmp/opentax-form7203-owned-debt-evidence-terminal-v6 FRESH_OUTPUT owned PDF_CACHE
+bun /tmp/opentax-form7203-owned-debt-retained-replay.ts CHECKOUT /tmp/opentax-form7203-owned-debt-evidence-terminal-v6 FRESH_OUTPUT owned PDF_CACHE
 ```
 
 It reads the retained public inputs, executes the actual return, validates full

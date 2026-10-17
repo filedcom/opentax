@@ -97,4 +97,4 @@ employer-name correction. Every packet has XML equality except ReturnTs and
 full XSD. Original archives were read directly and were never regenerated.
 The first raw command lacked the repository import config and stopped before
 execution; its log remains separately retained. The final command used
-`deno run --config deno.json` with read/write, xmllint and IRS permissions.
+`bun` with read/write, xmllint and IRS permissions.

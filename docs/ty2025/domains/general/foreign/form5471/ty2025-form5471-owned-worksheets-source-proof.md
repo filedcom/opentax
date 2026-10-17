@@ -64,7 +64,7 @@ Post-review calendar repair: invoice, purchase-payment and cash-receipt dates al
 The command is:
 
 ```sh
-PATH=/tmp/opentax-poppler-env/bin:/Users/atul/.deno/bin:$PATH deno test -A \
+PATH=/tmp/opentax-poppler-env/bin:/Users/atul/.deno/bin:$PATH bun test --timeout=1800000 \
   forms/f1040/nodes/inputs/general/foreign/f5471/worksheet_source.test.ts \
   forms/f1040/2025/return-processing/attachment_coverage.test.ts \
   forms/f1040/nodes/inputs/general/foreign/f5471/index.test.ts \
@@ -102,4 +102,4 @@ Downloaded source digests and the canonical template digests are recorded in the
 
 ## Integrated main verification
 
-Production27b82647d passes the standard deno task test source/native/PDF/reference gate80/0, including the impossible-calendar negative. Raw original11 field files and27decoded page rasters remain exact on main. All277 files in the final agent sealed evidence index match their SHA256. Logs `/tmp/opentax-form5471-owned-main-source-gate-oct6.log` and `/tmp/opentax-form5471-owned-main-old11-replay-oct6.log`; main pixel manifest `/tmp/opentax-form5471-owned-main-old11-replay-oct6/main-pixel-preservation.json`. All original guarded filing limits above remain.
+Production27b82647d passes the standard bun run test source/native/PDF/reference gate80/0, including the impossible-calendar negative. Raw original11 field files and27decoded page rasters remain exact on main. All277 files in the final agent sealed evidence index match their SHA256. Logs `/tmp/opentax-form5471-owned-main-source-gate-oct6.log` and `/tmp/opentax-form5471-owned-main-old11-replay-oct6.log`; main pixel manifest `/tmp/opentax-form5471-owned-main-old11-replay-oct6/main-pixel-preservation.json`. All original guarded filing limits above remain.

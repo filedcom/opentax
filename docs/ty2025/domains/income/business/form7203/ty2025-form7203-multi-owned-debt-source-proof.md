@@ -130,14 +130,14 @@ Optional evidence env `FORM7203_MULTI_DEBT_EVIDENCE_DIR` is permission-aware;
 source/XSD/PDF checks execute with it unset. Standard focused source command:
 
 ```sh
-FORM7203_MULTI_DEBT_EVIDENCE_DIR=/tmp/NEW_UNIQUE_OUTPUT deno test -A forms/f1040/2025/domains/income/business/form7203/form7203_multi_owned_debt_source.test.ts
+FORM7203_MULTI_DEBT_EVIDENCE_DIR=/tmp/NEW_UNIQUE_OUTPUT bun test --timeout=1800000 forms/f1040/2025/domains/income/business/form7203/form7203_multi_owned_debt_source.test.ts
 ```
 
 Raw replayer outside checkout, using actual retained public source and filer
 without factories:
 
 ```sh
-deno run -A --config CHECKOUT/deno.json /tmp/opentax-form7203-spouse-retained-replay.ts CHECKOUT /tmp/opentax-form7203-multi-owned-debt-evidence-terminal-v5 /tmp/NEW_UNIQUE_REPLAY owned PRIVATE_PDF_CACHE
+bun /tmp/opentax-form7203-spouse-retained-replay.ts CHECKOUT /tmp/opentax-form7203-multi-owned-debt-evidence-terminal-v5 /tmp/NEW_UNIQUE_REPLAY owned PRIVATE_PDF_CACHE
 ```
 
 Prior six uses the same script with prior

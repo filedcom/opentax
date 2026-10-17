@@ -742,7 +742,7 @@ shared allocation and interstate component guards. It does not establish full
 public-return, XSD or visual proof for every component test.
 
 ```sh
-DENO_V8_FLAGS=--max-old-space-size=8192 deno test -A   forms/f1040/2025/mef/forms/credits/health/f8962/   forms/f1040/2025/pdf/reviews/credits/health/
+DENO_V8_FLAGS=--max-old-space-size=8192 bun test --timeout=1800000   forms/f1040/2025/mef/forms/credits/health/f8962/   forms/f1040/2025/pdf/reviews/credits/health/
 ```
 
 Nine existing source fixtures were separately replayed through `executeReturn`,

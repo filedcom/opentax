@@ -59,7 +59,7 @@ After generating the archive fixtures using the companion replay's documented
 procedure, run:
 
 ```sh
-deno run --allow-read --allow-write scripts/research/audit-joint-submission-rules.ts .state/research/submission-joint-replay-2026-10-12
+bun scripts/research/audit-joint-submission-rules.ts .state/research/submission-joint-replay-2026-10-12
 ```
 
 The typed audit writes `business-rule-results.json` beside the archived inputs

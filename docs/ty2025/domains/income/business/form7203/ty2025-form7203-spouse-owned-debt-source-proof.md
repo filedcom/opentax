@@ -103,7 +103,7 @@ base. This slice does not claim those historical whole pending bytes unchanged.
 Run from the integrated checkout with Poppler/Deno on PATH:
 
 ```sh
-FORM7203_SPOUSE_DEBT_EVIDENCE_DIR=/tmp/NEW_UNIQUE_SOURCE_OUTPUT deno test -A forms/f1040/2025/domains/income/business/form7203/form7203_spouse_owned_debt_source.test.ts
+FORM7203_SPOUSE_DEBT_EVIDENCE_DIR=/tmp/NEW_UNIQUE_SOURCE_OUTPUT bun test --timeout=1800000 forms/f1040/2025/domains/income/business/form7203/form7203_spouse_owned_debt_source.test.ts
 ```
 
 The optional evidence env is permission-aware; absence does not omit
@@ -115,7 +115,7 @@ Actual raw retained-input replayer outside checkout (no source
 factory/regeneration):
 
 ```sh
-deno run -A --config CHECKOUT/deno.json /tmp/opentax-form7203-spouse-retained-replay.ts CHECKOUT /tmp/opentax-form7203-spouse-owned-debt-evidence-terminal-v9 /tmp/NEW_UNIQUE_REPLAY_OUTPUT owned PRIVATE_PDF_CACHE
+bun /tmp/opentax-form7203-spouse-retained-replay.ts CHECKOUT /tmp/opentax-form7203-spouse-owned-debt-evidence-terminal-v9 /tmp/NEW_UNIQUE_REPLAY_OUTPUT owned PRIVATE_PDF_CACHE
 ```
 
 It retains actual filer/source bytes, recalculates pending/current carries,

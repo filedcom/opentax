@@ -48,15 +48,14 @@ Strict final saved-input replay: `/tmp/opentax-eic-passive-property-final-retain
 Standard gate file list: `/tmp/opentax-eic-passive-property-standard-files-oct6.txt` (55 modules). Final log: `/tmp/opentax-eic-passive-property-standard-final-v3-oct6.log`, **680 passed / 0 failed (6m36s)**. This is the isolated 55-module gate, not a full latest-main regression.
 
 ```sh
-PATH=/tmp/opentax-poppler-env/bin:/Users/atul/.deno/bin:$PATH deno task test \
+PATH=/tmp/opentax-poppler-env/bin:/Users/atul/.deno/bin:$PATH bun run test \
   $(cat /tmp/opentax-eic-passive-property-standard-files-oct6.txt)
 
-PATH=/tmp/opentax-poppler-env/bin:/Users/atul/.deno/bin:$PATH deno task test \
+PATH=/tmp/opentax-poppler-env/bin:/Users/atul/.deno/bin:$PATH bun run test \
   forms/f1040/2025/domains/credits/earned-income/eic/eic_passive_property_source.test.ts
 
-PATH=/tmp/opentax-poppler-env/bin:/Users/atul/.deno/bin:$PATH deno run \
-  --config deno.json --allow-read --allow-write --allow-net=www.irs.gov \
-  --allow-run=xmllint /tmp/opentax-eic-passive-k1-retained-portable-final-oct6.ts \
+PATH=/tmp/opentax-poppler-env/bin:/Users/atul/.deno/bin:$PATH bun \
+/tmp/opentax-eic-passive-k1-retained-portable-final-oct6.ts \
   CHECKOUT PRIVATE_PDF_CACHE NEW_OUTPUT \
   /tmp/opentax-eic-passive-property-final-retained-v18-oct6
 ```
@@ -82,9 +81,8 @@ The portable independent replay is `/tmp/opentax-eic-property-reference-repair-r
 Corrected retained archive: `/tmp/opentax-eic-passive-property-reference-repair-retained-oct6`, **8/99**; independent reference-only comparison in its `report.json`. Subsequent strict saved-input replay: `/tmp/opentax-eic-passive-property-reference-repair-strict-raw-oct6/report.json`, **8/99 exact** including whole corrected pending. `/tmp/opentax-eic-passive-property-reference-repair-hashes-oct6.json` records original and repaired archive hashes. Byte-identical corrected PDFs inherit all 99 reviewed pages; there are no changed rendered pages to review. Older 680/0 is the earlier candidate standard gate, not a post-followup standard gate; only the affected source module and actual retained packets are rerun for this source-contract followup.
 
 ```sh
-PATH=/tmp/opentax-poppler-env/bin:/Users/atul/.deno/bin:$PATH deno run \
-  --config deno.json --allow-read --allow-write --allow-net=www.irs.gov \
-  --allow-run=xmllint /tmp/opentax-eic-property-reference-repair-retained-oct6.ts \
+PATH=/tmp/opentax-poppler-env/bin:/Users/atul/.deno/bin:$PATH bun \
+/tmp/opentax-eic-property-reference-repair-retained-oct6.ts \
   /tmp/opentax-eic-passive-property-oct6 \
   /tmp/opentax-eic-passive-property-final-retained-v18-oct6 \
   /tmp/opentax-eic-passive-property-reference-repair-inputs-oct6 \
