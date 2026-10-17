@@ -23,7 +23,9 @@ export type Baseline = z.infer<typeof baselineSchema>;
 export type Findings = Readonly<Record<string, readonly string[]>>;
 
 /** A filed return is signed; sample returns are calculation fixtures without PINs. */
-export function signed(inputs: Record<string, unknown>): Record<string, unknown> {
+export function signed(
+  inputs: Record<string, unknown>,
+): Record<string, unknown> {
   const general = (inputs.general ?? {}) as Record<string, unknown>;
   return {
     ...structuredClone(inputs),
@@ -47,7 +49,9 @@ export async function returnFindings(
 ): Promise<string[]> {
   const result = f1040_2025.executeReturn(signed(inputs));
   if (result.diagnostics.length > 0) {
-    return [...new Set(result.diagnostics.map((d) => `calculation ${d.nodeType}`))]
+    return [
+      ...new Set(result.diagnostics.map((d) => `calculation ${d.nodeType}`)),
+    ]
       .sort();
   }
   const pending = normalizeAllPending(result.pending);
@@ -59,11 +63,17 @@ export async function returnFindings(
     const message = error instanceof Error ? error.message : String(error);
     return [`xml ${message.replace(/\s+/g, " ").trim().slice(0, 160)}`];
   }
-  const report = businessRuleReport(pending, filer, emittedValidationScope(xml));
+  const report = businessRuleReport(
+    pending,
+    filer,
+    emittedValidationScope(xml),
+  );
   return [
     ...new Set(
       report.entries
-        .filter((e) => e.severity === "reject" || e.severity === "reject_and_stop")
+        .filter((e) =>
+          e.severity === "reject" || e.severity === "reject_and_stop"
+        )
         .map((e) => `rule ${e.ruleNumber}`),
     ),
   ].sort();
@@ -81,7 +91,10 @@ export function compareFindings(
   baseline: Baseline["returns"],
 ): Problem[] {
   const problems: Problem[] = [];
-  for (const id of [...new Set([...Object.keys(actual), ...Object.keys(baseline)])].sort()) {
+  for (
+    const id of [...new Set([...Object.keys(actual), ...Object.keys(baseline)])]
+      .sort()
+  ) {
     const now = new Set(actual[id] ?? []);
     const known = new Set(id in actual ? baseline[id] ?? [] : []);
     for (const finding of now) {

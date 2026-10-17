@@ -74,9 +74,14 @@ const changedFlag = process.argv.indexOf("--changed");
 // Local fast path: only tests whose imports reach a change since this base.
 const changedBase = changedFlag === -1
   ? null
-  : process.argv[changedFlag + 1] ?? "origin/main";
+  : process.argv[changedFlag + 1]?.replace(/^--.*/, "") || "origin/main";
 if (changedBase !== null && !["unit", "forms"].includes(mode)) {
   throw new Error("--changed applies to the unit and forms modes");
+}
+// verify:changed type-checks once in the unit run, then passes this to the forms run.
+const typecheck = !process.argv.includes("--typechecked");
+if (!typecheck && changedBase === null) {
+  throw new Error("--typechecked applies only with --changed");
 }
 const directory = join(root, ".state/research/testing");
 await fs.mkdir(directory, { recursive: true, mode: 0o700 });
@@ -192,7 +197,7 @@ try {
     ),
     { createNew: true, mode: 0o600 },
   );
-  const graphModules = await graphPreflight(root, evidence);
+  const graphModules = await graphPreflight(root, evidence, typecheck);
   if (mode === "preflight") {
     assertRuntimeUnchanged(before, await runtimeSnapshot(root));
     await sys.writeText(

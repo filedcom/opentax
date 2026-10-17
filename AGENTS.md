@@ -25,6 +25,11 @@ A change ships with proof, not a description of it:
   only with a publication cited in that product's `ledger.json`.
 - The pull request says what was not verified and why.
 
+While iterating, `bun run verify:changed` runs only what the change since
+`origin/main` can reach: tests whose imports reach a changed file, the MeF and
+CLI gates when the CLI loads it, and bench compared with the merge base (both
+results cached by content). CI still runs every gate in full.
+
 The layout the checks enforce, and which check owns each rule, is in
 `docs/architecture/STRUCTURE.md`.
 

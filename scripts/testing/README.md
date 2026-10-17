@@ -16,12 +16,33 @@ in [AGENTS.md](../../AGENTS.md); the rule each check owns is in the table in
 | `bun run test:unit`                         | the module graph resolves, type-checks, and the typed tests pass | an unresolved import, a `tsc` error (strict, no unused locals or parameters), a missing or duplicate test module, a failing test, a runtime change during the run                                                           |
 | `bun run test:forms`                        | the node, MeF, validation and return-processing tests pass       | a failing test not in `scripts/testing/forms-failure-baseline.json`, an expired entry, an entry whose test now passes                                                                                                       |
 | `bun run check:cli`                         | complete sample returns work end to end through the product CLI: create, add, get, validate, export MeF and PDF | a failing command, `return get` or MeF AGI differing from the engine, a reject other than the known header birth date, or an export that writes no file |
+| `bun run verify:changed [base]`             | the gates a change since `base` (default `origin/main`) can reach pass | any selected gate failing, or a bench case that passes at the merge base and fails now |
+| `bun run bench:cached [bench flags]`        | same as `bench`, replayed when nothing it reads changed           | as `bench`                                                                                                                                                                                                                  |
 | `bun run check:mef [--update]`              | every signed PDF review fixture computes, builds MeF XML and passes the IRS business rules export applies | a calculation, XML or reject-level rule finding not in `scripts/testing/mef-baseline.json`, or a baselined finding that no longer occurs; `--update` rewrites the baseline |
 
 Every check prints each problem with its fix, takes `--json`, and exits 1 on any
 problem. `.github/workflows/test.yml` runs the first three, `check:sandbox`,
 `test:unit`, `test:forms`, `check:mef` and `check:cli` on every pull request. `bench` runs locally until the baselined
 cases below are fixed, then joins them.
+
+## Changed-only runs
+
+`verify:changed` is the local fast path; CI does not use it. It selects:
+
+- `test:unit --changed` and `test:forms --changed`: tests whose import closure
+  reaches a changed file. A changed data file selects the modules that name it.
+  A deleted module, a data file no module names, or a shared input
+  (`package.json`, `bun.lock`, `tsconfig.json`, the runner itself) selects all.
+  The type check always runs, and the forms baseline is held only to the
+  selected tests.
+- `check:mef`, `check:cli` and bench only when `cli/main.ts` loads a changed
+  file or a benchmark file changed.
+- Bench on this change and on the merge base, each keyed by a hash of every file
+  its results can depend on (the commands bench runs, runtime data, the cases,
+  the lockfile, the Bun version and the date) and stored in
+  `~/.cache/opentax-bench`. A base runs once per `main` commit; a rule-only
+  change replays both. It fails on any case that passes at the base and fails
+  now.
 
 ## Ratchets
 

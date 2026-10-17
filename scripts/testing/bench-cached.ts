@@ -90,9 +90,10 @@ async function tee(
 ): Promise<string> {
   let text = "";
   const decoder = new TextDecoder();
-  for await (const chunk of stream) {
-    sink?.write(chunk);
-    text += decoder.decode(chunk, { stream: true });
+  const reader = stream.getReader();
+  for (let read = await reader.read(); !read.done; read = await reader.read()) {
+    sink?.write(read.value);
+    text += decoder.decode(read.value, { stream: true });
   }
   return text;
 }

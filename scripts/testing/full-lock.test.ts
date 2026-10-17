@@ -11,7 +11,7 @@ test("full regression lock refuses a concurrent owner and foreign release", asyn
   await assertRejects(
     () => acquireFullRunLock(path, { ...owner, evidence: "second" }),
     Error,
-      "EEXIST",
+    "EEXIST",
   );
   await assertRejects(
     () => releaseFullRunLock(path, { ...owner, evidence: "second" }),

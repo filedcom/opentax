@@ -216,7 +216,10 @@ async function baseCases(
 async function currentCases(root: string): Promise<Map<string, unknown>> {
   const entries: [string, unknown][] = [];
   for (const path of (await repositoryFiles(root)).filter((p) => caseKey(p))) {
-    entries.push([path, JSON.parse(await fs.readFile(join(root, path), "utf8"))]);
+    entries.push([
+      path,
+      JSON.parse(await fs.readFile(join(root, path), "utf8")),
+    ]);
   }
   return new Map(entries);
 }
@@ -231,7 +234,9 @@ async function currentLedgers(
       entries.push([
         product,
         ledgerSchema.parse(
-          JSON.parse(await fs.readFile(join(root, ledgerPath(product)), "utf8")),
+          JSON.parse(
+            await fs.readFile(join(root, ledgerPath(product)), "utf8"),
+          ),
         ),
       ]);
     } catch (error) {
@@ -289,7 +294,9 @@ export function formatReport(report: OracleReport): string {
 if (import.meta.main) {
   const root = dirname(dirname(dirname(fromFileUrl(import.meta.url))));
   const baseIndex = process.argv.slice(2).indexOf("--base");
-  const base = baseIndex === -1 ? "origin/main" : process.argv.slice(2)[baseIndex + 1];
+  const base = baseIndex === -1
+    ? "origin/main"
+    : process.argv.slice(2)[baseIndex + 1];
   let report: OracleReport;
   try {
     report = await oracleReport(root, base);

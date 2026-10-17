@@ -19,7 +19,7 @@ export function plan(
     ["check:structure"],
     ["check:oracle", "--base", base],
     ["test:unit", "--changed", base],
-    ["test:forms", "--changed", base],
+    ["test:forms", "--changed", base, "--typechecked"],
   ];
   if (changed.some((path) => path.startsWith("benchmark/"))) {
     gates.splice(1, 0, ["check:cases"]);
