@@ -1,11 +1,19 @@
 /**
  * MeF Business Rules: F1099R
  * Auto-generated from 1040_Business_Rules_2025v3.0.csv
- * 7 rules (4 implemented, 3 stubs)
+ * 7 rules (5 implemented, 2 IRS-side)
  */
 
 import type { RuleDef } from "../../../../../../core/validation/types.ts";
-import { rule, alwaysPass, hasValue, ifThen, validEIN, } from "../../../../../../core/validation/mod.ts";
+import {
+  hasValue,
+  ifThen,
+  inOwnDocument,
+  irsSide,
+  rule,
+  validEIN,
+  zipValidForState,
+} from "../../../../../../core/validation/mod.ts";
 
 export const F1099R_RULES: readonly RuleDef[] = [
   rule(
@@ -26,7 +34,7 @@ export const F1099R_RULES: readonly RuleDef[] = [
     "F1099R-004-01",
     "reject",
     "incorrect_data",
-    alwaysPass, // requires zip code to state cross-reference validation per Publication 4164
+    inOwnDocument(zipValidForState("PayerUSAddress/ZIPCd", "PayerUSAddress/StateAbbreviationCd")),
     "If Form 1099-R has a US Address in the Payer Address, then the first five digits of the Payer 'ZipCd' must be with in the valid ranges of Zip Codes listed for the corresponding 'StateAbbreviationCd'. See Publication 4164.",
   ),
   rule(
@@ -47,14 +55,14 @@ export const F1099R_RULES: readonly RuleDef[] = [
     "F1099R-502-02",
     "reject",
     "incorrect_data",
-    alwaysPass, // requires e-File database lookup
+    irsSide,
     "Form 1099-R, 'PayerEIN' must match data in the e-File database.",
   ),
   rule(
     "F1099R-505-02",
     "reject",
     "incorrect_data",
-    alwaysPass, // requires e-File database lookup for EIN issuance date
+    irsSide,
     "Form 1099-R, 'PayerEIN' was issued after the Tax Year in the Return Header.",
   ),
 ];

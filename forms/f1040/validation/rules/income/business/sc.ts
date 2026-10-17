@@ -1,11 +1,31 @@
 /**
  * MeF Business Rules: SC
  * Auto-generated from 1040_Business_Rules_2025v3.0.csv
- * 17 rules (16 implemented, 1 stub)
+ * 17 rules (17 implemented)
  */
 
 import type { RuleDef } from "../../../../../../core/validation/types.ts";
-import { rule, all, alwaysPass, any, eqDiff, eqStr, formPresent, gt, hasNonZero, hasValue, ifThen, lt, matchesHeaderSSN, notMatchesHeaderSSN, } from "../../../../../../core/validation/mod.ts";
+import {
+  all,
+  amount,
+  amountLte,
+  any,
+  constant,
+  eqDiff,
+  eqStr,
+  formPresent,
+  gt,
+  hasNonZero,
+  hasValue,
+  ifThen,
+  inOwnDocument,
+  lt,
+  matchesHeaderSSN,
+  notMatchesHeaderSSN,
+  plus,
+  rule,
+  total,
+} from "../../../../../../core/validation/mod.ts";
 
 export const SC_RULES: readonly RuleDef[] = [
   rule(
@@ -68,7 +88,15 @@ export const SC_RULES: readonly RuleDef[] = [
     "SC-F1040-015-01",
     "reject",
     "incorrect_data",
-    alwaysPass,
+    inOwnDocument(
+      ifThen(
+        all(hasNonZero("TotalAreaOfHomeCnt"), hasNonZero("HomeBusinessUseSquareFeetCnt")),
+        amountLte(
+          amount("HomeBusinessExpenseAmt"),
+          plus(constant(1500), total("8829/AllowableHomeBusExpnssSchCAmt")),
+        ),
+      ),
+    ),
     "If Schedule C (Form 1040), 'TotalAreaOfHomeCnt' and 'HomeBusinessUseSquareFeetCnt' both have a non-zero value, then 'HomeBusinessExpenseAmt' must not be greater than (1500 plus the sum of all Form 8829, 'AllowableHomeBusExpnssSchCAmt').",
   ),
   rule(

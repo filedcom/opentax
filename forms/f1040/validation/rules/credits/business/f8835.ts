@@ -1,11 +1,36 @@
 /**
  * MeF Business Rules: F8835
  * Auto-generated from 1040_Business_Rules_2025v3.0.csv
- * 29 rules (28 implemented, 1 stub)
+ * 29 rules (29 implemented)
  */
 
 import type { RuleDef } from "../../../../../../core/validation/types.ts";
-import { rule, alwaysPass, all, any, dateGteConst, dateYearEqConst, eqDiff, eqField, eqFieldProduct, eqMin, eqProduct, eqStr, eqSum, hasNonZero, hasValue, ifThen, isZero, not, noValue, notGtField, notLtSum, } from "../../../../../../core/validation/mod.ts";
+import {
+  all,
+  amount,
+  amountEq,
+  any,
+  dateGteConst,
+  dateYearEqConst,
+  eqDiff,
+  eqField,
+  eqFieldProduct,
+  eqMin,
+  eqProduct,
+  eqStr,
+  eqSum,
+  hasNonZero,
+  hasValue,
+  ifThen,
+  inOwnDocument,
+  isZero,
+  noValue,
+  not,
+  notGtField,
+  notLtSum,
+  rule,
+  total,
+} from "../../../../../../core/validation/mod.ts";
 
 export const F8835_RULES: readonly RuleDef[] = [
   rule(
@@ -19,7 +44,20 @@ export const F8835_RULES: readonly RuleDef[] = [
     "F8835-018",
     "reject",
     "incorrect_data",
-    alwaysPass,
+    inOwnDocument(
+      ifThen(
+        hasValue("TotalForCreditRtUnder45b4AAmt"),
+        amountEq(
+          amount("TotalForCreditRtUnder45b4AAmt"),
+          total(
+            "KwHrsPrdcdAndSoldWindCrAmt", "KwHrsPrdcdSoldClsLoopBmssCrAmt", "KwHrsPrdcdAndSoldGthrmlAmt",
+            "KwHrsPrdcdAndSoldSolarCrAmt", "KwHrsPrdcdSoldOffshrWindCrAmt", "KwHrsPrdcdSoldOpenLopBmssCrAmt",
+            "KwHrsPrdcdAndSoldLndfllGsCrAmt", "KwHrsPrdcdAndSoldTrashCrAmt", "KwHrsPrdcdAndSoldHydropwrCrAmt",
+            "KwHrsPrdcdSoldMarineRnwblCrAmt",
+          ),
+        ),
+      ),
+    ),
     "Form 8835 if Part II line 2 contains an entry, it must equal the sum of Part II Lines 1a(c) - 1j(c).",
   ),
   rule(

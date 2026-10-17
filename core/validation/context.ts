@@ -64,7 +64,7 @@ export function createReturnContext(
   // document. Lower-case names are engine facts outside the XML.
   function emittedValues(xmlName: string): readonly string[] | undefined {
     if (!emitted) return undefined;
-    if (!/^[A-Z]/.test(xmlName)) {
+    if (!/^[A-Z0-9]/.test(xmlName)) {
       // An emitted attribute answers a lower-case name; otherwise it is an engine fact.
       const attribute = ownDocument?.values.get(xmlName) ??
         emitted.documents.flatMap((d) => d.values.get(xmlName) ?? []);
@@ -121,7 +121,81 @@ export function createReturnContext(
     return undefined;
   }
 
+  function namedDocuments(documentName: string): readonly EmittedDocument[] {
+    if (!emitted) return [];
+    const prefix = [
+      ...[`IRS1040${documentName}`, `IRS${documentName}`]
+        .map(rulePrefixForDocumentTag),
+      documentName,
+    ].find((p) => emitted.documents.some((d) => d.prefix === p));
+    return emitted.documents.filter((d) => d.prefix === prefix);
+  }
+
   const context: ReturnContext = {
+    groupInstances(
+      group: string,
+      locals: readonly string[] = [],
+    ): readonly ReturnContext[] {
+      if (!emitted) return [];
+      const [first, ...rest] = group.split("/");
+      const name = rest.length > 0 ? rest.join("/") : first;
+      const documents = rest.length > 0
+        ? namedDocuments(first)
+        : ownDocument
+        ? [ownDocument]
+        : [emitted.header, ...emitted.documents];
+      const instances = documents.flatMap((d) => d.groups.get(name) ?? []);
+      const masked = new Set([
+        ...locals,
+        ...instances.flatMap((i) => [...i.values.keys()]),
+      ]);
+      return instances.map((i) => groupInstanceContext(context, i, masked));
+    },
+
+    emittedDocumentCount() {
+      return {
+        actual: emitted?.documents.length ?? 0,
+        declared: emitted?.declaredDocumentCnt,
+      };
+    },
+
+    ownDocumentOnly(): ReturnContext {
+      if (!emitted || !ownDocument) return context;
+      const shared = [
+        emitted.header,
+        ...emitted.documents.filter((d) => d.prefix === "F1040"),
+      ];
+      const masked = new Set(
+        emitted.documents
+          .filter((d) => d !== ownDocument)
+          .flatMap((d) => [...d.values.keys()])
+          // "Doc/Leaf" and "Grp/Leaf" names already say where they come from.
+          .filter((key) => !key.includes("/"))
+          .filter((key) => !shared.some((d) => d.values.has(key))),
+      );
+      return groupInstanceContext(context, ownDocument, masked);
+    },
+
+    emittedDocuments(prefix: string): readonly ReturnContext[] {
+      const documents = emitted?.documents.filter((d) => d.prefix === prefix) ??
+        [];
+      const masked = new Set(documents.flatMap((d) => [...d.values.keys()]));
+      return documents.map((document) =>
+        groupInstanceContext(
+          createReturnContext(
+            pending,
+            filer,
+            fieldRegistry,
+            emittedFormCounts,
+            emitted,
+            document,
+          ),
+          document,
+          masked,
+        )
+      );
+    },
+
     forRulePrefix(prefix: string): readonly ReturnContext[] {
       const documents = emitted?.documents.filter((d) => d.prefix === prefix);
       if (!documents?.length) return [context];
@@ -208,4 +282,46 @@ export function createReturnContext(
     },
   };
   return context;
+}
+
+function numeric(v: unknown): number {
+  if (typeof v === "number") return v;
+  if (typeof v === "string") {
+    const n = Number(v);
+    return Number.isNaN(n) ? 0 : n;
+  }
+  return 0;
+}
+
+/**
+ * A group instance reads the group's own elements from itself only, so a
+ * "corresponding" element never comes from a sibling instance.
+ */
+function groupInstanceContext(
+  parent: ReturnContext,
+  instance: EmittedDocument,
+  masked: ReadonlySet<string>,
+): ReturnContext {
+  const own = (xmlName: string): readonly unknown[] | undefined =>
+    instance.values.get(xmlName) ?? (masked.has(xmlName) ? [] : undefined);
+  const field = (xmlName: string): unknown => {
+    const values = own(xmlName);
+    return values ? values[0] : parent.field(xmlName);
+  };
+  return {
+    ...parent,
+    field,
+    num: (xmlName) => numeric(field(xmlName)),
+    hasValue(xmlName) {
+      const v = field(xmlName);
+      return v !== undefined && v !== null && v !== "";
+    },
+    hasNonZero(xmlName) {
+      const v = field(xmlName);
+      if (typeof v === "number") return v !== 0;
+      if (typeof v === "string") return v !== "" && v !== "0";
+      return false;
+    },
+    fieldArray: (xmlName) => own(xmlName) ?? parent.fieldArray(xmlName),
+  };
 }

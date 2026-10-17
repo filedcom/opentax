@@ -1,11 +1,29 @@
 /**
  * MeF Business Rules: SH
  * Auto-generated from 1040_Business_Rules_2025v3.0.csv
- * 21 rules (21 implemented, 0 stubs)
+ * 21 rules (18 implemented, 1 IRS-side, 2 not implemented)
  */
 
 import type { RuleDef } from "../../../../../../core/validation/types.ts";
-import { rule, all, allDistinct, alwaysPass, any, eqField, eqStr, gte, hasNonZero, hasValue, ifThen, matchesHeaderSSN, not, notGtField, notMatchesHeaderSSN, noValue, } from "../../../../../../core/validation/mod.ts";
+import {
+  all,
+  allDistinct,
+  alwaysPass,
+  any,
+  eqField,
+  eqStr,
+  gte,
+  hasNonZero,
+  hasValue,
+  ifThen,
+  irsSide,
+  matchesHeaderSSN,
+  noValue,
+  not,
+  notGtField,
+  notMatchesHeaderSSN,
+  rule,
+} from "../../../../../../core/validation/mod.ts";
 
 export const SH_RULES: readonly RuleDef[] = [
   rule(
@@ -135,7 +153,7 @@ export const SH_RULES: readonly RuleDef[] = [
     "SH-F1040-520-01",
     "reject",
     "database",
-    alwaysPass,
+    irsSide,
     "Schedule H (Form 1040), 'EmployerEIN' and 'EmployerNameControlTxt' must match data in the e-File database.",
   ),
   rule(

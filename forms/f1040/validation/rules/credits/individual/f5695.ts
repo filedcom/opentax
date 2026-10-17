@@ -1,11 +1,44 @@
 /**
  * MeF Business Rules: F5695
  * Auto-generated from 1040_Business_Rules_2025v3.0.csv
- * 76 rules (57 implemented, 19 stubs)
+ * 76 rules (76 implemented)
  */
 
 import type { RuleDef } from "../../../../../../core/validation/types.ts";
-import { rule, all, allDistinct, alwaysPass, any, eqCappedProduct, eqField, eqMin, eqMinNum, eqProduct, eqStr, eqSum, filingStatusIs, gt, hasNonZero, hasValue, ifThen, isZero, lt, matchesHeaderSSN, noValue, not, notGtNum, } from "../../../../../../core/validation/mod.ts";
+import {
+  all,
+  allDistinct,
+  amount,
+  amountEq,
+  any,
+  attachmentDescStartsWith,
+  documentPresent,
+  eachGroup,
+  eqCappedProduct,
+  eqField,
+  eqMin,
+  eqMinNum,
+  eqProduct,
+  eqStr,
+  eqSum,
+  filingStatusIs,
+  generalDependencyDescStartsWith,
+  gt,
+  hasNonZero,
+  hasValue,
+  ifThen,
+  ifThenUnless,
+  inOwnDocument,
+  isZero,
+  lt,
+  matchesHeaderSSN,
+  noValue,
+  not,
+  notGtNum,
+  plus,
+  rule,
+  total,
+} from "../../../../../../core/validation/mod.ts";
 
 export const F5695_RULES: readonly RuleDef[] = [
   rule(
@@ -26,7 +59,14 @@ export const F5695_RULES: readonly RuleDef[] = [
     "F5695-003-05",
     "reject",
     "incorrect_data",
-    alwaysPass,
+    inOwnDocument(
+      (ctx) => {
+        const forms = ctx.emittedDocuments?.("F5695") ?? [];
+        if (forms.length !== 2) return true;
+        const [a, b] = forms.map((f) => String(f.field("SSN") ?? "").replace(/\D/g, ""));
+        return a === b || forms.some((f) => !f.hasValue("ResidentialCleanEnergyCrGrp"));
+      },
+    ),
     "If there are two Forms 5695 in the return and their SSNs are not equal, then one of the forms must not have values in the 'ResidentialCleanEnergyCrGrp'.",
   ),
   rule(
@@ -236,14 +276,24 @@ export const F5695_RULES: readonly RuleDef[] = [
     "F5695-057",
     "reject",
     "incorrect_data",
-    alwaysPass,
+    inOwnDocument(
+      ifThen(
+        eqStr("AdjustedCreditLimitAmt@adjustedCreditLimitCd", "MORE THAN ONE MAIN HOME"),
+        (ctx) => ctx.formCount("form5695") === 2,
+      ),
+    ),
     "If Form 5695, 'AdjustedCreditLimitCd' has the value \"MORE THAN ONE MAIN HOME\", then there must be two instances of Form 5695 present in the return.",
   ),
   rule(
     "F5695-058",
     "reject",
     "incorrect_data",
-    alwaysPass,
+    inOwnDocument(
+      (ctx) =>
+        (ctx.emittedDocuments?.("F5695") ?? []).filter((f) =>
+          f.field("AdjustedCreditLimitAmt@adjustedCreditLimitCd") === "MORE THAN ONE MAIN HOME"
+        ).length <= 1,
+    ),
     "Form 5695, 'AdjustedCreditLimitCd' must only have the value \"MORE THAN ONE MAIN HOME\" on one instance of Form 5695.",
   ),
   rule(
@@ -271,14 +321,34 @@ export const F5695_RULES: readonly RuleDef[] = [
     "F5695-064",
     "reject",
     "incorrect_data",
-    alwaysPass,
+    inOwnDocument(
+      eachGroup(
+        "ResidentialCleanEnergyCrGrp",
+        ifThen(
+          hasValue("JointOccupancyInd"),
+          all(hasValue("JointOccupancyInd@referenceDocumentId"), documentPresent("JointOccupancyStatement")),
+        ),
+        "JointOccupancyInd",
+        "JointOccupancyInd@referenceDocumentId",
+      ),
+    ),
     "If Form 5695, [ 'JointOccupancyInd' in 'ResidentialCleanEnergyCrGrp' ] is checked, then at least one instance of [JointOccupancyStatement] must be attached to 'JointOccupancyInd'.",
   ),
   rule(
     "F5695-065",
     "reject",
     "incorrect_data",
-    alwaysPass,
+    inOwnDocument(
+      eachGroup(
+        "EgyEffcntHmImprvCrGrp",
+        ifThen(
+          hasValue("JointOccupancyInd"),
+          all(hasValue("JointOccupancyInd@referenceDocumentId"), documentPresent("JointOccupancyStatement")),
+        ),
+        "JointOccupancyInd",
+        "JointOccupancyInd@referenceDocumentId",
+      ),
+    ),
     "If Form 5695, [ 'JointOccupancyInd' in 'EgyEffcntHmImprvCrGrp' ] is checked, then at least one instance of [JointOccupancyStatement] must be attached to 'JointOccupancyInd'.",
   ),
   rule(
@@ -306,7 +376,7 @@ export const F5695_RULES: readonly RuleDef[] = [
     "F5695-069",
     "reject",
     "incorrect_data",
-    alwaysPass,
+    inOwnDocument(ifThenUnless(hasNonZero("ExteriorDoorEgyStarRqrGrp/MostExpnsExtrDoorCostAmt"), hasValue("ExteriorDoorEgyStarRqrGrp/MostExpnsExtrDoorQMID"), any(attachmentDescStartsWith("Substantiate QMID"), generalDependencyDescStartsWith("Substantiate QMID")))),
     "If Form 5695, [ 'MostExpnsExtrDoorCostAmt' in 'ExteriorDoorEgyStarRqrGrp' from 'EgyEffcntHmImprvCrGrp' ] has a non-zero value, then [ 'MostExpnsExtrDoorQMID' in 'ExteriorDoorEgyStarRqrGrp' from 'EgyEffcntHmImprvCrGrp' ] must be present unless a binary attachment or [GeneralDependencySmall] with description beginning with \"Substantiate QMID\" is present in the return.",
   ),
   rule(
@@ -320,14 +390,21 @@ export const F5695_RULES: readonly RuleDef[] = [
     "F5695-071",
     "reject",
     "incorrect_data",
-    alwaysPass,
+    inOwnDocument(
+      eachGroup(
+        "NextMostExpnsExtrDoorGrp",
+        ifThenUnless(hasNonZero("CostAmt"), hasValue("QMID"), any(attachmentDescStartsWith("Substantiate QMID"), generalDependencyDescStartsWith("Substantiate QMID"))),
+        "CostAmt",
+        "QMID",
+      ),
+    ),
     "If Form 5695, [ 'CostAmt' in 'NextMostExpnsExtrDoorGrp from 'OthExteriorDoorEgyStarRqrGrp' from 'ExteriorDoorEgyStarRqrGrp' from 'EgyEffcntHmImprvCrGrp' ] has a non-zero value, then [ 'QMID' in 'NextMostExpnsExtrDoorGrp from 'OthExteriorDoorEgyStarRqrGrp' from 'ExteriorDoorEgyStarRqrGrp' from 'EgyEffcntHmImprvCrGrp' ] must be present unless a binary attachment or [GeneralDependencySmall] with description beginning with \"Substantiate QMID\" is present in the return.",
   ),
   rule(
     "F5695-072",
     "reject",
     "math_error",
-    alwaysPass,
+    inOwnDocument(ifThen(hasNonZero("NextMostExpnsExtrDoorCostAmt"), amountEq(amount("NextMostExpnsExtrDoorCostAmt"), total("NextMostExpnsExtrDoorGrp/CostAmt")))),
     "If Form 5695, [ 'NextMostExpnsExtrDoorCostAmt' in 'OthExteriorDoorEgyStarRqrGrp' from 'ExteriorDoorEgyStarRqrGrp' from 'EgyEffcntHmImprvCrGrp' ] has a non-zero value, then it must equal the sum of all instances of [ 'CostAmt' in 'NextMostExpnsExtrDoorGrp' from 'OthExteriorDoorEgyStarRqrGrp' from 'ExteriorDoorEgyStarRqrGrp' from 'EgyEffcntHmImprvCrGrp' ].",
   ),
   rule(
@@ -348,14 +425,21 @@ export const F5695_RULES: readonly RuleDef[] = [
     "F5695-075",
     "reject",
     "incorrect_data",
-    alwaysPass,
+    inOwnDocument(
+      eachGroup(
+        "MostExpnsExtrWndwSkyltGrp",
+        ifThenUnless(hasNonZero("CostAmt"), hasValue("QMID"), any(attachmentDescStartsWith("Substantiate QMID"), generalDependencyDescStartsWith("Substantiate QMID"))),
+        "CostAmt",
+        "QMID",
+      ),
+    ),
     "If Form 5695, [ 'CostAmt' in 'MostExpnsExtrWndwSkyltGrp' from 'ExtrWndwSkyltEgyStarRqrGrp' from 'EgyEffcntHmImprvCrGrp' ] has a non-zero value, then [ 'QMID' in 'MostExpnsExtrWndwSkyltGrp' from 'ExtrWndwSkyltEgyStarRqrGrp' from 'EgyEffcntHmImprvCrGrp' ] must be present unless a binary attachment or [GeneralDependencySmall] with description beginning with \"Substantiate QMID\" is present in the return.",
   ),
   rule(
     "F5695-076",
     "reject",
     "math_error",
-    alwaysPass,
+    inOwnDocument(ifThen(hasNonZero("MostExpnsExtrWndwSkyltCostAmt"), amountEq(amount("MostExpnsExtrWndwSkyltCostAmt"), total("MostExpnsExtrWndwSkyltGrp/CostAmt")))),
     "If Form 5695, [ 'MostExpnsExtrWndwSkyltCostAmt' in 'ExtrWndwSkyltEgyStarRqrGrp' from 'EgyEffcntHmImprvCrGrp' ] has a non-zero value, then it must equal the sum of all instances of [ 'CostAmt' in 'MostExpnsExtrWndwSkyltGrp' from 'ExtrWndwSkyltEgyStarRqrGrp' from 'EgyEffcntHmImprvCrGrp' ].",
   ),
   rule(
@@ -376,7 +460,7 @@ export const F5695_RULES: readonly RuleDef[] = [
     "F5695-079",
     "reject",
     "incorrect_data",
-    alwaysPass,
+    inOwnDocument(ifThenUnless(hasNonZero("MostExpnsCentralAirCondCostAmt"), hasValue("MostExpnsCentralAirCondQMID"), any(attachmentDescStartsWith("Substantiate QMID"), generalDependencyDescStartsWith("Substantiate QMID")))),
     "If Form 5695, [ 'MostExpnsCentralAirCondCostAmt' in 'CentralAirConditionerGrp' from 'EgyEffcntHmImprvCrGrp' ] has a non-zero value, then [ 'MostExpnsCentralAirCondQMID' in 'CentralAirConditionerGrp' from 'EgyEffcntHmImprvCrGrp' ] must be present unless a binary attachment or [GeneralDependencySmall] with description beginning with \"Substantiate QMID\" is present in the return.",
   ),
   rule(
@@ -397,14 +481,21 @@ export const F5695_RULES: readonly RuleDef[] = [
     "F5695-082",
     "reject",
     "incorrect_data",
-    alwaysPass,
+    inOwnDocument(
+      eachGroup(
+        "MostExpnsWaterHtrGrp",
+        ifThenUnless(hasNonZero("CostAmt"), hasValue("QMID"), any(attachmentDescStartsWith("Substantiate QMID"), generalDependencyDescStartsWith("Substantiate QMID"))),
+        "CostAmt",
+        "QMID",
+      ),
+    ),
     "If Form 5695, [ 'CostAmt' in 'MostExpnsWaterHtrGrp' from 'WaterHeaterGrp' from 'EgyEffcntHmImprvCrGrp' ] has a non-zero value, then [ 'QMID' in 'MostExpnsWaterHtrGrp' from 'WaterHeaterGrp' from 'EgyEffcntHmImprvCrGrp' ] must be present unless a binary attachment or [GeneralDependencySmall] with description beginning with \"Substantiate QMID\" is present in the return.",
   ),
   rule(
     "F5695-083",
     "reject",
     "math_error",
-    alwaysPass,
+    inOwnDocument(ifThen(hasNonZero("MostExpnsWaterHtCostAmt"), amountEq(amount("MostExpnsWaterHtCostAmt"), total("MostExpnsWaterHtrGrp/CostAmt")))),
     "If Form 5695, [ 'MostExpnsWaterHtCostAmt' in 'WaterHeaterGrp' from 'EgyEffcntHmImprvCrGrp' ] has a non-zero value, then it must equal the sum of all instances of [ 'CostAmt' in 'MostExpnsWaterHtrGrp' from 'WaterHeaterGrp' from 'EgyEffcntHmImprvCrGrp' ].",
   ),
   rule(
@@ -425,7 +516,7 @@ export const F5695_RULES: readonly RuleDef[] = [
     "F5695-086",
     "reject",
     "incorrect_data",
-    alwaysPass,
+    inOwnDocument(ifThenUnless(hasNonZero("MostExpnsFrncHotWtrBlrCostAmt"), hasValue("MostExpnsFrncHotWtrBlrQMID"), any(attachmentDescStartsWith("Substantiate QMID"), generalDependencyDescStartsWith("Substantiate QMID")))),
     "If Form 5695, [ 'MostExpnsFrncHotWtrBlrCostAmt' in 'FrncHotWtrBlrGrp' from 'EgyEffcntHmImprvCrGrp' ] has a non-zero value, then [ 'MostExpnsFrncHotWtrBlrQMID' in 'FrncHotWtrBlrGrp' from 'EgyEffcntHmImprvCrGrp' ] must be present unless a binary attachment or [GeneralDependencySmall] with description beginning with \"Substantiate QMID\" is present in the return.",
   ),
   rule(
@@ -460,7 +551,7 @@ export const F5695_RULES: readonly RuleDef[] = [
     "F5695-091",
     "reject",
     "incorrect_data",
-    alwaysPass,
+    inOwnDocument(ifThenUnless(hasNonZero("PanelboardCktFeederCostAmt"), hasValue("EnablingPropertyGrp/QMID"), any(attachmentDescStartsWith("Substantiate QMID"), generalDependencyDescStartsWith("Substantiate QMID")))),
     "If Form 5695, [ 'PanelboardCktFeederCostAmt' in 'EnablingPropertyGrp' from 'EgyEffcntHmImprvCrGrp' ] has a non-zero value, then at least one instance of [ 'QMID' in 'EnablingPropertyGrp' from 'EgyEffcntHmImprvCrGrp' ] must be present unless a binary attachment or [GeneralDependencySmall] with description beginning with \"Substantiate QMID\" is present in the return.",
   ),
   rule(
@@ -495,28 +586,64 @@ export const F5695_RULES: readonly RuleDef[] = [
     "F5695-096",
     "reject",
     "incorrect_data",
-    alwaysPass,
+    inOwnDocument(
+      eachGroup(
+        "MostExpnsElecGasHtPumpGrp",
+        ifThenUnless(hasNonZero("CostAmt"), hasValue("QMID"), any(attachmentDescStartsWith("Substantiate QMID"), generalDependencyDescStartsWith("Substantiate QMID"))),
+        "CostAmt",
+        "QMID",
+      ),
+    ),
     "If Form 5695, [ 'CostAmt' in 'MostExpnsElecGasHtPumpGrp' from 'HtPumpWtrHeaterBmssStoveBlrGrp' from 'EgyEffcntHmImprvCrGrp' ] has a non-zero value, then [ 'QMID' in 'MostExpnsElecGasHtPumpGrp' from 'HtPumpWtrHeaterBmssStoveBlrGrp' from 'EgyEffcntHmImprvCrGrp' ] must be present unless a binary attachment or [GeneralDependencySmall] with description beginning with \"Substantiate QMID\" is present in the return.",
   ),
   rule(
     "F5695-097",
     "reject",
     "incorrect_data",
-    alwaysPass,
+    inOwnDocument(
+      eachGroup(
+        "MostExpnsHtPumpWtrHtrGrp",
+        ifThenUnless(hasNonZero("CostAmt"), hasValue("QMID"), any(attachmentDescStartsWith("Substantiate QMID"), generalDependencyDescStartsWith("Substantiate QMID"))),
+        "CostAmt",
+        "QMID",
+      ),
+    ),
     "If Form 5695, [ 'CostAmt' in 'MostExpnsHtPumpWtrHtrGrp' from 'HtPumpWtrHeaterBmssStoveBlrGrp' from 'EgyEffcntHmImprvCrGrp' ] has a non-zero value, then [ 'QMID' in 'MostExpnsHtPumpWtrHtrGrp' from 'HtPumpWtrHeaterBmssStoveBlrGrp' from 'EgyEffcntHmImprvCrGrp' ] must be present unless a binary attachment or [GeneralDependencySmall] with description beginning with \"Substantiate QMID\" is present in the return.",
   ),
   rule(
     "F5695-098",
     "reject",
     "incorrect_data",
-    alwaysPass,
+    inOwnDocument(
+      eachGroup(
+        "MostExpnsBmssStoveBlrGrp",
+        ifThenUnless(hasNonZero("CostAmt"), hasValue("QMID"), any(attachmentDescStartsWith("Substantiate QMID"), generalDependencyDescStartsWith("Substantiate QMID"))),
+        "CostAmt",
+        "QMID",
+      ),
+    ),
     "If Form 5695, [ 'CostAmt' in 'MostExpnsBmssStoveBlrGrp' from 'HtPumpWtrHeaterBmssStoveBlrGrp' from 'EgyEffcntHmImprvCrGrp' ] has a non-zero value, then [ 'QMID' in 'MostExpnsBmssStoveBlrGrp' from 'HtPumpWtrHeaterBmssStoveBlrGrp' from 'EgyEffcntHmImprvCrGrp' ] must be present unless a binary attachment or [GeneralDependencySmall] with description beginning with \"Substantiate QMID\" is present in the return.",
   ),
   rule(
     "F5695-099",
     "reject",
     "math_error",
-    alwaysPass,
+    inOwnDocument(
+      ifThen(
+        hasNonZero("HtPumpWtrHeaterBmssCostAmt"),
+        amountEq(
+          amount("HtPumpWtrHeaterBmssCostAmt"),
+          plus(
+            total("MostExpnsElecGasHtPumpGrp/CostAmt"),
+            amount("OthElecGasHtPumpCostAmt"),
+            total("MostExpnsHtPumpWtrHtrGrp/CostAmt"),
+            amount("OthElecGasHtPumpWtrHtCostAmt"),
+            total("MostExpnsBmssStoveBlrGrp/CostAmt"),
+            amount("OthBmssStoveBlrCostAmt"),
+          ),
+        ),
+      ),
+    ),
     "If Form 5695, [ 'HtPumpWtrHeaterBmssCostAmt' in 'HtPumpWtrHeaterBmssStoveBlrGrp' from 'EgyEffcntHmImprvCrGrp' ] has a non-zero value, then it must be equal to the sum of [ 'CostAmt' in 'MostExpnsElecGasHtPumpGrp' from 'EgyEffcntHmImprvCrGrp' ] and [ 'OthElecGasHtPumpCostAmt' in 'HtPumpWtrHeaterBmssStoveBlrGrp' from 'EgyEffcntHmImprvCrGrp' ] and [ 'CostAmt' in 'MostExpnsHtPumpWtrHtrGrp' from 'HtPumpWtrHeaterBmssStoveBlrGrp' from 'EgyEffcntHmImprvCrGrp' ] and  ['OthElecGasHtPumpWtrHtCostAmt' in 'HtPumpWtrHeaterBmssStoveBlrGrp' from 'EgyEffcntHmImprvCrGrp' ] and [ 'CostAmt' in 'MostExpnsBmssStoveBlrGrp' from 'HtPumpWtrHeaterBmssStoveBlrGrp' from 'EgyEffcntHmImprvCrGrp' ] and [ 'OthBmssStoveBlrCostAmt' in 'HtPumpWtrHeaterBmssStoveBlrGrp' from 'EgyEffcntHmImprvCrGrp' ].",
   ),
   rule(

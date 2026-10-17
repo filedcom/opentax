@@ -1,18 +1,38 @@
 /**
  * MeF Business Rules: F4835
  * Auto-generated from 1040_Business_Rules_2025v3.0.csv
- * 3 rules (3 implemented, 0 stubs)
+ * 3 rules (3 implemented)
  */
 
 import type { RuleDef } from "../../../../../../core/validation/types.ts";
-import { rule, alwaysPass, any, formPresent, hasNonZero, hasValue, ifThen, } from "../../../../../../core/validation/mod.ts";
+import {
+  amount,
+  amountEq,
+  any,
+  documentTotal,
+  formPresent,
+  hasNonZero,
+  hasValue,
+  ifThen,
+  inOwnDocument,
+  minus,
+  rule,
+} from "../../../../../../core/validation/mod.ts";
 
 export const F4835_RULES: readonly RuleDef[] = [
   rule(
     "F4835-001",
     "reject",
     "math_error",
-    alwaysPass, // cross-instance aggregation: sum across all Form 4835 instances vs Schedule E line
+    inOwnDocument(
+      amountEq(
+        minus(
+          documentTotal("F4835", (d) => Math.max(0, d.num("NetFarmRentalIncomeOrLossAmt"))),
+          documentTotal("F4835", (d) => Math.abs(d.num("FarmRentalDeductibleLossAmt"))),
+        ),
+        amount("ScheduleE/NetFarmRentalIncomeOrLossAmt"),
+      ),
+    ),
     "The sum of [all Forms 4835, Line 32 'NetFarmRentalIncomeOrLossAmt' with an amount greater than zero] minus (-) the sum of the absolute values of all Line 34c 'FarmRentalDeductibleLossAmt' must be equal to Schedule E (Form 1040), Line 40 'NetFarmRentalIncomeOrLossAmt'.",
   ),
   rule(

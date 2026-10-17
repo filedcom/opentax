@@ -12,6 +12,7 @@ import {
   alwaysPass,
   any,
   countEq,
+  eachGroup,
   eqNum,
   eqStr,
   filingStatusIs,
@@ -22,16 +23,26 @@ import {
   gte,
   hasValue,
   ifThen,
+  inOwnDocument,
   isZero,
   lt,
-  notGtNum,
   noValue,
+  notGtNum,
   rule,
   sumGtNum,
 } from "../../../../core/validation/mod.ts";
 import { ALL_RULES } from "./index.ts";
 
 export const TY2026_RETIRED_RULES: ReadonlySet<string> = new Set([
+  "F1040-471-01",
+  "F3800-409",
+  "R0000-193",
+  "SD-F1040-006",
+  "SD-F1040-007",
+  "SD-F1040-008",
+  "SD-F1040-009",
+  "SD-F1040-010",
+  "SD-F1040-011",
   "F1040-067-13",
   "F1040-206-11",
   "F1040-278-03",
@@ -690,7 +701,17 @@ export const TY2026_NEW_RULES: readonly RuleDef[] = [
     "SEIC-F1040-539-04",
     "reject",
     "missing_data",
-    alwaysPass,
+    inOwnDocument(
+      any(
+        eachGroup(
+          "QualifyingChildInformation",
+          any(hasValue("QualifyingChildSSN"), hasValue("DiedLiteralCd")),
+          "QualifyingChildSSN",
+          "DiedLiteralCd",
+        ),
+        notGtNum("1040/EarnedIncomeCreditAmt", 664),
+      ),
+    ),
     "Schedule EIC (Form 1040), [ 'QualifyingChildSSN' or 'DiedLiteralCd' ] in 'QualifyingChildInformation' must have a value unless both of the following are true: (1) Form 1040, 'EarnedIncomeCreditAmt' has a value less than or equal to 664 and (2) The self-only EIC being claimed with a qualifying child (see instructions and also Pub. 596).",
   ),
   rule(

@@ -1,22 +1,27 @@
 /**
  * MeF Business Rules: F8863
  * Auto-generated from 1040_Business_Rules_2025v3.0.csv
- * 18 rules (18 implemented, 0 stubs)
+ * 18 rules (12 implemented, 6 IRS-side)
  */
 
 import type { RuleDef } from "../../../../../../core/validation/types.ts";
 import {
   all,
-  alwaysPass,
+  amount,
+  amountLte,
   any,
   eqField,
   everyItem,
+  everyTinAmong,
   hasNonZero,
   hasValue,
   ifThen,
+  inOwnDocument,
+  irsSide,
   isZero,
   notGtNum,
   rule,
+  total,
   validSSN,
 } from "../../../../../../core/validation/mod.ts";
 
@@ -25,14 +30,27 @@ export const F8863_RULES: readonly RuleDef[] = [
     "F8863-001-04",
     "reject",
     "data_mismatch",
-    alwaysPass, // requires cross-instance check: StudentSSN must match PrimarySSN, SpouseSSN, or a DependentSSN in DependentDetail
+    inOwnDocument(everyTinAmong(["StudentSSN"], ["1040/DependentSSN"], true)),
     "Each 'StudentSSN' that has a value on Form 8863 must be equal to 'PrimarySSN' or 'SpouseSSN' in the Return Header or a 'DependentSSN' in 'DependentDetail' on the return.",
   ),
   rule(
     "F8863-003-03",
     "reject",
     "incorrect_data",
-    alwaysPass, // requires cross-instance check: each StudentSSN may only appear once across Line 30 or Line 31 credit groups
+    inOwnDocument(
+      (ctx) => {
+        const claims = (ctx.groupInstances?.("StudentAndEducationalInstnGrp") ?? [])
+          .map((student) => ({
+            ssn: String(student.field("StudentSSN") ?? "").replace(/\D/g, ""),
+            lines: [student.hasNonZero("AmerOppCreditNetCalcExpnssAmt"), student.hasNonZero("LifetimeQualifiedExpensesAmt")]
+              .filter(Boolean).length,
+          }))
+          .filter((claim) => claim.ssn !== "" && claim.lines > 0);
+        return claims.every((claim) =>
+          claim.lines === 1 && claims.filter((other) => other.ssn === claim.ssn).length === 1
+        );
+      },
+    ),
     "Each 'StudentSSN' that has a value on Form 8863, Line 21 can only be used once to claim either Line 30 'AmerOppCreditNetCalcExpnssAmt' or Line 31 'LifetimeQualifiedExpensesAmt'.",
   ),
   rule(
@@ -74,7 +92,12 @@ export const F8863_RULES: readonly RuleDef[] = [
     "F8863-022",
     "reject",
     "incorrect_data",
-    alwaysPass, // requires cross-instance aggregation: TentativeAmerOppCreditAmt must not exceed sum of all AmerOppCreditNetCalcExpnssAmt
+    inOwnDocument(
+      ifThen(
+        hasNonZero("TentativeAmerOppCreditAmt"),
+        amountLte(amount("TentativeAmerOppCreditAmt"), total("AmerOppCreditNetCalcExpnssAmt")),
+      ),
+    ),
     "If Form 8863, Line 1 'TentativeAmerOppCreditAmt' has a non-zero value, then it must not exceed the sum of all Line 30 'AmerOppCreditNetCalcExpnssAmt'.",
   ),
   rule(
@@ -88,7 +111,12 @@ export const F8863_RULES: readonly RuleDef[] = [
     "F8863-024",
     "reject",
     "incorrect_data",
-    alwaysPass, // requires cross-instance aggregation: TotalQualifiedExpensesAmt must not exceed sum of all LifetimeQualifiedExpensesAmt
+    inOwnDocument(
+      ifThen(
+        hasNonZero("TotalQualifiedExpensesAmt"),
+        amountLte(amount("TotalQualifiedExpensesAmt"), total("LifetimeQualifiedExpensesAmt")),
+      ),
+    ),
     "If Form 8863, Line 10 'TotalQualifiedExpensesAmt' has a non-zero value, then it must not exceed the sum of all Lines 31 'LifetimeQualifiedExpensesAmt'.",
   ),
   rule(
@@ -109,42 +137,42 @@ export const F8863_RULES: readonly RuleDef[] = [
     "F8863-027",
     "alert",
     "information",
-    alwaysPass, // requires e-File database lookup: prior-year student claim detection across accepted returns
+    irsSide,
     "A student claimed on Form 8863 for the Education Credit was previously claimed as a student on another accepted return for the same tax year. Visit www.irs.gov/identity-theft-fraud-scams/identity-theft-dependents for additional information.",
   ),
   rule(
     "F8863-512-02",
     "reject",
     "data_mismatch",
-    alwaysPass, // requires e-File database lookup: StudentNameControlTxt and StudentSSN must match e-File database
+    irsSide,
     "For each student in Form 8863, Line 20 'StudentNameControlTxt' and Line 21 'StudentSSN' must match e-File database.",
   ),
   rule(
     "F8863-528-04",
     "reject",
     "duplicate",
-    alwaysPass, // requires cross-instance check: StudentSSN must not appear on another Form 8863 for the same tax year (cross-return duplicate detection)
+    irsSide,
     "Each Student SSN that has a value on Form 8863, must not be the same as that in another Form 8863 for the same tax year. Visit www.irs.gov/identity-theft-fraud-scams/identity-theft-dependents for additional information. To electronically file with this duplicate condition, an Identity Protection Personal Identification Number (IP PIN) will be required. If you wish to get an IP PIN and you don't already have an account on IRS.gov, then you must register to validate your identity. Please visit www.irs.gov/getanippin for further information and resubmit your return with an IP PIN.",
   ),
   rule(
     "F8863-901",
     "reject_and_stop",
     "database",
-    alwaysPass, // requires e-File database lookup: SSA deceased-individual lock status
+    irsSide,
     "The Student SSN that has a value on Form 8863, Line 21 has been locked because Social Security Administration records indicate the number belongs to a deceased individual.",
   ),
   rule(
     "F8863-902",
     "reject_and_stop",
     "database",
-    alwaysPass, // requires e-File database lookup: taxpayer-requested account lock status
+    irsSide,
     "The Student SSN that has a value on Form 8863, Line 21 has been locked. The account was locked per the taxpayer's request.",
   ),
   rule(
     "F8863-904",
     "reject_and_stop",
     "database",
-    alwaysPass, // requires e-File database lookup: parent/guardian-requested account lock status
+    irsSide,
     "The Student SSN that has a value on Form 8863, Line 21 has been locked. The account was locked per the request of the student's parent or guardian.",
   ),
 ];

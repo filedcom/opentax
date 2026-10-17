@@ -1,11 +1,29 @@
 /**
  * MeF Business Rules: S2
  * Auto-generated from 1040_Business_Rules_2025v3.0.csv
- * 35 rules (32 implemented, 3 stubs)
+ * 35 rules (35 implemented)
  */
 
 import type { RuleDef } from "../../../../../../core/validation/types.ts";
-import { rule, alwaysPass, eqField, eqSum, hasValue, hasNonZero, gt, ifThen, any, all, formPresent, sumOfAll, } from "../../../../../../core/validation/mod.ts";
+import {
+  all,
+  amount,
+  amountEq,
+  any,
+  documentTotal,
+  eqField,
+  eqSum,
+  formPresent,
+  gt,
+  hasNonZero,
+  hasValue,
+  ifThen,
+  inOwnDocument,
+  noValue,
+  rule,
+  sumOfAll,
+  total,
+} from "../../../../../../core/validation/mod.ts";
 
 export const S2_RULES: readonly RuleDef[] = [
   rule(
@@ -180,7 +198,19 @@ export const S2_RULES: readonly RuleDef[] = [
     "S2-F1040-123-01",
     "reject",
     "math_error",
-    alwaysPass, // requires summing fields across variable number of Form 5329 instances — cross-instance aggregation
+    inOwnDocument(
+      ifThen(
+        all(hasNonZero("TaxOnIRAsAmt"), noValue("TaxOnIRAsAmt@form5329NotRequiredInd")),
+        amountEq(
+          amount("TaxOnIRAsAmt"),
+          total(
+            "5329/IRAEarlyDistributionsTaxAmt", "5329/EducIRADistributionsTaxAmt", "5329/IRAExcessContribTaxAmt",
+            "5329/RothIRAExcessContribTaxAmt", "5329/EducIRAExcessContribTaxAmt", "5329/MSAExcessContribTaxAmt",
+            "5329/HSAExcessContribTaxAmt", "5329/ABLEExcessContribTaxAmt", "5329/RtmntAnntyExcessContribTaxAmt",
+          ),
+        ),
+      ),
+    ),
     "If Schedule 2 (Form 1040), 'TaxOnIRAsAmt' has a non-zero value and 'form5329NotRequiredInd' is not checked, then 'TaxOnIRAsAmt' must be equal to the sum of the following on all Forms 5329: 'IRAEarlyDistributionsTaxAmt' and 'EducIRADistributionsTaxAmt' and 'IRAExcessContribTaxAmt' and 'RothIRAExcessContribTaxAmt' and 'EducIRAExcessContribTaxAmt' and 'MSAExcessContribTaxAmt' and 'HSAExcessContribTaxAmt' and 'ABLEExcessContribTaxAmt' and 'RtmntAnntyExcessContribTaxAmt'.",
   ),
   rule(
@@ -201,7 +231,16 @@ export const S2_RULES: readonly RuleDef[] = [
     "S2-F1040-146-02",
     "reject",
     "math_error",
-    alwaysPass, // requires conditional aggregation across variable number of Schedule H instances — cross-instance check
+    inOwnDocument(
+      amountEq(
+        amount("HouseholdEmploymentTaxAmt"),
+        documentTotal("SH", (d) => {
+          const fica = d.num("TotSocSecMedcrAndFedIncmTaxAmt");
+          const combined = d.num("CombinedFUTATaxPlusNetTaxesAmt");
+          return fica !== 0 && combined !== 0 ? combined : fica + combined;
+        }),
+      ),
+    ),
     "Schedule 2 (Form 1040), 'HouseholdEmploymentTaxAmt' must be equal to the sum of all Schedule H (Form 1040), [ 'TotSocSecMedcrAndFedIncmTaxAmt' plus (+) 'CombinedFUTATaxPlusNetTaxesAmt' ]. If in any Schedule H (Form 1040), both 'TotSocSecMedcrAndFedIncmTaxAmt' and 'CombinedFUTATaxPlusNetTaxesAmt' have non-zero values, include only 'CombinedFUTATaxPlusNetTaxesAmt' in the sum.",
   ),
   rule(
