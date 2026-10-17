@@ -256,13 +256,6 @@
     "approvedBy": "pending-review"
   },
   {
-    "module": "forms/f1040/2025/return-processing/calculated_return_replay.test.ts",
-    "name": "calculated Form 1040 and Schedule 1-3 amounts cannot change native XML without source replay",
-    "reason": "Five tip-health-single-* pdf review fixtures lack the issued policy and premium records that a single Schedule C Form 7206 plan has required since #71, so their export rejects; the fixtures need those records added.",
-    "expires": "2027-01-31",
-    "approvedBy": "pending-review"
-  },
-  {
     "module": "forms/f1040/nodes/inputs/general/foreign/f5471/worksheet-source.test.ts",
     "name": "Separate unrelated-note diagnostic preserves sixteen category obligations; original shareholder-note native operands remain guarded",
     "reason": "Validates against the private IRS TY2025 schema or PDF cache in .state/research, which CI and clean checkouts do not have.",
