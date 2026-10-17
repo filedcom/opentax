@@ -27,6 +27,11 @@ import { rulesForReturnVersion } from "../../forms/f1040/validation/rules/ty2026
 import { normalizeAllPending } from "../../forms/f1040/2025/return-processing/pending.ts";
 import { returnHeaderNameLine1 } from "../../forms/f1040/mef/header.ts";
 import { emittedValidationScope, isTransmissionOnlyRule } from "./export.ts";
+import {
+  loadReturnSourceFiles,
+  resolveSourceBytes,
+  withMissingSourceFiles,
+} from "./return-source-files.ts";
 
 function getCatalogEntry(formType: string, year: number) {
   const key = `${formType}:${year}`;
@@ -56,7 +61,10 @@ export async function validateReturnCommand(
   const returnPath = join(args.baseDir, args.returnId);
   const { meta, inputs } = await loadReturn(returnPath);
   const def = getCatalogEntry(meta.formType ?? "f1040", meta.year);
-  const engineInputs = buildEngineInputs(inputs, singletonPublicInputKeys(def));
+  const engineInputs = await resolveSourceBytes(
+    returnPath,
+    buildEngineInputs(inputs, singletonPublicInputKeys(def)),
+  );
   const result = def.executeReturn(engineInputs);
   const pending = normalizeAllPending(result.pending);
 
@@ -66,8 +74,19 @@ export async function validateReturnCommand(
   let scope: ReturnType<typeof emittedValidationScope> | undefined;
   let ownReport: DiagnosticsReport | undefined;
   let assemblyError: DiagnosticEntry | undefined;
+  let missing: readonly string[] = [];
   try {
-    const xml = def.buildMefXml(pending, filerIdentity);
+    const files = await loadReturnSourceFiles(returnPath, pending);
+    missing = files.missing;
+    // A return with source files is assembled as export assembles it.
+    const xml = files.attachments.length + files.retained.length > 0
+      ? (await def.prepareReturn(
+        pending,
+        filerIdentity,
+        files.attachments,
+        files.retained,
+      )).bundle.xml
+      : def.buildMefXml(pending, filerIdentity);
     if (def.mefRuleReport) ownReport = def.mefRuleReport(pending, xml);
     else scope = emittedValidationScope(xml);
   } catch (error) {
@@ -75,7 +94,7 @@ export async function validateReturnCommand(
       ruleNumber: "MEF_ASSEMBLY",
       severity: "reject",
       category: "xml_error",
-      message: error instanceof Error ? error.message : String(error),
+      message: withMissingSourceFiles(error, missing).message,
       formRef: "Return",
     };
   }

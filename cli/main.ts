@@ -23,6 +23,7 @@ import {
   exportPdfCommand,
 } from "./commands/export.ts";
 import { validateReturnCommand } from "./commands/validate.ts";
+import { attachSourceFileCommand } from "./commands/return-source-files.ts";
 import {
   checkForUpdate,
   updateCommand,
@@ -187,6 +188,47 @@ const COMMANDS: readonly CommandDef[] = [
           outputDir: args.output,
           force: args.force === true || args.force === "true",
           draft: args.draft === true || args.draft === "true",
+        })
+      );
+    },
+  },
+  {
+    cmd: "return",
+    sub: "attach",
+    description:
+      "Add a PDF the return files with MeF, or a retained source copy, to the return's folders",
+    usage:
+      "opentax return attach --returnId <id> --file <path> [--name <file.pdf>] [--description <text>] | --reference <document reference>",
+    options: [
+      { flag: "--returnId", description: "Return identifier", required: true },
+      { flag: "--file", description: "File to copy", required: true },
+      {
+        flag: "--name",
+        description:
+          "Attachment file name the inputs use (default: the file's own name)",
+      },
+      {
+        flag: "--description",
+        description:
+          "MeF attachment description, when the form needs a specific one",
+      },
+      {
+        flag: "--reference",
+        description:
+          "Retained document reference the inputs use; stores the file in retained/",
+      },
+    ],
+    handler: async (args) => {
+      const returnId = requireArg("returnId", args.returnId);
+      const file = requireArg("file", args.file);
+      await run(() =>
+        attachSourceFileCommand({
+          returnId,
+          baseDir: RETURNS_DIR,
+          file,
+          name: args.name,
+          description: args.description,
+          reference: args.reference,
         })
       );
     },
@@ -477,6 +519,10 @@ async function main(): Promise<void> {
       "export-dir",
       "record",
       "evidence",
+      "file",
+      "name",
+      "description",
+      "reference",
     ],
     boolean: ["json", "help", "draft"],
     alias: { h: "help" },

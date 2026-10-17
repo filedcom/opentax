@@ -213,3 +213,49 @@ test("Form 8862 PDF requires AOTC students to match Form 8863", () => {
     "reconcile",
   );
 });
+
+test("Form 8862 PDF renders once the prepared return retains the notice copy", () => {
+  const digest =
+    "1c68e71f4c34a2b3341881b3b5e7ac6fccb7514cbf14dd53e59c7ac7d5109686";
+  const source = {
+    claim_ctc: true,
+    ctc_disallowed_year: 2023,
+    ctc_disallowance_notice_reference: "Synthetic 2023 IRS CTC notice",
+    ctc_children: [{
+      first_name: "Alice",
+      last_name: "Doe",
+      lived_with_over_half_year: true,
+      qualifying_child: true,
+      dependent: true,
+      us_citizen_national_or_resident: true,
+    }],
+  };
+  const pending = {
+    general: {
+      ...noticeReviews,
+      prior_ctc_disallowance_review: {
+        ...noticeReviews.prior_ctc_disallowance_review,
+        notice_copy_sha256: digest,
+      },
+    },
+    f1040: {
+      taxpayer_ssn: "123456789",
+      line19_child_tax_credit: 2200,
+      dependent_details: [{
+        first_name: "Alice",
+        last_name: "Doe",
+        credit_category: "ctc",
+      }],
+    },
+  };
+  assertThrows(
+    () => form8862Pdf.instances?.(source, filer, pending),
+    Error,
+    "retained prior IRS notice copy with matching SHA-256",
+  );
+  const instances = form8862Pdf.instances?.(source, filer, pending, undefined, {
+    "Retained synthetic CTC notice copy": digest,
+  });
+  assertEquals(instances?.length, 1);
+  assertEquals(instances?.[0].ctc_child_0_name, "Alice Doe");
+});

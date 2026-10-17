@@ -165,6 +165,13 @@ transmission, applicable IRS testing/identifiers, state coverage and acceptance
 handling must be established separately. Export is neither filing nor acceptance;
 these facts do not establish any commercial product's IRS authorization.
 
+Export offers MeF preparation the files a return names: PDFs from the return's
+`attachments/` folder, matched by the file name its inputs use, and retained
+copies from `retained/`, matched by reference. A source copy whose bytes an
+input needs is stored as `"bytes": {"sha256": "<digest>"}` (or
+`{"retained": "<file name>"}`) and read from `retained/`. A missing file is
+reported with the path it belongs at.
+
 The CLI stores returns locally. Uploading source documents into a hosted
 assistant is a separate disclosure to that provider, not local-only processing.
 
@@ -177,6 +184,13 @@ opentax return validate --returnId a1b2c3
 # Export as IRS MeF XML for downstream validation or transmitter workflows.
 # This does not transmit a return or prove IRS acceptance.
 opentax return export --returnId a1b2c3 --type mef > return.xml
+
+# Add a PDF filed with the return, under the file name its inputs use;
+# --description when the form needs a specific MeF attachment description
+opentax return attach --returnId a1b2c3 --file ./policy.pdf --name 2025-leave-policy.pdf
+
+# Add a retained source copy (kept, not transmitted) under the reference its inputs use
+opentax return attach --returnId a1b2c3 --file ./notice.pdf --reference "2023 CTC notice copy"
 
 # List entries in a return
 opentax form list --returnId a1b2c3

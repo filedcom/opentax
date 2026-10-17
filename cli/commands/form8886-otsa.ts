@@ -5,10 +5,10 @@ import { dirname, join } from "node:path";
 import {
   emittedValidationScope,
   type ExportReturnArgs,
+  prepareWithSourceFiles,
   runReturnPipeline,
   validateBusinessRules,
 } from "./export.ts";
-import { loadForm8839Attachments } from "./form8839-attachments.ts";
 import {
   otsaDeliveryRequestSchema,
   otsaExportRequestSchema,
@@ -35,11 +35,7 @@ async function prepareExport(
     ? { ...pipeline.filer, timestamp: preparationTimestamp }
     : pipeline.filer;
   if (!filer) throw new Error("OTSA export requires the return filer");
-  const attachments = await loadForm8839Attachments(
-    join(args.baseDir, args.returnId),
-    pending,
-  );
-  const prepared = await def.prepareReturn(pending, filer, attachments);
+  const prepared = await prepareWithSourceFiles(args, pending, def, filer);
   validateBusinessRules(
     pending,
     filer,

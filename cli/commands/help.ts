@@ -21,6 +21,10 @@ export type ParsedArgs = {
   readonly "export-dir"?: string;
   readonly record?: string;
   readonly evidence?: string;
+  readonly file?: string;
+  readonly name?: string;
+  readonly description?: string;
+  readonly reference?: string;
   readonly json?: boolean;
   readonly help?: boolean;
 };
