@@ -76,6 +76,7 @@ import {
 } from "../../../../intermediate/forms/income/business/form461/index.ts";
 import { form8995 } from "../../../../intermediate/forms/deductions/business/form8995/index.ts";
 import { scheduleA } from "../../../deductions/itemized/schedule_a/index.ts";
+import { schedule_d } from "../../../../intermediate/aggregation/income/investments/schedule_d/index.ts";
 import { FilingStatus, TS } from "../../../../types.ts";
 import type { NodeContext } from "../../../../../../../core/types/node-context.ts";
 import { schedule1a } from "../../../../intermediate/forms/deductions/additional/schedule1a/index.ts";
@@ -1291,6 +1292,7 @@ class GeneralNode extends TaxNode<typeof inputSchema> {
     schedule1a,
     schedule1,
     form5329,
+    schedule_d,
   ]);
 
   compute(ctx: NodeContext, input: GeneralInput): NodeResult {
@@ -1635,6 +1637,12 @@ class GeneralNode extends TaxNode<typeof inputSchema> {
         filing_status: parsed.filing_status,
         scope_review: parsed.form461_scope_review,
       }),
+      // Schedule D line 21 limits a net capital loss to $1,500 for MFS.
+      ...(parsed.filing_status === FilingStatus.MFS
+        ? [this.outputNodes.output(schedule_d, {
+          filing_status: parsed.filing_status,
+        })]
+        : []),
       // Pass filing_status to schedule_a for OBBBA SALT phase-out threshold
       this.outputNodes.output(scheduleA, {
         filing_status: parsed.filing_status,

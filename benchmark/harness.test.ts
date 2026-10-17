@@ -323,3 +323,25 @@ test("known-invalid cases are allowed by the baseline until it expires, and a st
   ]);
   assertEquals(stale.allowed, 0);
 });
+
+test("the runners skip a baselined invalid case until its entry expires, and still fail on any other", async () => {
+  const root = await sys.makeTempDir();
+  const valid = await caseDirectory(root, "f1040/2025/01");
+  await caseWith(root, "f1040/2025/02", [start, {
+    node_type: "f1099int",
+    data: { box1_interest: 1 },
+  }]);
+  const entry = {
+    case: "f1040/2025/02",
+    reason: "renamed field",
+    expires: "2027-01-31",
+    approvedBy: "a7ul",
+  };
+  const year = join(root, "f1040/2025");
+  const known = { casesRoot: root, baseline: [entry], today: "2026-10-16" };
+  assertEquals(await discoverBenchmarkCases(year, undefined, known), [valid]);
+  await assertRejects(() => discoverBenchmarkCases(year));
+  await assertRejects(() =>
+    discoverBenchmarkCases(year, undefined, { ...known, today: "2027-02-01" })
+  );
+});

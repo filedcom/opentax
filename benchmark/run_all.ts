@@ -16,6 +16,7 @@ import {
   benchmarkTax,
   createdReturnSchema,
   discoverBenchmarkCases,
+  readCaseBaseline,
 } from "./harness.ts";
 
 const SCRIPT_DIR = dirname(fromFileUrl(import.meta.url));
@@ -26,7 +27,11 @@ async function tax(...args: string[]): Promise<string> {
   return await benchmarkTax(TAX_DIR, args);
 }
 
-const names = await discoverBenchmarkCases(CASES_DIR);
+const names = await discoverBenchmarkCases(CASES_DIR, undefined, {
+  casesRoot: CASES_DIR,
+  baseline: await readCaseBaseline(TAX_DIR),
+  today: new Date().toISOString().slice(0, 10),
+});
 
 console.log(`Running all ${names.length} benchmark cases...`);
 console.log("==================================");

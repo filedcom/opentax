@@ -300,6 +300,7 @@ function lossLimit(filingStatus: FilingStatus | undefined): number {
 class ScheduleDIntermediateNode extends TaxNode<typeof inputSchema> {
   readonly nodeType = "schedule_d";
   readonly inputSchema = inputSchema;
+  override readonly contextFields = ["filing_status"];
   get outputNodes() {
     return new OutputNodes([
       f1040,

@@ -130,7 +130,9 @@ export function reconcileForm4952ScheduleJChildDividend(
     pending.f8949 !== undefined ||
     pending.schedule_d !== undefined &&
       Object.entries(pending.schedule_d as Record<string, unknown>).some(
-        ([key, value]) => key !== "line13_form8814" && value !== undefined,
+        ([key, value]) =>
+          key !== "line13_form8814" && key !== "filing_status" &&
+          value !== undefined,
       ) ||
     pending.form1116 !== undefined
   ) {

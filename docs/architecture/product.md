@@ -149,7 +149,9 @@ export class Line15TaxableIncome extends TaxNode<typeof inputSchema, number> {
 A special TaxNode whose input is the raw return data. Its `compute` decides
 which first-wave nodes to activate based on what forms are present. Optional
 forms are handled by simply not activating them — no zero-propagation through
-unused nodes.
+unused nodes. A node may declare `contextFields` (return-wide facts such as
+filing status); after execution, a pending slot holding only those fields is
+dropped, so routing a fact to an optional form does not put it on the return.
 
 Each input node that can appear multiple times (W-2, 1099-INT, 1099-DIV, etc.)
 receives the **full array** in a single dispatch. The node itself handles

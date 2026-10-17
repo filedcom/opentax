@@ -1,0 +1,42 @@
+{
+  "year": 2025,
+  "scenario": "Married filing separately with W-2 wages and a $2,200 short-term capital loss; the deductible loss is limited to $1,500",
+  "forms": [
+    {
+      "node_type": "start",
+      "data": {
+        "general": {
+          "filing_status": "mfs",
+          "taxpayer_first_name": "Owen",
+          "taxpayer_last_name": "Smith",
+          "taxpayer_dob": "1975-06-15",
+          "address_city": "Austin",
+          "address_state": "TX",
+          "address_zip": "78701"
+        }
+      }
+    },
+    {
+      "node_type": "w2",
+      "data": {
+        "box1_wages": 55850,
+        "box2_fed_withheld": 5000,
+        "box3_ss_wages": 55850,
+        "box4_ss_withheld": 3463,
+        "box5_medicare_wages": 55850,
+        "box6_medicare_withheld": 810
+      }
+    },
+    {
+      "node_type": "f1099b",
+      "data": {
+        "description": "100 sh XYZ ST Covered",
+        "part": "A",
+        "date_acquired": "02/01/25",
+        "date_sold": "09/01/25",
+        "proceeds": 3000,
+        "cost_basis": 5200
+      }
+    }
+  ]
+}

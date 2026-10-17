@@ -16,6 +16,7 @@ import {
   benchmarkSourceIssues,
   createdReturnSchema,
   discoverBenchmarkCases,
+  readCaseBaseline,
 } from "./harness.ts";
 
 const SCRIPT_DIR = dirname(fromFileUrl(import.meta.url));
@@ -206,6 +207,7 @@ const SUMMARY_FIELDS = new Set([
 ]);
 const RAW_FIELDS = new Set([
   "line1a_wages",
+  "line7_capital_gain",
   "line10_adjustments",
   "line27_eitc",
 ]);
@@ -488,7 +490,11 @@ async function runAll(caseNames: string[]): Promise<CaseResult[]> {
 }
 
 if (import.meta.main) {
-  const paths = await discoverBenchmarkCases(CASES_DIR);
+  const paths = await discoverBenchmarkCases(CASES_DIR, undefined, {
+    casesRoot: join(SCRIPT_DIR, "cases"),
+    baseline: await readCaseBaseline(join(SCRIPT_DIR, "..")),
+    today: new Date().toISOString().slice(0, 10),
+  });
   const names = paths.map((path) => path.slice(CASES_DIR.length + 1));
 
   const results = await runAll(names);

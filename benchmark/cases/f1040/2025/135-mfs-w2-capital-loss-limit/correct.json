@@ -1,0 +1,16 @@
+{
+  "case": "135-mfs-w2-capital-loss-limit",
+  "scenario": "Married filing separately with W-2 wages and a $2,200 short-term capital loss; the deductible loss is limited to $1,500",
+  "year": 2025,
+  "source": "IRS 2025 Instructions for Schedule D (Form 1040), line 21: a net capital loss is limited to ($1,500) if married filing separately; Pub 17 TY2025 Table 10-1 MFS standard deduction $15,750; 2025 Tax Table, married filing separately column, taxable income $38,600-$38,650 = $4,397",
+  "correct": {
+    "line7_capital_gain": -1500,
+    "line9_total_income": 54350,
+    "line11_agi": 54350,
+    "line15_taxable_income": 38600,
+    "line24_total_tax": 4397,
+    "line33_total_payments": 5000,
+    "line35a_refund": 603,
+    "line37_amount_owed": 0
+  }
+}

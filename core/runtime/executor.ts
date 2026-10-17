@@ -199,9 +199,22 @@ export function execute(
   }
 
   return {
-    pending,
+    pending: withoutContextOnlySlots(pending, registry),
     diagnostics,
     carryforwards,
     ...(Object.keys(replayInputs).length > 0 ? { replayInputs } : {}),
   };
+}
+
+function withoutContextOnlySlots(
+  pending: Record<string, Record<string, unknown>>,
+  registry: NodeRegistry,
+): Record<string, Record<string, unknown>> {
+  return Object.fromEntries(
+    Object.entries(pending).filter(([nodeType, fields]) => {
+      const context = registry[nodeType]?.contextFields ?? [];
+      return context.length === 0 ||
+        Object.keys(fields).some((key) => !context.includes(key));
+    }),
+  );
 }

@@ -40,6 +40,8 @@ export abstract class TaxNode<TSchema extends z.ZodTypeAny = z.ZodTypeAny> {
   abstract readonly nodeType: NodeType;
   abstract readonly inputSchema: TSchema;
   abstract readonly outputNodes: OutputNodes<readonly TaxNode<z.ZodTypeAny>[]>;
+  /** Return-wide facts this node reads, such as filing status; they alone do not put the form on the return. */
+  readonly contextFields: readonly string[] = [];
   abstract compute(ctx: NodeContext, input: z.infer<TSchema>): NodeResult;
 
   get outputNodeTypes(): readonly NodeType[] {

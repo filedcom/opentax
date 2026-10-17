@@ -683,3 +683,63 @@ test("executor: remaining nodes execute after single node failure", () => {
   assertEquals(result.diagnostics[0].nodeType, "bad_b");
   assertEquals(result.diagnostics[0].code, "EXECUTOR_NODE_FAILURE");
 });
+
+const scheduleInputSchema = z.object({
+  filing_status: z.string().optional(),
+  loss: z.number().optional(),
+});
+class MockScheduleNode extends TaxNode<typeof scheduleInputSchema> {
+  readonly nodeType = "mock_schedule";
+  readonly inputSchema = scheduleInputSchema;
+  readonly outputNodes = new OutputNodes([]);
+  override readonly contextFields = ["filing_status"];
+  compute(): NodeResult {
+    return { outputs: [] };
+  }
+}
+
+const contextSourceSchema = z.object({
+  filing_status: z.string(),
+  loss: z.number().optional(),
+});
+class MockContextSource extends TaxNode<typeof contextSourceSchema> {
+  readonly nodeType = "start";
+  readonly inputSchema = contextSourceSchema;
+  readonly outputNodes = new OutputNodes([]);
+  compute(
+    _ctx: NodeContext,
+    input: z.infer<typeof contextSourceSchema>,
+  ): NodeResult {
+    return {
+      outputs: [{
+        nodeType: "mock_schedule",
+        fields: {
+          filing_status: input.filing_status,
+          ...(input.loss === undefined ? {} : { loss: input.loss }),
+        },
+      }],
+    };
+  }
+}
+
+test("a slot holding only a node's context fields does not put that form on the return", () => {
+  const registry: NodeRegistry = {
+    start: new MockContextSource(),
+    mock_schedule: new MockScheduleNode(),
+  };
+  const plan: ExecutionStep[] = [
+    { id: "start", nodeType: "start" },
+    { id: "mock_schedule", nodeType: "mock_schedule" },
+  ];
+  const ctx: NodeContext = { taxYear: 2025, formType: "f1040" };
+  const withSource = execute(plan, registry, { filing_status: "mfs" }, ctx);
+  assertEquals(withSource.pending.mock_schedule, undefined);
+  const withLoss = execute(plan, registry, {
+    filing_status: "mfs",
+    loss: -2_200,
+  }, ctx);
+  assertEquals(withLoss.pending.mock_schedule, {
+    filing_status: "mfs",
+    loss: -2_200,
+  });
+});

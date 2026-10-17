@@ -245,11 +245,34 @@ export async function inspectBenchmarkCases(
   return { found, problems };
 }
 
+/** Baselined invalid cases the runners skip; `casesRoot` is what entry names are relative to. */
+export type KnownInvalidCases = {
+  readonly casesRoot: string;
+  readonly baseline: CaseBaseline;
+  readonly today: string;
+};
+
+function isKnownInvalid(
+  known: KnownInvalidCases | undefined,
+  problem: CaseProblem,
+): boolean {
+  if (!known) return false;
+  const name = relative(known.casesRoot, problem.directory);
+  return known.baseline.some((entry) =>
+    entry.case === name && entry.expires >= known.today
+  );
+}
+
 export async function discoverBenchmarkCases(
   root: string,
   products: Readonly<Record<string, FormDefinition>> = catalog,
+  known?: KnownInvalidCases,
 ): Promise<string[]> {
-  const { found, problems } = await inspectBenchmarkCases(root, products);
+  const inspection = await inspectBenchmarkCases(root, products);
+  const found = inspection.found;
+  const problems = inspection.problems.filter((problem) =>
+    !isKnownInvalid(known, problem)
+  );
   if (problems.length > 0) {
     throw new Error(
       `${problems.length} invalid benchmark case${
