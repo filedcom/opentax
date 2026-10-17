@@ -262,9 +262,40 @@ export function eicTaxResidencyEligible(input: EitcInput): boolean {
   return input.filing_status === FilingStatus.MFJ;
 }
 
+type EicLookup = (amount: number, children: number, joint: boolean) => number;
+
+// Rev. Proc. 2025-32 §4.06(1) completed phaseout amounts by qualifying
+// children, [other filers, joint]. The 2026 EIC Table is not yet published,
+// so a TY2026 return can only establish that no credit is allowed.
+const EIC_COMPLETED_PHASEOUT_2026: Readonly<
+  Record<number, readonly [number, number]>
+> = {
+  0: [19_540, 26_820],
+  1: [51_593, 58_863],
+  2: [58_629, 65_899],
+  3: [62_974, 70_244],
+};
+
+function lookupEicWithoutTable2026(
+  amount: number,
+  children: number,
+  joint: boolean,
+): number {
+  const [other, mfj] = EIC_COMPLETED_PHASEOUT_2026[Math.min(children, 3)];
+  if (amount < 1 || amount >= (joint ? mfj : other)) return 0;
+  throw new Error("TY2026 EIC needs the 2026 EIC Table, not published yet");
+}
+
+function eicLookupForYear(taxYear: number): EicLookup {
+  if (taxYear === 2025) return lookupEic2025;
+  if (taxYear === 2026) return lookupEicWithoutTable2026;
+  throw new Error(`No EIC table for tax year ${taxYear}`);
+}
+
 function computeEitc(
   input: EitcInput,
   investmentIncomeLimit: number,
+  lookupEic: EicLookup = lookupEic2025,
 ): number {
   if (input.do_not_claim_eic === true) return 0;
   const earnedIncome = (input.earned_income ?? 0) +
@@ -299,12 +330,12 @@ function computeEitc(
 
   // Worksheet A/B: look up earned income first. AGI gets a second lookup only
   // at or above the worksheet threshold, then the smaller credit controls.
-  const earnedCredit = lookupEic2025(earnedIncome, children, isJoint);
+  const earnedCredit = lookupEic(earnedIncome, children, isJoint);
   const agiComparisonThreshold = children === 0
     ? (isJoint ? 17_730 : 10_620)
     : (isJoint ? 30_470 : 23_350);
   if (agi < agiComparisonThreshold) return earnedCredit;
-  return Math.min(earnedCredit, lookupEic2025(agi, children, isJoint));
+  return Math.min(earnedCredit, lookupEic(agi, children, isJoint));
 }
 
 function buildOutput(credit: number): NodeOutput[] {
@@ -324,7 +355,11 @@ class EitcNode extends TaxNode<typeof inputSchema> {
     if (!cfg) throw new Error(`No f1040 config for year ${ctx.taxYear}`);
 
     const input = inputSchema.parse(rawInput);
-    const credit = computeEitc(input, cfg.eitcInvestmentIncomeLimit);
+    const credit = computeEitc(
+      input,
+      cfg.eitcInvestmentIncomeLimit,
+      eicLookupForYear(ctx.taxYear),
+    );
     return {
       outputs: [
         ...buildOutput(credit),

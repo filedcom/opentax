@@ -332,6 +332,27 @@ const ELECTIVE_DEFERRAL_CODES = new Set<Box12Code>([
   Box12Code.EE,
 ]);
 
+/** Below the year's base deferral limit no owner can have a line 1h excess. */
+function noCodeDExcessDeferral(
+  w2s: W2Items,
+  baseLimit: number,
+): { amount: number; owners: string[] } {
+  const byOwner = new Map<string, number>();
+  for (const item of w2s) {
+    const owner = item.employee_ssn?.replaceAll("-", "") ?? "";
+    const codeD = (item.box12_entries ?? [])
+      .filter((entry) => entry.code === Box12Code.D)
+      .reduce((sum, entry) => sum + entry.amount, 0);
+    byOwner.set(owner, (byOwner.get(owner) ?? 0) + codeD);
+  }
+  if ([...byOwner.values()].some((total) => total > baseLimit)) {
+    throw new Error(
+      "W-2 code D above the base deferral limit needs the TY2025 excess review, not yet available for this year",
+    );
+  }
+  return { amount: 0, owners: [] };
+}
+
 /** The one supported 2025 line 1h W-2 excess: traditional, non-SIMPLE code D. */
 export function codeDExcessDeferral(w2s: W2Items): {
   amount: number;
@@ -1249,7 +1270,7 @@ class W2Node extends TaxNode<typeof inputSchema> {
     }
     const excessDeferral = ctx.taxYear === 2025
       ? codeDExcessDeferral(input.w2s)
-      : { amount: 0, owners: [] };
+      : noCodeDExcessDeferral(input.w2s, cfg.retirementLimits["401k"][49]);
 
     const incomeTaxFields = input.f8958_allocation
       ? communityW2Fields(input.w2s, input.f8958_allocation)

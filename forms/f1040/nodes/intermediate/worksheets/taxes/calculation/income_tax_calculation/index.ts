@@ -17,7 +17,11 @@ import { calculateForm8615 } from "../../../../forms/taxes/investments/form8615/
 import { inputSchema as form8615SourceSchema } from "../../../../../inputs/taxes/investments/f8615/schema.ts";
 import { f8812 } from "../../../../../inputs/credits/child/f8812/index.ts";
 import { CONFIG_BY_YEAR } from "../../../../../config/index.ts";
-import { ordinaryTax2025 } from "../tax_table_2025.ts";
+import {
+  ordinaryTax2025,
+  ordinaryTaxFromSchedule,
+} from "../tax_table_2025.ts";
+import { bracketsForStatus } from "../tax_brackets.ts";
 import {
   foreignEarnedIncomePreferentialTax,
   preferentialTax,
@@ -113,6 +117,33 @@ type IncomeTaxCalcInput = z.infer<typeof inputSchema>;
 
 // ─── Pure helpers ─────────────────────────────────────────────────────────────
 
+// The preferential, foreign-exclusion, Form 8615, Form 8814 and section 1294
+// worksheets still apply TY2025 brackets and thresholds.
+function assertYearSupportsWorksheets(
+  taxYear: number,
+  input: IncomeTaxCalcInput,
+): void {
+  if (taxYear === 2025) return;
+  const worksheetSources = [
+    sumField(input.qualified_dividends as number | number[] | undefined),
+    input.net_capital_gain ?? 0,
+    input.foreign_earned_income_exclusion ?? 0,
+    input.form8814_tax ?? 0,
+    input.form8621_1294_undistributed_ordinary ?? 0,
+    input.form8621_1294_undistributed_capital ?? 0,
+  ];
+  if (
+    worksheetSources.some((amount) => amount > 0) ||
+    input.form8615_source !== undefined ||
+    input.form8615_reviewed_source !== undefined ||
+    input.schedule_j_calculated_tax !== undefined
+  ) {
+    throw new Error(
+      `TY${taxYear} tax worksheets beyond the rate schedule are not supported yet`,
+    );
+  }
+}
+
 // ─── Node class ───────────────────────────────────────────────────────────────
 
 class IncomeTaxCalculationNode extends TaxNode<typeof inputSchema> {
@@ -149,6 +180,7 @@ class IncomeTaxCalculationNode extends TaxNode<typeof inputSchema> {
       );
     }
 
+    assertYearSupportsWorksheets(ctx.taxYear, input);
     const foreignExclusion = input.foreign_earned_income_exclusion ?? 0;
     if (
       foreignExclusion > 0 &&
@@ -260,7 +292,12 @@ class IncomeTaxCalculationNode extends TaxNode<typeof inputSchema> {
         electedCapitalGain,
       });
     } else {
-      tax = ordinaryTax2025(input.taxable_income, input.filing_status);
+      tax = ctx.taxYear === 2025
+        ? ordinaryTax2025(input.taxable_income, input.filing_status)
+        : ordinaryTaxFromSchedule(
+          input.taxable_income,
+          bracketsForStatus(input.filing_status, cfg),
+        );
     }
     let regularTaxBeforeAdditionalItems = tax;
 

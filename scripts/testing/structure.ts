@@ -145,7 +145,12 @@ const registryPath = (definition: FormDefinition) =>
 export function registryKeyProblems(
   definitions: readonly FormDefinition[],
 ): Problem[] {
-  return definitions.flatMap((definition) =>
+  // A year that reuses another year's registry is checked once, at its owner.
+  const owners = definitions.filter((definition, index) =>
+    definitions.findIndex((other) => other.registry === definition.registry) ===
+      index
+  );
+  return owners.flatMap((definition) =>
     Object.entries(definition.registry)
       .filter(([key, node]) => key !== node.nodeType)
       .map(([key, node]) => ({
@@ -215,7 +220,12 @@ export function unreachableProblems(
   definitions: readonly FormDefinition[],
   graph: Graph,
 ): Problem[] {
-  return definitions.flatMap((definition) =>
+  // A year that reuses another year's registry is checked once, at its owner.
+  const owners = definitions.filter((definition, index) =>
+    definitions.findIndex((other) => other.registry === definition.registry) ===
+      index
+  );
+  return owners.flatMap((definition) =>
     Object.entries(definition.registry)
       .filter(([key, node]) =>
         key === node.nodeType && key !== "start" &&

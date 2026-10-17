@@ -118,9 +118,9 @@ class Form8990Node extends TaxNode<typeof inputSchema> {
   readonly outputNodes = new OutputNodes([]);
 
   compute(ctx: NodeContext, rawInput: z.infer<typeof inputSchema>): NodeResult {
-    if (ctx.taxYear !== 2025) throw new Error("Form 8990 route is TY2025 only");
     const input = inputSchema.parse(rawInput);
     if (Object.keys(input).length === 0) return { outputs: [] };
+    if (ctx.taxYear !== 2025) throw new Error("Form 8990 route is TY2025 only");
     throw new Error(
       "Form 8990 active sources require the Form 1040 two-pass execution path",
     );

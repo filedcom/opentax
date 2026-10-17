@@ -140,9 +140,9 @@ class Form8829Node extends TaxNode<typeof inputSchema> {
   readonly outputNodes = new OutputNodes([scheduleC]);
 
   compute(ctx: NodeContext, rawInput: z.infer<typeof inputSchema>): NodeResult {
-    if (ctx.taxYear !== 2025) throw new Error("Form 8829 route is TY2025 only");
     const input = inputSchema.parse(rawInput);
     if (!input.rented_home) return { outputs: [] };
+    if (ctx.taxYear !== 2025) throw new Error("Form 8829 route is TY2025 only");
     const lines = calculateRentedHomeForm8829(input.rented_home);
     return {
       outputs: [

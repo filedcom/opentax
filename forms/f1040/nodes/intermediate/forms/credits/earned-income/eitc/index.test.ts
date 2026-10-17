@@ -6,8 +6,8 @@ import { FilingStatus } from "../../../../../types.ts";
 
 // ─── Test Helpers ─────────────────────────────────────────────────────────────
 
-function compute(input: Record<string, unknown>) {
-  return eitc.compute({ taxYear: 2025, formType: "f1040" }, {
+function compute(input: Record<string, unknown>, taxYear = 2025) {
+  return eitc.compute({ taxYear, formType: "f1040" }, {
     filer_has_valid_ssns: true,
     taxpayer_dob: "1985-06-15",
     main_home_in_us_over_half_year: true,
@@ -583,4 +583,17 @@ test("computed EIC routes to Form 1040 line 27a", () => {
   });
   const out = result.outputs.find((o) => o.nodeType === "f1040");
   assertEquals(out?.fields.line27_eitc, 4_328);
+});
+
+test("TY2026 EIC is zero at the completed phaseout and refused below it", () => {
+  const claim = { qualifying_children: 0, filing_status: FilingStatus.Single };
+  // Rev. Proc. 2025-32 §4.06(1): no-child completed phaseout $19,540.
+  const fields = compute({ ...claim, earned_income: 19_540 }, 2026).outputs
+    .find((o) => o.nodeType === "eitc")?.fields;
+  assertEquals(fields?.credit_amount, 0);
+  assertThrows(
+    () => compute({ ...claim, earned_income: 12_000 }, 2026),
+    Error,
+    "2026 EIC Table",
+  );
 });

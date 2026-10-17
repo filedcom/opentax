@@ -29,7 +29,10 @@ import { assertReviewedForm8283PdfFields } from "./forms/deductions/charitable/f
 import { assertForm8978SourceBytes } from "../domains/taxes/passthrough/form8978/form8978_source.ts";
 import { buildReturnHeader, FilingStatus } from "../../mef/header.ts";
 import { element, elements } from "../../mef/xml.ts";
-import { F1040_2025_CONFIG } from "../config.ts";
+import {
+  assertMefReturnVersion,
+  MEF_RETURN_VERSION_BY_TAX_YEAR,
+} from "../../mef/return-versions.ts";
 import { PDFDocument } from "pdf-lib";
 import { isValidMefPdfFilename } from "./attachments/pdf-attachment-filename.ts";
 import { assertMefPdfEnvelope } from "./attachments/pdf-attachment-envelope.ts";
@@ -285,16 +288,7 @@ function buildReturnXml(
   readonly documents: readonly MefDocumentFragment[];
 } {
   assertEmployeeContributionReturn(pending);
-  if (year !== 2025 || returnType !== "1040") {
-    throw new Error(
-      "TY2025 Form 1040 export requires year 2025 and return type 1040",
-    );
-  }
-  if (schemaVersion !== F1040_2025_CONFIG.mefSchemaVersion) {
-    throw new Error(
-      "TY2025 Form 1040 export requires the reviewed MeF schema version",
-    );
-  }
+  assertMefReturnVersion(year, schemaVersion, returnType);
   if (!filer) {
     throw new Error("MeF export requires a real filer identity");
   }
@@ -519,11 +513,12 @@ export function assertPreparedBundleProjection(
   if (!filer.timestamp && !retainedTimestamp) {
     throw new Error("Prepared MeF XML has no replayable ReturnTs");
   }
+  const year = Number(/<TaxYr>(\d{4})<\/TaxYr>/.exec(bundle.xml)?.[1]);
   const projected = buildReturnXml(
     bundle.pending,
     filer.timestamp ? filer : { ...filer, timestamp: `${retainedTimestamp}Z` },
-    F1040_2025_CONFIG.mefSchemaVersion,
-    2025,
+    MEF_RETURN_VERSION_BY_TAX_YEAR[year] ?? "",
+    year,
     "1040",
     bundle.attachments,
     bundle.attachmentSha256ByFileName,

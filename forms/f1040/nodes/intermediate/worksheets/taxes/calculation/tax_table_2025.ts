@@ -31,6 +31,17 @@ export function taxTable2025(income: number, status: FilingStatus): number {
   if (wholeDollarIncome >= 100_000) {
     throw new Error("The 2025 Tax Table stops below $100,000");
   }
+  return taxTableCell(wholeDollarIncome, bracketsForTableStatus(status));
+}
+
+/**
+ * Tax Table cell for whole-dollar income below $100,000 under any year's
+ * rate schedule, built the way the published 2025 table is (see above).
+ */
+function taxTableCell(
+  wholeDollarIncome: number,
+  brackets: ReadonlyArray<Bracket>,
+): number {
   const midpoint = wholeDollarIncome < 5
     ? 2.5
     : wholeDollarIncome < 15
@@ -40,7 +51,7 @@ export function taxTable2025(income: number, status: FilingStatus): number {
     : wholeDollarIncome < 3_000
     ? Math.floor(wholeDollarIncome / 25) * 25 + 12.5
     : Math.floor(wholeDollarIncome / 50) * 50 + 25;
-  const bracket = [...bracketsForTableStatus(status)].reverse().find((entry) =>
+  const bracket = [...brackets].reverse().find((entry) =>
     midpoint > entry.over
   );
   if (!bracket) return 0;
@@ -74,6 +85,24 @@ export function ordinaryTax2025(income: number, status: FilingStatus): number {
       wholeDollarIncome,
       bracketsForTableStatus(status),
     ));
+}
+
+/**
+ * Ordinary tax for a year whose Tax Table is not yet published: the table
+ * cell derived from that year's rate schedule below $100,000, the Tax
+ * Computation Worksheet at or above.
+ */
+export function ordinaryTaxFromSchedule(
+  income: number,
+  brackets: ReadonlyArray<Bracket>,
+): number {
+  if (!Number.isFinite(income) || income < 0) {
+    throw new Error("Ordinary tax needs nonnegative taxable income");
+  }
+  const wholeDollarIncome = Math.round(income);
+  return wholeDollarIncome < 100_000
+    ? taxTableCell(wholeDollarIncome, brackets)
+    : Math.round(taxFromBrackets(wholeDollarIncome, brackets));
 }
 
 /**

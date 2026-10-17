@@ -14,7 +14,7 @@ import {
   rulePrefixForDocumentTag,
 } from "../../core/validation/emitted-documents.ts";
 import { FIELD_REGISTRY } from "../../forms/f1040/validation/field-registry.ts";
-import { ALL_RULES } from "../../forms/f1040/validation/rules/index.ts";
+import { rulesForReturnVersion } from "../../forms/f1040/validation/rules/ty2026.ts";
 import type { DiagnosticEntry } from "../../core/validation/types.ts";
 import type { ExecutorDiagnosticEntry } from "../../core/runtime/executor.ts";
 import { loadForm8839Attachments } from "./form8839-attachments.ts";
@@ -192,7 +192,9 @@ export function businessRuleReport(
     emittedScope?.emitted,
   );
   return evaluateRules(
-    ALL_RULES.filter((rule) => !isTransmissionOnlyRule(rule.ruleNumber)),
+    rulesForReturnVersion(emittedScope?.returnVersion).filter((rule) =>
+      !isTransmissionOnlyRule(rule.ruleNumber)
+    ),
     ctx,
     emittedScope?.rulePrefixes,
   );
