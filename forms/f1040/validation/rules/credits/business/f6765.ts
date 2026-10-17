@@ -1,11 +1,20 @@
 /**
  * MeF Business Rules: F6765
  * Auto-generated from 1040_Business_Rules_2025v3.0.csv
- * 3 rules (2 implemented, 1 stubs)
+ * 3 rules (3 implemented)
  */
 
 import type { RuleDef } from "../../../../../../core/validation/types.ts";
-import { rule, alwaysPass, notGtNum, } from "../../../../../../core/validation/mod.ts";
+import {
+  all,
+  any,
+  hasNonZero,
+  ifThen,
+  inOwnDocument,
+  isZero,
+  notGtNum,
+  rule,
+} from "../../../../../../core/validation/mod.ts";
 
 export const F6765_RULES: readonly RuleDef[] = [
   rule(
@@ -19,7 +28,26 @@ export const F6765_RULES: readonly RuleDef[] = [
     "F6765-004-02",
     "reject",
     "incorrect_data",
-    alwaysPass, // cross-section aggregation: requires inspecting all Section A/B fields holistically
+    inOwnDocument(
+      ifThen(
+        any(
+          ...[
+            "RegularEnergyConsortiaAmt", "RegularBasicResearchPaymentAmt", "RegularBasePeriodAmt",
+            "RegularPaymentMinusBaseAmt", "FixedBasedPct", "RegularAverageGrossReceiptsAmt",
+            "FixedBasePctTimesGrossRcptsAmt", "AdjTotQualifedRsrchExpnssAmt", "HalfAdjTotQlfyRsrchExpnssAmt",
+            "SmallerQlfyResearchExpnssAmt", "RsrchExpensesPlusRsrchPymtsAmt", "RegularCreditAmt",
+          ].map(hasNonZero),
+        ),
+        all(
+          ...[
+            "AltEnergyConsortiaAmt", "AltBasicResearchPaymentAmt", "AltBasePeriodAmt", "AltPaymentMinusBaseAmt",
+            "TotalSumEnergyAndNetBaseAmt", "TotalSumTimesTwentyPctAmt", "TotQlfyResearchExpns3PYAmt",
+            "TotQlfyResearchExpns3PYPctAmt", "NetQlfyResearchExpns3PYPctAmt", "NetQlfyResearchExpnsPctAmt",
+            "TotalAltPctAmt", "AltCreditAmt",
+          ].map(isZero),
+        ),
+      ),
+    ),
     "If Form 6765 has significant data on any Line in Section A, then if an amount is entered on any Line in Section B, it must have a zero value.",
   ),
   rule(

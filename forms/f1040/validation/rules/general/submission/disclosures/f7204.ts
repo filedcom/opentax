@@ -1,11 +1,19 @@
 /**
  * MeF Business Rules: F7204
  * Auto-generated from 1040_Business_Rules_2025v3.0.csv
- * 6 rules (3 implemented, 3 stubs)
+ * 6 rules
  */
 
 import type { RuleDef } from "../../../../../../../core/validation/types.ts";
-import { rule, allDistinct, alwaysPass, hasValue, ifThen, } from "../../../../../../../core/validation/mod.ts";
+import {
+  allDistinct,
+  any,
+  attachmentDescIs,
+  hasValue,
+  ifThen,
+  inOwnDocument,
+  rule,
+} from "../../../../../../../core/validation/mod.ts";
 
 export const F7204_RULES: readonly RuleDef[] = [
   rule(
@@ -19,7 +27,10 @@ export const F7204_RULES: readonly RuleDef[] = [
     "F7204-002",
     "reject",
     "missing_document",
-    alwaysPass, // requires checking either TrusteeInd or ExecutorAdminOtherFiduciaryInd, then binary attachment "Form 56"
+    ifThen(
+      inOwnDocument(any(hasValue("TrusteeInd"), hasValue("ExecutorAdminOtherFiduciaryInd"))),
+      attachmentDescIs("Form 56"),
+    ),
     "If Form 7204, 'TrusteeInd' or 'ExecutorAdminOtherFiduciaryInd' is checked, then a binary attachment with description \"Form 56\" must be present in the return.",
   ),
   rule(
@@ -33,7 +44,10 @@ export const F7204_RULES: readonly RuleDef[] = [
     "F7204-004",
     "reject",
     "missing_document",
-    alwaysPass, // requires checking ExecutorAdminOtherFiduciaryInd, then binary attachment "Court Certificate" or "Letter Of Testamentary"
+    ifThen(
+      inOwnDocument(hasValue("ExecutorAdminOtherFiduciaryInd")),
+      attachmentDescIs("Court Certificate", "Letter Of Testamentary"),
+    ),
     "If Form 7204, 'ExecutorAdminOtherFiduciaryInd' is checked, then a binary attachment with description \"Court Certificate\" or \"Letter Of Testamentary\" must be present in the return.",
   ),
   rule(

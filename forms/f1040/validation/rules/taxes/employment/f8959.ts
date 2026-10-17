@@ -1,12 +1,14 @@
 /**
  * MeF Business Rules: F8959
  * Auto-generated from 1040_Business_Rules_2025v3.0.csv
- * 18 rules (15 implemented, 3 stubs)
+ * 18 rules (18 implemented)
  */
 
 import type { RuleDef } from "../../../../../../core/validation/types.ts";
 import {
-  alwaysPass,
+  amount,
+  amountEq,
+  documentTotal,
   eqDiffFloorZero,
   eqField,
   eqNum,
@@ -15,6 +17,7 @@ import {
   filingStatusIs,
   hasValue,
   ifThen,
+  inOwnDocument,
   rule,
 } from "../../../../../../core/validation/mod.ts";
 
@@ -23,14 +26,24 @@ export const F8959_RULES: readonly RuleDef[] = [
     "F8959-001",
     "reject",
     "math_error",
-    alwaysPass,
+    inOwnDocument(
+      amountEq(
+        amount("TotalUnreportedMedicareTipsAmt"),
+        documentTotal("F4137", amount("NetUnreportedMinusIncdntlAmt")),
+      ),
+    ),
     "Form 8959, Line 2 'TotalUnreportedMedicareTipsAmt' must be equal to the sum of all Form 4137, Line 6 'NetUnreportedMinusIncdntlAmt'.",
   ),
   rule(
     "F8959-002",
     "reject",
     "math_error",
-    alwaysPass,
+    inOwnDocument(
+      amountEq(
+        amount("TotalWagesWithNoWithholdingAmt"),
+        documentTotal("F8919", amount("TotalWagesWithNoWithholdingAmt")),
+      ),
+    ),
     "Form 8959, Line 3 'TotalWagesWithNoWithholdingAmt' must be equal to the sum of all Form 8919, Line 6 'TotalWagesWithNoWithholdingAmt'.",
   ),
   rule(
@@ -79,7 +92,12 @@ export const F8959_RULES: readonly RuleDef[] = [
     "F8959-010-02",
     "reject",
     "math_error",
-    alwaysPass,
+    inOwnDocument(
+      amountEq(
+        amount("TotalSelfEmploymentIncomeAmt"),
+        documentTotal("SSE", amount("CombinedSEAndChurchWagesAmt")),
+      ),
+    ),
     "Form 8959, 'TotalSelfEmploymentIncomeAmt' must be equal to the sum of all Schedule SE (Form 1040), 'CombinedSEAndChurchWagesAmt'.",
   ),
   rule(

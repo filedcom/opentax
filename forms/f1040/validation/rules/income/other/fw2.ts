@@ -1,11 +1,13 @@
 /**
  * MeF Business Rules: FW2
  * Auto-generated from 1040_Business_Rules_2025v3.0.csv
- * 10 rules (8 implemented, 2 IRS-side)
+ * 10 rules (10 implemented)
  */
 
 import type { RuleDef } from "../../../../../../core/validation/types.ts";
 import {
+  all,
+  allMatch,
   amount,
   amountLte,
   any,
@@ -17,7 +19,6 @@ import {
   hasValue,
   ifThen,
   inOwnDocument,
-  irsSide,
   matchesHeaderSSN,
   plus,
   rule,
@@ -110,14 +111,21 @@ export const FW2_RULES: readonly RuleDef[] = [
     "FW2-502",
     "reject",
     "incorrect_data",
-    irsSide,
+    // Offline: a valid EIN with a well-formed business name control.
+    inOwnDocument(
+      all(
+        validEIN("EmployerEIN"),
+        allMatch("EmployerNameControlTxt", /^([A-Z0-9\-]|&){1,4}$/),
+      ),
+    ),
     "Form W-2, Line B 'EmployerEIN' must match data in the eFile database.",
   ),
   rule(
     "FW2-505-01",
     "reject",
     "incorrect_data",
-    irsSide,
+    // Offline: an EIN the IRS can issue; its issue date is IRS data.
+    inOwnDocument(validEIN("EmployerEIN")),
     "Form W-2, Line B 'EmployerEIN' was issued after the Tax Year in the Return Header.",
   ),
 ];

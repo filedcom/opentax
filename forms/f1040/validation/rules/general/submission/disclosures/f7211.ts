@@ -1,11 +1,21 @@
 /**
  * MeF Business Rules: F7211
  * Auto-generated from 1040_Business_Rules_2025v3.0.csv
- * 3 rules (1 implemented, 2 stubs)
+ * 3 rules
  */
 
 import type { RuleDef } from "../../../../../../../core/validation/types.ts";
-import { rule, alwaysPass, any, hasValue, ifThen, not, } from "../../../../../../../core/validation/mod.ts";
+import {
+  any,
+  dateYearGte,
+  eachGroup,
+  eqRoundedFieldProduct,
+  hasNonZero,
+  hasValue,
+  ifThen,
+  not,
+  rule,
+} from "../../../../../../../core/validation/mod.ts";
 
 export const F7211_RULES: readonly RuleDef[] = [
   rule(
@@ -19,14 +29,23 @@ export const F7211_RULES: readonly RuleDef[] = [
     "F7211-002",
     "reject",
     "math_error",
-    alwaysPass,
+    eachGroup(
+      "CleanElectricityProdGrp",
+      ifThen(
+        hasNonZero("CalculatedCreditAmt"),
+        eqRoundedFieldProduct("CalculatedCreditAmt", "KilowattHrsQty", "InflationAdjustedCreditRtAmt"),
+      ),
+    ),
     "In each 'CleanElectricityProdGrp' on Form 7211, if 'CalculatedCreditAmt' has a non-zero value, then it must be equal to the product of the corresponding 'KilowattHrsQty' and 'InflationAdjustedCreditRtAmt'.",
   ),
   rule(
     "F7211-003",
     "reject",
     "incorrect_data",
-    alwaysPass,
+    eachGroup(
+      "CleanElectricityProdGrp",
+      ifThen(hasValue("CalendarYr"), dateYearGte("CalendarYr", "TaxYr")),
+    ),
     "In each 'CleanElectricityProdGrp' on Form 7211, if 'CalendarYr' has a value, then it must not be prior to 'TaxYr' in the Return Header.",
   ),
 ];

@@ -1,13 +1,16 @@
 /**
  * MeF Business Rules: F8915F
  * Auto-generated from 1040_Business_Rules_2025v3.0.csv
- * 3 rules (3 implemented, 0 stubs)
+ * 3 rules (3 implemented)
  */
 
 import type { RuleDef } from "../../../../../../core/validation/types.ts";
 import {
+  amount,
+  amountLte,
   any,
   eqStr,
+  inOwnDocument,
   not,
   rule,
 } from "../../../../../../core/validation/mod.ts";
@@ -31,7 +34,13 @@ export const F8915F_RULES: readonly RuleDef[] = [
     "F8915F-003",
     "reject",
     "incorrect_data",
-    null,
+    // Each distinct FEMA declaration number is one qualified disaster.
+    inOwnDocument(
+      amountLte(
+        amount("TotalDistriAllRetirePlansGrp/PriorYrNotRptDistributionAmt"),
+        (ctx) => 22000 * new Set(ctx.fieldArray("FEMADisasterDeclarationNum").map(String)).size,
+      ),
+    ),
     "Form 8915F 'PriorYrNotRptDistributionAmt' in 'TotalDistriAllRetirePlansGrp' must not be greater than 22000 times the number of qualified disasters.",
   ),
 ];

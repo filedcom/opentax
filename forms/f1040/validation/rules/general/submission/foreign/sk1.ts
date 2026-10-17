@@ -5,14 +5,14 @@
  */
 
 import type { RuleDef } from "../../../../../../../core/validation/types.ts";
-import { rule, alwaysPass, any, hasValue, } from "../../../../../../../core/validation/mod.ts";
+import { rule, any, referencedByExactlyOne, hasValue, } from "../../../../../../../core/validation/mod.ts";
 
 export const SK1_RULES: readonly RuleDef[] = [
   rule(
     "SK1-F8865-001",
     "reject",
     "incorrect_data",
-    alwaysPass, // requires cross-instance reference count: Schedule K-1 (Form 8865) must be referenced from exactly one Form 8865
+    referencedByExactlyOne("IRS8865ScheduleK1", "IRS8865"),
     "If Schedule K-1 (Form 8865) is present in the return, then it must be referenced from one and only one Form 8865.",
   ),
   rule(

@@ -1,23 +1,29 @@
 /**
  * MeF Business Rules: F8814
  * Auto-generated from 1040_Business_Rules_2025v3.0.csv
- * 6 rules (4 implemented, 2 stubs)
+ * 6 rules (6 implemented)
  */
 
 import type { RuleDef } from "../../../../../../core/validation/types.ts";
 import {
   all,
-  alwaysPass,
+  amountLt,
+  amountLte,
+  constant,
   eqNum,
   formCountAtMost,
   gt,
   hasNonZero,
+  hasValue,
   ifThen,
   lt,
   noValue,
   rule,
   validSSN,
 } from "../../../../../../core/validation/mod.ts";
+import {
+  documentCountWhere,
+} from "../../../../../../core/validation/predicates.ts";
 
 export const F8814_RULES: readonly RuleDef[] = [
   rule(
@@ -31,7 +37,10 @@ export const F8814_RULES: readonly RuleDef[] = [
     "F8814-002",
     "reject",
     "missing_data",
-    alwaysPass, // requires form count check: if more than one Form 8814, MultipleForm8814Ind must be checked on one
+    ifThen(
+      amountLt(constant(1), documentCountWhere("F8814")),
+      amountLte(constant(1), documentCountWhere("F8814", hasValue("MultipleForm8814Ind"))),
+    ),
     "If more than one Form 8814 is present in the return, then Line C checkbox 'MultipleForm8814Ind' must be checked on one of them.",
   ),
   rule(

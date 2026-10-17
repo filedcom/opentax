@@ -1,11 +1,26 @@
 /**
  * MeF Business Rules: F8283
  * Auto-generated from 1040_Business_Rules_2025v3.0.csv
- * 18 rules (18 implemented, 0 stubs)
+ * 18 rules (18 implemented)
  */
 
 import type { RuleDef } from "../../../../../../core/validation/types.ts";
-import { rule, alwaysPass, any, dateYearEqOrNext, eqStr, hasValue, ifThen, ssnNotEqual, } from "../../../../../../core/validation/mod.ts";
+import {
+  any,
+  attachmentDescIs,
+  attachmentDescStartsWith,
+  dateYearEqOrNext,
+  eachGroup,
+  eqStr,
+  hasValue,
+  ifThen,
+  inOwnDocument,
+  rule,
+  ssnNotEqual,
+} from "../../../../../../core/validation/mod.ts";
+import {
+  statementAttached,
+} from "../../../../../../core/validation/predicates.ts";
 
 export const F8283_RULES: readonly RuleDef[] = [
   rule(
@@ -61,7 +76,15 @@ export const F8283_RULES: readonly RuleDef[] = [
     "F8283-029-02",
     "reject",
     "missing_document",
-    alwaysPass,
+    inOwnDocument(
+      ifThen(
+        hasValue("DonatedPropertyVehicleInd"),
+        any(
+          attachmentDescStartsWith("Form1098C", "DoneeOrganizationContemporaneousWrittenAcknowledgment"),
+          hasValue("ReturnHeader/Form1098CPaperDocumentInd"),
+        ),
+      ),
+    ),
     "If Form 8283, 'DonatedPropertyVehicleInd' is checked, then a binary attachment with Description beginning with 'Form1098C' or 'DoneeOrganizationContemporaneousWrittenAcknowledgment' must be attached to Form 8283 or the 'Form1098CPaperDocumentInd' in the Return Header must have a choice of 'Yes' indicated.",
   ),
   rule(
@@ -75,21 +98,21 @@ export const F8283_RULES: readonly RuleDef[] = [
     "F8283-031-01",
     "reject",
     "missing_document",
-    alwaysPass,
+    inOwnDocument(ifThen(hasValue("VehicleInd"), attachmentDescStartsWith("Form1098C", "DoneeOrganizationContemporaneousWrittenAcknowledgment"))),
     "If Form 8283 'VehicleInd' is checked, then a binary attachment with description beginning with 'Form1098C' or 'DoneeOrganizationContemporaneousWrittenAcknowledgment' must be attached to Form 8283.",
   ),
   rule(
     "F8283-032-02",
     "reject",
     "missing_document",
-    alwaysPass,
+    inOwnDocument(ifThen(hasValue("InformationOnDonatedProperty/DonatedPropertyVehicleInd"), attachmentDescStartsWith("Form1098C", "DoneeOrganizationContemporaneousWrittenAcknowledgment"))),
     "If Form 8283, [ 'DonatedPropertyVehicleInd' in 'InformationOnDonatedProperty' ] is checked, then a binary attachment with description beginning with [ \"Form1098C\" or \"DoneeOrganizationContemporaneousWrittenAcknowledgment\" ] must be attached to Form 8283.",
   ),
   rule(
     "F8283-033-01",
     "reject",
     "missing_document",
-    alwaysPass,
+    inOwnDocument(ifThen(hasValue("VehicleInd"), attachmentDescStartsWith("Form1098C", "DoneeOrganizationContemporaneousWrittenAcknowledgment"))),
     "If Form 8283, 'VehicleInd' is checked, then a binary attachment with description beginning with [ \"Form1098C\" or \"DoneeOrganizationContemporaneousWrittenAcknowledgment\" ] must be attached to Form 8283.",
   ),
   rule(
@@ -110,7 +133,21 @@ export const F8283_RULES: readonly RuleDef[] = [
     "F8283-036",
     "reject",
     "missing_document",
-    alwaysPass,
+    inOwnDocument(
+      eachGroup(
+        "InformationOnDonatedProperty",
+        ifThen(
+          hasValue("DonatedPropertyVehicleInd"),
+          statementAttached(
+            "DonatedPropertyVehicleInd",
+            "ContributionsOfMotorVehiclesBoatsAndAirplanesStatement",
+            "ContemporaneousWrittenAcknowledgmentStatement",
+          ),
+        ),
+        "DonatedPropertyVehicleInd",
+        "DonatedPropertyVehicleInd@referenceDocumentId",
+      ),
+    ),
     "In each 'InformationOnDonatedProperty' on Form 8283, if 'DonatedPropertyVehicleInd' is checked, then [ContributionsOfMotorVehiclesBoatsAndAirplanesStatement] or [ContemporaneousWrittenAcknowledgmentStatement] must be attached to 'DonatedPropertyVehicleInd'.",
   ),
   rule(
@@ -124,14 +161,14 @@ export const F8283_RULES: readonly RuleDef[] = [
     "F8283-041",
     "reject",
     "missing_document",
-    ifThen(hasValue("AppraiserSignedDt"), alwaysPass),
+    ifThen(hasValue("AppraiserSignedDt"), attachmentDescIs("Form 8283 appraiser signature document")),
     "If Form 8283, 'AppraiserSignedDt' has a value, then a binary attachment with description \"Form 8283 appraiser signature document\" must be present in the return.",
   ),
   rule(
     "F8283-042",
     "reject",
     "missing_document",
-    ifThen(hasValue("DoneeName"), alwaysPass),
+    ifThen(hasValue("DoneeName"), attachmentDescIs("Form 8283 Donee signature document")),
     "If Form 8283, 'DoneeName' has a value, then a binary attachment with description \"Form 8283 Donee signature document\" must be present in the return.",
   ),
 ];

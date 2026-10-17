@@ -9,7 +9,6 @@
 import type { RuleDef } from "../../../../core/validation/types.ts";
 import {
   all,
-  alwaysPass,
   any,
   countEq,
   eachGroup,
@@ -21,6 +20,7 @@ import {
   formPresent,
   gt,
   gte,
+  hasNonZero,
   hasValue,
   ifThen,
   inOwnDocument,
@@ -32,6 +32,11 @@ import {
   sumGtNum,
 } from "../../../../core/validation/mod.ts";
 import { ALL_RULES } from "./index.ts";
+
+/** Form 8854 net income tax for each of the five years before expatriation. */
+const F8854_PRIOR_YEAR_TAX = ["1st", "2nd", "3rd", "4th", "5th"].map((n) =>
+  `USIncomeTax${n}YearBfrExptrtAmt`
+);
 
 export const TY2026_RETIRED_RULES: ReadonlySet<string> = new Set([
   "F1040-471-01",
@@ -609,7 +614,17 @@ export const TY2026_NEW_RULES: readonly RuleDef[] = [
     "F8854-017-10",
     "reject",
     "incorrect_data",
-    alwaysPass,
+    ifThen(
+      all(
+        (ctx) =>
+          // The average is below 211,001: the five years sum below 5 × 211,001.
+          F8854_PRIOR_YEAR_TAX.reduce((sum, f) => sum + ctx.num(f), 0) <
+            211001 * 5,
+        lt("NetWorthOnExptrtDateAmt", 2000000),
+        eqStr("InCompliance5PrecTaxYearInd", "Yes"),
+      ),
+      noValue("PropertyOwnedDtExpatriationGrp"),
+    ),
     "On Form 8854, if the average of ['USIncomeTax1stYearBfrExptrtAmt' and 'USIncomeTax2ndYearBfrExptrtAmt' and 'USIncomeTax3rdYearBfrExptrtAmt' and 'USIncomeTax4thYearBfrExptrtAmt' and 'USIncomeTax5thYearBfrExptrtAmt'] is less than 211,001 and 'NetWorthOnExptrtDateAmt' is less than 2,000,000 and 'InCompliance5PrecTaxYearInd' has a choice of \"Yes\" indicated, then 'PropertyOwnedDtExpatriationGrp' must not have a value.",
   ),
   rule(
@@ -660,7 +675,20 @@ export const TY2026_NEW_RULES: readonly RuleDef[] = [
     "IND-067-11",
     "alert",
     "missing_data",
-    alwaysPass,
+    ifThen(
+      all(
+        hasValue("PaidPreparerInformationGrp"),
+        any(
+          filingStatusIs(4),
+          hasNonZero("EarnedIncomeCreditAmt"),
+          hasNonZero("RefundableAmerOppCreditAmt"),
+          hasNonZero("8863/TentativeAmerOppCreditAmt"),
+          hasNonZero("CTCODCAmt"),
+          hasNonZero("AdditionalChildTaxCreditAmt"),
+        ),
+      ),
+      formPresent("form8867"),
+    ),
     "As a paid tax preparer of a return (1) with filing status Head of household or (2) claiming Earned Income Tax Credit or American Opportunity Tax Credit or Child Tax Credit or Additional Child Tax Credit or Credit for Other Dependents, you must complete and submit Form 8867 to the IRS with the original submission of each return. Failure to submit Form 8867 is a violation of IRC Sec 6695(g) and a $665 penalty may be imposed per failure, with a maximum penalty amount of $2,660 per return. This alert is for your information only. Do not send us the missing Form 8867 or amend any returns to include the missing Form 8867. We will continue to monitor future returns you prepare that claim these benefits to ensure you meet your due diligence requirement.",
   ),
   rule(

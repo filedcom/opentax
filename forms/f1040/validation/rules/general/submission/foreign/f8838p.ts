@@ -5,14 +5,14 @@
  */
 
 import type { RuleDef } from "../../../../../../../core/validation/types.ts";
-import { rule, alwaysPass, any, hasValue, noValue, } from "../../../../../../../core/validation/mod.ts";
+import { rule, any, attachmentDescIs, documentPresent, hasValue, ifThen, noValue, } from "../../../../../../../core/validation/mod.ts";
 
 export const F8838P_RULES: readonly RuleDef[] = [
   rule(
     "F8838P-001",
     "reject",
     "missing_document",
-    alwaysPass,
+    ifThen(documentPresent("F8838P"), attachmentDescIs("8838P Signature Document")),
     "If Form 8838P is present in the return, then a binary attachment document with Description \"8838P Signature Document\" must be present.",
   ),
   rule(
