@@ -17,6 +17,8 @@ import {
 import { assertFarmWotcReturn } from "../../../../../domains/deductions/business/form8995/form8995_farm_wotc_reconciliation.ts";
 import { patronFiledBusinessLines } from "../../../../../../nodes/inputs/deductions/business/qbi_patron/calculation.ts";
 import { assertJointOwner8995 } from "./f8995-joint-owner.ts";
+import { assertMultiBusinessInvestmentSources } from "./f8995-investment.ts";
+import { inputSchema as form8995InputSchema } from "../../../../../../nodes/intermediate/forms/deductions/business/form8995/index.ts";
 import { assertMultipleScheduleC8995 } from "./f8995-multiple.ts";
 import {
   allocateSharedSeDeduction,
@@ -455,9 +457,24 @@ export function assertOneScheduleC8995(
     "sep_retirement",
   ] as const;
   const form7206 = pending.form7206;
-  let sourcedCapitalGain = 0;
-  let sourcedFiledCapital: number | undefined;
-  if (pending.schedule_d !== undefined) {
+  // Without REIT dividends, ordinary interest, dividends and capital sales
+  // replay from their copies, Schedule B and Schedule D (i8995 line 12).
+  const investment = fields.reit_dividend_sources === undefined &&
+      [pending.f1099int, pending.f1099div, pending.f1099b, pending.schedule_d]
+        .some((item) => item !== undefined)
+    ? assertMultiBusinessInvestmentSources(
+      form8995InputSchema.parse(fields),
+      pending,
+      false,
+      general?.filing_status === "mfj" && typeof general.spouse_ssn === "string"
+        ? general.spouse_ssn
+        : undefined,
+      false,
+    )
+    : undefined;
+  let sourcedCapitalGain = investment?.capitalGain ?? 0;
+  let sourcedFiledCapital: number | undefined = investment?.returnCapital;
+  if (pending.schedule_d !== undefined && investment === undefined) {
     if (
       pending.f1099k === undefined && pending.f1099b === undefined &&
       pending.f8949 === undefined
@@ -516,8 +533,10 @@ export function assertOneScheduleC8995(
       );
     }
   }
-  const qualifiedDividends = (pending.f1099div !== undefined &&
-      !zeroOrAbsent(f1040?.line3a_qualified_dividends))
+  const qualifiedDividends = investment
+    ? { ordinary: investment.ordinary, qualified: investment.qualified }
+    : (pending.f1099div !== undefined &&
+        !zeroOrAbsent(f1040?.line3a_qualified_dividends))
     ? qualifiedDividendSource(
       pending.f1099div,
       fields.reit_dividend_sources,
@@ -531,7 +550,7 @@ export function assertOneScheduleC8995(
       qualifiedDividends.qualified,
     );
   if (
-    pending.f1099div !== undefined &&
+    pending.f1099div !== undefined && investment === undefined &&
     fields.reit_dividend_sources === undefined &&
     zeroOrAbsent(fields.net_capital_gain)
   ) {
@@ -718,11 +737,11 @@ export function assertOneScheduleC8995(
       reit + qualifiedDividends.ordinary ||
     (sourcedFiledCapital === undefined
       ? !zeroOrAbsent(f1040.line7_capital_gain)
-      : f1040.line7_capital_gain !== sourcedFiledCapital) ||
+      : (f1040.line7_capital_gain ?? 0) !== sourcedFiledCapital) ||
     !zeroOrAbsent(f1040.line7a_cap_gain_distrib) ||
     (fields.net_capital_gain ?? 0) !==
       qualifiedDividends.qualified + sourcedCapitalGain ||
-    reit + qualifiedDividends.ordinary > 1_500 ||
+    (investment === undefined && reit + qualifiedDividends.ordinary > 1_500) ||
     typeof f1040.line11_agi !== "number" ||
     typeof f1040.line12c_deduction_total !== "number" ||
     Math.round(
@@ -743,7 +762,8 @@ export function assertOneScheduleC8995(
     fields,
     f1040,
     reit,
-    qualifiedDividends.qualified + sourcedCapitalGain,
+    investment?.filedQbiCapitalLimit ??
+      qualifiedDividends.qualified + sourcedCapitalGain,
   );
   return {
     businesses: [{

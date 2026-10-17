@@ -67,7 +67,9 @@ export async function validateReturnCommand(
   let ownReport: DiagnosticsReport | undefined;
   let assemblyError: DiagnosticEntry | undefined;
   try {
-    const xml = def.buildMefXml(pending, filerIdentity);
+    // Assemble from the same filed projection export uses (Form 8949 rows,
+    // only a completed Form 8960), not the raw normalized graph.
+    const xml = def.buildMefXml(def.buildPending(result.pending), filerIdentity);
     if (def.mefRuleReport) ownReport = def.mefRuleReport(pending, xml);
     else scope = emittedValidationScope(xml);
   } catch (error) {

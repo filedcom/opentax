@@ -20,6 +20,7 @@ export const CLI_RETURNS = [
   "single-form8815-series-ee-bond-exclusion",
   "qualified-tip-qbi-wholly-excluded-qbi",
   "independent-primary-spouse-c-health-different-owner-eligible-months",
+  "joint-spouse-c-qbi-investment-income",
 ] as const;
 
 const MAIN = new URL("../../cli/main.ts", import.meta.url).pathname;
