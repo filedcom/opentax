@@ -1,6 +1,6 @@
 import { test } from "bun:test";
 import { assertStringIncludes } from "@std/assert";
-import { schedule1 } from "../../../general/return-assembly/schedule1/schedule1.ts";
+import { schedule1 } from "./schedule1.ts";
 
 test("Schedule 1 native line 5 prints the Form 7203-adjusted Schedule E loss", () => {
   const xml = schedule1.build({

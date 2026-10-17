@@ -1,7 +1,7 @@
 import type { PdfFieldEntry, PdfFormDescriptor } from "../../../review-support/form-descriptor.ts";
 import { StandardFonts } from "pdf-lib";
 import { inputSchema, type W2GItem } from "../../../../../nodes/inputs/income/gambling/w2g/index.ts";
-import { assertWithheldW2GSource } from "../../../../mef/forms/income/other/w2g.ts";
+import { assertWithheldW2GSource } from "../../../../mef/forms/income/gambling/w2g.ts";
 
 // Copy B is the recipient copy identified on the continuous-use Dec. 2023
 // Form W-2G. It occupies PDF page 3 (zero-based index 2).

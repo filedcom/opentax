@@ -71,8 +71,8 @@ import { assertBox11Line10Sources } from "../../nodes/inputs/income/rental-passt
 import { assertForm8915FSourceLinks } from "../../nodes/inputs/income/retirement/f8915f/index.ts";
 import { assertExtensionPaymentSource } from "../domains/payments/settlement/extension-payment-reconciliation.ts";
 import { assert1099RRecipientOwner } from "../domains/income/retirement/f1099r/f1099r-recipient-owner.ts";
-import { assertNecWithholdingRecipient } from "../domains/payments/withholding/f1099n/f1099nec-withholding-owner.ts";
-import { assert1099BRecipientOwner } from "../domains/income/other/f1099b/f1099b-recipient-owner.ts";
+import { assertNecWithholdingRecipient } from "../domains/payments/withholding/f1099nec/f1099nec-withholding-owner.ts";
+import { assert1099BRecipientOwner } from "../domains/income/investments/f1099b/f1099b-recipient-owner.ts";
 import {
   assertCapitalSaleSourceRows,
   assertNoRepeatedBrokerSaleSources,
@@ -80,7 +80,7 @@ import {
 import {
   assertPatrIssuedCopies,
   assertPatrWithholdingRecipient,
-} from "../domains/payments/withholding/f1099p/f1099patr-withholding-owner.ts";
+} from "../domains/payments/withholding/f1099patr/f1099patr-withholding-owner.ts";
 import {
   assertForm4852FilingRoute,
   assertLine1aWageSource,
@@ -121,7 +121,7 @@ import {
   assertFinalBalanceProjection,
   assertQualifiedDividendSubset,
 } from "../return-processing/return-wide-arithmetic.ts";
-import { assertDividendIncomeSources } from "../domains/income/other/f1099d/f1099div-income-reconciliation.ts";
+import { assertDividendIncomeSources } from "../domains/income/investments/f1099div/f1099div-income-reconciliation.ts";
 import {
   assertScheduleBInterestJoin,
   assertScheduleBPreparedProjection,
@@ -133,7 +133,7 @@ import {
 } from "../domains/income/retirement/ssa-benefits-reconciliation.ts";
 import { assertRrb1099rPensionSource } from "../domains/income/retirement/rrb1099r-pension-reconciliation.ts";
 import { assertIra1099rIncomeSource } from "../domains/income/retirement/ira1099r-income-reconciliation.ts";
-import { assertPositiveW2GRecipient } from "../mef/forms/income/other/w2g.ts";
+import { assertPositiveW2GRecipient } from "../mef/forms/income/gambling/w2g.ts";
 import { assertForm1098IssuerCopies } from "../../nodes/inputs/deductions/mortgage/f1098/issuer_copy.ts";
 import {
   hasForm8994Claim,

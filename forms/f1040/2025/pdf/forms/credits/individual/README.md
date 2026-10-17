@@ -30,7 +30,7 @@ Individual and business credits and their limitations.
 | [schedule3_line6d.test.ts](schedule3_line6d.test.ts) | 1 files |
 | [schedule_8812.test.ts](schedule_8812.test.ts) | 1 files |
 | [schedule_8812.ts](schedule_8812.ts) | 1 files |
-| [schedule_r.test.ts](schedule_r.test.ts) | 1 files |
-| [schedule_r.ts](schedule_r.ts) | 1 files |
+| [schedule_r.test.ts](../elderly-disabled/schedule_r.test.ts) | 1 files |
+| [schedule_r.ts](../elderly-disabled/schedule_r.ts) | 1 files |
 
 Canonical [Form 8962](../../../../mef/forms/credits/health/f8962/f8962.ts) also reconciles advance-credit repayment under [Taxes](../../taxes/README.md); its whole-form family is classified as Credits.

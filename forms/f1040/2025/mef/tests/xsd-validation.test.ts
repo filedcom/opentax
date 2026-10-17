@@ -27,7 +27,7 @@ import { buildPdfBytes } from "../../pdf/builder.ts";
 import { f1040_2025 } from "../../index.ts";
 import { normalizeAllPending } from "../../return-processing/pending.ts";
 import { buildPending } from "../execution/pending.ts";
-import { w2gPdf } from "../../pdf/forms/income/other/w2g.ts";
+import { w2gPdf } from "../../pdf/forms/income/gambling/w2g.ts";
 import type { MefFormsPending } from "../types.ts";
 import { FilingStatus } from "../../../nodes/types.ts";
 import { EnergyType } from "../../../nodes/inputs/credits/business/f8835/index.ts";

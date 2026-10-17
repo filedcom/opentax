@@ -1,6 +1,6 @@
 import { type PDFDocument, StandardFonts } from "pdf-lib";
 import type { FilerIdentity } from "../../../../../../mef/header.ts";
-import { schedule1OtherIncomeRows } from "../../../../../mef/forms/income/other/schedule1/schedule1_other_income_rows.ts";
+import { schedule1OtherIncomeRows } from "../../../../../mef/forms/general/return-assembly/schedule1/schedule1_other_income_rows.ts";
 
 /** Print the same identified Schedule 1 line 8z rows as the native statement. */
 export async function appendSchedule1OtherIncomeStatement(

@@ -3,7 +3,7 @@ import { assertEquals, assertStringIncludes } from "@std/assert";
 import { PDFDocument } from "pdf-lib";
 import { f1040_2025 } from "../../2025/index.ts";
 import { extractFilerIdentity } from "../../mef/filer.ts";
-import { w2 as nativeW2 } from "../../2025/mef/forms/income/other/w2.ts";
+import { w2 as nativeW2 } from "../../2025/mef/forms/income/wages/w2.ts";
 import { scheduleC } from "../../2025/mef/forms/income/business/schedule_c.ts";
 import { scheduleSE } from "../../2025/mef/forms/taxes/self-employment/schedule_se.ts";
 import { scheduleCPdf } from "../../2025/pdf/forms/income/business/schedule_c.ts";

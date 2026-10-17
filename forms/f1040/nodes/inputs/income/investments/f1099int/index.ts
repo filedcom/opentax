@@ -24,7 +24,7 @@ import { schedule_b } from "../../../../intermediate/aggregation/income/investme
 import { form4952 } from "../../../../intermediate/forms/deductions/investments/form4952/index.ts";
 import { agi_aggregator } from "../../../../intermediate/aggregation/general/return-assembly/agi_aggregator/index.ts";
 import type { NodeContext } from "../../../../../../../core/types/node-context.ts";
-import { sellerFinancedBuyerSchema } from "../../../../../seller_financed_buyer.ts";
+import { sellerFinancedBuyerSchema } from "../../../../intermediate/aggregation/income/investments/schedule_b/seller_financed_buyer.ts";
 import {
   pabAllocableDeductionWorkpaperSchema,
   reconcilePabPaidExpense,

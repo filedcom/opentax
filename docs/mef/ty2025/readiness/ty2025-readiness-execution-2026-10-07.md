@@ -3157,9 +3157,9 @@ credit is deposited. Native/source projection and prepared-packet integration
 remain required under the existing main trust-K1 requirement.
 
 Normal typed focused command: `deno test --allow-read --allow-write
---allow-net=www.irs.gov forms/f1040/2025/domains/income/business/trust-k1/trust-k1-issued-copy-fields.test.ts
-forms/f1040/2025/domains/income/business/trust-k1/trust-k1-issued-copy-review.test.ts
-forms/f1040/2025/domains/payments/withholding/trust-k1/trust_k1_backup_withholding.test.ts`: **15 passed /0 failed**.
+--allow-net=www.irs.gov forms/f1040/2025/domains/income/rental-passthrough/k1_trust/trust-k1-issued-copy-fields.test.ts
+forms/f1040/2025/domains/income/rental-passthrough/k1_trust/trust-k1-issued-copy-review.test.ts
+forms/f1040/2025/domains/payments/withholding/k1_trust/trust_k1_backup_withholding.test.ts`: **15 passed /0 failed**.
 Cases include full field preservation and continued export guards, rehashed
 identity/amount changes, duplicate/missing codeB, malformed amount, missing
 field/page, hidden text and stale appearance. A prior14/1 run failed while
@@ -3188,10 +3188,10 @@ nonnegative-type, invalid-date and conflicting-indicator rows reject.
 
 Final normal typed focused command:
 `deno test --allow-read --allow-write --allow-run=xmllint --allow-net=www.irs.gov
-forms/f1040/2025/domains/income/business/trust-k1/trust-k1-native-copy-review.test.ts
-forms/f1040/2025/domains/income/business/trust-k1/trust-k1-issued-copy-fields.test.ts
-forms/f1040/2025/domains/income/business/trust-k1/trust-k1-issued-copy-review.test.ts
-forms/f1040/2025/domains/payments/withholding/trust-k1/trust_k1_backup_withholding.test.ts`: **29 passed /0 failed**.
+forms/f1040/2025/domains/income/rental-passthrough/k1_trust/trust-k1-native-copy-review.test.ts
+forms/f1040/2025/domains/income/rental-passthrough/k1_trust/trust-k1-issued-copy-fields.test.ts
+forms/f1040/2025/domains/income/rental-passthrough/k1_trust/trust-k1-issued-copy-review.test.ts
+forms/f1040/2025/domains/payments/withholding/k1_trust/trust_k1_backup_withholding.test.ts`: **29 passed /0 failed**.
 Four positive native shapes validate against the cached standalone K1 XSD:
 all amount rows, foreign-address, spouse-owned, suffix/care-of/second-line.
 The retained artifact set separately contains three synthetic source PDFs
@@ -3237,11 +3237,11 @@ helper does not authorize a codeB credit or authenticate the fiduciary.
 
 Normal typed focused command:
 `deno test --allow-read --allow-write --allow-run=xmllint --allow-net=www.irs.gov
-forms/f1040/2025/domains/income/business/trust-k1/trust-k1-source-copy-reconciliation.test.ts
-forms/f1040/2025/domains/income/business/trust-k1/trust-k1-native-copy-review.test.ts
-forms/f1040/2025/domains/income/business/trust-k1/trust-k1-issued-copy-fields.test.ts
-forms/f1040/2025/domains/income/business/trust-k1/trust-k1-issued-copy-review.test.ts
-forms/f1040/2025/domains/payments/withholding/trust-k1/trust_k1_backup_withholding.test.ts`: **51 passed /0 failed**.
+forms/f1040/2025/domains/income/rental-passthrough/k1_trust/trust-k1-source-copy-reconciliation.test.ts
+forms/f1040/2025/domains/income/rental-passthrough/k1_trust/trust-k1-native-copy-review.test.ts
+forms/f1040/2025/domains/income/rental-passthrough/k1_trust/trust-k1-issued-copy-fields.test.ts
+forms/f1040/2025/domains/income/rental-passthrough/k1_trust/trust-k1-issued-copy-review.test.ts
+forms/f1040/2025/domains/payments/withholding/k1_trust/trust_k1_backup_withholding.test.ts`: **51 passed /0 failed**.
 One prior49/1 run used numeric MeF filing status in a public-input fixture;
 corrected it to `FilingStatus.Single` and reran. All logs retained. After the
 final passing run only an error message was clarified: trust-name match and
@@ -3286,11 +3286,11 @@ Normal typed focused command:
 --allow-run=xmllint,pdftotext,pdftoppm --allow-net=www.irs.gov
 forms/f1040/nodes/inputs/income/rental-passthrough/k1_trust/index.test.ts
 forms/f1040/2025/domains/payments/withholding/f8288/f8288-withholding-reconciliation.test.ts
-forms/f1040/2025/domains/income/business/trust-k1/trust-k1-source-copy-reconciliation.test.ts
-forms/f1040/2025/domains/income/business/trust-k1/trust-k1-native-copy-review.test.ts
-forms/f1040/2025/domains/income/business/trust-k1/trust-k1-issued-copy-fields.test.ts
-forms/f1040/2025/domains/income/business/trust-k1/trust-k1-issued-copy-review.test.ts
-forms/f1040/2025/domains/payments/withholding/trust-k1/trust_k1_backup_withholding.test.ts`: **111 passed /0 failed**.
+forms/f1040/2025/domains/income/rental-passthrough/k1_trust/trust-k1-source-copy-reconciliation.test.ts
+forms/f1040/2025/domains/income/rental-passthrough/k1_trust/trust-k1-native-copy-review.test.ts
+forms/f1040/2025/domains/income/rental-passthrough/k1_trust/trust-k1-issued-copy-fields.test.ts
+forms/f1040/2025/domains/income/rental-passthrough/k1_trust/trust-k1-issued-copy-review.test.ts
+forms/f1040/2025/domains/payments/withholding/k1_trust/trust_k1_backup_withholding.test.ts`: **111 passed /0 failed**.
 Cases include cent drift, unsafe sum, two-owner/W2G aggregate346, all-five-source
 replay75,700.75, changed/omitted/excess source totals and continued attachment
 rejection on a fully calculated graph. V1 type checking caught a wrong public

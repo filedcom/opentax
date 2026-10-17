@@ -4,7 +4,7 @@ import { type FilerIdentity, FilingStatus } from "../../../../../mef/header.ts";
 import { inputSchema } from "../../../../../nodes/inputs/general/filing/f9000/index.ts";
 import { f1040_2025 } from "../../../../index.ts";
 import { buildPending } from "../../../execution/pending.ts";
-import { form9000Pdf } from "../../../../pdf/forms/general/return-assembly/f9000.ts";
+import { form9000Pdf } from "../../../../pdf/forms/general/filing/f9000.ts";
 import { buildPdfBytes, type PdfPageOrigin } from "../../../../pdf/builder.ts";
 import { pdfReviewFixtures } from "../../../../pdf/review-fixtures.ts";
 import { buildForm9000 } from "./f9000.ts";

@@ -6,7 +6,7 @@ import {
 import {
   buildScheduleLep,
   requestIdentity,
-} from "../../../../mef/forms/general/return-assembly/schedule_lep.ts";
+} from "../../../../mef/forms/general/filing/schedule_lep.ts";
 
 // The December 2024 Schedule LEP AcroForm is the form referenced by the
 // TY2025 IRS package. Page 2 contains instructions, not fillable return data.

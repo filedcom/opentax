@@ -17,9 +17,9 @@ import { eitcPdf } from "./credits/earned-income/eitc.ts";
 import { scheduleFPdf } from "./income/business/schedule_f.ts";
 import { scheduleHPdf } from "./taxes/household-employment/schedule_h.ts";
 import { scheduleJPdf } from "./taxes/income-averaging/schedule_j.ts";
-import { scheduleLepPdf } from "./general/return-assembly/schedule_lep.ts";
-import { form9000Pdf } from "./general/return-assembly/f9000.ts";
-import { scheduleRPdf } from "./credits/individual/schedule_r.ts";
+import { scheduleLepPdf } from "./general/filing/schedule_lep.ts";
+import { form9000Pdf } from "./general/filing/f9000.ts";
+import { scheduleRPdf } from "./credits/elderly-disabled/schedule_r.ts";
 import { scheduleSePdf } from "./taxes/self-employment/schedule_se.ts";
 import { form461Pdf } from "./income/business/f461.ts";
 import { form982Pdf } from "./income/other/f982.ts";
@@ -116,7 +116,7 @@ import { form8995aScheduleAPdf } from "./deductions/business/f8995a_schedule_a.t
 import { form8995aScheduleBPdf } from "./deductions/business/f8995a_schedule_b.ts";
 import { form8995aScheduleCPdf } from "./deductions/business/f8995a_schedule_c.ts";
 import { form8995aScheduleDPdf } from "./deductions/business/f8995a_schedule_d.ts";
-import { w2gPdf } from "./income/other/w2g.ts";
+import { w2gPdf } from "./income/gambling/w2g.ts";
 
 export const ALL_PDF_FORMS: readonly PdfFormDescriptor[] = [
   irs1040Pdf,

@@ -4,7 +4,7 @@ import { irs1040 } from "../../2025/mef/forms/general/return-assembly/f1040.ts";
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import { PDFDocument } from "pdf-lib";
 import { f1040_2025 } from "../../2025/index.ts";
-import { w2 as nativeW2 } from "../../2025/mef/forms/income/other/w2.ts";
+import { w2 as nativeW2 } from "../../2025/mef/forms/income/wages/w2.ts";
 import { irs1040Pdf } from "../../2025/pdf/forms/general/return-assembly/f1040.ts";
 import { fillFormPdf } from "../../2025/pdf/builder.ts";
 import { extractFilerIdentity } from "../../mef/filer.ts";

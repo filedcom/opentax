@@ -8,7 +8,7 @@ import { schedule1 } from "../../../../outputs/general/return-assembly/schedule1
 import { schedule_b } from "../../../../intermediate/aggregation/income/investments/schedule_b/index.ts";
 import { form_1116 } from "../../../../intermediate/forms/credits/foreign/form_1116/index.ts";
 import { agi_aggregator } from "../../../../intermediate/aggregation/general/return-assembly/agi_aggregator/index.ts";
-import type { SellerFinancedBuyer } from "../../../../../seller_financed_buyer.ts";
+import type { SellerFinancedBuyer } from "../../../../intermediate/aggregation/income/investments/schedule_b/seller_financed_buyer.ts";
 
 // ---------------------------------------------------------------------------
 // Helpers

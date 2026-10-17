@@ -1,6 +1,6 @@
 import { schedule2Part1Total } from "../../nodes/intermediate/aggregation/taxes/other/schedule2/index.ts";
-import { schedule1ActivityNotForProfitTotal } from "../mef/forms/income/other/schedule1/schedule1_nonbusiness_sources.ts";
-import { schedule1OtherIncomeTotal } from "../mef/forms/income/other/schedule1/schedule1_other_income_rows.ts";
+import { schedule1ActivityNotForProfitTotal } from "../mef/forms/general/return-assembly/schedule1/schedule1_nonbusiness_sources.ts";
+import { schedule1OtherIncomeTotal } from "../mef/forms/general/return-assembly/schedule1/schedule1_other_income_rows.ts";
 
 /** Line 3a is the qualified portion of ordinary dividends on line 3b. */
 export function assertQualifiedDividendSubset(

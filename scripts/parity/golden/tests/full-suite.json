@@ -3967,242 +3967,242 @@
 "passed"
 ],
 [
-"forms/f1040/2025/domains/credits/business/form8582c/form8582cr_filed_ordinary.test.ts",
+"forms/f1040/2025/domains/credits/business/form8582cr/form8582cr_filed_ordinary.test.ts",
 "Form 8582-CR interest branch rejects altered issuer box, filed interest, and tax",
 "passed"
 ],
 [
-"forms/f1040/2025/domains/credits/business/form8582c/form8582cr_filed_ordinary.test.ts",
+"forms/f1040/2025/domains/credits/business/form8582cr/form8582cr_filed_ordinary.test.ts",
 "Form 8582-CR native and PDF reject changed rental, credit, tax and filed-return joins",
 "passed"
 ],
 [
-"forms/f1040/2025/domains/credits/business/form8582c/form8582cr_filed_ordinary.test.ts",
+"forms/f1040/2025/domains/credits/business/form8582cr/form8582cr_filed_ordinary.test.ts",
 "Form 8582-CR rejects two-payer amount, copy, payer, and filed-return drift",
 "passed"
 ],
 [
-"forms/f1040/2025/domains/credits/business/form8582c/form8582cr_filed_ordinary.test.ts",
+"forms/f1040/2025/domains/credits/business/form8582cr/form8582cr_filed_ordinary.test.ts",
 "S corporation K-1 code AD passive credit reconciles rental line 6, Form 3800, native and PDF",
 "passed"
 ],
 [
-"forms/f1040/2025/domains/credits/business/form8582c/form8582cr_filed_ordinary.test.ts",
+"forms/f1040/2025/domains/credits/business/form8582cr/form8582cr_filed_ordinary.test.ts",
 "S corporation K-1 code AD passive credit rejects changed issuer, amount, income boxes and recipient",
 "passed"
 ],
 [
-"forms/f1040/2025/domains/credits/business/form8582c/form8582cr_filed_ordinary.test.ts",
+"forms/f1040/2025/domains/credits/business/form8582cr/form8582cr_filed_ordinary.test.ts",
 "current-year excess credit retains an activity/year Worksheet 9 balance while native and PDF print the limited amount",
 "passed"
 ],
 [
-"forms/f1040/2025/domains/credits/business/form8582c/form8582cr_filed_ordinary.test.ts",
+"forms/f1040/2025/domains/credits/business/form8582cr/form8582cr_filed_ordinary.test.ts",
 "current-year passive New Markets credit and rental income reconcile Form 8582-CR line 6, Form 3800, Form 1040, native and PDF",
 "passed"
 ],
 [
-"forms/f1040/2025/domains/credits/business/form8582c/form8582cr_filed_ordinary.test.ts",
+"forms/f1040/2025/domains/credits/business/form8582cr/form8582cr_filed_ordinary.test.ts",
 "fifteen credit-only New Markets K-1 sources fill Form 3800 Part V and reject an unmatched additional source",
 "passed"
 ],
 [
-"forms/f1040/2025/domains/credits/business/form8582c/form8582cr_filed_ordinary.test.ts",
+"forms/f1040/2025/domains/credits/business/form8582cr/form8582cr_filed_ordinary.test.ts",
 "fifteen passive Form 8874 activities calculate while direct export is blocked",
 "passed"
 ],
 [
-"forms/f1040/2025/domains/credits/business/form8582c/form8582cr_filed_ordinary.test.ts",
+"forms/f1040/2025/domains/credits/business/form8582cr/form8582cr_filed_ordinary.test.ts",
 "one sourced 1099-INT joins passive rental line 6 while direct Form 8874 export is blocked",
 "passed"
 ],
 [
-"forms/f1040/2025/domains/credits/business/form8582c/form8582cr_filed_ordinary.test.ts",
+"forms/f1040/2025/domains/credits/business/form8582cr/form8582cr_filed_ordinary.test.ts",
 "partial passive Form 8874 allowance retains its 2025 remainder while direct export is blocked",
 "passed"
 ],
 [
-"forms/f1040/2025/domains/credits/business/form8582c/form8582cr_filed_ordinary.test.ts",
+"forms/f1040/2025/domains/credits/business/form8582cr/form8582cr_filed_ordinary.test.ts",
 "partnership K-1 code AD passive credit reconciles rental line 6, Form 3800, native and PDF",
 "passed"
 ],
 [
-"forms/f1040/2025/domains/credits/business/form8582c/form8582cr_filed_ordinary.test.ts",
+"forms/f1040/2025/domains/credits/business/form8582cr/form8582cr_filed_ordinary.test.ts",
 "partnership K-1 code AD passive credit rejects changed issuer, amount, income boxes and recipient",
 "passed"
 ],
 [
-"forms/f1040/2025/domains/credits/business/form8582c/form8582cr_filed_ordinary.test.ts",
+"forms/f1040/2025/domains/credits/business/form8582cr/form8582cr_filed_ordinary.test.ts",
 "partnership and S corporation code AD credits share one passive tax limit with distinct Worksheet 9 and Part V rows",
 "passed"
 ],
 [
-"forms/f1040/2025/domains/credits/business/form8582c/form8582cr_filed_ordinary.test.ts",
+"forms/f1040/2025/domains/credits/business/form8582cr/form8582cr_filed_ordinary.test.ts",
 "passive and nonpassive Form 8874 investments calculate line 1i before direct export is blocked",
 "passed"
 ],
 [
-"forms/f1040/2025/domains/credits/business/form8582c/form8582cr_filed_ordinary.test.ts",
+"forms/f1040/2025/domains/credits/business/form8582cr/form8582cr_filed_ordinary.test.ts",
 "prior-only 2024 credit cannot activate the 2025 native or PDF ordinary route",
 "passed"
 ],
 [
-"forms/f1040/2025/domains/credits/business/form8582c/form8582cr_filed_ordinary.test.ts",
+"forms/f1040/2025/domains/credits/business/form8582cr/form8582cr_filed_ordinary.test.ts",
 "same-payer 1099-INT line 6 rejects duplicate account, copy review, amount, and final return drift",
 "passed"
 ],
 [
-"forms/f1040/2025/domains/credits/business/form8582c/form8582cr_filed_ordinary.test.ts",
+"forms/f1040/2025/domains/credits/business/form8582cr/form8582cr_filed_ordinary.test.ts",
 "self-earned and K-1 credits calculate together, then unauthenticated direct Form 8874 export is blocked",
 "passed"
 ],
 [
-"forms/f1040/2025/domains/credits/business/form8582c/form8582cr_filed_ordinary.test.ts",
+"forms/f1040/2025/domains/credits/business/form8582cr/form8582cr_filed_ordinary.test.ts",
 "seven passive Form 8874 activities calculate investment overflow while direct export is blocked",
 "passed"
 ],
 [
-"forms/f1040/2025/domains/credits/business/form8582c/form8582cr_filed_ordinary.test.ts",
+"forms/f1040/2025/domains/credits/business/form8582cr/form8582cr_filed_ordinary.test.ts",
 "three partnership and one S corporation passive code AD credits keep four source-specific Worksheet 9 and Part V rows",
 "passed"
 ],
 [
-"forms/f1040/2025/domains/credits/business/form8582c/form8582cr_filed_ordinary.test.ts",
+"forms/f1040/2025/domains/credits/business/form8582cr/form8582cr_filed_ordinary.test.ts",
 "three passive Form 8874 credits allocate line 6 by source while direct export is blocked",
 "passed"
 ],
 [
-"forms/f1040/2025/domains/credits/business/form8582c/form8582cr_filed_ordinary.test.ts",
+"forms/f1040/2025/domains/credits/business/form8582cr/form8582cr_filed_ordinary.test.ts",
 "two 1099-INT copies retain separate accounts while direct Form 8874 export is blocked",
 "passed"
 ],
 [
-"forms/f1040/2025/domains/credits/business/form8582c/form8582cr_filed_ordinary.test.ts",
+"forms/f1040/2025/domains/credits/business/form8582cr/form8582cr_filed_ordinary.test.ts",
 "two distinct 1099-INT payers sum into passive rental line 6 while direct export is blocked",
 "passed"
 ],
 [
-"forms/f1040/2025/domains/credits/business/form8582c/form8582cr_filed_ordinary.test.ts",
+"forms/f1040/2025/domains/credits/business/form8582cr/form8582cr_filed_ordinary.test.ts",
 "two passive Form 8874 activities calculate separate Worksheet 9 balances while direct export is blocked",
 "passed"
 ],
 [
-"forms/f1040/2025/domains/credits/business/form8582c/form8582cr_filed_ordinary.test.ts",
+"forms/f1040/2025/domains/credits/business/form8582cr/form8582cr_filed_ordinary.test.ts",
 "two self-earned investments and three K-1s retain source identities while direct export is blocked",
 "passed"
 ],
 [
-"forms/f1040/2025/domains/credits/business/form8582c/form8582cr_filed_ordinary.test.ts",
+"forms/f1040/2025/domains/credits/business/form8582cr/form8582cr_filed_ordinary.test.ts",
 "unverified direct Form 8874 blocks the otherwise calculated passive Form 8582-CR return",
 "passed"
 ],
 [
-"forms/f1040/2025/domains/credits/business/form8582c/form8582cr_k1_income.test.ts",
+"forms/f1040/2025/domains/credits/business/form8582cr/form8582cr_k1_income.test.ts",
 "Complete passive K-1 income and credit inventory: four-row-boundary",
 "passed"
 ],
 [
-"forms/f1040/2025/domains/credits/business/form8582c/form8582cr_k1_income.test.ts",
+"forms/f1040/2025/domains/credits/business/form8582cr/form8582cr_k1_income.test.ts",
 "Complete passive K-1 income and credit inventory: mixed-two-boxes",
 "passed"
 ],
 [
-"forms/f1040/2025/domains/credits/business/form8582c/form8582cr_k1_income.test.ts",
+"forms/f1040/2025/domains/credits/business/form8582cr/form8582cr_k1_income.test.ts",
 "Complete passive K-1 income and credit inventory: partnership-rental",
 "passed"
 ],
 [
-"forms/f1040/2025/domains/credits/business/form8582c/form8582cr_k1_income.test.ts",
+"forms/f1040/2025/domains/credits/business/form8582cr/form8582cr_k1_income.test.ts",
 "Complete passive K-1 income and credit inventory: sixteen-mixed",
 "passed"
 ],
 [
-"forms/f1040/2025/domains/credits/business/form8582c/form8582cr_k1_income.test.ts",
+"forms/f1040/2025/domains/credits/business/form8582cr/form8582cr_k1_income.test.ts",
 "Complete passive K-1 income and credit inventory: thirtyone-mixed",
 "passed"
 ],
 [
-"forms/f1040/2025/domains/credits/business/form8582c/form8582cr_mixed_k1.test.ts",
+"forms/f1040/2025/domains/credits/business/form8582cr/form8582cr_mixed_k1.test.ts",
 "Mixed passive/nonpassive K-1 credit inventory: credit-continuation",
 "passed"
 ],
 [
-"forms/f1040/2025/domains/credits/business/form8582c/form8582cr_mixed_k1.test.ts",
+"forms/f1040/2025/domains/credits/business/form8582cr/form8582cr_mixed_k1.test.ts",
 "Mixed passive/nonpassive K-1 credit inventory: four-income-issuers",
 "passed"
 ],
 [
-"forms/f1040/2025/domains/credits/business/form8582c/form8582cr_mixed_k1.test.ts",
+"forms/f1040/2025/domains/credits/business/form8582cr/form8582cr_mixed_k1.test.ts",
 "Mixed passive/nonpassive K-1 credit inventory: fully-allowed",
 "passed"
 ],
 [
-"forms/f1040/2025/domains/credits/business/form8582c/form8582cr_mixed_k1.test.ts",
+"forms/f1040/2025/domains/credits/business/form8582cr/form8582cr_mixed_k1.test.ts",
 "Mixed passive/nonpassive K-1 credit inventory: limited-passive",
 "passed"
 ],
 [
-"forms/f1040/2025/domains/credits/business/form8582c/form8582cr_overflow.test.ts",
+"forms/f1040/2025/domains/credits/business/form8582cr/form8582cr_overflow.test.ts",
 "Complete passive credit inventory and continuations: 15",
 "passed"
 ],
 [
-"forms/f1040/2025/domains/credits/business/form8582c/form8582cr_overflow.test.ts",
+"forms/f1040/2025/domains/credits/business/form8582cr/form8582cr_overflow.test.ts",
 "Complete passive credit inventory and continuations: 16",
 "passed"
 ],
 [
-"forms/f1040/2025/domains/credits/business/form8582c/form8582cr_overflow.test.ts",
+"forms/f1040/2025/domains/credits/business/form8582cr/form8582cr_overflow.test.ts",
 "Complete passive credit inventory and continuations: 30",
 "passed"
 ],
 [
-"forms/f1040/2025/domains/credits/business/form8582c/form8582cr_overflow.test.ts",
+"forms/f1040/2025/domains/credits/business/form8582cr/form8582cr_overflow.test.ts",
 "Complete passive credit inventory and continuations: 31",
 "passed"
 ],
 [
-"forms/f1040/2025/domains/credits/business/form8582c/form8582cr_overflow.test.ts",
+"forms/f1040/2025/domains/credits/business/form8582cr/form8582cr_overflow.test.ts",
 "Complete passive credit inventory and continuations: 46",
 "passed"
 ],
 [
-"forms/f1040/2025/domains/credits/business/form8582c/form8582cr_rentals.test.ts",
+"forms/f1040/2025/domains/credits/business/form8582cr/form8582cr_rentals.test.ts",
 "Complete passive rental income inventory: 2 rentals, 2 credits",
 "passed"
 ],
 [
-"forms/f1040/2025/domains/credits/business/form8582c/form8582cr_rentals.test.ts",
+"forms/f1040/2025/domains/credits/business/form8582cr/form8582cr_rentals.test.ts",
 "Complete passive rental income inventory: 3 rentals, 15 credits",
 "passed"
 ],
 [
-"forms/f1040/2025/domains/credits/business/form8582c/form8582cr_rentals.test.ts",
+"forms/f1040/2025/domains/credits/business/form8582cr/form8582cr_rentals.test.ts",
 "Complete passive rental income inventory: 4 rentals, 16 credits",
 "passed"
 ],
 [
-"forms/f1040/2025/domains/credits/business/form8582c/form8582cr_rentals.test.ts",
+"forms/f1040/2025/domains/credits/business/form8582cr/form8582cr_rentals.test.ts",
 "Complete passive rental income inventory: 7 rentals, 31 credits",
 "passed"
 ],
 [
-"forms/f1040/2025/domains/credits/business/form8582c/form8582cr_separate_income.test.ts",
+"forms/f1040/2025/domains/credits/business/form8582cr/form8582cr_separate_income.test.ts",
 "Separate K-1 rental income and credit inventory: corporate-income-partnership-credit",
 "passed"
 ],
 [
-"forms/f1040/2025/domains/credits/business/form8582c/form8582cr_separate_income.test.ts",
+"forms/f1040/2025/domains/credits/business/form8582cr/form8582cr_separate_income.test.ts",
 "Separate K-1 rental income and credit inventory: four-income-two-credit",
 "passed"
 ],
 [
-"forms/f1040/2025/domains/credits/business/form8582c/form8582cr_separate_income.test.ts",
+"forms/f1040/2025/domains/credits/business/form8582cr/form8582cr_separate_income.test.ts",
 "Separate K-1 rental income and credit inventory: partnership-income-corporate-credit",
 "passed"
 ],
 [
-"forms/f1040/2025/domains/credits/business/form8582c/form8582cr_separate_income.test.ts",
+"forms/f1040/2025/domains/credits/business/form8582cr/form8582cr_separate_income.test.ts",
 "Separate K-1 rental income and credit inventory: separate-income-full-credit",
 "passed"
 ],
@@ -11722,452 +11722,452 @@
 "passed"
 ],
 [
-"forms/f1040/2025/domains/income/business/trust-k1/trust-k1-issued-copy-fields.test.ts",
+"forms/f1040/2025/domains/income/rental-passthrough/k1_trust/trust-k1-issued-copy-fields.test.ts",
 "trust K-1 checkbox verifier accepts all six original unchecked IRS appearances",
 "passed"
 ],
 [
-"forms/f1040/2025/domains/income/business/trust-k1/trust-k1-issued-copy-fields.test.ts",
+"forms/f1040/2025/domains/income/rental-passthrough/k1_trust/trust-k1-issued-copy-fields.test.ts",
 "trust K-1 checkbox verifier accepts each regenerated checked state at its official position",
 "passed"
 ],
 [
-"forms/f1040/2025/domains/income/business/trust-k1/trust-k1-issued-copy-fields.test.ts",
+"forms/f1040/2025/domains/income/rental-passthrough/k1_trust/trust-k1-issued-copy-fields.test.ts",
 "trust K-1 extraction rejects rehashed hidden withholding",
 "passed"
 ],
 [
-"forms/f1040/2025/domains/income/business/trust-k1/trust-k1-issued-copy-fields.test.ts",
+"forms/f1040/2025/domains/income/rental-passthrough/k1_trust/trust-k1-issued-copy-fields.test.ts",
 "trust K-1 extraction rejects rehashed missing explanation page",
 "passed"
 ],
 [
-"forms/f1040/2025/domains/income/business/trust-k1/trust-k1-issued-copy-fields.test.ts",
+"forms/f1040/2025/domains/income/rental-passthrough/k1_trust/trust-k1-issued-copy-fields.test.ts",
 "trust K-1 extraction rejects rehashed missing field",
 "passed"
 ],
 [
-"forms/f1040/2025/domains/income/business/trust-k1/trust-k1-issued-copy-fields.test.ts",
+"forms/f1040/2025/domains/income/rental-passthrough/k1_trust/trust-k1-issued-copy-fields.test.ts",
 "trust K-1 extraction rejects rehashed printed mismatch f1_10[0]=999-88-7777",
 "passed"
 ],
 [
-"forms/f1040/2025/domains/income/business/trust-k1/trust-k1-issued-copy-fields.test.ts",
+"forms/f1040/2025/domains/income/rental-passthrough/k1_trust/trust-k1-issued-copy-fields.test.ts",
 "trust K-1 extraction rejects rehashed printed mismatch f1_50[0]=A",
 "passed"
 ],
 [
-"forms/f1040/2025/domains/income/business/trust-k1/trust-k1-issued-copy-fields.test.ts",
+"forms/f1040/2025/domains/income/rental-passthrough/k1_trust/trust-k1-issued-copy-fields.test.ts",
 "trust K-1 extraction rejects rehashed printed mismatch f1_51[0]=1,25.25",
 "passed"
 ],
 [
-"forms/f1040/2025/domains/income/business/trust-k1/trust-k1-issued-copy-fields.test.ts",
+"forms/f1040/2025/domains/income/rental-passthrough/k1_trust/trust-k1-issued-copy-fields.test.ts",
 "trust K-1 extraction rejects rehashed printed mismatch f1_51[0]=124.25",
 "passed"
 ],
 [
-"forms/f1040/2025/domains/income/business/trust-k1/trust-k1-issued-copy-fields.test.ts",
+"forms/f1040/2025/domains/income/rental-passthrough/k1_trust/trust-k1-issued-copy-fields.test.ts",
 "trust K-1 extraction rejects rehashed printed mismatch f1_52[0]=B",
 "passed"
 ],
 [
-"forms/f1040/2025/domains/income/business/trust-k1/trust-k1-issued-copy-fields.test.ts",
+"forms/f1040/2025/domains/income/rental-passthrough/k1_trust/trust-k1-issued-copy-fields.test.ts",
 "trust K-1 extraction rejects rehashed printed mismatch f1_6[0]=98-7654321",
 "passed"
 ],
 [
-"forms/f1040/2025/domains/income/business/trust-k1/trust-k1-issued-copy-fields.test.ts",
+"forms/f1040/2025/domains/income/rental-passthrough/k1_trust/trust-k1-issued-copy-fields.test.ts",
 "trust K-1 extraction rejects rehashed printed mismatch f1_6[0]=X123456789",
 "passed"
 ],
 [
-"forms/f1040/2025/domains/income/business/trust-k1/trust-k1-issued-copy-fields.test.ts",
+"forms/f1040/2025/domains/income/rental-passthrough/k1_trust/trust-k1-issued-copy-fields.test.ts",
 "trust K-1 extraction rejects rehashed stale amount appearance",
 "passed"
 ],
 [
-"forms/f1040/2025/domains/income/business/trust-k1/trust-k1-issued-copy-fields.test.ts",
+"forms/f1040/2025/domains/income/rental-passthrough/k1_trust/trust-k1-issued-copy-fields.test.ts",
 "trust K-1 extraction retains every canonical field without enabling filing or authenticating issuer",
 "passed"
 ],
 [
-"forms/f1040/2025/domains/income/business/trust-k1/trust-k1-issued-copy-fields.test.ts",
+"forms/f1040/2025/domains/income/rental-passthrough/k1_trust/trust-k1-issued-copy-fields.test.ts",
 "trust K-1 extraction uses the exact verified byte snapshot despite caller buffer mutation",
 "passed"
 ],
 [
-"forms/f1040/2025/domains/income/business/trust-k1/trust-k1-issued-copy-fields.test.ts",
+"forms/f1040/2025/domains/income/rental-passthrough/k1_trust/trust-k1-issued-copy-fields.test.ts",
 "trust K-1 rejects rehashed blank checked appearance",
 "passed"
 ],
 [
-"forms/f1040/2025/domains/income/business/trust-k1/trust-k1-issued-copy-fields.test.ts",
+"forms/f1040/2025/domains/income/rental-passthrough/k1_trust/trust-k1-issued-copy-fields.test.ts",
 "trust K-1 rejects rehashed hidden unchecked widget",
 "passed"
 ],
 [
-"forms/f1040/2025/domains/income/business/trust-k1/trust-k1-issued-copy-fields.test.ts",
+"forms/f1040/2025/domains/income/rental-passthrough/k1_trust/trust-k1-issued-copy-fields.test.ts",
 "trust K-1 rejects rehashed marked unchecked appearance",
 "passed"
 ],
 [
-"forms/f1040/2025/domains/income/business/trust-k1/trust-k1-issued-copy-fields.test.ts",
+"forms/f1040/2025/domains/income/rental-passthrough/k1_trust/trust-k1-issued-copy-fields.test.ts",
 "trust K-1 rejects rehashed missing normal appearance",
 "passed"
 ],
 [
-"forms/f1040/2025/domains/income/business/trust-k1/trust-k1-issued-copy-fields.test.ts",
+"forms/f1040/2025/domains/income/rental-passthrough/k1_trust/trust-k1-issued-copy-fields.test.ts",
 "trust K-1 rejects rehashed moved checkbox",
 "passed"
 ],
 [
-"forms/f1040/2025/domains/income/business/trust-k1/trust-k1-issued-copy-fields.test.ts",
+"forms/f1040/2025/domains/income/rental-passthrough/k1_trust/trust-k1-issued-copy-fields.test.ts",
 "trust K-1 rejects rehashed nonblack regenerated check mark",
 "passed"
 ],
 [
-"forms/f1040/2025/domains/income/business/trust-k1/trust-k1-issued-copy-fields.test.ts",
+"forms/f1040/2025/domains/income/rental-passthrough/k1_trust/trust-k1-issued-copy-fields.test.ts",
 "trust K-1 rejects rehashed nonprinting checkbox",
 "passed"
 ],
 [
-"forms/f1040/2025/domains/income/business/trust-k1/trust-k1-issued-copy-fields.test.ts",
+"forms/f1040/2025/domains/income/rental-passthrough/k1_trust/trust-k1-issued-copy-fields.test.ts",
 "trust K-1 rejects rehashed optional-content checkbox",
 "passed"
 ],
 [
-"forms/f1040/2025/domains/income/business/trust-k1/trust-k1-issued-copy-fields.test.ts",
+"forms/f1040/2025/domains/income/rental-passthrough/k1_trust/trust-k1-issued-copy-fields.test.ts",
 "trust K-1 rejects rehashed substituted original glyph font",
 "passed"
 ],
 [
-"forms/f1040/2025/domains/income/business/trust-k1/trust-k1-issued-copy-fields.test.ts",
+"forms/f1040/2025/domains/income/rental-passthrough/k1_trust/trust-k1-issued-copy-fields.test.ts",
 "trust K-1 rejects rehashed transformed appearance",
 "passed"
 ],
 [
-"forms/f1040/2025/domains/income/business/trust-k1/trust-k1-issued-copy-fields.test.ts",
+"forms/f1040/2025/domains/income/rental-passthrough/k1_trust/trust-k1-issued-copy-fields.test.ts",
 "trust K-1 rejects rehashed value and appearance state conflict",
 "passed"
 ],
 [
-"forms/f1040/2025/domains/income/business/trust-k1/trust-k1-issued-copy-fields.test.ts",
+"forms/f1040/2025/domains/income/rental-passthrough/k1_trust/trust-k1-issued-copy-fields.test.ts",
 "trust K-1 retains checked original IRS glyph and regenerated checkbox appearances",
 "passed"
 ],
 [
-"forms/f1040/2025/domains/income/business/trust-k1/trust-k1-issued-copy-review.test.ts",
+"forms/f1040/2025/domains/income/rental-passthrough/k1_trust/trust-k1-issued-copy-review.test.ts",
 "trust K-1 code B copy review rejects another beneficiary or altered amount",
 "passed"
 ],
 [
-"forms/f1040/2025/domains/income/business/trust-k1/trust-k1-issued-copy-review.test.ts",
+"forms/f1040/2025/domains/income/rental-passthrough/k1_trust/trust-k1-issued-copy-review.test.ts",
 "trust K-1 code B review binds exact PDF bytes but leaves printed content unverified",
 "passed"
 ],
 [
-"forms/f1040/2025/domains/income/business/trust-k1/trust-k1-native-copy-review.test.ts",
+"forms/f1040/2025/domains/income/rental-passthrough/k1_trust/trust-k1-native-copy-review.test.ts",
 "trust K-1 native beneficiary transcription requires exact printed recipient and distinct copy reference",
 "passed"
 ],
 [
-"forms/f1040/2025/domains/income/business/trust-k1/trust-k1-native-copy-review.test.ts",
+"forms/f1040/2025/domains/income/rental-passthrough/k1_trust/trust-k1-native-copy-review.test.ts",
 "trust K-1 native review joins the spouse-owned copy to its own beneficiary",
 "failed:research-docs"
 ],
 [
-"forms/f1040/2025/domains/income/business/trust-k1/trust-k1-native-copy-review.test.ts",
+"forms/f1040/2025/domains/income/rental-passthrough/k1_trust/trust-k1-native-copy-review.test.ts",
 "trust K-1 native review preserves foreign recipient address separately from the current return",
 "failed:research-docs"
 ],
 [
-"forms/f1040/2025/domains/income/business/trust-k1/trust-k1-native-copy-review.test.ts",
+"forms/f1040/2025/domains/income/rental-passthrough/k1_trust/trust-k1-native-copy-review.test.ts",
 "trust K-1 native review projects all scalar and coded rows in IRS sequence and validates standalone XSD",
 "failed:research-docs"
 ],
 [
-"forms/f1040/2025/domains/income/business/trust-k1/trust-k1-native-copy-review.test.ts",
+"forms/f1040/2025/domains/income/rental-passthrough/k1_trust/trust-k1-native-copy-review.test.ts",
 "trust K-1 native review rejects conflicting resident marks",
 "passed"
 ],
 [
-"forms/f1040/2025/domains/income/business/trust-k1/trust-k1-native-copy-review.test.ts",
+"forms/f1040/2025/domains/income/rental-passthrough/k1_trust/trust-k1-native-copy-review.test.ts",
 "trust K-1 native review rejects date without indicator",
 "passed"
 ],
 [
-"forms/f1040/2025/domains/income/business/trust-k1/trust-k1-native-copy-review.test.ts",
+"forms/f1040/2025/domains/income/rental-passthrough/k1_trust/trust-k1-native-copy-review.test.ts",
 "trust K-1 native review rejects impossible date",
 "passed"
 ],
 [
-"forms/f1040/2025/domains/income/business/trust-k1/trust-k1-native-copy-review.test.ts",
+"forms/f1040/2025/domains/income/rental-passthrough/k1_trust/trust-k1-native-copy-review.test.ts",
 "trust K-1 native review rejects malformed grouping",
 "passed"
 ],
 [
-"forms/f1040/2025/domains/income/business/trust-k1/trust-k1-native-copy-review.test.ts",
+"forms/f1040/2025/domains/income/rental-passthrough/k1_trust/trust-k1-native-copy-review.test.ts",
 "trust K-1 native review rejects negative nonnegative gain",
 "passed"
 ],
 [
-"forms/f1040/2025/domains/income/business/trust-k1/trust-k1-native-copy-review.test.ts",
+"forms/f1040/2025/domains/income/rental-passthrough/k1_trust/trust-k1-native-copy-review.test.ts",
 "trust K-1 native review rejects orphan amount",
 "passed"
 ],
 [
-"forms/f1040/2025/domains/income/business/trust-k1/trust-k1-native-copy-review.test.ts",
+"forms/f1040/2025/domains/income/rental-passthrough/k1_trust/trust-k1-native-copy-review.test.ts",
 "trust K-1 native review rejects reuse of one PDF as two claimed source documents",
 "passed"
 ],
 [
-"forms/f1040/2025/domains/income/business/trust-k1/trust-k1-native-copy-review.test.ts",
+"forms/f1040/2025/domains/income/rental-passthrough/k1_trust/trust-k1-native-copy-review.test.ts",
 "trust K-1 native review rejects statement-only amount",
 "passed"
 ],
 [
-"forms/f1040/2025/domains/income/business/trust-k1/trust-k1-native-copy-review.test.ts",
+"forms/f1040/2025/domains/income/rental-passthrough/k1_trust/trust-k1-native-copy-review.test.ts",
 "trust K-1 native review rejects unknown code",
 "passed"
 ],
 [
-"forms/f1040/2025/domains/income/business/trust-k1/trust-k1-native-copy-review.test.ts",
+"forms/f1040/2025/domains/income/rental-passthrough/k1_trust/trust-k1-native-copy-review.test.ts",
 "trust K-1 native review retains owner suffix, care-of and second address line",
 "failed:research-docs"
 ],
 [
-"forms/f1040/2025/domains/income/business/trust-k1/trust-k1-prepared-copies.test.ts",
+"forms/f1040/2025/domains/income/rental-passthrough/k1_trust/trust-k1-prepared-copies.test.ts",
 "prepared trust K-1 copies bind the real finalized graph, reviewed native projection and exact source bytes without authorizing exports",
 "failed:other"
 ],
 [
-"forms/f1040/2025/domains/income/business/trust-k1/trust-k1-prepared-copies.test.ts",
+"forms/f1040/2025/domains/income/rental-passthrough/k1_trust/trust-k1-prepared-copies.test.ts",
 "prepared trust K-1 copies reject incomplete finalized withholding, extra bytes and a different filer",
 "failed:other"
 ],
 [
-"forms/f1040/2025/domains/income/business/trust-k1/trust-k1-prepared-copies.test.ts",
+"forms/f1040/2025/domains/income/rental-passthrough/k1_trust/trust-k1-prepared-copies.test.ts",
 "prepared trust K-1 page projection rejects changed return totals before rendering",
 "failed:other"
 ],
 [
-"forms/f1040/2025/domains/income/business/trust-k1/trust-k1-prepared-copies.test.ts",
+"forms/f1040/2025/domains/income/rental-passthrough/k1_trust/trust-k1-prepared-copies.test.ts",
 "prepared trust K-1 rejects changed income after preparation",
 "failed:other"
 ],
 [
-"forms/f1040/2025/domains/income/business/trust-k1/trust-k1-prepared-copies.test.ts",
+"forms/f1040/2025/domains/income/rental-passthrough/k1_trust/trust-k1-prepared-copies.test.ts",
 "prepared trust K-1 rejects changed refund after preparation",
 "failed:other"
 ],
 [
-"forms/f1040/2025/domains/income/business/trust-k1/trust-k1-prepared-copies.test.ts",
+"forms/f1040/2025/domains/income/rental-passthrough/k1_trust/trust-k1-prepared-copies.test.ts",
 "prepared trust K-1 rejects changed retained source reference after preparation",
 "failed:other"
 ],
 [
-"forms/f1040/2025/domains/income/business/trust-k1/trust-k1-prepared-copies.test.ts",
+"forms/f1040/2025/domains/income/rental-passthrough/k1_trust/trust-k1-prepared-copies.test.ts",
 "prepared trust K-1 return binding preserves top-level Form8949 rows handled by the shared prepared-source contract",
 "failed:other"
 ],
 [
-"forms/f1040/2025/domains/income/business/trust-k1/trust-k1-prepared-copies.test.ts",
+"forms/f1040/2025/domains/income/rental-passthrough/k1_trust/trust-k1-prepared-copies.test.ts",
 "prepared trust K-1 review pages fix verified appearances while retaining original source bytes and ownership manifest",
 "failed:other"
 ],
 [
-"forms/f1040/2025/domains/income/business/trust-k1/trust-k1-prepared-copies.test.ts",
+"forms/f1040/2025/domains/income/rental-passthrough/k1_trust/trust-k1-prepared-copies.test.ts",
 "prepared trust K-1 review pages keep independent joint-owner copies without AcroForm field collisions",
 "failed:other"
 ],
 [
-"forms/f1040/2025/domains/income/business/trust-k1/trust-k1-prepared-copies.test.ts",
+"forms/f1040/2025/domains/income/rental-passthrough/k1_trust/trust-k1-prepared-copies.test.ts",
 "prepared trust K-1 review pages retain a blank original glyph checkbox without inventing an Off appearance",
 "failed:other"
 ],
 [
-"forms/f1040/2025/domains/income/business/trust-k1/trust-k1-prepared-copies.test.ts",
+"forms/f1040/2025/domains/income/rental-passthrough/k1_trust/trust-k1-prepared-copies.test.ts",
 "prepared trust K-1 source/filer/recipient/byte snapshots survive caller mutations before asynchronous verification finishes",
 "failed:other"
 ],
 [
-"forms/f1040/2025/domains/income/business/trust-k1/trust-k1-source-copy-reconciliation.test.ts",
+"forms/f1040/2025/domains/income/rental-passthrough/k1_trust/trust-k1-source-copy-reconciliation.test.ts",
 "trust K-1 copy reconciliation flags entered foreign workpaper facts for statement review even without a printed tax amount",
 "passed"
 ],
 [
-"forms/f1040/2025/domains/income/business/trust-k1/trust-k1-source-copy-reconciliation.test.ts",
+"forms/f1040/2025/domains/income/rental-passthrough/k1_trust/trust-k1-source-copy-reconciliation.test.ts",
 "trust K-1 copy reconciliation joins ordinary public source through the real graph while credit/export remain guarded",
 "failed:other"
 ],
 [
-"forms/f1040/2025/domains/income/business/trust-k1/trust-k1-source-copy-reconciliation.test.ts",
+"forms/f1040/2025/domains/income/rental-passthrough/k1_trust/trust-k1-source-copy-reconciliation.test.ts",
 "trust K-1 copy reconciliation rejects claimed amounts absent from the copy and changed trust name",
 "passed"
 ],
 [
-"forms/f1040/2025/domains/income/business/trust-k1/trust-k1-source-copy-reconciliation.test.ts",
+"forms/f1040/2025/domains/income/rental-passthrough/k1_trust/trust-k1-source-copy-reconciliation.test.ts",
 "trust K-1 copy reconciliation rejects unmodeled box11 without dropping it",
 "passed"
 ],
 [
-"forms/f1040/2025/domains/income/business/trust-k1/trust-k1-source-copy-reconciliation.test.ts",
+"forms/f1040/2025/domains/income/rental-passthrough/k1_trust/trust-k1-source-copy-reconciliation.test.ts",
 "trust K-1 copy reconciliation rejects unmodeled box12 without dropping it",
 "passed"
 ],
 [
-"forms/f1040/2025/domains/income/business/trust-k1/trust-k1-source-copy-reconciliation.test.ts",
+"forms/f1040/2025/domains/income/rental-passthrough/k1_trust/trust-k1-source-copy-reconciliation.test.ts",
 "trust K-1 copy reconciliation rejects unmodeled box13 without dropping it",
 "passed"
 ],
 [
-"forms/f1040/2025/domains/income/business/trust-k1/trust-k1-source-copy-reconciliation.test.ts",
+"forms/f1040/2025/domains/income/rental-passthrough/k1_trust/trust-k1-source-copy-reconciliation.test.ts",
 "trust K-1 copy reconciliation rejects unmodeled box14 without dropping it",
 "passed"
 ],
 [
-"forms/f1040/2025/domains/income/business/trust-k1/trust-k1-source-copy-reconciliation.test.ts",
+"forms/f1040/2025/domains/income/rental-passthrough/k1_trust/trust-k1-source-copy-reconciliation.test.ts",
 "trust K-1 copy reconciliation rejects unmodeled box9 without dropping it",
 "passed"
 ],
 [
-"forms/f1040/2025/domains/income/business/trust-k1/trust-k1-source-copy-reconciliation.test.ts",
+"forms/f1040/2025/domains/income/rental-passthrough/k1_trust/trust-k1-source-copy-reconciliation.test.ts",
 "trust K-1 copy reconciliation rejects unreported printed fact f1_12[0]",
 "passed"
 ],
 [
-"forms/f1040/2025/domains/income/business/trust-k1/trust-k1-source-copy-reconciliation.test.ts",
+"forms/f1040/2025/domains/income/rental-passthrough/k1_trust/trust-k1-source-copy-reconciliation.test.ts",
 "trust K-1 copy reconciliation rejects unreported printed fact f1_13[0]",
 "passed"
 ],
 [
-"forms/f1040/2025/domains/income/business/trust-k1/trust-k1-source-copy-reconciliation.test.ts",
+"forms/f1040/2025/domains/income/rental-passthrough/k1_trust/trust-k1-source-copy-reconciliation.test.ts",
 "trust K-1 copy reconciliation rejects unreported printed fact f1_14[0]",
 "passed"
 ],
 [
-"forms/f1040/2025/domains/income/business/trust-k1/trust-k1-source-copy-reconciliation.test.ts",
+"forms/f1040/2025/domains/income/rental-passthrough/k1_trust/trust-k1-source-copy-reconciliation.test.ts",
 "trust K-1 copy reconciliation rejects unreported printed fact f1_15[0]",
 "passed"
 ],
 [
-"forms/f1040/2025/domains/income/business/trust-k1/trust-k1-source-copy-reconciliation.test.ts",
+"forms/f1040/2025/domains/income/rental-passthrough/k1_trust/trust-k1-source-copy-reconciliation.test.ts",
 "trust K-1 copy reconciliation rejects unreported printed fact f1_16[0]",
 "passed"
 ],
 [
-"forms/f1040/2025/domains/income/business/trust-k1/trust-k1-source-copy-reconciliation.test.ts",
+"forms/f1040/2025/domains/income/rental-passthrough/k1_trust/trust-k1-source-copy-reconciliation.test.ts",
 "trust K-1 copy reconciliation rejects unreported printed fact f1_19[0]",
 "passed"
 ],
 [
-"forms/f1040/2025/domains/income/business/trust-k1/trust-k1-source-copy-reconciliation.test.ts",
+"forms/f1040/2025/domains/income/rental-passthrough/k1_trust/trust-k1-source-copy-reconciliation.test.ts",
 "trust K-1 copy reconciliation rejects unreported printed fact f1_20[0]",
 "passed"
 ],
 [
-"forms/f1040/2025/domains/income/business/trust-k1/trust-k1-source-copy-reconciliation.test.ts",
+"forms/f1040/2025/domains/income/rental-passthrough/k1_trust/trust-k1-source-copy-reconciliation.test.ts",
 "trust K-1 copy reconciliation rejects unreported printed fact f1_21[0]",
 "passed"
 ],
 [
-"forms/f1040/2025/domains/income/business/trust-k1/trust-k1-source-copy-reconciliation.test.ts",
+"forms/f1040/2025/domains/income/rental-passthrough/k1_trust/trust-k1-source-copy-reconciliation.test.ts",
 "trust K-1 copy reconciliation rejects unreported printed fact f1_22[0]",
 "passed"
 ],
 [
-"forms/f1040/2025/domains/income/business/trust-k1/trust-k1-source-copy-reconciliation.test.ts",
+"forms/f1040/2025/domains/income/rental-passthrough/k1_trust/trust-k1-source-copy-reconciliation.test.ts",
 "trust K-1 copy reconciliation rejects unreported printed fact f1_30[0]",
 "passed"
 ],
 [
-"forms/f1040/2025/domains/income/business/trust-k1/trust-k1-source-copy-reconciliation.test.ts",
+"forms/f1040/2025/domains/income/rental-passthrough/k1_trust/trust-k1-source-copy-reconciliation.test.ts",
 "trust K-1 copy reconciliation rejects unreported printed fact f1_40[0]",
 "passed"
 ],
 [
-"forms/f1040/2025/domains/income/business/trust-k1/trust-k1-source-copy-reconciliation.test.ts",
+"forms/f1040/2025/domains/income/rental-passthrough/k1_trust/trust-k1-source-copy-reconciliation.test.ts",
 "trust K-1 copy reconciliation rejects unreported printed fact f1_56[0]",
 "passed"
 ],
 [
-"forms/f1040/2025/domains/income/business/trust-k1/trust-k1-source-copy-reconciliation.test.ts",
+"forms/f1040/2025/domains/income/rental-passthrough/k1_trust/trust-k1-source-copy-reconciliation.test.ts",
 "trust K-1 copy reconciliation requires the claimed final-year mark",
 "passed"
 ],
 [
-"forms/f1040/2025/domains/income/business/trust-k1/trust-k1-source-copy-reconciliation.test.ts",
+"forms/f1040/2025/domains/income/rental-passthrough/k1_trust/trust-k1-source-copy-reconciliation.test.ts",
 "trust K-1 copy reconciliation retains all currently modeled coded facts and outstanding statement references",
 "passed"
 ],
 [
-"forms/f1040/2025/domains/income/business/trust-k1/trust-k1-static-pages.test.ts",
+"forms/f1040/2025/domains/income/rental-passthrough/k1_trust/trust-k1-static-pages.test.ts",
 "trust K-1 source extraction rejects an overlay even with matching visible field appearances and rehashed metadata",
 "passed"
 ],
 [
-"forms/f1040/2025/domains/income/business/trust-k1/trust-k1-static-pages.test.ts",
+"forms/f1040/2025/domains/income/rental-passthrough/k1_trust/trust-k1-static-pages.test.ts",
 "trust K-1 static fingerprint is derived from the pinned official template and excludes editable values",
 "passed"
 ],
 [
-"forms/f1040/2025/domains/income/business/trust-k1/trust-k1-static-pages.test.ts",
+"forms/f1040/2025/domains/income/rental-passthrough/k1_trust/trust-k1-static-pages.test.ts",
 "trust K-1 static-page verification rejects rehashed additional annotation",
 "passed"
 ],
 [
-"forms/f1040/2025/domains/income/business/trust-k1/trust-k1-static-pages.test.ts",
+"forms/f1040/2025/domains/income/rental-passthrough/k1_trust/trust-k1-static-pages.test.ts",
 "trust K-1 static-page verification rejects rehashed altered instruction page",
 "passed"
 ],
 [
-"forms/f1040/2025/domains/income/business/trust-k1/trust-k1-static-pages.test.ts",
+"forms/f1040/2025/domains/income/rental-passthrough/k1_trust/trust-k1-static-pages.test.ts",
 "trust K-1 static-page verification rejects rehashed automatic widget action",
 "passed"
 ],
 [
-"forms/f1040/2025/domains/income/business/trust-k1/trust-k1-static-pages.test.ts",
+"forms/f1040/2025/domains/income/rental-passthrough/k1_trust/trust-k1-static-pages.test.ts",
 "trust K-1 static-page verification rejects rehashed duplicate widget annotation",
 "passed"
 ],
 [
-"forms/f1040/2025/domains/income/business/trust-k1/trust-k1-static-pages.test.ts",
+"forms/f1040/2025/domains/income/rental-passthrough/k1_trust/trust-k1-static-pages.test.ts",
 "trust K-1 static-page verification rejects rehashed missing static content",
 "passed"
 ],
 [
-"forms/f1040/2025/domains/income/business/trust-k1/trust-k1-static-pages.test.ts",
+"forms/f1040/2025/domains/income/rental-passthrough/k1_trust/trust-k1-static-pages.test.ts",
 "trust K-1 static-page verification rejects rehashed moved printed amount",
 "passed"
 ],
 [
-"forms/f1040/2025/domains/income/business/trust-k1/trust-k1-static-pages.test.ts",
+"forms/f1040/2025/domains/income/rental-passthrough/k1_trust/trust-k1-static-pages.test.ts",
 "trust K-1 static-page verification rejects rehashed optional content configuration",
 "passed"
 ],
 [
-"forms/f1040/2025/domains/income/business/trust-k1/trust-k1-static-pages.test.ts",
+"forms/f1040/2025/domains/income/rental-passthrough/k1_trust/trust-k1-static-pages.test.ts",
 "trust K-1 static-page verification rejects rehashed page transparency group",
 "passed"
 ],
 [
-"forms/f1040/2025/domains/income/business/trust-k1/trust-k1-static-pages.test.ts",
+"forms/f1040/2025/domains/income/rental-passthrough/k1_trust/trust-k1-static-pages.test.ts",
 "trust K-1 static-page verification rejects rehashed print range omitting instructions",
 "passed"
 ],
 [
-"forms/f1040/2025/domains/income/business/trust-k1/trust-k1-static-pages.test.ts",
+"forms/f1040/2025/domains/income/rental-passthrough/k1_trust/trust-k1-static-pages.test.ts",
 "trust K-1 static-page verification rejects rehashed replacement document script",
 "passed"
 ],
 [
-"forms/f1040/2025/domains/income/business/trust-k1/trust-k1-static-pages.test.ts",
+"forms/f1040/2025/domains/income/rental-passthrough/k1_trust/trust-k1-static-pages.test.ts",
 "trust K-1 static-page verification rejects rehashed substituted page font",
 "passed"
 ],
 [
-"forms/f1040/2025/domains/income/business/trust-k1/trust-k1-static-pages.test.ts",
+"forms/f1040/2025/domains/income/rental-passthrough/k1_trust/trust-k1-static-pages.test.ts",
 "trust K-1 static-page verification rejects rehashed white overlay concealing source amount",
 "passed"
 ],
@@ -12842,67 +12842,67 @@
 "passed"
 ],
 [
-"forms/f1040/2025/domains/income/other/f1099b/f1099b-recipient-owner.test.ts",
+"forms/f1040/2025/domains/income/investments/f1099b/f1099b-recipient-owner.test.ts",
 "1099-B broker sale needs payer identity at final export",
 "passed"
 ],
 [
-"forms/f1040/2025/domains/income/other/f1099b/f1099b-recipient-owner.test.ts",
+"forms/f1040/2025/domains/income/investments/f1099b/f1099b-recipient-owner.test.ts",
 "1099-B missing issued recipient blocks native and PDF filing",
 "passed"
 ],
 [
-"forms/f1040/2025/domains/income/other/f1099b/f1099b-recipient-owner.test.ts",
+"forms/f1040/2025/domains/income/investments/f1099b/f1099b-recipient-owner.test.ts",
 "1099-B recipient belongs to taxpayer or joint spouse",
 "passed"
 ],
 [
-"forms/f1040/2025/domains/income/other/f1099b/f1099b-recipient-owner.test.ts",
+"forms/f1040/2025/domains/income/investments/f1099b/f1099b-recipient-owner.test.ts",
 "1099-B wrong recipient blocks native and PDF final return",
 "passed"
 ],
 [
-"forms/f1040/2025/domains/income/other/f1099d/f1099div-income-reconciliation.test.ts",
+"forms/f1040/2025/domains/income/investments/f1099div/f1099div-income-reconciliation.test.ts",
 "nominee distributions are excluded from sourced 1099-DIV minimum",
 "passed"
 ],
 [
-"forms/f1040/2025/domains/income/other/f1099d/f1099div-income-reconciliation.test.ts",
+"forms/f1040/2025/domains/income/investments/f1099div/f1099div-income-reconciliation.test.ts",
 "partnership K-1 dividends survive both final exporters",
 "passed"
 ],
 [
-"forms/f1040/2025/domains/income/other/f1099d/f1099div-income-reconciliation.test.ts",
+"forms/f1040/2025/domains/income/investments/f1099div/f1099div-income-reconciliation.test.ts",
 "retained 1099-DIV income survives native and PDF export",
 "passed"
 ],
 [
-"forms/f1040/2025/domains/income/other/f1099d/f1099div-income-reconciliation.test.ts",
+"forms/f1040/2025/domains/income/investments/f1099div/f1099div-income-reconciliation.test.ts",
 "three K-1 issuer families add to the 1099-DIV minimum without box 6c",
 "passed"
 ],
 [
-"forms/f1040/2025/domains/income/other/f1099d/f1099div-owner-reconciliation.test.ts",
+"forms/f1040/2025/domains/income/investments/f1099div/f1099div-owner-reconciliation.test.ts",
 "capital-gain-only and tax-exempt 1099-DIV copies require owners",
 "passed"
 ],
 [
-"forms/f1040/2025/domains/income/other/f1099d/f1099div-owner-reconciliation.test.ts",
+"forms/f1040/2025/domains/income/investments/f1099div/f1099div-owner-reconciliation.test.ts",
 "joint spouse 1099-DIV belongs on MFJ return only",
 "passed"
 ],
 [
-"forms/f1040/2025/domains/income/other/f1099d/f1099div-owner-reconciliation.test.ts",
+"forms/f1040/2025/domains/income/investments/f1099div/f1099div-owner-reconciliation.test.ts",
 "native and PDF exports reject a corrected DIV copy with a missing payer TIN",
 "passed"
 ],
 [
-"forms/f1040/2025/domains/income/other/f1099d/f1099div-owner-reconciliation.test.ts",
+"forms/f1040/2025/domains/income/investments/f1099div/f1099div-owner-reconciliation.test.ts",
 "positive 1099-DIV needs an identified payer in both Form 1040 exports",
 "passed"
 ],
 [
-"forms/f1040/2025/domains/income/other/f1099d/f1099div-owner-reconciliation.test.ts",
+"forms/f1040/2025/domains/income/investments/f1099div/f1099div-owner-reconciliation.test.ts",
 "positive 1099-DIV owner is checked by native and PDF Form 1040",
 "passed"
 ],
@@ -12957,207 +12957,207 @@
 "passed"
 ],
 [
-"forms/f1040/2025/domains/income/other/f1099i/f1099int-owner-reconciliation.test.ts",
+"forms/f1040/2025/domains/income/investments/f1099int/f1099int-owner-reconciliation.test.ts",
 "joint spouse 1099-INT belongs on MFJ return only",
 "passed"
 ],
 [
-"forms/f1040/2025/domains/income/other/f1099i/f1099int-owner-reconciliation.test.ts",
+"forms/f1040/2025/domains/income/investments/f1099int/f1099int-owner-reconciliation.test.ts",
 "positive 1099-INT needs a nonblank payer name in both Form 1040 exports",
 "passed"
 ],
 [
-"forms/f1040/2025/domains/income/other/f1099i/f1099int-owner-reconciliation.test.ts",
+"forms/f1040/2025/domains/income/investments/f1099int/f1099int-owner-reconciliation.test.ts",
 "positive 1099-INT owner is checked by native and PDF Form 1040",
 "passed"
 ],
 [
-"forms/f1040/2025/domains/income/other/f1099k/f1099k-copy-identity.test.ts",
+"forms/f1040/2025/domains/income/business/f1099k/f1099k-copy-identity.test.ts",
 "1099-K reviewed owner and TIN owner cannot repeat one processor account in native or PDF export",
 "passed"
 ],
 [
-"forms/f1040/2025/domains/income/other/f1099k/f1099k-copy-reconciliation.test.ts",
+"forms/f1040/2025/domains/income/business/f1099k/f1099k-copy-reconciliation.test.ts",
 "ambiguous processor copies reject in native and PDF export",
 "passed"
 ],
 [
-"forms/f1040/2025/domains/income/other/f1099k/f1099k-copy-reconciliation.test.ts",
+"forms/f1040/2025/domains/income/business/f1099k/f1099k-copy-reconciliation.test.ts",
 "one identified 1099-K account cannot replay changed income in native or PDF export",
 "passed"
 ],
 [
-"forms/f1040/2025/domains/income/other/f1099k/f1099k-copy-reconciliation.test.ts",
+"forms/f1040/2025/domains/income/business/f1099k/f1099k-copy-reconciliation.test.ts",
 "one issued 1099-K reference cannot replay changed income without an account",
 "passed"
 ],
 [
-"forms/f1040/2025/domains/income/other/f1099k/f1099k-copy-reconciliation.test.ts",
+"forms/f1040/2025/domains/income/business/f1099k/f1099k-copy-reconciliation.test.ts",
 "one issued 1099-K reference cannot replay under a changed processor and account",
 "passed"
 ],
 [
-"forms/f1040/2025/domains/income/other/f1099k/f1099k-recipient-review.test.ts",
+"forms/f1040/2025/domains/income/business/f1099k/f1099k-recipient-review.test.ts",
 "1099-K reviewed name must belong to the owner identified by its TIN",
 "passed"
 ],
 [
-"forms/f1040/2025/domains/income/other/f1099m/f1099m-owner-reconciliation.test.ts",
+"forms/f1040/2025/domains/income/business/f1099m/f1099m-owner-reconciliation.test.ts",
 "joint spouse 1099-MISC belongs on MFJ return only",
 "passed"
 ],
 [
-"forms/f1040/2025/domains/income/other/f1099m/f1099m-owner-reconciliation.test.ts",
+"forms/f1040/2025/domains/income/business/f1099m/f1099m-owner-reconciliation.test.ts",
 "positive 1099-MISC rent owner is checked by native and PDF Form 1040",
 "passed"
 ],
 [
-"forms/f1040/2025/domains/income/other/f1099m/f1099m-owner-reconciliation.test.ts",
+"forms/f1040/2025/domains/income/business/f1099m/f1099m-owner-reconciliation.test.ts",
 "positive 1099-MISC withholding needs a nonblank payer name in both Form 1040 exports",
 "passed"
 ],
 [
-"forms/f1040/2025/domains/income/other/f1099m/f1099m-owner-reconciliation.test.ts",
+"forms/f1040/2025/domains/income/business/f1099m/f1099m-owner-reconciliation.test.ts",
 "positive other-income and federal-withholding copies also need filed owner",
 "passed"
 ],
 [
-"forms/f1040/2025/domains/income/other/f1099m/f1099m_409a_source_replay.test.ts",
+"forms/f1040/2025/domains/income/business/f1099m/f1099m_409a_source_replay.test.ts",
 "1099-MISC box 15 1099nec source and review drift rejects both exports",
 "passed"
 ],
 [
-"forms/f1040/2025/domains/income/other/f1099m/f1099m_409a_source_replay.test.ts",
+"forms/f1040/2025/domains/income/business/f1099m/f1099m_409a_source_replay.test.ts",
 "1099-MISC box 15 cannot repeat a W-2 code Z tax base",
 "passed"
 ],
 [
-"forms/f1040/2025/domains/income/other/f1099m/f1099m_409a_source_replay.test.ts",
+"forms/f1040/2025/domains/income/business/f1099m/f1099m_409a_source_replay.test.ts",
 "1099-MISC box 15 taxes reviewed box 3 income once through 1040, native and PDF",
 "passed"
 ],
 [
-"forms/f1040/2025/domains/income/other/f1099m/f1099m_409a_source_replay.test.ts",
+"forms/f1040/2025/domains/income/business/f1099m/f1099m_409a_source_replay.test.ts",
 "1099-MISC box 15 uses identified 1099nec income once in native and PDF",
 "failed:research-docs"
 ],
 [
-"forms/f1040/2025/domains/income/other/f1099m/f1099m_409a_source_replay.test.ts",
+"forms/f1040/2025/domains/income/business/f1099m/f1099m_409a_source_replay.test.ts",
 "1099-MISC box 15 uses identified w2 income once in native and PDF",
 "failed:research-docs"
 ],
 [
-"forms/f1040/2025/domains/income/other/f1099m/f1099m_409a_source_replay.test.ts",
+"forms/f1040/2025/domains/income/business/f1099m/f1099m_409a_source_replay.test.ts",
 "1099-MISC box 15 w2 source and review drift rejects both exports",
 "passed"
 ],
 [
-"forms/f1040/2025/domains/income/other/f1099m/f1099m_409a_source_replay.test.ts",
+"forms/f1040/2025/domains/income/business/f1099m/f1099m_409a_source_replay.test.ts",
 "409A direct Schedule 1 deposit or changed interest rejects in both exports",
 "passed"
 ],
 [
-"forms/f1040/2025/domains/income/other/f1099m/f1099m_409a_source_replay.test.ts",
+"forms/f1040/2025/domains/income/business/f1099m/f1099m_409a_source_replay.test.ts",
 "two 1099-MISC box 15 rows cannot exceed the same 1099-NEC inclusion",
 "passed"
 ],
 [
-"forms/f1040/2025/domains/income/other/f1099m/f1099m_box8_substitute_sources.test.ts",
+"forms/f1040/2025/domains/income/business/f1099m/f1099m_box8_substitute_sources.test.ts",
 "1099-MISC box 8 sources reconcile one to one with Schedule 1",
 "passed"
 ],
 [
-"forms/f1040/2025/domains/income/other/f1099m/f1099m_box8_substitute_sources.test.ts",
+"forms/f1040/2025/domains/income/business/f1099m/f1099m_box8_substitute_sources.test.ts",
 "altered 1099-MISC box 8 copy or statement row rejects native and PDF exports",
 "passed"
 ],
 [
-"forms/f1040/2025/domains/income/other/f1099m/f1099m_box8_substitute_sources.test.ts",
+"forms/f1040/2025/domains/income/business/f1099m/f1099m_box8_substitute_sources.test.ts",
 "box 8, RTAA, and taxable grant rows combine once in a full return",
 "failed:research-docs"
 ],
 [
-"forms/f1040/2025/domains/income/other/f1099m/f1099m_box8_substitute_sources.test.ts",
+"forms/f1040/2025/domains/income/business/f1099m/f1099m_box8_substitute_sources.test.ts",
 "two 1099-MISC box 8 copies retain payer rows through 1040, native statement, and PDF",
 "failed:research-docs"
 ],
 [
-"forms/f1040/2025/domains/income/other/f1099n/f1099nec-owner-reconciliation.test.ts",
+"forms/f1040/2025/domains/income/business/f1099nec/f1099nec-owner-reconciliation.test.ts",
 "1099-NEC box 4 needs an identified issued payer in both Form 1040 exports",
 "passed"
 ],
 [
-"forms/f1040/2025/domains/income/other/f1099n/f1099nec-owner-reconciliation.test.ts",
+"forms/f1040/2025/domains/income/business/f1099nec/f1099nec-owner-reconciliation.test.ts",
 "ambiguous repeated 1099-NEC copies reject full native and PDF export",
 "passed"
 ],
 [
-"forms/f1040/2025/domains/income/other/f1099n/f1099nec-owner-reconciliation.test.ts",
+"forms/f1040/2025/domains/income/business/f1099nec/f1099nec-owner-reconciliation.test.ts",
 "joint spouse 1099-NEC belongs on MFJ return only",
 "passed"
 ],
 [
-"forms/f1040/2025/domains/income/other/f1099n/f1099nec-owner-reconciliation.test.ts",
+"forms/f1040/2025/domains/income/business/f1099nec/f1099nec-owner-reconciliation.test.ts",
 "one identified 1099-NEC issued copy cannot replay changed income at native or PDF export",
 "passed"
 ],
 [
-"forms/f1040/2025/domains/income/other/f1099n/f1099nec-owner-reconciliation.test.ts",
+"forms/f1040/2025/domains/income/business/f1099nec/f1099nec-owner-reconciliation.test.ts",
 "positive 1099-NEC income owner is checked by native and PDF Form 1040",
 "passed"
 ],
 [
-"forms/f1040/2025/domains/income/other/f1099n/f1099nec-owner-reconciliation.test.ts",
+"forms/f1040/2025/domains/income/business/f1099nec/f1099nec-owner-reconciliation.test.ts",
 "positive 1099-NEC withholding cannot belong to another recipient",
 "passed"
 ],
 [
-"forms/f1040/2025/domains/income/other/f1099o/f1099oid-owner-reconciliation.test.ts",
+"forms/f1040/2025/domains/income/investments/f1099oid/f1099oid-owner-reconciliation.test.ts",
 "joint spouse 1099-OID belongs on MFJ return only",
 "passed"
 ],
 [
-"forms/f1040/2025/domains/income/other/f1099o/f1099oid-owner-reconciliation.test.ts",
+"forms/f1040/2025/domains/income/investments/f1099oid/f1099oid-owner-reconciliation.test.ts",
 "positive 1099-OID needs a nonblank payer name in both Form 1040 exports",
 "passed"
 ],
 [
-"forms/f1040/2025/domains/income/other/f1099o/f1099oid-owner-reconciliation.test.ts",
+"forms/f1040/2025/domains/income/investments/f1099oid/f1099oid-owner-reconciliation.test.ts",
 "positive 1099-OID owner is checked by native and PDF Form 1040",
 "passed"
 ],
 [
-"forms/f1040/2025/domains/income/other/f1099o/f1099oid-owner-reconciliation.test.ts",
+"forms/f1040/2025/domains/income/investments/f1099oid/f1099oid-owner-reconciliation.test.ts",
 "tax-exempt OID still requires owner at export",
 "passed"
 ],
 [
-"forms/f1040/2025/domains/income/other/f1099p/f1099patr-owner-reconciliation.test.ts",
+"forms/f1040/2025/domains/income/business/f1099patr/f1099patr-owner-reconciliation.test.ts",
 "invalid specified-cooperative deduction rejects native and PDF export",
 "passed"
 ],
 [
-"forms/f1040/2025/domains/income/other/f1099p/f1099patr-owner-reconciliation.test.ts",
+"forms/f1040/2025/domains/income/business/f1099patr/f1099patr-owner-reconciliation.test.ts",
 "joint spouse 1099-PATR belongs on MFJ return only",
 "passed"
 ],
 [
-"forms/f1040/2025/domains/income/other/f1099p/f1099patr-owner-reconciliation.test.ts",
+"forms/f1040/2025/domains/income/business/f1099patr/f1099patr-owner-reconciliation.test.ts",
 "one 1099-PATR issued reference without an account cannot be counted twice",
 "passed"
 ],
 [
-"forms/f1040/2025/domains/income/other/f1099p/f1099patr-owner-reconciliation.test.ts",
+"forms/f1040/2025/domains/income/business/f1099patr/f1099patr-owner-reconciliation.test.ts",
 "positive 1099-PATR distribution owner is checked by native and PDF Form 1040",
 "passed"
 ],
 [
-"forms/f1040/2025/domains/income/other/f1099p/f1099patr-owner-reconciliation.test.ts",
+"forms/f1040/2025/domains/income/business/f1099patr/f1099patr-owner-reconciliation.test.ts",
 "positive 1099-PATR withholding needs an identified payer in both Form 1040 exports",
 "passed"
 ],
 [
-"forms/f1040/2025/domains/income/other/f1099p/f1099patr-owner-reconciliation.test.ts",
+"forms/f1040/2025/domains/income/business/f1099patr/f1099patr-owner-reconciliation.test.ts",
 "positive PATR withholding and cooperative deduction need a filed owner",
 "passed"
 ],
@@ -14172,27 +14172,27 @@
 "passed"
 ],
 [
-"forms/f1040/2025/domains/payments/withholding/f1099n/f1099nec-withholding-owner.test.ts",
+"forms/f1040/2025/domains/payments/withholding/f1099nec/f1099nec-withholding-owner.test.ts",
 "1099-NEC backup withholding owner is replayed by both exporters",
 "passed"
 ],
 [
-"forms/f1040/2025/domains/payments/withholding/f1099p/f1099patr-withholding-owner.test.ts",
+"forms/f1040/2025/domains/payments/withholding/f1099patr/f1099patr-withholding-owner.test.ts",
 "1099-PATR box 4 recipient may be taxpayer or joint spouse",
 "passed"
 ],
 [
-"forms/f1040/2025/domains/payments/withholding/f1099p/f1099patr-withholding-owner.test.ts",
+"forms/f1040/2025/domains/payments/withholding/f1099patr/f1099patr-withholding-owner.test.ts",
 "1099-PATR box 4 without a filed recipient rejects in both exports",
 "passed"
 ],
 [
-"forms/f1040/2025/domains/payments/withholding/f1099p/f1099patr-withholding-owner.test.ts",
+"forms/f1040/2025/domains/payments/withholding/f1099patr/f1099patr-withholding-owner.test.ts",
 "1099-PATR repeated issued account rejects direct native and PDF export",
 "passed"
 ],
 [
-"forms/f1040/2025/domains/payments/withholding/f1099p/f1099patr-withholding-owner.test.ts",
+"forms/f1040/2025/domains/payments/withholding/f1099patr/f1099patr-withholding-owner.test.ts",
 "ambiguous cooperative withholding copies reject in native and PDF export",
 "passed"
 ],
@@ -14252,12 +14252,12 @@
 "passed"
 ],
 [
-"forms/f1040/2025/domains/payments/withholding/trust-k1/trust_k1_backup_withholding.test.ts",
+"forms/f1040/2025/domains/payments/withholding/k1_trust/trust_k1_backup_withholding.test.ts",
 "joint return graph combines both owners' trust codeB withholding with W-2G and rejects changed source totals",
 "passed"
 ],
 [
-"forms/f1040/2025/domains/payments/withholding/trust-k1/trust_k1_backup_withholding.test.ts",
+"forms/f1040/2025/domains/payments/withholding/k1_trust/trust_k1_backup_withholding.test.ts",
 "trust K-1 box 13 code B stays retained but cannot silently leave native or PDF export",
 "passed"
 ],
@@ -18962,62 +18962,62 @@
 "ignored"
 ],
 [
-"forms/f1040/2025/mef/forms/credits/individual/schedule_r.test.ts",
+"forms/f1040/2025/mef/forms/credits/elderly-disabled/schedule_r.test.ts",
 "Schedule R MFS age route rejects missing all-year separation evidence",
 "passed"
 ],
 [
-"forms/f1040/2025/mef/forms/credits/individual/schedule_r.test.ts",
+"forms/f1040/2025/mef/forms/credits/elderly-disabled/schedule_r.test.ts",
 "Schedule R age-only status boxes retain their distinct bases and thresholds",
 "passed"
 ],
 [
-"forms/f1040/2025/mef/forms/credits/individual/schedule_r.test.ts",
+"forms/f1040/2025/mef/forms/credits/elderly-disabled/schedule_r.test.ts",
 "Schedule R disability boxes 2/4/5/6/9 use their distinct line 11 amounts",
 "passed"
 ],
 [
-"forms/f1040/2025/mef/forms/credits/individual/schedule_r.test.ts",
+"forms/f1040/2025/mef/forms/credits/elderly-disabled/schedule_r.test.ts",
 "Schedule R disability path requires physician and taxable-income evidence",
 "passed"
 ],
 [
-"forms/f1040/2025/mef/forms/credits/individual/schedule_r.test.ts",
+"forms/f1040/2025/mef/forms/credits/elderly-disabled/schedule_r.test.ts",
 "Schedule R emits the bounded 65-plus single-taxpayer form",
 "passed"
 ],
 [
-"forms/f1040/2025/mef/forms/credits/individual/schedule_r.test.ts",
+"forms/f1040/2025/mef/forms/credits/elderly-disabled/schedule_r.test.ts",
 "Schedule R leaves a zero-credit age-65 source unfiled",
 "passed"
 ],
 [
-"forms/f1040/2025/mef/forms/credits/individual/schedule_r.test.ts",
+"forms/f1040/2025/mef/forms/credits/elderly-disabled/schedule_r.test.ts",
 "Schedule R line 13b needs qualifying nontaxable pension classification",
 "passed"
 ],
 [
-"forms/f1040/2025/mef/forms/credits/individual/schedule_r.test.ts",
+"forms/f1040/2025/mef/forms/credits/elderly-disabled/schedule_r.test.ts",
 "Schedule R rejects missing age evidence, wrong AGI, and a tax-limited credit",
 "passed"
 ],
 [
-"forms/f1040/2025/mef/forms/credits/individual/schedule_r.test.ts",
+"forms/f1040/2025/mef/forms/credits/elderly-disabled/schedule_r.test.ts",
 "Schedule R ties nontaxable Social Security to filed 1040 lines 6a and 6b",
 "passed"
 ],
 [
-"forms/f1040/2025/mef/forms/credits/individual/schedule_r.test.ts",
+"forms/f1040/2025/mef/forms/credits/elderly-disabled/schedule_r.test.ts",
 "XSD: Schedule R age-only joint and all-year-apart MFS boxes",
 "ignored"
 ],
 [
-"forms/f1040/2025/mef/forms/credits/individual/schedule_r.test.ts",
+"forms/f1040/2025/mef/forms/credits/elderly-disabled/schedule_r.test.ts",
 "XSD: Schedule R box 6 disability and prior-year statement",
 "ignored"
 ],
 [
-"forms/f1040/2025/mef/forms/credits/individual/schedule_r.test.ts",
+"forms/f1040/2025/mef/forms/credits/elderly-disabled/schedule_r.test.ts",
 "XSD: Schedule R sourced single age-65 credit",
 "ignored"
 ],
@@ -20922,52 +20922,52 @@
 "passed"
 ],
 [
-"forms/f1040/2025/mef/forms/general/return-assembly/f9000.test.ts",
+"forms/f1040/2025/mef/forms/general/filing/f9000.test.ts",
 "Form 9000 request reaches native return and one filled-PDF page",
 "passed"
 ],
 [
-"forms/f1040/2025/mef/forms/general/return-assembly/f9000.test.ts",
+"forms/f1040/2025/mef/forms/general/filing/f9000.test.ts",
 "Form 9000 supports distinct joint owners and rejects invalid requests",
 "passed"
 ],
 [
-"forms/f1040/2025/mef/forms/general/return-assembly/f9000.test.ts",
+"forms/f1040/2025/mef/forms/general/filing/f9000.test.ts",
 "joint Form 9000 fixture retains two native and two printable owner copies",
 "passed"
 ],
 [
-"forms/f1040/2025/mef/forms/general/return-assembly/joint_occupancy_statement.test.ts",
+"forms/f1040/2025/mef/forms/general/filing/joint_occupancy_statement.test.ts",
 "joint occupancy fuel-cell cost follows the IRS allocation example",
 "passed"
 ],
 [
-"forms/f1040/2025/mef/forms/general/return-assembly/joint_occupancy_statement.test.ts",
+"forms/f1040/2025/mef/forms/general/filing/joint_occupancy_statement.test.ts",
 "joint occupancy statement allocates a binding property cap",
 "passed"
 ],
 [
-"forms/f1040/2025/mef/forms/general/return-assembly/joint_occupancy_statement.test.ts",
+"forms/f1040/2025/mef/forms/general/filing/joint_occupancy_statement.test.ts",
 "joint occupancy statement emits schema-order groups and a decimal share",
 "passed"
 ],
 [
-"forms/f1040/2025/mef/forms/general/return-assembly/joint_occupancy_statement.test.ts",
+"forms/f1040/2025/mef/forms/general/filing/joint_occupancy_statement.test.ts",
 "joint occupancy statement rejects a property cap above the IRS limit",
 "passed"
 ],
 [
-"forms/f1040/2025/mef/forms/general/return-assembly/joint_occupancy_statement.test.ts",
+"forms/f1040/2025/mef/forms/general/filing/joint_occupancy_statement.test.ts",
 "joint occupancy statement rejects a share that rounds to one",
 "passed"
 ],
 [
-"forms/f1040/2025/mef/forms/general/return-assembly/joint_occupancy_statement.test.ts",
+"forms/f1040/2025/mef/forms/general/filing/joint_occupancy_statement.test.ts",
 "joint occupancy statement rejects an impossible allocation",
 "passed"
 ],
 [
-"forms/f1040/2025/mef/forms/general/return-assembly/joint_occupancy_statement.test.ts",
+"forms/f1040/2025/mef/forms/general/filing/joint_occupancy_statement.test.ts",
 "joint occupancy statement rejects fractional fuel-cell increments",
 "passed"
 ],
@@ -21357,17 +21357,17 @@
 "passed"
 ],
 [
-"forms/f1040/2025/mef/forms/general/return-assembly/schedule_lep.test.ts",
+"forms/f1040/2025/mef/forms/general/filing/schedule_lep.test.ts",
 "Schedule LEP cancellation requires a confirmed request and prior election record",
 "passed"
 ],
 [
-"forms/f1040/2025/mef/forms/general/return-assembly/schedule_lep.test.ts",
+"forms/f1040/2025/mef/forms/general/filing/schedule_lep.test.ts",
 "Schedule LEP emits separate taxpayer and spouse requests in TY2025 schema order",
 "passed"
 ],
 [
-"forms/f1040/2025/mef/forms/general/return-assembly/schedule_lep.test.ts",
+"forms/f1040/2025/mef/forms/general/filing/schedule_lep.test.ts",
 "Schedule LEP rejects duplicate persons, invalid codes, and spouse on a nonjoint return",
 "passed"
 ],
@@ -21877,7 +21877,7 @@
 "ignored"
 ],
 [
-"forms/f1040/2025/mef/forms/income/business/schedule1/schedule1_basis_loss.test.ts",
+"forms/f1040/2025/mef/forms/general/return-assembly/schedule1/schedule1_basis_loss.test.ts",
 "Schedule 1 native line 5 prints the Form 7203-adjusted Schedule E loss",
 "passed"
 ],
@@ -22797,127 +22797,127 @@
 "ignored"
 ],
 [
-"forms/f1040/2025/mef/forms/income/other/schedule1/schedule1_other_income_statement.test.ts",
+"forms/f1040/2025/mef/forms/general/return-assembly/schedule1/schedule1_other_income_statement.test.ts",
 "TY2025 Form 1098 taxable mortgage-interest recovery has a typed line 8z row",
 "passed"
 ],
 [
-"forms/f1040/2025/mef/forms/income/other/schedule1/schedule1_other_income_statement.test.ts",
+"forms/f1040/2025/mef/forms/general/return-assembly/schedule1/schedule1_other_income_statement.test.ts",
 "TY2025 Form 8621 income types remain separate on Schedule 1 line 8z",
 "passed"
 ],
 [
-"forms/f1040/2025/mef/forms/income/other/schedule1/schedule1_other_income_statement.test.ts",
+"forms/f1040/2025/mef/forms/general/return-assembly/schedule1/schedule1_other_income_statement.test.ts",
 "TY2025 S corporation K-1 tax-benefit recovery has a typed line 8z row",
 "passed"
 ],
 [
-"forms/f1040/2025/mef/forms/income/other/schedule1/schedule1_other_income_statement.test.ts",
+"forms/f1040/2025/mef/forms/general/return-assembly/schedule1/schedule1_other_income_statement.test.ts",
 "TY2025 Schedule 1 gives each 1099-MISC box 8 payer a statement row",
 "passed"
 ],
 [
-"forms/f1040/2025/mef/forms/income/other/schedule1/schedule1_other_income_statement.test.ts",
+"forms/f1040/2025/mef/forms/general/return-assembly/schedule1/schedule1_other_income_statement.test.ts",
 "TY2025 Schedule 1 line 8z links its type statement",
 "passed"
 ],
 [
-"forms/f1040/2025/mef/forms/income/other/schedule1/schedule1_other_income_statement.test.ts",
+"forms/f1040/2025/mef/forms/general/return-assembly/schedule1/schedule1_other_income_statement.test.ts",
 "TY2025 Schedule 1 line 8z rejects missing type and link",
 "passed"
 ],
 [
-"forms/f1040/2025/mef/forms/income/other/schedule1/schedule1_other_income_statement.test.ts",
+"forms/f1040/2025/mef/forms/general/return-assembly/schedule1/schedule1_other_income_statement.test.ts",
 "TY2025 Schedule 1 rejects bare disallowed business interest income",
 "passed"
 ],
 [
-"forms/f1040/2025/mef/forms/income/other/schedule1/schedule1_other_income_statement.test.ts",
+"forms/f1040/2025/mef/forms/general/return-assembly/schedule1/schedule1_other_income_statement.test.ts",
 "TY2025 nonbusiness Form 1099-NEC uses line 8j and rejects the old 8z scalar",
 "passed"
 ],
 [
-"forms/f1040/2025/mef/forms/income/other/w2.test.ts",
+"forms/f1040/2025/mef/forms/income/wages/w2.test.ts",
 "W-2 MeF binds an explicit employee SSN to the return owner",
 "passed"
 ],
 [
-"forms/f1040/2025/mef/forms/income/other/w2.test.ts",
+"forms/f1040/2025/mef/forms/income/wages/w2.test.ts",
 "W-2 MeF retains RRTA box 14 compensation and Additional Medicare Tax",
 "passed"
 ],
 [
-"forms/f1040/2025/mef/forms/income/other/w2.test.ts",
+"forms/f1040/2025/mef/forms/income/wages/w2.test.ts",
 "W2 native business-name formatting preserves legal source spelling, EIN and name control",
 "passed"
 ],
 [
-"forms/f1040/2025/mef/forms/income/other/w2.test.ts",
+"forms/f1040/2025/mef/forms/income/wages/w2.test.ts",
 "reviewed nonstandard W-2 emits code N only for its identified copy",
 "passed"
 ],
 [
-"forms/f1040/2025/mef/forms/income/other/w2.test.ts",
+"forms/f1040/2025/mef/forms/income/wages/w2.test.ts",
 "w2 builds one IRSW2 document per wage statement",
 "passed"
 ],
 [
-"forms/f1040/2025/mef/forms/income/other/w2.test.ts",
+"forms/f1040/2025/mef/forms/income/wages/w2.test.ts",
 "w2 emits required identity, address, wage, and withholding fields in XSD order",
 "passed"
 ],
 [
-"forms/f1040/2025/mef/forms/income/other/w2.test.ts",
+"forms/f1040/2025/mef/forms/income/wages/w2.test.ts",
 "w2 refuses a finalized document with missing employer filing data",
 "passed"
 ],
 [
-"forms/f1040/2025/mef/forms/income/other/w2.test.ts",
+"forms/f1040/2025/mef/forms/income/wages/w2.test.ts",
 "w2 refuses a finalized document without filer identity",
 "passed"
 ],
 [
-"forms/f1040/2025/mef/forms/income/other/w2.test.ts",
+"forms/f1040/2025/mef/forms/income/wages/w2.test.ts",
 "w2 refuses an Applied For employer EIN that IRSW2 cannot export",
 "passed"
 ],
 [
-"forms/f1040/2025/mef/forms/income/other/w2g.test.ts",
+"forms/f1040/2025/mef/forms/income/gambling/w2g.test.ts",
 "non-withheld winnings and withholding claims need a TY2025 source year",
 "passed"
 ],
 [
-"forms/f1040/2025/mef/forms/income/other/w2g.test.ts",
+"forms/f1040/2025/mef/forms/income/gambling/w2g.test.ts",
 "nonstandard W-2G code N requires a reviewed matching payer copy",
 "passed"
 ],
 [
-"forms/f1040/2025/mef/forms/income/other/w2g.test.ts",
+"forms/f1040/2025/mef/forms/income/gambling/w2g.test.ts",
 "positive non-withheld W-2G belongs to the taxpayer or joint spouse",
 "passed"
 ],
 [
-"forms/f1040/2025/mef/forms/income/other/w2g.test.ts",
+"forms/f1040/2025/mef/forms/income/gambling/w2g.test.ts",
 "withheld W-2G accepts a matching joint-filing spouse but not a separate-filing spouse",
 "passed"
 ],
 [
-"forms/f1040/2025/mef/forms/income/other/w2g.test.ts",
+"forms/f1040/2025/mef/forms/income/gambling/w2g.test.ts",
 "withheld W-2G cannot emit the same payer-issued copy twice",
 "passed"
 ],
 [
-"forms/f1040/2025/mef/forms/income/other/w2g.test.ts",
+"forms/f1040/2025/mef/forms/income/gambling/w2g.test.ts",
 "withheld W-2G emits one native document in TY2025 order",
 "passed"
 ],
 [
-"forms/f1040/2025/mef/forms/income/other/w2g.test.ts",
+"forms/f1040/2025/mef/forms/income/gambling/w2g.test.ts",
 "withheld W-2G rejects incomplete issued form and winner mismatch",
 "passed"
 ],
 [
-"forms/f1040/2025/mef/forms/income/other/w2g.test.ts",
+"forms/f1040/2025/mef/forms/income/gambling/w2g.test.ts",
 "withheld W-2G requires its exact submitted payer-issued PDF",
 "passed"
 ],
@@ -28382,22 +28382,22 @@
 "passed"
 ],
 [
-"forms/f1040/2025/pdf/forms/credits/individual/schedule_r.test.ts",
+"forms/f1040/2025/pdf/forms/credits/elderly-disabled/schedule_r.test.ts",
 "Schedule R PDF maps the sourced single age-65 credit to 2025 widgets",
 "passed"
 ],
 [
-"forms/f1040/2025/pdf/forms/credits/individual/schedule_r.test.ts",
+"forms/f1040/2025/pdf/forms/credits/elderly-disabled/schedule_r.test.ts",
 "Schedule R PDF prints box 6, line 11, and prior-year disability statement",
 "passed"
 ],
 [
-"forms/f1040/2025/pdf/forms/credits/individual/schedule_r.test.ts",
+"forms/f1040/2025/pdf/forms/credits/elderly-disabled/schedule_r.test.ts",
 "Schedule R PDF prints the joint-spouse and MFS age-only boxes",
 "passed"
 ],
 [
-"forms/f1040/2025/pdf/forms/credits/individual/schedule_r.test.ts",
+"forms/f1040/2025/pdf/forms/credits/elderly-disabled/schedule_r.test.ts",
 "Schedule R PDF rejects a credit that differs from the finalized return",
 "passed"
 ],
@@ -29432,7 +29432,7 @@
 "passed"
 ],
 [
-"forms/f1040/2025/pdf/forms/income/business/schedule1/schedule1_basis_loss.test.ts",
+"forms/f1040/2025/pdf/forms/general/return-assembly/schedule1/schedule1_basis_loss.test.ts",
 "Schedule 1 PDF maps the Form 7203-adjusted loss to printed line 5",
 "passed"
 ],
@@ -29877,37 +29877,37 @@
 "passed"
 ],
 [
-"forms/f1040/2025/pdf/forms/income/other/schedule1/schedule1_other_income_statement.test.ts",
+"forms/f1040/2025/pdf/forms/general/return-assembly/schedule1/schedule1_other_income_statement.test.ts",
 "Schedule 1 PDF appends a source-reconciled line 8z continuation",
 "passed"
 ],
 [
-"forms/f1040/2025/pdf/forms/income/other/schedule1/schedule1_other_income_statement.test.ts",
+"forms/f1040/2025/pdf/forms/general/return-assembly/schedule1/schedule1_other_income_statement.test.ts",
 "Schedule 1 PDF carries one very long income type across pages",
 "passed"
 ],
 [
-"forms/f1040/2025/pdf/forms/income/other/schedule1/schedule1_other_income_statement.test.ts",
+"forms/f1040/2025/pdf/forms/general/return-assembly/schedule1/schedule1_other_income_statement.test.ts",
 "Schedule 1 PDF refuses a line 8z continuation with changed amount, label, or source",
 "passed"
 ],
 [
-"forms/f1040/2025/pdf/forms/income/other/w2g.test.ts",
+"forms/f1040/2025/pdf/forms/income/gambling/w2g.test.ts",
 "W-2G PDF creates one copy per distinct withheld payer form",
 "passed"
 ],
 [
-"forms/f1040/2025/pdf/forms/income/other/w2g.test.ts",
+"forms/f1040/2025/pdf/forms/income/gambling/w2g.test.ts",
 "W-2G PDF omits the payer copy when no tax was withheld",
 "passed"
 ],
 [
-"forms/f1040/2025/pdf/forms/income/other/w2g.test.ts",
+"forms/f1040/2025/pdf/forms/income/gambling/w2g.test.ts",
 "W-2G PDF prints one recipient copy from each withheld source",
 "passed"
 ],
 [
-"forms/f1040/2025/pdf/forms/income/other/w2g.test.ts",
+"forms/f1040/2025/pdf/forms/income/gambling/w2g.test.ts",
 "W-2G PDF requires the native source facts and reconciled withholding",
 "passed"
 ],
@@ -41197,17 +41197,17 @@
 "failed:research-docs"
 ],
 [
-"forms/f1040/e2e/income/business/form1099n/form1099nec_schedule_c.test.ts",
+"forms/f1040/e2e/income/business/form1099nec/form1099nec_schedule_c.test.ts",
 "1099-NEC and 1099-MISC receipts cannot exceed one business's gross receipts",
 "passed"
 ],
 [
-"forms/f1040/e2e/income/business/form1099n/form1099nec_schedule_c.test.ts",
+"forms/f1040/e2e/income/business/form1099nec/form1099nec_schedule_c.test.ts",
 "1099-NEC export rejects a recipient who differs from the business proprietor",
 "passed"
 ],
 [
-"forms/f1040/e2e/income/business/form1099n/form1099nec_schedule_c.test.ts",
+"forms/f1040/e2e/income/business/form1099nec/form1099nec_schedule_c.test.ts",
 "two 1099-NEC payers reconcile to a reviewed Schedule C and Form 1040",
 "failed:research-docs"
 ],
@@ -41412,12 +41412,12 @@
 "failed:research-docs"
 ],
 [
-"forms/f1040/e2e/income/other/form1099n/form1099nec_nonbusiness.test.ts",
+"forms/f1040/e2e/income/other/form1099nec/form1099nec_nonbusiness.test.ts",
 "1099-NEC nonbusiness recipient must belong to the filer",
 "passed"
 ],
 [
-"forms/f1040/e2e/income/other/form1099n/form1099nec_nonbusiness.test.ts",
+"forms/f1040/e2e/income/other/form1099nec/form1099nec_nonbusiness.test.ts",
 "two 1099-NEC nonbusiness payments reach Schedule 1 line 8j and Form 1040",
 "failed:research-docs"
 ],
@@ -72022,12 +72022,12 @@
 "passed"
 ],
 [
-"forms/f1040/schedule_b_filing.test.ts",
+"forms/f1040/nodes/intermediate/aggregation/income/investments/schedule_b/filing.test.ts",
 "Schedule B special filing triggers apply below the income thresholds",
 "passed"
 ],
 [
-"forms/f1040/schedule_b_filing.test.ts",
+"forms/f1040/nodes/intermediate/aggregation/income/investments/schedule_b/filing.test.ts",
 "Schedule B uses separate strict $1,500 income thresholds",
 "passed"
 ],

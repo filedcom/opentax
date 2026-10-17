@@ -1,7 +1,7 @@
 import * as fs from "node:fs/promises";
 import * as sys from "../../../../../../scripts/support/sys.ts";
 import { PDFDocument, StandardFonts } from "pdf-lib";
-import { w2gPdf } from "../../../pdf/forms/income/other/w2g.ts";
+import { w2gPdf } from "../../../pdf/forms/income/gambling/w2g.ts";
 
 /** Constructed source on the real recipient template; not payer authentication. */
 export async function w2gPayerCopyFixture(

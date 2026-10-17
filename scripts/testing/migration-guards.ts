@@ -28,7 +28,7 @@ const reviewedTestLines = new Map<string, readonly number[]>([
   ]],
   ["forms/f1040/2025/domains/income/other/schedule1_rtaa_source.test.ts", [115]],
   [
-    "forms/f1040/2025/domains/income/other/f1099m/f1099m_box8_substitute_sources.test.ts",
+    "forms/f1040/2025/domains/income/business/f1099m/f1099m_box8_substitute_sources.test.ts",
     [213, 281],
   ],
   [
@@ -60,8 +60,8 @@ const reviewedTestLines = new Map<string, readonly number[]>([
   ["forms/f1040/e2e/income/other/form1099m/form1099misc_box3_business.test.ts", [38]],
   ["forms/f1040/e2e/income/other/form1099m/form1099misc_box3_other.test.ts", [35]],
   ["forms/f1040/e2e/income/business/form1099m/form1099misc_schedule_c.test.ts", [37]],
-  ["forms/f1040/e2e/income/other/form1099n/form1099nec_nonbusiness.test.ts", [36]],
-  ["forms/f1040/e2e/income/business/form1099n/form1099nec_schedule_c.test.ts", [36]],
+  ["forms/f1040/e2e/income/other/form1099nec/form1099nec_nonbusiness.test.ts", [36]],
+  ["forms/f1040/e2e/income/business/form1099nec/form1099nec_schedule_c.test.ts", [36]],
   ["forms/f1040/e2e/income/investments/form8814/form8814_schedule_b.test.ts", [91]],
 ]);
 

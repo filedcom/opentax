@@ -21,7 +21,7 @@ import { pdfReviewFixtures } from "../../../review-fixtures.ts";
 import { irs1040Pdf } from "../../../forms/general/return-assembly/f1040.ts";
 import { form8911Pdf } from "../../../forms/credits/business/f8911.ts";
 import { form8911ScheduleAPdf } from "../../../forms/credits/business/f8911_schedule_a.ts";
-import { w2gPdf } from "../../../forms/income/other/w2g.ts";
+import { w2gPdf } from "../../../forms/income/gambling/w2g.ts";
 
 const xsd = new URL(
   "../../../../../../../.state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd",

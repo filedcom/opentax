@@ -26,7 +26,7 @@ Income sources, exclusions, and net-income reconciliation.
 | [f8824.ts](f8824.ts) | 1 files |
 | [f8824.xsd.test.ts](f8824.xsd.test.ts) | 1 files |
 | [f8824_gain_statement.ts](f8824_gain_statement.ts) | 1 files |
-| [schedule1](schedule1) | 1 files |
+| [schedule1](../../general/return-assembly/schedule1) | 1 files |
 | [schedule_c.test.ts](schedule_c.test.ts) | 1 files |
 | [schedule_c.ts](schedule_c.ts) | 1 files |
 | [schedule_f.test.ts](schedule_f.test.ts) | 1 files |

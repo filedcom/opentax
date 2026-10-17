@@ -1,5 +1,5 @@
 import type { PdfFieldEntry, PdfFormDescriptor } from "../../../review-support/form-descriptor.ts";
-import { calculateScheduleR, scheduleR } from "../../../../mef/forms/credits/individual/schedule_r.ts";
+import { calculateScheduleR, scheduleR } from "../../../../mef/forms/credits/elderly-disabled/schedule_r.ts";
 
 // Canonical fields inspected on the two-page 2025 IRS Schedule R AcroForm.
 const page1 = "topmostSubform[0].Page1[0]";

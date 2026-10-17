@@ -5,7 +5,7 @@ import { appendScheduleBDividendStatement } from "./schedule_b_dividend_statemen
 import { appendScheduleBSellerFinancedStatement } from "./schedule_b_seller_financed_statement.ts";
 import { appendScheduleBInterestAdjustmentsStatement } from "./schedule_b_interest_adjustments_statement.ts";
 import { appendScheduleBNomineeDividendStatement } from "./schedule_b_nominee_dividend_statement.ts";
-import { scheduleBFilingRequired } from "../../../../../../schedule_b_filing.ts";
+import { scheduleBFilingRequired } from "../../../../../../nodes/intermediate/aggregation/income/investments/schedule_b/filing.ts";
 import {
   appendScheduleBForeignCountriesStatement,
   foreignCountryPrintFields,

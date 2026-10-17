@@ -9,7 +9,7 @@ import { buildPending } from "../../../../mef/execution/pending.ts";
 import { preparedSourceSha256, sha256Hex } from "../../../../return-processing/prepared-source.ts";
 import { inputSchema as w2gInputSchema } from "../../../../../nodes/inputs/income/gambling/w2g/index.ts";
 import { buildPdfBytes } from "../../../builder.ts";
-import { w2gPdf } from "../../../forms/income/other/w2g.ts";
+import { w2gPdf } from "../../../forms/income/gambling/w2g.ts";
 import { pdfReviewFixtures } from "../../../review-fixtures.ts";
 
 test("prepared PDF rechecks W-2G payer-copy content after attachment digests change", async () => {

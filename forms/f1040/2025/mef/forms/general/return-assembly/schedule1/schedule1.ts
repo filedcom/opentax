@@ -16,8 +16,8 @@ import type {
   MefBuildContext,
   MefFormDescriptor,
 } from "../../../../form-descriptor.ts";
-import { schedule1OtherIncomeRows } from "../../../income/other/schedule1/schedule1_other_income_rows.ts";
-import { schedule1ActivityNotForProfitTotal } from "../../../income/other/schedule1/schedule1_nonbusiness_sources.ts";
+import { schedule1OtherIncomeRows } from "./schedule1_other_income_rows.ts";
+import { schedule1ActivityNotForProfitTotal } from "./schedule1_nonbusiness_sources.ts";
 import { inputSchema as trustK1InputSchema } from "../../../../../../nodes/inputs/income/rental-passthrough/k1_trust/index.ts";
 import { assertPersonalPropertyRentalSource } from "../../../../../domains/income/business/personal-property-rental-source.ts";
 import { assertTaxableAlimonySchedule1 } from "../../../../../../nodes/inputs/income/other/alimony_received/index.ts";

@@ -2,7 +2,10 @@ import * as fs from "node:fs/promises";
 import * as sys from "../support/sys.ts";
 /** Structure contract: where tax nodes live, and that every node is registered and reachable. */
 import { dirname, join } from "node:path";
-import { fileURLToPath as fromFileUrl, pathToFileURL as toFileUrl } from "node:url";
+import {
+  fileURLToPath as fromFileUrl,
+  pathToFileURL as toFileUrl,
+} from "node:url";
 import { z } from "zod";
 import { TaxNode } from "../../core/types/tax-node.ts";
 import type { FormDefinition } from "../../core/types/form-definition.ts";
@@ -43,6 +46,9 @@ export type Problem = {
     | "registry-key"
     | "not-in-registry"
     | "unreachable"
+    | "truncated-name"
+    | "projection-placement"
+    | "root-module"
     | "expired-baseline"
     | "stale-baseline";
   readonly path: string;
@@ -55,9 +61,10 @@ export type Placement =
   | { readonly ok: true }
   | { readonly ok: false; readonly expected: string };
 
-const NODE_SOURCE = /\bextends\s+TaxNode\b/;
-// The year's composite input node is wiring, like nodes/config, and stays with its year.
-const YEAR_START = /^forms\/[^/]+\/\d{4}\/return-processing\/start\.ts$/;
+// Only module-level classes are graph nodes; a class declared inside a function
+// is a scoped override for a replay (a substituted aggregator, a generated start).
+const NODE_SOURCE =
+  /^(?:export\s+)?(?:abstract\s+)?class\s+\w+(?:<[^\n]*?>)?\s+extends\s+TaxNode\b/m;
 
 function oneOf<T extends readonly string[]>(
   values: T,
@@ -74,7 +81,6 @@ function expectedPath(form: string): string {
 
 /** Rule (a): nodes are shared per form; a year owns only config and wiring. */
 export function nodePlacement(path: string): Placement {
-  if (YEAR_START.test(path)) return { ok: true };
   const [forms, form, nodes, role, ...rest] = path.split("/");
   const expected = expectedPath(form || "<form>");
   if (forms !== "forms" || !form || nodes !== "nodes" || !oneOf(ROLES, role)) {
@@ -227,6 +233,194 @@ export function unreachableProblems(
   );
 }
 
+/** Form identity, ignoring style: `form1116`, `f1116`, `form_1116` and `F1116` agree. */
+export function formKey(name: string): string {
+  return name.toLowerCase()
+    .replace(/(\.test|\.fixture|\.staged)?\.(ts|md|json)$/, "")
+    .replace(/[-_]/g, "")
+    .replace(/^(form|f)(?=\d)/, "");
+}
+
+/** Where a form's nodes live: its key, the node folder names and their section/group. */
+export type NodeIndex = ReadonlyMap<
+  string,
+  { readonly names: ReadonlySet<string>; readonly places: ReadonlySet<string> }
+>;
+
+const NODE_DIR = new RegExp(
+  `^forms/([^/]+)/nodes/(?:inputs|outputs|intermediate/(?:${
+    INTERMEDIATE_KINDS.join("|")
+  }))/(${SECTIONS.join("|")})/([^/]+)/([^/]+)/`,
+);
+// Roles that mirror a form outside the node tree. Domains and e2e are grouped
+// by tax concern, so the same source can rightly appear in two sections there.
+const MIRROR = new RegExp(
+  `^forms/([^/]+)/(?:\\d{4}/(domains|mef/forms|pdf/forms)|(e2e|validation/rules))/(${
+    SECTIONS.join("|")
+  })/([^/]+)/([^/]+)(/.*)?$`,
+);
+
+export function nodeIndex(paths: readonly string[]): NodeIndex {
+  const index = new Map<string, { names: Set<string>; places: Set<string> }>();
+  for (const path of paths) {
+    const match = NODE_DIR.exec(path);
+    if (!match) continue;
+    const [, form, section, group, name] = match;
+    const key = `${form}:${formKey(name)}`;
+    const entry = index.get(key) ?? { names: new Set(), places: new Set() };
+    entry.names.add(name);
+    entry.places.add(`${section}/${group}`);
+    index.set(key, entry);
+  }
+  return index;
+}
+
+type Mirror = {
+  readonly form: string;
+  readonly role: string;
+  readonly section: string;
+  readonly group: string;
+  readonly leaf: string;
+  readonly path: string;
+};
+
+function mirrors(paths: readonly string[]): Mirror[] {
+  const seen = new Map<string, Mirror>();
+  for (const path of paths) {
+    const match = MIRROR.exec(path);
+    if (!match) continue;
+    const [, form, yearRole, formRole, section, group, leaf, rest] = match;
+    const name = rest === undefined
+      ? leaf.replace(/(\.test|\.fixture|\.staged)?\.(ts|md|json)$/, "")
+      : leaf;
+    const at = `${
+      path.slice(0, path.length - leaf.length - (rest?.length ?? 0))
+    }${name}`;
+    if (!seen.has(at)) {
+      seen.set(at, {
+        form,
+        role: yearRole ?? formRole,
+        section,
+        group,
+        leaf: name,
+        path: at,
+      });
+    }
+  }
+  return [...seen.values()];
+}
+
+/** A shortened form name (`f1099n`) hides which form it is; use the node's name. */
+export function truncatedNameProblems(
+  paths: readonly string[],
+  index: NodeIndex,
+): Problem[] {
+  return mirrors(paths).flatMap((mirror) => {
+    if (!/^(form|f)[-_]?\d/i.test(mirror.leaf)) return [];
+    const key = formKey(mirror.leaf);
+    if (index.has(`${mirror.form}:${key}`)) return [];
+    const longer = [...index].filter(([candidate]) =>
+      candidate.startsWith(`${mirror.form}:${key}`)
+    );
+    if (longer.length !== 1) return [];
+    const names = [...longer[0][1].names].join(" or ");
+    return [{
+      kind: "truncated-name" as const,
+      path: mirror.path,
+      message: `'${mirror.leaf}' is a shortened name for the ${names} node`,
+      fix: `Rename it to ${names}, the node's own name`,
+    }];
+  });
+}
+
+/** A form's MeF and PDF projections live in the same section/group as its node. */
+export function projectionPlacementProblems(
+  paths: readonly string[],
+  index: NodeIndex,
+): Problem[] {
+  return mirrors(paths).flatMap((mirror) => {
+    if (mirror.role !== "mef/forms" && mirror.role !== "pdf/forms") return [];
+    const node = index.get(`${mirror.form}:${formKey(mirror.leaf)}`);
+    if (!node || node.places.has(`${mirror.section}/${mirror.group}`)) {
+      return [];
+    }
+    const places = [...node.places].join(" or ");
+    return [{
+      kind: "projection-placement" as const,
+      path: mirror.path,
+      message: `The ${mirror.leaf} ${
+        mirror.role.split("/")[0]
+      } projection is in ${mirror.section}/${mirror.group}, but its node is in ${places}`,
+      fix: `Move it under ${mirror.role}/${places}`,
+    }];
+  });
+}
+
+const SPECIFIER =
+  /(?:\bfrom\s*|\bimport\s*\(\s*|\bimport\s+)["'](\.{1,2}\/[^"'\n]+)["']/g;
+
+/** Relative imports in a module, resolved to repository paths. */
+export function importsOf(path: string, text: string): string[] {
+  const directory = dirname(path);
+  return [...text.matchAll(SPECIFIER)].map((match) =>
+    join(directory, match[1]).replaceAll("\\", "/")
+  );
+}
+
+function sectionOf(path: string, form: string): string {
+  if (!path.startsWith(`forms/${form}/`)) return "outside";
+  const segment = path.split("/").find((part) => oneOf(SECTIONS, part));
+  return segment ?? "form-wide";
+}
+
+/** A module at a form's root must serve more than one tax section; otherwise it belongs in that section. */
+export function rootModuleProblems(
+  imports: ReadonlyMap<string, readonly string[]>,
+): Problem[] {
+  const roots = [...imports.keys()].filter((path) =>
+    /^forms\/[^/]+\/[^/]+\.ts$/.test(path) && !path.endsWith(".test.ts")
+  );
+  return roots.flatMap((module) => {
+    const form = module.split("/")[1];
+    const users = new Set(
+      [...imports]
+        .filter(([path, targets]) =>
+          path !== module && !path.endsWith(".test.ts") &&
+          targets.includes(module)
+        )
+        .map(([path]) => sectionOf(path, form))
+        .filter((section) => section !== "outside"),
+    );
+    if (users.has("form-wide") || users.size > 1) return [];
+    const [only] = users;
+    return [{
+      kind: "root-module" as const,
+      path: module,
+      message: only
+        ? `A form-root module used only by the ${only} section`
+        : "A form-root module nothing in the form uses",
+      fix: only
+        ? `Move it next to the ${only} code that uses it`
+        : "Delete it, or move it next to the code that should use it",
+    }];
+  });
+}
+
+async function moduleImports(
+  root: string,
+  paths: readonly string[],
+): Promise<Map<string, readonly string[]>> {
+  const entries: [string, readonly string[]][] = [];
+  for (const path of paths) {
+    if (!path.endsWith(".ts")) continue;
+    entries.push([
+      path,
+      importsOf(path, await fs.readFile(join(root, path), "utf8")),
+    ]);
+  }
+  return new Map(entries);
+}
+
 function covers(entry: BaselineEntry, problem: Problem): boolean {
   return entry.path === problem.path && entry.nodeType === problem.nodeType;
 }
@@ -299,15 +493,21 @@ export async function structureReport(
   today = new Date().toISOString().slice(0, 10),
   baseline?: Baseline,
 ): Promise<StructureReport> {
+  const files = await repositoryFiles(root);
   const paths = await nodeFiles(root);
   const allowed = baseline ?? await readBaseline(root);
   const canonical = paths.filter((path) => nodePlacement(path).ok);
   const graph = graphOf(definitions);
+  const index = nodeIndex(files);
+  const formFiles = files.filter((path) => path.startsWith("forms/"));
   const raw = [
     ...placementProblems(paths),
     ...registryKeyProblems(definitions),
     ...unregisteredNodeProblems(await importedNodes(root, canonical), graph),
     ...unreachableProblems(definitions, graph),
+    ...truncatedNameProblems(formFiles, index),
+    ...projectionPlacementProblems(formFiles, index),
+    ...rootModuleProblems(await moduleImports(root, formFiles)),
   ];
   return {
     nodeFiles: paths.length,

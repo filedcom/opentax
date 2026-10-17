@@ -10,7 +10,7 @@ import { f1040_2025 } from "../../../index.ts";
 import { buildPending } from "../../../mef/execution/pending.ts";
 import { buildMefBundle } from "../../../mef/builder.ts";
 import { extractFilerIdentity } from "../../../../mef/filer.ts";
-import { scheduleRPdf } from "../../../pdf/forms/credits/individual/schedule_r.ts";
+import { scheduleRPdf } from "../../../pdf/forms/credits/elderly-disabled/schedule_r.ts";
 import { inputSchema } from "../../../../nodes/inputs/credits/elderly-disabled/schedule_r/calculation.ts";
 
 for (const [id, c] of Object.entries(cases)) {

@@ -6,7 +6,7 @@ import {
   LanguagePreferenceCode,
 } from "../../../../../nodes/inputs/general/filing/schedule_lep/index.ts";
 import { buildScheduleLep } from "./schedule_lep.ts";
-import { scheduleLepPdf } from "../../../../pdf/forms/general/return-assembly/schedule_lep.ts";
+import { scheduleLepPdf } from "../../../../pdf/forms/general/filing/schedule_lep.ts";
 import { buildExecutionPlan } from "../../../../../../../core/runtime/planner.ts";
 import { execute } from "../../../../../../../core/runtime/executor.ts";
 import { registry } from "../../../../registry.ts";

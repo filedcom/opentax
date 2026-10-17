@@ -5,7 +5,7 @@ import {
 } from "../../../../../../../core/types/tax-node.ts";
 import type { NodeContext } from "../../../../../../../core/types/node-context.ts";
 import { OutputNodes } from "../../../../../../../core/types/output-nodes.ts";
-import { publicSourceSchema } from "./source.ts";
+import { publicSourceSchema } from "../../../../../2025/domains/general/filing/form8886/source.ts";
 
 /** Disclosure facts are retained separately; they never change tax amounts. */
 class Form8886Node extends TaxNode<typeof publicSourceSchema> {

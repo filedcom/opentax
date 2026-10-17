@@ -1,23 +1,5 @@
 [
   {
-    "path": "forms/f1040/2025/domains/general/filing/form8886/public-node.ts",
-    "reason": "Pre-existing node under 2025/domains; migrate into forms/f1040/nodes per STRUCTURE.md",
-    "expires": "2027-01-31",
-    "approvedBy": "a7ul"
-  },
-  {
-    "path": "forms/f1040/2025/domains/income/business/form172/form172_modified_income.ts",
-    "reason": "Pre-existing node under 2025/domains; migrate into forms/f1040/nodes per STRUCTURE.md",
-    "expires": "2027-01-31",
-    "approvedBy": "a7ul"
-  },
-  {
-    "path": "forms/f1040/2025/domains/income/business/form172/form172_projected_return.ts",
-    "reason": "Pre-existing node under 2025/domains; migrate into forms/f1040/nodes per STRUCTURE.md",
-    "expires": "2027-01-31",
-    "approvedBy": "a7ul"
-  },
-  {
     "path": "forms/f1040/2025/registry.ts",
     "nodeType": "f8854Annual",
     "reason": "Registry key differs from the node type; the executor resolves by node type, so this node cannot run until the key is fixed",

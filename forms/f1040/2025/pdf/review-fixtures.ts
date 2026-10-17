@@ -1,6 +1,6 @@
 import { withHealthPolicyRecords } from "../../nodes/intermediate/forms/adjustments/health/form7206/policy-records.fixture.ts";
 import { withRentedHomeEvidence } from "../../nodes/intermediate/forms/deductions/business/form_8829/source.fixture.ts";
-import { form8582crReviewFixtures } from "../domains/credits/business/form8582c/form8582cr_k1.fixture.ts";
+import { form8582crReviewFixtures } from "../domains/credits/business/form8582cr/form8582cr_k1.fixture.ts";
 import { ordinaryRothSubstituteReviewFixture } from "./reviews/general/composed-returns/review-4852-ordinary-roth.fixture.ts";
 import type { Form4852RetainedDocument } from "../domains/income/wages/form4852/form4852_source.ts";
 import { form8621QefReviewFixture } from "../domains/income/foreign/form8621/form8621_qef.fixture.ts";

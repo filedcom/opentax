@@ -9,7 +9,7 @@ import type {
   PdfFormDescriptor,
 } from "../../../../review-support/form-descriptor.ts";
 import { assertForm3800FinalCreditJoin } from "../../../../../domains/credits/business/form3800/form3800_final_credit_join.ts";
-import { reconcileFiledForm8582CROrdinary } from "../../../../../domains/credits/business/form8582c/form8582cr_filed_ordinary.ts";
+import { reconcileFiledForm8582CROrdinary } from "../../../../../domains/credits/business/form8582cr/form8582cr_filed_ordinary.ts";
 import {
   calculateForm8820,
   inputSchema as f8820InputSchema,

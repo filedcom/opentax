@@ -1,6 +1,6 @@
 import type { PdfFieldEntry, PdfFormDescriptor } from "../../../review-support/form-descriptor.ts";
 import { inputSchema } from "../../../../../nodes/inputs/general/filing/f9000/index.ts";
-import { buildForm9000, form9000Identity } from "../../../../mef/forms/general/return-assembly/f9000.ts";
+import { buildForm9000, form9000Identity } from "../../../../mef/forms/general/filing/f9000.ts";
 
 const page = "topmostSubform[0].Page1[0]";
 const codes = ["00", "01", "02", "03", "04", "05"] as const;

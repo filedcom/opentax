@@ -15,7 +15,7 @@ import { buildMefBundle } from "../../../mef/builder.ts";
 import { buildPending } from "../../../mef/execution/pending.ts";
 import { buildPdfBytes } from "../../../pdf/builder.ts";
 import { schedule1Pdf } from "../../../pdf/forms/general/return-assembly/schedule1/schedule1.ts";
-import { schedule1OtherIncomeRows } from "../../../mef/forms/income/other/schedule1/schedule1_other_income_rows.ts";
+import { schedule1OtherIncomeRows } from "../../../mef/forms/general/return-assembly/schedule1/schedule1_other_income_rows.ts";
 
 const xsd = new URL(
   "../../../../../../.state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd",

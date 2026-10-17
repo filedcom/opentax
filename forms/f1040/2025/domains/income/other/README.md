@@ -6,15 +6,15 @@ Income sources, exclusions, and net-income reconciliation.
 | --- | --- |
 | [alimony_received_route.test.ts](alimony_received_route.test.ts) | 1 files |
 | [benefit-1042s-source.test.ts](benefit-1042s-source.test.ts) | 1 files |
-| [f1099b](f1099b) | 2 files |
-| [f1099d](f1099d) | 4 files |
+| [f1099b](../investments/f1099b) | 2 files |
+| [f1099d](../investments/f1099div) | 4 files |
 | [f1099g](f1099g) | 4 files |
-| [f1099i](f1099i) | 2 files |
-| [f1099k](f1099k) | 3 files |
-| [f1099m](f1099m) | 4 files |
-| [f1099n](f1099n) | 2 files |
-| [f1099o](f1099o) | 2 files |
-| [f1099p](f1099p) | 2 files |
+| [f1099i](../investments/f1099int) | 2 files |
+| [f1099k](../business/f1099k) | 3 files |
+| [f1099m](../business/f1099m) | 4 files |
+| [f1099n](../business/f1099nec) | 2 files |
+| [f1099o](../investments/f1099oid) | 2 files |
+| [f1099p](../business/f1099patr) | 2 files |
 | [form982](form982) | 1 files |
 | [line1a_w2_source_replay.test.ts](line1a_w2_source_replay.test.ts) | 1 files |
 | [line1b-household-wages.ts](line1b-household-wages.ts) | 1 files |

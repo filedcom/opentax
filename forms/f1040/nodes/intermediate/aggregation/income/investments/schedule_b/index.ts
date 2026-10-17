@@ -13,8 +13,8 @@ import { f1040 } from "../../../../../outputs/general/return-assembly/f1040/inde
 import { agi_aggregator } from "../../../general/return-assembly/agi_aggregator/index.ts";
 import { form8960 } from "../../../../forms/taxes/investments/form8960/index.ts";
 import { normalizeArray } from "../../../../../utils.ts";
-import { scheduleBFilingRequired } from "../../../../../../schedule_b_filing.ts";
-import { sellerFinancedBuyerSchema } from "../../../../../../seller_financed_buyer.ts";
+import { scheduleBFilingRequired } from "./filing.ts";
+import { sellerFinancedBuyerSchema } from "./seller_financed_buyer.ts";
 import { ty2025IrsCountryCodeSchema } from "../../../../../irs_country_code.ts";
 
 // ─── Schemas ─────────────────────────────────────────────────────────────────

@@ -1,7 +1,7 @@
 import { test } from "bun:test";
 import { assertEquals } from "@std/assert";
-import { scheduleBFilingRequired } from "./schedule_b_filing.ts";
-import type { ScheduleBFilingFacts } from "./schedule_b_filing.ts";
+import { scheduleBFilingRequired } from "./filing.ts";
+import type { ScheduleBFilingFacts } from "./filing.ts";
 
 const none: ScheduleBFilingFacts = {
   taxableInterest: 0,

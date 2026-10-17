@@ -1,11 +1,11 @@
 import { element, elements } from "../../../../../mef/xml.ts";
 import type { MefFormDescriptor } from "../../../form-descriptor.ts";
-import { scheduleBFilingRequired } from "../../../../../schedule_b_filing.ts";
+import { scheduleBFilingRequired } from "../../../../../nodes/intermediate/aggregation/income/investments/schedule_b/filing.ts";
 import { isTy2025IrsCountryCode } from "../../../../../nodes/irs_country_code.ts";
 import {
   type SellerFinancedBuyer,
   sellerFinancedBuyerSchema,
-} from "../../../../../seller_financed_buyer.ts";
+} from "../../../../../nodes/intermediate/aggregation/income/investments/schedule_b/seller_financed_buyer.ts";
 
 export interface Fields {
   interest_rows?: readonly { payerName: string; amount: number }[] | null;

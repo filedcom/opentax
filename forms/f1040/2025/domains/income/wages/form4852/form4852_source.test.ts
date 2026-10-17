@@ -1,6 +1,6 @@
 import { test } from "bun:test";
 import { form4852NativeSources } from "./form4852_native_source.ts";
-import { w2 } from "../../../../mef/forms/income/other/w2.ts";
+import { w2 } from "../../../../mef/forms/income/wages/w2.ts";
 import { f1099r } from "../../../../mef/forms/income/retirement/f1099r.ts";
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import { createHash } from "node:crypto";

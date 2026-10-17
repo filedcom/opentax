@@ -3,7 +3,7 @@ import type { FilerIdentity } from "../../../../../../mef/header.ts";
 import {
   type SellerFinancedBuyer,
   sellerFinancedBuyerSchema,
-} from "../../../../../../seller_financed_buyer.ts";
+} from "../../../../../../nodes/intermediate/aggregation/income/investments/schedule_b/seller_financed_buyer.ts";
 
 interface SellerRow {
   buyer: SellerFinancedBuyer;

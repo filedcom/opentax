@@ -11,8 +11,8 @@ import { buildPending } from "../../../mef/execution/pending.ts";
 import { buildMefBundle } from "../../../mef/builder.ts";
 import { extractFilerIdentity } from "../../../../mef/filer.ts";
 import { inputSchema as scheduleRSchema } from "../../../../nodes/inputs/credits/elderly-disabled/schedule_r/index.ts";
-import { scheduleR } from "../../../mef/forms/credits/individual/schedule_r.ts";
-import { scheduleRPdf } from "../../../pdf/forms/credits/individual/schedule_r.ts";
+import { scheduleR } from "../../../mef/forms/credits/elderly-disabled/schedule_r.ts";
+import { scheduleRPdf } from "../../../pdf/forms/credits/elderly-disabled/schedule_r.ts";
 
 test("Schedule R apart-all-year MFS age and disability sources reach final tax and native/PDF", async () => {
   for (const [key, source] of Object.entries(inputs)) {

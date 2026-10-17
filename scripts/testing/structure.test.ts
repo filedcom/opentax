@@ -8,13 +8,19 @@ import { OutputNodes } from "../../core/types/output-nodes.ts";
 import type { FormDefinition } from "../../core/types/form-definition.ts";
 import {
   applyBaseline,
+  formKey,
   graphOf,
+  importsOf,
   isNodeSource,
+  nodeIndex,
   nodePlacement,
   placementProblems,
+  projectionPlacementProblems,
   readBaseline,
   registryKeyProblems,
+  rootModuleProblems,
   structureReport,
+  truncatedNameProblems,
   unreachableProblems,
   unregisteredNodeProblems,
 } from "./structure.ts";
@@ -48,7 +54,7 @@ function definition(
 const hatch = "forms/f1040/2025/domains/general/filing/form8886/public-node.ts";
 const registryFile = "forms/f1040/2025/registry.ts";
 
-test("canonical node paths and the year's start node pass", () => {
+test("canonical node paths pass for every role and form", () => {
   for (
     const path of [
       "forms/f1040/nodes/inputs/income/investments/f1099int/index.ts",
@@ -58,8 +64,6 @@ test("canonical node paths and the year's start node pass", () => {
       "forms/f1040/nodes/intermediate/worksheets/adjustments/retirement/ira_deduction_worksheet/index.ts",
       "forms/f1040/nodes/outputs/general/return-assembly/f1040/index.ts",
       "forms/f1041/nodes/inputs/income/other/k1_beneficiary/index.ts",
-      "forms/f1040/2025/return-processing/start.ts",
-      "forms/f1040/2026/return-processing/start.ts",
     ]
   ) assert(nodePlacement(path).ok, path);
 });
@@ -90,9 +94,15 @@ test("the TY2026 branch's flat node files and main's escape hatches fail with th
   }
 });
 
-test("node sources are detected by their base class, not their file name", () => {
+test("node sources are module-level classes; a class built inside a function is a replay override", () => {
   assert(isNodeSource("class W2Node extends TaxNode<typeof inputSchema> {"));
+  assert(isNodeSource("export class Form8886Node extends TaxNode {"));
   assert(!isNodeSource("export const w2 = new W2Node();"));
+  assert(
+    !isNodeSource(
+      "export function replay() {\n  class ModifiedAgi extends TaxNode {\n  }\n}",
+    ),
+  );
 });
 
 test("a registry key that is not the node type is reported, because the executor resolves by node type", () => {
@@ -240,5 +250,114 @@ test("dropping a CLI input that nothing routes to reproduces the silently-ignore
   assertEquals(
     regression.problems.map((p) => [p.kind, p.nodeType]),
     [["unreachable", victim.node.nodeType]],
+  );
+});
+
+const nodeTree = nodeIndex([
+  "forms/f1040/nodes/inputs/income/business/f1099nec/index.ts",
+  "forms/f1040/nodes/inputs/income/investments/f1099div/index.ts",
+  "forms/f1040/nodes/inputs/income/gambling/w2g/index.ts",
+  "forms/f1040/nodes/inputs/credits/elderly-disabled/schedule_r/index.ts",
+  "forms/f1040/nodes/outputs/general/return-assembly/schedule1/index.ts",
+  "forms/f1040/nodes/intermediate/forms/credits/amt/form8801/index.ts",
+  "forms/f1040/nodes/inputs/credits/amt/f8801/index.ts",
+]);
+
+test("form identity ignores naming style", () => {
+  for (
+    const name of ["form1116", "f1116", "form_1116", "F1116", "f1116.test.ts"]
+  ) {
+    assertEquals(formKey(name), "1116");
+  }
+  assertEquals(formKey("schedule_r"), formKey("schedule-r"));
+  assert(nodeTree.get("f1040:8801")?.places.has("credits/amt"));
+});
+
+test("a shortened form folder fails with the node's full name, in any mirror role", () => {
+  const problems = truncatedNameProblems([
+    "forms/f1040/2025/domains/income/other/f1099n/owner.ts",
+    "forms/f1040/2025/domains/payments/withholding/f1099d/withholding.ts",
+    "forms/f1040/e2e/income/business/form1099n/schedule_c.test.ts",
+    "forms/f1040/2025/domains/payments/withholding/f1099/withholding.ts",
+    "forms/f1040/2025/domains/income/business/f1099nec/owner.ts",
+  ], nodeTree);
+  assertEquals(problems.map((p) => p.path), [
+    "forms/f1040/2025/domains/income/other/f1099n",
+    "forms/f1040/2025/domains/payments/withholding/f1099d",
+    "forms/f1040/e2e/income/business/form1099n",
+  ]);
+  assert(problems[0].fix.includes("f1099nec"));
+  assert(problems[1].fix.includes("f1099div"));
+});
+
+test("MeF and PDF projections must sit with their node; domain and e2e mirrors follow tax concern", () => {
+  const problems = projectionPlacementProblems([
+    "forms/f1040/2025/mef/forms/income/other/w2g.ts",
+    "forms/f1040/2025/mef/forms/income/other/w2g.test.ts",
+    "forms/f1040/2025/pdf/forms/credits/individual/schedule_r.ts",
+    "forms/f1040/2025/mef/forms/income/other/schedule1/rows.ts",
+    "forms/f1040/2025/mef/forms/income/gambling/w2g.ts",
+    "forms/f1040/2025/mef/forms/general/return-assembly/schedule1/schedule1.ts",
+    "forms/f1040/2025/mef/forms/credits/amt/form8801.ts",
+    "forms/f1040/2025/domains/payments/withholding/f1099nec/withholding.ts",
+    "forms/f1040/e2e/income/other/form1099nec/nonbusiness.test.ts",
+  ], nodeTree);
+  assertEquals(problems.map((p) => p.path), [
+    "forms/f1040/2025/mef/forms/income/other/w2g",
+    "forms/f1040/2025/pdf/forms/credits/individual/schedule_r",
+    "forms/f1040/2025/mef/forms/income/other/schedule1",
+  ]);
+  assert(problems[0].fix.endsWith("mef/forms/income/gambling"));
+});
+
+test("relative imports resolve to repository paths", () => {
+  assertEquals(
+    importsOf(
+      "forms/f1040/nodes/inputs/income/business/f1099nec/index.ts",
+      'import { r } from "../../../../../whole-dollars.ts";\nconst m = await import("./helper.ts");',
+    ),
+    [
+      "forms/f1040/whole-dollars.ts",
+      "forms/f1040/nodes/inputs/income/business/f1099nec/helper.ts",
+    ],
+  );
+});
+
+test("a form-root module must serve more than one tax section", () => {
+  const imports = new Map<string, readonly string[]>([
+    ["forms/f1040/schedule_b_filing.ts", []],
+    ["forms/f1040/whole-dollars.ts", []],
+    ["forms/f1040/source-fields.ts", []],
+    ["forms/f1040/unused.ts", []],
+    [
+      "forms/f1040/nodes/intermediate/aggregation/income/investments/schedule_b/index.ts",
+      [
+        "forms/f1040/schedule_b_filing.ts",
+        "forms/f1040/whole-dollars.ts",
+      ],
+    ],
+    ["forms/f1040/2025/pdf/forms/income/investments/schedule_b/schedule_b.ts", [
+      "forms/f1040/schedule_b_filing.ts",
+    ]],
+    [
+      "forms/f1040/nodes/intermediate/forms/taxes/retirement/form5329/index.ts",
+      [
+        "forms/f1040/whole-dollars.ts",
+      ],
+    ],
+    ["forms/f1040/2025/mef/identity/w2g-payer-copy.ts", [
+      "forms/f1040/source-fields.ts",
+    ]],
+    ["forms/f1040/unused.test.ts", ["forms/f1040/unused.ts"]],
+  ]);
+  assertEquals(
+    rootModuleProblems(imports).map((p) => [p.path, p.message]),
+    [
+      [
+        "forms/f1040/schedule_b_filing.ts",
+        "A form-root module used only by the income section",
+      ],
+      ["forms/f1040/unused.ts", "A form-root module nothing in the form uses"],
+    ],
   );
 });

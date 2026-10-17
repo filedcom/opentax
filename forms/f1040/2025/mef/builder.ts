@@ -80,15 +80,15 @@ import { assertForm8915FSourceLinks } from "../../nodes/inputs/income/retirement
 import { assertW2GPayerCopyContents } from "./identity/w2g-payer-copy.ts";
 import { assertLine1bHouseholdWageSource } from "../domains/income/other/line1b-household-wages.ts";
 import { assertBusinessSchedule1Amounts } from "../domains/income/business/business-schedule1-reconciliation.ts";
-import { assertPositiveW2GRecipient } from "./forms/income/other/w2g.ts";
+import { assertPositiveW2GRecipient } from "./forms/income/gambling/w2g.ts";
 import { reconciledForm8908Source } from "./forms/credits/business/f8908_source_reconciliation.ts";
 import { assertForm8908PwaSubmittedPdfs } from "./forms/credits/business/f8908_pwa.ts";
 import { assertPreparedVehicleAcknowledgments } from "./forms/deductions/charitable/f8283/f8283_vehicle_sale_evidence.ts";
 import { assertForm1098IssuerCopies } from "../../nodes/inputs/deductions/mortgage/f1098/issuer_copy.ts";
 import { assertExtensionPaymentSource } from "../domains/payments/settlement/extension-payment-reconciliation.ts";
 import { assert1099RRecipientOwner } from "../domains/income/retirement/f1099r/f1099r-recipient-owner.ts";
-import { assertNecWithholdingRecipient } from "../domains/payments/withholding/f1099n/f1099nec-withholding-owner.ts";
-import { assert1099BRecipientOwner } from "../domains/income/other/f1099b/f1099b-recipient-owner.ts";
+import { assertNecWithholdingRecipient } from "../domains/payments/withholding/f1099nec/f1099nec-withholding-owner.ts";
+import { assert1099BRecipientOwner } from "../domains/income/investments/f1099b/f1099b-recipient-owner.ts";
 import {
   assertCapitalSaleSourceRows,
   assertNoRepeatedBrokerSaleSources,
@@ -96,7 +96,7 @@ import {
 import {
   assertPatrIssuedCopies,
   assertPatrWithholdingRecipient,
-} from "../domains/payments/withholding/f1099p/f1099patr-withholding-owner.ts";
+} from "../domains/payments/withholding/f1099patr/f1099patr-withholding-owner.ts";
 import {
   assertForm4852FilingRoute,
   assertLine1aWageSource,
@@ -134,7 +134,7 @@ import {
   assertFinalBalanceProjection,
   assertQualifiedDividendSubset,
 } from "../return-processing/return-wide-arithmetic.ts";
-import { assertDividendIncomeSources } from "../domains/income/other/f1099d/f1099div-income-reconciliation.ts";
+import { assertDividendIncomeSources } from "../domains/income/investments/f1099div/f1099div-income-reconciliation.ts";
 import {
   assertScheduleBInterestJoin,
   assertScheduleBPreparedProjection,

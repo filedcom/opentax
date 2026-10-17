@@ -1,6 +1,6 @@
 import { test } from "bun:test";
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
-import { schedule1 } from "../../../general/return-assembly/schedule1/schedule1.ts";
+import { schedule1 } from "./schedule1.ts";
 import { schedule1OtherIncomeStatement } from "./schedule1_other_income_statement.ts";
 
 const sourced = {

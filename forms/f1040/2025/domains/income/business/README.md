@@ -24,6 +24,6 @@ Income sources, exclusions, and net-income reconciliation.
 | [qbi_distinct_capital_sources.test.ts](qbi_distinct_capital_sources.test.ts) | 1 files |
 | [schedule-c](schedule-c) | 2 files |
 | [schedule-cf-signed-dollars.test.ts](schedule-cf-signed-dollars.test.ts) | 1 files |
-| [trust-k1](trust-k1) | 15 files |
+| [trust-k1](../rental-passthrough/k1_trust) | 15 files |
 
 Canonical [Form 8621](../../../mef/forms/income/foreign/f8621.ts) also carries section 1291 tax and interest; follow [Taxes](../../taxes/README.md) for related effects.

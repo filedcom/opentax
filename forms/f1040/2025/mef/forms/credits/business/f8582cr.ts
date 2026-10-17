@@ -1,5 +1,5 @@
 import { element, elements } from "../../../../../mef/xml.ts";
-import { reconcileFiledForm8582CROrdinary } from "../../../../domains/credits/business/form8582c/form8582cr_filed_ordinary.ts";
+import { reconcileFiledForm8582CROrdinary } from "../../../../domains/credits/business/form8582cr/form8582cr_filed_ordinary.ts";
 import {
   calculateForm8582CR,
   inputSchema,
