@@ -29,6 +29,9 @@ function decode(text: string): string {
     .replace(/&amp;/g, "&");
 }
 
+const ATTRIBUTE = /\s+([^\s=>]+)="([^"]*)"/g;
+const BOOKKEEPING_ATTRIBUTE =
+  /^(?:xmlns(?::.*)?|xsi:.*|documentId|documentName|referenceDocument(?:Id|Name)|software(?:Id|VersionNum)|returnVersion|binaryAttachmentCnt|uuid)$/;
 const TAG = /<(\/?)([A-Za-z][\w.-]*)((?:\s+[^\s=>]+="[^"]*")*)\s*(\/?)>/g;
 
 /** Index leaf element values per emitted document, in document order. */
@@ -80,7 +83,21 @@ export function parseEmittedReturn(xml: string): EmittedReturn {
       textStart = -1;
       continue;
     }
-    if (selfClosing) continue;
+    // Rules name a few amounts carried as attributes, e.g. Form8814Ind's
+    // childInterestAndDividendTaxAmt; bookkeeping attributes are skipped.
+    const recordAttributes = () => {
+      const target = current ?? (stack.includes("ReturnHeader")
+        ? header
+        : undefined);
+      if (!target) return;
+      for (const [, key, value] of attributes.matchAll(ATTRIBUTE)) {
+        if (!BOOKKEEPING_ATTRIBUTE.test(key)) record(target, key, decode(value));
+      }
+    };
+    if (selfClosing) {
+      recordAttributes();
+      continue;
+    }
     const prefix = current === undefined && stack.at(-1) === "ReturnData" &&
         /\bdocumentId="/.test(attributes)
       // Supporting statements keep their own tag as their prefix.
@@ -92,6 +109,7 @@ export function parseEmittedReturn(xml: string): EmittedReturn {
       documents.push({ prefix, values: current });
       documentDepth = stack.length - 1;
     }
+    if (!prefix) recordAttributes();
     lastOpen = name;
     textStart = index + raw.length;
   }

@@ -117,6 +117,7 @@ test("Schedule H uses the form's required identity and line-level tax amounts", 
     xml,
     "<CombinedFUTATaxPlusNetTaxesAmt>474</CombinedFUTATaxPlusNetTaxesAmt>",
   );
+  assertEquals(xml.includes("HsldEmplPdCashWageOvrLmtQtrInd"), false);
 });
 
 test("Schedule H native FUTA-only student minor keeps Part I wages at zero", () => {
@@ -165,6 +166,11 @@ test("Schedule H native FUTA-only student minor keeps Part I wages at zero", () 
   assertStringIncludes(
     xml,
     "<CombinedFUTATaxPlusNetTaxesAmt>24</CombinedFUTATaxPlusNetTaxesAmt>",
+  );
+  // Lines A and B are "No", so line C answers the quarterly test (SH-F1040-005).
+  assertStringIncludes(
+    xml,
+    "<HsldEmplPdCashWageOverLmtCYInd>false</HsldEmplPdCashWageOverLmtCYInd><HsldEmplPdCashWageOvrLmtQtrInd>true</HsldEmplPdCashWageOvrLmtQtrInd>",
   );
 });
 

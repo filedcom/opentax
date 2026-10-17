@@ -16,11 +16,12 @@ export const S3_RULES: readonly RuleDef[] = [
     "If Schedule 3 (Form 1040), 'TaxPaidByRICOrREITAmt' has a value greater than zero, then Form 2439 must be present in the return.",
   ),
   rule(
-    "S3-F1040-013-01",
+    // 2026v1.0 text: the 2025v5.4 Schedule 3 names line 6c NonrefundableAdoptionCreditAmt.
+    "S3-F1040-013-02",
     "reject",
     "missing_data",
-    ifThen(hasNonZero("OtherCreditsAmt"), any(hasNonZero("CurrentYearCreditAllowedAmt"), hasNonZero("MinAMTCrAmt"), hasNonZero("AdoptionCreditAmt"), hasNonZero("CreditForElderlyOrDisabledAmt"), hasNonZero("PersonalUsePartOfCreditAmt"), hasNonZero("CleanVehPrsnlUsePartCrAmt"), hasNonZero("MortgageInterestCreditAmt"), hasNonZero("DCHmByrCurrentYearCreditAmt"), hasNonZero("QlfyElecMotorVehCrAmt"), hasNonZero("TotalPersonalUsePartOfCrAmt"), hasNonZero("CurrentYearAllowableCreditAmt"), hasNonZero("TotRptgYrTxIncreaseDecreaseAmt"), hasNonZero("MaxPrevOwnedCleanVehCrAmt"), hasNonZero("TotOthNonrefundableCreditsAmt"))),
-    "If Schedule 3 (Form 1040), 'OtherCreditsAmt' has a non-zero value, then at least one of the following must have a non-zero value: 'CurrentYearCreditAllowedAmt' or 'MinAMTCrAmt' or 'AdoptionCreditAmt' or 'CreditForElderlyOrDisabledAmt' or 'PersonalUsePartOfCreditAmt' or 'CleanVehPrsnlUsePartCrAmt' or 'MortgageInterestCreditAmt' or 'DCHmByrCurrentYearCreditAmt' or 'QlfyElecMotorVehCrAmt' or 'TotalPersonalUsePartOfCrAmt' or 'CurrentYearAllowableCreditAmt' or 'TotRptgYrTxIncreaseDecreaseAmt' or 'MaxPrevOwnedCleanVehCrAmt' or 'TotOthNonrefundableCreditsAmt'.",
+    ifThen(hasNonZero("OtherCreditsAmt"), any(hasNonZero("CurrentYearCreditAllowedAmt"), hasNonZero("MinAMTCrAmt"), hasNonZero("NonrefundableAdoptionCreditAmt"), hasNonZero("CreditForElderlyOrDisabledAmt"), hasNonZero("PersonalUsePartOfCreditAmt"), hasNonZero("CleanVehPrsnlUsePartCrAmt"), hasNonZero("MortgageInterestCreditAmt"), hasNonZero("DCHmByrCurrentYearCreditAmt"), hasNonZero("QlfyElecMotorVehCrAmt"), hasNonZero("TotalPersonalUsePartOfCrAmt"), hasNonZero("CurrentYearAllowableCreditAmt"), hasNonZero("TotRptgYrTxIncreaseDecreaseAmt"), hasNonZero("MaxPrevOwnedCleanVehCrAmt"), hasNonZero("TotOthNonrefundableCreditsAmt"))),
+    "If Schedule 3 (Form 1040), 'OtherCreditsAmt' has a non-zero value, then at least one of the following must have a non-zero value: 'CurrentYearCreditAllowedAmt' or 'MinAMTCrAmt' or 'NonrefundableAdoptionCreditAmt' or 'CreditForElderlyOrDisabledAmt' or 'PersonalUsePartOfCreditAmt' or 'CleanVehPrsnlUsePartCrAmt' or 'MortgageInterestCreditAmt' or 'DCHmByrCurrentYearCreditAmt' or 'QlfyElecMotorVehCrAmt' or 'TotalPersonalUsePartOfCrAmt' or 'CurrentYearAllowableCreditAmt' or 'TotRptgYrTxIncreaseDecreaseAmt' or 'MaxPrevOwnedCleanVehCrAmt' or 'TotOthNonrefundableCreditsAmt'.",
   ),
   rule(
     "S3-F1040-016",

@@ -338,9 +338,11 @@ test.skipIf(!xsdAvailable)("XSD: German 1099 interest reaches Form 1116 with IRS
   assertEquals(result.diagnostics, []);
   const xml = buildMefXml(result.pending, filer);
   assertStringIncludes(xml, "<ForeignCountryCd>GM</ForeignCountryCd>");
+  // One Form 1116: Part IV lines 25-32 stay empty (F1116-007-01).
+  assertEquals(xml.includes("<ForeignPassiveIncTaxCreditAmt>"), false);
   assertStringIncludes(
     xml,
-    "<ForeignPassiveIncTaxCreditAmt>100</ForeignPassiveIncTaxCreditAmt>",
+    "<SmllrOfRtnTaxOrForeignTaxCrAmt>100</SmllrOfRtnTaxOrForeignTaxCrAmt>",
   );
   await validateXsd(xml);
 });
@@ -719,9 +721,11 @@ test.skipIf(!xsdAvailable)("XSD: foreign-employer tax reaches Form 1116 and Sche
   assertEquals(result.diagnostics, []);
   const xml = buildMefXml(result.pending, filer);
   assertStringIncludes(xml, "<ForeignCountryCd>GM</ForeignCountryCd>");
+  // One Form 1116: Part IV lines 25-32 stay empty (F1116-007-01).
+  assertEquals(xml.includes("<ForeignGeneralIncTaxCreditAmt>"), false);
   assertStringIncludes(
     xml,
-    "<ForeignGeneralIncTaxCreditAmt>3000</ForeignGeneralIncTaxCreditAmt>",
+    "<SmllrOfRtnTaxOrForeignTaxCrAmt>3000</SmllrOfRtnTaxOrForeignTaxCrAmt>",
   );
   assertStringIncludes(
     xml,

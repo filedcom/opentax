@@ -3667,10 +3667,8 @@ function buildIRS8962(fields: Input, context?: MefBuildContext): string {
     element("HouseholdIncomeAmt", fields.household_income),
     element("PovertyLevelAmt", fields.federal_poverty_line),
     element("FederalPovertyTableLocCd", location),
+    // 2025 line 6 is "Reserved for future use"; F8962-330 rejects its indicator.
     element("FederalPovertyLevelPct", fields.federal_poverty_pct),
-    fields.federal_poverty_pct === 401
-      ? element("FederalPovertyLevelPct401Ind", "true")
-      : "",
     typeof fields.applicable_figure === "number"
       ? element("ApplicableFigureRt", fields.applicable_figure.toFixed(4))
       : "",

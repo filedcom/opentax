@@ -3,44 +3,8 @@
   "approvedBy": "pending-review",
   "expires": "2027-01-31",
   "returns": {
-    "single-form8978-positive-reviewed-source": [
-      "xml Form8978 reviewed source needs one supplied PDF per record"
-    ],
-    "single-form8978-negative-reviewed-source": [
-      "xml Form8978 reviewed source needs one supplied PDF per record"
-    ],
-    "single-form8978-multiple-reviewed-source": [
-      "xml Form8978 reviewed source needs one supplied PDF per record"
-    ],
-    "single-form8994-direct-employer-full": [
-      "xml Form 8994 uploaded policy or payroll bytes differ from reviewed digest"
-    ],
-    "single-form8994-direct-employer-partial": [
-      "xml Form 8994 uploaded policy or payroll bytes differ from reviewed digest"
-    ],
-    "single-form8994-direct-employer-zero": [
-      "xml Form 8994 uploaded policy or payroll bytes differ from reviewed digest"
-    ],
-    "single-retained-4852-ordinary-roth": [
-      "xml Form 4852 retained document missing, duplicated or digest changed"
-    ],
-    "single-reviewed-adoption-credit": [
-      "xml Form 8839 needs the reviewed PDF attachment decree-1.pdf"
-    ],
-    "single-8862-ctc-reinstatement": [
-      "xml Form 8862 CTC/ODC export needs the retained prior IRS notice copy with matching SHA-256"
-    ],
     "single-withheld-w2g": [
       "xml W-2G payer copy content needs its exact attached PDF"
-    ],
-    "single-schedule-h-three-state-futa": [
-      "rule SH-F1040-005"
-    ],
-    "single-form8814-child-dividends-adjustments": [
-      "rule F1040-231-01"
-    ],
-    "single-form8814-child-gain-with-schedule-d": [
-      "rule F1040-231-01"
     ],
     "single-new-markets-business-credit": [
       "xml [MEF] Form 8874 direct QEI needs authenticated CDE status and recapture history; export blocked"
@@ -72,27 +36,6 @@
     "single-two-at-risk-business-losses": [
       "rule S1-F1040-195"
     ],
-    "single-alternating-policies-all-covered-slcsp-corrections": [
-      "rule F8962-330"
-    ],
-    "single-alternating-policies-both-slcsp-corrected": [
-      "rule F8962-330"
-    ],
-    "single-five-sequential-corrected-slcsp-policies": [
-      "rule F8962-330"
-    ],
-    "single-situation4-nonenrolled-other-taxpayer": [
-      "rule F8962-057"
-    ],
-    "single-situation4-two-agreed-percentages": [
-      "rule F8962-057"
-    ],
-    "mfs-shared-policy-exception": [
-      "rule F8962-057"
-    ],
-    "single-foreign-interest-current-excess": [
-      "rule F1116-007-01"
-    ],
     "single-form2555-full-year-physical-presence": [
       "rule F1040-065-05"
     ],
@@ -115,19 +58,43 @@
       "calculation schedule1a"
     ],
     "tip-health-single-fully-phased-out": [
-      "xml [ { \"code\": \"invalid_type\", \"expected\": \"object\", \"received\": \"undefined\", \"path\": [], \"message\": \"Required\" } ]"
+      "xml Health plan needs its issued policy record and 12 issued monthly premium records"
     ],
     "tip-health-single-health-income-limited": [
-      "xml [ { \"code\": \"invalid_type\", \"expected\": \"object\", \"received\": \"undefined\", \"path\": [], \"message\": \"Required\" } ]"
+      "xml Health plan needs its issued policy record and 12 issued monthly premium records"
     ],
     "tip-health-single-positive-health": [
-      "xml [ { \"code\": \"invalid_type\", \"expected\": \"object\", \"received\": \"undefined\", \"path\": [], \"message\": \"Required\" } ]"
+      "xml Health plan needs its issued policy record and 12 issued monthly premium records"
     ],
     "tip-health-single-tip-netincome-limited": [
-      "xml [ { \"code\": \"invalid_type\", \"expected\": \"object\", \"received\": \"undefined\", \"path\": [], \"message\": \"Required\" } ]"
+      "xml Health plan needs its issued policy record and 12 issued monthly premium records"
     ],
     "tip-health-single-w2-qbi-binding": [
-      "xml [ { \"code\": \"invalid_type\", \"expected\": \"object\", \"received\": \"undefined\", \"path\": [], \"message\": \"Required\" } ]"
+      "xml Health plan needs its issued policy record and 12 issued monthly premium records"
     ]
+  },
+  "reasons": {
+    "single-withheld-w2g": "The W-2G guard requires the payer-issued copy as an exact attached PDF; this static fixture carries none (the XSD test builds one from the IRS template over the network).",
+    "single-new-markets-business-credit": "Product boundary: export has no input or attachment route for the CDE's year-end status statement and Form 8874-A/B history; the f8874 evidence reconcilers are not wired into export.",
+    "single-long-name-new-markets-investment": "Product boundary: export has no input or attachment route for the CDE's year-end status statement and Form 8874-A/B history; the f8874 evidence reconcilers are not wired into export.",
+    "single-two-new-markets-investments": "Product boundary: export has no input or attachment route for the CDE's year-end status statement and Form 8874-A/B history; the f8874 evidence reconcilers are not wired into export.",
+    "single-six-new-markets-investments": "Product boundary: export has no input or attachment route for the CDE's year-end status statement and Form 8874-A/B history; the f8874 evidence reconcilers are not wired into export.",
+    "single-seven-new-markets-investments": "Product boundary: export has no input or attachment route for the CDE's year-end status statement and Form 8874-A/B history; the f8874 evidence reconcilers are not wired into export.",
+    "single-twenty-four-new-markets-investments": "Product boundary: export has no input or attachment route for the CDE's year-end status statement and Form 8874-A/B history; the f8874 evidence reconcilers are not wired into export.",
+    "single-geothermal-and-new-markets-credits": "Product boundary: export has no input or attachment route for the CDE's year-end status statement and Form 8874-A/B history; the f8874 evidence reconcilers are not wired into export.",
+    "single-partnership-code-k-and-w2g": "The W-2G guard requires the payer-issued copy as an exact attached PDF; this static fixture carries none (the XSD test builds one from the IRS template over the network).",
+    "single-k-reported-error": "All Form 1040 amounts the rule lists are zero; MeF rejects an all-zero return.",
+    "single-two-at-risk-business-losses": "Schedule 1 line 3 correctly takes the Form 6198 allowable losses (1,600), while S1-F1040-195 demands the sum of Schedule C line 31 (-2,000); how MeF expects the at-risk limit on NetProfitOrLossAmt is unverified.",
+    "single-form2555-full-year-physical-presence": "The full Form 2555 exclusion leaves every amount F1040-065-05 lists at zero; MeF rejects an all-zero return.",
+    "single-form461-schedule-c-excess-business-loss": "Form 8995 has no filing route yet for a single-business net QBI loss carryforward alongside a Form 461 excess business loss; the node guard stops it.",
+    "single-multiple-schedule-c-net-loss": "Schedule C lines 31 round 10,000.49 and -20,000.50 separately (-10,001) while Schedule 1 line 3 rounds the cent total (-10,000), as the Form 1040 rounding instructions allow; S1-F1040-195 needs exact equality.",
+    "tip-health-mfj-fully-phased-out": "Frozen tip-health fixture predates the issued policy and monthly premium records the Form 7206 health-plan guard requires; it may not be edited.",
+    "tip-health-mfj-owned-cap-phaseout": "Frozen tip-health fixture predates the issued policy and monthly premium records the Form 7206 health-plan guard requires; it may not be edited.",
+    "tip-health-mfj-primary-health-limited": "Frozen tip-health fixture predates the issued policy and monthly premium records the Form 7206 health-plan guard requires; it may not be edited.",
+    "tip-health-single-fully-phased-out": "Frozen tip-health fixture predates the issued policy and monthly premium records the Form 7206 health-plan guard requires; it may not be edited.",
+    "tip-health-single-health-income-limited": "Frozen tip-health fixture predates the issued policy and monthly premium records the Form 7206 health-plan guard requires; it may not be edited.",
+    "tip-health-single-positive-health": "Frozen tip-health fixture predates the issued policy and monthly premium records the Form 7206 health-plan guard requires; it may not be edited.",
+    "tip-health-single-tip-netincome-limited": "Frozen tip-health fixture predates the issued policy and monthly premium records the Form 7206 health-plan guard requires; it may not be edited.",
+    "tip-health-single-w2-qbi-binding": "Frozen tip-health fixture predates the issued policy and monthly premium records the Form 7206 health-plan guard requires; it may not be edited."
   }
 }

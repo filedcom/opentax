@@ -92,6 +92,12 @@ import {
   adoptionReviewSource,
 } from "./reviews/general/composed-returns/review-8839.fixture.ts";
 
+const CTC_NOTICE_COPY = {
+  document_reference: "Retained synthetic CTC notice copy",
+  text: "Synthetic retained copy of the 2023 IRS CTC disallowance notice for the Form 8862 review fixture.\n",
+  sha256: "1c68e71f4c34a2b3341881b3b5e7ac6fccb7514cbf14dd53e59c7ac7d5109686",
+};
+
 /** Synthetic source returns for the held TY2025 filled-PDF review. */
 export interface PdfReviewFixture {
   readonly id: string;
@@ -1429,7 +1435,8 @@ const basePdfReviewFixtures: readonly PdfReviewFixture[] = [
         prior_ctc_disallowance_review: {
           disallowed_year: 2023,
           notice_reference: "Synthetic 2023 IRS CTC notice",
-          notice_copy_reference: "Retained synthetic CTC notice copy",
+          notice_copy_reference: CTC_NOTICE_COPY.document_reference,
+          notice_copy_sha256: CTC_NOTICE_COPY.sha256,
           taxpayer_ssn: "111223333",
           nonclerical_disallowance_verified: true,
           no_active_ban_verified: true,
@@ -1493,6 +1500,10 @@ const basePdfReviewFixtures: readonly PdfReviewFixture[] = [
       },
     },
     filer: singleFiler,
+    retainedSourceDocuments: [{
+      document_reference: CTC_NOTICE_COPY.document_reference,
+      bytes: new TextEncoder().encode(CTC_NOTICE_COPY.text),
+    }],
     expectedPdfForms: ["f1040", "f8812", "f8862"],
     reviewFocus: [
       "Form 8862 Part III names the same child as the Form 1040 dependent and checks the CTC eligibility answers",

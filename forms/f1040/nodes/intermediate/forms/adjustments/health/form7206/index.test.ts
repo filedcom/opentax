@@ -1,5 +1,6 @@
 import { test } from "bun:test";
 import { withHealthPolicyRecords } from "./policy-records.fixture.ts";
+import { reconcileHealthPolicyRecords } from "./policy-records.ts";
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import { TS } from "../../../../../types.ts";
 import { FilingStatus } from "../../../../../../mef/header.ts";
@@ -638,4 +639,13 @@ test("Publication 974 Marketplace deduction uses the identified Schedule C and S
     Error,
     "must match the identified Schedule C",
   );
+});
+
+test("2025 Form 7206 names missing issued policy records instead of a schema crash", () => {
+  assertThrows(
+    () => reconcileHealthPolicyRecords(source, "123456789"),
+    Error,
+    "Health plan needs its issued policy record and 12 issued monthly premium records",
+  );
+  reconcileHealthPolicyRecords(withHealthPolicyRecords(source), "123456789");
 });

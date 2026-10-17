@@ -37,8 +37,19 @@ export function reconcileHealthPolicyRecords(plan: {
   issued_premium_records?: unknown;
   premium_months: readonly PremiumRecordMonth[];
 }, ownerTin: string): void {
-  const policy = issuedPolicyRecordSchema.parse(plan.issued_policy_record);
-  const records = issuedPremiumRecordsSchema.parse(plan.issued_premium_records);
+  const policyResult = issuedPolicyRecordSchema.safeParse(
+    plan.issued_policy_record,
+  );
+  const recordsResult = issuedPremiumRecordsSchema.safeParse(
+    plan.issued_premium_records,
+  );
+  if (!policyResult.success || !recordsResult.success) {
+    throw new Error(
+      "Health plan needs its issued policy record and 12 issued monthly premium records",
+    );
+  }
+  const policy = policyResult.data;
+  const records = recordsResult.data;
   const ssn = ownerTin.replaceAll("-", "");
   const payments = new Set<string>();
   if (

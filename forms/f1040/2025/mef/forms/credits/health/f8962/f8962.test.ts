@@ -156,6 +156,9 @@ test("Form 8962 emits sourced policy months and reconciled repayment", () => {
   );
   assertEquals((xml.match(/<MonthlyPTCCalculationGrp>/g) ?? []).length, 12);
   assertEquals(xml.includes("<AnnualPTCCalculationGrp>"), false);
+  // Line 5 is 401; 2025 line 6 is reserved, so its indicator is not filed.
+  assertStringIncludes(xml, "<FederalPovertyLevelPct>401</FederalPovertyLevelPct>");
+  assertEquals(xml.includes("FederalPovertyLevelPct401Ind"), false);
 });
 
 test("Form 8962 monthly one-person policy binds its covered person to the filer", () => {

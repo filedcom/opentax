@@ -849,9 +849,11 @@ function buildIRS1116(
       );
     }
   }
+  // F1116-007-01: a lone Form 1116 leaves lines 25-32 empty and line 33 equals line 24.
   const partIV = [
-    ...credits,
-    element("TentativeForeignTaxCreditAmt", total),
+    ...(summaries.length > 1
+      ? [...credits, element("TentativeForeignTaxCreditAmt", total)]
+      : []),
     element("SmllrOfRtnTaxOrForeignTaxCrAmt", claimedCredit),
     element("ForeignTaxCreditAmt", claimedCredit),
   ];

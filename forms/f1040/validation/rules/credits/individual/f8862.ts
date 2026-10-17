@@ -4,8 +4,17 @@
  * 14 rules (13 implemented, 1 stubs)
  */
 
-import type { RuleDef } from "../../../../../../core/validation/types.ts";
+import type { RuleCheck, RuleDef } from "../../../../../../core/validation/types.ts";
 import { rule, alwaysPass, any, eqField, eqStr, filingStatusIs, hasValue, ifThen, noValue, } from "../../../../../../core/validation/mod.ts";
+
+// Part II line 6 answers 'QualifyingChildInd'; Part III's per-child one sits in CTCACTCChildInformationGrp and follows it.
+const partIIQualifyingChild = (answer: "Yes" | "No"): RuleCheck => (ctx) => {
+  const all = ctx.fieldArray("QualifyingChildInd");
+  const partIII = ctx.fieldArray("CTCACTCChildInformationGrp/QualifyingChildInd");
+  if (all.length <= partIII.length) return false;
+  const value = String(all[0]).toLowerCase();
+  return answer === "Yes" ? value === "true" || value === "yes" || value === "1" : value === "false" || value === "no" || value === "0";
+};
 
 export const F8862_RULES: readonly RuleDef[] = [
   rule(
@@ -54,21 +63,21 @@ export const F8862_RULES: readonly RuleDef[] = [
     "F8862-008",
     "reject",
     "missing_data",
-    ifThen(eqStr("QualifyingChildInd", "No"), hasValue("PrimaryNoQualifyingChildGrp")),
+    ifThen(partIIQualifyingChild("No"), hasValue("PrimaryNoQualifyingChildGrp")),
     "If Form 8862, 'QualifyingChildInd' has a choice of \"No\" indicated, then 'PrimaryNoQualifyingChildGrp' must have a value.",
   ),
   rule(
     "F8862-009",
     "reject",
     "missing_data",
-    ifThen(eqStr("QualifyingChildInd", "No"), ifThen(filingStatusIs(2), hasValue("SpouseNoQualifyingChildGrp"))),
+    ifThen(partIIQualifyingChild("No"), ifThen(filingStatusIs(2), hasValue("SpouseNoQualifyingChildGrp"))),
     "If Form 8862, 'QualifyingChildInd' has a choice of \"No\" indicated and the Filing Status of the return is \"Married filing jointly\" (element 'IndividualReturnFilingStatusCd' has the value 2), then 'SpouseNoQualifyingChildGrp' must have a value.",
   ),
   rule(
     "F8862-010",
     "reject",
     "missing_data",
-    ifThen(eqStr("QualifyingChildInd", "Yes"), hasValue("FilerWithQualifyingChildGrp")),
+    ifThen(partIIQualifyingChild("Yes"), hasValue("FilerWithQualifyingChildGrp")),
     "If Form 8862, 'QualifyingChildInd' is 'Yes' then, 'FilerWithQualifyingChildGrp' must have a value.",
   ),
   rule(

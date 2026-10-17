@@ -2,7 +2,10 @@
 import * as fs from "node:fs/promises";
 import { z } from "zod";
 import { f1040_2025 } from "../../forms/f1040/2025/index.ts";
-import { pdfReviewFixtures } from "../../forms/f1040/2025/pdf/review-fixtures.ts";
+import {
+  type PdfReviewFixture,
+  pdfReviewFixtures,
+} from "../../forms/f1040/2025/pdf/review-fixtures.ts";
 import { normalizeAllPending } from "../../forms/f1040/2025/return-processing/pending.ts";
 import { extractFilerIdentity } from "../../forms/f1040/mef/filer.ts";
 import {
@@ -18,6 +21,8 @@ const baselineSchema = z.object({
   expires: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "expected YYYY-MM-DD"),
   /** Sample return id → the findings it is known to have. */
   returns: z.record(z.array(z.string().min(1))),
+  /** Sample return id → why its findings are a correct block. */
+  reasons: z.record(z.string().min(1)).default({}),
 });
 export type Baseline = z.infer<typeof baselineSchema>;
 export type Findings = Readonly<Record<string, readonly string[]>>;
@@ -51,6 +56,10 @@ export function signed(
 /** What stops one signed sample return from filing, as sorted findings. */
 export async function returnFindings(
   inputs: Record<string, unknown>,
+  documents: Pick<
+    PdfReviewFixture,
+    "attachments" | "retainedSourceDocuments"
+  > = {},
 ): Promise<string[]> {
   const result = f1040_2025.executeReturn(signed(inputs));
   if (result.diagnostics.length > 0) {
@@ -63,7 +72,12 @@ export async function returnFindings(
   const filer = extractFilerIdentity(pending.f1040 ?? {});
   let xml: string;
   try {
-    xml = (await f1040_2025.prepareReturn(pending, filer, [])).bundle.xml;
+    xml = (await f1040_2025.prepareReturn(
+      pending,
+      filer,
+      documents.attachments ?? [],
+      documents.retainedSourceDocuments ?? [],
+    )).bundle.xml;
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
     return [`xml ${message.replace(/\s+/g, " ").trim().slice(0, 160)}`];
@@ -112,6 +126,16 @@ export function compareFindings(
   return problems;
 }
 
+/** Reasons stay with the returns that are still blocked. */
+export function keptReasons(
+  actual: Findings,
+  reasons: Baseline["reasons"],
+): Baseline["reasons"] {
+  return Object.fromEntries(
+    Object.entries(reasons).filter(([id]) => (actual[id] ?? []).length > 0),
+  );
+}
+
 export function summarize(actual: Findings): string {
   const ids = Object.keys(actual);
   const clean = ids.filter((id) => actual[id].length === 0).length;
@@ -134,11 +158,15 @@ async function main(args: readonly string[]): Promise<number> {
   for (const fixture of pdfReviewFixtures) {
     actual[fixture.id] = await returnFindings(
       fixture.inputs as Record<string, unknown>,
+      fixture,
     );
   }
   const json = args.includes("--json");
   if (!json) console.log(summarize(actual));
   if (args.includes("--update")) {
+    const previous = baselineSchema.safeParse(
+      JSON.parse(await fs.readFile(BASELINE_FILE, "utf8").catch(() => "{}")),
+    );
     const baseline: Baseline = {
       reason:
         "Known MeF blockers per sample return; a finding leaves when its fix lands",
@@ -146,6 +174,10 @@ async function main(args: readonly string[]): Promise<number> {
       expires: "2027-01-31",
       returns: Object.fromEntries(
         Object.entries(actual).filter(([, findings]) => findings.length > 0),
+      ),
+      reasons: keptReasons(
+        actual,
+        previous.success ? previous.data.reasons : {},
       ),
     };
     await fs.writeFile(BASELINE_FILE, `${JSON.stringify(baseline, null, 2)}\n`);

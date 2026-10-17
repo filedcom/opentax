@@ -179,11 +179,12 @@ export const F1040_RULES: readonly RuleDef[] = [
     "At least one of the following must have a non-zero value on Form 1040: 'TotalIncomeAmt' or 'AdjustedGrossIncomeAmt' or 'TaxAmt' or 'TotalTaxBeforeCrAndOthTaxesAmt' or 'TotalCreditsAmt' or 'TotalTaxAmt' or 'TotalPaymentsAmt' or 'TaxExemptInterestAmt' or 'QualifiedDividendsAmt' or 'IRADistributionsAmt' or 'PensionsAnnuitiesAmt' or 'SocSecBnftAmt'.",
   ),
   rule(
-    "F1040-066-09",
+    // 2026v1.0 text: 2025v3.0's -09 predates line 30 (P.L. 119-21 §70402), which the 2025v5.4 schema emits.
+    "F1040-066-10",
     "reject",
     "math_error",
-    eqSum("TotalPaymentsAmt", "WithholdingTaxAmt", "EstimatedTaxPaymentsAmt", "EarnedIncomeCreditAmt", "AdditionalChildTaxCreditAmt", "RefundableAmerOppCreditAmt", "form8689Amt", "ReconciledPremiumTaxCreditAmt", "RequestForExtensionAmt", "ExcessSocSecAndTier1RRTATaxAmt", "TotalFuelTaxCreditAmt", "OtherPaymentsAmt"),
-    "Form 1040, 'TotalPaymentsAmt' must be equal to the sum of the following: 'WithholdingTaxAmt' and 'EstimatedTaxPaymentsAmt' and 'EarnedIncomeCreditAmt' and 'AdditionalChildTaxCreditAmt' and 'RefundableAmerOppCreditAmt' and 'form8689Amt' and Schedule 3 (Form 1040), [ 'ReconciledPremiumTaxCreditAmt' and 'RequestForExtensionAmt' and 'ExcessSocSecAndTier1RRTATaxAmt' and 'TotalFuelTaxCreditAmt' and 'OtherPaymentsAmt' ].",
+    eqSum("TotalPaymentsAmt", "WithholdingTaxAmt", "EstimatedTaxPaymentsAmt", "EarnedIncomeCreditAmt", "AdditionalChildTaxCreditAmt", "RefundableAmerOppCreditAmt", "RefundableAdoptionCreditAmt", "ReconciledPremiumTaxCreditAmt", "RequestForExtensionAmt", "ExcessSocSecAndTier1RRTATaxAmt", "TotalFuelTaxCreditAmt", "OtherPaymentsAmt"),
+    "Form 1040, 'TotalPaymentsAmt' must be equal to the sum of the following: 'WithholdingTaxAmt' and 'EstimatedTaxPaymentsAmt' and 'EarnedIncomeCreditAmt' and 'AdditionalChildTaxCreditAmt' and 'RefundableAmerOppCreditAmt' and 'RefundableAdoptionCreditAmt' and Schedule 3 (Form 1040), [ 'ReconciledPremiumTaxCreditAmt' and 'RequestForExtensionAmt' and 'ExcessSocSecAndTier1RRTATaxAmt' and 'TotalFuelTaxCreditAmt' and 'OtherPaymentsAmt' ].",
   ),
   rule(
     "F1040-067-13",

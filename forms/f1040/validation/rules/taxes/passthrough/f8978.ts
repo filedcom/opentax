@@ -5,7 +5,7 @@
  */
 
 import type { RuleDef } from "../../../../../../core/validation/types.ts";
-import { rule, alwaysPass, eqSum, hasValue, ifThen, } from "../../../../../../core/validation/mod.ts";
+import { rule, alwaysPass, eqSumOfAll } from "../../../../../../core/validation/mod.ts";
 
 export const F8978_RULES: readonly RuleDef[] = [
   rule(
@@ -26,28 +26,29 @@ export const F8978_RULES: readonly RuleDef[] = [
     "F8978-030-01",
     "reject",
     "missing_document",
-    ifThen(hasValue("TotRptgYrTxIncreaseDecreaseAmt"), hasValue("ScheduleA_Form8978")),
+    // Each emitted Form 8978 references its own Schedule A copy.
+    (ctx) => ctx.formCount("form8978schedulea") >= ctx.formCount("form8978"),
     "If Form 8978 is present in the return, then Schedule A (Form 8978) must be attached to Form 8978.",
   ),
   rule(
     "F8978-031",
     "reject",
     "data_mismatch",
-    eqSum("TotRptgYrTxIncreaseDecreaseAmt", "TYAuditLiabilityCmptGrp/TaxIncreaseDecreaseAmt"),
+    eqSumOfAll("TotRptgYrTxIncreaseDecreaseAmt", "TYAuditLiabilityCmptGrp/TaxIncreaseDecreaseAmt"),
     "The sum of 'TaxIncreaseDecreaseAmt' in all 'TYAuditLiabilityCmptGrp' on Form 8978 must be equal to 'TotRptgYrTxIncreaseDecreaseAmt'.",
   ),
   rule(
     "F8978-032",
     "reject",
     "data_mismatch",
-    eqSum("TotalPenaltyAmt", "TYAuditLiabilityCmptGrp/PenaltyAmt"),
+    eqSumOfAll("TotalPenaltyAmt", "TYAuditLiabilityCmptGrp/PenaltyAmt"),
     "The sum of 'PenaltyAmt' in all 'TYAuditLiabilityCmptGrp' on Form 8978 must be equal to 'TotalPenaltyAmt'.",
   ),
   rule(
     "F8978-033",
     "reject",
     "data_mismatch",
-    eqSum("TotalInterestAmt", "TYAuditLiabilityCmptGrp/InterestAmt"),
+    eqSumOfAll("TotalInterestAmt", "TYAuditLiabilityCmptGrp/InterestAmt"),
     "The sum of 'InterestAmt' in all 'TYAuditLiabilityCmptGrp' on Form 8978 must be equal to 'TotalInterestAmt'.",
   ),
 ];

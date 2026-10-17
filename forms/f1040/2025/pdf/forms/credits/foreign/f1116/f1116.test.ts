@@ -861,9 +861,11 @@ test("Form 1116 PDF projects a complete one-country paid passive category", () =
     xml,
     "<GrossForeignTaxCreditAmt>50</GrossForeignTaxCreditAmt>",
   );
+  // One Form 1116: Part IV lines 25-32 stay empty (F1116-007-01).
+  assertEquals(xml.includes("<ForeignPassiveIncTaxCreditAmt>"), false);
   assertStringIncludes(
     xml,
-    "<ForeignPassiveIncTaxCreditAmt>50</ForeignPassiveIncTaxCreditAmt>",
+    "<SmllrOfRtnTaxOrForeignTaxCrAmt>50</SmllrOfRtnTaxOrForeignTaxCrAmt>",
   );
   assertEquals(form1116Pdf.includeWhen?.(projected, pending), true);
   assertEquals(

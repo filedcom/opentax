@@ -71,3 +71,19 @@ test("a ReturnHeader/ path reads only the header", () => {
   assertEquals(ctx.hasValue("ReturnHeader/AddressLine2Txt"), false);
   assertEquals(ctx.field("ReturnHeader/NameLine1Txt"), "ALEX<EXAMPLE");
 });
+
+test("a lower-case rule name reads an emitted attribute before engine facts", () => {
+  const ctx = createReturnContext(
+    { f1040: { childInterestAndDividendTaxAmt: 0, form8689Amt: 7 } },
+    { primarySSN: "111223333", filingStatus: 1 },
+    new Map(),
+    new Map([["f1040", 1]]),
+    parseEmittedReturn(
+      `<Return><ReturnData><IRS1040 documentId="a"><Form8814Ind childInterestAndDividendTaxAmt="135" referenceDocumentId="x">X</Form8814Ind></IRS1040></ReturnData></Return>`,
+    ),
+  );
+  assertEquals(ctx.num("childInterestAndDividendTaxAmt"), 135);
+  assertEquals(ctx.num("form8689Amt"), 7);
+  assertEquals(ctx.hasValue("referenceDocumentId"), false);
+  assertEquals(ctx.field("Form8814Ind"), "X");
+});

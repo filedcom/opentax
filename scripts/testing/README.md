@@ -57,7 +57,7 @@ fails until it is removed, so a baseline only shrinks.
 | `scripts/testing/structure-baseline.json`     | path, node type        | nodes outside the tree, registry and reach problems |
 | `benchmark/cases/baseline.json`               | `<form>/<year>/<case>` | cases whose inputs no longer fit their node schema  |
 | `scripts/testing/forms-failure-baseline.json` | test file, test name   | form tests known to fail                            |
-| `scripts/testing/mef-baseline.json`           | sample return id       | known calculation, XML and IRS-rule blockers        |
+| `scripts/testing/mef-baseline.json`           | sample return id       | known calculation, XML and IRS-rule blockers, and why each is a correct block |
 | `benchmark/cases/<form>/<year>/ledger.json`   | case, line             | every expected-value change, with its publication   |
 
 The ledger is history, not debt: it is append-only and never expires. An entry

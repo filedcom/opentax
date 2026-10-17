@@ -306,6 +306,14 @@ function buildIRS1040ScheduleH(
       (fields.federal_income_tax_withheld ?? 0) > 0
       ? element("HsldEmplFedIncmTaxWithheldInd", "true")
       : "",
+    // Line C is reached only after "No" on lines A and B.
+    fields.cash_wages_over_2025_limit === false &&
+      (fields.federal_income_tax_withheld ?? 0) === 0
+      ? boolean(
+        "HsldEmplPdCashWageOvrLmtQtrInd",
+        fields.cash_wages_over_quarter_limit,
+      )
+      : "",
     amount("SocialSecurityTaxCashWagesAmt", fields.ss_wages),
     amount("SocialSecurityTaxAmt", ssTax),
     amount("MedicareTaxCashWagesAmt", fields.medicare_wages),

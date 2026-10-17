@@ -125,7 +125,7 @@ test("plain W-2 MeF validation does not report missing 1040 totals or Form 8959"
       ExportRejectedError,
     );
     const falseRejects = error.entries.filter((entry) =>
-      entry.ruleNumber === "F1040-066-09" ||
+      entry.ruleNumber === "F1040-066-10" ||
       entry.ruleNumber.startsWith("F8959-")
     );
     assertEquals(falseRejects, []);

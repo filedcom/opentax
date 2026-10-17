@@ -105,7 +105,7 @@ export const F8962_RULES: readonly RuleDef[] = [
     "F8962-012",
     "reject",
     "math_error",
-    eqDiffFloorZero("AnnualMaxPremiumAssistanceAmt", "AnnualPremiumSLCSPAmt", "AnnualContributionAmt"),
+    eqDiffFloorZero("AnnualPTCCalculationGrp/AnnualMaxPremiumAssistanceAmt", "AnnualPTCCalculationGrp/AnnualPremiumSLCSPAmt", "AnnualPTCCalculationGrp/AnnualContributionAmt"),
     "Form 8962, Line 11D 'AnnualMaxPremiumAssistanceAmt' must be equal to Line 11B 'AnnualPremiumSLCSPAmt' minus (-) Line 11C 'AnnualContributionAmt'.",
   ),
   rule(
@@ -371,7 +371,8 @@ export const F8962_RULES: readonly RuleDef[] = [
     "F8962-057",
     "reject",
     "incorrect_data",
-    ifThen(any(hasNonZero("AnnualPremiumAmt"), hasNonZero("AnnualPremiumSLCSPAmt"), hasNonZero("AnnualContributionAmt"), hasNonZero("AnnualMaxPremiumAssistanceAmt"), hasNonZero("AnnualPremiumTaxCreditAllwAmt"), hasNonZero("AnnualAdvancedPTCAmt")), all(noValue("SharedPolicyAllocationGrp"), noValue("AltCalcForMarriagePrimaryGrp"), noValue("AltCalcForMarriageSpouseGrp"))),
+    // Line 11 leaves live in AnnualPTCCalculationGrp; a bare AnnualContributionAmt is line 8a.
+    ifThen(any(hasNonZero("AnnualPTCCalculationGrp/AnnualPremiumAmt"), hasNonZero("AnnualPTCCalculationGrp/AnnualPremiumSLCSPAmt"), hasNonZero("AnnualPTCCalculationGrp/AnnualContributionAmt"), hasNonZero("AnnualPTCCalculationGrp/AnnualMaxPremiumAssistanceAmt"), hasNonZero("AnnualPTCCalculationGrp/AnnualPremiumTaxCreditAllwAmt"), hasNonZero("AnnualPTCCalculationGrp/AnnualAdvancedPTCAmt")), all(noValue("SharedPolicyAllocationGrp"), noValue("AltCalcForMarriagePrimaryGrp"), noValue("AltCalcForMarriageSpouseGrp"))),
     "If Form 8962, Line 11A 'AnnualPremiumAmt' or Line 11B 'AnnualPremiumSLCSPAmt' or Line 11C 'AnnualContributionAmt' or Line 11D 'AnnualMaxPremiumAssistanceAmt' or Line 11E 'AnnualPremiumTaxCreditAllwAmt' or Line 11F 'AnnualAdvancedPTCAmt ' has a non-zero value, then the following must not have values: 'SharedPolicyAllocationGrp' and Line 35 'AltCalcForMarriagePrimaryGrp' and Line 36 'AltCalcForMarriageSpouseGrp'.",
   ),
   rule(
@@ -595,7 +596,7 @@ export const F8962_RULES: readonly RuleDef[] = [
     "F8962-321",
     "reject",
     "incorrect_data",
-    ifThen(hasValue("AnnualContributionAmt"), eqField("AnnualContributionAmt", "AnnualContributionAmt")),
+    ifThen(hasNonZero("AnnualPTCCalculationGrp/AnnualContributionAmt"), eqField("AnnualPTCCalculationGrp/AnnualContributionAmt", "AnnualContributionAmt")),
     "If Form 8962, Line 11C 'AnnualContributionAmt' has a non-zero value, then it must be equal to Line 8a 'AnnualContributionAmt'.",
   ),
   rule(

@@ -63,7 +63,13 @@ export function createReturnContext(
   // the rule's own document, then the header, then Form 1040, then any
   // document. Lower-case names are engine facts outside the XML.
   function emittedValues(xmlName: string): readonly string[] | undefined {
-    if (!emitted || !/^[A-Z]/.test(xmlName)) return undefined;
+    if (!emitted) return undefined;
+    if (!/^[A-Z]/.test(xmlName)) {
+      // An emitted attribute answers a lower-case name; otherwise it is an engine fact.
+      const attribute = ownDocument?.values.get(xmlName) ??
+        emitted.documents.flatMap((d) => d.values.get(xmlName) ?? []);
+      return attribute.length > 0 ? attribute : undefined;
+    }
     // "Schedule1/Leaf" names a leaf in another document; "ReturnHeader/Leaf"
     // names one in the header only.
     const [documentName, ...rest] = xmlName.split("/");

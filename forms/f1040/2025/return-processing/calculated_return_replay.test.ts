@@ -9,7 +9,6 @@ import { pdfReviewFixtures } from "../pdf/review-fixtures.ts";
 // preparation. Keep exclusions explicit so a newly guarded fixture cannot
 // silently shrink the replay audit.
 const guardedFixtureIds = new Set([
-  "single-8862-ctc-reinstatement",
   "single-withheld-w2g",
   "single-new-markets-business-credit",
   "single-long-name-new-markets-investment",
