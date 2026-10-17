@@ -1,3 +1,4 @@
+import { roundWholeDollars } from "../../../../../whole-dollars.ts";
 import { assertIndependentPatronReturn } from "../../../deductions/business/form8995a/form8995a_independent_patron_reconciliation.ts";
 import { inputSchema as patronInputSchema } from "../../../../../nodes/intermediate/forms/deductions/business/form8995a/index.ts";
 import { replayIndependentPatronSources } from "../../../../../nodes/inputs/deductions/business/qbi_patron/independent.ts";
@@ -163,6 +164,8 @@ export function assertIndependentOwnerHealthSource(
   const w2s = p.w2?.w2s as Array<Record<string, unknown>> | undefined;
   const wages = w2s?.reduce((n, r) => n + Number(r.box1_wages), 0) ?? 0;
   const profit = owned.source.businesses.reduce((n, b) => n + b.net_profit, 0);
+  // Line 9 and AGI add the whole-dollar line 1z, not the source wage cents.
+  const filedWages = roundWholeDollars(wages);
   if (
     !q ||
     independentHealthCanonical(q.joint_owner_health_plans_source) !==
@@ -184,12 +187,12 @@ export function assertIndependentOwnerHealthSource(
     Number(p.schedule1?.line16_sep_simple ?? 0) !== retirement ||
     p.schedule1?.line10_total_additional_income !== profit ||
     f.line8_additional_income !== profit ||
-    f.line9_total_income !== wages + profit ||
+    f.line9_total_income !== filedWages + profit ||
     p.schedule1?.line26_total_adjustments !==
       owned.deduction + result.deduction + retirement ||
     f.line10_adjustments !== owned.deduction + result.deduction + retirement ||
     f.line11_agi !==
-      wages + profit - owned.deduction - result.deduction - retirement ||
+      filedWages + profit - owned.deduction - result.deduction - retirement ||
     Number(f.line1a_wages ?? 0) !== wages
   ) {
     throw new Error(

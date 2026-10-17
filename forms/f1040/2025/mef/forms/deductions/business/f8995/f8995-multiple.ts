@@ -1,3 +1,4 @@
+import { roundWholeDollars } from "../../../../../../whole-dollars.ts";
 import {
   assertMultiBusinessInvestmentSources,
   assertMultiBusinessInvestmentTax,
@@ -89,6 +90,13 @@ export function assertMultipleScheduleC8995(
     Math.abs(actual - expected) < 1e-8;
   const same = (a: unknown, b: unknown) =>
     JSON.stringify(a) === JSON.stringify(b);
+  const filedIncome = [
+    wages,
+    profit,
+    investment.interest,
+    investment.ordinary,
+    investment.returnCapital,
+  ].reduce((sum, value) => sum + roundWholeDollars(value), 0);
   if (
     !rows || !retained || rows.length !== items.length ||
     retained.length !== items.length ||
@@ -160,7 +168,8 @@ export function assertMultipleScheduleC8995(
       business.proprietor_recipient !== items[index].proprietor_recipient ||
       business.line31_net_profit !== amounts.profits[index]
     ) ||
-    !seSource || seSource.net_profit_schedule_c !== (seExpected ? profit : 0) ||
+    // Schedule SE receives the signed Schedule C total even below line 4c.
+    !seSource || seSource.net_profit_schedule_c !== profit ||
     number(seSource.net_profit_schedule_f) !== 0 ||
     seSource.farm_optional_method_elected !== false ||
     seSource.line13_deduction !== deduction ||
@@ -180,17 +189,10 @@ export function assertMultipleScheduleC8995(
     number(f1040.line1a_wages) !== wages ||
     number(f1040.line1z_total_wages) !== wages ||
     f1040.line8_additional_income !== profit ||
-    !sameAmount(
-      f1040.line9_total_income,
-      wages + profit + investment.interest + investment.ordinary +
-        investment.returnCapital,
-    ) ||
+    // Line 9 adds the whole-dollar income lines.
+    !sameAmount(f1040.line9_total_income, filedIncome) ||
     number(f1040.line10_adjustments) !== deduction ||
-    !sameAmount(
-      f1040.line11_agi,
-      wages + profit + investment.interest + investment.ordinary +
-        investment.returnCapital - deduction,
-    ) ||
+    !sameAmount(f1040.line11_agi, filedIncome - deduction) ||
     [
       "line13b_additional_deductions",
     ].some((key) => number(f1040[key]) !== 0) ||

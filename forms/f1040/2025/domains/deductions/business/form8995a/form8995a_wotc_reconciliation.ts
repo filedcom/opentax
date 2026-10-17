@@ -1,3 +1,4 @@
+import { roundWholeDollars } from "../../../../../whole-dollars.ts";
 import { assertLossWotcSources } from "./form8995a_loss_wotc_source.ts";
 import { assertQualifiedTipQbiSource } from "../form8995/form8995_qualified_tip_source.ts";
 import { assertOwnedScheduleSE } from "../../../taxes/self-employment/schedule-se/schedule-se-owner-source.ts";
@@ -226,7 +227,10 @@ export function assertForm8995AWotcReturn(
   const wagesTotal = wageRows.reduce((sum, row) => sum + row.box1_wages, 0);
   if (
     joint && (!owned || !isDeepStrictEqual(joint, owned.source) ||
-      Math.abs(wagesTotal - (source.joint_wages_total ?? 0)) > 1e-7 ||
+      // The joint source carries the whole-dollar line 1z.
+      Math.abs(
+          roundWholeDollars(wagesTotal) - (source.joint_wages_total ?? 0),
+        ) > 1e-7 ||
       pending.general?.filing_status !== "mfj" ||
       sources.some((s) =>
         (s.business.source_schedule_c.proprietor_recipient === "S"
@@ -268,13 +272,16 @@ export function assertForm8995AWotcReturn(
     f1040?.line8_additional_income !== profit ||
     (joint &&
       (f1040?.line1a_wages !== wagesTotal ||
-        f1040?.line1z_total_wages !== wagesTotal)) ||
+        f1040?.line1z_total_wages !== roundWholeDollars(wagesTotal))) ||
     f1040?.line9_total_income !==
-      (joint ? profit + wagesTotal : Math.round(profit + wagesTotal)) ||
+      (joint
+        ? roundWholeDollars(profit) + roundWholeDollars(wagesTotal)
+        : Math.round(profit + wagesTotal)) ||
     f1040?.line10_adjustments !== seLines.line13 ||
     f1040?.line11_agi !==
       (joint
-        ? profit + wagesTotal - seLines.line13
+        ? roundWholeDollars(profit) + roundWholeDollars(wagesTotal) -
+          seLines.line13
         : Math.round(profit + wagesTotal - seLines.line13)) ||
     input.taxable_income !==
       Math.max(
