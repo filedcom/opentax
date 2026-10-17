@@ -16,7 +16,7 @@ import expected from "../../../../pdf/reviews/taxes/retirement/form4972/review-4
 
 const dir = ".state/research/2026-10-06-form4972-fractional-share";
 const xsd =
-  ".state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd";
+  "irs/mef/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd";
 test("fractional beneficiary cents retain full issued sources and independently calculated IRS worksheets in complete XML/PDF", async () => {
   await fs.mkdir(dir, { recursive: true });
   for (const spec of fractionalBeneficiaryCases) {

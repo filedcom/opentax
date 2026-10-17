@@ -6,11 +6,11 @@ import { buildForm8820Document } from "./f8820.ts";
 import { form8820ControlledGroupStatement } from "./f8820_controlled_group_statement.ts";
 
 const XSD_PATH = new URL(
-  "../../../../../../../.state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/CorporateIncomeTax/Common/IRS8820/IRS8820.xsd",
+  "../../../../../../../irs/mef/2025v5.4/CorporateIncomeTax/Common/IRS8820/IRS8820.xsd",
   import.meta.url,
 ).pathname;
 const STATEMENT_XSD_PATH = new URL(
-  "../../../../../../../.state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/CorporateIncomeTax/Common/Dependencies/ControlledGroupMembersStatement.xsd",
+  "../../../../../../../irs/mef/2025v5.4/CorporateIncomeTax/Common/Dependencies/ControlledGroupMembersStatement.xsd",
   import.meta.url,
 ).pathname;
 

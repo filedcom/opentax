@@ -8,7 +8,7 @@ import { pdfReviewFixtures } from "../../../../pdf/review-fixtures.ts";
 import { withReviewedForm8874RecaptureEvidence } from "../../../../../nodes/inputs/credits/business/f8874/recapture_fixture.ts";
 
 const schema =
-  ".state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd";
+  "irs/mef/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd";
 async function validate(xml: string) {
   const p = new sys.Command("xmllint", {
     args: ["--noout", "--schema", schema, "-"],

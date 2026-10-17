@@ -552,7 +552,7 @@ test("schedule_b: normalized graph output keeps every source interest row", () =
 
 test("schedule_b: source interest detail follows the IRS 2025 schema", async () => {
   const xsd = new URL(
-    "../../../../../../../.state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/IndividualIncomeTax/Common/IRS1040ScheduleB/IRS1040ScheduleB.xsd",
+    "../../../../../../../irs/mef/2025v5.4/IndividualIncomeTax/Common/IRS1040ScheduleB/IRS1040ScheduleB.xsd",
     import.meta.url,
   ).pathname;
   try {

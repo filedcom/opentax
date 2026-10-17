@@ -182,7 +182,7 @@ for (const kind of Object.keys(expected) as DepreciationCase[]) {
       args: [
         "--noout",
         "--schema",
-        "/Users/atul/projects/opentax/.state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd",
+        "/Users/atul/projects/opentax/irs/mef/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd",
         "-",
       ],
       stdin: "piped",
@@ -412,7 +412,7 @@ test("2025 active owned depreciation and four sourced reductions bind actual QBI
     args: [
       "--noout",
       "--schema",
-      "/Users/atul/projects/opentax/.state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd",
+      "/Users/atul/projects/opentax/irs/mef/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd",
       "-",
     ],
     stdin: "piped",

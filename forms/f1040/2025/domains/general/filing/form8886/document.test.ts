@@ -12,7 +12,7 @@ import { disclosureFixture } from "./source.fixture.ts";
 import { ReportableCategory, TaxBenefit } from "./source.ts";
 
 const schema = new URL(
-  "../../../../../../../.state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/CorporateIncomeTax/Common/IRS8886/IRS8886.xsd",
+  "../../../../../../../irs/mef/2025v5.4/CorporateIncomeTax/Common/IRS8886/IRS8886.xsd",
   import.meta.url,
 );
 

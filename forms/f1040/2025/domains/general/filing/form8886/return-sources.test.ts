@@ -919,7 +919,7 @@ test("Form 8886 real MeF bundle binds source, global continuations, printable co
   assertEquals(handoff.artifact.xml_sha256, final.metadata.xml_sha256);
 
   const schema = new URL(
-    "../../../../../../../.state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd",
+    "../../../../../../../irs/mef/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd",
     import.meta.url,
   );
   const path = await sys.makeTempFile({ suffix: ".xml" });
@@ -1172,7 +1172,7 @@ test("Form 8886 public large-loss route covers every owned broker and direct sal
   try {
     await fs.writeFile(path, bundle.xml);
     const schema = new URL(
-      "../../../../../../../.state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd",
+      "../../../../../../../irs/mef/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd",
       import.meta.url,
     );
     const checked = await new sys.Command("xmllint", {

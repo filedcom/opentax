@@ -14,7 +14,7 @@ import {
 } from "./form7203_overflow_debt.fixture.ts";
 
 const xsd =
-  ".state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd";
+  "irs/mef/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd";
 for (
   const c of [...overflowDebtCases, { id: "independent_owners", allowed: 7600 }]
 ) {

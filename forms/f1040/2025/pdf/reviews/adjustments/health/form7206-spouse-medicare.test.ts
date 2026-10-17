@@ -19,7 +19,7 @@ import { form8995 } from "../../../../mef/forms/deductions/business/f8995/f8995.
 import { form8995Pdf } from "../../../forms/deductions/business/f8995/f8995.ts";
 import { form8995 as qbiNode } from "../../../../../nodes/intermediate/forms/deductions/business/form8995/index.ts";
 const xsd = new URL(
-  "../../../../../../../.state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd",
+  "../../../../../../../irs/mef/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd",
   import.meta.url,
 ).pathname;
 for (

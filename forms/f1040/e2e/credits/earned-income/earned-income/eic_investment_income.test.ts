@@ -335,7 +335,7 @@ test("EIC Worksheet 1 counts reviewed partnership and S-corporation K-1 income",
     true,
   );
   const xsd = new URL(
-    "../../../../../../.state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd",
+    "../../../../../../irs/mef/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd",
     import.meta.url,
   ).pathname;
   const xmlPath = await sys.makeTempFile({ suffix: ".xml" });
@@ -502,7 +502,7 @@ test("EIC counts reviewed passive K-1 Form 4797 line 10 at the 2025 limit", asyn
     true,
   );
   const xsd = new URL(
-    "../../../../../../.state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd",
+    "../../../../../../irs/mef/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd",
     import.meta.url,
   ).pathname;
   const xmlPath = await sys.makeTempFile({ suffix: ".xml" });
@@ -600,7 +600,7 @@ test("EIC reconciles Form 4835 with rental and three K-1 sources", async () => {
     true,
   );
   const xsd = new URL(
-    "../../../../../../.state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd",
+    "../../../../../../irs/mef/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd",
     import.meta.url,
   ).pathname;
   const xmlPath = await sys.makeTempFile({ suffix: ".xml" });
@@ -728,7 +728,7 @@ test("EIC nets an allowed Form 4835 farm loss against passive rental income", as
     true,
   );
   const xsd = new URL(
-    "../../../../../../.state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd",
+    "../../../../../../irs/mef/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd",
     import.meta.url,
   ).pathname;
   const xmlPath = await sys.makeTempFile({ suffix: ".xml" });
@@ -808,7 +808,7 @@ test("EIC allocates two Form 4835 farm losses beside passive rent", async () => 
     2,
   );
   const xsd = new URL(
-    "../../../../../../.state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd",
+    "../../../../../../irs/mef/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd",
     import.meta.url,
   ).pathname;
   const xmlPath = await sys.makeTempFile({ suffix: ".xml" });
@@ -992,7 +992,7 @@ test("active rental special allowance nets passive farm income", async () => {
     true,
   );
   const xsd = new URL(
-    "../../../../../../.state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd",
+    "../../../../../../irs/mef/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd",
     import.meta.url,
   ).pathname;
   const xmlPath = await sys.makeTempFile({ suffix: ".xml" });
@@ -1044,7 +1044,7 @@ test("EIC reconciles rental, partnership, S-corporation, and trust income", asyn
     true,
   );
   const xsd = new URL(
-    "../../../../../../.state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd",
+    "../../../../../../irs/mef/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd",
     import.meta.url,
   ).pathname;
   const xmlPath = await sys.makeTempFile({ suffix: ".xml" });
@@ -1148,7 +1148,7 @@ test("three passive rentals print Schedule E property columns A through C", asyn
     true,
   );
   const xsd = new URL(
-    "../../../../../../.state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd",
+    "../../../../../../irs/mef/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd",
     import.meta.url,
   ).pathname;
   const xmlPath = await sys.makeTempFile({ suffix: ".xml" });
@@ -1223,7 +1223,7 @@ test("seven passive rentals print three Schedule E Part I copies", async () => {
     true,
   );
   const xsd = new URL(
-    "../../../../../../.state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd",
+    "../../../../../../irs/mef/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd",
     import.meta.url,
   ).pathname;
   const xmlPath = await sys.makeTempFile({ suffix: ".xml" });
@@ -1312,7 +1312,7 @@ test("Schedule E type 8 and line 19 details follow their property sources", asyn
     true,
   );
   const xsd = new URL(
-    "../../../../../../.state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd",
+    "../../../../../../irs/mef/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd",
     import.meta.url,
   ).pathname;
   const xmlPath = await sys.makeTempFile({ suffix: ".xml" });
@@ -1404,7 +1404,7 @@ test("Schedule E long type 8 description travels with a full return", async () =
     true,
   );
   const xsd = new URL(
-    "../../../../../../.state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd",
+    "../../../../../../irs/mef/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd",
     import.meta.url,
   ).pathname;
   const xmlPath = await sys.makeTempFile({ suffix: ".xml" });
@@ -1451,7 +1451,7 @@ test("EIC reconciles passive K-1s with a Schedule E property on both PDF pages",
     true,
   );
   const xsd = new URL(
-    "../../../../../../.state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd",
+    "../../../../../../irs/mef/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd",
     import.meta.url,
   ).pathname;
   const xmlPath = await sys.makeTempFile({ suffix: ".xml" });
@@ -1492,7 +1492,7 @@ test("EIC Worksheet 1 counts trust K-1 passive Schedule E income", async () => {
   const filer = extractFilerIdentity(atLimit.pending.f1040);
   const xml = buildMefXml(buildPending(atLimit.pending), filer);
   const xsd = new URL(
-    "../../../../../../.state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd",
+    "../../../../../../irs/mef/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd",
     import.meta.url,
   ).pathname;
   const xmlPath = await sys.makeTempFile({ suffix: ".xml" });
@@ -1544,7 +1544,7 @@ test("EIC Worksheet 1 counts passive Form 4797 Part II ordinary gains", async ()
   const filer = extractFilerIdentity(atLimit.pending.f1040);
   const xml = buildMefXml(buildPending(atLimit.pending), filer);
   const xsd = new URL(
-    "../../../../../../.state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd",
+    "../../../../../../irs/mef/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd",
     import.meta.url,
   ).pathname;
   const xmlPath = await sys.makeTempFile({ suffix: ".xml" });
@@ -1603,7 +1603,7 @@ test("EIC Worksheet 1 counts passive Schedule E rental profit at the investment 
   const filer = extractFilerIdentity(atLimit.pending.f1040);
   const xml = buildMefXml(buildPending(atLimit.pending), filer);
   const xsd = new URL(
-    "../../../../../../.state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd",
+    "../../../../../../irs/mef/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd",
     import.meta.url,
   ).pathname;
   const xmlPath = await sys.makeTempFile({ suffix: ".xml" });
@@ -1755,7 +1755,7 @@ test("EIC investment limit follows filed interest and dividends through the full
   const filer = extractFilerIdentity(atLimit.pending.f1040);
   const xml = buildMefXml(buildPending(atLimit.pending), filer);
   const xsd = new URL(
-    "../../../../../../.state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd",
+    "../../../../../../irs/mef/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd",
     import.meta.url,
   ).pathname;
   const xmlPath = await sys.makeTempFile({ suffix: ".xml" });
@@ -1824,7 +1824,7 @@ test("EIC investment limit includes capital distributions but subtracts Form 479
   const filer = extractFilerIdentity(atLimit.pending.f1040);
   const xml = buildMefXml(buildPending(atLimit.pending), filer);
   const xsd = new URL(
-    "../../../../../../.state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd",
+    "../../../../../../irs/mef/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd",
     import.meta.url,
   ).pathname;
   const xmlPath = await sys.makeTempFile({ suffix: ".xml" });
@@ -1896,7 +1896,7 @@ test("EIC investment limit includes Form 8814 tax-exempt interest and line 12 af
   const filer = extractFilerIdentity(atLimit.pending.f1040);
   const xml = buildMefXml(buildPending(atLimit.pending), filer);
   const xsd = new URL(
-    "../../../../../../.state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd",
+    "../../../../../../irs/mef/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd",
     import.meta.url,
   ).pathname;
   const xmlPath = await sys.makeTempFile({ suffix: ".xml" });
@@ -1991,7 +1991,7 @@ test("EIC investment limit nets filed Schedule E royalties and Schedule 1 person
   );
   const xml = buildMefXml(buildPending(atLimit.pending), filer);
   const xsd = new URL(
-    "../../../../../../.state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd",
+    "../../../../../../irs/mef/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd",
     import.meta.url,
   ).pathname;
   const xmlPath = await sys.makeTempFile({ suffix: ".xml" });

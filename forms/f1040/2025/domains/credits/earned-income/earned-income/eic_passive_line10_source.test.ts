@@ -21,7 +21,7 @@ import { form4797 } from "../../../../mef/forms/income/business/f4797.ts";
 import { form4797Pdf } from "../../../../pdf/forms/income/business/f4797.ts";
 import { irs1040Pdf } from "../../../../pdf/forms/general/return-assembly/f1040.ts";
 const xsd = new URL(
-  "../../../../../../../.state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd",
+  "../../../../../../../irs/mef/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd",
   import.meta.url,
 ).pathname;
 test("current issued passive ordinary K1 gains release owned farm PAL with filed character and QBI", async () => {

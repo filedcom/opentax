@@ -26,7 +26,7 @@ import { f1099r } from "../../../../../nodes/inputs/income/retirement/f1099r/ind
 
 const root = ".state/research/form4852-source-margin-corrected";
 const schema =
-  ".state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd";
+  "irs/mef/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd";
 const ordinaryW2 = {
   employer_name: "Other Payroll Employer",
   employer_ein: "22-3456789",

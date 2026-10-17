@@ -113,6 +113,10 @@ function extractPreparedBy(
   return {
     selfPrepared: selfPrepared,
     ptin,
+    personName: str(f1040["preparer_name"]),
+    selfEmployed: bool(f1040["preparer_self_employed"]),
+    signatureDate: str(f1040["preparer_signature_date"]),
+    phone: str(f1040["preparer_phone"]),
     firmName,
     firmEin,
     firmAddressLine1: str(f1040["preparer_firm_address_line1"]),
@@ -196,6 +200,7 @@ export function extractFilerIdentity(
     priorYearAgi: num(f1040["taxpayer_prior_year_agi"]),
     priorYearPin: str(f1040["taxpayer_prior_year_pin"]),
     birthDate: str(f1040["taxpayer_dob"]),
+    inCareOf: str(f1040["address_in_care_of"]),
     spouse: extractSpouse(f1040),
     pinEnteredBy: PINEnteredBy.Taxpayer,
     bankAccount: extractBankAccount(f1040),

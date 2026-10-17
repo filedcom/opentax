@@ -24,7 +24,7 @@ import { form8911ScheduleAPdf } from "../../../forms/credits/business/f8911_sche
 import { w2gPdf } from "../../../forms/income/gambling/w2g.ts";
 
 const xsd = new URL(
-  "../../../../../../../.state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd",
+  "../../../../../../../irs/mef/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd",
   import.meta.url,
 ).pathname;
 const xsdAvailable = (() => {
@@ -139,7 +139,7 @@ for (const fixture of pdfReviewFixtures) {
         assertThrows(
           () => buildMefXml(buildPending(result.pending), fixture.filer),
           Error,
-          "executor-owned authentication of prior IRS notice issuance and contents",
+          "retained prior IRS notice copy with matching SHA-256",
         );
         return;
       }

@@ -22,7 +22,7 @@ import { form8995aPdf } from "../../../../pdf/forms/deductions/business/f8995a.t
 const evidenceDir = process.env.SCHEDULE_J_FISHING_EVIDENCE_DIR ??
   ".state/research/schedulej-fishing-preferential-source";
 const xsd = process.env.SCHEDULE_J_FISHING_XSD_PATH ??
-  ".state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd";
+  "irs/mef/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd";
 
 async function packet(id: string, input: Record<string, unknown>) {
   const result = f1040_2025.executeReturn(input);

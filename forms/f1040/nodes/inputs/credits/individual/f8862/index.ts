@@ -61,6 +61,8 @@ export const priorCreditDisallowanceReviewSchema = z.object({
   disallowed_year: z.number().int().min(2016).max(2024),
   notice_reference: z.string().trim().min(1),
   notice_copy_reference: z.string().trim().min(1),
+  // SHA-256 of the retained notice copy; export compares it to the bytes.
+  notice_copy_sha256: z.string().regex(/^[a-f0-9]{64}$/).optional(),
   taxpayer_ssn: z.string().regex(/^\d{3}-?\d{2}-?\d{4}$/),
   nonclerical_disallowance_verified: z.literal(true),
   no_active_ban_verified: z.literal(true),

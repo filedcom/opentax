@@ -31,7 +31,8 @@ CLI gates when the CLI loads it, and bench compared with the merge base (both
 results cached by content). CI still runs every gate in full.
 
 The layout the checks enforce, and which check owns each rule, is in
-`docs/architecture/STRUCTURE.md`.
+`docs/architecture/STRUCTURE.md`. IRS schemas and business rules live in
+`irs/`, which is never committed; `irs/README.md` lists every file.
 
 ## Nodes
 

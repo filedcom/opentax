@@ -91,7 +91,7 @@ test("structured Form 2555 exclusion joins Schedule 1-A senior MAGI and Form 104
     new Set(["f1040", "schedule1", "schedule1a", "form2555"]),
   );
   const schema = new URL(
-    "../../../../../.state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd",
+    "../../../../../irs/mef/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd",
     import.meta.url,
   ).pathname;
   try {
@@ -202,7 +202,7 @@ test("structured Form 2555 exclusion joins vehicle interest, senior deduction, n
     "<TotalAdditionalDeductionsAmt>6800</TotalAdditionalDeductionsAmt>",
   );
   const schema = new URL(
-    "../../../../../.state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd",
+    "../../../../../irs/mef/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd",
     import.meta.url,
   ).pathname;
   const path = await sys.makeTempFile({ suffix: ".xml" });

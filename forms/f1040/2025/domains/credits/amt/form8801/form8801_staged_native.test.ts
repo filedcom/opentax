@@ -15,7 +15,7 @@ import {
 import { assertAttachmentCoverage } from "../../../../return-processing/attachment-coverage.ts";
 
 const schema = new URL(
-  "../../../../../../../.state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/IndividualIncomeTax/Common/IRS8801/IRS8801.xsd",
+  "../../../../../../../irs/mef/2025v5.4/IndividualIncomeTax/Common/IRS8801/IRS8801.xsd",
   import.meta.url,
 ).pathname;
 let schemaAvailable = false;

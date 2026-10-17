@@ -6,6 +6,8 @@ export type Form3800CurrentNonpassiveAmount = {
   readonly line: Form3800CreditLine;
   readonly grossCredit: number;
   readonly transferOutCredit: number;
+  /** IRC §6418 credit purchased as transferee, column (f) positive. */
+  readonly transferInCredit?: number;
   readonly appliedCredit: number;
 };
 
@@ -20,6 +22,7 @@ export type Form3800CurrentCreditAmount = {
   readonly line: Form3800CreditLine;
   readonly nonpassiveCredit: number;
   readonly transferOutCredit: number;
+  readonly transferInCredit?: number;
   readonly passiveBeforeLimit: number;
   readonly passiveAfterLimit: number;
   readonly totalCredit: number;
@@ -116,11 +119,14 @@ export function combineForm3800CurrentCreditAmounts(
       !isCentMoney(row.grossCredit) ||
       !isCentMoney(row.transferOutCredit) ||
       !isCentMoney(row.appliedCredit) ||
+      !isCentMoney(row.transferInCredit ?? 0) ||
       row.grossCredit < 0 || row.transferOutCredit < 0 ||
+      (row.transferInCredit ?? 0) < 0 ||
       cents(row.transferOutCredit) > cents(row.grossCredit) ||
       row.appliedCredit < 0 ||
       cents(row.appliedCredit) >
-        cents(row.grossCredit) - cents(row.transferOutCredit) ||
+        cents(row.grossCredit) - cents(row.transferOutCredit) +
+          cents(row.transferInCredit ?? 0) ||
       seenNonpassive.has(row.line)
     ) {
       throw new Error("Form 3800 current-year nonpassive row is invalid");
@@ -130,10 +136,12 @@ export function combineForm3800CurrentCreditAmounts(
       line: row.line,
       nonpassiveCredit: row.grossCredit,
       transferOutCredit: row.transferOutCredit,
+      ...(row.transferInCredit ? { transferInCredit: row.transferInCredit } : {}),
       passiveBeforeLimit: 0,
       passiveAfterLimit: 0,
       totalCredit: dollars(
-        cents(row.grossCredit) - cents(row.transferOutCredit),
+        cents(row.grossCredit) - cents(row.transferOutCredit) +
+          cents(row.transferInCredit ?? 0),
       ),
       appliedCredit: row.appliedCredit,
     });
@@ -156,10 +164,11 @@ export function combineForm3800CurrentCreditAmounts(
     const prior = byLine.get(row.line);
     const nonpassiveCredit = prior?.nonpassiveCredit ?? 0;
     const transferOutCredit = prior?.transferOutCredit ?? 0;
+    const transferInCredit = prior?.transferInCredit ?? 0;
     const appliedCents = cents(prior?.appliedCredit ?? 0) +
       cents(row.appliedCredit);
     const totalCents = cents(nonpassiveCredit) - cents(transferOutCredit) +
-      cents(row.afterPassiveLimit);
+      cents(transferInCredit) + cents(row.afterPassiveLimit);
     if (
       !Number.isSafeInteger(totalCents) ||
       !Number.isSafeInteger(appliedCents) || appliedCents > totalCents
@@ -170,6 +179,7 @@ export function combineForm3800CurrentCreditAmounts(
       line: row.line,
       nonpassiveCredit,
       transferOutCredit,
+      ...(transferInCredit ? { transferInCredit } : {}),
       passiveBeforeLimit: row.beforePassiveLimit,
       passiveAfterLimit: row.afterPassiveLimit,
       totalCredit: dollars(totalCents),
@@ -206,6 +216,7 @@ export function buildForm3800CurrentCreditRowXml(
     cents(row.transferOutCredit) > cents(row.nonpassiveCredit) ||
     row.passiveBeforeLimit < 0 || row.passiveAfterLimit < 0 ||
     row.passiveAfterLimit > row.passiveBeforeLimit ||
+    (row.transferInCredit ?? 0) !== 0 ||
     cents(row.totalCredit) !== cents(row.nonpassiveCredit) -
         cents(row.transferOutCredit) + cents(row.passiveAfterLimit) ||
     row.appliedCredit < 0 ||

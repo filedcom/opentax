@@ -15,7 +15,7 @@ import { irs1040Pdf } from "../../../forms/general/return-assembly/f1040.ts";
 import { form8615 } from "../../../../mef/forms/taxes/investments/f8615.ts";
 import { form8615Pdf } from "../../../forms/taxes/investments/f8615.ts";
 const xsd = new URL(
-  "../../../../../../../.state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd",
+  "../../../../../../../irs/mef/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd",
   import.meta.url,
 ).pathname;
 const evidence = "/tmp/opentax-f8863-parent-preferential-evidence";

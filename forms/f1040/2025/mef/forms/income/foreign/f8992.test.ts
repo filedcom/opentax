@@ -10,7 +10,7 @@ import { form8992 } from "./f8992.ts";
 import { form8992ScheduleA } from "./f8992_schedule_a.ts";
 
 const sharedSchemaRoot = new URL(
-  "../../../../../../../.state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/Shared/",
+  "../../../../../../../irs/mef/2025v5.4/Shared/",
   import.meta.url,
 ).pathname;
 let schemaAvailable = false;

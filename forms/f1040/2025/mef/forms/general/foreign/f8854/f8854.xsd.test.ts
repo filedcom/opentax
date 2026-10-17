@@ -25,7 +25,7 @@ import { annualInputSchema } from "../../../../../../nodes/inputs/general/foreig
 import { ReportedFormCode } from "../../../../../../nodes/inputs/general/foreign/f8854/section-c.ts";
 
 const XSD_PATH = new URL(
-  "../../../../../../../../.state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/IndividualIncomeTax/Common/IRS8854/IRS8854.xsd",
+  "../../../../../../../../irs/mef/2025v5.4/IndividualIncomeTax/Common/IRS8854/IRS8854.xsd",
   import.meta.url,
 ).pathname;
 
@@ -711,7 +711,7 @@ test.skipIf(!xsdAvailable)("XSD: noncovered initial Form 8854 in a full Form 104
     f8854: noncoveredInput,
   }, filer);
   const xsd = new URL(
-    "../../../../../../../../.state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd",
+    "../../../../../../../../irs/mef/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd",
     import.meta.url,
   ).pathname;
   const path = await sys.makeTempFile({ suffix: ".xml" });
@@ -734,7 +734,7 @@ test.skipIf(!xsdAvailable)("XSD: noncovered Form 8854 with linked native stateme
     f8854: statementInput,
   }, filer);
   const xsd = new URL(
-    "../../../../../../../../.state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd",
+    "../../../../../../../../irs/mef/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd",
     import.meta.url,
   ).pathname;
   const path = await sys.makeTempFile({ suffix: ".xml" });
@@ -843,7 +843,7 @@ test.skipIf(!xsdAvailable)("XSD: covered initial Form 8854 with filed Form 8949 
     schedule_d: { transaction: coveredCapitalTransaction },
   }, filer);
   const xsd = new URL(
-    "../../../../../../../../.state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd",
+    "../../../../../../../../irs/mef/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd",
     import.meta.url,
   ).pathname;
   const path = await sys.makeTempFile({ suffix: ".xml" });
@@ -868,7 +868,7 @@ test.skipIf(!xsdAvailable)("XSD: covered Form 8854 Section D bundle with three l
     schedule_d: { transaction: coveredCapitalTransaction },
   }, { filer, attachments: await deferralAttachments() });
   const xsd = new URL(
-    "../../../../../../../../.state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd",
+    "../../../../../../../../irs/mef/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd",
     import.meta.url,
   ).pathname;
   const path = await sys.makeTempFile({ suffix: ".xml" });
@@ -891,7 +891,7 @@ test.skipIf(!xsdAvailable)("XSD: annual no-activity Form 8854 in a full Form 104
     f8854_annual: annualNoActivityInput,
   }, filer);
   const xsd = new URL(
-    "../../../../../../../../.state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd",
+    "../../../../../../../../irs/mef/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd",
     import.meta.url,
   ).pathname;
   const path = await sys.makeTempFile({ suffix: ".xml" });
@@ -916,7 +916,7 @@ test.skipIf(!xsdAvailable)("XSD: annual Form 8854 capital disposition with linke
     schedule_d: { transaction: annualCapitalTransaction },
   }, { filer, attachments: [await annualPaymentAttachment()] });
   const xsd = new URL(
-    "../../../../../../../../.state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd",
+    "../../../../../../../../irs/mef/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd",
     import.meta.url,
   ).pathname;
   const path = await sys.makeTempFile({ suffix: ".xml" });

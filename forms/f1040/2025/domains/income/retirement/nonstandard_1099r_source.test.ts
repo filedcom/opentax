@@ -77,7 +77,7 @@ test("altered 1099-R source reaches nonstandard TY2025 native and PDF return", a
     "<PensionsAnnuitiesAmt>20000</PensionsAnnuitiesAmt>",
   );
   const xsd = new URL(
-    "../../../../../../.state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd",
+    "../../../../../../irs/mef/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd",
     import.meta.url,
   ).pathname;
   const xmlPath = await sys.makeTempFile({ suffix: ".xml" });
@@ -154,7 +154,7 @@ test("reviewed typed 1099-R reaches Form 1040, TY2025 XML, and filled PDF", asyn
     "<PensionsAnnuitiesAmt>20000</PensionsAnnuitiesAmt>",
   );
   const xsd = new URL(
-    "../../../../../../.state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd",
+    "../../../../../../irs/mef/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd",
     import.meta.url,
   ).pathname;
   const xmlPath = await sys.makeTempFile({ suffix: ".xml" });

@@ -735,7 +735,8 @@ export function buildForm3800NonpassiveParts(
   };
   for (const [index, facility] of input.facilities.entries()) {
     const applied = appliedAt(index);
-    const available = facility.credit_amount - facility.transfer_out_amount;
+    const available = facility.credit_amount - facility.transfer_out_amount +
+      (facility.transfer_in_amount ?? 0);
     if (!Number.isFinite(applied) || applied < 0 || applied > available) {
       throw new Error(
         `Form 3800 facility ${index + 1} has an invalid applied credit`,
@@ -940,8 +941,12 @@ export function buildForm3800NonpassiveParts(
       0,
     );
     const firstTransferred = row.facilities.find((facility) =>
-      facility.transfer_out_amount > 0
+      facility.transfer_out_amount > 0 || (facility.transfer_in_amount ?? 0) > 0
     );
+    const transferor = row.facilities.find((facility) =>
+      (facility.transfer_in_amount ?? 0) > 0
+    )?.transferor_tin;
+    const transferNet = row.transferInAmount - row.transferOutAmount;
     for (const index of facilityIndexes) {
       const facility = input.facilities[index];
       if (!facility) {
@@ -953,7 +958,14 @@ export function buildForm3800NonpassiveParts(
         credit: facility.credit_amount,
         appliedCredit: facilityApplied,
         transferOutCredit: facility.transfer_out_amount,
-        transferRegistrationNumber: facility.transfer_out_amount > 0
+        ...((facility.transfer_in_amount ?? 0) > 0
+          ? {
+            transferInCredit: facility.transfer_in_amount,
+            transferorEin: facility.transferor_tin,
+          }
+          : {}),
+        transferRegistrationNumber: facility.transfer_out_amount > 0 ||
+            (facility.transfer_in_amount ?? 0) > 0
           ? facility.registration_number
           : undefined,
         sourceDocumentId: documentIdAt(index),
@@ -992,9 +1004,12 @@ export function buildForm3800NonpassiveParts(
               firstTransferred.registration_number,
             )
             : "",
-          element("GeneralBusCrFromNnPssvActyAmt", row.selfEarnedCredit),
-          row.transferOutAmount > 0
-            ? element("CreditTransferElectionAmt", -row.transferOutAmount)
+          element("TransferCreditEntityEIN", transferor),
+          row.selfEarnedCredit > 0 || row.transferInAmount === 0
+            ? element("GeneralBusCrFromNnPssvActyAmt", row.selfEarnedCredit)
+            : "",
+          transferNet !== 0
+            ? element("CreditTransferElectionAmt", transferNet)
             : "",
           element("TotalGeneralBusCreditsAmt", row.availableCredit),
           element("TotalGeneralBusCreditsAppTxAmt", applied),
@@ -1265,6 +1280,9 @@ export function buildForm3800NonpassiveParts(
       line: row.line,
       grossCredit: row.selfEarnedCredit,
       transferOutCredit: row.transferOutAmount,
+      ...(row.transferInAmount > 0
+        ? { transferInCredit: row.transferInAmount }
+        : {}),
       appliedCredit: input.facilities.reduce(
         (sum, facility, index) =>
           sum + (facility.form3800_line === row.line ? appliedAt(index) : 0),

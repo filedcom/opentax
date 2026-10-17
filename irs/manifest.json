@@ -1,0 +1,44 @@
+{
+  "packages": [
+    {
+      "id": "mef-2025v5.4",
+      "use": "TY2025 Form 1040 MeF schemas, ATS-valid from 2025-10-13",
+      "source": "IRS e-Services Secure Object Repository: IMF_Series_2025v5.4.zip > 1040x_Schema_2025v5.4.zip > 2025v5.4/",
+      "path": "mef/2025v5.4",
+      "files": {
+        "IndividualIncomeTax/Ind1040/Return1040.xsd": "e52dbd0fbd862929c9bc6a46db811fa2c7ae55e915651fc2679c21cb05184c6c",
+        "IndividualIncomeTax/Common/ReturnHeader1040x.xsd": "c1cb3e2e159204c0de58d3bd99190c549673c1bc27064fdc2dac64edbb725899",
+        "Common/efileTypes.xsd": "d149341c9554ca338f18c68a9d34c55e3a8c41f0e2485058c54a11aae8bdf5e5"
+      }
+    },
+    {
+      "id": "mef-2026v1.0",
+      "use": "TY2026 Form 1040 MeF schemas (not ATS-valid; ATS uses 2026v3.0, then 2026v4.0 from 2026-11-01)",
+      "source": "IRS e-Services Secure Object Repository: IMF_Series_2026v1.0.zip > 1040x_2026v1.0.zip > 1040x_Schema_2026v1.0.zip > 2026v1.0/",
+      "path": "mef/2026v1.0",
+      "files": {
+        "IndividualIncomeTax/Ind1040/Return1040.xsd": "d68b64ca23dd79d0f27a98f757b5f5880f1009a42b4528d28b65bd16bdc1b850",
+        "IndividualIncomeTax/Common/ReturnHeader1040x.xsd": "2c7fa1d6e8d25cacc13b1d3340efd055f541b4c1d398e164001bf0f684e177e7",
+        "Common/efileTypes.xsd": "488a94688cb19155b576ebe4c5b9d8a84905b073a2829066010a5c94349095dd"
+      }
+    },
+    {
+      "id": "rules-2025v3.0",
+      "use": "TY2025 Form 1040 business rules that forms/f1040/validation/rules was generated from",
+      "source": "IRS e-Services Secure Object Repository: IMF_Series_2025v3.0.zip > 1040x_2025v3.0.zip > 1040x_Business_Rules_2025v3.0.zip",
+      "path": "rules",
+      "files": {
+        "1040_Business_Rules_2025v3.0.csv": "3f4ec6d13b351eb07da8659a564e1b8cd4d4b6c0171ff18f30c02df09166ea9b"
+      }
+    },
+    {
+      "id": "rules-2026v1.0",
+      "use": "TY2026 Form 1040 business rules",
+      "source": "IRS e-Services Secure Object Repository: IMF_Series_2026v1.0.zip > 1040x_2026v1.0.zip > 1040x_Business_Rules_2026v1.0.zip",
+      "path": "rules",
+      "files": {
+        "1040_Business_Rules_2026v1.0.csv": "ec54240b1800073b25e59ef725772ff761e12a569abcde700822d126edc39433"
+      }
+    }
+  ]
+}

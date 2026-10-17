@@ -97,7 +97,7 @@ test("MFS short-term crossover validates prepared XML and filled Form 6251 PDF",
     await fs.writeFile(xmlPath, prepared.bundle.xml);
     await fs.writeFile(pdfPath, await prepared.renderPdf());
     const schema = new URL(
-      "../../../../../../../.state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd",
+      "../../../../../../../irs/mef/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd",
       import.meta.url,
     ).pathname;
     const validation = await new sys.Command("xmllint", {

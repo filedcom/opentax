@@ -42,6 +42,12 @@ answer for each item. We will keep the printed values separate until then.
    regular tax, so an answer must cover that credit as well.
    [Scenario 12 PDF](https://www.irs.gov/pub/irs-efile/1040-mef-ats-scenario-12-10292025.pdf),
    [Scenario 13 PDF](https://www.irs.gov/pub/irs-efile/1040-mef-ats-scenario-13.pdf).
+5. **Scenario 12, Form 1040 line 13a:** The packet leaves the qualified
+   business income deduction blank and lists no Form 8995. Schedule C reports
+   $24,328 profit from a non-SSTB design business, and taxable income is
+   below the threshold, so Form 8995 gives $4,322. Should the ATS return
+   include Form 8995?
+   [Scenario 12 PDF](https://www.irs.gov/pub/irs-efile/1040-mef-ats-scenario-12-10292025.pdf).
 
 Record the IRS contact, response date, packet revision or case number, and
 exact answer in the ATS preparation record before changing a fixture or

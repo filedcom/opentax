@@ -175,7 +175,7 @@ test("Supported owned category documents validate canonical XSD; US-source Q uni
   );
   const item = ownedCfcWorksheetItem(true, true);
   const base = new URL(
-    "../../../../../../../.state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/",
+    "../../../../../../../irs/mef/2025v5.4/",
     import.meta.url,
   ).pathname;
   for (
@@ -291,7 +291,7 @@ test("Separate unrelated-note diagnostic preserves sixteen category obligations;
     }, ownedCfcWorksheetItem(true, true))
   );
   const base = new URL(
-    "../../../../../../../.state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/",
+    "../../../../../../../irs/mef/2025v5.4/",
     import.meta.url,
   ).pathname;
   for (

@@ -1,0 +1,6 @@
+# IRS e-Services packages are licensed to registered software developers and are
+# never committed. Only the files that say what belongs here are tracked.
+*
+!.gitignore
+!README.md
+!manifest.json

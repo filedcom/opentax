@@ -85,7 +85,7 @@ test("Form 8814 and a below-threshold 1099-DIV trigger Schedule B once", async (
   );
   assertStringIncludes(xml, "<IRS8814");
   const xsdPath = new URL(
-    "../../../../../../.state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd",
+    "../../../../../../irs/mef/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd",
     import.meta.url,
   ).pathname;
   try {

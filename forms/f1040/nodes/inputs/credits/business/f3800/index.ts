@@ -71,6 +71,9 @@ const f8835CreditEntrySchema = z.object({
   form3800_line: z.enum(["1f", "4e"]),
   credit_amount: z.number().nonnegative(),
   transfer_out_amount: z.number().nonnegative(),
+  // IRC §6418 credit purchased as transferee; Part III column (f), positive.
+  transfer_in_amount: z.number().int().positive().optional(),
+  transferor_tin: z.string().regex(/^\d{9}$/).optional(),
   registration_number: z.string().min(1).optional(),
   subject_to_passive_activity_limit: z.boolean(),
   transfer_election_statement_file_name: z.string().min(1).optional(),

@@ -957,6 +957,8 @@ export type Form8835CreditEntry = {
   readonly form3800_line: "1f" | "4e";
   readonly credit_amount: number;
   readonly transfer_out_amount: number;
+  readonly transfer_in_amount?: number;
+  readonly transferor_tin?: string;
   readonly registration_number?: string;
   readonly subject_to_passive_activity_limit: boolean;
   readonly transfer_election_statement_file_name?: string;
@@ -968,6 +970,7 @@ export type Form3800CreditRow = {
   readonly facilityCount: number;
   readonly selfEarnedCredit: number;
   readonly transferOutAmount: number;
+  readonly transferInAmount: number;
   readonly availableCredit: number;
   readonly facilities: readonly Form8835CreditEntry[];
 };
@@ -998,6 +1001,22 @@ export function classifyForm8835Credits(
       throw new Error(
         "Form 3800 needs valid Form 8835 credit and transfer amounts",
       );
+    }
+    const transferIn = entry.transfer_in_amount ?? 0;
+    if (transferIn > 0) {
+      if (
+        entry.credit_amount !== 0 || entry.transfer_out_amount !== 0 ||
+        !entry.registration_number || !entry.transferor_tin ||
+        !entry.transfer_election_statement_file_name ||
+        entry.transfer_election_statement_file_names !== undefined
+      ) {
+        throw new Error(
+          "Form 3800 purchased Form 8835 credit needs only the transferor, registration and its transfer election statement",
+        );
+      }
+      statementFiles.add(entry.transfer_election_statement_file_name);
+    } else if (entry.transferor_tin !== undefined) {
+      throw new Error("Form 3800 transferor EIN needs a purchased credit");
     }
     if (entry.transfer_out_amount > 0) {
       if (
@@ -1033,12 +1052,17 @@ export function classifyForm8835Credits(
       (sum, entry) => sum + entry.transfer_out_amount,
       0,
     );
+    const transferInAmount = facilities.reduce(
+      (sum, entry) => sum + (entry.transfer_in_amount ?? 0),
+      0,
+    );
     return [{
       line,
       facilityCount: facilities.length,
       selfEarnedCredit,
       transferOutAmount,
-      availableCredit: selfEarnedCredit - transferOutAmount,
+      transferInAmount,
+      availableCredit: selfEarnedCredit - transferOutAmount + transferInAmount,
       facilities,
     }];
   });

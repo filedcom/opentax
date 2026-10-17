@@ -71,7 +71,8 @@ export const schedule8812: MefFormDescriptor<"f8812", F8812Input> = {
     if (Object.keys(rawFields).length === 0) return "";
     const fields = inputSchema.parse(rawFields);
     const lines = calculateSchedule8812Lines(2025, fields);
-    if (!lines || (lines.line14 === 0 && lines.line27 === 0)) return "";
+    // A tax-limited $0 credit for claimed children still files the schedule.
+    if (!lines) return "";
     reconcileReturn(lines, context);
     return elements("IRS1040Schedule8812", [
       element("AdjustedGrossIncomeAmt", lines.line1),

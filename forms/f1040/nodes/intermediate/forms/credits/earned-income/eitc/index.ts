@@ -111,6 +111,8 @@ export const priorEicDisallowanceReviewSchema = z.discriminatedUnion("status", [
     status: z.literal("requires_8862"),
     disallowed_year: z.number().int().min(1997).max(2024),
     disallowance_notice_reference: z.string().trim().min(1),
+    notice_copy_reference: z.string().trim().min(1).optional(),
+    notice_copy_sha256: z.string().regex(/^[a-f0-9]{64}$/).optional(),
   }).strict(),
 ]);
 

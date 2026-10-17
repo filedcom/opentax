@@ -69,7 +69,7 @@ test("actual interpreter invoice and full expense reduction reconcile full parti
     const xmlFile = `${root}/${id}.xml`;
     await fs.writeFile(xmlFile, prepared.bundle.xml);
     const xsd =
-      ".state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd";
+      "irs/mef/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd";
     const checked = await new sys.Command("xmllint", {
       args: ["--noout", "--schema", xsd, xmlFile],
       stderr: "piped",

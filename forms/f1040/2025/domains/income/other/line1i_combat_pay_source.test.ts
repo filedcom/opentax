@@ -38,7 +38,7 @@ test("elected W-2 code-Q combat pay reaches Form 1040 line 1i and both exports",
     "<NontxCombatPayElectionAmt>1000</NontxCombatPayElectionAmt>",
   );
   const xsd = new URL(
-    "../../../../../../.state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd",
+    "../../../../../../irs/mef/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd",
     import.meta.url,
   ).pathname;
   const xmlPath = await sys.makeTempFile({ suffix: ".xml" });

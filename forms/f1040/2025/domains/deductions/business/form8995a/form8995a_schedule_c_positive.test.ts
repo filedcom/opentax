@@ -247,7 +247,7 @@ test("cent-valued Schedule C gain and loss reach whole-dollar Form 8995-A, XSD a
     "<TotalTradeOrBusinessLossAmt>100</TotalTradeOrBusinessLossAmt>",
   );
   const xsd = new URL(
-    "../../../../../../../.state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd",
+    "../../../../../../../irs/mef/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd",
     import.meta.url,
   ).pathname;
   const validator = new sys.Command("xmllint", {

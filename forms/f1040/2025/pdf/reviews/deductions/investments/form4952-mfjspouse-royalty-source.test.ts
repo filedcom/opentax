@@ -204,7 +204,7 @@ test("MFJ spouse portfolio royalty and primary traced loan reconcile through For
   await fs.writeFile(out + "/return.xml", bundle.xml);
   await fs.writeFile(out + "/return.pdf", pdf);
   const xsd = new URL(
-    "../../../../../../../.state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd",
+    "../../../../../../../irs/mef/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd",
     import.meta.url,
   ).pathname;
   const checked = await new sys.Command("xmllint", {

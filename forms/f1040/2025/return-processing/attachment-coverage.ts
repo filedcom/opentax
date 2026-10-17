@@ -117,7 +117,12 @@ const MISSING_ATTACHMENTS: readonly MissingAttachment[] = [
     pendingKey: "f3903",
     exportKinds: ["mef", "pdf"],
     reason: "Form 3903 moving expenses require a native attachment",
-    isActive: (fields) => nonempty(fields.f3903s),
+    isActive: (fields) =>
+      Array.isArray(fields.f3903s) &&
+      fields.f3903s.some((item) =>
+        item === null || typeof item !== "object" ||
+        !("storage_fees_only" in item)
+      ),
   },
   {
     pendingKey: "f3468",

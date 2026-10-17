@@ -152,7 +152,7 @@ const aggregateParts: Form3800DocumentParts = {
 };
 
 const XSD_PATH = new URL(
-  "../../../../../../../../.state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/CorporateIncomeTax/Corp1120/IRS3800/IRS3800.xsd",
+  "../../../../../../../../irs/mef/2025v5.4/CorporateIncomeTax/Corp1120/IRS3800/IRS3800.xsd",
   import.meta.url,
 ).pathname;
 let xsdAvailable = false;

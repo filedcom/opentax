@@ -235,6 +235,9 @@ export function joinForm3800DocumentParts(
       line: row.line,
       grossCredit: row.nonpassiveCredit,
       transferOutCredit: row.transferOutCredit,
+      ...(row.transferInCredit
+        ? { transferInCredit: row.transferInCredit }
+        : {}),
       appliedCredit: row.appliedCredit,
     })),
     passive.currentAmounts.map((row) => ({

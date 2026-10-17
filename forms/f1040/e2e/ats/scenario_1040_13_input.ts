@@ -2,6 +2,25 @@ import { FilingStatus } from "../../nodes/types.ts";
 import { FuelType } from "../../nodes/inputs/credits/business/f8911/index.ts";
 import { SCENARIO_1040_13_FACTS } from "./ty2025_cases.ts";
 
+/** Recorded fill-ins for facts the packet does not print but export requires. */
+export const SCENARIO_1040_13_ASSUMPTIONS = [
+  {
+    field: "general.taxpayer_dob",
+    value: "1980-03-13",
+    why: "Packet gives no birth date; Form 1040 line 12d is unchecked, so any date after 1961-01-01 is consistent.",
+  },
+  {
+    field: "general.spouse_dob",
+    value: "1982-07-13",
+    why: "Packet gives no spouse birth date; line 12d is unchecked for the spouse.",
+  },
+  {
+    field: "general.taxpayer_prior_year_agi",
+    value: 0,
+    why: "Packet gives no prior-year AGI.",
+  },
+] as const;
+
 /**
  * Complete source-fact input for TY2025 ATS Form 1040 Scenario 13.
  * Source: https://www.irs.gov/pub/irs-efile/1040-mef-ats-scenario-13.pdf
@@ -31,6 +50,10 @@ export function scenario104013Input() {
       digital_assets: facts.taxpayer.digitalAssets,
       main_home_in_us_over_half_year:
         facts.form1040.mainHomeInUsOverHalfYearCheckboxChecked,
+      taxpayer_dob: "1980-03-13",
+      spouse_dob: "1982-07-13",
+      taxpayer_prior_year_agi: 0,
+      ats_test_submission: true as const,
     },
     w2: [{
       employer_name: facts.w2.employerName,
@@ -99,6 +122,26 @@ export const SCENARIO_1040_13_RECONCILIATION = {
     taxableIncomeBeforeAnyOtherAdjustments:
       SCENARIO_1040_13_FACTS.w2.box1Wages - 31_500,
   },
+  /**
+   * Printed answer-key values that differ from the current-law return. All
+   * follow from line 12e (30,000 printed, 31,500 under current law); the
+   * printed 162 tax also differs from the 2025 Tax Table's 161 for 1,620.
+   */
+  conflicts: [
+    { page: 3, line: "1040 line 12e", printed: 30_000, current: 31_500 },
+    { page: 3, line: "1040 line 14", printed: 30_000, current: 31_500 },
+    { page: 3, line: "1040 line 15", printed: 1_620, current: 120 },
+    { page: 3, line: "1040 line 16", printed: 162, current: 11 },
+    { page: 3, line: "1040 line 18", printed: 162, current: 11 },
+    { page: 3, line: "1040 line 20", printed: 162, current: 11 },
+    { page: 3, line: "1040 line 21", printed: 162, current: 11 },
+    { page: 4, line: "Schedule 3 line 6j", printed: 162, current: 11 },
+    { page: 4, line: "Schedule 3 line 8", printed: 162, current: 11 },
+    { page: 5, line: "Form 6251 line 1b", printed: 1_620, current: 120 },
+    { page: 5, line: "Form 6251 line 2a", printed: 30_000, current: 31_500 },
+    { page: 5, line: "Form 6251 line 10", printed: 162, current: 11 },
+    { page: 7, line: "Form 8911 personal credit", printed: 162, current: 11 },
+  ],
 } as const;
 
 /**

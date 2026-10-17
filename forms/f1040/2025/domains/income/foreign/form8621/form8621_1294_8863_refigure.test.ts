@@ -141,7 +141,7 @@ test("QEF Election B refigures actual education MAGI, phaseout, and credit capac
     args: [
       "--noout",
       "--schema",
-      ".state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd",
+      "irs/mef/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd",
       `${out}/return.xml`,
     ],
     stderr: "piped",
@@ -342,7 +342,7 @@ test("issued Form 1098-T and payments retain an LLC credit-limit refigure", asyn
     args: [
       "--noout",
       "--schema",
-      ".state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd",
+      "irs/mef/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd",
       `${out}/return.xml`,
     ],
     stderr: "piped",
@@ -417,7 +417,7 @@ test("dependent education and Schedule 8812 worksheets refigure together", async
     args: [
       "--noout",
       "--schema",
-      ".state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd",
+      "irs/mef/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd",
       `${out}/return.xml`,
     ],
     stderr: "piped",
@@ -487,7 +487,7 @@ test("QEF Election B replays sourced Form 3800 tax-limited business credit", asy
     args: [
       "--noout",
       "--schema",
-      ".state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd",
+      "irs/mef/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd",
       `${out}/return.xml`,
     ],
     stderr: "piped",

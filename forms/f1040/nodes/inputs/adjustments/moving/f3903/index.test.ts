@@ -244,3 +244,38 @@ test("f3903.compute: smoke test — multiple moves, mixed military/civilian", ()
   const fields = fieldsOf(result.outputs, schedule1)!;
   assertEquals(fields.line14_moving_expenses, 6300);
 });
+
+const storageReview = {
+  moved_in_earlier_year_verified: true,
+  storage_during_absence_from_us_verified: true,
+  government_storage_payment_in_w2_box1_verified: true,
+  storage_fee_record_reference: "storage-invoice-2025",
+};
+
+test("f3903 storage-fees-only claim checks the Schedule 1 line 14 box without filing Form 3903", () => {
+  const result = compute([{
+    transportation_storage: 1_475,
+    active_duty_military: true,
+    storage_fees_only: storageReview,
+  }]);
+  assertEquals(fieldsOf(result.outputs, schedule1), {
+    line14_moving_expenses: 1_475,
+    line14_storage_fees_only: true,
+  });
+});
+
+test("f3903 storage-fees-only claim cannot include travel, reimbursements or another move", () => {
+  for (
+    const items of [
+      [{ transportation_storage: 1_475, active_duty_military: true, travel_expenses: 10, storage_fees_only: storageReview }],
+      [{ transportation_storage: 1_475, active_duty_military: true, employer_reimbursements: 10, storage_fees_only: storageReview }],
+      [{ transportation_storage: 1_475, storage_fees_only: storageReview }],
+      [
+        { transportation_storage: 1_475, active_duty_military: true, storage_fees_only: storageReview },
+        { transportation_storage: 500, active_duty_military: true },
+      ],
+    ]
+  ) {
+    assertThrows(() => compute(items), Error, "storage-fees-only claim");
+  }
+});

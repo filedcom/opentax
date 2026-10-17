@@ -79,7 +79,7 @@ test("Schedule 2 line 4 retains calculated Schedule SE tax in native and PDF ret
     "<SelfEmploymentTaxAmt>8478</SelfEmploymentTaxAmt>",
   );
   const xsd = new URL(
-    "../../../../../../.state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd",
+    "../../../../../../irs/mef/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd",
     import.meta.url,
   ).pathname;
   const xmlPath = await sys.makeTempFile({ suffix: ".xml" });

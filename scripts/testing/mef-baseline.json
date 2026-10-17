@@ -28,7 +28,7 @@
       "xml Form 8839 needs the reviewed PDF attachment decree-1.pdf"
     ],
     "single-8862-ctc-reinstatement": [
-      "xml Form 8862 CTC/ODC and AOTC export needs executor-owned authentication of prior IRS notice issuance and contents"
+      "xml Form 8862 CTC/ODC export needs the retained prior IRS notice copy with matching SHA-256"
     ],
     "single-withheld-w2g": [
       "xml W-2G payer copy content needs its exact attached PDF"

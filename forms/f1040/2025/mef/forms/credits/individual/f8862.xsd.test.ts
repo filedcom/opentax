@@ -7,7 +7,7 @@ import { type FilerIdentity, FilingStatus } from "../../../types.ts";
 import { FilingStatus as NodeFilingStatus } from "../../../../../nodes/types.ts";
 
 const XSD_PATH = new URL(
-  "../../../../../../../.state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd",
+  "../../../../../../../irs/mef/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd",
   import.meta.url,
 ).pathname;
 
@@ -241,7 +241,7 @@ test.skipIf(!xsdAvailable)("XSD fixture: CTC and AOTC notice assertions cannot a
         filer,
       ),
     Error,
-    "executor-owned authentication of prior IRS notice issuance and contents",
+    "retained prior IRS notice copy with matching SHA-256",
   );
 });
 
@@ -283,7 +283,7 @@ test("Form 8862 childless EITC return remains blocked before XSD", () => {
         filer,
       ),
     Error,
-    "executor-owned authentication of prior IRS notice issuance and contents",
+    "retained prior IRS notice copy with matching SHA-256",
   );
 });
 
@@ -317,6 +317,6 @@ test("Form 8862 income-only EITC return remains blocked before XSD", () => {
         filer,
       ),
     Error,
-    "executor-owned authentication of prior IRS notice issuance and contents",
+    "retained prior IRS notice copy with matching SHA-256",
   );
 });

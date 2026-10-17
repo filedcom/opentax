@@ -87,7 +87,7 @@ test("spouse and both-owner WOTC preserve actual owner credit/QBI joins and nati
     const prepared = await f1040_2025.prepareReturn(r.pending, fixture.filer);
     assertStringIncludes(prepared.bundle.xml, "<IRS8995A ");
     const xsd = new URL(
-      "../../../../../../../.state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd",
+      "../../../../../../../irs/mef/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd",
       import.meta.url,
     ).pathname;
     const proc = new sys.Command("xmllint", {

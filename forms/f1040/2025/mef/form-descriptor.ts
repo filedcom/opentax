@@ -63,6 +63,8 @@ export interface MefBuildContext {
   readonly attachmentDescriptionsByFileName?: Readonly<Record<string, string>>;
   /** SHA-256 of each validated PDF's exact submitted bytes, lowercase hex. */
   readonly attachmentSha256ByFileName?: Readonly<Record<string, string>>;
+  /** SHA-256 of each retained, untransmitted source document by reference. */
+  readonly retainedSourceSha256ByReference?: Readonly<Record<string, string>>;
   /** Capture the exact validated Form 3800 parts serialized by this pass. */
   readonly onPreparedForm3800?: (parts: Form3800DocumentParts) => void;
 }

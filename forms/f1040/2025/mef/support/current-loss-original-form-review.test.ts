@@ -47,7 +47,7 @@ async function validateXml(xml: string, root: string, schema: string) {
 
 test("current loss original-form native reviews reconcile original deductions and validate three reporting schemas", async () => {
   const cache = new URL(
-    "../../../../../.state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/",
+    "../../../../../irs/mef/2025v5.4/",
     import.meta.url,
   ).pathname;
   const schemas = {

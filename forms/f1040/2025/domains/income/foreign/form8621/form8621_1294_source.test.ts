@@ -270,7 +270,7 @@ test("Form 8621 Election B refigures the current return tax from QEF income", as
       args: [
         "--noout",
         "--schema",
-        ".state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd",
+        "irs/mef/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd",
         path,
       ],
       stderr: "piped",
@@ -331,7 +331,7 @@ test("Form 8621 Election B refigures the current return tax from QEF income", as
       args: [
         "--noout",
         "--schema",
-        ".state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd",
+        "irs/mef/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd",
         medicalXmlPath,
       ],
       stderr: "piped",
@@ -426,7 +426,7 @@ test("Form 8621 Election B refigures the current return tax from QEF income", as
       args: [
         "--noout",
         "--schema",
-        ".state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd",
+        "irs/mef/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd",
         seniorXmlPath,
       ],
       stderr: "piped",
@@ -683,7 +683,7 @@ test("Form 8621 continuing QEF Part VI joins Schedule 2 and prints page 4", asyn
       args: [
         "--noout",
         "--schema",
-        ".state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd",
+        "irs/mef/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd",
         path,
       ],
       stderr: "piped",
@@ -805,7 +805,7 @@ test("Form 8621 Part VI continues a seventh sourced election on page 4", async (
       args: [
         "--noout",
         "--schema",
-        ".state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd",
+        "irs/mef/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd",
         xmlPath,
       ],
       stderr: "piped",
@@ -958,7 +958,7 @@ test("Form 8621 multiple MTM dispositions keep sale sources and separate net gai
       args: [
         "--noout",
         "--schema",
-        ".state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd",
+        "irs/mef/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd",
         path,
       ],
       stderr: "piped",
@@ -1089,7 +1089,7 @@ test("Form 8621 line 14c residual capital loss routes through sourced Form 8949"
       args: [
         "--noout",
         "--schema",
-        ".state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd",
+        "irs/mef/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd",
         path,
       ],
       stderr: "piped",

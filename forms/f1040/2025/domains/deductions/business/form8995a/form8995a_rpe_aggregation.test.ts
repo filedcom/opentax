@@ -154,7 +154,7 @@ test("issued S-corp RPE aggregation keeps complete members, annual copy, wage-pr
     );
     await fs.writeFile(dir + "/return.xml", prepared.bundle.xml);
     const xsd =
-      ".state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd";
+      "irs/mef/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd";
     const checked = await new sys.Command("xmllint", {
       args: ["--noout", "--schema", xsd, dir + "/return.xml"],
       stdout: "piped",

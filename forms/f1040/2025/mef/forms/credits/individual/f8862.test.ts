@@ -252,7 +252,7 @@ test("Form 8862 refuses CTC/ODC and AOTC export without authenticated IRS notice
   assertThrows(
     () => form8862.build(scenarioInput),
     Error,
-    "executor-owned authentication of prior IRS notice issuance and contents",
+    "retained prior IRS notice copy with matching SHA-256",
   );
 });
 
@@ -346,7 +346,7 @@ test("Form 8862 childless EITC keeps source checks before the notice authenticat
         },
       }),
     Error,
-    "executor-owned authentication of prior IRS notice issuance and contents",
+    "retained prior IRS notice copy with matching SHA-256",
   );
 });
 
@@ -372,7 +372,7 @@ test("Form 8862 rejects childless EITC with fewer than 183 US-home days", () => 
   assertThrows(
     () => form8862.build(childless),
     Error,
-    "executor-owned authentication of prior IRS notice issuance and contents",
+    "retained prior IRS notice copy with matching SHA-256",
   );
   assertThrows(
     () =>
@@ -415,7 +415,7 @@ test("Form 8862 income-reporting-only EITC also stops at notice authentication",
         eitc_income_reporting_only: true,
       }),
     Error,
-    "executor-owned authentication of prior IRS notice issuance and contents",
+    "retained prior IRS notice copy with matching SHA-256",
   );
   assertThrows(
     () =>

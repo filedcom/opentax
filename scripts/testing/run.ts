@@ -25,7 +25,7 @@ import { selectAffected } from "./affected.ts";
 const root = dirname(dirname(dirname(fromFileUrl(import.meta.url))));
 const FORMS_BASELINE = "scripts/testing/forms-failure-baseline.json";
 const IRS_CACHE_XSD =
-  ".state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd";
+  "irs/mef/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd";
 
 /** Node, export and return-processing tests: hermetic and fast enough for every pull request. */
 function isFormsGateTest(path: string): boolean {
@@ -105,7 +105,7 @@ async function requiredTools() {
   }
   const xsd = join(
     root,
-    ".state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd",
+    "irs/mef/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd",
   );
   if (!(await sys.stat(xsd)).isFile) {
     throw new Error(`Required full-run Return1040 XSD missing: ${xsd}`);

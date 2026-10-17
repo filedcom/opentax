@@ -20,7 +20,7 @@ import { form1116 } from "./f1116.ts";
 import { scheduleBFieldsSchema } from "./f1116_schedule_b.ts";
 
 const XSD_PATH = new URL(
-  "../../../../../../../../.state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd",
+  "../../../../../../../../irs/mef/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd",
   import.meta.url,
 ).pathname;
 

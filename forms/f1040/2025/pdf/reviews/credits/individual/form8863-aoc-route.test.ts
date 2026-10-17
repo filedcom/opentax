@@ -111,7 +111,7 @@ test("reviewed AOTC credit calculates, but notice assertions cannot authorize ex
   assertThrows(
     () => nativeForm8862.build(pending.f8862!, { pending }),
     Error,
-    "executor-owned authentication of prior IRS notice issuance and contents",
+    "retained prior IRS notice copy with matching SHA-256",
   );
   assertThrows(
     () =>
@@ -122,12 +122,12 @@ test("reviewed AOTC credit calculates, but notice assertions cannot authorize ex
         schedule3: pending.schedule3!,
       }),
     Error,
-    "executor-owned authentication of prior IRS notice issuance and contents",
+    "retained prior IRS notice copy with matching SHA-256",
   );
   await assertRejects(
     () => buildMefBundle(pending, { filer: base.filer, attachments: [] }),
     Error,
-    "executor-owned authentication of prior IRS notice issuance and contents",
+    "retained prior IRS notice copy with matching SHA-256",
   );
 });
 

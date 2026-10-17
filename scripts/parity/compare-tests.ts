@@ -47,7 +47,7 @@ function bunOutcome(test: Case): Outcome {
   const text = typeof failure === "string"
     ? failure
     : `${failure["@_message"] ?? ""} ${failure["#text"] ?? ""}`;
-  if (/\.state\/research|IMF_Series|complete local XSD/.test(text)) {
+  if (/irs\/mef|\.state\/research|IMF_Series|complete local XSD/.test(text)) {
     return "failed:research-docs";
   }
   return "failed:other";
