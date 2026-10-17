@@ -955,13 +955,13 @@ test("TY2025 Form 1040 builder rejects other return types and years", () => {
     assertThrows(
       () => rawBuildMefXml({}, sampleFiler(), "2025v5.4", 2025, returnType),
       Error,
-      "requires year 2025 and return type 1040",
+      "has no reviewed MeF schema for",
     );
   }
   assertThrows(
     () => rawBuildMefXml({}, sampleFiler(), "2025v5.4", 2024, "1040"),
     Error,
-    "requires year 2025 and return type 1040",
+    "has no reviewed MeF schema for",
   );
 });
 
@@ -986,7 +986,7 @@ test("TY2025 MeF bundle rejects a non-1040 export", async () => {
         returnType: "1040NR",
       }),
     Error,
-    "requires year 2025 and return type 1040",
+    "has no reviewed MeF schema for",
   );
 });
 

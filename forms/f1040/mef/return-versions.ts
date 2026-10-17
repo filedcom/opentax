@@ -19,7 +19,7 @@ export function assertMefReturnVersion(
   }
   if (schemaVersion !== expected) {
     throw new Error(
-      `TY${year} Form 1040 export requires MeF schema version ${expected}`,
+      `TY${year} Form 1040 export requires the reviewed MeF schema version ${expected}`,
     );
   }
 }
