@@ -1,0 +1,69 @@
+{
+  "year": 2025,
+  "scenario": "Single filer above the NIIT threshold with interest, nonqualified dividends and a $2,200 short-term capital loss; Form 8960 line 5a keeps the loss deducted on Form 1040 line 7",
+  "forms": [
+    {
+      "node_type": "start",
+      "data": {
+        "general": {
+          "filing_status": "single",
+          "taxpayer_first_name": "Robin",
+          "taxpayer_last_name": "Lee",
+          "taxpayer_dob": "1980-03-10",
+          "address_city": "Austin",
+          "address_state": "TX",
+          "address_zip": "78701"
+        }
+      }
+    },
+    {
+      "node_type": "w2",
+      "data": {
+        "box1_wages": 220000,
+        "box2_fed_withheld": 40000,
+        "box3_ss_wages": 176100,
+        "box4_ss_withheld": 10918.2,
+        "box5_medicare_wages": 220000,
+        "box6_medicare_withheld": 3370,
+        "employer_name": "ACME INDUSTRIES INC",
+        "employer_ein": "93-1000083"
+      }
+    },
+    {
+      "node_type": "f1099int",
+      "data": {
+        "payer_name": "FIRST NATIONAL BANK",
+        "box1": 1700,
+        "payer_tin": "17-1000007"
+      }
+    },
+    {
+      "node_type": "f1099div",
+      "data": {
+        "payerName": "LIBERTY INVESTMENTS LLC",
+        "isNominee": false,
+        "box11": false,
+        "box1a": 3000,
+        "box1b": 0
+      }
+    },
+    {
+      "node_type": "f1099b",
+      "data": {
+        "description": "100 sh XYZ ST Covered",
+        "part": "A",
+        "date_acquired": "02/01/25",
+        "date_sold": "09/01/25",
+        "proceeds": 3000,
+        "cost_basis": 5200
+      }
+    },
+    {
+      "node_type": "schedule_b_part_iii",
+      "data": {
+        "foreign_accounts_question": false,
+        "foreign_trust_question": false
+      }
+    }
+  ]
+}

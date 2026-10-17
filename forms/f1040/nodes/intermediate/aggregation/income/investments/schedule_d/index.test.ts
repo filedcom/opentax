@@ -424,6 +424,23 @@ test("loss: large loss — capped at $3000 (non-MFS)", () => {
   assertEquals(fieldsOf(result.outputs, f1040)!.line7_capital_gain, -3000);
 });
 
+test("loss: Form 8960 line 5a keeps the deductible loss reported on Form 1040 line 7", () => {
+  const limited = compute({
+    transaction: mkTx({ gain_loss: -10000, is_long_term: false }),
+  });
+  assertEquals(
+    limited.outputs.find((o) => o.nodeType === "form8960")?.fields,
+    { line5a_net_gain: -3000 },
+  );
+  const partial = compute({
+    transaction: mkTx({ gain_loss: -2200, is_long_term: false }),
+  });
+  assertEquals(
+    partial.outputs.find((o) => o.nodeType === "form8960")?.fields,
+    { line5a_net_gain: -2200 },
+  );
+});
+
 test("loss: MFS below $1500 limit passes through ($1000 loss)", () => {
   const result = compute({
     transaction: mkTx({ gain_loss: -1000, is_long_term: false }),
@@ -564,11 +581,12 @@ test("output count: gain + 28pct → exactly 8 outputs", () => {
   assertEquals(result.outputs.length, 8);
 });
 
-test("output count: pure loss retains the AMT audit and printable Schedule D", () => {
+test("output count: pure loss retains the AMT audit, Form 8960 line 5a and printable Schedule D", () => {
   const result = compute({
     transaction: mkTx({ gain_loss: -5000, is_long_term: false }),
   });
-  assertEquals(result.outputs.length, 4);
+  assertEquals(result.outputs.length, 5);
+  assert(result.outputs.some((o) => o.nodeType === "form8960"));
   assert(result.outputs.some((o) => o.nodeType === "f1040"));
   assert(result.outputs.some((o) => o.nodeType === "agi_aggregator"));
 });

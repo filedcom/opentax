@@ -1,0 +1,16 @@
+{
+  "case": "136-single-w2-niit-capital-loss",
+  "scenario": "Single filer above the NIIT threshold with interest, nonqualified dividends and a $2,200 short-term capital loss; Form 8960 line 5a keeps the loss deducted on Form 1040 line 7",
+  "year": 2025,
+  "source": "IRS 2025 Instructions for Form 8960, line 5a (net gain or loss from Form 1040 line 7) and lines 12-17 (3.8% of the smaller of NII $2,500 or MAGI over $200,000); 2025 Instructions for Form 8959 (0.9% of Medicare wages over $200,000 = $180, withholding of $180 on line 24); 2025 Instructions for Form 1040 Tax Computation Worksheet, single, taxable income $206,750 x 32% - $22,937 = $43,223; Pub 17 TY2025 single standard deduction $15,750",
+  "correct": {
+    "line7_capital_gain": -2200,
+    "line9_total_income": 222500,
+    "line11_agi": 222500,
+    "line15_taxable_income": 206750,
+    "line24_total_tax": 43498,
+    "line33_total_payments": 40180,
+    "line35a_refund": 0,
+    "line37_amount_owed": 3318
+  }
+}

@@ -501,8 +501,8 @@ class ScheduleDIntermediateNode extends TaxNode<typeof inputSchema> {
       },
     }));
 
-    // NII: net capital gain (not loss) is subject to NIIT (IRC §1411(c)(1)(A)(iii))
-    if (capitalGainForReturn > 0) {
+    // Form 8960 line 5a takes the Form 1040 line 7 amount, including a deductible loss.
+    if (capitalGainForReturn !== 0) {
       outputs.push(
         this.outputNodes.output(form8960, {
           line5a_net_gain: capitalGainForReturn,
