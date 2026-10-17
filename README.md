@@ -298,7 +298,7 @@ Git history.
 
 ### Contributing with Claude Code
 
-The repo includes four skills that automate the full development lifecycle. Open the project in [Claude Code](https://claude.ai/code) and invoke them with `/skill-name`.
+The repo includes five skills (in `.claude/skills/`) that automate the full development lifecycle. Open the project in [Claude Code](https://claude.ai/code) and invoke them with `/skill-name`.
 
 #### `/tax-status`
 
@@ -332,6 +332,14 @@ End-to-end form builder. Researches IRS instructions, extracts ground truth, bui
 
 ```
 /tax-build 1120
+```
+
+#### `/audit-harness [goal]`
+
+Generic audit/fix loop. A planner splits the goal into non-overlapping work packages, auditor and fixer agents run on them in parallel, and the loop ends after two consecutive clean cycles per package.
+
+```
+/audit-harness "every node routes only through outputNodes"
 ```
 
 #### Typical workflows

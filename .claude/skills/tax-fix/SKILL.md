@@ -15,7 +15,7 @@ Parse `$ARGUMENTS` as `{form}:{year}`. Derive:
 - State key: `{form}:{year}` in `.state/bench/state.json` under `forms`
 - Progress log: `.state/bench/progress.md`
 
-Read `AGENTS.md` and `forms/{form}/FORM.md`; pass both to every spawned agent.
+Read `AGENTS.md` and `forms/{form}/FORM.md`; pass both to every spawned agent. Benchmark rules and pass criteria are in `benchmark/AGENTS.md` and `benchmark/README.md`.
 
 ## Step 1 — Load State
 
@@ -27,6 +27,10 @@ Read `.state/bench/state.json`. Navigate to `forms.{form}:{year}.fix`:
 ## Step 2 — Identify Pending Root Causes
 
 From `forms.{form}:{year}.fix.root_causes`, collect all entries where `status === "pending"`.
+
+If none are pending, spawn the validator (Step 4) first and cluster its `failing` cases: read each case's `failures[].lineFailures`, trace the diverging line to the node that produces it (`bun run tax node graph --node_type start --json` maps the routing), and record each cluster as a root cause `{ status: "pending", cases: [case numbers], description, node_path }` keyed by a short snake_case name. If nothing fails, set `status: "done"` and stop.
+
+`node_path` is the node's `index.ts` under `forms/{form}/nodes/…` (see `docs/architecture/STRUCTURE.md`).
 
 ## Step 3 — Spawn Parallel Bug-Fixer Agents
 
@@ -52,7 +56,7 @@ Then spawn the validator agent (`.claude/skills/tax-fix/agents/validator.md`) wi
 First, `git status --porcelain benchmark/cases` must print nothing. If it does: `git checkout -- benchmark/cases`, mark the affected clusters `"pending"` with the note "case edit refused; needs a ledger citation", and do not count them.
 
 Compare the pass count to `forms.{form}:{year}.fix.benchmark_baseline`:
-- **Net positive** (more passes, zero new failures) and Step 4 green → commit engine paths only, update the baseline, mark fixed root causes `"done"`, reset `no_improvement_count`:
+- **Net positive** (more passes, zero new failures) and Step 4 green → commit engine paths only, update the baseline, mark fixed root causes `"fixed"`, reset `no_improvement_count`:
   ```bash
   git add forms core cli
   git commit -m "fix: {form} {year} benchmark — X→Y passing cases"

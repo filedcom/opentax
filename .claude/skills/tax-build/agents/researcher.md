@@ -22,20 +22,37 @@ Read the instructions carefully. Focus on:
 
 For each logical group of lines, define one node. A node handles a cohesive section of computation (e.g., "income section", "deductions section", "tax computation").
 
-Group lines into these sections:
+Every node's `section` must be one of the seven `SECTIONS` that
+`bun run check:structure` enforces (`scripts/testing/structure.ts`):
+`general`, `income`, `adjustments`, `deductions`, `credits`, `taxes`,
+`payments`. For Form 1120:
 - `income`: Lines 1-11 (gross receipts, COGS, gross profit, other income, total income)
 - `deductions`: Lines 12-29 (compensation, repairs, rents, taxes, interest, depreciation, etc.)
-- `tax_computation`: Lines 30-37 (taxable income, NOL, special deductions, tax at 21%)
-- `credits`: Schedule J (tax credits)
+- `taxes`: Lines 30-31 and Schedule J tax computation (taxable income, NOL, special deductions, tax at 21%)
+- `credits`: Schedule J credits
 - `payments`: Lines 32-37 (estimated payments, deposits, refund/amount owed)
-- `schedules`: Any additional schedules (C, J, K, L, M-1, M-2)
+- `general`: entity information and informational schedules (K, L, M-1, M-2)
+
+Also give each node a `role` — `inputs` (a source document or user-entered
+data), `intermediate` with a `kind` of `forms`, `worksheets` or `aggregation`
+(computed), or `outputs` (final line assembly) — and a kebab-case `group`.
+The node's folder becomes
+`forms/f{FORM}/nodes/<role>/[<kind>/]<section>/<group>/<id>/`.
+
+Name node ids by the repository rule (`docs/architecture/STRUCTURE.md`,
+"Naming"): `f<number>` for a source-document input (`f1125a`),
+`form<number>` for a computed form (`form4626`), `schedule_<letter>` for a
+lettered schedule; snake_case. The id is also the registry key and CLI input
+name.
 
 ## Step 3 — For Each Node, Define:
 
 ```json
 {
   "id": "f1120_income",
+  "role": "inputs",
   "section": "income",
+  "group": "business",
   "lines": ["1a", "1b", "1c", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11"],
   "description": "Gross receipts and income section of Form 1120",
   "inputs": [
@@ -60,7 +77,7 @@ Write the complete node spec to the output path:
   "form": "1120",
   "year": 2025,
   "generated_at": "[timestamp]",
-  "sections": ["income", "deductions", "tax_computation", "credits", "payments", "schedules"],
+  "sections": ["general", "income", "deductions", "credits", "taxes", "payments"],
   "nodes": [
     ... all node specs ...
   ]

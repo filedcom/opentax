@@ -36,18 +36,16 @@ Apply each fix using the Edit tool. Follow these rules:
 
 ## Step 4 — Run Tests
 
-After applying all fixes for a file, look for adjacent test files:
-- `{filename}.test.ts`
-- `{filename}_test.ts`
-- `__tests__/{filename}.ts`
-- `{directory}/tests/`
+After applying all fixes for a file, find the tests that cover it. Tests sit
+beside their source and end in `.test.ts` (a node's tests are its folder's
+`index.test.ts`; `grep -rl "<file name>" --include=*.test.ts` finds others).
 
-If test files exist, run them:
+Run them, then the checks that cover every change:
 ```bash
-bun test ./{test_file} 2>&1 | tail -20
+bun test ./{test_file} --timeout=1800000 2>&1 | tail -20
+bun run typecheck 2>&1 | tail -5
+bun run check:structure 2>&1 | tail -5    # when a node, registry or inputs.ts changed
 ```
-
-(Adjust the test command based on what test runner the project uses.)
 
 If tests fail after your fix:
 - If the test was wrong (testing the old buggy behavior) → fix the test too

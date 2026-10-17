@@ -24,7 +24,7 @@ Compare the printed summary with `correct.json`. Name the field and the delta.
 
 ## Step 3 — Locate
 
-Read the node at `root_cause.node_path` and the nodes it routes to (`outputNodes`). Trace which pure function produces the diverging field, and check the IRS instruction cited in FORM.md for the rule it should apply.
+Read the node at `root_cause.node_path` (under `forms/{form}/nodes/…`), its `research/context.md`, and the nodes it routes to (`outputNodes`). Trace which pure function produces the diverging field, and check the IRS instruction cited in FORM.md for the rule it should apply. Year constants live in `forms/{form}/nodes/config/{year}.ts`.
 
 ## Step 4 — Decide What Is Wrong
 
@@ -35,8 +35,9 @@ Read the node at `root_cause.node_path` and the nodes it routes to (`outputNodes
 
 Make a minimal, targeted change following `AGENTS.md`: Zod schemas, pure functions, no mutation, early returns, no `as any`. Then:
 ```bash
-bun test ./{node_directory}/
+bun test ./{node_directory}/ --timeout=1800000
 bun run check:structure
+bun run typecheck
 ```
 Re-run the representative cases; expected values must match within $5.
 

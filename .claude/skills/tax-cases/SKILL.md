@@ -20,7 +20,7 @@ Parse $ARGUMENTS for an optional `{form}:{year}` prefix (e.g. `f1040:2025 vita`)
 
 Cases directory: `benchmark/cases/{form}/{year}/`
 
-Read `docs/architecture/STRUCTURE.md` to confirm paths are still current. If STRUCTURE.md differs, use those paths.
+Read `docs/architecture/STRUCTURE.md` ("Benchmark case formats") and `benchmark/cases/AGENTS.md` to confirm paths and rules are still current. If they differ, use those.
 
 ## Step 1 — Determine Source
 
@@ -36,7 +36,8 @@ If no argument, default to `vita`.
 
 Spawn one agent using `agents/irs-sourcer.md`. Pass:
 - Source type / description: $ARGUMENTS
-- Output path: `.state/bench/irs-cases-raw.json`
+- Output path: `.state/bench/irs-cases-raw.json` (a git-ignored per-run intermediate; never commit it)
+- Existing cases dir: `benchmark/cases/{form}/{year}/`
 
 Wait for completion. Verify the file exists and contains a `cases` array with at least one entry.
 
@@ -44,14 +45,14 @@ If sourcer finds no usable cases, stop and report which sources were tried.
 
 ## Step 3 — Determine Next Case Number
 
-Read the `benchmark/cases/` directory. Find the highest existing case number (e.g. 97 → next is 98).
+Read `benchmark/cases/{form}/{year}/`. Find the highest existing case number (e.g. 134 → next is 135).
 
 ## Step 4 — Spawn Case Writer Agents
 
 Read `.state/bench/irs-cases-raw.json`. For each raw case in the `cases` array, spawn one case-writer agent in parallel using `agents/case-writer.md`. Pass:
 - The raw case object (scenario description, form values, IRS-provided correct values, source citation)
-- The next available case number (increment per case: 98, 99, 100, …)
-- Cases directory: `benchmark/cases/`
+- The next available case number (increment per case: 135, 136, 137, …)
+- Cases directory: `benchmark/cases/{form}/{year}/`
 
 Spawn ALL case-writer agents in a single message (parallel).
 
@@ -64,18 +65,24 @@ For each newly created case directory, verify:
 2. `correct.json` exists and has `correct.line24_total_tax`, `correct.line35a_refund`, `correct.line37_amount_owed`
 3. `correct.json` has a `source` field citing the IRS publication, exercise number, and page
 
-Report any cases that failed verification. Do NOT run the benchmark — that's for `/tax-fix` after cases are added.
+Then run:
+```bash
+bun run check:cases    # every node_type and field fits the node schema; source is a publication
+bun run check:oracle   # existing expected values unchanged
+```
+
+Report any cases that failed verification. Do NOT run the benchmark — that's for `/tax-fix` after cases are added. A single case can be tried with `bun benchmark/run_case.ts benchmark/cases/{form}/{year}/<case>` (prints the computed return, writes nothing).
 
 ## Step 6 — Report
 
 Print a summary:
 ```
-Cases added: N (cases 98–105)
+Cases added: N (cases 135–142)
 Source: VITA Pub 4491 TY2025
 
 New cases:
-  98-[name]   Single, W-2 + interest   IRS VITA Ex. 3
-  99-[name]   MFJ, retirement + SSA    IRS VITA Ex. 7
+  135-[name]   Single, W-2 + interest   IRS VITA Ex. 3
+  136-[name]   MFJ, retirement + SSA    IRS VITA Ex. 7
   ...
 
 Next step: run /tax-fix to see how the engine performs on these cases.
@@ -94,4 +101,4 @@ Append to `.state/bench/progress.md`:
 - Every `correct` value must be traceable to an IRS publication page/exercise — no computed values
 - If an IRS example is ambiguous or the publication doesn't give a specific line value, omit that field from `correct` (the benchmark only requires the three pass/fail fields)
 - Do NOT delete or modify existing cases
-- Do NOT run gen_correct.ts — it no longer exists
+- Never derive a value from the engine (`run_case.ts`, `return get`): `check:cases` rejects an engine citation, and a case is never edited to pass

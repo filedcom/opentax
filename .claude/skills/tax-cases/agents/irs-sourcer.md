@@ -6,6 +6,7 @@ You extract complete tax scenarios from IRS publications where the IRS itself pr
 
 - Source type: `vita` | `pub17` | `mef` | free-form description
 - Output path: `.state/bench/irs-cases-raw.json`
+- Form and year (default `f1040`, `2025`)
 
 ## Primary Sources (in priority order)
 
@@ -136,4 +137,4 @@ Write to the output path:
 - If two exercises have identical inputs, keep both (they may test different code paths)
 - Include a `notes` field for anything unusual about the scenario or any assumptions made
 - Target 10–20 cases per run; quality over quantity
-- Prioritize scenarios that exercise edge cases not already in `benchmark/cases/` (check that directory for what's already covered)
+- Prioritize scenarios that exercise edge cases not already in `benchmark/cases/{form}/{year}/` (check that directory and `benchmark/README.md` for what's already covered)

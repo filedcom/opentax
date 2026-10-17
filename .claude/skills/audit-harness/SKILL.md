@@ -13,7 +13,7 @@ description: Generic audit/fix loop. Pass a goal string. Planner subdivides work
 
 Generate a `run_id`: take the first 5 words of `$ARGUMENTS`, lowercase, replace spaces with hyphens, append today's date as `-YYYYMMDD`. Example: `"ensure compute functions handle edge"` → `ensure-compute-functions-handle-edge-20260411`.
 
-Read `.state/audit/state.json`. If the file does not exist, create it:
+Read `.state/audit/state.json` (git-ignored local run state, like `.state/audit/progress.md`; never commit it). If the file does not exist, create it:
 ```json
 {"version": 1, "runs": {}}
 ```
@@ -43,13 +43,12 @@ Write state.json.
 ## Step 1 — Checkpoint Git State
 
 ```bash
-git add -A && git status --porcelain
+git status --porcelain
 ```
 
-If there are uncommitted changes, commit them:
-```bash
-git commit -m "audit-harness: checkpoint before run {run_id}"
-```
+Never commit uncommitted changes you did not make: they may be someone
+else's work in progress. Leave them as they are and keep track of their
+paths, so later cycles stage only files the fixers changed.
 
 Record the current HEAD SHA as `checkpoint_commit` in the run entry. Write state.json.
 
@@ -164,9 +163,9 @@ Write state.json.
 git diff --stat
 ```
 
-If there are changes:
+If there are changes, stage only the files this cycle's fixers changed:
 ```bash
-git add -A
+git add <files the fixers reported>
 git commit -m "audit-harness: {run_id} cycle {global_cycle} — {N} findings fixed"
 ```
 

@@ -117,7 +117,7 @@ opentax form add --returnId <id> --node_type w2 \
 
 # 1099-INT
 opentax form add --returnId <id> --node_type f1099int \
-  '{"payer_name": "Chase Bank", "box1_interest": 420}'
+  '{"payer_name": "Chase Bank", "box1": 420}'
 ```
 
 Common node types: `general`, `w2`, `f1099int`, `f1099div`, `f1099nec`, `f1099r`, `f1099b`, `f1099g`, `ssa1099`, `schedule_c`, `schedule_a`, `f1098`, `f1098e`, `f8949`.

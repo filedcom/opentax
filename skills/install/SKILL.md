@@ -1,5 +1,5 @@
 ---
-name: Install CLI
+name: install
 description: Downloads and installs the opentax CLI binary. Detects OS and architecture automatically.
 ---
 

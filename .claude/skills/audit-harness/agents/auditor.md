@@ -105,7 +105,7 @@ When a source node (e.g., f1099m) sends income to an intermediate node (e.g., sc
 When a node routes to another via `output()`, verify every field name in the output actually exists in the target's `inputSchema`. Zod's default `.parse()` strips unknown keys silently.
 
 ### 4. Self-Referential Output Without Guard
-Some output nodes (e.g., schedule1) write back to their own `nodeType` for MeF assembly. If upstream also writes the same field, `mergePending` promotes it to an array. Downstream consumers must handle both scalar and array values.
+Some output nodes (e.g., schedule1) write back to their own `nodeType` for MeF assembly. If upstream also writes the same field, `mergePending` (`core/runtime/executor.ts`) promotes it to an array. Downstream consumers must handle both scalar and array values.
 
 ### 5. Dead Output Routes
 A node declares `outputNodes` but never actually calls `output()` for some of them. Or calls `output()` to a target that is never registered in the execution plan. The data goes nowhere.

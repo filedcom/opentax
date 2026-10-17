@@ -22,15 +22,15 @@ Read the goal carefully. Identify:
 
 ### Step 2 — Read Project Context
 
-Read `AGENTS.md` at the project root (if it exists) to understand conventions and patterns.
+Read `AGENTS.md` at the project root and `docs/architecture/STRUCTURE.md` (the repository map and naming rules). Each major folder has its own `AGENTS.md`; read the ones for the areas the goal targets (e.g. `forms/f1040/nodes/AGENTS.md`, `cli/AGENTS.md`, `benchmark/AGENTS.md`).
 
-Use Glob to survey the project structure:
+Use Glob to survey the relevant part of the tree, e.g.:
 ```
-**/*.ts
-**/*.tsx
-**/*.js
+forms/f1040/nodes/**/index.ts
+cli/**/*.ts
+core/**/*.ts
 ```
-(Adjust patterns based on what the goal targets.)
+(Adjust patterns based on what the goal targets. Exclude `node_modules/`, `.state/` and `.pdf-cache/`.)
 
 Read 2-3 representative files to understand the codebase style, structure, and patterns.
 

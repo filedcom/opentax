@@ -5,25 +5,25 @@ You convert a raw IRS-sourced scenario into a benchmark case: an `input.json` th
 ## Your Input
 
 - Raw case object (from irs-cases-raw.json): description, source, year, inputs, correct values
-- Case number (e.g. 98)
-- Cases directory: `benchmark/cases/`
+- Case number (e.g. 135)
+- Cases directory: `benchmark/cases/{form}/{year}/` (e.g. `benchmark/cases/f1040/2025/`)
 
 ## Step 1 — Name the Case Directory
 
 Format: `{number}-{filing-status}-{key-forms}`
 
 Examples:
-- `98-single-w2-interest`
-- `99-mfj-w2-ssa-1099r`
-- `100-hoh-w2-eitc-ctc`
+- `135-single-w2-interest`
+- `136-mfj-w2-ssa-1099r`
+- `137-hoh-w2-eitc-ctc`
 
 Use the filing status and the primary income forms present. Keep it short (max 5 segments).
 
-Create the directory: `benchmark/cases/{name}/`
+Create the directory: `benchmark/cases/{form}/{year}/{name}/`
 
 ## Step 2 — Write input.json
 
-Map the raw inputs to engine node types. Follow the exact format of existing cases (read `benchmark/cases/01-single-w2-minimal/input.json` as a reference).
+Map the raw inputs to engine node types. Follow the exact format of existing cases (read `benchmark/cases/f1040/2025/02-single-w2-basic/input.json` as a reference, and `grep -l '"node_type": "<type>"' benchmark/cases/f1040/2025/*/input.json` for a case that already uses a node type). Each `forms[]` entry is one `form add`: for a repeatable document (W-2, each 1099) add one entry per document whose `data` is a single item.
 
 ```json
 {
@@ -49,27 +49,35 @@ Map the raw inputs to engine node types. Follow the exact format of existing cas
 
 ### Node type mapping
 
-| Raw input | node_type | Key fields |
-|-----------|-----------|------------|
+The schema is the authority, not this table: run
+`bun run tax node inspect --node_type <type>` (for a repeatable document, its
+`items:` are the fields of one entry). Schemas are strict — unknown fields are
+rejected and many source documents require reviewed-copy references — so copy
+an existing valid case where one exists.
+
+| Raw input | node_type | Example fields |
+|-----------|-----------|----------------|
 | W-2 | `w2` | box1_wages, box2_fed_withheld, box3_ss_wages, box4_ss_withheld, box5_medicare_wages, box6_medicare_withheld |
-| 1099-INT | `f1099int` | box1_interest |
-| 1099-DIV | `f1099div` | box1a_ordinary_dividends, box1b_qualified_dividends |
+| 1099-INT | `f1099int` | payer_name, box1 |
+| 1099-DIV | `f1099div` | see `node inspect` |
 | 1099-G (unemployment) | `f1099g` | box_1_unemployment |
 | SSA-1099 | `ssa1099` | box5_net_benefits |
 | 1099-R | `f1099r` | box1_gross_distribution, box2a_taxable_amount, box7_distribution_code |
-| 1099-NEC | `f1099nec` | box1_nonemployee_compensation |
-| 1099-B | `f1099b` | Use appropriate part (A/B/C/D/E) |
-| Schedule C | `schedule_c` | gross_income, total_expenses |
-| K-1 partnership | `k1_partnership` | ordinary_business_income, net_rental_income, etc. |
-| 1095-A | `f1095a` | monthly_premium, monthly_slcsp, monthly_aptc |
-| Form 2441 | `f2441` | qualifying_person_expenses, earned_income_spouse |
-| Form 8863 | `f8863` | student expenses for AOTC/LLC |
-| Form 1040-ES | `f1040es` | payment_amount (repeat per payment) |
+| 1099-NEC | `f1099nec` | payer_name, payer_tin, box1_nec |
+| 1099-B | `f1099b` | see `node inspect` (part A/B/C/D/E) |
+| Schedule C | `schedule_c` | see `node inspect` |
+| K-1 partnership | `k1_partnership` | see `node inspect` |
+| 1095-A | `f1095a` | issuer_name, monthly_premiums, monthly_slcsps, … |
+| Form 2441 | `f2441` | qualifying_person_count, qualifying_expenses_paid, earned_income_taxpayer, earned_income_spouse |
+| Form 8863 | `f8863` | see `node inspect` |
+| Form 1040-ES | `f1040es` | payment_q1 … payment_q4 |
 | Schedule A | `schedule_a` | Only if itemizing |
 | Educator expenses | `educator_expenses` | expenses |
 | Student loan interest | `f1098e` | box1_student_loan_interest |
-| IRA deduction | `ira_deduction_worksheet` | traditional_ira_contribution |
-| HSA (employer) | `w2` box12 code W | box12_code_w_employer_hsa |
+| IRA deduction | `ira_deduction_worksheet` | ira_contribution, active_participant, … |
+
+Filing status, taxpayer and dependents go in the `start` entry's `general`
+object, as in the example above.
 
 For dependents, add to the `general` node:
 ```json
@@ -114,7 +122,7 @@ Only include fields the IRS publication explicitly provides. Do not calculate or
 ## Step 4 — Verify
 
 Check that:
-1. `bun run check:cases` passes. It validates every node_type and field against the node schema the CLI applies; fix each reported field until it passes. The table above is a starting point; the schemas in `forms/{form}/{year}/inputs.ts` are the authority.
+1. `bun run check:cases` passes. It validates every node_type and field against the node schema the CLI applies; fix each reported field until it passes. The table above is a starting point; `bun run tax node inspect --node_type <type>` and the schemas wired in `forms/{form}/{year}/inputs.ts` are the authority.
 2. `correct.json` has all three required fields
 3. `source` field is present and specific (pub name + exercise/page)
 4. The numbers in `correct.json` are consistent with each other (refund + owed can't both be nonzero; total_payments − total_tax should roughly equal refund)
@@ -123,7 +131,7 @@ Check that:
 
 Report:
 ```
-Created: benchmark/cases/98-single-w2-interest/
+Created: benchmark/cases/f1040/2025/135-single-w2-interest/
   input.json:   3 forms (start, w2, f1099int)
   correct.json: line24_total_tax=1763, line35a_refund=4052, line37_amount_owed=0
   Source: IRS VITA Pub 4491 TY2025, Exercise 2, p. 34
