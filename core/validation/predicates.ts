@@ -793,3 +793,95 @@ export const isItinOrAtin = (v: unknown): boolean => {
 
 /** Convenience: build a RuleDef with less boilerplate. */
 export { rule } from "./rule-builder.ts";
+
+// ─── Identifiers, PINs and receipt (return assembly) ────
+// Checks on what the return itself carries for rules the IRS settles against
+// its e-File database: the database answer is not known offline, but a value
+// that cannot be in it is.
+
+const ITIN_GROUP = /^(5\d|6[0-5]|7\d|8[0-8]|9[0-2]|9[4-9])$/;
+// SSA-voided numbers that were printed in advertising.
+const VOIDED_SSNS = new Set(["078051120", "219099999"]);
+
+/**
+ * A TIN the SSA or IRS can issue. SSNs never have area 000, 666 or 9xx, group
+ * 00 or serial 0000 (SSA POMS RM 10201.035); 9xx is an ITIN (group 50-65,
+ * 70-88, 90-92, 94-99) or an ATIN (group 93). Pub 1436 ATS SSNs use group 00.
+ */
+export const isIssuableTin = (v: unknown, ats = false): boolean => {
+  const d = digits(v);
+  if (!/^\d{9}$/.test(d)) return false;
+  const area = d.slice(0, 3), group = d.slice(3, 5), serial = d.slice(5);
+  if (area.startsWith("9")) return ITIN_GROUP.test(group) || group === "93";
+  if (area === "000" || area === "666" || serial === "0000") return false;
+  if (VOIDED_SSNS.has(d)) return false;
+  return group !== "00" || ats;
+};
+
+/** Every value of the fields is an issuable SSN, ITIN or ATIN. */
+export const issuableTins = (...xml: string[]): RuleCheck =>
+  (ctx) =>
+    xml.flatMap((f) => ctx.fieldArray(f))
+      .every((v) => isIssuableTin(v, isAtsTest(ctx)));
+
+/** Every value is an IRS-issued six-digit Identity Protection PIN. */
+export const validIpPins = (...xml: string[]): RuleCheck =>
+  (ctx) =>
+    xml.flatMap((f) => ctx.fieldArray(f))
+      .every((v) => /^\d{6}$/.test(String(v)) && String(v) !== "000000");
+
+/** Every value is a five-digit PIN (PINType) that is not all zeros. */
+export const validFiveDigitPins = (...xml: string[]): RuleCheck =>
+  (ctx) =>
+    xml.flatMap((f) => ctx.fieldArray(f))
+      .every((v) => /^\d{5}$/.test(String(v)) && String(v) !== "00000");
+
+/** The return's creation date from 'ReturnTs'; it is never after receipt. */
+const returnTsMs = (ctx: ReturnContext): number | null => {
+  const ts = String(ctx.field("ReturnHeader/ReturnTs") ?? "");
+  return parseDateMs(ts.slice(0, 10));
+};
+
+/** Year the return is processed: the year of 'ReturnTs'. NaN when absent. */
+export const processingYear: Amount = yearOf("ReturnHeader/ReturnTs");
+
+/** 'TaxYr' is before the year before processing: a prior-year return. */
+export const priorYearReturn: RuleCheck = (ctx) =>
+  ctx.num("TaxYr") < processingYear(ctx) - 1;
+
+/** An amended or superseded return (Form 1040 checkbox or Form 1040-X). */
+export const postOriginalReturn: RuleCheck = (ctx) =>
+  ctx.hasValue("AmendedReturnInd") || ctx.hasValue("SupersededReturnInd") ||
+  ctx.hasForm("form1040x");
+
+/**
+ * The date is before (`strict`) or on the day the return was created, so it is
+ * before or on the IRS received date. Passes when either date is absent.
+ */
+export const dateBeforeReceipt = (xml: string, strict = false): RuleCheck =>
+  (ctx) => {
+    const d = String(ctx.field(xml) ?? "");
+    const received = returnTsMs(ctx);
+    if (!d || received === null) return true;
+    const ms = parseDateMs(d);
+    if (ms === null) return false;
+    return strict ? ms < received : ms <= received;
+  };
+
+/**
+ * A real calendar birth date no later than the end of 'TaxYr' and no more
+ * than 125 years before it. Passes when absent.
+ */
+export const plausibleBirthDate = (xml: string): RuleCheck =>
+  (ctx) => {
+    const d = String(ctx.field(xml) ?? "");
+    if (!d) return true;
+    const m = d.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+    if (!m) return false;
+    const [y, mo, day] = [Number(m[1]), Number(m[2]), Number(m[3])];
+    const dt = new Date(Date.UTC(y, mo - 1, day));
+    const real = dt.getUTCFullYear() === y && dt.getUTCMonth() === mo - 1 &&
+      dt.getUTCDate() === day;
+    const taxYr = ctx.num("TaxYr");
+    return real && y <= taxYr && y >= taxYr - 125;
+  };

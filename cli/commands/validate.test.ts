@@ -55,6 +55,7 @@ test("CLI validation scopes rules to the emitted Form 1040 and W-2", async () =>
     assertEquals(report.canFile, false);
     assertEquals(report.entries.map((entry) => entry.ruleNumber), [
       "IND-025-02",
+      "IND-031-04",
     ]);
     assertEquals(JSON.parse(formatted), report);
 
