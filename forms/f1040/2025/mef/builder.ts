@@ -158,6 +158,7 @@ import {
 export interface MefBundle {
   readonly form8886Packets?: PreparedForm8886ReturnPackets;
   readonly retainedSourceDocuments?: readonly Form4852RetainedDocument[];
+  readonly retainedSourceSha256ByReference?: Readonly<Record<string, string>>;
   readonly xml: string;
   readonly attachments: ReadonlyArray<MefPdfAttachment>;
   readonly pending: MefFormsPending;
@@ -279,6 +280,7 @@ function buildReturnXml(
   attachmentSha256ByFileName?: Readonly<Record<string, string>>,
   form4852EvidenceVerified = false,
   preparedForm8886?: PreparedForm8886ReturnPackets,
+  retainedSourceSha256ByReference?: Readonly<Record<string, string>>,
 ): {
   readonly xml: string;
   readonly form3800Parts?: Form3800DocumentParts;
@@ -423,6 +425,7 @@ function buildReturnXml(
     binaryAttachmentFileNames,
     attachmentDescriptionsByFileName,
     attachmentSha256ByFileName,
+    retainedSourceSha256ByReference,
     pending,
   });
   const documentIdsByPendingKey = Object.fromEntries(
@@ -460,6 +463,7 @@ function buildReturnXml(
     documentIdsByPendingKey,
     documentIdsByTag,
     documentIdsByAttachmentFileName,
+    retainedSourceSha256ByReference,
     pending,
     onPreparedForm3800(parts) {
       if (form3800Parts) {
@@ -529,6 +533,7 @@ export function assertPreparedBundleProjection(
     bundle.attachmentSha256ByFileName,
     bundle.retainedSourceDocuments !== undefined,
     bundle.form8886Packets,
+    bundle.retainedSourceSha256ByReference,
   );
   if (projected.xml !== bundle.xml) {
     throw new Error(
@@ -627,6 +632,11 @@ export async function buildMefBundle(
     options.filer,
     retainedSourceDocuments,
   );
+  const retainedSourceSha256ByReference = Object.fromEntries(
+    await Promise.all(retainedSourceDocuments.map(async (d) =>
+      [d.document_reference, await sha256Hex(d.bytes)] as const
+    )),
+  );
   const generated = await Promise.all(
     ALL_MEF_FORMS.map((form) =>
       "buildBinaryAttachments" in form && form.buildBinaryAttachments
@@ -700,6 +710,7 @@ export async function buildMefBundle(
     attachmentSha256ByFileName,
     pending.f4852 !== undefined,
     options.form8886?.prepared,
+    retainedSourceSha256ByReference,
   );
   const form8886Packets = options.form8886 && options.filer
     ? await finalizeForm8886NativeReturnPackets(
@@ -723,6 +734,7 @@ export async function buildMefBundle(
     form3800Parts: prepared.form3800Parts,
     form8886Packets,
     retainedSourceDocuments,
+    retainedSourceSha256ByReference,
     attachments,
     pending,
     sourceSha256: await preparedSourceSha256(pending, options.filer),

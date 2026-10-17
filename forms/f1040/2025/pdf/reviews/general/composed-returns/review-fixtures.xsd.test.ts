@@ -139,7 +139,7 @@ for (const fixture of pdfReviewFixtures) {
         assertThrows(
           () => buildMefXml(buildPending(result.pending), fixture.filer),
           Error,
-          "executor-owned authentication of prior IRS notice issuance and contents",
+          "retained prior IRS notice copy with matching SHA-256",
         );
         return;
       }

@@ -32,13 +32,17 @@ function subtotalXml(
       Form3800CurrentCreditAmount,
       | "nonpassiveCredit"
       | "transferOutCredit"
+      | "transferInCredit"
       | "passiveBeforeLimit"
       | "passiveAfterLimit"
       | "totalCredit"
       | "appliedCredit"
     >,
   ): number => {
-    const amount = rows.reduce((sum, row) => sum + toCents(row[field]), 0);
+    const amount = rows.reduce(
+      (sum, row) => sum + toCents(row[field] ?? 0),
+      0,
+    );
     if (!Number.isSafeInteger(amount)) {
       throw new Error("Form 3800 Part III subtotal exceeds cent precision");
     }
@@ -48,11 +52,13 @@ function subtotalXml(
   const passiveAfter = total("passiveAfterLimit");
   const nonpassive = total("nonpassiveCredit");
   const transferOut = total("transferOutCredit");
+  const transferIn = total("transferInCredit");
+  const transferNet = toCents(transferIn) - toCents(transferOut);
   const available = total("totalCredit");
   const applied = total("appliedCredit");
   if (
     toCents(available) !==
-      toCents(passiveAfter) + toCents(nonpassive) - toCents(transferOut) ||
+      toCents(passiveAfter) + toCents(nonpassive) + transferNet ||
     toCents(applied) > toCents(available)
   ) {
     throw new Error("Form 3800 Part III subtotal does not reconcile");
@@ -62,7 +68,9 @@ function subtotalXml(
       ? element("CrSubjToPassiveActyLmtAmt", passiveBefore)
       : "",
     nonpassive > 0 ? element("GeneralBusCrFromNnPssvActyAmt", nonpassive) : "",
-    transferOut > 0 ? element("CreditTransferElectionAmt", -transferOut) : "",
+    transferNet !== 0
+      ? element("CreditTransferElectionAmt", transferNet / 100)
+      : "",
     element("TotalGeneralBusCreditsAmt", available),
     element("TotalGeneralBusCreditsAppTxAmt", applied),
   ]);
@@ -84,13 +92,14 @@ export function buildForm3800PartIIIXml(
     const passiveAfter = toCents(row.passiveAfterLimit);
     const nonpassive = toCents(row.nonpassiveCredit);
     const transferOut = toCents(row.transferOutCredit);
+    const transferIn = toCents(row.transferInCredit ?? 0);
     const available = toCents(row.totalCredit);
     const applied = toCents(row.appliedCredit);
     if (
       passiveBefore < 0 || passiveAfter < 0 ||
       passiveAfter > passiveBefore || nonpassive < 0 ||
-      transferOut < 0 || transferOut > nonpassive ||
-      available !== passiveAfter + nonpassive - transferOut ||
+      transferOut < 0 || transferOut > nonpassive || transferIn < 0 ||
+      available !== passiveAfter + nonpassive - transferOut + transferIn ||
       applied < 0 || applied > available
     ) {
       throw new Error("Form 3800 Part III amount row does not reconcile");

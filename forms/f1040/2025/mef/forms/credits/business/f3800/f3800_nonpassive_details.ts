@@ -26,6 +26,9 @@ export type Form3800NonpassiveDetailRow = {
   readonly appliedCredit: number;
   readonly passThroughEin?: string;
   readonly transferOutCredit?: number;
+  /** IRC §6418 credit purchased as transferee, Part V column (f)(2). */
+  readonly transferInCredit?: number;
+  readonly transferorEin?: string;
   readonly transferRegistrationNumber?: string;
   readonly sourceDocumentId?: string;
 };
@@ -79,30 +82,40 @@ export function form3800NonpassiveCurrentDetailXml(
   row: Form3800NonpassiveDetailRow,
 ): string {
   const transferred = row.transferOutCredit ?? 0;
+  const purchased = row.transferInCredit ?? 0;
   const facility = row.line === "1f" || row.line === "4e";
   const specified = row.line === "1aa" || row.line === "4e";
   if (
     !Number.isFinite(row.credit) || row.credit < 0 ||
     !Number.isFinite(row.appliedCredit) || row.appliedCredit < 0 ||
     !Number.isFinite(transferred) || transferred < 0 ||
-    row.appliedCredit > row.credit - transferred ||
-    (!facility && (transferred !== 0 || row.transferRegistrationNumber)) ||
-    (transferred > 0 && !row.transferRegistrationNumber) ||
+    !Number.isFinite(purchased) || purchased < 0 ||
+    row.appliedCredit > row.credit - transferred + purchased ||
+    (!facility &&
+      (transferred !== 0 || purchased !== 0 ||
+        row.transferRegistrationNumber)) ||
+    ((transferred > 0 || purchased > 0) && !row.transferRegistrationNumber) ||
+    (purchased > 0) !== (row.transferorEin !== undefined) ||
+    (row.transferorEin !== undefined && !/^\d{9}$/.test(row.transferorEin)) ||
     (row.passThroughEin !== undefined && !/^\d{9}$/.test(row.passThroughEin)) ||
     (row.passThroughEin && row.sourceDocumentId && row.line !== "1v")
   ) {
     throw new Error("Form 3800 nonpassive Part V source is invalid");
   }
-  const available = row.credit - transferred;
+  const available = row.credit - transferred + purchased;
   return elements(detailTag[row.line], [
-    row.passThroughEin
-      ? element("PassThroughEntityEIN", row.passThroughEin)
-      : "",
     row.transferRegistrationNumber
       ? element("TransferRegistrationNum", row.transferRegistrationNumber)
       : "",
-    element("OthThnCrTrnsfrElectCrNoLmtAmt", row.credit),
+    row.passThroughEin
+      ? element("PassThroughEntityEIN", row.passThroughEin)
+      : "",
+    element("TransferCreditEntityEIN", row.transferorEin),
+    row.credit > 0 || purchased === 0
+      ? element("OthThnCrTrnsfrElectCrNoLmtAmt", row.credit)
+      : "",
     transferred > 0 ? element("TrnsfrElectCrSoldNoLmtAmt", -transferred) : "",
+    purchased > 0 ? element("PrchsTrnsfrElectCrNoLmtAmt", purchased) : "",
     element("TotalGeneralBusCreditsAmt", available),
     specified ? element("TotalGBCLessGrossEPEAmt", available) : "",
     element("TotalGBCLessGrossEPEAppTxAmt", row.appliedCredit),

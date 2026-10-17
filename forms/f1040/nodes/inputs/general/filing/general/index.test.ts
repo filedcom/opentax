@@ -1537,3 +1537,28 @@ test("smoke: all new major fields populated → routes correctly to f1040", () =
   assertEquals(input?.taxpayer_ip_pin, "123456");
   assertEquals(input?.spouse_ip_pin, "654321");
 });
+
+test("reviewed HOH lived-apart spouse marks the Form 1040 separated-spouse box only for HOH", () => {
+  const review = {
+    lived_apart_last_six_months_of_2025_verified: true,
+    separate_residence_record_reference: "2025 residence ledger",
+  };
+  const result = compute({
+    filing_status: FilingStatus.HOH,
+    hoh_spouse_lived_apart_review: review,
+    dependents: [qualifyingChildDep()],
+  });
+  assertEquals(
+    findOutput(result, "f1040")?.fields.hoh_spouse_lived_apart,
+    true,
+  );
+  assertThrows(
+    () =>
+      compute({
+        filing_status: FilingStatus.Single,
+        hoh_spouse_lived_apart_review: review,
+      }),
+    Error,
+    "needs head-of-household status",
+  );
+});

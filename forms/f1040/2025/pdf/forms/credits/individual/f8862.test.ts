@@ -112,7 +112,7 @@ test("Form 8862 PDF projects bounded EITC and CTC claims", () => {
         },
       }),
     Error,
-    "executor-owned authentication of prior IRS notice issuance and contents",
+    "retained prior IRS notice copy with matching SHA-256",
   );
 });
 

@@ -69,6 +69,7 @@ export interface Fields {
   line12_business_expenses?: number | null;
   line13_hsa_deduction?: number | null;
   line14_moving_expenses?: number | null;
+  line14_storage_fees_only?: boolean | null;
   line15_se_deduction?: number | null;
   line16_sep_simple?: number | null;
   line17_se_health_insurance?: number | null;
@@ -180,6 +181,12 @@ function buildIRS1040Schedule1(
       return amount > 0 ? element(tag, amount) : "";
     }
     if (typeof value !== "number") return "";
+    if (key === "line14_moving_expenses") {
+      return element(tag, value) +
+        (fields.line14_storage_fees_only === true
+          ? element("ClaimStorageFeesInd", "X")
+          : "");
+    }
     if (key === "line8a_nol_deduction") return element(tag, -value);
     if (key === "line8d_foreign_earned_income_exclusion") {
       const formId = context?.documentIdsByPendingKey?.form2555?.[0];

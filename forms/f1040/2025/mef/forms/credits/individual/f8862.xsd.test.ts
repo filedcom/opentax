@@ -241,7 +241,7 @@ test.skipIf(!xsdAvailable)("XSD fixture: CTC and AOTC notice assertions cannot a
         filer,
       ),
     Error,
-    "executor-owned authentication of prior IRS notice issuance and contents",
+    "retained prior IRS notice copy with matching SHA-256",
   );
 });
 
@@ -283,7 +283,7 @@ test("Form 8862 childless EITC return remains blocked before XSD", () => {
         filer,
       ),
     Error,
-    "executor-owned authentication of prior IRS notice issuance and contents",
+    "retained prior IRS notice copy with matching SHA-256",
   );
 });
 
@@ -317,6 +317,6 @@ test("Form 8862 income-only EITC return remains blocked before XSD", () => {
         filer,
       ),
     Error,
-    "executor-owned authentication of prior IRS notice issuance and contents",
+    "retained prior IRS notice copy with matching SHA-256",
   );
 });

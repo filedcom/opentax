@@ -77,15 +77,15 @@ test("ATS public-entry matrix retains missing prerequisites and printed conflict
   assertEquals(ledger.byKind, {
     calculation: {
       count: 90,
-      counts: { different: 21, match: 64, "not-produced": 5 },
+      counts: { different: 21, match: 66, "not-produced": 3 },
     },
     "document-copy": {
       count: 56,
-      counts: { missing: 12, "not-evaluated": 26, present: 18 },
+      counts: { "not-evaluated": 26, present: 30 },
     },
     "binary-attachment": {
       count: 2,
-      counts: { missing: 1, "not-evaluated": 1 },
+      counts: { "not-evaluated": 1, "present-in-verified-manifest": 1 },
     },
     "native-retirement-value": {
       count: 30,
@@ -105,11 +105,11 @@ test("ATS public-entry matrix retains missing prerequisites and printed conflict
       },
     },
   });
-  assertEquals(ledger.calculationAnchor.matching, 59);
-  assertEquals(ledger.calculationAnchor.evaluated, 80);
-  assertEquals(ledger.calculationAnchor.notProduced, 5);
+  assertEquals(ledger.calculationAnchor.matching, 61);
+  assertEquals(ledger.calculationAnchor.evaluated, 82);
+  assertEquals(ledger.calculationAnchor.notProduced, 3);
   assertEquals(ledger.calculationAnchor.provisional, 5);
-  assertEquals(ledger.calculationAnchor.percent, 100 * 59 / 80);
+  assertEquals(ledger.calculationAnchor.percent, 100 * 61 / 82);
   assertEquals(ledger.attachmentRequirementsNotInventoried.length, 0);
   // Distinct W2 copy identities survive; blocked copies are not labeled missing.
   assertEquals(
@@ -165,13 +165,19 @@ test("ATS public-entry matrix retains missing prerequisites and printed conflict
     ],
   );
   const transfer = report.scenarios.find((s) => s.id === "1040-04")!;
-  assertEquals(transfer.preparation.attachments, []);
+  const statement = {
+    description: "Transfer Election Statement",
+    fileName: "Transfer Election Statement.pdf",
+    byteLength: 792,
+    sha256: "5dd494c2ff29f13af108af76f27e6e2c3936b0ff5de009ed38b2abb080f5f523",
+  };
+  assertEquals(transfer.preparation.attachments, [statement]);
   assertEquals(transfer.attachmentCoverage.knownRequiredCount, 1);
-  assertEquals(transfer.attachmentCoverage.allKnownRequiredPresent, false);
+  assertEquals(transfer.attachmentCoverage.allKnownRequiredPresent, true);
   assertEquals(transfer.attachmentCoverage.rows, [{
     description: "Transfer Election Statement",
-    result: "missing",
-    observed: [],
+    result: "present-in-verified-manifest",
+    observed: [statement],
   }]);
   for (const scenario of report.scenarios) {
     const coverage = scenario.attachmentCoverage;
@@ -204,8 +210,8 @@ test("ATS public-entry matrix retains missing prerequisites and printed conflict
     { id: "1040-01", observed: 0, required: 7, present: false },
     { id: "1040-02", observed: 0, required: 7, present: false },
     { id: "1040-03", observed: 0, required: 9, present: false },
-    { id: "1040-04", observed: 2, required: 7, present: false },
-    { id: "1040-05", observed: 2, required: 9, present: false },
+    { id: "1040-04", observed: 7, required: 7, present: true },
+    { id: "1040-05", observed: 9, required: 9, present: true },
     { id: "1040-08", observed: 0, required: 3, present: false },
     { id: "1040-12", observed: 8, required: 8, present: true },
     { id: "1040-13", observed: 6, required: 6, present: true },
@@ -215,7 +221,7 @@ test("ATS public-entry matrix retains missing prerequisites and printed conflict
       .documentCoverage.rows.filter((r) => r.missingCopies).map((r) =>
         r.sourceForm
       ),
-    ["Schedule 3", "3800", "8835", "8936", "8936 Schedule A"],
+    [],
   );
 
   assertEquals(
@@ -224,7 +230,17 @@ test("ATS public-entry matrix retains missing prerequisites and printed conflict
   );
   assertEquals(
     report.scenarios.find((s) => s.id === "1040-04")!.preparation.documentRoots,
-    ["IRS1040", "IRSW2"],
+    [
+      "IRS1040",
+      "IRS1040Schedule3",
+      "IRS3800",
+      "IRS6251",
+      "IRS8835",
+      "IRS8936",
+      "IRS8936ScheduleA",
+      "IRSW2",
+      "BinaryAttachment",
+    ],
   );
   assertEquals(
     report.scenarios.find((s) => s.id === "1040-01")!.preparation.result,
@@ -241,7 +257,7 @@ test("ATS public-entry matrix retains missing prerequisites and printed conflict
     }
     assertEquals(scenario.preparation.result, PreparationResult.NativeBlocked);
   }
-  assertEquals(report.counts, { match: 64, different: 21, "not-produced": 5 });
+  assertEquals(report.counts, { match: 66, different: 21, "not-produced": 3 });
   const farm = report.scenarios.find((s) => s.id === "1040-03")!;
   assertEquals(
     farm.checks.filter((c) => c.result !== CheckResult.Match).map(
@@ -254,11 +270,20 @@ test("ATS public-entry matrix retains missing prerequisites and printed conflict
     ],
   );
   assertEquals(
-    transfer.checks.filter((c) => c.result === CheckResult.NotProduced)
-      .map((c) => [c.path, c.expected]),
+    transfer.checks.map((c) => [c.path, c.expected, c.result]),
     [
-      ["f3800.f8835_credit_entries.0.credit_amount", 13200],
-      ["f3800.f8936_new_vehicle_credit.credit_amount", 130],
+      ["f1040.line1a_wages", 36014, CheckResult.Match],
+      ["f1040.line25a_w2_withheld", 4581, CheckResult.Match],
+      [
+        "f3800.f8835_credit_entries.0.transfer_in_amount",
+        13200,
+        CheckResult.Match,
+      ],
+      [
+        "f3800.f8936_new_vehicle_credit.credit_amount",
+        130,
+        CheckResult.Match,
+      ],
     ],
   );
   // Preserve every printed AMT target, including stale tax limits and absent

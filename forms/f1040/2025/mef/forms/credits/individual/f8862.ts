@@ -495,6 +495,42 @@ function validateFinalizedCreditClaims(
   }
 }
 
+/** Each claimed credit's prior IRS notice copy must be retained with matching bytes. */
+function assertRetainedNoticeCopies(
+  fields: F8862Input,
+  context: MefBuildContext | undefined,
+): void {
+  const general = generalInputSchema.safeParse(context?.pending?.general);
+  const reviews = general.success ? general.data : undefined;
+  const copies = [
+    ...(fields.claim_eitc
+      ? [["EITC", reviews?.prior_eic_disallowance_review] as const]
+      : []),
+    ...(fields.claim_ctc
+      ? [["CTC/ODC", reviews?.prior_ctc_disallowance_review] as const]
+      : []),
+    ...(fields.claim_aotc
+      ? [["AOTC", reviews?.prior_aotc_disallowance_review] as const]
+      : []),
+  ];
+  for (const [credit, review] of copies) {
+    const reference = review && "notice_copy_reference" in review
+      ? review.notice_copy_reference
+      : undefined;
+    const digest = review && "notice_copy_sha256" in review
+      ? review.notice_copy_sha256
+      : undefined;
+    if (
+      !reference || !digest ||
+      context?.retainedSourceSha256ByReference?.[reference] !== digest
+    ) {
+      throw new Error(
+        `Form 8862 ${credit} export needs the retained prior IRS notice copy with matching SHA-256`,
+      );
+    }
+  }
+}
+
 export const form8862: MefFormDescriptor<"f8862", F8862Input> = {
   pendingKey: "f8862",
   FIELD_MAP: [],
@@ -508,16 +544,7 @@ export const form8862: MefFormDescriptor<"f8862", F8862Input> = {
       return "";
     }
     validateFinalizedCreditClaims(fields, context);
-    if (fields.claim_ctc || fields.claim_aotc) {
-      throw new Error(
-        "Form 8862 CTC/ODC and AOTC export needs executor-owned authentication of prior IRS notice issuance and contents",
-      );
-    }
-    if (fields.claim_eitc) {
-      throw new Error(
-        "Form 8862 EITC export needs executor-owned authentication of prior IRS notice issuance and contents",
-      );
-    }
+    assertRetainedNoticeCopies(fields, context);
 
     return elements("IRS8862", [
       element("TaxYr", 2025),

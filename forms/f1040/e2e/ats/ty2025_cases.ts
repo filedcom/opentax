@@ -907,7 +907,7 @@ export const SCENARIO_1040_04_FACTS = {
   },
   form3800: {
     partIIIline1f: {
-      registrationNumber: "PAZ12305555",
+      registrationNumber: "PAZ123055555",
       transferorEinEntry: "APPLD FOR",
       creditTransferElectionAmount: 13_200,
       combinedCredit: 13_200,
@@ -921,7 +921,7 @@ export const SCENARIO_1040_04_FACTS = {
     },
   },
   form8835: {
-    registrationNumber: "PAZ12305555",
+    registrationNumber: "PAZ123055555",
     facilityOwner: "Texas Solar Energy",
     facilityOwnerTin: "000000029",
     facilityAddress: "808 Spring Love Lane, Houston, TX 77004",

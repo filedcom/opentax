@@ -1,20 +1,15 @@
 /** ATS readiness: each IRS Assurance Testing scenario scored on what an ATS accept needs offline. */
-import * as fs from "node:fs/promises";
-import { join } from "node:path";
-import * as sys from "../support/sys.ts";
-import { f1040_2025 } from "../../forms/f1040/2025/index.ts";
-import { normalizeAllPending } from "../../forms/f1040/2025/return-processing/pending.ts";
-import { extractFilerIdentity } from "../../forms/f1040/mef/filer.ts";
 import {
   ATS_SCENARIO_INPUTS,
   replayAtsChecks,
 } from "../../forms/f1040/e2e/ats/ty2025-check-replay.ts";
-import { returnFindings, signed } from "./mef.ts";
-
-const RETURN_XSD = new URL(
-  "../../irs/mef/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd",
-  import.meta.url,
-).pathname;
+import {
+  exportedReturn,
+  type RetainedDocument,
+  validateAgainstXsd,
+  xsdAvailable,
+} from "../../forms/f1040/e2e/ats/ats-export.ts";
+import type { MefPdfAttachment } from "../../forms/f1040/2025/mef/form-descriptor.ts";
 
 export type ScenarioScore = {
   readonly id: string;
@@ -38,12 +33,30 @@ export function passes(score: ScenarioScore): boolean {
 }
 
 type Conflict = { page: number; printed: unknown; current: unknown };
+type ScenarioModule = Record<string, unknown>;
 
-/** A scenario's documented packet conflicts: `SCENARIO_1040_NN_RECONCILIATION.conflicts`. */
-async function documentedConflicts(id: string): Promise<readonly Conflict[]> {
-  const module: Record<string, unknown> = await import(
+async function scenarioModule(id: string): Promise<ScenarioModule> {
+  return await import(
     `../../forms/f1040/e2e/ats/scenario_${id.replace("-", "_")}_input.ts`
   );
+}
+
+/** The files a scenario files with its return: `*Attachments()` and `*RetainedSourceDocuments()`. */
+function scenarioFiles(module: ScenarioModule) {
+  const call = <T>(suffix: string): T[] =>
+    Object.entries(module)
+      .filter(([name, value]) =>
+        name.endsWith(suffix) && typeof value === "function"
+      )
+      .flatMap(([, value]) => (value as () => T[])());
+  return {
+    attachments: call<MefPdfAttachment>("Attachments"),
+    retained: call<RetainedDocument>("RetainedSourceDocuments"),
+  };
+}
+
+/** A scenario's documented packet conflicts: `SCENARIO_1040_NN_RECONCILIATION.conflicts`. */
+function documentedConflicts(module: ScenarioModule): readonly Conflict[] {
   return Object.entries(module)
     .filter(([name]) => name.endsWith("_RECONCILIATION"))
     .flatMap(([, value]) => {
@@ -53,66 +66,59 @@ async function documentedConflicts(id: string): Promise<readonly Conflict[]> {
     .filter((c) => typeof c.page === "number");
 }
 
-async function schemaValid(
+/** Reject-level findings and XSD validity, built the way export builds the return. */
+async function filing(
   inputs: Record<string, unknown>,
-  dir: string,
-  id: string,
-): Promise<boolean | null> {
-  if (!(await fs.access(RETURN_XSD).then(() => true, () => false))) {
-    return null;
+  module: ScenarioModule,
+): Promise<{ findings: string[]; schemaValid: boolean | null }> {
+  const { attachments, retained } = scenarioFiles(module);
+  try {
+    const { xml, rejects } = await exportedReturn(
+      inputs,
+      attachments,
+      retained,
+    );
+    const findings = rejects.map((rule) => `rule ${rule}`);
+    if (!(await xsdAvailable())) return { findings, schemaValid: null };
+    const valid = await validateAgainstXsd(xml).then(() => true, () => false);
+    return { findings, schemaValid: valid };
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    return {
+      findings: [`xml ${message.replace(/\s+/g, " ").trim().slice(0, 160)}`],
+      schemaValid: null,
+    };
   }
-  const result = f1040_2025.executeReturn(signed(inputs));
-  const pending = normalizeAllPending(result.pending);
-  const xml = await f1040_2025.prepareReturn(
-    pending,
-    extractFilerIdentity(pending.f1040 ?? {}),
-    [],
-  ).then((prepared) => prepared.bundle.xml, () => null);
-  if (xml === null) return null;
-  const path = join(dir, `${id}.xml`);
-  await fs.writeFile(path, xml);
-  const out = await new sys.Command("xmllint", {
-    args: ["--noout", "--schema", RETURN_XSD, path],
-    stdout: "null",
-    stderr: "null",
-  }).output();
-  return out.code === 0;
 }
 
 export async function scoreScenarios(): Promise<ScenarioScore[]> {
   const replay = await replayAtsChecks();
-  const dir = await sys.makeTempDir({ prefix: "opentax-ats-" });
-  try {
-    return await Promise.all(
-      Object.entries(ATS_SCENARIO_INPUTS).map(async ([id, factory]) => {
-        const inputs = factory() as Record<string, unknown>;
-        const checks = replay.scenarios.find((s) => s.id === id)?.checks ?? [];
-        const conflicts = await documentedConflicts(id);
-        const findings = await returnFindings(inputs);
-        return {
-          id,
-          findings,
-          schemaValid: findings.some((f) => !f.startsWith("rule "))
-            ? null
-            : await schemaValid(inputs, dir, id),
-          // MeF omits zero amounts, so an unproduced value the packet prints as 0 matches.
-          valuesMatched: checks.filter((c) =>
-            c.result === "match" ||
-            (c.result === "not-produced" && c.expected === 0)
-          ).length,
-          valuesConflicting: checks.filter((c) =>
-            c.result === "different" &&
-            conflicts.some((k) =>
-              k.printed === c.expected && k.current === c.actual
-            )
-          ).length,
-          valuesCompared: checks.length,
-        };
-      }),
-    );
-  } finally {
-    await sys.remove(dir, { recursive: true });
-  }
+  return await Promise.all(
+    Object.entries(ATS_SCENARIO_INPUTS).map(async ([id, factory]) => {
+      const inputs = factory() as Record<string, unknown>;
+      const checks = replay.scenarios.find((s) => s.id === id)?.checks ?? [];
+      const module = await scenarioModule(id);
+      const conflicts = documentedConflicts(module);
+      const { findings, schemaValid } = await filing(inputs, module);
+      return {
+        id,
+        findings,
+        schemaValid,
+        // MeF omits zero amounts, so an unproduced value the packet prints as 0 matches.
+        valuesMatched: checks.filter((c) =>
+          c.result === "match" ||
+          (c.result === "not-produced" && c.expected === 0)
+        ).length,
+        valuesConflicting: checks.filter((c) =>
+          c.result === "different" &&
+          conflicts.some((k) =>
+            k.printed === c.expected && k.current === c.actual
+          )
+        ).length,
+        valuesCompared: checks.length,
+      };
+    }),
+  );
 }
 
 function row(score: ScenarioScore): string {

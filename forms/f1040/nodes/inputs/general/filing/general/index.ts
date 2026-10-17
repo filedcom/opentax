@@ -447,6 +447,12 @@ export const inputSchema = z.object({
   hoh_qualifying_person_name: z.string().optional(),
   hoh_qualifying_person_relationship: z.string().optional(),
   hoh_paid_more_than_half_home_costs: z.boolean().optional(),
+  // Form 1040 dependents-section box: a married HOH filer lived apart from
+  // the spouse for the last 6 months of 2025 (Pub. 501, considered unmarried).
+  hoh_spouse_lived_apart_review: z.object({
+    lived_apart_last_six_months_of_2025_verified: z.literal(true),
+    separate_residence_record_reference: z.string().trim().min(1),
+  }).strict().optional(),
   // QSS-specific
   qss_spouse_death_year: z.number().int().optional(),
   qss_qualifying_child_ssn: z.string().optional(),
@@ -1240,6 +1246,19 @@ function buildF1040Input(input: GeneralInput): Record<string, unknown> {
     fields,
     "mfs_eitc_separation_rule",
     input.mfs_eitc_separation_review === undefined ? undefined : true,
+  );
+  if (
+    input.hoh_spouse_lived_apart_review !== undefined &&
+    input.filing_status !== FilingStatus.HOH
+  ) {
+    throw new Error(
+      "HOH lived-apart spouse review needs head-of-household status",
+    );
+  }
+  addIfDefined(
+    fields,
+    "hoh_spouse_lived_apart",
+    input.hoh_spouse_lived_apart_review === undefined ? undefined : true,
   );
   addIfDefined(
     fields,

@@ -26,7 +26,7 @@ test("reviewed CTC credit calculates, but notice assertions cannot authorize exp
   assertThrows(
     () => nativeForm8862.build(pending.f8862!, { pending }),
     Error,
-    "executor-owned authentication of prior IRS notice issuance and contents",
+    "retained prior IRS notice copy with matching SHA-256",
   );
   assertThrows(
     () =>
@@ -36,11 +36,11 @@ test("reviewed CTC credit calculates, but notice assertions cannot authorize exp
         f8812: pending.f8812!,
       }),
     Error,
-    "executor-owned authentication of prior IRS notice issuance and contents",
+    "retained prior IRS notice copy with matching SHA-256",
   );
   await assertRejects(
     () => buildMefBundle(pending, { filer: fixture.filer, attachments: [] }),
     Error,
-    "executor-owned authentication of prior IRS notice issuance and contents",
+    "retained prior IRS notice copy with matching SHA-256",
   );
 });

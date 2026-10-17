@@ -144,17 +144,17 @@ test("reviewed ODC and AOTC amounts calculate, but notice assertions cannot auth
   assertThrows(
     () => nativeForm8862.build(pending.f8862!, { pending }),
     Error,
-    "executor-owned authentication of prior IRS notice issuance and contents",
+    "retained prior IRS notice copy with matching SHA-256",
   );
   assertThrows(
     () => form8862Pdf.instances?.(pending.f8862!, base.filer, pdfPending),
     Error,
-    "executor-owned authentication of prior IRS notice issuance and contents",
+    "retained prior IRS notice copy with matching SHA-256",
   );
   await assertRejects(
     () => buildMefBundle(pending, { filer: base.filer, attachments: [] }),
     Error,
-    "executor-owned authentication of prior IRS notice issuance and contents",
+    "retained prior IRS notice copy with matching SHA-256",
   );
 });
 

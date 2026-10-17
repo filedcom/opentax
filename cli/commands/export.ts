@@ -18,6 +18,10 @@ import { ALL_RULES } from "../../forms/f1040/validation/rules/index.ts";
 import type { DiagnosticEntry } from "../../core/validation/types.ts";
 import type { ExecutorDiagnosticEntry } from "../../core/runtime/executor.ts";
 import { loadForm8839Attachments } from "./form8839-attachments.ts";
+import {
+  loadForm8835PurchaseAttachments,
+  loadForm8862RetainedNotices,
+} from "./return-source-files.ts";
 import { normalizeAllPending } from "../../forms/f1040/2025/return-processing/pending.ts";
 import { buildForm4972PaperPdfBytes } from "../../forms/f1040/2025/pdf/builder.ts";
 import { reconcileForm4972Collection } from "../../forms/f1040/2025/domains/taxes/retirement/form4972/form4972_collection_reconciliation.ts";
@@ -295,11 +299,17 @@ export async function exportMefCommand(
   const { pending, def, filer, executorDiagnostics } = await runReturnPipeline(
     args,
   );
-  const attachments = await loadForm8839Attachments(
-    join(args.baseDir, args.returnId),
+  const returnPath = join(args.baseDir, args.returnId);
+  const attachments = [
+    ...await loadForm8839Attachments(returnPath, pending),
+    ...await loadForm8835PurchaseAttachments(returnPath, pending),
+  ];
+  const prepared = await def.prepareReturn(
     pending,
+    filer,
+    attachments,
+    await loadForm8862RetainedNotices(returnPath, pending),
   );
-  const prepared = await def.prepareReturn(pending, filer, attachments);
   const xml = prepared.bundle.xml;
   validateBusinessRules(
     pending,
@@ -321,14 +331,20 @@ export async function exportPdfCommand(
   const { pending, def, filer } = await runReturnPipeline(
     args,
   );
-  const attachments = await loadForm8839Attachments(
-    join(args.baseDir, args.returnId),
-    pending,
-  );
+  const returnPath = join(args.baseDir, args.returnId);
+  const attachments = [
+    ...await loadForm8839Attachments(returnPath, pending),
+    ...await loadForm8835PurchaseAttachments(returnPath, pending),
+  ];
   // An unidentified draft is a PDF preview; it has no fileable MeF return.
   const prepared = args.draft && !filer
     ? undefined
-    : await def.prepareReturn(pending, filer, attachments);
+    : await def.prepareReturn(
+      pending,
+      filer,
+      attachments,
+      await loadForm8862RetainedNotices(returnPath, pending),
+    );
   validateBusinessRules(
     pending,
     filer,

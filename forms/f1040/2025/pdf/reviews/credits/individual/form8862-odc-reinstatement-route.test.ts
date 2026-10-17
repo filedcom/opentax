@@ -59,7 +59,7 @@ test("reviewed ODC credit calculates, but unauthenticated notice blocks both exp
   assertThrows(
     () => nativeForm8862.build(pending.f8862!, { pending }),
     Error,
-    "executor-owned authentication of prior IRS notice issuance and contents",
+    "retained prior IRS notice copy with matching SHA-256",
   );
   assertThrows(
     () =>
@@ -69,12 +69,12 @@ test("reviewed ODC credit calculates, but unauthenticated notice blocks both exp
         f8812: pending.f8812!,
       }),
     Error,
-    "executor-owned authentication of prior IRS notice issuance and contents",
+    "retained prior IRS notice copy with matching SHA-256",
   );
   await assertRejects(
     () => buildMefBundle(pending, { filer: base.filer, attachments: [] }),
     Error,
-    "executor-owned authentication of prior IRS notice issuance and contents",
+    "retained prior IRS notice copy with matching SHA-256",
   );
 });
 

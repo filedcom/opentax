@@ -17,6 +17,10 @@ import {
   form8835IncreaseDescription,
 } from "../../../../../nodes/inputs/credits/business/f8835/increase-source.ts";
 import { assertForm8835BondSource } from "../../../../../nodes/inputs/credits/business/f8835/bond-source.ts";
+import {
+  FORM8835_PURCHASE_STATEMENT_DESCRIPTION,
+  QualifiedFacilityRequirement,
+} from "../../../../../nodes/inputs/credits/business/f8835/purchase-source.ts";
 import { element, elements } from "../../../../../mef/xml.ts";
 import {
   calculateForm8835,
@@ -92,7 +96,120 @@ function requireAttachment(
   }
 }
 
+/** Transferee copy: facility identity and production from the transferor. */
+function purchasedFacilityXml(
+  item: F8835Item,
+  context: MefBuildContext,
+): string {
+  calculateForm8835(item);
+  const source = item.purchase_source!;
+  const address = item.facility_us_address;
+  if (
+    !item.facility_description || !address ||
+    item.facility_latitude === undefined ||
+    item.facility_longitude === undefined ||
+    item.ac_nameplate_kw === undefined ||
+    (item.energy_type === EnergyType.Solar &&
+      item.solar_dc_nameplate_kw === undefined)
+  ) {
+    throw new Error(
+      "Form 8835 purchased credit needs the transferor's facility description, address, coordinates and nameplate capacity",
+    );
+  }
+  requireAttachment(source.statement_file_name, context, "purchased credit");
+  if (
+    context.attachmentSha256ByFileName?.[source.statement_file_name] !==
+      source.statement_sha256 ||
+    context.attachmentDescriptionsByFileName?.[source.statement_file_name] !==
+      FORM8835_PURCHASE_STATEMENT_DESCRIPTION
+  ) {
+    throw new Error(
+      "Form 8835 purchased-credit transfer statement differs from retained bytes",
+    );
+  }
+  const owner = item.facility_owner_business!;
+  const requirements = new Set(source.qualified_facility_requirements);
+  const [quantityTag] = productionTags[item.energy_type];
+  const acTag = item.energy_type === EnergyType.Solar
+    ? "ACNameplateCapSolarEgyPropInd"
+    : item.energy_type === EnergyType.Wind ||
+        item.energy_type === EnergyType.OffshoreWind
+    ? "ACNameplateCapWindEgyPropInd"
+    : "ACNameplateCapOthEgyPropInd";
+  const acAttribute = item.energy_type === EnergyType.Solar
+    ? "aCNameplateCapSolarEgyKWQty"
+    : item.energy_type === EnergyType.Wind ||
+        item.energy_type === EnergyType.OffshoreWind
+    ? "aCNameplateCapWindEgyPropKWQty"
+    : "aCNameplateCapOthEgyPropKWQty";
+  return elements("IRS8835", [
+    element("FacilityIRSIssdRegistrationNum", source.registration_number),
+    element("FacilityTypeDesc", item.facility_description),
+    elements("FacilityOwnerBusinessName", [
+      element("BusinessNameLine1Txt", owner.name),
+    ]),
+    element("FacilityOwnerEIN", owner.ein),
+    elements("FacilityUSAddress", [
+      element("AddressLine1Txt", address.line1),
+      element("AddressLine2Txt", address.line2),
+      element("CityNm", address.city),
+      element("StateAbbreviationCd", address.state),
+      element("ZIPCd", address.zip),
+    ]),
+    element("FacilityLatitudeNum", coordinate(item.facility_latitude, 2)),
+    element("FacilityLongitudeNum", coordinate(item.facility_longitude, 3)),
+    element(
+      "FacilityConstructionStartDt",
+      item.facility_construction_start_date,
+    ),
+    element("FacilityPlacedInServiceDt", item.facility_placed_in_service_date),
+    item.existing_facility_expansion !== undefined
+      ? element(
+        "ExistingFacilityExpansionInd",
+        String(item.existing_facility_expansion),
+      )
+      : "",
+    requirements.has(QualifiedFacilityRequirement.UnderOneMw)
+      ? element("ProjectNetOutputUnder1MWInd", "X")
+      : "",
+    requirements.has(QualifiedFacilityRequirement.ConstructionBefore20230129)
+      ? element("FcltyConstrBeganBfrSpcfdDtInd", "X")
+      : "",
+    requirements.has(
+        QualifiedFacilityRequirement.PrevailingWageAndApprenticeship,
+      )
+      ? element("FcltyStsfyWgAprntcshpRqrInd", "X")
+      : "",
+    requirements.size === 0 ? element("FacilityRqrNotStsfdInd", "X") : "",
+    element("PropertyQualifyDomBonusCrInd", String(item.domestic_content_bonus)),
+    element("QlfyEgyComBonusCrInd", String(item.energy_community_bonus)),
+    item.energy_type === EnergyType.Solar
+      ? element("DCSolarEnergyPropCapacityInd", "X", {
+        dCSolarEnergyPropCapKWQty: String(item.solar_dc_nameplate_kw),
+      })
+      : element("NANameplateCapacityDCInd", "X"),
+    element(acTag, "X", { [acAttribute]: String(item.ac_nameplate_kw) }),
+    element(quantityTag, item.kwh_sold),
+    // No Part II credit is figured by the transferee; zero lines stay zero.
+    ...[
+      "TotalPhaseoutAdjustmentAmt",
+      "SmllrCrBfrReductionFncPctAmt",
+      "WindFacilityPercentageAmt",
+      "WindFacilityYr2Amt",
+      "WindFacilityPercentageYr2Amt",
+      "WindFacilityYr3Amt",
+      "WindFcltyConstrPctYr3Amt",
+      "WindFcltyConstrPhaseOutCrAmt",
+      "DomesticContentBonusCreditAmt",
+      "EnergyCommunityBonusCreditAmt",
+      "RenewableElectricityProdCrAmt",
+      "AllocatedToBeneficiariesAmt",
+    ].map((tag) => element(tag, 0)),
+  ]);
+}
+
 function facilityXml(item: F8835Item, context: MefBuildContext): string {
+  if (item.purchase_source) return purchasedFacilityXml(item, context);
   const address = item.facility_us_address;
   if (
     !item.facility_description || !address ||

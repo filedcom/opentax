@@ -113,6 +113,7 @@ export interface Fields {
   line6b_ss_taxable?: number | null;
   mfs_spouse_lived_with_taxpayer?: boolean;
   mfs_eitc_separation_rule?: boolean;
+  hoh_spouse_lived_apart?: boolean;
   line7_capital_gain?: number | null;
   line7a_cap_gain_distrib?: number | null;
   line8_additional_income?: number | null;
@@ -350,7 +351,9 @@ function dependentXml(fields: Input, context?: MefBuildContext): string[] {
       "Form 1040 dependent credits do not match the dependent rows",
     );
   }
-  const separatedSpouseMark = fields.mfs_eitc_separation_rule === true
+  const separatedSpouseMark = fields.mfs_eitc_separation_rule === true ||
+      (fields.hoh_spouse_lived_apart === true &&
+        fields.filing_status === FilingStatus.HOH)
     ? element("SepdSpsFilingSepRetMeetsRqrInd", "X")
     : "";
   if (details.length === 0) {

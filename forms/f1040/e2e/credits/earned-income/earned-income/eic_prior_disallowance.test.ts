@@ -90,12 +90,12 @@ test("prior EIC disallowance calculates the credit but stops unauthenticated For
   assertThrows(
     () => buildMefXml(buildPending(result.pending), filer),
     Error,
-    "executor-owned authentication of prior IRS notice issuance and contents",
+    "retained prior IRS notice copy with matching SHA-256",
   );
   assertThrows(
     () => form8862Pdf.instances!(result.pending.f8862, filer, result.pending),
     Error,
-    "executor-owned authentication of prior IRS notice issuance and contents",
+    "retained prior IRS notice copy with matching SHA-256",
   );
 
   const wrongNotice = {

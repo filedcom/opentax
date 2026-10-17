@@ -19,6 +19,10 @@ import {
   assertForm8835SmallFacilitySource,
   smallFacilitySourceSchema,
 } from "./increase-source.ts";
+import {
+  calculatePurchasedForm8835,
+  purchaseSourceSchema,
+} from "./purchase-source.ts";
 import { z } from "zod";
 import { assertForm8835BondSource, bondSourceSchema } from "./bond-source.ts";
 import type { NodeContext } from "../../../../../../../core/types/node-context.ts";
@@ -221,6 +225,7 @@ export const itemSchema = z.object({
   is_fiscal_year: z.boolean(),
   phaseout_adjustment: z.number().nonnegative().optional(),
   transfer_source: transferSourceSchema.optional(),
+  purchase_source: purchaseSourceSchema.optional(),
   transfer_election_amount: z.number().nonnegative().optional(),
   transfer_election_statement_file_name: z.string().min(1).optional(),
   registration_number: z.string().regex(
@@ -417,6 +422,9 @@ function form3800Line(item: F8835Item): "1f" | "4e" {
 }
 
 export function calculateForm8835(item: F8835Item): F8835Lines {
+  if (item.purchase_source) {
+    return calculatePurchasedForm8835(itemSchema.parse(item));
+  }
   assertForm8835PwaSource(item);
   assertForm8835SmallFacilitySource(item);
   assertForm8835EarlyConstructionSource(item);
@@ -811,6 +819,20 @@ class F8835Node extends TaxNode<typeof inputSchema> {
     const input = inputSchema.parse(rawInput);
     const entries = input.f8835s.map((item) => {
       const lines = calculateForm8835(item);
+      const purchase = item.purchase_source;
+      if (purchase) {
+        return {
+          form3800_line: lines.form3800Line,
+          credit_amount: 0,
+          transfer_out_amount: 0,
+          transfer_in_amount: purchase.purchased_credit_amount,
+          transferor_tin: purchase.transferor_tin,
+          registration_number: purchase.registration_number,
+          subject_to_passive_activity_limit:
+            item.subject_to_passive_activity_limit,
+          transfer_election_statement_file_name: purchase.statement_file_name,
+        };
+      }
       return {
         form3800_line: lines.form3800Line,
         credit_amount: lines.line15,
