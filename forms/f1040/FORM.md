@@ -1,32 +1,37 @@
 # Form 1040 — U.S. Individual Income Tax Return
 
-IRC §6012 | IRS Pub 17 | MeF Schema: 2025v3.0
+IRC §6012 | IRS Pub 17 | MeF Schema: 2025v5.4
 
 ## What This Form Does
+
 Annual income tax return for U.S. individuals (and married couples filing jointly).
 Computes taxable income, applies the tax rate schedule, claims credits, and
 determines refund or amount owed. Most other IRS forms feed into it as inputs.
 
 ## Node Categories
 
-- `nodes/inputs/`          → 131 nodes — one per IRS input document (W-2, 1099s, Schedule C, A, …)
-- `nodes/intermediate/forms/`       → ~35 nodes — computed forms (8959, 8960, EITC, 8889, …)
-- `nodes/intermediate/worksheets/`  → ~10 nodes — computation worksheets (brackets, Sch D, QBI, …)
-- `nodes/intermediate/aggregation/` → ~8 nodes  — AGI, Schedule B/D/2/3 aggregators
-- `nodes/outputs/`          → 2 nodes  — final line aggregators (f1040, schedule1)
+- `nodes/inputs/` → 159 nodes — source documents (W-2, 1099s, K-1s, Schedule C/E, …)
+- `nodes/intermediate/forms/` → 53 nodes — computed forms (8959, 8960, EITC, 8889, …)
+- `nodes/intermediate/worksheets/` → 7 nodes — worksheets (tax calculation, QDCGTW, standard deduction, …)
+- `nodes/intermediate/aggregation/` → 7 nodes — AGI and Schedule B/D/2/3 aggregators
+- `nodes/outputs/` → 2 nodes — final line assembly (f1040, schedule1)
+
+Placement, naming and the add-a-node steps: [nodes/AGENTS.md](nodes/AGENTS.md).
 
 ## Conventions
 
-- **Config-injected nodes** import year constants via `CONFIG_BY_YEAR[ctx.taxYear]` from
-  `nodes/config/index.ts`. Adding a new year = add entry to that barrel + a new `config.ts`.
-- **Year-specific structural overrides** (rare, ~2–5 per year) live in `{year}/nodes/`.
-  A year's `registry.ts` imports the override instead of the shared node.
+- **Config-injected nodes** read year constants via `CONFIG_BY_YEAR[ctx.taxYear]` from
+  `nodes/config/index.ts`; values live in `nodes/config/<year>.ts`.
+- Nodes are shared across years; a year folder owns only config and wiring. A `TaxNode`
+  outside `nodes/` fails `bun run check:structure` (except `{year}/return-processing/start.ts`).
+- Every node must be registered in `{year}/registry.ts`, keyed by its node type, and be
+  either an `inputNodes` entry in `{year}/inputs.ts` or a routing target
+  (`bun run check:structure`; exceptions in `scripts/testing/structure-baseline.json`).
 - All nodes follow the file shape in `AGENTS.md`: imports → enums → schemas → helpers → class → singleton.
-- Node discovery: `glob forms/f1040/nodes/**/ ` — no master list needed.
 
 ## IRS Specs
 
-- XSD schemas: `.state/research/docs/IMF_Series_2025v3.0/1040x_2025v3.0/`
+- XSD schemas: `.state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/` (private, not checked in)
 - PDF field dumps: `forms/f1040/2025/pdf/field-dumps/`
 - Instructions PDF: https://www.irs.gov/pub/irs-pdf/i1040.pdf
 - IRS Pub 17: https://www.irs.gov/publications/p17
@@ -36,23 +41,25 @@ determines refund or amount owed. Most other IRS forms feed into it as inputs.
 
 Cases: `benchmark/cases/f1040/{year}/`
 Runner: `bun run bench --form f1040 --year {year}`
-Pass threshold: 95% (≥ 93 of 97 for the current case set)
+Pass: `bench` exits 1 on any failing or skipped case (every case must pass).
+Single case: `bun benchmark/run_case.ts benchmark/cases/f1040/{year}/<case>`
 
 ## Known Failure Modes (TY2025)
 
-- **SSA + NIIT interaction** (cases 67, 91, 95): `form8959` does not correctly
-  account for SSA income stacking with 1099-B capital gains when computing
-  Additional Medicare Tax MAGI.
+- `bench` stops before running the engine while any case is invalid: it does not
+  apply `benchmark/cases/baseline.json`, which lists 28 TY2025 cases whose inputs no
+  longer fit their node schemas (`bun run check:cases`).
 
 ## Adding a New Tax Year
 
 1. Copy `forms/f1040/2025/` → `forms/f1040/{year}/`
-2. Update `{year}/config.ts` with new IRS Rev. Proc. constants
-3. Add `{year}` entry to `nodes/config/index.ts`: `import { config{year} } from "../../{year}/config.ts"`
-4. Run `bun run bench --form f1040 --year {year}` — most nodes pass unchanged
-5. Any failure → that node has structural changes → create override at `{year}/nodes/{path}/index.ts`
-6. Update `{year}/registry.ts` to import override instead of shared node
-7. Update this FORM.md: bump "Known Failure Modes" section
+2. Update `{year}/config.ts` (`taxYear`, `mefSchemaVersion`) and add `"f1040:{year}"` to `catalog.ts`
+3. Add `nodes/config/{year}.ts` exporting `config{year}: F1040Config` with the new
+   Rev. Proc. constants, and a `{year}` entry in `nodes/config/index.ts`
+4. Run `bun run check:structure` and `bun run bench --form f1040 --year {year}`
+5. A structural change is made in the shared node, branching on `ctx.taxYear`
+   (nodes may not live under `{year}/`)
+6. Update this FORM.md: bump "Known Failure Modes" section
 
 ## Adding a New Form
 
