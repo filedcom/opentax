@@ -1,0 +1,146 @@
+{
+  "general": {
+    "filing_status": "qss",
+    "child_eic_filer_review": {
+      "not_qualifying_child_of_another_taxpayer_verified": true,
+      "relationship_age_residence_record_reference": "Synthetic 2025 review"
+    },
+    "eic_tax_residency_review": {
+      "status": "all_year_resident",
+      "taxpayer_status_record_reference": "Synthetic 2025 review"
+    },
+    "taxpayer_first_name": "Robin",
+    "taxpayer_last_name": "Example",
+    "taxpayer_ssn": "111-22-3333",
+    "taxpayer_ssn_valid_for_employment": true,
+    "taxpayer_ssn_issued_before_due_date": true,
+    "taxpayer_tin_issued_by_due_date": true,
+    "taxpayer_dob": "1975-10-06",
+    "taxpayer_blind": false,
+    "taxpayer_can_be_claimed_as_dependent": false,
+    "address_line1": "1 Example Way",
+    "address_city": "Orlando",
+    "address_state": "FL",
+    "address_zip": "32801",
+    "digital_assets": false,
+    "main_home_in_us_over_half_year": true,
+    "taxpayer_signature_pin": "23424",
+    "taxpayer_signature_date": "2026-07-09",
+    "qss_spouse_death_year": 2023,
+    "dependents": [
+      {
+        "first_name": "Jordan",
+        "last_name": "Example",
+        "ssn": "222-33-4444",
+        "ssn_valid_for_employment": true,
+        "ssn_issued_before_due_date": true,
+        "tin_issued_by_due_date": true,
+        "dob": "1988-09-14",
+        "relationship": "son",
+        "irs_relationship_code": "SON",
+        "months_in_home": 12,
+        "lived_in_us_over_half_year": true,
+        "months_lived_with_you_in_us": 12,
+        "eic_dated_residency_review": {
+          "child_ssn": "222334444",
+          "residence_periods": [
+            {
+              "start_date": "2025-01-01",
+              "end_date": "2025-12-31",
+              "record_reference": "Synthetic residence record",
+              "child_lived_with_filer_in_us_verified": true
+            }
+          ]
+        },
+        "us_citizen_national_or_resident": true,
+        "provided_over_half_own_support": false,
+        "filed_joint_return_except_refund_only": false,
+        "disabled": true,
+        "full_time_student": false,
+        "gross_income": 0,
+        "taxpayer_provided_over_half_support": true,
+        "dependent_on_another_return": false,
+        "child_care_months": 12
+      }
+    ]
+  },
+  "schedule_a": {
+    "force_itemized": true,
+    "line_5a_sales_tax": 426,
+    "cash_contributions_to_50_percent_organizations": 8000
+  },
+  "w2": [
+    {
+      "employer_ein": "12-3456789",
+      "employer_name": "Employer",
+      "employee_ssn": "111223333",
+      "box1_wages": 1000,
+      "box2_fed_withheld": 0,
+      "box3_ss_wages": 1000,
+      "box4_ss_withheld": 62,
+      "box5_medicare_wages": 1000,
+      "box6_medicare_withheld": 15,
+      "box13_statutory_employee": false,
+      "box13_retirement_plan": false,
+      "box13_third_party_sick": false
+    }
+  ],
+  "f1099int": [
+    {
+      "payer_name": "Example Bank",
+      "payer_tin": "12-3456789",
+      "recipient_tin": "111223333",
+      "box1": 4000
+    }
+  ],
+  "f1099r": [
+    {
+      "payer_name": "Example Plan",
+      "payer_ein": "12-3456789",
+      "payer_address_line1": "1 Plan Way",
+      "payer_address_city": "City",
+      "payer_address_state": "AK",
+      "payer_address_zip": "99801",
+      "recipient_ssn": "111223333",
+      "ts": "T",
+      "box1_gross_distribution": 11000,
+      "box2a_taxable_amount": 11000,
+      "box2b_not_determined": false,
+      "box2b_total_dist": false,
+      "box4_federal_withheld": 1100,
+      "box7_distribution_code": "3",
+      "box7_ira_simple_indicator": false,
+      "disability_flag": true,
+      "disability_as_wages": true
+    }
+  ],
+  "f2441": [
+    {
+      "qualifying_person_count": 1,
+      "qualifying_expenses_paid": 800
+    }
+  ],
+  "schedule_b_part_iii": {
+    "foreign_accounts_question": false,
+    "foreign_trust_question": false
+  },
+  "schedule_r": {
+    "filing_status": "qss",
+    "taxpayer_disabled": true,
+    "taxpayer_disability_income": 11000,
+    "taxpayer_disability_evidence": {
+      "retired_on_permanent_total_disability": true,
+      "below_mandatory_retirement_age_on_january_1": true,
+      "unable_to_perform_substantial_gainful_activity": true,
+      "condition_expected_to_last_one_year_or_result_in_death_verified": true,
+      "disability_income_source_reference": "Synthetic disability record",
+      "disability_income_reported_on": "pension",
+      "eligibility_source_reference": "Synthetic disability record",
+      "physician_statement": "prior_year",
+      "physician_statement_source_reference": "Synthetic disability record",
+      "physician_or_va_statement_signed_verified": true,
+      "prior_year_line_b_or_1983_verified": true
+    },
+    "agi": 16000
+  }
+}

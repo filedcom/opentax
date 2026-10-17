@@ -117,6 +117,8 @@ export const inputSchema = z.object({
   // Set by Form 8862 when prior-year CTC/ACTC disallowance has been cleared
   form8862_filed: z.boolean().optional(),
   credit_limit_worksheet: creditLimitWorksheetSchema.optional(),
+  // Credit Limit Worksheet A line 2 from the computed Schedule 3 (schedule3).
+  schedule3_credit_limit_worksheet: creditLimitWorksheetSchema.optional(),
   part_iib: z.object({
     line21_w2_withheld_social_security_medicare: z.number().nonnegative(),
     schedule1_line15: z.number().nonnegative(),
@@ -481,8 +483,10 @@ export function calculateSchedule8812Lines(
       "Schedule 8812 credit-limit worksheet cannot be supplied both on an item and at the root",
     );
   }
-  const creditWorksheet = input.credit_limit_worksheet ??
+  const suppliedWorksheet = input.credit_limit_worksheet ??
     itemCreditWorksheets[0];
+  const derivedWorksheet = input.schedule3_credit_limit_worksheet;
+  const creditWorksheet = suppliedWorksheet ?? derivedWorksheet;
   if (!creditWorksheet) {
     throw new Error(
       "Schedule 8812 needs complete Credit Limit Worksheet A and B answers",
@@ -530,6 +534,15 @@ export function calculateSchedule8812Lines(
     )
     : null;
   const line13 = calculateCreditLimitWorksheetALine5(tax, creditWorksheet);
+  if (
+    suppliedWorksheet && derivedWorksheet &&
+    !suppliedWorksheet.worksheet_b_applies &&
+    line13 !== calculateCreditLimitWorksheetALine5(tax, derivedWorksheet)
+  ) {
+    throw new Error(
+      "Schedule 8812 Credit Limit Worksheet A differs from the return's Schedule 3 credits",
+    );
+  }
   const line14 = Math.min(line12, line13);
 
   const canClaimActc = line4 > 0 && !doNotClaimActc && !hasFEIE;
