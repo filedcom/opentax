@@ -37,6 +37,8 @@ jobs:
         run: bun run test:unit
       - name: Node, export and return-processing tests fail only on known, baselined failures
         run: bun run test:forms
+      - name: Sample returns gain no new MeF blockers
+        run: bun run check:mef
       - name: Preserve verification report
         if: always()
         uses: actions/upload-artifact@v4

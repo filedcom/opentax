@@ -166,12 +166,12 @@ export function emittedValidationScope(xml: string): EmittedValidationScope {
   };
 }
 
-export function validateBusinessRules(
+/** Reject-level IRS business rules the emitted return fails, as export applies them. */
+export function businessRuleReport(
   pending: Readonly<Record<string, Record<string, unknown>>>,
   filer: PipelineResult["filer"],
-  force: boolean | undefined,
   emittedScope?: EmittedValidationScope,
-): void {
+) {
   const f1040 = pending["f1040"] ?? {};
   const filerInfo = {
     primarySSN: filer?.primarySSN ?? "",
@@ -190,11 +190,20 @@ export function validateBusinessRules(
     emittedScope?.formCounts,
     emittedScope?.emitted,
   );
-  const report = evaluateRules(
+  return evaluateRules(
     ALL_RULES.filter((rule) => !isTransmissionOnlyRule(rule.ruleNumber)),
     ctx,
     emittedScope?.rulePrefixes,
   );
+}
+
+export function validateBusinessRules(
+  pending: Readonly<Record<string, Record<string, unknown>>>,
+  filer: PipelineResult["filer"],
+  force: boolean | undefined,
+  emittedScope?: EmittedValidationScope,
+): void {
+  const report = businessRuleReport(pending, filer, emittedScope);
   const rejectEntries = report.entries.filter(
     (entry) =>
       entry.severity === "reject" || entry.severity === "reject_and_stop",

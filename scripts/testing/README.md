@@ -15,10 +15,11 @@ in [AGENTS.md](../../AGENTS.md); the rule each check owns is in the table in
 | `bun run check:sandbox`                     | the binary can reach the network only through restricted fetch   | a module `cli/main.ts` loads, dependencies included, that imports `child_process`, `net`, `http`, `worker_threads`, `vm`, `bun:ffi` or similar, or calls `Bun.spawn`, `eval` or a non-literal `import()`                    |
 | `bun run test:unit`                         | the module graph resolves, type-checks, and the typed tests pass | an unresolved import, a `tsc` error (strict, no unused locals or parameters), a missing or duplicate test module, a failing test, a runtime change during the run                                                           |
 | `bun run test:forms`                        | the node, MeF, validation and return-processing tests pass       | a failing test not in `scripts/testing/forms-failure-baseline.json`, an expired entry, an entry whose test now passes                                                                                                       |
+| `bun run check:mef [--update]`              | every signed PDF review fixture computes, builds MeF XML and passes the IRS business rules export applies | a calculation, XML or reject-level rule finding not in `scripts/testing/mef-baseline.json`, or a baselined finding that no longer occurs; `--update` rewrites the baseline |
 
 Every check prints each problem with its fix, takes `--json`, and exits 1 on any
 problem. `.github/workflows/test.yml` runs the first three, `check:sandbox`,
-`test:unit` and `test:forms` on every pull request. `bench` runs locally until the baselined
+`test:unit`, `test:forms` and `check:mef` on every pull request. `bench` runs locally until the baselined
 cases below are fixed, then joins them.
 
 ## Ratchets
@@ -32,6 +33,7 @@ fails until it is removed, so a baseline only shrinks.
 | `scripts/testing/structure-baseline.json`     | path, node type        | nodes outside the tree, registry and reach problems |
 | `benchmark/cases/baseline.json`               | `<form>/<year>/<case>` | cases whose inputs no longer fit their node schema  |
 | `scripts/testing/forms-failure-baseline.json` | test file, test name   | form tests known to fail                            |
+| `scripts/testing/mef-baseline.json`           | sample return id       | known calculation, XML and IRS-rule blockers        |
 | `benchmark/cases/<form>/<year>/ledger.json`   | case, line             | every expected-value change, with its publication   |
 
 The ledger is history, not debt: it is append-only and never expires. An entry

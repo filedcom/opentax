@@ -1,0 +1,1256 @@
+{
+  "reason": "Known MeF blockers per sample return; a finding leaves when its fix lands",
+  "approvedBy": "pending-review",
+  "expires": "2027-01-31",
+  "returns": {
+    "form4972-annuity-primary-3-spouse-0-nua-1": [
+      "rule IND-021-01"
+    ],
+    "form4972-annuity-primary-5-spouse-0-nua-1": [
+      "rule IND-021-01"
+    ],
+    "form4972-annuity-primary-7-spouse-0-nua-1": [
+      "rule IND-021-01"
+    ],
+    "form4972-annuity-primary-2-spouse-3-nua-1": [
+      "rule IND-021-01",
+      "rule IND-022-01"
+    ],
+    "form4972-annuity-primary-4-spouse-5-nua-1": [
+      "rule IND-021-01",
+      "rule IND-022-01"
+    ],
+    "form4972-annuity-primary-1-spouse-1-nua-1": [
+      "rule IND-021-01",
+      "rule IND-022-01"
+    ],
+    "form4972-annuity-primary-3-spouse-0-nua-0": [
+      "rule IND-021-01"
+    ],
+    "form4972-nua-primary-3-spouse-0": [
+      "rule IND-021-01"
+    ],
+    "form4972-nua-primary-5-spouse-0": [
+      "rule IND-021-01"
+    ],
+    "form4972-nua-primary-7-spouse-0": [
+      "rule IND-021-01"
+    ],
+    "form4972-nua-primary-2-spouse-3": [
+      "rule IND-021-01",
+      "rule IND-022-01"
+    ],
+    "form4972-nua-primary-4-spouse-5": [
+      "rule IND-021-01",
+      "rule IND-022-01"
+    ],
+    "owned-two-farm-wotc-below": [
+      "rule IND-021-01",
+      "rule IND-022-01"
+    ],
+    "owned-two-farm-wotc-phase": [
+      "rule IND-021-01",
+      "rule IND-022-01"
+    ],
+    "owned-two-farm-wotc-above-limited": [
+      "rule IND-021-01",
+      "rule IND-022-01"
+    ],
+    "owned-two-farm-wotc-phase-loss": [
+      "rule IND-021-01",
+      "rule IND-022-01"
+    ],
+    "owned-two-farm-health-full": [
+      "rule IND-021-01",
+      "rule IND-022-01"
+    ],
+    "owned-two-farm-health-income-limited": [
+      "rule IND-021-01",
+      "rule IND-022-01"
+    ],
+    "owned-two-farm-health-excluded-months": [
+      "rule IND-021-01",
+      "rule IND-022-01"
+    ],
+    "owned-two-farm-health-excluded-all": [
+      "rule IND-021-01",
+      "rule IND-022-01"
+    ],
+    "owned-two-farm-health-phase": [
+      "rule IND-021-01",
+      "rule IND-022-01"
+    ],
+    "owned-two-farm-health-above-limited-credit": [
+      "rule IND-021-01",
+      "rule IND-022-01"
+    ],
+    "owned-two-farm-health-loss-owner": [
+      "rule IND-021-01",
+      "rule IND-022-01"
+    ],
+    "single-issued-k1-lihtc-recapture": [
+      "rule IND-021-01"
+    ],
+    "joint-spouse-issued-k1-lihtc-recapture": [
+      "rule IND-021-01",
+      "rule IND-022-01"
+    ],
+    "owned-controlled-farm-wotc-below": [
+      "rule IND-021-01",
+      "rule IND-022-01"
+    ],
+    "owned-controlled-farm-wotc-phase": [
+      "rule IND-021-01",
+      "rule IND-022-01"
+    ],
+    "owned-controlled-farm-wotc-above-limited": [
+      "rule IND-021-01",
+      "rule IND-022-01"
+    ],
+    "owned-controlled-farm-wotc-phase-loss": [
+      "rule IND-021-01",
+      "rule IND-022-01"
+    ],
+    "owned-controlled-mixed-cf-wotc-below": [
+      "rule IND-021-01",
+      "rule IND-022-01"
+    ],
+    "owned-controlled-mixed-cf-wotc-phase": [
+      "rule IND-021-01",
+      "rule IND-022-01"
+    ],
+    "owned-controlled-mixed-cf-wotc-above-limited": [
+      "rule IND-021-01",
+      "rule IND-022-01"
+    ],
+    "owned-controlled-mixed-cf-wotc-phase-loss": [
+      "rule IND-021-01",
+      "rule IND-022-01"
+    ],
+    "owned-mixed-cf-health-full": [
+      "rule IND-021-01",
+      "rule IND-022-01"
+    ],
+    "owned-mixed-cf-health-income-limited": [
+      "rule IND-021-01",
+      "rule IND-022-01"
+    ],
+    "owned-mixed-cf-health-excluded-months": [
+      "rule IND-021-01",
+      "rule IND-022-01"
+    ],
+    "owned-mixed-cf-health-excluded-all": [
+      "rule IND-021-01",
+      "rule IND-022-01"
+    ],
+    "owned-mixed-cf-health-phase": [
+      "rule IND-021-01",
+      "rule IND-022-01"
+    ],
+    "owned-mixed-cf-health-above-limited-credit": [
+      "rule IND-021-01",
+      "rule IND-022-01"
+    ],
+    "owned-mixed-cf-health-ordinary-no-credit-election": [
+      "rule IND-021-01",
+      "rule IND-022-01"
+    ],
+    "owned-farm-wotc-loss-below-primary-c-offset": [
+      "rule IND-021-01",
+      "rule IND-022-01"
+    ],
+    "owned-farm-wotc-loss-below-primary-zero-use": [
+      "rule IND-021-01",
+      "rule IND-022-01"
+    ],
+    "owned-farm-wotc-loss-below-spouse-net-loss": [
+      "rule IND-021-01",
+      "rule IND-022-01"
+    ],
+    "owned-farm-wotc-loss-phase-primary-f-offset": [
+      "rule IND-021-01",
+      "rule IND-022-01"
+    ],
+    "owned-farm-wotc-loss-above-spouse-net-loss": [
+      "rule IND-021-01",
+      "rule IND-022-01"
+    ],
+    "owned-farm-wotc-loss-below-primary-limited-credit": [
+      "rule IND-021-01",
+      "rule IND-022-01"
+    ],
+    "single-disabled-access-interpreter-full": [
+      "rule IND-021-01"
+    ],
+    "single-disabled-access-interpreter-partial": [
+      "rule IND-021-01"
+    ],
+    "single-disabled-access-interpreter-zero": [
+      "rule IND-021-01"
+    ],
+    "optional-spouse-cap-profit": [
+      "rule IND-021-01",
+      "rule IND-022-01"
+    ],
+    "optional-spouse-cap-loss": [
+      "rule IND-021-01",
+      "rule IND-022-01"
+    ],
+    "optional-same-owner": [
+      "rule IND-021-01",
+      "rule IND-022-01"
+    ],
+    "optional-nonfarm-loss": [
+      "rule IND-021-01",
+      "rule IND-022-01"
+    ],
+    "optional-combined-below-minimum": [
+      "rule IND-021-01",
+      "rule IND-022-01"
+    ],
+    "optional-two-farms-loss": [
+      "rule IND-021-01",
+      "rule IND-022-01"
+    ],
+    "optional-exact-gross-boundary": [
+      "rule IND-021-01",
+      "rule IND-022-01"
+    ],
+    "optional-net-boundary": [
+      "rule IND-021-01",
+      "rule IND-022-01"
+    ],
+    "optional-two-farm-owners": [
+      "rule IND-021-01",
+      "rule IND-022-01"
+    ],
+    "joint-owned-cf-filed-business-filed-part-v-total": [
+      "rule IND-021-01",
+      "rule IND-022-01"
+    ],
+    "joint-owned-cf-filed-farm-loss-49": [
+      "rule IND-021-01",
+      "rule IND-022-01"
+    ],
+    "joint-owned-cf-filed-farm-loss-50": [
+      "rule IND-021-01",
+      "rule IND-022-01"
+    ],
+    "joint-owned-cf-filed-farm-loss-51": [
+      "rule IND-021-01",
+      "rule IND-022-01"
+    ],
+    "joint-owned-cf-filed-business-loss-49": [
+      "rule IND-021-01",
+      "rule IND-022-01"
+    ],
+    "joint-owned-cf-filed-business-loss-50": [
+      "rule IND-021-01",
+      "rule IND-022-01"
+    ],
+    "joint-owned-cf-filed-farm-loss-small-half": [
+      "rule IND-021-01",
+      "rule IND-022-01"
+    ],
+    "joint-owned-cf-filed-farm-filed-leaf-operands": [
+      "rule IND-021-01",
+      "rule IND-022-01"
+    ],
+    "joint-owned-cf-filed-business-filed-leaf-operands": [
+      "rule IND-021-01",
+      "rule IND-022-01"
+    ],
+    "joint-owned-cf-filed-business-filed-meal-allowance": [
+      "rule IND-021-01",
+      "rule IND-022-01"
+    ],
+    "joint-owned-cf-filed-farm-filed-conservation-allowance": [
+      "rule IND-021-01",
+      "rule IND-022-01"
+    ],
+    "joint-owned-se-mixed-business-and-farm": [
+      "rule IND-021-01",
+      "rule IND-022-01"
+    ],
+    "owned-farm-wotc-single-zero-use-below": [
+      "rule IND-021-01"
+    ],
+    "owned-farm-wotc-single-below": [
+      "rule IND-021-01"
+    ],
+    "owned-farm-wotc-primary-below": [
+      "rule IND-021-01",
+      "rule IND-022-01"
+    ],
+    "owned-farm-wotc-spouse-phase": [
+      "rule IND-021-01",
+      "rule IND-022-01"
+    ],
+    "owned-farm-wotc-primary-limited": [
+      "rule IND-021-01",
+      "rule IND-022-01"
+    ],
+    "owned-farm-wotc-ordinary-spouse-phase": [
+      "rule IND-021-01",
+      "rule IND-022-01"
+    ],
+    "owned-farm-wotc-three-farms-phase": [
+      "rule IND-021-01",
+      "rule IND-022-01"
+    ],
+    "single-form8978-positive-reviewed-source": [
+      "xml Form8978 reviewed source needs one supplied PDF per record"
+    ],
+    "single-form8978-negative-reviewed-source": [
+      "xml Form8978 reviewed source needs one supplied PDF per record"
+    ],
+    "single-form8978-multiple-reviewed-source": [
+      "xml Form8978 reviewed source needs one supplied PDF per record"
+    ],
+    "joint-controlled-wotc-phasein": [
+      "rule IND-021-01",
+      "rule IND-022-01"
+    ],
+    "joint-controlled-wotc-fractional-phasein": [
+      "rule IND-021-01",
+      "rule IND-022-01"
+    ],
+    "joint-controlled-wotc-partial-above": [
+      "rule IND-021-01",
+      "rule IND-022-01"
+    ],
+    "joint-both-owner-wotc-phasein": [
+      "rule IND-021-01",
+      "rule IND-022-01"
+    ],
+    "joint-both-owner-wotc-partial-above": [
+      "rule IND-021-01",
+      "rule IND-022-01"
+    ],
+    "joint-both-owner-wotc-one-phasein": [
+      "rule IND-021-01",
+      "rule IND-022-01"
+    ],
+    "joint-spouse-wotc-phasein": [
+      "rule IND-021-01",
+      "rule IND-022-01"
+    ],
+    "joint-spouse-wotc-threshold-edge": [
+      "rule IND-021-01",
+      "rule IND-022-01"
+    ],
+    "joint-spouse-wotc-upper-edge": [
+      "rule IND-021-01",
+      "rule IND-022-01"
+    ],
+    "joint-spouse-wotc-upper-plus-one": [
+      "rule IND-021-01",
+      "rule IND-022-01"
+    ],
+    "joint-spouse-wotc-partial-above": [
+      "rule IND-021-01",
+      "rule IND-022-01"
+    ],
+    "joint-primary-wotc-phasein": [
+      "rule IND-021-01",
+      "rule IND-022-01"
+    ],
+    "joint-primary-wotc-threshold-edge": [
+      "rule IND-021-01",
+      "rule IND-022-01"
+    ],
+    "joint-primary-wotc-upper-edge": [
+      "rule IND-021-01",
+      "rule IND-022-01"
+    ],
+    "joint-primary-wotc-upper-plus-one": [
+      "rule IND-021-01",
+      "rule IND-022-01"
+    ],
+    "joint-primary-wotc-partial-above": [
+      "rule IND-021-01",
+      "rule IND-022-01"
+    ],
+    "single-form8994-direct-employer-full": [
+      "xml Form 8994 uploaded policy or payroll bytes differ from reviewed digest"
+    ],
+    "single-form8994-direct-employer-partial": [
+      "xml Form 8994 uploaded policy or payroll bytes differ from reviewed digest"
+    ],
+    "single-form8994-direct-employer-zero": [
+      "xml Form 8994 uploaded policy or payroll bytes differ from reviewed digest"
+    ],
+    "joint-owned-se-two-businesses-spouse-wage-cap": [
+      "rule IND-021-01",
+      "rule IND-022-01"
+    ],
+    "single-shop-health-premium-credit": [
+      "rule IND-021-01"
+    ],
+    "single-shop-part-year-enrollment": [
+      "rule IND-021-01"
+    ],
+    "single-shop-mixed-family-tiers": [
+      "rule IND-021-01"
+    ],
+    "single-shop-list-computed-family-floor": [
+      "rule IND-021-01"
+    ],
+    "single-shop-multiple-qhp-reference-eligibility": [
+      "rule IND-021-01"
+    ],
+    "single-shop-seasonal-excluded-workers": [
+      "rule IND-021-01"
+    ],
+    "same-proprietor-two-business-shop-common-control": [
+      "rule IND-021-01"
+    ],
+    "same-proprietor-three-business-shop-common-control": [
+      "rule IND-021-01"
+    ],
+    "independent-mf-joint-spouse-shop-two-form8941": [
+      "rule IND-021-01",
+      "rule IND-022-01"
+    ],
+    "single-medicare-msa-partial-disability-prior-account": [
+      "rule IND-021-01"
+    ],
+    "mfs-ny-primary-form8995a-accounting-sstb-phasein": [
+      "rule IND-021-01"
+    ],
+    "mfs-ak-primary-form8995a-accounting-sstb-phasein": [
+      "rule IND-021-01"
+    ],
+    "mfs-tn-primary-form8995a-accounting-sstb-phasein": [
+      "rule IND-021-01"
+    ],
+    "mfs-sd-primary-form8995a-accounting-sstb-phasein": [
+      "rule IND-021-01"
+    ],
+    "mfs-primary-form8995a-accounting-sstb-phasein": [
+      "rule IND-021-01"
+    ],
+    "joint-primary-form8995a-accounting-sstb-phasein": [
+      "rule IND-021-01",
+      "rule IND-022-01"
+    ],
+    "single-form8995a-accounting-sstb-no-payroll": [
+      "rule IND-021-01"
+    ],
+    "single-form8995a-accounting-sstb-phasein": [
+      "rule IND-021-01"
+    ],
+    "single-form8995a-patron-farm": [
+      "rule IND-021-01"
+    ],
+    "single-form8995a-patron-c-health": [
+      "rule IND-021-01"
+    ],
+    "single-form8995a-patron-income-cap": [
+      "rule IND-021-01"
+    ],
+    "single-form8995a-patron-phase-farm": [
+      "rule IND-021-01"
+    ],
+    "single-form8995a-patron-phase-c-health": [
+      "rule IND-021-01"
+    ],
+    "single-form8995a-patron-phase-income-cap": [
+      "rule IND-021-01"
+    ],
+    "single-form8995a-patron-phase-unbound": [
+      "rule IND-021-01"
+    ],
+    "joint-form8995a-patron-farm": [
+      "rule IND-021-01",
+      "rule IND-022-01"
+    ],
+    "joint-form8995a-patron-c-health": [
+      "rule IND-021-01",
+      "rule IND-022-01"
+    ],
+    "joint-form8995a-patron-income-cap": [
+      "rule IND-021-01",
+      "rule IND-022-01"
+    ],
+    "joint-spouse-owned-form8995a-patron-farm": [
+      "rule IND-021-01",
+      "rule IND-022-01"
+    ],
+    "joint-spouse-owned-form8995a-patron-c-health": [
+      "rule IND-021-01",
+      "rule IND-022-01"
+    ],
+    "joint-spouse-owned-form8995a-patron-income-cap": [
+      "rule IND-021-01",
+      "rule IND-022-01"
+    ],
+    "single-form8995a-two-business-aggregation": [
+      "rule IND-021-01"
+    ],
+    "single-form8863-missing-tuition-form-taxable-scholarship-phaseout": [
+      "rule IND-021-01"
+    ],
+    "single-source-qef-1294-election": [
+      "rule IND-021-01"
+    ],
+    "single-retained-4852-ordinary-roth": [
+      "xml Form 4852 retained document missing, duplicated or digest changed"
+    ],
+    "single-passive-partnership-new-markets": [
+      "rule IND-021-01"
+    ],
+    "single-mixed-passive-new-markets": [
+      "rule IND-021-01"
+    ],
+    "single-reviewed-adoption-credit": [
+      "xml Form 8839 needs the reviewed PDF attachment decree-1.pdf"
+    ],
+    "mfj-spouse-dependent-refund-only": [
+      "rule IND-021-01",
+      "rule IND-022-01"
+    ],
+    "single-child-unearned-income": [
+      "rule IND-021-01"
+    ],
+    "single-high-wage-no-niit": [
+      "rule IND-021-01"
+    ],
+    "single-agri-biodiesel-producer-credit": [
+      "rule IND-021-01"
+    ],
+    "single-w2-refund": [
+      "rule IND-021-01"
+    ],
+    "qss-w2-nonclaimed-joint-return-child": [
+      "rule IND-021-01"
+    ],
+    "hoh-w2-nonclaimed-custodial-release-child": [
+      "rule IND-021-01"
+    ],
+    "single-divorced-agreed-joint-estimated-payment": [
+      "rule IND-021-01"
+    ],
+    "single-w2-overpayment-applied-2026": [
+      "rule IND-021-01"
+    ],
+    "single-w2-eic-opt-out": [
+      "rule IND-021-01"
+    ],
+    "single-form8888-two-account-refund": [
+      "rule IND-021-01"
+    ],
+    "single-form2439-undistributed-gain-and-tax-credit": [
+      "rule IND-021-01"
+    ],
+    "single-fully-repaid-unemployment": [
+      "rule IND-021-01"
+    ],
+    "single-w2-three-eic-children-with-reviewed-birth": [
+      "rule IND-021-01"
+    ],
+    "single-w2-custodial-eic-release": [
+      "rule IND-021-01"
+    ],
+    "mfs-w2-separated-spouse-eic": [
+      "rule IND-021-01"
+    ],
+    "mfs-w2-lived-apart-all-year-social-security-box": [
+      "rule IND-021-01"
+    ],
+    "mfs-w2-legal-separation-eic-child": [
+      "rule IND-021-01"
+    ],
+    "single-1098-purchase-points": [
+      "rule IND-021-01"
+    ],
+    "mfs-two-loan-mortgage-limit": [
+      "rule IND-021-01"
+    ],
+    "single-1098-construction-refinance-points": [
+      "rule IND-021-01"
+    ],
+    "single-unreported-refinance-points": [
+      "rule IND-021-01"
+    ],
+    "single-2023-refinance-points-ledger": [
+      "rule IND-021-01"
+    ],
+    "single-1098-prior-year-recovery": [
+      "rule IND-021-01"
+    ],
+    "single-actc-opt-out": [
+      "rule IND-021-01"
+    ],
+    "single-8862-ctc-reinstatement": [
+      "xml Form 8862 CTC/ODC and AOTC export needs executor-owned authentication of prior IRS notice issuance and contents"
+    ],
+    "single-five-dependent-continuation": [
+      "rule IND-021-01"
+    ],
+    "single-withheld-w2g": [
+      "xml W-2G payer copy content needs its exact attached PDF"
+    ],
+    "joint-schedule-h-spouse-withholding-only": [
+      "rule IND-021-01",
+      "rule IND-022-01"
+    ],
+    "single-schedule-h-fica-and-futa": [
+      "rule IND-021-01"
+    ],
+    "single-schedule-h-three-state-futa": [
+      "rule IND-021-01",
+      "rule SH-F1040-005"
+    ],
+    "single-form8814-child-dividends-adjustments": [
+      "rule F1040-231-01",
+      "rule IND-021-01"
+    ],
+    "single-form8814-child-gain-with-schedule-d": [
+      "rule F1040-231-01",
+      "rule IND-021-01"
+    ],
+    "single-ordinary-noncash-gift": [
+      "rule IND-021-01"
+    ],
+    "single-section-a-capital-gain-reduction-gift": [
+      "rule IND-021-01"
+    ],
+    "single-section-a-donor-prepared-manuscript-reduction": [
+      "rule IND-021-01"
+    ],
+    "single-two-short-term-reduced-gifts": [
+      "rule IND-021-01"
+    ],
+    "single-trust-clean-electricity-investment-credit": [
+      "rule IND-021-01"
+    ],
+    "single-geothermal-general-business-credit": [
+      "rule IND-021-01"
+    ],
+    "single-two-geothermal-business-credits": [
+      "rule IND-021-01"
+    ],
+    "single-wind-and-geothermal-business-credits": [
+      "rule IND-021-01"
+    ],
+    "single-new-markets-business-credit": [
+      "xml [MEF] Form 8874 direct QEI needs authenticated CDE status and recapture history; export blocked"
+    ],
+    "single-long-name-new-markets-investment": [
+      "xml [MEF] Form 8874 direct QEI needs authenticated CDE status and recapture history; export blocked"
+    ],
+    "single-two-new-markets-investments": [
+      "xml [MEF] Form 8874 direct QEI needs authenticated CDE status and recapture history; export blocked"
+    ],
+    "single-six-new-markets-investments": [
+      "xml [MEF] Form 8874 direct QEI needs authenticated CDE status and recapture history; export blocked"
+    ],
+    "single-seven-new-markets-investments": [
+      "xml [MEF] Form 8874 direct QEI needs authenticated CDE status and recapture history; export blocked"
+    ],
+    "single-twenty-four-new-markets-investments": [
+      "xml [MEF] Form 8874 direct QEI needs authenticated CDE status and recapture history; export blocked"
+    ],
+    "single-geothermal-and-new-markets-credits": [
+      "xml [MEF] Form 8874 direct QEI needs authenticated CDE status and recapture history; export blocked"
+    ],
+    "joint-presidential-campaign-both": [
+      "rule IND-021-01",
+      "rule IND-022-01"
+    ],
+    "joint-two-w2s": [
+      "rule IND-021-01",
+      "rule IND-022-01"
+    ],
+    "joint-two-w2s-schedule-lep": [
+      "rule IND-021-01",
+      "rule IND-022-01"
+    ],
+    "joint-two-w2s-form9000": [
+      "rule IND-021-01",
+      "rule IND-022-01"
+    ],
+    "single-mixed-final-trust-and-partnership-capital": [
+      "rule IND-021-01"
+    ],
+    "single-partnership-code-l-r-ordinary": [
+      "rule IND-021-01"
+    ],
+    "single-six-partnership-code-l-r-continuation": [
+      "rule IND-021-01"
+    ],
+    "single-two-partnership-code-s-capital": [
+      "rule IND-021-01"
+    ],
+    "single-partnership-code-k-and-w2g": [
+      "xml W-2G payer copy content needs its exact attached PDF"
+    ],
+    "single-two-partnership-code-e-cod": [
+      "rule IND-021-01"
+    ],
+    "single-two-partnership-code-j-recoveries": [
+      "rule IND-021-01"
+    ],
+    "single-sourced-collectibles-gain": [
+      "rule IND-021-01"
+    ],
+    "single-short-and-long-form8949-sales": [
+      "rule IND-021-01"
+    ],
+    "single-direct-broker-basis-sales": [
+      "rule IND-021-01"
+    ],
+    "single-direct-and-adjusted-broker-sales": [
+      "rule IND-021-01"
+    ],
+    "single-final-trust-k1-long-term-capital-loss": [
+      "rule IND-021-01"
+    ],
+    "single-final-trust-k1-short-term-capital-loss": [
+      "rule IND-021-01"
+    ],
+    "single-final-trust-k1-section67e-deduction": [
+      "rule IND-021-01"
+    ],
+    "single-trust-k1-box5-schedule-e": [
+      "rule IND-021-01"
+    ],
+    "single-trust-k1-passive-schedule-e": [
+      "rule IND-021-01"
+    ],
+    "single-reviewed-car-loan-schedule1a": [
+      "rule IND-021-01"
+    ],
+    "single-refinanced-car-loan-schedule1a": [
+      "rule IND-021-01"
+    ],
+    "single-three-car-loan-schedule1a": [
+      "rule IND-021-01"
+    ],
+    "single-two-w2-flsa-overtime-schedule1a": [
+      "rule IND-021-01"
+    ],
+    "single-employer-statement-flsa-overtime-schedule1a": [
+      "rule IND-021-01"
+    ],
+    "single-aggregate-payroll-flsa-overtime-schedule1a": [
+      "rule IND-021-01"
+    ],
+    "single-double-time-flsa-overtime-schedule1a": [
+      "rule IND-021-01"
+    ],
+    "single-w2-qualified-tips-schedule1a": [
+      "rule IND-021-01"
+    ],
+    "single-two-w2-qualified-tips-schedule1a": [
+      "rule IND-021-01"
+    ],
+    "single-employer-statement-qualified-tips-schedule1a": [
+      "rule IND-021-01"
+    ],
+    "single-w2-box14-qualified-tips-schedule1a": [
+      "rule IND-021-01"
+    ],
+    "single-form4070-high-wage-qualified-tips-schedule1a": [
+      "rule IND-021-01"
+    ],
+    "single-form4070-form4137-no-w2-code-schedule1a": [
+      "rule IND-021-01"
+    ],
+    "single-form4137-qualified-tips-schedule1a": [
+      "rule IND-021-01"
+    ],
+    "single-two-employer-form4137-tips-schedule1a": [
+      "rule IND-021-01"
+    ],
+    "joint-senior-schedule1a": [
+      "rule IND-021-01",
+      "rule IND-022-01"
+    ],
+    "joint-mixed-schedule1a": [
+      "rule IND-021-01",
+      "rule IND-022-01"
+    ],
+    "single-1099nec-trade-business-tips-schedule1a": [
+      "rule IND-021-01"
+    ],
+    "single-nec-misc-business-tips-schedule1a": [
+      "rule IND-021-01"
+    ],
+    "single-nec-misc-k-business-tips-schedule1a": [
+      "rule IND-021-01"
+    ],
+    "single-nec-k-nonbusiness-line8j": [
+      "rule IND-021-01"
+    ],
+    "single-k-blank-tin-withholding": [
+      "rule IND-021-01"
+    ],
+    "single-k-personal-gain-loss": [
+      "rule IND-021-01"
+    ],
+    "single-k-personal-selling-fees": [
+      "rule IND-021-01"
+    ],
+    "single-k-business-refund": [
+      "rule IND-021-01"
+    ],
+    "single-k-business-refund-and-fee": [
+      "rule IND-021-01"
+    ],
+    "single-k-reported-error": [
+      "rule F1040-065-05",
+      "rule IND-021-01"
+    ],
+    "single-k-mixed-business-personal": [
+      "rule IND-021-01"
+    ],
+    "single-k-mixed-duplicate-personal": [
+      "rule IND-021-01"
+    ],
+    "single-k-mixed-error-duplicate-personal": [
+      "rule IND-021-01"
+    ],
+    "single-schedule-c": [
+      "rule IND-021-01"
+    ],
+    "single-schedule-c-simplified-home-office": [
+      "rule IND-021-01"
+    ],
+    "single-two-at-risk-business-losses": [
+      "rule IND-021-01",
+      "rule S1-F1040-195"
+    ],
+    "single-direct-pension-rollover": [
+      "rule IND-021-01"
+    ],
+    "single-ira-rollover": [
+      "rule IND-021-01"
+    ],
+    "single-ira-qualified-plan-rollover": [
+      "rule IND-021-01"
+    ],
+    "single-ira-2026-rollover": [
+      "rule IND-021-01"
+    ],
+    "single-ira-late-automatic-waiver": [
+      "rule IND-021-01"
+    ],
+    "single-ira-late-self-certification": [
+      "rule IND-021-01"
+    ],
+    "single-ira-late-irs-ruling": [
+      "rule IND-021-01"
+    ],
+    "single-ira-late-frozen-deposit": [
+      "rule IND-021-01"
+    ],
+    "single-hsa-code2-excess": [
+      "rule IND-021-01"
+    ],
+    "joint-two-hsa-owners": [
+      "rule IND-021-01",
+      "rule IND-022-01"
+    ],
+    "joint-other-coverage-hsa-current-excess": [
+      "rule IND-021-01",
+      "rule IND-022-01"
+    ],
+    "single-sequential-no-aptc-policies-200-fpl": [
+      "rule IND-021-01"
+    ],
+    "single-sequential-three-no-aptc-policies-200-fpl": [
+      "rule IND-021-01"
+    ],
+    "single-alternating-three-no-aptc-policies-200-fpl": [
+      "rule IND-021-01"
+    ],
+    "single-two-no-aptc-policies-july-uncovered": [
+      "rule IND-021-01"
+    ],
+    "single-three-no-aptc-policies-september-uncovered": [
+      "rule IND-021-01"
+    ],
+    "single-three-no-aptc-policies-three-uncovered-months": [
+      "rule IND-021-01"
+    ],
+    "single-three-no-aptc-policies-four-uncovered-months": [
+      "rule IND-021-01"
+    ],
+    "single-two-no-aptc-policies-ten-uncovered-months": [
+      "rule IND-021-01"
+    ],
+    "single-three-no-aptc-policies-nine-uncovered-months": [
+      "rule IND-021-01"
+    ],
+    "single-four-sequential-no-aptc-policies-full-year": [
+      "rule IND-021-01"
+    ],
+    "single-four-sequential-no-aptc-policies-four-gaps": [
+      "rule IND-021-01"
+    ],
+    "single-five-sequential-no-aptc-policies-full-year": [
+      "rule IND-021-01"
+    ],
+    "single-two-sequential-no-aptc-policies-protected-partial": [
+      "rule IND-021-01"
+    ],
+    "single-twelve-sequential-no-aptc-policies-full-year": [
+      "rule IND-021-01"
+    ],
+    "single-marketplace-aptc-repayment": [
+      "rule IND-021-01"
+    ],
+    "single-alternating-policies-all-covered-slcsp-corrections": [
+      "rule F8962-330",
+      "rule IND-021-01"
+    ],
+    "single-alternating-policies-both-slcsp-corrected": [
+      "rule F8962-330",
+      "rule IND-021-01"
+    ],
+    "single-five-sequential-corrected-slcsp-policies": [
+      "rule F8962-330",
+      "rule IND-021-01"
+    ],
+    "single-situation4-nonenrolled-other-taxpayer": [
+      "rule F8962-057",
+      "rule IND-021-01"
+    ],
+    "single-situation4-two-agreed-percentages": [
+      "rule F8962-057",
+      "rule IND-021-01"
+    ],
+    "mfs-shared-policy-repayment": [
+      "rule IND-021-01"
+    ],
+    "mfs-shared-policy-exception": [
+      "rule F8962-057",
+      "rule IND-021-01"
+    ],
+    "single-iso-amt": [
+      "rule IND-021-01"
+    ],
+    "single-nonparticipating-rental-loss": [
+      "rule IND-021-01"
+    ],
+    "single-elected-lump-sum-part-ii": [
+      "rule IND-021-01"
+    ],
+    "single-foreign-interest-current-excess": [
+      "rule F1116-007-01",
+      "rule IND-021-01"
+    ],
+    "single-eic-royalty-personal-rental": [
+      "rule IND-021-01"
+    ],
+    "single-form7217-nonliquidating-basis-decrease": [
+      "rule IND-021-01"
+    ],
+    "single-form8880-w2-deferral": [
+      "rule IND-021-01"
+    ],
+    "single-form8826-direct-interpreter-credit": [
+      "rule IND-021-01"
+    ],
+    "single-schedule-f-raised-products-qbi": [
+      "rule IND-021-01"
+    ],
+    "single-w2-code-d-excess-line1h": [
+      "rule IND-021-01"
+    ],
+    "single-1099r-code8-corrective-line1h": [
+      "rule IND-021-01"
+    ],
+    "single-standalone-fec-line1h": [
+      "rule IND-021-01"
+    ],
+    "single-form2555-full-year-physical-presence": [
+      "rule F1040-065-05",
+      "rule IND-021-01"
+    ],
+    "single-form2441-child-care-credit": [
+      "rule IND-021-01"
+    ],
+    "single-form8824-section1231-exchange": [
+      "rule IND-021-01"
+    ],
+    "single-form6252-installment-land-sale": [
+      "rule IND-021-01"
+    ],
+    "single-form4952-interest-and-dividends": [
+      "rule IND-021-01"
+    ],
+    "single-form4562-section179-w2-income-limit": [
+      "rule IND-021-01"
+    ],
+    "single-form6781-two-section1256-accounts": [
+      "rule IND-021-01"
+    ],
+    "single-form6781-four-section1256-accounts": [
+      "rule IND-021-01"
+    ],
+    "single-form8863-lifetime-learning-scholarship": [
+      "rule IND-021-01"
+    ],
+    "single-form8606-post-year-contribution-and-distribution": [
+      "rule IND-021-01"
+    ],
+    "single-form7206-schedule-c-health-plan": [
+      "rule IND-021-01"
+    ],
+    "single-form8815-series-ee-bond-exclusion": [
+      "rule IND-021-01"
+    ],
+    "single-form5329-two-early-ira-distributions": [
+      "rule IND-021-01"
+    ],
+    "single-form8915f-disaster-and-ordinary-plan-distributions": [
+      "rule IND-021-01"
+    ],
+    "single-form8829-rented-home-office": [
+      "rule IND-021-01"
+    ],
+    "single-form8995a-two-business-loss-netting": [
+      "rule IND-021-01"
+    ],
+    "single-form7203-capital-and-debt-basis-loss": [
+      "rule IND-021-01"
+    ],
+    "single-form982-qpri-exclusion": [
+      "rule IND-021-01"
+    ],
+    "single-form8919-nec-wages-and-additional-medicare": [
+      "rule IND-021-01"
+    ],
+    "single-form5695-door-and-air-conditioner": [
+      "rule IND-021-01"
+    ],
+    "single-form461-schedule-c-excess-business-loss": [
+      "calculation form8995"
+    ],
+    "single-form4684-business-casualty-loss": [
+      "rule IND-021-01"
+    ],
+    "single-form8396-certified-loan-interest-credit": [
+      "rule IND-021-01"
+    ],
+    "single-schedule-j-farm-income-averaging": [
+      "rule IND-021-01"
+    ],
+    "single-form8881-startup-and-auto-enrollment": [
+      "rule IND-021-01"
+    ],
+    "single-form4835-farm-rental-profit": [
+      "rule IND-021-01"
+    ],
+    "single-form4136-farm-fuel-credit": [
+      "rule IND-021-01"
+    ],
+    "mfj-form2210f-first-joint-filing": [
+      "rule IND-021-01",
+      "rule IND-022-01"
+    ],
+    "single-personal-home-charger-credit": [
+      "rule IND-021-01"
+    ],
+    "single-new-clean-vehicle-personal-credit": [
+      "rule IND-021-01"
+    ],
+    "single-fee-basis-employee-expenses": [
+      "rule IND-021-01"
+    ],
+    "single-dc-homebuyer-credit-carryforward": [
+      "rule IND-021-01"
+    ],
+    "single-passive-electric-vehicle-credit": [
+      "rule IND-021-01"
+    ],
+    "single-certified-work-opportunity-credit": [
+      "rule IND-021-01"
+    ],
+    "single-reported-tax-credit-bond": [
+      "rule IND-021-01"
+    ],
+    "single-orphan-drug-clinical-testing-credit": [
+      "rule IND-021-01"
+    ],
+    "single-empowerment-zone-employment-credit": [
+      "rule IND-021-01"
+    ],
+    "single-employer-childcare-facility-and-referral-credit": [
+      "rule IND-021-01"
+    ],
+    "single-disabled-worker-schedule-r-credit": [
+      "rule IND-021-01"
+    ],
+    "single-two-employers-excess-social-security": [
+      "rule IND-021-01"
+    ],
+    "single-mixed-box8-rtaa-taxable-grant-line8z": [
+      "rule IND-021-01"
+    ],
+    "single-excess-social-security-plus-fuel-credit": [
+      "rule IND-021-01"
+    ],
+    "single-form8863-two-school-llc": [
+      "rule IND-021-01"
+    ],
+    "single-form8863-two-school-aoc": [
+      "rule IND-021-01"
+    ],
+    "single-multiple-schedule-c-overflow": [
+      "rule IND-021-01"
+    ],
+    "single-multiple-schedule-c-net-loss": [
+      "rule IND-021-01",
+      "rule S1-F1040-195"
+    ],
+    "qualified-tip-qbi-wholly-excluded-qbi": [
+      "rule IND-021-01"
+    ],
+    "qualified-tip-qbi-positive-business-only": [
+      "rule IND-021-01"
+    ],
+    "qualified-tip-qbi-issued-w2-qbi-binding": [
+      "rule IND-021-01"
+    ],
+    "qualified-tip-qbi-business-tips-25000-cap": [
+      "rule IND-021-01"
+    ],
+    "qualified-tip-qbi-business-tips-magi-phaseout": [
+      "rule IND-021-01"
+    ],
+    "qualified-tip-qbi-mfj-independent-owner-tips": [
+      "rule IND-021-01",
+      "rule IND-022-01"
+    ],
+    "qualified-tip-qbi-mfj-cap-phaseout-owner-allocation": [
+      "rule IND-021-01",
+      "rule IND-022-01"
+    ],
+    "qualified-tip-qbi-mfj-employee-business-tip-allocation": [
+      "rule IND-021-01",
+      "rule IND-022-01"
+    ],
+    "qualified-tip-qbi-advanced-event-wotc-tip-exclusion": [
+      "rule IND-021-01"
+    ],
+    "tip-health-advanced-wotc-fully-phased-out": [
+      "rule IND-021-01"
+    ],
+    "tip-health-mfj-fully-phased-out": [
+      "calculation form7206",
+      "calculation schedule1a"
+    ],
+    "tip-health-mfj-owned-cap-phaseout": [
+      "calculation form7206",
+      "calculation schedule1a"
+    ],
+    "tip-health-mfj-primary-health-limited": [
+      "calculation form7206",
+      "calculation schedule1a"
+    ],
+    "tip-health-single-fully-phased-out": [
+      "xml [ { \"code\": \"invalid_type\", \"expected\": \"object\", \"received\": \"undefined\", \"path\": [], \"message\": \"Required\" } ]"
+    ],
+    "tip-health-single-health-income-limited": [
+      "xml [ { \"code\": \"invalid_type\", \"expected\": \"object\", \"received\": \"undefined\", \"path\": [], \"message\": \"Required\" } ]"
+    ],
+    "tip-health-single-positive-health": [
+      "xml [ { \"code\": \"invalid_type\", \"expected\": \"object\", \"received\": \"undefined\", \"path\": [], \"message\": \"Required\" } ]"
+    ],
+    "tip-health-single-tip-netincome-limited": [
+      "xml [ { \"code\": \"invalid_type\", \"expected\": \"object\", \"received\": \"undefined\", \"path\": [], \"message\": \"Required\" } ]"
+    ],
+    "tip-health-single-w2-qbi-binding": [
+      "xml [ { \"code\": \"invalid_type\", \"expected\": \"object\", \"received\": \"undefined\", \"path\": [], \"message\": \"Required\" } ]"
+    ],
+    "mixed-cf-tip-above-zero-wotc": [
+      "rule IND-021-01",
+      "rule IND-022-01"
+    ],
+    "mixed-cf-tip-health-income-limited": [
+      "rule IND-021-01",
+      "rule IND-022-01"
+    ],
+    "mixed-cf-tip-health-netincome-limited": [
+      "rule IND-021-01",
+      "rule IND-022-01"
+    ],
+    "mixed-cf-tip-no-health": [
+      "rule IND-021-01",
+      "rule IND-022-01"
+    ],
+    "mixed-cf-tip-ordinary-no-credit": [
+      "rule IND-021-01",
+      "rule IND-022-01"
+    ],
+    "mixed-cf-tip-owned-health": [
+      "rule IND-021-01",
+      "rule IND-022-01"
+    ],
+    "mixed-cf-tip-phase-wotc": [
+      "rule IND-021-01",
+      "rule IND-022-01"
+    ],
+    "partial-4972-beneficiary-2-copies": [
+      "rule IND-021-01"
+    ],
+    "partial-4972-beneficiary-3-copies": [
+      "rule IND-021-01"
+    ],
+    "same-proprietor-two-c-one-f-shop-full": [
+      "rule IND-021-01"
+    ],
+    "same-proprietor-two-c-one-f-shop-partial": [
+      "rule IND-021-01"
+    ],
+    "same-proprietor-two-c-one-f-shop-zero": [
+      "rule IND-021-01"
+    ],
+    "owned-farm-shop-full-use": [
+      "rule IND-021-01"
+    ],
+    "owned-farm-shop-limited-use": [
+      "rule IND-021-01"
+    ],
+    "owned-farm-shop-zero-use": [
+      "rule IND-021-01"
+    ],
+    "owned-farm-shop-shop-wotc": [
+      "rule IND-021-01"
+    ],
+    "carrier-daily-billed-shop-full-use": [
+      "rule IND-021-01"
+    ],
+    "carrier-daily-billed-shop-partial-use": [
+      "rule IND-021-01"
+    ],
+    "independent-primary-spouse-c-health-both-full": [
+      "rule IND-021-01",
+      "rule IND-022-01"
+    ],
+    "independent-primary-spouse-c-health-primary-income-limited": [
+      "rule IND-021-01",
+      "rule IND-022-01"
+    ],
+    "independent-primary-spouse-c-health-primary-months-excluded": [
+      "rule IND-021-01",
+      "rule IND-022-01"
+    ],
+    "independent-primary-spouse-c-health-both-months-excluded": [
+      "rule IND-021-01",
+      "rule IND-022-01"
+    ],
+    "independent-primary-spouse-c-health-one-established-plan-two-owned-businesses": [
+      "rule IND-021-01",
+      "rule IND-022-01"
+    ],
+    "independent-primary-spouse-c-health-different-owner-eligible-months": [
+      "rule IND-021-01",
+      "rule IND-022-01"
+    ]
+  }
+}
