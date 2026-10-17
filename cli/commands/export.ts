@@ -15,7 +15,10 @@ import {
 } from "../../core/validation/emitted-documents.ts";
 import { FIELD_REGISTRY } from "../../forms/f1040/validation/field-registry.ts";
 import { rulesForReturnVersion } from "../../forms/f1040/validation/rules/ty2026.ts";
-import type { DiagnosticEntry } from "../../core/validation/types.ts";
+import type {
+  DiagnosticEntry,
+  DiagnosticsReport,
+} from "../../core/validation/types.ts";
 import type { ExecutorDiagnosticEntry } from "../../core/runtime/executor.ts";
 import { loadForm8839Attachments } from "./form8839-attachments.ts";
 import {
@@ -210,7 +213,28 @@ export function validateBusinessRules(
   force: boolean | undefined,
   emittedScope?: EmittedValidationScope,
 ): void {
-  const report = businessRuleReport(pending, filer, emittedScope);
+  gateRuleReport(businessRuleReport(pending, filer, emittedScope), force);
+}
+
+/** The emitted return's own rule set: a Form 4868 is not judged by Form 1040 rules. */
+function validateSubmissionRules(
+  def: PipelineResult["def"],
+  pending: Readonly<Record<string, Record<string, unknown>>>,
+  filer: PipelineResult["filer"],
+  force: boolean | undefined,
+  xml: string,
+): void {
+  if (def.mefRuleReport) {
+    gateRuleReport(def.mefRuleReport(pending, xml), force);
+    return;
+  }
+  validateBusinessRules(pending, filer, force, emittedValidationScope(xml));
+}
+
+function gateRuleReport(
+  report: DiagnosticsReport,
+  force: boolean | undefined,
+): void {
   const rejectEntries = report.entries.filter(
     (entry) =>
       entry.severity === "reject" || entry.severity === "reject_and_stop",
@@ -313,12 +337,7 @@ export async function exportMefCommand(
     await loadForm8862RetainedNotices(returnPath, pending),
   );
   const xml = prepared.bundle.xml;
-  validateBusinessRules(
-    pending,
-    filer,
-    args.force,
-    emittedValidationScope(xml),
-  );
+  validateSubmissionRules(def, pending, filer, args.force, xml);
   return args.draft ? draftXmlNotice(executorDiagnostics) + xml : xml;
 }
 
@@ -339,20 +358,23 @@ export async function exportPdfCommand(
     ...await loadForm8835PurchaseAttachments(returnPath, pending),
   ];
   // An unidentified draft is a PDF preview; it has no fileable MeF return.
-  const prepared = args.draft && !filer
-    ? undefined
-    : await def.prepareReturn(
-      pending,
-      filer,
-      attachments,
-      await loadForm8862RetainedNotices(returnPath, pending),
-    );
-  validateBusinessRules(
+  const prepared = args.draft && !filer ? undefined : await def.prepareReturn(
     pending,
     filer,
-    args.force,
-    prepared ? emittedValidationScope(prepared.bundle.xml) : undefined,
+    attachments,
+    await loadForm8862RetainedNotices(returnPath, pending),
   );
+  if (prepared) {
+    validateSubmissionRules(
+      def,
+      pending,
+      filer,
+      args.force,
+      prepared.bundle.xml,
+    );
+  } else {
+    validateBusinessRules(pending, filer, args.force);
+  }
   const pdfBytes = prepared
     ? await prepared.renderPdf()
     : await def.buildPdfBytes(def.buildPending(pending), filer);

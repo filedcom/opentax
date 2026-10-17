@@ -94,10 +94,14 @@ const COMMANDS: readonly CommandDef[] = [
     cmd: "return",
     sub: "create",
     description: "Create a new tax return",
-    usage: "opentax return create --year <year>",
+    usage: "opentax return create --year <year> [--form f1040|f4868]",
     options: [
       { flag: "--year", description: "Tax year (e.g. 2025)", required: true },
-      { flag: "--form", description: "Form type (default: f1040)" },
+      {
+        flag: "--form",
+        description:
+          "Form type (default: f1040; f4868 with --year 2026 for an extension)",
+      },
     ],
     handler: async (args) => {
       const year = Number(args.year);

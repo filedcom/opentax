@@ -185,7 +185,8 @@ export async function getReturnCommand(
     year: meta.year,
     summary: extractSummary(f1040),
     forms: collectForms(pending),
-    lines: f1040,
+    // A Form 4868 is its own submission; its filed lines are form4868.
+    lines: def.formType === "f4868" ? pending["form4868"] ?? {} : f1040,
     warnings,
     carryforwards: result.carryforwards,
   };
