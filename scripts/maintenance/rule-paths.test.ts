@@ -3,7 +3,11 @@ import * as fs from "node:fs/promises";
 import * as sys from "../support/sys.ts";
 import { assert, assertEquals, assertThrows } from "@std/assert";
 import { basename } from "node:path";
-import { ruleCoreImportPath, ruleRelativePath } from "./rule-paths.ts";
+import {
+  ruleCoreImportPath,
+  ruleGroupStems,
+  ruleRelativePath,
+} from "./rule-paths.ts";
 
 const ruleRegistry = new URL(
   "../../forms/f1040/validation/rules/index.ts",
@@ -21,6 +25,10 @@ test("every registered MeF rule group retains its semantic generation destinatio
     assertEquals(ruleRelativePath(basename(path, ".ts")), path);
     assert((await sys.stat(new URL(path, ruleRegistry))).isFile);
   }
+  assertEquals(
+    [...ruleGroupStems()],
+    paths.map((path) => basename(path, ".ts")).sort(),
+  );
 });
 
 test("generated MeF rule imports resolve the engine from each domain folder", async () => {

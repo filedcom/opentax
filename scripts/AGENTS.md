@@ -12,9 +12,10 @@ from `scripts/`. Group index: [README.md](./README.md).
   tests; `inspect-pdf-fields.ts` (AcroForm fields vs PDF descriptors);
   `audit-joint-submission-rules.ts`; `ty2026/*.py` (corpus download, inventory
   and PDF-field generators writing under `docs/ty2026/`).
-- `maintenance/` — `parse-rules.ts` generates
-  `forms/f1040/validation/rules/` from the IRS MeF business-rules CSV, using
-  `rule-paths.ts` for each rule group's folder; `*4972*-oracle.py` are
+- `maintenance/` — `parse-rules.ts` regenerates the rules in
+  `forms/f1040/validation/rules/` from the IRS MeF business-rules CSV into
+  `.state/research/generated/mef-rules/` for review (`--in-place` overwrites
+  hand-edited rules), using `rule-paths.ts` for each rule group's folder; `*4972*-oracle.py` are
   independent Decimal source oracles.
 - `release/` — `smoke-release-binary.ts <asset> <version> [transcript]`
   (`.github/workflows/release.yml`) and `smoke-issue77.ts` scenarios it runs.

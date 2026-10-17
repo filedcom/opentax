@@ -28,11 +28,14 @@ Section index: [rules/README.md](./rules/README.md).
 - A check can only see an element whose name is in `FIELD_REGISTRY`; add the
   pair to the serializer's `FIELD_MAP`, not a special case here.
 - Files say "Auto-generated" by `scripts/maintenance/parse-rules.ts` (IRS
-  business-rules CSV), but many were edited by hand since (e.g. `alwaysPass`
-  with a reason comment, `sumOfAll`). The generator rewrites whole files and
-  `index.ts`, and `scripts/maintenance/rule-paths.ts` still maps stems to the
-  pre-section folders (`f1040` → `identity/f1040.ts`); do not run it without
-  updating that map and diffing the result.
+  business-rules CSV, TY2025v5.4 under `.state/research/docs/`), but many
+  were edited by hand since (e.g. `alwaysPass` with a reason comment,
+  `sumOfAll`). The generator rewrites whole files and `index.ts`, so by
+  default it writes to the git-ignored `.state/research/generated/mef-rules/`
+  and reports which files differ from the tree; port changes by hand.
+  `--in-place` overwrites the hand edits. Each group's home comes from the
+  tree via `scripts/maintenance/rule-paths.ts`; a new prefix fails until its
+  file is placed in a section by hand.
 - Tests sit beside a group (`rules/income/investments/sb.test.ts`,
   `f8815.test.ts`): build a context with `createReturnContext(pending, header,
   FIELD_REGISTRY)` and call `rule.check`.
@@ -41,7 +44,7 @@ Section index: [rules/README.md](./rules/README.md).
 - `bun test ./forms/f1040/validation/ --timeout=1800000`
 - `bun test ./core/validation/ --timeout=1800000` when predicates change.
 - `bun test ./scripts/maintenance/rule-paths.test.ts --timeout=1800000` after
-  moving a rule file (currently fails: the map is stale, see above).
+  moving, adding or removing a rule file (tree and `index.ts` must agree).
 - `bun run test:unit`.
 
 ## Read next

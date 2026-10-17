@@ -4,25 +4,54 @@ import * as sys from "../support/sys.ts";
 /**
  * IRS MeF Business Rules CSV → TypeScript rule files generator.
  *
- * Reads the official IRS business rules CSV and generates:
- *   forms/f1040/validation/rules/<prefix>.ts — one file per form prefix
- *   forms/f1040/validation/rules/index.ts    — registry importing all
+ * Reads the IRS 1040-series business rules CSV (TY2025v5.4, a private
+ * download unpacked under the git-ignored `.state/research/docs/`) and
+ * generates, for every active rule-number prefix:
+ *   <out>/<section>/<group>/.../<stem>.ts — the group's existing home, from
+ *                                           `rule-paths.ts` (the real tree)
+ *   <out>/index.ts                         — registry importing all groups
  *
- * For recognizable patterns (~60% of rules), auto-generates the
- * predicate DSL check function. Complex rules get check: null (stub).
+ * For recognizable patterns, auto-generates the predicate DSL check function.
+ * Complex rules get check: null (stub).
  *
- * Usage: bun scripts/maintenance/parse-rules.ts
+ * The rule files under `forms/f1040/validation/rules/` were edited by hand
+ * after generation (`alwaysPass` with reason comments, `sumOfAll`, tests
+ * beside groups), and every write here replaces a whole file. So by default
+ * `<out>` is `.state/research/generated/mef-rules/` (git-ignored): the source
+ * tree is never touched, and each file is reported as new, unchanged or
+ * differing from its in-tree counterpart so you can diff and port by hand.
+ * `--in-place` makes `<out>` the source tree and overwrites those hand edits;
+ * pass it only after reviewing that diff. A prefix with no home in the tree
+ * fails (`Unclassified MeF rule group`) until its file is placed by hand.
+ *
+ * Usage: bun scripts/maintenance/parse-rules.ts [--csv <path>] [--in-place]
  */
 
 import { parse } from "@std/csv";
 import { ruleCoreImportPath, ruleRelativePath } from "./rule-paths.ts";
 
-const CSV_PATH = new URL(
-  "../../.research/docs/IMF_Series_2025v3.0/1040x_2025v3.0/business_rules/1040_Business_Rules_2025v3.0.csv",
-  import.meta.url,
-);
+const SCHEMA_VERSION = "2025v5.4";
+const CSV_NAME = `1040_Business_Rules_${SCHEMA_VERSION}.csv`;
+
+function argValue(flag: string): string | undefined {
+  const at = process.argv.indexOf(flag);
+  return at === -1 ? undefined : process.argv[at + 1];
+}
+
+const csvArg = argValue("--csv");
+const CSV_PATH = csvArg === undefined
+  ? new URL(
+    `../../.state/research/docs/IMF_Series_${SCHEMA_VERSION}/1040x_${SCHEMA_VERSION}/business_rules/${CSV_NAME}`,
+    import.meta.url,
+  )
+  : new URL(csvArg, `file://${process.cwd()}/`);
 const RULES_DIR = new URL(
   "../../forms/f1040/validation/rules/",
+  import.meta.url,
+);
+const IN_PLACE = process.argv.includes("--in-place");
+const OUT_DIR = IN_PLACE ? RULES_DIR : new URL(
+  "../../.state/research/generated/mef-rules/",
   import.meta.url,
 );
 
@@ -213,7 +242,7 @@ function generateRuleFile(prefix: string, rules: GeneratedRule[]): string {
   const lines: string[] = [];
   lines.push("/**");
   lines.push(` * MeF Business Rules: ${prefix}`);
-  lines.push(` * Auto-generated from 1040_Business_Rules_2025v3.0.csv`);
+  lines.push(` * Auto-generated from ${CSV_NAME}`);
   lines.push(` * ${rules.length} rules (${rules.filter((r) => r.checkCode).length} implemented, ${rules.filter((r) => !r.checkCode).length} stubs)`);
   lines.push(" */");
   lines.push("");
@@ -287,10 +316,32 @@ function generateIndex(prefixes: string[]): string {
   return lines.join("\n");
 }
 
+// ─── Output ─────────────────────────────────────────
+
+/** Compare with the in-tree file before writing, so the report shows drift. */
+async function emit(relativePath: string, code: string): Promise<string> {
+  const current = await fs.readFile(new URL(relativePath, RULES_DIR), "utf8")
+    .catch(() => null);
+  const status = current === null
+    ? "new"
+    : current === code
+    ? "unchanged"
+    : "differs";
+  const target = new URL(relativePath, OUT_DIR);
+  await fs.mkdir(new URL("./", target), { recursive: true });
+  await fs.writeFile(target, code);
+  return status;
+}
+
 // ─── Main ───────────────────────────────────────────────
 
 async function main() {
-  console.log("Loading IRS business rules CSV...");
+  console.log(`Loading IRS business rules CSV: ${CSV_PATH.pathname}`);
+  if (!(await sys.stat(CSV_PATH).catch(() => null))?.isFile) {
+    throw new Error(
+      `Missing ${CSV_NAME}; unpack IMF_Series_${SCHEMA_VERSION} under .state/research/docs/ or pass --csv <path>`,
+    );
+  }
   const allRules = await loadRules();
   const active = allRules.filter(isActive);
   console.log(`Total: ${allRules.length}, Active: ${active.length}`);
@@ -304,13 +355,16 @@ async function main() {
   }
 
   console.log(`Form groups: ${byPrefix.size}`);
+  console.log(
+    IN_PLACE
+      ? "Writing in place: hand edits in differing files are overwritten."
+      : `Writing to ${OUT_DIR.pathname} (source tree untouched).`,
+  );
 
-  // Generate rule files
   let totalImpl = 0;
   let totalStub = 0;
   const prefixes: string[] = [];
-
-  await fs.mkdir(new URL(RULES_DIR), { recursive: true });
+  const differing: string[] = [];
 
   for (const [prefix, rules] of byPrefix) {
     prefixes.push(prefix);
@@ -330,24 +384,26 @@ async function main() {
 
     const code = generateRuleFile(prefix, generated);
     const fileName = ruleRelativePath(prefixToFileName(prefix));
-    const filePath = new URL(fileName, RULES_DIR);
-    await fs.mkdir(new URL("./", filePath), { recursive: true });
-    await fs.writeFile(filePath, code);
+    const status = await emit(fileName, code);
+    if (status === "differs") differing.push(fileName);
     const implCount = generated.filter((r) => r.checkCode).length;
     console.log(
-      `  ${prefix.padEnd(10)} → ${fileName.padEnd(20)} (${rules.length} rules, ${implCount} auto-implemented)`,
+      `  ${prefix.padEnd(10)} → ${fileName.padEnd(48)} ${status.padEnd(9)} (${rules.length} rules, ${implCount} auto-implemented)`,
     );
   }
 
-  // Generate index
-  const indexCode = generateIndex(prefixes);
-  await fs.writeFile(new URL("index.ts", RULES_DIR), indexCode);
+  const indexStatus = await emit("index.ts", generateIndex(prefixes));
+  if (indexStatus === "differs") differing.push("index.ts");
 
   console.log("");
   console.log(`Done! Generated ${prefixes.length} rule files.`);
   console.log(`  Auto-implemented: ${totalImpl}`);
   console.log(`  Stubs (manual):   ${totalStub}`);
   console.log(`  Total:            ${totalImpl + totalStub}`);
+  console.log(`  Differ from tree: ${differing.length}`);
 }
 
-main();
+main().catch((error: unknown) => {
+  console.error(error instanceof Error ? error.message : error);
+  process.exit(1);
+});
