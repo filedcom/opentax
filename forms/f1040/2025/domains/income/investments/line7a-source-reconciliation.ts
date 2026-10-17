@@ -1,4 +1,5 @@
 import { inputSchema as dividendSchema } from "../../../../nodes/inputs/income/investments/f1099div/index.ts";
+import { roundWholeDollars } from "../../../../whole-dollars.ts";
 
 type Pending = Readonly<Record<string, unknown>>;
 
@@ -80,7 +81,8 @@ export function assertDirectCapitalGainDistributionSource(
     return;
   }
 
-  if (Math.abs(filed - sourced) > 0.000001) {
+  // Schedule D sends direct line 7a distributions in whole dollars.
+  if (filed !== roundWholeDollars(sourced)) {
     throw new Error(
       "Form 1040 line 7a differs from retained 1099-DIV and Form 8814 capital-gain distributions",
     );

@@ -1,3 +1,4 @@
+import { roundWholeDollars } from "../../../../../../whole-dollars.ts";
 import { assertLossWotcSources } from "../../../../../domains/deductions/business/form8995a/form8995a_loss_wotc_source.ts";
 import { scheduleSELines } from "../../../../../../nodes/intermediate/forms/taxes/self-employment/schedule_se/calculation.ts";
 import { assertOwnedScheduleSE } from "../../../../../domains/taxes/self-employment/schedule-se/schedule-se-owner-source.ts";
@@ -412,8 +413,14 @@ export function assertScheduleCLossSources(
       (sum, business) => sum + business.qbi,
       0,
     );
-    const expectedIncome = wages + profit + investment.interest +
-      investment.ordinary + investment.returnCapital;
+    // Line 9 adds the whole-dollar income lines.
+    const expectedIncome = [
+      wages,
+      profit,
+      investment.interest,
+      investment.ordinary,
+      investment.returnCapital,
+    ].reduce((sum, value) => sum + roundWholeDollars(value), 0);
     if (
       !Number.isFinite(retained.f1040.line9_total_income) ||
       !Number.isFinite(retained.f1040.line11_agi) ||
@@ -546,10 +553,11 @@ export function assertScheduleCLossSources(
     schedule1.data.line10_total_additional_income !==
       form1040.data.line8_additional_income ||
     form1040.data.line13_qbi_deduction !== lines.parent.line39 ||
+    // Line 33 files whole-dollar taxable income before the QBI deduction.
     form1040.data.line15_taxable_income +
           form1040.data.line13_qbi_deduction +
           (form1040.data.line13b_additional_deductions ?? 0) !==
-      fields.taxable_income ||
+      Math.round(fields.taxable_income) ||
     (schedule1.data.line15_se_deduction ?? 0) !== seDeduction ||
     (schedule1.data.line16_sep_simple ?? 0) !== 0 ||
     (schedule1.data.line17_se_health_insurance ?? 0) !== 0

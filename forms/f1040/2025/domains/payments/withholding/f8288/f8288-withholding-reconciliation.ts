@@ -55,10 +55,12 @@ export function assertOtherFormsWithholding(
     medicareWithheld + trustWithheld;
   if (total === 0 && !requireExact) return;
   const filed = fields.line25c_total;
+  // Line 25c files the combined withholding in whole dollars.
+  const filedTotal = Math.round(total);
   if (
     total > 0 &&
     (typeof filed !== "number" || !Number.isFinite(filed) ||
-      filed + 0.01 < total)
+      filed < filedTotal)
   ) {
     throw new Error(
       partnershipWithheld + medicareWithheld + trustWithheld > 0 ||
@@ -73,7 +75,7 @@ export function assertOtherFormsWithholding(
   if (
     requireExact &&
     (typeof actual !== "number" || !Number.isFinite(actual) ||
-      Math.abs(actual - total) >= 0.01)
+      actual !== filedTotal)
   ) {
     throw new Error(
       "Form 1040 line 25c differs from retained other-form withholding",

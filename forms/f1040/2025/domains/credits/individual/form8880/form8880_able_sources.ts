@@ -70,6 +70,17 @@ export function assertPublicAbleContributionSources(
   rawBusinesses?: unknown,
   rawFarms?: unknown,
 ): void {
+  // The return graph reports an invalid filing status; only a review needs it here.
+  const reviews = generalSchema.pick({
+    form8880_able_contribution_review: true,
+    form8880_nonjoint_distribution_review: true,
+    form8880_joint_distribution_review: true,
+  }).partial().parse(rawGeneral ?? {});
+  if (
+    !reviews.form8880_able_contribution_review &&
+    !reviews.form8880_nonjoint_distribution_review &&
+    !reviews.form8880_joint_distribution_review
+  ) return;
   const general = generalSchema.pick({
     form8880_able_contribution_review: true,
     form8880_employee_contribution_review: true,

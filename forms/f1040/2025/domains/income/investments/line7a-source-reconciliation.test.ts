@@ -69,6 +69,33 @@ test("direct Form 1040 capital-gain distributions replay retained payer and chil
   );
 });
 
+test("direct Form 1040 line 7a files cent distributions in whole dollars", () => {
+  const pending = {
+    f1099div: {
+      f1099divs: [{
+        isNominee: false,
+        box11: false,
+        box1a: 0,
+        box2a: 700.5,
+        recipient_tin: "111223333",
+      }],
+    },
+  };
+  assertDirectCapitalGainDistributionSource(
+    { line7a_cap_gain_distrib: 701 },
+    pending,
+  );
+  assertThrows(
+    () =>
+      assertDirectCapitalGainDistributionSource(
+        { line7a_cap_gain_distrib: 700.5 },
+        pending,
+      ),
+    Error,
+    "differs from retained",
+  );
+});
+
 test("native and PDF Form 1040 reject a changed direct capital-gain distribution", () => {
   const pending = {
     f1099div: {

@@ -199,8 +199,11 @@ export function assertMultipleScheduleC8995(
     number(f1040.line2b_taxable_interest) !== investment.interest ||
     number(f1040.line3a_qualified_dividends) !== investment.qualified ||
     number(f1040.line3b_ordinary_dividends) !== investment.ordinary ||
+    // Schedule D sends line 7a distributions in whole dollars.
     number(f1040.line7a_cap_gain_distrib) !==
-      (pending.f1099b === undefined ? investment.capital : 0) ||
+      (pending.f1099b === undefined
+        ? roundWholeDollars(investment.capital)
+        : 0) ||
     number(f1040.line7_capital_gain) !==
       (pending.f1099b === undefined ? 0 : investment.returnCapital) ||
     typeof f1040.line12c_deduction_total !== "number"

@@ -2,6 +2,8 @@ import { FilingStatus } from "../../../../../nodes/types.ts";
 import {
   inputSchema as scheduleDInputSchema,
 } from "../../../../../nodes/intermediate/aggregation/income/investments/schedule_d/index.ts";
+import { roundWholeDollars } from "../../../../../whole-dollars.ts";
+import { roundCapitalAmount } from "../../../../../nodes/intermediate/forms/income/investments/form8949/reported-money.ts";
 
 type Pending = Readonly<Record<string, unknown>>;
 
@@ -66,12 +68,23 @@ export function assertScheduleD1040Join(pending: Pending): void {
   let shortGain = (input.line_1a_proceeds ?? 0) -
     (input.line_1a_cost ?? 0) + sum(input.line_4_other_st) +
     sum(input.line_5_k1_st) - (input.line_6_carryover ?? 0);
+  // Schedule D files combined distributions and each 8949 row in whole dollars.
   let longGain = (input.line_8a_proceeds ?? 0) -
     (input.line_8a_cost ?? 0) + sum(input.line_11_form2439) +
-    (input.line_11_qef_lt ?? 0) + (input.line_12_cap_gain_dist ?? 0) +
-    sum(input.line_12_k1_lt) - (input.line_14_carryover ?? 0) +
-    (input.line13_cap_gain_distrib ?? 0) +
-    (input.line13_form8814 ?? 0);
+    (input.line_11_qef_lt ?? 0) + sum(input.line_12_k1_lt) -
+    (input.line_14_carryover ?? 0) +
+    Math.round(
+      (input.line_12_cap_gain_dist ?? 0) +
+        (input.line13_cap_gain_distrib ?? 0) +
+        (input.line13_form8814 ?? 0),
+    );
+  const rowGain = (
+    proceeds: number,
+    costBasis: number,
+    adjustment: number | undefined,
+  ): number =>
+    Math.round(proceeds) - Math.round(costBasis) +
+    roundCapitalAmount(adjustment ?? 0);
   const transactions = input.transaction === undefined
     ? []
     : Array.isArray(input.transaction)
@@ -82,26 +95,29 @@ export function assertScheduleD1040Join(pending: Pending): void {
       addDirect(tx.is_long_term, tx.proceeds, tx.cost_basis);
       continue;
     }
-    if (tx.is_long_term) longGain += tx.gain_loss;
-    else shortGain += tx.gain_loss;
+    const gain = rowGain(tx.proceeds, tx.cost_basis, tx.adjustment_amount);
+    if (tx.is_long_term) longGain += gain;
+    else shortGain += gain;
   }
   for (const tx of input.transactions ?? []) {
     if (direct(tx.part, tx.adjustment_codes, tx.adjustment_amount)) {
       addDirect(tx.part === "D", tx.proceeds, tx.cost_basis);
       continue;
     }
-    const gain = tx.proceeds - tx.cost_basis + (tx.adjustment_amount ?? 0);
+    const gain = rowGain(tx.proceeds, tx.cost_basis, tx.adjustment_amount);
     if (shortParts.has(tx.part)) shortGain += gain;
     else longGain += gain;
   }
+  // Lines 1a and 8a file the rounded totals of the retained direct sales.
   if (
     pending.general !== undefined && (
-      Math.abs((input.line_1a_proceeds ?? 0) - directAmounts.shortProceeds) >=
-        0.01 ||
-      Math.abs((input.line_1a_cost ?? 0) - directAmounts.shortCost) >= 0.01 ||
-      Math.abs((input.line_8a_proceeds ?? 0) - directAmounts.longProceeds) >=
-        0.01 ||
-      Math.abs((input.line_8a_cost ?? 0) - directAmounts.longCost) >= 0.01
+      (input.line_1a_proceeds ?? 0) !==
+        roundWholeDollars(directAmounts.shortProceeds) ||
+      (input.line_1a_cost ?? 0) !==
+        roundWholeDollars(directAmounts.shortCost) ||
+      (input.line_8a_proceeds ?? 0) !==
+        roundWholeDollars(directAmounts.longProceeds) ||
+      (input.line_8a_cost ?? 0) !== roundWholeDollars(directAmounts.longCost)
     )
   ) {
     throw new Error(

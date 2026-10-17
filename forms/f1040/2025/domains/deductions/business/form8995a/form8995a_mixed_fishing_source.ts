@@ -61,13 +61,16 @@ export function assertMixedFishingQbiReturn(
       "Mixed fishing Form 8995-A rows differ from filed owned C/F and SE sources",
     );
   }
+  // A joint source has no single owner; both spouses own the return.
+  const general = pending.general as Record<string, unknown> | undefined;
   const investment = assertMultiBusinessInvestmentSources(
     {
       ...input,
-      taxpayer_ssn: source.owner_ssn,
+      taxpayer_ssn: joint ? String(general?.taxpayer_ssn) : source.owner_ssn,
     },
     pending as Record<string, Record<string, unknown>>,
     true,
+    joint ? String(general?.spouse_ssn) : undefined,
   );
   if (input.net_capital_gain !== investment.filedQbiCapitalLimit) {
     throw new Error(
