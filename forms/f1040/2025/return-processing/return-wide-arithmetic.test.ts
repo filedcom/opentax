@@ -655,3 +655,30 @@ test("full-return Schedule 1 totals replay printed income and adjustments", () =
     );
   }
 });
+
+// IRS i1040gi, Rounding Off to Whole Dollars: add cents before rounding a line.
+test("Form 1040 sums retained amounts on one line before rounding", () => {
+  for (
+    const [parts, total, wrong] of [
+      [[20_000.40, 20_000.40], 40_001, 40_000],
+      [[20_000.60, 20_000.60], 40_001, 40_002],
+    ] as const
+  ) {
+    const fields = {
+      line1a_wages: [...parts],
+      line1z_total_wages: total,
+      line9_total_income: total,
+    };
+    assertReturnWideArithmetic(fields);
+    assertThrows(
+      () =>
+        assertReturnWideArithmetic({
+          ...fields,
+          line1z_total_wages: wrong,
+          line9_total_income: wrong,
+        }),
+      Error,
+      "line 1z",
+    );
+  }
+});

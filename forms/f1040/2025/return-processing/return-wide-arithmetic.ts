@@ -127,9 +127,8 @@ export function assertReturnWideArithmetic(
         Array.isArray(value) &&
         value.every((item) => typeof item === "number" && Number.isFinite(item))
       ) {
-        total += value.reduce(
-          (sum: number, item: number) => sum + roundWholeDollars(item),
-          0,
+        total += roundWholeDollars(
+          value.reduce((sum: number, item: number) => sum + item, 0),
         );
       } else {
         throw new Error(`Form 1040 ${key} needs a finite amount`);

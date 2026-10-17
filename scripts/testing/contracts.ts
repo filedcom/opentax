@@ -266,6 +266,9 @@ export function openFailures(
   const open = failed.flatMap((test) => {
     const entry = known.get(key(test));
     if (!entry) return [`New failure: ${key(test)}`];
+    if (entry.requires === "irs-cache" && irsCache) {
+      return [`Failure with IRS cache available: ${key(test)}`];
+    }
     if (entry.expires < today) {
       return [`Baseline expired on ${entry.expires}: ${key(test)}`];
     }

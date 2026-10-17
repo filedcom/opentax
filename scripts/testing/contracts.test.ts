@@ -191,3 +191,24 @@ test("known failures pass the gate until they expire; new failures and stale ent
   ]);
   assertEquals(openFailures([], baseline, "2026-10-17", false).length, 2);
 });
+
+test("IRS cache baseline cannot hide a failure when the cache is available", () => {
+  const failure = { module: "a.test.ts", name: "xsd" };
+  assertEquals(
+    openFailures(
+      [failure],
+      [{
+        ...failure,
+        reason: "cache unavailable",
+        requires: "irs-cache",
+        expires: "2027-01-31",
+        approvedBy: "pending-review",
+      }],
+      "2026-10-17",
+      true,
+    ),
+    [
+      "Failure with IRS cache available: a.test.ts: xsd",
+    ],
+  );
+});
