@@ -144,8 +144,13 @@ export function assertMultipleScheduleC8995(
         number(se.w2_ss_wages) !== ssWages ||
         number(se.unreported_tips_4137) !== 0 ||
         number(se.wages_8919) !== 0)) ||
+    // Below the line 4c threshold Schedule SE holds only the Schedule C total.
     (!seExpected && se &&
-      Object.keys(se).some((key) => key !== "w2_ss_wages")) ||
+      (Object.keys(se).some((key) =>
+        key !== "w2_ss_wages" && key !== "net_profit_schedule_c"
+      ) ||
+        (se.net_profit_schedule_c !== undefined &&
+          se.net_profit_schedule_c !== profit))) ||
     !healthSource ||
     healthSource.unadjusted_source !==
       ((c.form8941_premium_reductions?.length ?? 0) === 0) ||

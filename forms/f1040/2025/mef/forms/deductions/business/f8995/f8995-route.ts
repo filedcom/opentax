@@ -830,12 +830,16 @@ export function assertTwoSmallScheduleC8995(
       business.proprietor_recipient !== items[index]?.proprietor_recipient ||
       business.line31_net_profit !== profits[index]
     ) ||
+    // Schedule SE receives the combined Schedule C total and stops at line 4c.
     (scheduleSe !== undefined &&
-      (Object.keys(scheduleSe).some((key) => key !== "w2_ss_wages") ||
+      (Object.keys(scheduleSe).some((key) =>
+        key !== "w2_ss_wages" && key !== "net_profit_schedule_c"
+      ) ||
+        scheduleSe.net_profit_schedule_c !== total ||
         scheduleSe.w2_ss_wages !== wage.box3_ss_wages)) ||
     (scheduleSe !== undefined && scheduleSeSource === undefined) ||
     (scheduleSeSource !== undefined &&
-      (scheduleSeSource.net_profit_schedule_c !== 0 ||
+      (scheduleSeSource.net_profit_schedule_c !== total ||
         scheduleSeSource.net_profit_schedule_f !== 0 ||
         scheduleSeSource.farm_optional_method_elected !== false ||
         scheduleSeSource.line13_deduction !== 0)) ||
