@@ -48,7 +48,7 @@ test("Form8978 reviewed public positive/negative/multi-year sources join full na
       args: [
         "--noout",
         "--schema",
-        ".state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd",
+        "irs/mef/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd",
         "-",
       ],
       stdin: "piped",

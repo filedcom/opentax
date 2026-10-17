@@ -14,7 +14,7 @@ import {
   twoNotesOpenInputs,
 } from "./form7203_two_notes_open.fixture.ts";
 const xsd =
-  ".state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd";
+  "irs/mef/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd";
 // Independently worked PartII line30 columns, source face values remain fixed.
 const reductions: Record<string, number[]> = {
   primary_fractional: [1053, 526, 921],

@@ -12,7 +12,7 @@ import {
 } from "./form7203_spouse_owned_debt.fixture.ts";
 import { form7203StockLossPdf } from "../../../../pdf/forms/income/business/f7203_stock_loss.ts";
 const xsd =
-  ".state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd";
+  "irs/mef/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd";
 for (const c of spouseOwnedDebtCases) {
   test(`MFJ owned direct debt ${c.id}: independent basis, required copies, full XML/PDF`, async () => {
     const { inputs, filer } = spouseOwnedDebtInputs(c),

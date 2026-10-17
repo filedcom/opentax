@@ -19,7 +19,7 @@ const optionalEnv = (name: string): string | undefined => {
   return process.env[name];
 };
 const xsd = optionalEnv("SCHEDULE_H_STATE_RATE_XSD_PATH") ?? new URL(
-  "../../../../../../../.state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd",
+  "../../../../../../../irs/mef/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd",
   import.meta.url,
 ).pathname;
 

@@ -312,7 +312,7 @@ test.skipIf(!regularPdfTemplateAvailable)("2210 staged PDF rejects changed templ
 });
 
 const regularNativeSchema = new URL(
-  "../../../../../../../.state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/IndividualIncomeTax/Common/IRS2210/IRS2210.xsd",
+  "../../../../../../../irs/mef/2025v5.4/IndividualIncomeTax/Common/IRS2210/IRS2210.xsd",
   import.meta.url,
 ).pathname;
 let regularNativeSchemaAvailable = false;

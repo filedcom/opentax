@@ -39,7 +39,7 @@ function changedFields(
 
 async function validateNative(xml: string) {
   const schema = new URL(
-    "../../../../../../../.state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/EstateTrustIncomeTax/1041/IRS1041ScheduleK1/IRS1041ScheduleK1.xsd",
+    "../../../../../../../irs/mef/2025v5.4/EstateTrustIncomeTax/1041/IRS1041ScheduleK1/IRS1041ScheduleK1.xsd",
     import.meta.url,
   ).pathname;
   const path = await sys.makeTempFile({ suffix: ".xml" });

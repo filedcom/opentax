@@ -113,7 +113,7 @@ const cases = [
 // Tax-table amounts below $100,000 taxable income use IRS Publication 1040.
 // https://www.irs.gov/publications/p1040
 const schema =
-  ".state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd";
+  "irs/mef/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd";
 const base = pdfReviewFixtures.find((item) => item.id === "single-w2-refund")!;
 const evidenceDir = process.argv.slice(2).find((arg) => arg.startsWith("--evidence-dir="))
   ?.slice("--evidence-dir=".length);

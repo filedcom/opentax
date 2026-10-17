@@ -216,7 +216,7 @@ test("Final native integrity rejects parent reference and per-schedule source-ow
 
 test("Linked actual Category4/5a parent satisfies canonical v5.4 XSD fixed reference names", async () => {
     const xsd = new URL(
-      "../../../../../../../../.state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/CorporateIncomeTax/Common/IRS5471/IRS5471.xsd",
+      "../../../../../../../../irs/mef/2025v5.4/CorporateIncomeTax/Common/IRS5471/IRS5471.xsd",
       import.meta.url,
     ).pathname;
     const fragments = linked();

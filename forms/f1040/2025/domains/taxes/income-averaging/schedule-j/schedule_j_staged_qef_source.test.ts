@@ -175,7 +175,7 @@ test("Alex's issued farm and dividend sources compose Schedule J, adoption and Q
     args: [
       "--noout",
       "--schema",
-      ".state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd",
+      "irs/mef/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd",
       `${out}/return.xml`,
     ],
     stderr: "piped",
@@ -243,7 +243,7 @@ test("Alex's Schedule J and adoption source retains staged credit without QEF", 
     args: [
       "--noout",
       "--schema",
-      ".state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd",
+      "irs/mef/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd",
       `${out}/return.xml`,
     ],
     stderr: "piped",
@@ -332,7 +332,7 @@ test("Alex's issued education sources compose the J and QEF shadow at the actual
     args: [
       "--noout",
       "--schema",
-      ".state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd",
+      "irs/mef/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd",
       `${out}/return.xml`,
     ],
     stderr: "piped",

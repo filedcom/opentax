@@ -180,7 +180,7 @@ test("Passive Form 7203 projection replays bank/source joins and rejects illegal
 });
 
 const XSD_PATH = new URL(
-  "../../../../../../../.state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/Shared/IRS7203/IRS7203.xsd",
+  "../../../../../../../irs/mef/2025v5.4/Shared/IRS7203/IRS7203.xsd",
   import.meta.url,
 ).pathname;
 for (

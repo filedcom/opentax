@@ -18,7 +18,7 @@ import { parse } from "@std/csv";
 import { ruleCoreImportPath, ruleRelativePath } from "./rule-paths.ts";
 
 const CSV_PATH = new URL(
-  "../../.research/docs/IMF_Series_2025v3.0/1040x_2025v3.0/business_rules/1040_Business_Rules_2025v3.0.csv",
+  "../../irs/rules/1040_Business_Rules_2025v3.0.csv",
   import.meta.url,
 );
 const RULES_DIR = new URL(

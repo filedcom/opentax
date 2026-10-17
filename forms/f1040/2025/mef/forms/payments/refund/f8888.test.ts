@@ -42,7 +42,7 @@ const second = {
 const source = { account_1: first, account_2: second };
 
 const XSD_PATH = new URL(
-  "../../../../../../../.state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/IndividualIncomeTax/Common/IRS8888/IRS8888.xsd",
+  "../../../../../../../irs/mef/2025v5.4/IndividualIncomeTax/Common/IRS8888/IRS8888.xsd",
   import.meta.url,
 ).pathname;
 let xsdAvailable = false;

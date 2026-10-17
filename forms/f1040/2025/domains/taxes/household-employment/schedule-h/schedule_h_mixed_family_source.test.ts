@@ -352,7 +352,7 @@ test("Schedule H mixed family payroll retains actual relationships through sourc
   const flag = process.argv.slice(2).indexOf("--write-review-artifacts");
   const root = flag >= 0 ? process.argv.slice(2)[flag + 1] : undefined;
   const xsd = new URL(
-    "../../../../../../../.state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd",
+    "../../../../../../../irs/mef/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd",
     import.meta.url,
   ).pathname;
   for (const { id, inputs, tax, futa } of cases()) {

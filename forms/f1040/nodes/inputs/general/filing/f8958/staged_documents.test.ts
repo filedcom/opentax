@@ -304,7 +304,7 @@ test("f8958 complete staged execution remains blocked by both public exporters",
 });
 
 const componentSchema =
-  ".state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/IndividualIncomeTax/Common/IRS8958/IRS8958.xsd";
+  "irs/mef/2025v5.4/IndividualIncomeTax/Common/IRS8958/IRS8958.xsd";
 let componentSchemaAvailable = false;
 try {
   componentSchemaAvailable = sys.statSync(componentSchema).isFile;

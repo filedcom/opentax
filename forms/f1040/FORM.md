@@ -26,7 +26,7 @@ determines refund or amount owed. Most other IRS forms feed into it as inputs.
 
 ## IRS Specs
 
-- XSD schemas: `.state/research/docs/IMF_Series_2025v3.0/1040x_2025v3.0/`
+- MeF schemas and business rules: `irs/` (not committed; [irs/README.md](../../irs/README.md) lists every file and how to install it)
 - PDF field dumps: `.state/field-dumps/`
 - Instructions PDF: https://www.irs.gov/pub/irs-pdf/i1040.pdf
 - IRS Pub 17: https://www.irs.gov/publications/p17

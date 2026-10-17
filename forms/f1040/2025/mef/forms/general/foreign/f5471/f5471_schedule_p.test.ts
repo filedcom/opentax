@@ -9,7 +9,7 @@ import {
 import { form5471ScheduleP } from "./f5471_schedule_p.ts";
 
 const xsd = new URL(
-  "../../../../../../../../.state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/Shared/IRS5471ScheduleP/IRS5471ScheduleP.xsd",
+  "../../../../../../../../irs/mef/2025v5.4/Shared/IRS5471ScheduleP/IRS5471ScheduleP.xsd",
   import.meta.url,
 ).pathname;
 let schemaAvailable = false;

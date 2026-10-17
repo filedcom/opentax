@@ -24,7 +24,7 @@ import { form8995Pdf } from "../../../../pdf/forms/deductions/business/f8995/f89
 import { form7203StockLossPdf } from "../../../../pdf/forms/income/business/f7203_stock_loss.ts";
 
 const xsd =
-  ".state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd";
+  "irs/mef/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd";
 // Independent 2025 single Tax Table rows: TI30750,31150,32150,31350.
 // Each row spans $50; tax is calculated at the midpoint.
 const expectedTax: Record<string, number> = {

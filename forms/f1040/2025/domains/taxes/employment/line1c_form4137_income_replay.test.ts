@@ -18,7 +18,7 @@ import { inputSchema as form8959Schema } from "../../../../nodes/intermediate/fo
 const base = pdfReviewFixtures.find((item) => item.id === "single-w2-refund")!;
 const employer = (base.inputs.w2 as Array<Record<string, unknown>>)[0];
 const xsd = new URL(
-  "../../../../../../.state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd",
+  "../../../../../../irs/mef/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd",
   import.meta.url,
 ).pathname;
 

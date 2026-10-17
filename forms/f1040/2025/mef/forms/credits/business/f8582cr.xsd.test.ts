@@ -10,7 +10,7 @@ import {
 import { form8582cr } from "./f8582cr.ts";
 
 const XSD_PATH = new URL(
-  "../../../../../../../.state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/IndividualIncomeTax/Common/IRS8582CR/IRS8582CR.xsd",
+  "../../../../../../../irs/mef/2025v5.4/IndividualIncomeTax/Common/IRS8582CR/IRS8582CR.xsd",
   import.meta.url,
 ).pathname;
 

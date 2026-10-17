@@ -73,7 +73,7 @@ test("multiple dependent W2/INT/DIV sources reconcile all income and household M
     await fs.writeFile(dir + "/return.pdf", pdf);
     await fs.writeFile(dir + "/return.xml", prepared.bundle.xml);
     const xsd =
-      ".state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd";
+      "irs/mef/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd";
     const validated = await new sys.Command("xmllint", {
       args: ["--noout", "--schema", xsd, dir + "/return.xml"],
       stdout: "piped",

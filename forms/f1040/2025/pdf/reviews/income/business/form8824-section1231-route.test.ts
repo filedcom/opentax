@@ -69,7 +69,7 @@ test("Form 8824 section 1231 exchange joins Form 4797, Schedule D, Form 1040 and
     "<CapitalGainLossAmt>20000</CapitalGainLossAmt>",
   );
   const xsd = new URL(
-    "../../../../../../../.state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd",
+    "../../../../../../../irs/mef/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd",
     import.meta.url,
   ).pathname;
   const xmlPath = await sys.makeTempFile({ suffix: ".xml" });
@@ -157,7 +157,7 @@ test("Form 4797 retains installment and exchange gains in one filed return", asy
     "<CapitalGainLossAmt>30000</CapitalGainLossAmt>",
   );
   const xsd = new URL(
-    "../../../../../../../.state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd",
+    "../../../../../../../irs/mef/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd",
     import.meta.url,
   ).pathname;
   const xmlPath = await sys.makeTempFile({ suffix: ".xml" });

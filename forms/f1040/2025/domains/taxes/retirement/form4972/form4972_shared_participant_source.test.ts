@@ -331,7 +331,7 @@ test("shared participant public packets match independent worksheets and full XS
   const dir = ".state/research/2026-10-06-form4972-shared-participant";
   await fs.mkdir(dir, { recursive: true });
   const xsd =
-    ".state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd";
+    "irs/mef/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd";
   for (const id of sharedParticipantCases) {
     const input = sharedParticipantInputs(id),
       result = f1040_2025.executeReturn(input);

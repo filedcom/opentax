@@ -134,7 +134,7 @@ for (
 }
 
 const base =
-  "../../../.state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/";
+  "../../../irs/mef/2025v5.4/";
 test("XSD: registered passive source Form7203, Form8995, Form8582 and ScheduleE components", async () => {
   const p =
     f1040_2025.executeReturn(passiveSCorpLossReturnInputs(4000, 3000)).pending;

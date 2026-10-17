@@ -13,7 +13,7 @@ import { reviewedRothActivity } from "../../../../../nodes/intermediate/forms/in
 
 const root = ".state/research/form4852-roth-source-checkbox-corrected";
 const schema =
-  ".state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd";
+  "irs/mef/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd";
 
 test("retained Form4852 Roth J/T account contribution and age records derive full1040/8606/5329 native XSD PDF returns", async () => {
   await fs.mkdir(root, { recursive: true });

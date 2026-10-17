@@ -21,7 +21,7 @@ import { buildPdfBytes } from "../../../builder.ts";
 import { tipHealthCases } from "./qualified-tip-health.fixture.ts";
 const root = "/tmp/opentax-qualified-tip-health-evidence";
 const xsd = new URL(
-  "../../../../../../../.state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd",
+  "../../../../../../../irs/mef/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd",
   import.meta.url,
 ).pathname;
 // Independently calculated profit/halfSE/health/tips/QBI/QBI-deduction/AGI/TI/ordinary/total.

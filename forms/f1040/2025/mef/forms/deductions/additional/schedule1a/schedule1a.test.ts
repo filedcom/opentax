@@ -1520,7 +1520,7 @@ test("Schedule 1-A emits all four deductions in schema order with one total", as
     previous = position;
   }
   const xsd = new URL(
-    "../../../../../../../../.state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/IndividualIncomeTax/Common/IRS1040Schedule1A/IRS1040Schedule1A.xsd",
+    "../../../../../../../../irs/mef/2025v5.4/IndividualIncomeTax/Common/IRS1040Schedule1A/IRS1040Schedule1A.xsd",
     import.meta.url,
   );
   try {

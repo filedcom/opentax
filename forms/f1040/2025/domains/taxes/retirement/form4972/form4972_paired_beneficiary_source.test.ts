@@ -123,7 +123,7 @@ test("all reviewed fractional source families retain each spouse's independent w
 test("paired beneficiary public returns preserve both native copies and complete four-page PDFs", async () => {
   const dir = ".state/research/2026-10-06-form4972-paired-beneficiaries";
   const xsd =
-    ".state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd";
+    "irs/mef/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd";
   await fs.mkdir(dir, { recursive: true });
   for (const [index, first] of fractionalBeneficiaryCases.entries()) {
     const second =

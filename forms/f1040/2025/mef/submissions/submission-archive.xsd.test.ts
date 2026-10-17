@@ -7,7 +7,7 @@ import { buildMefBundle } from "../builder.ts";
 import { buildMefSubmissionArchive } from "./submission-archive.ts";
 
 const XSD_PATH = new URL(
-  "../../../../../.state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/Common/efileAttachments.xsd",
+  "../../../../../irs/mef/2025v5.4/Common/efileAttachments.xsd",
   import.meta.url,
 ).pathname;
 const filer: FilerIdentity = {

@@ -299,7 +299,7 @@ test("Form 3800 current-year XML keeps shared passive, nonpassive, and transfer 
 
 test("Form 3800 mixed current-year row follows TY2025v5.4 IRS3800 XSD", async () => {
   const xsd = new URL(
-    "../../../../../../../../.state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/CorporateIncomeTax/Corp1120/IRS3800/IRS3800.xsd",
+    "../../../../../../../../irs/mef/2025v5.4/CorporateIncomeTax/Corp1120/IRS3800/IRS3800.xsd",
     import.meta.url,
   ).pathname;
   try {

@@ -33,6 +33,7 @@
     "check:mef": "bun scripts/testing/mef.ts",
     "check:cli": "bun scripts/testing/cli.ts",
     "check:ats": "bun scripts/testing/ats.ts",
+    "check:irs": "bun scripts/testing/irs.ts",
     "typecheck": "tsc --project tsconfig.json",
     "bench": "bun benchmark/run_benchmark.ts",
     "bench:cached": "bun scripts/testing/bench-cached.ts",

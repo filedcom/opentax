@@ -149,7 +149,7 @@ test("CLI exports a signed W-2 return without force once the header authenticate
     assertStringIncludes(xml, "<NameLine1Txt>TEST&lt;TAXPAYER</NameLine1Txt>");
     const schema = fromFileUrl(
       new URL(
-        "../../.state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd",
+        "../../irs/mef/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd",
         import.meta.url,
       ),
     );

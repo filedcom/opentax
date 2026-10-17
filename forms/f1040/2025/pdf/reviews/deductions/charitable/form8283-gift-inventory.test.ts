@@ -158,7 +158,7 @@ for (
       args: [
         "--noout",
         "--schema",
-        "/Users/atul/projects/opentax/.state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd",
+        "/Users/atul/projects/opentax/irs/mef/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd",
         "-",
       ],
       stdin: "piped",
@@ -441,7 +441,7 @@ test("complete Section A eight-reason reduction inventory preserves source FMV b
     args: [
       "--noout",
       "--schema",
-      "/Users/atul/projects/opentax/.state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd",
+      "/Users/atul/projects/opentax/irs/mef/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd",
       "-",
     ],
     stdin: "piped",
@@ -599,7 +599,7 @@ for (
       args: [
         "--noout",
         "--schema",
-        "/Users/atul/projects/opentax/.state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd",
+        "/Users/atul/projects/opentax/irs/mef/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd",
         "-",
       ],
       stdin: "piped",
@@ -783,7 +783,7 @@ for (const lowValueGrouped of [false, true]) {
       args: [
         "--noout",
         "--schema",
-        "/Users/atul/projects/opentax/.state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd",
+        "/Users/atul/projects/opentax/irs/mef/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd",
         "-",
       ],
       stdin: "piped",
@@ -922,7 +922,7 @@ for (const longHeld of [false, true]) {
       args: [
         "--noout",
         "--schema",
-        "/Users/atul/projects/opentax/.state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd",
+        "/Users/atul/projects/opentax/irs/mef/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd",
         "-",
       ],
       stdin: "piped",

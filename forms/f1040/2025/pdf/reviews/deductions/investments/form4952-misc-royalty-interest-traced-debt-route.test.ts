@@ -159,7 +159,7 @@ test("traced loan, royalty, and taxable interest reach the full native and fille
     "<TaxableInterestAmt>500</TaxableInterestAmt>",
   );
   const xsd = new URL(
-    "../../../../../../../.state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd",
+    "../../../../../../../irs/mef/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd",
     import.meta.url,
   ).pathname;
   const xmlPath = await sys.makeTempFile({ suffix: ".xml" });
@@ -293,7 +293,7 @@ test("royalty and multiple owned interest payers reconcile individually through 
   );
   assertStringIncludes(prepared.bundle.xml, "<IRS1040ScheduleB");
   const xsd = new URL(
-    "../../../../../../../.state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd",
+    "../../../../../../../irs/mef/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd",
     import.meta.url,
   ).pathname;
   const xmlPath = await sys.makeTempFile({ suffix: ".xml" });
@@ -407,7 +407,7 @@ test("Form4952 source cents reconcile before native/PDF whole-dollar filing", as
   await fs.mkdir(root, { recursive: true });
   await fs.writeFile(`${root}/return.xml`, bundle.xml);
   const xsd = new URL(
-    "../../../../../../../.state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd",
+    "../../../../../../../irs/mef/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd",
     import.meta.url,
   ).pathname;
   const checked = await new sys.Command("xmllint", {

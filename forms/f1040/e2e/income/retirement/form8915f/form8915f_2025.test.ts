@@ -232,7 +232,7 @@ for (const sourceKind of ["plan", "traditional_ira"] as const) {
       "<CYTaxableDistributionsAmt>5667</CYTaxableDistributionsAmt>",
     );
     const xsd = new URL(
-      "../../../../../../.state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd",
+      "../../../../../../irs/mef/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd",
       import.meta.url,
     ).pathname;
     const xmlPath = await sys.makeTempFile({ suffix: ".xml" });
@@ -329,7 +329,7 @@ for (
       "<CYTaxableDistributionsAmt>5667</CYTaxableDistributionsAmt>",
     );
     const xsd = new URL(
-      "../../../../../../.state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd",
+      "../../../../../../irs/mef/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd",
       import.meta.url,
     ).pathname;
     const xmlPath = await sys.makeTempFile({ suffix: ".xml" });
@@ -369,7 +369,7 @@ test("reviewed 2025 Form 8915-F plan distribution reaches full native and PDF re
     "<CYTaxableDistributionsAmt>20000</CYTaxableDistributionsAmt>",
   );
   const xsd = new URL(
-    "../../../../../../.state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd",
+    "../../../../../../irs/mef/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd",
     import.meta.url,
   ).pathname;
   const xmlPath = await sys.makeTempFile({ suffix: ".xml" });
@@ -426,7 +426,7 @@ test("2025 Form 8915-F three-year election reports only the first-year pension s
   );
   assertEquals(xml.includes("<OptOutSpreadThreeYrsInd>"), false);
   const xsd = new URL(
-    "../../../../../../.state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd",
+    "../../../../../../irs/mef/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd",
     import.meta.url,
   ).pathname;
   const xmlPath = await sys.makeTempFile({ suffix: ".xml" });
@@ -504,7 +504,7 @@ for (
       fullInclusion,
     );
     const xsd = new URL(
-      "../../../../../../.state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd",
+      "../../../../../../irs/mef/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd",
       import.meta.url,
     ).pathname;
     const xmlPath = await sys.makeTempFile({ suffix: ".xml" });
@@ -584,7 +584,7 @@ test("spouse-owned 2025 Form 8915-F IRA spread keeps spouse identity", async () 
     "<PersonNm>Sam Example</PersonNm><SSN>444556666</SSN>",
   );
   const xsd = new URL(
-    "../../../../../../.state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd",
+    "../../../../../../irs/mef/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd",
     import.meta.url,
   ).pathname;
   const xmlPath = await sys.makeTempFile({ suffix: ".xml" });
@@ -645,7 +645,7 @@ for (const sourceKind of ["plan", "traditional_ira"] as const) {
     assertStringIncludes(xml, "<IRS8915F documentId=");
     assertEquals(xml.includes("<IRS5329"), false);
     const xsd = new URL(
-      "../../../../../../.state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd",
+      "../../../../../../irs/mef/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd",
       import.meta.url,
     ).pathname;
     const xmlPath = await sys.makeTempFile({ suffix: ".xml" });

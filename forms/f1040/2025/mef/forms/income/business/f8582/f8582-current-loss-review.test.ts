@@ -36,7 +36,7 @@ function currentLoss(
 
 test("source-bound current ordinary loss review projects Parts V VII VIII IX and validates standalone IRS8582", async () => {
   const schema = new URL(
-    "../../../../../../../../.state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/IndividualIncomeTax/Common/IRS8582/IRS8582.xsd",
+    "../../../../../../../../irs/mef/2025v5.4/IndividualIncomeTax/Common/IRS8582/IRS8582.xsd",
     import.meta.url,
   ).pathname;
   const flag = process.argv.slice(2).indexOf("--write-review-artifacts");
