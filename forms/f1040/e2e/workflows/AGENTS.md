@@ -24,9 +24,6 @@ export gates and XSD conformance. Parent: [../AGENTS.md](../AGENTS.md).
 - XSD cases use `test.skipIf(!xsdAvailable)` on
   `.state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd`;
   a skip is not a pass — report it as unverified.
-- `scenarios.test.ts` points to `docs/scenarios.md`, which does not exist;
-  the header's `--allow-*` permissions in `xsd_validation.test.ts` are Deno
-  leftovers.
 - A section-specific contract goes under `../<section>/<group>/<form>/`, not here.
 
 ## Verify

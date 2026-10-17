@@ -129,7 +129,7 @@ test("verification includes source and oracle JSON and detects changed fixture b
     verificationInputPaths([
       "forms/source.json",
       "benchmark/cases/correct.json",
-      "forms/f1040/2025/pdf/field-dumps/map.json",
+      "forms/f1040/2025/pdf/field-dumps/f1040.json",
       "scripts/testing/skip-policy.json",
       "docs/notes.md",
       "product_board.md",
@@ -137,7 +137,7 @@ test("verification includes source and oracle JSON and detects changed fixture b
     [
       "forms/source.json",
       "benchmark/cases/correct.json",
-      "forms/f1040/2025/pdf/field-dumps/map.json",
+      "forms/f1040/2025/pdf/field-dumps/f1040.json",
       "scripts/testing/skip-policy.json",
     ],
   );

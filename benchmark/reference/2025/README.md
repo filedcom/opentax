@@ -103,10 +103,10 @@ removing a limitation or treating the complete return as an authoritative oracle
 Run the focused checks with:
 
 ```sh
-bun test ./--allow-run \
-  benchmark/issue77_reference.test.ts benchmark/fixture_contract.test.ts \
-  benchmark/harness.test.ts benchmark/run_benchmark.test.ts \
-  benchmark/run_benchmark.integration.test.ts
+bun test --timeout=1800000 \
+  ./benchmark/issue77_reference.test.ts ./benchmark/fixture_contract.test.ts \
+  ./benchmark/harness.test.ts ./benchmark/run_benchmark.test.ts \
+  ./benchmark/run_benchmark.integration.test.ts
 ```
 
 Initial reconciliation checkpoint: **30 focused tests passed**. That full benchmark discovered all 133

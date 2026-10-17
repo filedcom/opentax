@@ -7,6 +7,7 @@ Calculations stay in `../../nodes/`; source checks shared with the PDF live in
 Index of serializers: [forms/README.md](./forms/README.md).
 
 ## Layout
+
 - `form_descriptor.ts` — `MefFormDescriptor` (`pendingKey`, `FIELD_MAP`,
   `pdfUrl`, `build(fields, context)`, optional extra documents and PDF
   attachments) and `MefBuildContext`.
@@ -22,6 +23,7 @@ Index of serializers: [forms/README.md](./forms/README.md).
   whole-return XML contracts.
 
 ## Rules
+
 - A new document: export one `MefFormDescriptor` constant plus its `FIELD_MAP`
   from its section folder and add it to `ALL_MEF_FORMS` at the position
   `ReturnData1040.xsd` sequences it; out-of-order elements fail xmllint with
@@ -40,6 +42,7 @@ Index of serializers: [forms/README.md](./forms/README.md).
 - The bundle accepts only `F1040_2025_CONFIG.mefSchemaVersion` (`2025v5.4`).
 
 ## Verify
+
 - `bun test ./forms/f1040/2025/mef/forms/<section>/<group>/<form>.test.ts --timeout=1800000`.
 - `bun test ./forms/f1040/2025/mef/xsd_validation.test.ts --timeout=1800000` —
   needs `xmllint` and
@@ -50,7 +53,8 @@ Index of serializers: [forms/README.md](./forms/README.md).
 - `bun run test:unit` (type-check only for this folder).
 
 ## Read next
-- [forms/README.md](./forms/README.md), [support/README.md](./support/README.md)
+
+- [forms/README.md](./forms/README.md), [support/AGENTS.md](./support/AGENTS.md)
 - [../../mef/AGENTS.md](../../mef/AGENTS.md) — header, filer and XML helpers
 - [../../validation/AGENTS.md](../../validation/AGENTS.md) — rules over `FIELD_MAP` names
 - [../domains/AGENTS.md](../domains/AGENTS.md)

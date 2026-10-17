@@ -31,8 +31,6 @@ output. Narrative: [README.md](./README.md). Parent: [../../AGENTS.md](../../AGE
   `irs-tables.json` or `issue77-changes.json` needs the IRS source and a
   `../../cases/f1040/2025/ledger.json` entry, created with the first change
   (`bun run check:oracle`).
-- The README's "Run the focused checks" block (`bun test ./--allow-run …`)
-  is not a valid command; use the ones below.
 
 ## Verify
 

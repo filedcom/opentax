@@ -6,6 +6,7 @@ export/IO belong here; tax computation lives in `forms/`, the engine in `core/`,
 and developer tooling in `scripts/` and `benchmark/` (never shipped).
 
 ## Layout
+
 - `main.ts` — entry: installs the network policy, parses flags with
   `@std/cli` `parseArgs`, dispatches `COMMANDS` (`<cmd> <sub>`) and `TOP_LEVEL`
   (`version`, `update`). Returns live under `./.state/returns` (`RETURNS_DIR`).
@@ -21,6 +22,7 @@ and developer tooling in `scripts/` and `benchmark/` (never shipped).
 - `utils/zod-doc.ts` — renders a node's Zod input schema for `node inspect`.
 
 ## Rules
+
 - The binary cannot spawn processes, load native code, open sockets or `eval`:
   `bun run check:sandbox` (`scripts/testing/sandbox.ts`) walks every module
   `cli/main.ts` reaches, dependencies included, and fails on `child_process`,
@@ -45,6 +47,7 @@ and developer tooling in `scripts/` and `benchmark/` (never shipped).
 - File names are kebab-case; tests sit beside their module as `<name>.test.ts`.
 
 ## Verify
+
 - `bun run check:sandbox` after any change here or to anything `main.ts`
   imports.
 - `bun run test:unit` covers `cli/utils/` and `cli/network.test.ts` only.
@@ -54,6 +57,7 @@ and developer tooling in `scripts/` and `benchmark/` (never shipped).
   builds `./opentax`.
 
 ## Read next
+
 - [store/AGENTS.md](store/AGENTS.md)
 - [../core/AGENTS.md](../core/AGENTS.md)
 - [../scripts/testing/README.md](../scripts/testing/README.md) — the harness and what each check proves

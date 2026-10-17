@@ -5,7 +5,7 @@ onto the official AcroForm fields, the builder that fills and concatenates the
 IRS PDFs, and the synthetic returns used for human PDF review. Values are
 computed in `../../nodes/` and reconciled in `../domains/`; nothing here
 computes tax. Indexes: [forms/README.md](./forms/README.md),
-[reviews/README.md](./reviews/README.md), [support/README.md](./support/README.md).
+[reviews/README.md](./reviews/README.md), [support/AGENTS.md](./support/AGENTS.md).
 
 ## Layout
 - `form_descriptor.ts` — `PdfFormDescriptor` (`pendingKey`, `pdfUrl`,

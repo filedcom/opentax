@@ -6,8 +6,6 @@ import { test } from "bun:test";
  * specific Form 1040 line values. Income below $100,000 uses the IRS
  * 2025 Tax Table; higher amounts use the rate schedules.
  *
- * See docs/scenarios.md for the detailed computation breakdowns.
- *
  * Pending dict semantics:
  *   Fields deposited by BOTH upstream nodes AND f1040's assembleReturn()
  *   end up as arrays (e.g. line16_income_tax). The final summary lines
