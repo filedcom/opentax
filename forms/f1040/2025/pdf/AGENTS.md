@@ -4,8 +4,9 @@ TY2025 printed IRS forms: descriptors that project normalized pending values
 onto the official AcroForm fields, the builder that fills and concatenates the
 IRS PDFs, and the synthetic returns used for human PDF review. Values are
 computed in `../../nodes/` and reconciled in `../domains/`; nothing here
-computes tax. Indexes: [forms/README.md](AGENTS.md),
-[reviews/README.md](AGENTS.md), [support/AGENTS.md](./support/AGENTS.md).
+computes tax. Per section:
+[forms/income/AGENTS.md](forms/income/AGENTS.md),
+[reviews/income/AGENTS.md](reviews/income/AGENTS.md) (one per section); [support/AGENTS.md](./support/AGENTS.md).
 
 ## Layout
 - `form_descriptor.ts` — `PdfFormDescriptor` (`pendingKey`, `pdfUrl`,

@@ -54,5 +54,5 @@ to every node it feeds.
 
 - [../AGENTS.md](../AGENTS.md) — placement and the add-a-node checklist
 - [../intermediate/AGENTS.md](../intermediate/AGENTS.md)
-- [../../2025/return-processing/README.md](../../2025/return-processing/AGENTS.md)
+- [../../2025/return-processing/AGENTS.md](../../2025/return-processing/AGENTS.md)
 - [../../../../benchmark/AGENTS.md](../../../../benchmark/AGENTS.md)

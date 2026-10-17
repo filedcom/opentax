@@ -3,7 +3,6 @@
 End-to-end return contracts for Form 1040: inputs run through the real
 registry, planner and executor, and the result is checked in MeF XML, PDF or
 return lines. Unit tests for a single node stay beside that node, not here.
-Index: [README.md](AGENTS.md).
 
 ## Layout
 - `income/`, `adjustments/`, `deductions/`, `credits/`, `taxes/`, `payments/` —
@@ -43,7 +42,7 @@ Index: [README.md](AGENTS.md).
 - `bun run test:unit` still passes (type-checks every module, including these).
 
 ## Read next
-- [README.md](AGENTS.md) and each section README, e.g. [income](income/AGENTS.md)
+- Each section's AGENTS.md, e.g. [income/AGENTS.md](income/AGENTS.md)
 - [../../../docs/architecture/STRUCTURE.md](../../../docs/architecture/STRUCTURE.md)
 - [../../../docs/architecture/repository-organization.md](../../../docs/architecture/repository-organization.md)
 - [../../../scripts/testing/README.md](../../../scripts/testing/README.md) — test runner modes

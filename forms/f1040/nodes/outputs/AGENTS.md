@@ -38,5 +38,5 @@ these lines belongs in `../../2025/mef/` and `../../2025/pdf/`.
 
 - [../AGENTS.md](../AGENTS.md)
 - [../intermediate/AGENTS.md](../intermediate/AGENTS.md)
-- [general/README.md](general/AGENTS.md)
+- [general/AGENTS.md](general/AGENTS.md)
 - [../../../../benchmark/AGENTS.md](../../../../benchmark/AGENTS.md)

@@ -6,8 +6,8 @@ documents together for one form or effect. Calculations belong in
 `../../nodes/` (a `TaxNode` here fails `check:structure`; the three legacy
 ones in `general/filing/form8886/` and `income/business/form172/` are baselined
 in `scripts/testing/structure-baseline.json` — move, don't add); XML element and PDF
-field mapping belong in `../mef/forms/` and `../pdf/forms/`. Index:
-[README.md](AGENTS.md) and one README per section.
+field mapping belong in `../mef/forms/` and `../pdf/forms/`. Per section:
+each section's `AGENTS.md`, e.g. [taxes/AGENTS.md](taxes/AGENTS.md).
 
 ## Layout
 - `<section>/<group>/<form>/` — section is one of the seven return sections,
@@ -49,7 +49,7 @@ field mapping belong in `../mef/forms/` and `../pdf/forms/`. Index:
   computed line.
 
 ## Read next
-- [README.md](AGENTS.md), e.g. [taxes/README.md](taxes/AGENTS.md)
+- [taxes/AGENTS.md](taxes/AGENTS.md) and the other section files
 - [../AGENTS.md](../AGENTS.md) — how the year calls these modules
 - [../mef/AGENTS.md](../mef/AGENTS.md), [../pdf/AGENTS.md](../pdf/AGENTS.md)
 - [../../../../docs/architecture/repository-organization.md](../../../../docs/architecture/repository-organization.md)

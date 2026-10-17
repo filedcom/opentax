@@ -45,13 +45,13 @@ belongs in `core/`; return persistence and commands in `cli/`.
 - `bun run check:structure`, `bun run test:unit`, `bun run check:sandbox`
 - `bun run check:cases` after changing an input schema
 - `bun run bench --form f1040 --year 2025` and `bun run check:oracle`
-- `bun test <changed folder> --timeout=1800000` for node and projection tests
+- `bun test --timeout=1800000 ./<changed folder>` for node and projection tests
   (`test:unit` does not run them).
 
 ## Read next
 
 - [nodes/AGENTS.md](nodes/AGENTS.md), [2025/AGENTS.md](2025/AGENTS.md), [mef/AGENTS.md](mef/AGENTS.md), [validation/AGENTS.md](validation/AGENTS.md)
 - [FORM.md](FORM.md)
-- [2025/domains/README.md](2025/domains/AGENTS.md), [2025/return-processing/README.md](2025/return-processing/AGENTS.md)
-- [2025/mef/forms/README.md](2025/mef/AGENTS.md), [2025/pdf/forms/README.md](2025/pdf/AGENTS.md)
-- [validation/rules/README.md](validation/AGENTS.md), [e2e/AGENTS.md](e2e/AGENTS.md)
+- [2025/domains/AGENTS.md](2025/domains/AGENTS.md), [2025/return-processing/AGENTS.md](2025/return-processing/AGENTS.md)
+- [2025/mef/AGENTS.md](2025/mef/AGENTS.md), [2025/pdf/AGENTS.md](2025/pdf/AGENTS.md)
+- [validation/AGENTS.md](validation/AGENTS.md), [e2e/AGENTS.md](e2e/AGENTS.md)

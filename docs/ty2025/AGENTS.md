@@ -54,4 +54,4 @@ code those notes describe lives in `forms/f1040/` (shared nodes, and
 - [ats/ty2025.md](ats/ty2025.md)
 - [../architecture/repository-organization.md](../architecture/repository-organization.md)
 - [../../product_board.md](../../product_board.md)
-- [../../forms/f1040/2025/domains/README.md](../../forms/f1040/2025/domains/AGENTS.md)
+- [../../forms/f1040/2025/domains/AGENTS.md](../../forms/f1040/2025/domains/AGENTS.md)
