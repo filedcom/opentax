@@ -39,6 +39,9 @@ jobs:
       - name: Update node and input counts on the site
         run: bun scripts/site/site-stats.ts
 
+      - name: Keep agent context files off the site
+        run: rm -f site/AGENTS.md site/CLAUDE.md
+
       - name: Setup Pages
         uses: actions/configure-pages@v5
 

@@ -296,6 +296,9 @@ regular Git files.
 - [`FORM4835-GRAPH.md`](./graphs/FORM4835-GRAPH.md): production-based farm rent,
   the new vehicle-interest line 19b, Schedule E/SE boundary, loss limits,
   PDF/MeF build order, and ATS scenario 3.
+- [`ATS-SCENARIO-01.md`](./ats/ATS-SCENARIO-01.md): two W-2s, Schedule H
+  household Social Security/Medicare tax to Schedule 2 line 17a, and the
+  carryforward-only 2026 Form 5695 credit through Schedule 3 line 5a.
 - [`ATS-SCENARIO-03.md`](./ats/ATS-SCENARIO-03.md): page-level retirement, capital
   gain, farm, farm-rent, and optional self-employment method facts with
   independently derived intermediate amounts and filing gates.
@@ -315,7 +318,7 @@ regular Git files.
   evidence.
 
 - [`corpus/manifest.json`](./corpus/manifest.json): URL, SHA-256, byte length,
-  and retrieval date for **63 TY2026 IRS draft forms**, **27 verified 2026
+  and retrieval date for **69 TY2026 IRS draft forms**, **28 verified 2026
   draft instruction PDFs**, **six draft form URLs that
   still serve an older year**, **13 IRS ATS PDFs**, **two MeF
   inventory spreadsheets**, final IRS authorities (Rev. Procs.
@@ -345,8 +348,12 @@ regular Git files.
   progress notes do not mean a node is ready for the 2026 registry.
 - [`year-literals.csv`](./inventories/year-literals.csv): all `2025` occurrences in non-test
   calculation node source, including comments. These are review leads, not
-  proof of a bug. Regenerate the four CSVs with `python3
-  scripts/research/ty2026/build_inventory.py` after a source or code change.
+  proof of a bug. Regenerate these five CSVs with `python3
+  scripts/research/ty2026/build_inventory.py` after a source or code change;
+  the `pdf-fields-*.csv` inventories under `inventories/pdf-fields/` come from
+  `python3 scripts/research/ty2026/build_pdf_fields.py`. The committed CSVs
+  predate later code moves: their `forms/` paths no longer resolve, so check
+  each row against the current checkout until they are regenerated.
 - [`FORM-DELTA.md`](./readiness/FORM-DELTA.md): concrete changes visible in IRS draft forms.
 - [`DEDUCTION-GRAPH.md`](./graphs/DEDUCTION-GRAPH.md): source-backed Schedule A,
   Schedule 1-A, and QBI dependency contract and implementation sequence.
