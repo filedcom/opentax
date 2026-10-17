@@ -28,11 +28,20 @@ answer for each item. We will keep the printed values separate until then.
    charitable payment, and amount, and clarify the intended line 4a value.
    If the mark is an error, please confirm that it should be clear.
    [Scenario 8 PDF](https://www.irs.gov/pub/irs-efile/1040-mef-ats-scenario-8-10212025.pdf).
-3. **Scenario 12, Form 7217 pages 1–2:** Part I line 10 prints $6,000 and
+3. **Scenario 3, cover and forms list:** The cover says the taxpayer is a
+   patron in a specified agricultural cooperative. The packet has a Schedule F
+   farm profit of $3,251, but its forms list has no Form 8995 or 8995-A and it
+   gives no Form 1099-PATR or qualified payments. The Form 8995 instructions
+   send patrons to Form 8995-A. Should the return claim the QBI deduction on
+   Form 8995-A with a zero patron reduction, or claim none, as the forms list
+   suggests? The current fixture claims none. Scenario 12 also leaves line 13a
+   blank despite Schedule C profit.
+   [Scenario 3 PDF](https://www.irs.gov/pub/irs-efile/ty25-1040-mef-ats-scenario-3-10202025.pdf).
+4. **Scenario 12, Form 7217 pages 1–2:** Part I line 10 prints $6,000 and
    says it must equal Part II line B column (e), which prints $4,000. Which
    basis amount and underlying property allocation should the ATS return
    carry? [Scenario 12 PDF](https://www.irs.gov/pub/irs-efile/1040-mef-ats-scenario-12-10292025.pdf).
-4. **Scenarios 12 and 13, Form 1040:** Scenario 12 prints a $15,000 single
+5. **Scenarios 12 and 13, Form 1040:** Scenario 12 prints a $15,000 single
    standard deduction, and Scenario 13 prints a $30,000 joint deduction.
    Those amounts differ from the TY2025 $15,750 and $31,500 amounts used by
    the current schema-era return calculation. Should ATS submissions recompute

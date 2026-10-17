@@ -3,12 +3,12 @@ import { DistributionCode } from "../../nodes/inputs/income/retirement/f1099r/in
 import { SCENARIO_1040_03_FACTS } from "./ty2025_cases.ts";
 
 /**
- * TY2025 ATS Scenario 3 is a source-fact packet, not a completed return.
+ * TY2025 ATS Scenario 3, transcribed from the issued packet:
  * https://www.irs.gov/pub/irs-efile/ty25-1040-mef-ats-scenario-3-10202025.pdf
  * PDF pp. 1-4: cover, uncomputed 1040, 1099-R; pp. 9-10: Schedule D;
  * pp. 11-12: Schedule E; pp. 13-14: Schedule F; pp. 15-16: Schedule SE;
- * p. 17: Form 4835. The PDF marks Single and digital-assets Yes, but leaves result
- * lines blank. This fragment must not be transmitted as a complete ATS return.
+ * p. 17: Form 4835. The packet leaves result lines blank; facts it omits but
+ * export requires are listed in SCENARIO_1040_03_ASSUMPTIONS.
  */
 export const SCENARIO_1040_03_SOURCE = {
   scheduleD: {
@@ -56,12 +56,74 @@ export const SCENARIO_1040_03_SOURCE = {
   },
 } as const;
 
-/** Only tax facts explicitly present in the packet are passed to the graph. */
+const ASSUMED = {
+  saleDate: "2025-12-31",
+  brokerCopyReference: "irs-ty2025-ats-1040-03-schedule-d-page-9",
+  refundPayerName: "Idaho State Tax Commission",
+  refundPayerTin: "000000009",
+  refundCopyReference: "irs-ty2025-ats-1040-03-cover-state-refund",
+  refundWorkpaperReference: "irs-ty2025-ats-1040-03-cover-taxable-refund",
+  refundGross: SCENARIO_1040_03_FACTS.taxableStateTaxRefund,
+  refundTaxYear: 2024,
+  priorYearAgi: 0,
+} as const;
+
+/** Facts export requires that the packet does not print; none changes tax. */
+export const SCENARIO_1040_03_ASSUMPTIONS = [
+  {
+    field: "f1099b[*].date_acquired / date_sold",
+    value: `VARIOUS / ${ASSUMED.saleDate}`,
+    why:
+      "Schedule D p. 9 prints only line 1a/8a totals; export replays them from retained basis-reported sales, which need a 2025 sale date.",
+  },
+  {
+    field: "f1099b[*].source_document_reference",
+    value: ASSUMED.brokerCopyReference,
+    why: "No broker copy is issued; the reference names the printed page.",
+  },
+  {
+    field: "f1099g[0].payer_name / payer_tin",
+    value: `${ASSUMED.refundPayerName} / ${ASSUMED.refundPayerTin}`,
+    why:
+      "The cover gives only the taxable refund; the Idaho taxpayer's state payer and the packet's 00-0000009 test TIN pattern are assumed.",
+  },
+  {
+    field: "f1099g[0].box_2_state_refund",
+    value: String(ASSUMED.refundGross),
+    why:
+      "The cover gives the taxable amount only; the gross refund is taken equal to it, so the taxable recovery is unchanged.",
+  },
+  {
+    field: "f1099g[0].box_2_prior_year_itemized / box_3_tax_year",
+    value: `true / ${ASSUMED.refundTaxYear}`,
+    why:
+      "A taxable state refund implies a 2024 itemized state-tax deduction.",
+  },
+  {
+    field: "general.taxpayer_prior_year_agi",
+    value: String(ASSUMED.priorYearAgi),
+    why: "The packet gives no 2024 AGI for the Self-Select PIN.",
+  },
+  {
+    field: "general.qbi_deduction_not_claimed",
+    value: "true",
+    why:
+      "The packet lists no Form 8995 or 8995-A. As a cooperative patron the taxpayer would need Form 8995-A Schedule D facts that the packet does not give. Scenario 12 also prints line 13a blank despite Schedule C profit.",
+  },
+] as const;
+
+const BROKER_COPY = {
+  recipient_ssn: SCENARIO_1040_03_FACTS.taxpayer.ssn,
+  source_document_reference: ASSUMED.brokerCopyReference,
+} as const;
+
+/** Packet facts plus the recorded assumptions above. */
 export function scenario104003Input(): Record<string, unknown> {
   const facts = SCENARIO_1040_03_FACTS;
   const source = SCENARIO_1040_03_SOURCE;
   return {
     general: {
+      ats_test_submission: true,
       // Visually verified on official packet page 2; marks are absent from text extraction.
       filing_status: FilingStatus.Single,
       digital_assets: true,
@@ -69,11 +131,27 @@ export function scenario104003Input(): Record<string, unknown> {
       taxpayer_last_name: facts.taxpayer.lastName,
       taxpayer_ssn: facts.taxpayer.ssn,
       taxpayer_dob: facts.taxpayer.dateOfBirth,
+      taxpayer_ip_pin: facts.taxpayer.identityProtectionPin,
+      taxpayer_prior_year_agi: ASSUMED.priorYearAgi,
+      // Page 2 checks "You" for the Presidential Election Campaign.
+      presidential_campaign_fund_taxpayer: true,
+      qbi_deduction_not_claimed: true,
       address_line1: facts.taxpayer.address.line1,
       address_city: facts.taxpayer.address.city,
       address_state: facts.taxpayer.address.state,
       address_zip: facts.taxpayer.address.zip,
     },
+    f1099g: [{
+      payer_name: ASSUMED.refundPayerName,
+      payer_tin: ASSUMED.refundPayerTin,
+      recipient_tin: facts.taxpayer.ssn,
+      source_document_reference: ASSUMED.refundCopyReference,
+      box_2_state_refund: ASSUMED.refundGross,
+      box_2_prior_year_itemized: true,
+      box_2_taxable_recovery_verified_amount: facts.taxableStateTaxRefund,
+      box_2_recovery_workpaper_reference: ASSUMED.refundWorkpaperReference,
+      box_3_tax_year: ASSUMED.refundTaxYear,
+    }],
     f1099r: [{
       // Recipient and unmarked boxes visually verified on issued Copy B.
       recipient_ssn: facts.taxpayer.ssn,
@@ -119,6 +197,9 @@ export function scenario104003Input(): Record<string, unknown> {
       activity_id: "irs-ty2025-ats-1040-03-form4835-page-17",
       activity_name: "ATS 1040-03 Form 4835 page 17",
       actively_participated: source.form4835.activelyParticipated,
+      // Schedule E p. 11 lines A and B both check Yes; Part I has no property.
+      schedule_e_1099_payments_made: source.scheduleE.paymentsRequiring1099,
+      schedule_e_1099_filed: source.scheduleE.required1099FiledOrWillFile,
       livestock_crop_income: source.form4835.line1ProductionIncome,
       cooperative_distributions_gross:
         source.form4835.line2aCooperativeDistributionsGross,
@@ -135,14 +216,31 @@ export function scenario104003Input(): Record<string, unknown> {
       expense_repairs_maintenance: source.form4835.line23Repairs,
       expense_supplies: source.form4835.line26Supplies,
     }],
-    // Official page 9 supplies aggregate basis-reported/no-adjustment lines.
-    // Use the existing aggregate input; do not invent broker identities or sale dates.
-    schedule_d: {
-      line_1a_proceeds: source.scheduleD.shortTermLine1aProceeds,
-      line_1a_cost: source.scheduleD.shortTermLine1aBasis,
-      line_8a_proceeds: source.scheduleD.longTermLine8aProceeds,
-      line_8a_cost: source.scheduleD.longTermLine8aBasis,
-    },
+    // Official page 9 prints only basis-reported, no-adjustment totals.
+    f1099b: [
+      {
+        ...BROKER_COPY,
+        transaction_id: "line-1a",
+        part: "A",
+        description: "Short-term covered sales (Schedule D line 1a)",
+        date_acquired: "VARIOUS",
+        date_sold: ASSUMED.saleDate,
+        proceeds: source.scheduleD.shortTermLine1aProceeds,
+        cost_basis: source.scheduleD.shortTermLine1aBasis,
+        box12_basis_reported_to_irs: true,
+      },
+      {
+        ...BROKER_COPY,
+        transaction_id: "line-8a",
+        part: "D",
+        description: "Long-term covered sales (Schedule D line 8a)",
+        date_acquired: "VARIOUS",
+        date_sold: ASSUMED.saleDate,
+        proceeds: source.scheduleD.longTermLine8aProceeds,
+        cost_basis: source.scheduleD.longTermLine8aBasis,
+        box12_basis_reported_to_irs: true,
+      },
+    ],
   };
 }
 
@@ -193,13 +291,9 @@ export const SCENARIO_1040_03_RECONCILIATION = {
     farmOptionalMethodTwoThirdsGrossDenominator: 3,
   },
   notAtsReadyBecause: [
-    "Form 1040 marks Single and digital-assets Yes; its result lines remain blank.",
-    "The cover supplies a taxable state refund of 3,110, but not the gross issued refund, payer or prior-year recovery workpaper required by the current 1099-G route.",
-    "Schedule D p. 9 aggregate 1a/8a proceeds and basis calculate, but full export requires retained direct-sale transactions; no individual broker transaction or issuer identity is asserted.",
-    "Form 4835 p. 17 marks active participation Yes. Its internal source label does not establish external activity history or QBI eligibility.",
-    "The cover says the taxpayer is a specified agricultural-cooperative patron, but no patronage or cooperative-sale allocation facts are supplied for any QBI cooperative reduction.",
-    "The taxpayer elects Schedule SE's farm optional method; its calculation and MeF/PDF mapping are coded, but end-to-end validation and any farm K-1 or CRP facts remain pending.",
-    "Schedule SE pp. 15-16 and Schedule 1 pp. 5-6 leave all calculated lines blank; the farm optional-method election supplies no printed SE-tax target.",
-    "No completed 1040 tax, deduction, payment, or refund target is printed, so current-law output cannot be asserted equal to a printed return.",
+    "Exports without --force once the shared ATS header and test-EIN mode land. The XML validates against the TY2025 v5.4 XSD.",
+    "The packet prints no Form 1040 result lines. Its forms list has no Form 8995 or 8995-A, so the return claims no QBI deduction; IRS clarification is requested for the cooperative-patron note.",
+    "The state-refund payer, gross refund and prior-year workpaper, and the Schedule D sale dates, are recorded assumptions.",
+    "Form 4835 p. 17 active participation does not establish QBI eligibility for the farm rental.",
   ],
 } as const;

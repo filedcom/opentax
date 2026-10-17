@@ -207,6 +207,7 @@ export const inputSchema = z.object({
   single_farm_owner_w2_sources: z.array(ownerW2WageSourceSchema).optional(),
   qbi_no_prior_loss_or_suspended_loss_confirmed: z.literal(true).optional(),
   qbi_not_patron_of_specified_cooperative_confirmed: z.literal(true).optional(),
+  qbi_deduction_not_claimed: z.literal(true).optional(),
   taxpayer_ssn: z.string().regex(/^\d{3}-?\d{2}-?\d{4}$/).optional(),
   spouse_ssn: z.string().regex(/^\d{3}-?\d{2}-?\d{4}$/).optional(),
   // Prior-year REIT/PTP net loss carryforward (must be zero or negative)
@@ -1682,6 +1683,19 @@ class Form8995Node extends TaxNode<typeof inputSchema> {
     }
 
     if (!hasQbiActivity(input)) {
+      return { outputs: [] };
+    }
+
+    if (input.qbi_deduction_not_claimed === true) {
+      if (
+        netQbi(input) < 0 || netReit(input) < 0 ||
+        (input.qbi_loss_carryforward ?? 0) !== 0 ||
+        (input.reit_loss_carryforward ?? 0) !== 0
+      ) {
+        throw new Error(
+          "An unclaimed QBI deduction cannot drop a QBI or REIT/PTP loss carryforward",
+        );
+      }
       return { outputs: [] };
     }
 

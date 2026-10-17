@@ -1,5 +1,4 @@
 import { test } from "bun:test";
-import { scheduleD } from "../../2025/mef/forms/income/investments/schedule_d.ts";
 import { scheduleDPdf } from "../../2025/pdf/forms/income/investments/schedule_d.ts";
 import { f1040_2025 } from "../../2025/index.ts";
 import { extractFilerIdentity } from "../../mef/filer.ts";
@@ -20,10 +19,27 @@ import { SCENARIO_1040_03_FACTS } from "./ty2025_cases.ts";
 import { fillFormPdf } from "../../2025/pdf/builder.ts";
 import { PDFDocument } from "pdf-lib";
 import {
+  SCENARIO_1040_03_ASSUMPTIONS,
   scenario104003Input,
   SCENARIO_1040_03_RECONCILIATION,
   SCENARIO_1040_03_SOURCE,
 } from "./scenario_1040_03_input.ts";
+import {
+  atsMefExport,
+  TY2025_RETURN1040_XSD,
+  validateTy2025Xsd,
+  xmlValue,
+} from "./ty2025-ats-export.ts";
+import * as sys from "../../../../scripts/support/sys.ts";
+
+// Temporary: cleared by the shared ATS header and test-EIN mode (PR #93).
+let xsdAvailable = false;
+try {
+  sys.statSync(TY2025_RETURN1040_XSD);
+  xsdAvailable = true;
+} catch {
+  // The IRS schema bundle is a local, untracked research cache.
+}
 
 test("ATS 1040 Scenario 3 maps printed pension, farm and farm-rental source facts", () => {
   const input = scenario104003Input();
@@ -50,14 +66,16 @@ test("ATS 1040 Scenario 3 maps printed pension, farm and farm-rental source fact
   assertEquals(farm.line17_fertilizers, 250);
   assertEquals(farm.line26_seeds, 2_970);
 
-  // Printed aggregate amounts are not fabricated into transaction records.
   assertEquals(Object.keys(input).sort(), [
+    "f1099b",
+    "f1099g",
     "f1099r",
     "f4835",
     "general",
-    "schedule_d",
     "schedule_f",
   ]);
+  assertEquals(general.taxpayer_ip_pin, "876534");
+  assertEquals(general.presidential_campaign_fund_taxpayer, true);
 });
 
 test("ATS 1040 Scenario 3 reconciles filled source lines, not blank printed totals", () => {
@@ -269,7 +287,7 @@ test("ATS 1040 Scenario 3 preserves optional-method eligibility and missing targ
   assertEquals(SCENARIO_1040_03_SOURCE.form4835.activelyParticipated, true);
   assertStringIncludes(
     recon.notAtsReadyBecause.join(" "),
-    "No completed 1040 tax",
+    "prints no Form 1040 result lines",
   );
 });
 
@@ -283,9 +301,9 @@ test("ATS 1040 Scenario 3 marked active farm rental reaches Schedule E and 1040 
   assertEquals(p.schedule_e?.farm_rental_net, 11_061);
   assertEquals(p.schedule1?.line5_schedule_e, 11_061);
   assertEquals(p.schedule1?.line6_schedule_f, 3_251);
-  // This remains a partial return: the cover's taxable state refund is absent.
-  assertEquals(p.f1040?.line8_additional_income, 14_312);
-  assertEquals(p.f1040?.line9_total_income, 69_125);
+  assertEquals(p.schedule1?.line1_state_refund, 3_110);
+  assertEquals(p.f1040?.line8_additional_income, 17_422);
+  assertEquals(p.f1040?.line9_total_income, 72_235);
   assertEquals(p.schedule2?.line4_se_tax, 827);
   assertEquals(p.schedule1?.line15_se_deduction, 414);
   const [xml] = form4835.build(p.f4835, context);
@@ -319,19 +337,18 @@ test("ATS 1040 Scenario 3 marked active farm rental reaches Schedule E and 1040 
   assertEquals(eCopy.farm_line42, 17_035);
 });
 
-test("ATS 1040 Scenario 3 aggregate basis-reported gains reach native, PDF and Form1040 without fabricated sales", () => {
+test("ATS 1040 Scenario 3 retained basis-reported sales replay printed lines 1a and 8a", async () => {
   const input = scenario104003Input();
-  assertEquals(input.f1099b, undefined);
   assertEquals(input.f8949, undefined);
+  assertEquals(input.schedule_d, undefined);
   const result = f1040_2025.executeReturn(input);
   assertEquals(result.diagnostics, []);
   const p = result.pending;
   assertEquals(p.f1040?.line7_capital_gain, 11_713);
-  assertEquals(p.f1040?.line9_total_income, 69_125);
+  assertEquals(p.f1040?.line9_total_income, 72_235);
   assertEquals(p.schedule_d?.print_line7_st_total, 1_988);
   assertEquals(p.schedule_d?.print_line15_lt_total, 9_725);
-  const filer = extractFilerIdentity(p.f1040)!;
-  const xml = scheduleD.build(p.schedule_d, { filer, pending: p });
+  const { xml } = await atsMefExport(input);
   assertStringIncludes(
     xml,
     "<TotalSTCGL1099BssRptNoAdjGrp><TotalProceedsSalesPriceAmt>14222</TotalProceedsSalesPriceAmt><TotalCostOrOtherBasisAmt>12234</TotalCostOrOtherBasisAmt><TotalGainOrLossAmt>1988</TotalGainOrLossAmt></TotalSTCGL1099BssRptNoAdjGrp>",
@@ -348,3 +365,69 @@ test("ATS 1040 Scenario 3 aggregate basis-reported gains reach native, PDF and F
   assertEquals(p.schedule_d?.print_line17_both_gains, true);
   assertEquals(p.schedule_d?.print_line20_qdcgt, true);
 });
+
+test("ATS 1040 Scenario 3 exports without force and files the packet's lines", async () => {
+  const { diagnostics, xml, rejects } = await atsMefExport(
+    scenario104003Input(),
+  );
+  assertEquals(diagnostics, []);
+  assertEquals(rejects, []);
+  assertEquals(
+    [...xml.matchAll(/<(IRS[A-Za-z0-9]+) documentId=/g)].map((m) => m[1]),
+    [
+      "IRS1040",
+      "IRS1040Schedule1",
+      "IRS1040Schedule2",
+      "IRS1040ScheduleD",
+      "IRS1040ScheduleE",
+      "IRS1040ScheduleF",
+      "IRS1040ScheduleSE",
+      "IRS1099R",
+      "IRS4835",
+    ],
+  );
+  const value = (document: string, tag: string) =>
+    xmlValue(xml, document, tag);
+  assertEquals(value("IRS1040", "IndividualReturnFilingStatusCd"), "1");
+  assertEquals(value("IRS1040", "VirtualCurAcquiredDurTYInd"), "true");
+  assertEquals(value("IRS1040", "PECFPrimaryInd"), "X");
+  assertEquals(value("IRS1040", "PensionsAnnuitiesAmt"), "53778");
+  assertEquals(value("IRS1040", "TotalTaxablePensionsAmt"), "43100");
+  assertEquals(value("IRS1040", "Form1099WithheldTaxAmt"), "3405");
+  assertEquals(value("IRS1040", "TotalIncomeAmt"), "72235");
+  assertEquals(value("IRS1040", "QualifiedBusinessIncomeDedAmt"), undefined);
+  assertEquals(value("IRS1040Schedule1", "StateLocalIncomeTaxRefundAmt"), "3110");
+  assertEquals(value("IRS1040ScheduleD", "DisposeInvestmentQOFInd"), "false");
+  assertEquals(value("IRS1040ScheduleD", "NetSTAndLTCapitalGainOrLossAmt"), "11713");
+  assertEquals(value("IRS1040ScheduleD", "STAndLTGainInd"), "true");
+  assertEquals(value("IRS1040ScheduleD", "RateGainWrkshtAmt"), "0");
+  assertEquals(value("IRS1040ScheduleD", "UnrcptrSect1250GainWrkshtAmt"), "0");
+  assertEquals(value("IRS1040ScheduleD", "ZeroOrBlankInd"), "true");
+  assertEquals(value("IRS1040ScheduleE", "PaymentRqrFilingForm1099Ind"), "true");
+  assertEquals(value("IRS1040ScheduleE", "RequiredForms1099FiledInd"), "true");
+  assertEquals(value("IRS1040ScheduleF", "AgriculturalActivityCd"), "111400");
+  assertEquals(value("IRS1040ScheduleF", "RequiredToFileForms1099Ind"), "false");
+  assertEquals(value("IRS1040ScheduleSE", "OptionalMethodAmt"), "5407");
+  assertEquals(value("IRS4835", "ActivelyParticipatedInd"), "true");
+  assertEquals(value("IRS4835", "NetFarmRentalIncomeOrLossAmt"), "11061");
+  assertEquals(value("IRS1099R", "PayerEIN"), "000000009");
+  assertEquals(value("IRS1099R", "F1099RDistributionCd"), "7");
+  assertEquals(
+    SCENARIO_1040_03_ASSUMPTIONS.map((assumption) => assumption.field),
+    [
+      "f1099b[*].date_acquired / date_sold",
+      "f1099b[*].source_document_reference",
+      "f1099g[0].payer_name / payer_tin",
+      "f1099g[0].box_2_state_refund",
+      "f1099g[0].box_2_prior_year_itemized / box_3_tax_year",
+      "general.taxpayer_prior_year_agi",
+      "general.qbi_deduction_not_claimed",
+    ],
+  );
+}, 60_000);
+
+test.skipIf(!xsdAvailable)("ATS 1040 Scenario 3 export conforms to the TY2025 v5.4 Return1040.xsd", async () => {
+  const { xml } = await atsMefExport(scenario104003Input());
+  const { success, stderr } = await validateTy2025Xsd(xml);
+  assertEquals(success, true, stderr);
+}, 60_000);

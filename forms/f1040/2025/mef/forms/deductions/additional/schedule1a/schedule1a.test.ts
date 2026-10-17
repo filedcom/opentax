@@ -44,6 +44,22 @@ test("Schedule 1-A does not silently omit a positive senior source without Part 
   );
 });
 
+test("Schedule 1-A is not filed for a married-filing-separately senior", () => {
+  assertEquals(
+    schedule1a.build(
+      {
+        filing_status: FilingStatus.MFS,
+        magi: 17_800,
+        taxpayer_age_65_or_older: true,
+        taxpayer_has_valid_ssn: true,
+        taxpayer_ssn: "400001039",
+      },
+      { pending: { f1040: {} } },
+    ),
+    "",
+  );
+});
+
 const review = {
   no_section933_puerto_rico_excluded_income: true as const,
   section933_review_source_reference: "2025 residency and income review",

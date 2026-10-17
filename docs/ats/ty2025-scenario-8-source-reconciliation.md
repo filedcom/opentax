@@ -1,7 +1,11 @@
 # TY2025 Form 1040 ATS Scenario 8 source reconciliation
 
-Status: blocked as a complete ATS scenario. These are source observations, not
-an IRS acceptance or a decision to disregard a checked box.
+Status (2026-10-17): the fixture exports with no reject-level rule once the
+shared ATS header and test-EIN mode (#93) are in place, and the XML validates
+against the v5.4 XSD. It files $35,800 on line 4a, $0 on line 4b and no QCD box,
+which conflicts with the printed blank line 4a and checked line 4c. The IRS
+question below is still open. The SSA-1099 copy reference and the 1099-DIV payer
+name are recorded assumptions (`SCENARIO_1040_08_ASSUMPTIONS`).
 
 ## What the packet establishes
 

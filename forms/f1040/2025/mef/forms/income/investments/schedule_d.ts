@@ -177,6 +177,11 @@ function buildIRS1040ScheduleD(
     typeof fields["print_line16_combined"] !== "number"
   ) return "";
   const children: string[] = [];
+  const amount = (key: string, tag: string): string =>
+    typeof fields[key] === "number" ? element(tag, fields[key] as number) : "";
+  const yesNo = (key: string, tag: string): string =>
+    typeof fields[key] === "boolean" ? element(tag, String(fields[key])) : "";
+  children.push(yesNo("print_qof_disposition", "DisposeInvestmentQOFInd"));
 
   // Part I: direct line 1a, Form 8949 lines 1b/2/3, then scalar lines 4–6.
   children.push(
@@ -208,6 +213,7 @@ function buildIRS1040ScheduleD(
   children.push(mapped("STGainOrLossFromFormsAmt"));
   children.push(mapped("NetSTGainOrLossFromSchK1Amt"));
   children.push(mapped("STCapitalLossCarryoverAmt"));
+  children.push(amount("print_line7_st_total", "NetSTCapitalGainOrLossAmt"));
 
   // Part II: direct line 8a, Form 8949 lines 8b/9/10, then scalar lines.
   children.push(
@@ -234,7 +240,23 @@ function buildIRS1040ScheduleD(
     children.push(element("CapitalGainDistributionsAmt", sum));
   }
   children.push(mapped("LTCapitalLossCarryoverAmt"));
-  children.push(mapped("UnrcptrSect1250GainWrkshtAmt"));
+  // Part III: lines 15-21 from the finalized print fields.
+  children.push(amount("print_line15_lt_total", "NetLTCapitalGainOrLossAmt"));
+  children.push(
+    amount("print_line16_combined", "NetSTAndLTCapitalGainOrLossAmt"),
+  );
+  children.push(yesNo("print_line17_both_gains", "STAndLTGainInd"));
+  children.push(amount("print_line18_28pct", "RateGainWrkshtAmt"));
+  children.push(
+    mapped("UnrcptrSect1250GainWrkshtAmt") ||
+      amount("print_line19_unrecaptured_1250", "UnrcptrSect1250GainWrkshtAmt"),
+  );
+  children.push(yesNo("print_line20_qdcgt", "ZeroOrBlankInd"));
+  if (typeof fields.print_line21_loss === "number") {
+    children.push(
+      element("AllowableLossAmt", Math.abs(fields.print_line21_loss)),
+    );
+  }
 
   return elements("IRS1040ScheduleD", children);
 }

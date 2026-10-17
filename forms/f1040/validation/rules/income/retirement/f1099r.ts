@@ -19,7 +19,7 @@ export const F1099R_RULES: readonly RuleDef[] = [
     "F1099R-003-01",
     "reject",
     "missing_data",
-    ifThen(hasValue("PayerUSAddress"), hasValue("ZipCd")),
+    ifThen(hasValue("PayerUSAddress"), hasValue("ZIPCd")),
     "If Form 1099-R has a US Address in the Payer Address, then 'ZipCd' must have a value.",
   ),
   rule(

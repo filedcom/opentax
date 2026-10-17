@@ -555,3 +555,25 @@ test("equal capital contributions finalize a retained scalar even when the incom
   assertEquals(findOutput(result, "f1040"), undefined);
   assertEquals(findOutput(result, "form8995")?.fields.net_capital_gain, 2000);
 });
+
+test("an unclaimed QBI deduction files no Form 8995 lines", () => {
+  const result = compute({
+    qbi_from_schedule_c: 10000,
+    taxable_income: 50000,
+    qbi_deduction_not_claimed: true,
+  });
+  assertEquals(result.outputs, []);
+});
+
+test("an unclaimed QBI deduction cannot drop a loss carryforward", () => {
+  assertThrows(
+    () =>
+      compute({
+        qbi_from_schedule_c: -1000,
+        taxable_income: 50000,
+        qbi_deduction_not_claimed: true,
+      }),
+    Error,
+    "cannot drop a QBI or REIT/PTP loss carryforward",
+  );
+});

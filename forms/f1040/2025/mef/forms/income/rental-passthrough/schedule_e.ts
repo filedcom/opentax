@@ -386,6 +386,31 @@ export function buildScheduleEPropertyLines(
   };
 }
 
+/** Return-level Part I lines A and B, used only when no property row answers them. */
+export function scheduleEReturn1099Answer(
+  fields: Pick<Fields, "form_1099_payments_made" | "form_1099_filed">,
+  propertyCount: number,
+): { payments: boolean; filed: boolean | undefined } | undefined {
+  const payments = fields.form_1099_payments_made;
+  if (payments === undefined) {
+    if (fields.form_1099_filed !== undefined) {
+      throw new Error("Schedule E line B needs a line A answer");
+    }
+    return undefined;
+  }
+  if (propertyCount > 0) {
+    throw new Error(
+      "Schedule E Form 1099 answers belong on each property row",
+    );
+  }
+  if (payments !== (fields.form_1099_filed !== undefined)) {
+    throw new Error(
+      "Schedule E line B is answered only when line A is Yes",
+    );
+  }
+  return { payments, filed: fields.form_1099_filed };
+}
+
 function sum(
   lines: readonly PropertyLines[],
   key: keyof Omit<PropertyLines, "xml">,
@@ -769,7 +794,9 @@ export const scheduleE: MefFormDescriptor<"schedule_e", Fields> = {
       trustRows.length === 0 &&
       k1Rows.length === 0
     ) return "";
-    const payments = itemList.some((item) => item.form_1099_payments_made);
+    const returnAnswer = scheduleEReturn1099Answer(fields, itemList.length);
+    const payments = returnAnswer?.payments ??
+      itemList.some((item) => item.form_1099_payments_made);
     const income = properties.filter((line) => line.net > 0).reduce(
       (total, line) => total + line.net,
       0,
@@ -858,15 +885,18 @@ export const scheduleE: MefFormDescriptor<"schedule_e", Fields> = {
       }
     }
     return elements("IRS1040ScheduleE", [
-      itemList.length > 0
+      itemList.length > 0 || returnAnswer
         ? element("PaymentRqrFilingForm1099Ind", String(payments))
         : "",
       payments
         ? element(
           "RequiredForms1099FiledInd",
-          String(itemList.every((item) =>
-            !item.form_1099_payments_made || item.form_1099_filed
-          )),
+          String(
+            returnAnswer?.filed ??
+              itemList.every((item) =>
+                !item.form_1099_payments_made || item.form_1099_filed
+              ),
+          ),
         )
         : "",
       ...properties.map((line) => line.xml),

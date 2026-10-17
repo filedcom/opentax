@@ -231,6 +231,9 @@ export const itemSchema = z.object({
 
 export const inputSchema = z.object({
   schedule_es: z.array(itemSchema).optional().default([]),
+  // Part I lines A and B when no property row carries them (e.g. only Form 4835).
+  form_1099_payments_made: z.boolean().optional(),
+  form_1099_filed: z.boolean().optional(),
   // Reviewed filed-year record, joined to every positive 2025 prior PAL by
   // durable activity ID and reporting character. Acceptance is verified by
   // the export boundary, not inferred from this entered reference.
