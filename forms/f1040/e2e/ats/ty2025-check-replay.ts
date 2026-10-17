@@ -430,7 +430,7 @@ export const ATS_REPLAY_TARGETS = z.array(scenarioSchema).parse([
     ],
   },
 ]);
-const inputs = {
+export const ATS_SCENARIO_INPUTS = {
   "1040-01": scenario104001Input,
   "1040-02": scenario104002Input,
   "1040-03": scenario104003Input,
@@ -534,7 +534,7 @@ export async function replayAtsChecks() {
   const scenarios = await Promise.all(
     ATS_REPLAY_TARGETS.map(async (scenario) => {
       const source = TY2025_ATS_CASES.find((s) => s.id === scenario.id)!;
-      const factory = inputs[scenario.id as keyof typeof inputs];
+      const factory = ATS_SCENARIO_INPUTS[scenario.id as keyof typeof ATS_SCENARIO_INPUTS];
       if (!source || !factory) {
         throw new Error(`Missing ATS source/input ${scenario.id}`);
       }
