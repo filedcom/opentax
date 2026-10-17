@@ -399,6 +399,7 @@ test("first-year sale ledger sources produce complete native and prepared PDF pa
     "../../irs/mef/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd",
     import.meta.url,
   ).pathname;
+  const haveSchema = await sys.stat(schema).then((i) => i.isFile, () => false);
   for (
     const c of [
       { id: "other-retained", active: false, entire: false },
@@ -434,20 +435,23 @@ test("first-year sale ledger sources produce complete native and prepared PDF pa
     assertEquals(pending.schedule1.line5_schedule_e, c.entire ? -5000 : -2000);
     assertEquals(pending.f1040.line11_agi, c.entire ? 163000 : 160000);
     assertEquals(pending, before);
-    const temp = await sys.makeTempFile({ suffix: ".xml" });
-    try {
-      await fs.writeFile(temp, bundle.xml);
-      const validated = await new sys.Command("xmllint", {
-        args: ["--noout", "--schema", schema, temp],
-        stderr: "piped",
-      }).output();
-      assertEquals(
-        validated.code,
-        0,
-        new TextDecoder().decode(validated.stderr),
-      );
-    } finally {
-      await sys.remove(temp);
+    // The IRS schema lives in irs/ and is not committed (see irs/README.md).
+    if (haveSchema) {
+      const temp = await sys.makeTempFile({ suffix: ".xml" });
+      try {
+        await fs.writeFile(temp, bundle.xml);
+        const validated = await new sys.Command("xmllint", {
+          args: ["--noout", "--schema", schema, temp],
+          stderr: "piped",
+        }).output();
+        assertEquals(
+          validated.code,
+          0,
+          new TextDecoder().decode(validated.stderr),
+        );
+      } finally {
+        await sys.remove(temp);
+      }
     }
     if (output) {
       const dir = join(output, c.id);
