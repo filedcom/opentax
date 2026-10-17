@@ -5,14 +5,24 @@
  */
 
 import type { RuleDef } from "../../../../../../core/validation/types.ts";
-import { rule, alwaysPass, all, eqField, formCountAtMost, hasNonZero, hasValue, ifThen, isZero, } from "../../../../../../core/validation/mod.ts";
+import { rule, all, amountLte, constant, documentCount, eqField, eqStr, not, formCountAtMost, hasNonZero, hasValue, ifThen, isZero, } from "../../../../../../core/validation/mod.ts";
+
+const AMT_CATEGORY_BOXES = [
+  "ForeignIncmSection951AInd",
+  "ForeignBranchIncomeInd",
+  "ForeignIncPassiveCategoryInd",
+  "ForeignIncGeneralCategoryInd",
+  "ForeignIncSection901jInd",
+  "ForeignIncResourcedTreatyInd",
+  "ForeignIncLumpSumDistribInd",
+];
 
 export const F1116_RULES: readonly RuleDef[] = [
   rule(
     "F1116-002-01",
     "reject",
     "incorrect_data",
-    alwaysPass, // requires cross-instance uniqueness check: among all Forms 1116 with AMT code, each category checkbox must appear at most once
+    all(...AMT_CATEGORY_BOXES.map((box) => amountLte(documentCount("F1116", all(eqStr("AlternativeMinimumTaxCd", "AMT"), hasValue(box))), constant(1)))),
     "Among all Forms 1116 present in the return with 'AlternativeMinimumTaxCd' having the value \"AMT\", there must be only one Form 1116 with each one of the following checkboxes checked: 'ForeignIncmSection951AInd', 'ForeignBranchIncomeInd', 'ForeignIncPassiveCategoryInd', 'ForeignIncGeneralCategoryInd', 'ForeignIncSection901jInd', 'ForeignIncResourcedTreatyInd', 'ForeignIncLumpSumDistribInd'.",
   ),
   rule(
@@ -61,7 +71,7 @@ export const F1116_RULES: readonly RuleDef[] = [
     "F1116-014-02",
     "reject",
     "incorrect_data",
-    alwaysPass, // requires cross-instance check: among Forms 1116 without 901j/LumpSum, only one can have nonzero ForeignTaxCreditAmt
+    amountLte(documentCount("F1116", all(not(all(hasValue("ForeignIncSection901jInd"), hasValue("ForeignIncLumpSumDistribInd"))), hasNonZero("ForeignTaxCreditAmt"))), constant(1)),
     "If there is more than one Form 1116 with Item e checkbox 'ForeignIncSection901jInd' or Item g 'ForeignIncLumpSumDistribInd' not checked, then only one of those Form 1116s can have a non-zero value on 'ForeignTaxCreditAmt'.",
   ),
   rule(

@@ -152,6 +152,14 @@ export function createReturnContext(
       return instances.map((i) => groupInstanceContext(context, i, masked));
     },
 
+    documentReferences() {
+      return (emitted?.documents ?? []).map((d) => ({
+        prefix: d.prefix,
+        documentId: d.documentId,
+        references: d.references ?? [],
+      }));
+    },
+
     emittedDocumentCount() {
       return {
         actual: emitted?.documents.length ?? 0,

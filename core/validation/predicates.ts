@@ -7,6 +7,7 @@
 
 import type { ReturnContext, RuleCheck } from "./types.ts";
 import { zipMatchesState } from "./zip-codes.ts";
+import { rulePrefixForDocumentTag } from "./emitted-documents.ts";
 
 // ─── Field Value Checks ─────────────────────────────────
 
@@ -885,3 +886,76 @@ export const plausibleBirthDate = (xml: string): RuleCheck =>
     const taxYr = ctx.num("TaxYr");
     return real && y <= taxYr && y >= taxYr - 125;
   };
+
+// ─── Document References, Document Counts and Dates ────
+
+const prefixOfTag = (tag: string): string =>
+  rulePrefixForDocumentTag(tag) ?? tag;
+
+/**
+ * Every emitted document tagged `childTag` is named, by its documentId, in the
+ * 'referenceDocumentId' of exactly one emitted document tagged one of
+ * `parentTags`. Passes when no such child is emitted.
+ */
+export const referencedByExactlyOne = (
+  childTag: string,
+  ...parentTags: string[]
+): RuleCheck =>
+  (ctx) => {
+    const documents = ctx.documentReferences?.() ?? [];
+    const parents = new Set(parentTags.map(prefixOfTag));
+    const child = prefixOfTag(childTag);
+    return documents.filter((d) => d.prefix === child).every(({ documentId }) =>
+      documentId !== undefined &&
+      documents.filter((p) =>
+          parents.has(p.prefix) && p.references.includes(documentId)
+        ).length === 1
+    );
+  };
+
+/** Element `xml`'s 'referenceDocumentId' names an emitted document tagged one of `tags`. */
+export const attachedAt = (xml: string, ...tags: string[]): RuleCheck =>
+  (ctx) => {
+    const prefixes = new Set(tags.map(prefixOfTag));
+    const ids = new Set(
+      (ctx.documentReferences?.() ?? [])
+        .filter((d) => prefixes.has(d.prefix))
+        .map((d) => d.documentId),
+    );
+    return ctx.fieldArray(`${xml}@referenceDocumentId`)
+      .flatMap((v) => String(v).split(/\s+/))
+      .some((id) => id !== "" && ids.has(id));
+  };
+
+/** Number of emitted documents with the rule prefix that satisfy `check`. */
+export const documentCount = (
+  prefix: string,
+  check: RuleCheck = () => true,
+): Amount =>
+  (ctx) => (ctx.emittedDocuments?.(prefix) ?? []).filter(check).length;
+
+/**
+ * A date, or the date of a timestamp, as ms since epoch with its year moved
+ * by `years`; NaN when absent or unparseable.
+ */
+export const dateOf = (xml: string, years = 0): Amount =>
+  (ctx) => {
+    const m = String(ctx.field(xml) ?? "").match(/^(\d{4})-(\d{2})-(\d{2})/);
+    return m
+      ? Date.UTC(Number(m[1]) + years, Number(m[2]) - 1, Number(m[3]))
+      : NaN;
+  };
+
+/** Days from the `begin` date to the `end` date; NaN when either is absent. */
+export const daysBetween = (end: string, begin: string): Amount =>
+  (ctx) => (dateOf(end)(ctx) - dateOf(begin)(ctx)) / 86_400_000;
+
+/**
+ * The date is not after the date the IRS receives the submission. A return is
+ * received no earlier than its Return Header 'ReturnTs', so the date must not
+ * be after that day; with no 'ReturnTs' the receipt date cannot be bounded.
+ */
+export const dateNotAfterReceipt = (xml: string): RuleCheck =>
+  (ctx) =>
+    !ctx.hasValue(xml) ||
+    dateOf(xml)(ctx) <= dateOf("ReturnHeader/ReturnTs")(ctx);
