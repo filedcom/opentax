@@ -1,15 +1,23 @@
 /**
  * MeF Business Rules: F1040
  * Auto-generated from 1040_Business_Rules_2025v3.0.csv
- * 118 rules (93 implemented, 25 stubs)
+ * 118 rules (105 implemented, 13 IRS-side)
  */
 
-import type { RuleDef } from "../../../../../../../core/validation/types.ts";
+import type { RuleCheck, RuleDef } from "../../../../../../../core/validation/types.ts";
 import {
+  ageAtYearEnd,
   all,
-  alwaysPass,
+  amount,
+  amountEq,
+  amountLt,
+  amountLte,
   any,
+  attachmentDescIs,
+  constant,
   countEq,
+  documentTotal,
+  eachGroup,
   eqCheckedCount,
   eqCountSum,
   eqField,
@@ -21,21 +29,36 @@ import {
   formAbsent,
   formCountAtMost,
   formPresent,
+  groupTotal,
   gt,
   hasNonZero,
   hasValue,
   ifThen,
   ifThenUnless,
+  inOwnDocument,
+  irsSide,
   isITIN,
   isZero,
+  known,
+  minus,
   noValue,
   not,
   notGtNum,
+  plus,
   rule,
+  someMatchesFilerSSN,
   ssnNotEqual,
   sumOfAll,
+  total,
   validSSN,
 } from "../../../../../../../core/validation/mod.ts";
+
+/** EIC without a qualifying child: at least 25 and under 65 at year end (Pub 596). */
+const eicAge = (birthDate: string): RuleCheck =>
+  all(
+    amountLte(constant(25), ageAtYearEnd(birthDate)),
+    amountLt(ageAtYearEnd(birthDate), constant(65)),
+  );
 
 export const F1040_RULES: readonly RuleDef[] = [
   rule(
@@ -119,7 +142,30 @@ export const F1040_RULES: readonly RuleDef[] = [
     "F1040-034-08",
     "reject",
     "math_error",
-    alwaysPass,
+    inOwnDocument(
+      ifThen(
+        formAbsent("form8958"),
+        amountEq(
+          amount("WithholdingTaxAmt"),
+          plus(
+            total(
+              "1099R/FederalIncomeTaxWithheldAmt",
+              "OtherWithholdingStatement/WithholdingAmt",
+              "W2/WithholdingAmt",
+              "W2G/FederalIncomeTaxWithheldAmt",
+              "8959/AddlMedcrRRTTaxWithholdingAmt",
+              "BackupWithholdingFromSchedulesK1Statement/TotalAmt",
+              "RRB1042S/FederalIncomeTaxWithheldAmt",
+            ),
+            documentTotal(
+              "FSSA1042S",
+              (d) => d.num("NetTaxWithheldAmt") || d.num("FederalIncomeTaxWithheldAmt"),
+            ),
+          ),
+          5,
+        ),
+      ),
+    ),
     "Form 1040, 'WithholdingTaxAmt' must be equal to the sum of the following: [(1) all Forms 1099-R, 'FederalIncomeTaxWithheldAmt' and (2) all 'WithholdingAmt' in [OtherWithholdingStatement] and (3) all Forms W-2, 'WithholdingAmt' and (4) all Forms W-2G, 'FederalIncomeTaxWithheldAmt' and (5) Form 8959, 'AddlMedcrRRTTaxWithholdingAmt' and (6) 'TotalAmt' in [BackupWhSchedulesK1Statement] and (7) all Forms RRB 1042-S, 'FederalIncomeTaxWithheldAmt' and (8) all Forms SSA 1042-S, ('NetTaxWithheldAmt' if it has a non-zero value, otherwise 'FederalIncomeTaxWithheldAmt')] unless Form 8958 is present in the return. When evaluating this, a tolerance of $5.00 is allowed.",
   ),
   rule(
@@ -197,7 +243,19 @@ export const F1040_RULES: readonly RuleDef[] = [
     "F1040-068-03",
     "reject",
     "incorrect_data",
-    alwaysPass,
+    inOwnDocument(
+      ifThen(
+        all(hasNonZero("EarnedIncomeCreditAmt"), formAbsent("schedule_eic")),
+        any(
+          not(known(ageAtYearEnd("PrimaryBirthDt"))),
+          eicAge("PrimaryBirthDt"),
+          all(
+            filingStatusIs(2),
+            any(not(known(ageAtYearEnd("SpouseBirthDt"))), eicAge("SpouseBirthDt")),
+          ),
+        ),
+      ),
+    ),
     "If Form 1040, 'EarnedIncomeCreditAmt' has a non-zero value and Schedule EIC (Form 1040) is not present, then the Primary or Spouse must be at least 25 years old but less than 65 years old.",
   ),
   rule(
@@ -211,14 +269,39 @@ export const F1040_RULES: readonly RuleDef[] = [
     "F1040-071-07",
     "reject",
     "incorrect_data",
-    alwaysPass,
+    inOwnDocument(
+      ifThenUnless(
+        hasNonZero("WithholdingTaxAmt"),
+        amountLt(
+          amount("WithholdingTaxAmt"),
+          plus(
+            amount("WagesSalariesAndTipsAmt"),
+            amount("TaxableInterestAmt"),
+            amount("OrdinaryDividendsAmt"),
+            (ctx) => Math.max(ctx.num("IRADistributionsAmt"), ctx.num("TaxableIRAAmt")),
+            (ctx) => Math.max(ctx.num("PensionsAnnuitiesAmt"), ctx.num("TotalTaxablePensionsAmt")),
+            amount("SocSecBnftAmt"),
+            amount("Schedule1/UnemploymentCompAmt"),
+            amount("Schedule1/TotalOtherIncomeAmt"),
+            total("ScheduleC/TotalGrossReceiptsAmt"),
+          ),
+        ),
+        any(
+          hasNonZero("CapitalGainLossAmt"),
+          hasNonZero("Schedule1/OtherGainLossAmt"),
+          hasNonZero("Schedule1/RentalRealEstateIncomeLossAmt"),
+          hasNonZero("Schedule1/NetFarmProfitLossAmt"),
+          hasNonZero("NontxCombatPayElectionAmt"),
+        ),
+      ),
+    ),
     "Form 1040, 'WithholdingTaxAmt' must be less than the sum of the following: ['WagesSalariesAndTipsAmt' and 'TaxableInterestAmt' and 'OrdinaryDividendsAmt' and ('IRADistributionsAmt' or 'TaxableIRAAmt') and ( 'PensionsAnnuitiesAmt' or 'TotalTaxablePensionsAmt' ) and 'SocSecBnftAmt' and Schedule 1 (Form 1040), ( 'UnemploymentCompAmt' and 'TotalOtherIncomeAmt' ) and ( all Schedule C (Form 1040), 'TotalGrossReceiptsAmt' )] unless one of the following is true: (1) Form 1040, 'CapitalGainLossAmt' has a non-zero value; (2) Schedule 1 (Form 1040), 'OtherGainLossAmt' or 'RentalRealEstateIncomeLossAmt' or 'NetFarmProfitLossAmt' has a non-zero value; (3) Combat Pay has been excluded from wages.",
   ),
   rule(
     "F1040-087-02",
     "reject",
     "incorrect_data",
-    alwaysPass,
+    irsSide,
     "Form 1040, 'EarnedIncomeCreditAmt' must be zero if an amount is entered. The e-File database indicates the taxpayer is not allowed to claim the Earned Income Credit.",
   ),
   rule(
@@ -302,7 +385,7 @@ export const F1040_RULES: readonly RuleDef[] = [
     "F1040-164-01",
     "reject",
     "missing_data",
-    alwaysPass,
+    irsSide,
     "Form 8862 must be present in the return with Earned Income Credit Claimed Indicator checked. The e-File database indicates the taxpayer must file Form 8862 to claim Earned Income Credit after disallowance.",
   ),
   rule(
@@ -554,7 +637,18 @@ export const F1040_RULES: readonly RuleDef[] = [
     "F1040-360-02",
     "reject",
     "math_error",
-    alwaysPass,
+    inOwnDocument(
+      eachGroup(
+        "OtherAdjustmentsStatement/OtherAdjustmentsStmt",
+        ifThen(
+          any(eqStr("OtherAdjustmentsLitCd", "FORM 2555"), eqStr("OtherAdjustmentsCodeTxt", "FORM 2555")),
+          amountEq(amount("OtherAdjustmentsAmt"), total("2555/HousingDeductionAmt")),
+        ),
+        "OtherAdjustmentsLitCd",
+        "OtherAdjustmentsCodeTxt",
+        "OtherAdjustmentsAmt",
+      ),
+    ),
     "If 'OtherAdjustmentsLitCd' in [OtherAdjustmentsStatement] has the value \"FORM 2555\", then the corresponding 'OtherAdjustmentsAmt' must be equal to the sum of all Forms 2555, 'HousingDeductionAmt'.",
   ),
   rule(
@@ -687,7 +781,19 @@ export const F1040_RULES: readonly RuleDef[] = [
     "F1040-406-02",
     "reject",
     "incorrect_data",
-    alwaysPass,
+    inOwnDocument(
+      ifThen(
+        filingStatusIs(3, 4),
+        not(someMatchesFilerSSN(
+          "spouse",
+          "W2/EmployeeSSN",
+          "1099R/RecipientSSN",
+          "ScheduleC/SSN",
+          "ScheduleF/SSN",
+          "ScheduleSE/SSN",
+        )),
+      ),
+    ),
     "If the filing status of the return is married filing separately or head of household, then the Spouse must have no income (or loss).",
   ),
   rule(
@@ -708,14 +814,22 @@ export const F1040_RULES: readonly RuleDef[] = [
     "F1040-448",
     "reject",
     "missing_data",
-    alwaysPass,
+    irsSide,
     "Form 8862 must be present in the return with American Opportunity Tax Credit Claimed Indicator checked. The e-File database indicates the taxpayer must file Form 8862 to claim American Opportunity Tax Credit after disallowance.",
   ),
   rule(
     "F1040-455",
     "reject",
     "math_error",
-    alwaysPass,
+    inOwnDocument(
+      ifThen(
+        hasNonZero("NontxCombatPayElectionAmt"),
+        amountEq(
+          amount("NontxCombatPayElectionAmt"),
+          groupTotal("W2/EmployersUseGrp", amount("EmployersUseAmt"), eqStr("EmployersUseCd", "Q"), "EmployersUseCd", "EmployersUseAmt"),
+        ),
+      ),
+    ),
     "If 'NontxCombatPayElectionAmt' in the return has a non-zero value, then it must be equal to the sum of all Forms W-2, 'EmployersUseAmt' with corresponding 'EmployersUseCd' having the value \"Q\".",
   ),
   rule(
@@ -750,7 +864,18 @@ export const F1040_RULES: readonly RuleDef[] = [
     "F1040-464",
     "reject",
     "incorrect_data",
-    alwaysPass,
+    inOwnDocument(
+      amountEq(
+        groupTotal(
+          "WagesNotShownSchedule/WagesNotShownSch",
+          amount("WagesNotShownAmt"),
+          eqStr("WagesLiteralCd", "FEC"),
+          "WagesLiteralCd",
+          "WagesNotShownAmt",
+        ),
+        total("FECRecord/ForeignEmployerCompensationAmt"),
+      ),
+    ),
     "The [ sum of all 'WagesNotShownAmt' in [WagesNotShownSchedule] with the corresponding 'WagesLiteralCd' having the value \"FEC\" ] must be equal to [ the sum of 'ForeignEmployerCompensationAmt' in all [FECRecord] ].",
   ),
   rule(
@@ -764,28 +889,48 @@ export const F1040_RULES: readonly RuleDef[] = [
     "F1040-468",
     "reject",
     "incorrect_data",
-    alwaysPass,
+    irsSide,
     "Form 1040, 'RefundableAmerOppCreditAmt' must be zero if an amount is entered. The e-File database indicates the taxpayer is not allowed to claim the American Opportunity Tax Credit.",
   ),
   rule(
     "F1040-469",
     "reject",
     "missing_document",
-    alwaysPass,
+    inOwnDocument(
+      ifThen(
+        someMatchesFilerSSN("primary", "RRB1042S/SSN", "SSA1042S/SSN"),
+        attachmentDescIs("Signed Declaration"),
+      ),
+    ),
     "If Form RRB 1042-S, 'SSN' or Form SSA 1042-S, 'SSN' is the same as 'PrimarySSN' in the Return Header, then a binary attachment with Description \"Signed Declaration\" must be present in the return.",
   ),
   rule(
     "F1040-470",
     "reject",
     "missing_document",
-    alwaysPass,
+    inOwnDocument(
+      ifThen(
+        someMatchesFilerSSN("primary", "RRB1042S/SSN", "SSA1042S/SSN"),
+        attachmentDescIs("Green Card"),
+      ),
+    ),
     "If Form RRB 1042-S, 'SSN' or Form SSA 1042-S, 'SSN' is the same as 'PrimarySSN' in the Return Header, then a binary attachment with Description \"Green Card\" must be present in the return.",
   ),
   rule(
     "F1040-471-01",
     "reject",
     "incorrect_data",
-    alwaysPass,
+    inOwnDocument(
+      ifThen(
+        hasNonZero("8995/TotQlfyBusinessIncomeOrLossAmt"),
+        amountLte(
+          minus(amount("AdjustedGrossIncomeAmt"), amount("TotalItemizedOrStandardDedAmt")),
+          // The 2025v3.0 text prints the TY2024 thresholds; F1040-471-02 (2026v1.0
+          // package) and Rev. Proc. 2024-40 give TY2025's 394,600 and 197,300.
+          (ctx) => ctx.filingStatus() === 2 ? 394600 : 197300,
+        ),
+      ),
+    ),
     "If Form 8995, 'TotQlfyBusinessIncomeOrLossAmt' has a non-zero value, then Form 1040, 'AdjustedGrossIncomeAmt' minus (-) 'TotalItemizedOrStandardDedAmt' must not be greater than [383900, if the filing status of the return is married filing jointly] or [191950, for all other filing status].",
   ),
   rule(
@@ -799,70 +944,70 @@ export const F1040_RULES: readonly RuleDef[] = [
     "F1040-473",
     "alert",
     "missing_data",
-    alwaysPass,
+    inOwnDocument(eachGroup("OtherWithholdingStatement/OtherWithholdingStmt", hasValue("EIN"), "EIN")),
     "On your return, a claim for Other Forms Withholding, line 25c, did not have an EIN present on the Other Withholding Statement. The IRS may contact you for validation of the requested Other Withholding claim. Please visit https://www.irs.gov/newsroom/misleading-social-media-advice-leads-to-false-claims-for-fuel-tax-credit-sick-and-family-leave-credit-household-employment-taxes-faqs-help-address-common-questions-next-steps-for-those-receiving-irs and the line 25c form instructions for additional information.",
   ),
   rule(
     "F1040-474",
     "alert",
     "information",
-    alwaysPass,
+    irsSide,
     "A high claim for Other Forms Withholding, line 25c, was claimed on your return. The IRS may contact you for validation of the requested Other Withholding claim. Please visit https://www.irs.gov/newsroom/misleading-social-media-advice-leads-to-false-claims-for-fuel-tax-credit-sick-and-family-leave-credit-household-employment-taxes-faqs-help-address-common-questions-next-steps-for-those-receiving-irs and the line 25c form instructions for additional information.",
   ),
   rule(
     "F1040-516-01",
     "reject",
     "incorrect_data",
-    alwaysPass,
+    irsSide,
     "If Form 1040, 'PrimaryClaimAsDependentInd' is not checked, then 'PrimarySSN' must not be the same as a Dependent SSN on another return filed for the same tax year. Visit www.irs.gov/identity-theft-fraud-scams/identity-theft-dependents for additional information. To electronically file with this duplicate condition, an Identity Protection Personal Identification Number (IP PIN) will be required. If you wish to get an IP PIN and you don't already have an account on IRS.gov, then you must register to validate your identity. Please visit www.irs.gov/getanippin for further information and resubmit your return with an IP PIN.",
   ),
   rule(
     "F1040-518-01",
     "reject",
     "incorrect_data",
-    alwaysPass,
+    irsSide,
     "If Form 1040, 'SpouseClaimAsDependentInd' is not checked, then 'SpouseSSN' must not be the same as a Dependent SSN on another return filed for the same tax year. Visit www.irs.gov/identity-theft-fraud-scams/identity-theft-dependents for additional information. To electronically file with this duplicate condition, an Identity Protection Personal Identification Number (IP PIN) will be required. If you wish to get an IP PIN and you don't already have an account on IRS.gov, then you must register to validate your identity. Please visit www.irs.gov/getanippin for further information and resubmit your return with an IP PIN.",
   ),
   rule(
     "F1040-525-03",
     "reject_and_stop",
     "incorrect_data",
-    alwaysPass,
+    irsSide,
     "If 'PINTypeCd' in the Return Header has the value \"Self-Select On-Line\" and the filing status of the return is married filing jointly and Form 1040, [ 'SpecialProcessingLiteralCd' and 'CombatZoneCd' and 'SpecialProcessingCodeTxt' and 'PrimaryDeathDt' ] do not have values, then 'PrimaryBirthDt' in the Return Header must match the e-File database.",
   ),
   rule(
     "F1040-526-03",
     "reject_and_stop",
     "incorrect_data",
-    alwaysPass,
+    irsSide,
     "If 'PINTypeCd' in the Return Header has the value \"Self-Select On-Line\" and the filing status of the return is married filing jointly and Form 1040, [ 'SpecialProcessingLiteralCd' and 'CombatZoneCd' and 'SpecialProcessingCodeTxt' and 'SpouseDeathDt' ] do not have values, then 'SpouseBirthDt' in the Return Header must match the e-File database.",
   ),
   rule(
     "F1040-616",
     "alert",
     "information",
-    alwaysPass,
+    irsSide,
     "The primary filer on the return was previously claimed as a dependent on another accepted return for the same tax year. Visit www.irs.gov/identity-theft-fraud-scams/identity-theft-dependents for additional information.",
   ),
   rule(
     "F1040-618",
     "alert",
     "information",
-    alwaysPass,
+    irsSide,
     "The spouse filer on the return was previously claimed as a dependent on another accepted return for the same tax year. Visit www.irs.gov/identity-theft-fraud-scams/identity-theft-dependents for additional information.",
   ),
   rule(
     "F1040-900",
     "reject_and_stop",
     "database",
-    alwaysPass,
+    irsSide,
     "A Qualifying Child SSN on Schedule EIC (Form 1040) has been systemically locked because the IRS does not accept a replaced SSN as valid for tax filing.",
   ),
   rule(
     "F1040-901",
     "reject_and_stop",
     "database",
-    alwaysPass,
+    irsSide,
     "A Student SSN on Form 8863 has been systemically locked because the IRS does not accept a replaced SSN as valid for tax filing.",
   ),
 ];

@@ -1,11 +1,31 @@
 /**
  * MeF Business Rules: SSE
  * Auto-generated from 1040_Business_Rules_2025v3.0.csv
- * 8 rules (6 implemented, 2 stubs)
+ * 8 rules (8 implemented)
  */
 
 import type { RuleDef } from "../../../../../../core/validation/types.ts";
-import { rule, allDistinct, alwaysPass, formPresent, hasNonZero, ifThen, matchesHeaderSSN, all, noValue, sumOfAll, } from "../../../../../../core/validation/mod.ts";
+import type { Amount } from "../../../../../../core/validation/mod.ts";
+import {
+  all,
+  allDistinct,
+  amount,
+  amountLte,
+  any,
+  formPresent,
+  hasNonZero,
+  ifThen,
+  ifThenUnless,
+  inOwnDocument,
+  matchesHeaderSSN,
+  noValue,
+  rule,
+  sumOfAll,
+} from "../../../../../../core/validation/mod.ts";
+
+/** The social security wage base, the "threshold amount for the tax year" (SSA). */
+const socialSecurityWageBase: Amount = (ctx) =>
+  ctx.num("TaxYr") >= 2026 ? 184_500 : 176_100;
 
 export const SSE_RULES: readonly RuleDef[] = [
   rule(
@@ -26,7 +46,13 @@ export const SSE_RULES: readonly RuleDef[] = [
     "SSE-F1040-005-09",
     "reject",
     "incorrect_data",
-    alwaysPass, // requires threshold comparison: if SSTWagesRRTCompAmt or UnreportedTipsAmt or WagesSubjectToSSTAmt nonzero, then TotalWagesAndUnreportedTipsAmt nonzero unless SSTWagesRRTCompAmt >= yearly threshold
+    inOwnDocument(
+      ifThenUnless(
+        any(hasNonZero("SSTWagesRRTCompAmt"), hasNonZero("UnreportedTipsAmt"), hasNonZero("WagesSubjectToSSTAmt")),
+        hasNonZero("TotalWagesAndUnreportedTipsAmt"),
+        amountLte(socialSecurityWageBase, amount("SSTWagesRRTCompAmt")),
+      ),
+    ),
     "If Schedule SE (Form 1040), 'SSTWagesRRTCompAmt' has a non-zero value or 'UnreportedTipsAmt' has a non-zero value, or 'WagesSubjectToSSTAmt' has a non-zero value, then 'TotalWagesAndUnreportedTipsAmt' must have a non-zero value unless 'SSTWagesRRTCompAmt' is greater than or equal to the threshold amount for the tax year.",
   ),
   rule(

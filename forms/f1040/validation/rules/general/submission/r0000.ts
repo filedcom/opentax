@@ -1,11 +1,43 @@
 /**
  * MeF Business Rules: R0000
  * Auto-generated from 1040_Business_Rules_2025v3.0.csv
- * 62 rules (29 implemented, 33 stubs)
+ * 62 rules (39 implemented, 16 IRS-side, 7 not implemented)
  */
 
 import type { RuleDef } from "../../../../../../core/validation/types.ts";
-import { rule, alwaysPass, hasValue, hasNonZero, validSSN, eqStr, eqField, formPresent, ifThen, any, all, not, charAfterIsAlpha, charCountAtMost, contains, dateMonthDayEq, dateYearEq, validRTN, isAtsTest, ssnMiddleDigitsEq, } from "../../../../../../core/validation/mod.ts";
+import {
+  all,
+  allMatch,
+  alwaysPass,
+  amount,
+  amountLte,
+  any,
+  attachmentDescIs,
+  charAfterIsAlpha,
+  charCountAtMost,
+  contains,
+  dateMonthDayEq,
+  dateYearEq,
+  documentCntMatches,
+  eqField,
+  eqStr,
+  formAbsent,
+  formPresent,
+  hasNonZero,
+  hasValue,
+  ifThen,
+  irsSide,
+  isAtsTest,
+  noValue,
+  not,
+  plus,
+  rule,
+  ssnMiddleDigitsEq,
+  total,
+  validRTN,
+  validSSN,
+  zipValidForState,
+} from "../../../../../../core/validation/mod.ts";
 
 export const R0000_RULES: readonly RuleDef[] = [
   rule(
@@ -19,35 +51,41 @@ export const R0000_RULES: readonly RuleDef[] = [
     "R0000-004-01",
     "reject_and_stop",
     "data_mismatch",
-    alwaysPass,
+    irsSide,
     "'ReturnTypeCd' (specified in the Return Header) and the return version (specified by the 'returnVersion' attribute of the 'Return' element) of the return must match the return type and the version supported by the Modernized e-File system.",
   ),
   rule(
     "R0000-007-02",
     "reject",
     "incorrect_data",
-    alwaysPass,
+    zipValidForState("Filer/ZIPCd", "Filer/StateAbbreviationCd"),
     "For US Addresses, the first five digits of 'ZipCd' of the Filer's address in the Return Header must be within the valid ranges of zip codes for the corresponding 'StateAbbreviationCd'. See Publication 4164.",
   ),
   rule(
     "R0000-019",
     "reject",
     "data_mismatch",
-    alwaysPass,
+    documentCntMatches,
     "The number of return documents (forms, schedules, and supporting documents) included in the return must be equal to the value of the 'documentCnt' attribute of the ReturnData.",
   ),
   rule(
     "R0000-030-01",
     "reject",
     "data_mismatch",
-    ifThen(hasValue("PractitionerPINGrp"), eqField("PractitionerPINGrp_EFIN", "OriginatorGrp_EFIN")),
+    ifThen(hasValue("PractitionerPINGrp"), (ctx) =>
+      // OriginatorGrp's own EFIN precedes the nested PractitionerPINGrp's.
+      String(ctx.field("PractitionerPINGrp/EFIN") ?? "") === String(ctx.field("OriginatorGrp/EFIN") ?? "")),
     "If 'PractitionerPINGrp' in the Return Header has a value, then 'EFIN' in 'PractitionerPINGrp' must be the same as 'EFIN' in 'OriginatorGrp'.",
   ),
   rule(
     "R0000-046-01",
     "reject",
     "incorrect_data",
-    alwaysPass,
+    (ctx) => {
+      const zip = String(ctx.field("Filer/ZIPCd") ?? "").replace(/\D/g, "").slice(0, 5);
+      return zip.length < 5 || zip.slice(3) !== "00" ||
+        ["00800", "20500", "34000", "00600", "96100", "96900"].includes(zip);
+    },
     "For US Addresses, the fourth and fifth digit of the 'ZipCd' of the Filer's address in the Return Header cannot both be zeros (\"00\"), except when the 'ZipCd' is 00800, 20500, 34000, 00600, 96100, 96900.",
   ),
   rule(
@@ -75,35 +113,35 @@ export const R0000_RULES: readonly RuleDef[] = [
     "R0000-056-01",
     "reject",
     "missing_document",
-    alwaysPass,
+    ifThen(formPresent("form8838"), attachmentDescIs("8838 Signature Document")),
     "If Form 8838 is present in the return, then a binary attachment document with Description \"8838 Signature Document\" must be present.",
   ),
   rule(
     "R0000-057-01",
     "reject",
     "missing_data",
-    alwaysPass,
+    alwaysPass, // submission manifest or zip archive, not the return XML
     "Every attached file (i.e. binary attachment) must be referenced by the XML document that represents it.",
   ),
   rule(
     "R0000-058-01",
     "reject",
     "missing_data",
-    alwaysPass,
+    alwaysPass, // submission manifest or zip archive, not the return XML
     "An XML document that represents a binary attachment must have a valid reference to an attached file.",
   ),
   rule(
     "R0000-060",
     "reject_and_stop",
     "incorrect_data",
-    alwaysPass,
+    alwaysPass, // checked on the manifest: mef/submissions/submission-manifest.ts
     "First six digits in the Submission ID must match the EFIN in the Submission Manifest.",
   ),
   rule(
     "R0000-067",
     "reject_and_stop",
     "incorrect_data",
-    alwaysPass,
+    alwaysPass, // submission manifest or zip archive, not the return XML
     "The attached files (i.e. binary attachments) in a submission zip archive must have distinct names.",
   ),
   rule(
@@ -152,7 +190,7 @@ export const R0000_RULES: readonly RuleDef[] = [
     "R0000-090",
     "alert",
     "database",
-    alwaysPass,
+    irsSide,
     "'ImperfectReturnInd' is checked in the Return Header, but the return does not meet the necessary conditions.",
   ),
   rule(
@@ -222,28 +260,28 @@ export const R0000_RULES: readonly RuleDef[] = [
     "R0000-118-01",
     "reject_and_stop",
     "incorrect_data",
-    alwaysPass,
+    alwaysPass, // checked on the manifest: mef/submissions/submission-manifest.ts
     "If first two digits of the EFIN in the IRS Submission Manifest are 10, 21, 32, 44 or 53, then 'OriginatorTypeCd' in the Return Header must have the value \"OnlineFiler\".",
   ),
   rule(
     "R0000-119-01",
     "reject_and_stop",
     "incorrect_data",
-    alwaysPass,
+    alwaysPass, // checked on the manifest: mef/submissions/submission-manifest.ts
     "If 'OriginatorTypeCd' in the Return Header has the value \"OnlineFiler\", then the first two digits of the EFIN in the IRS Submission Manifest must be 10 or 21 or 32 or 44 or 53.",
   ),
   rule(
     "R0000-120",
     "reject_and_stop",
     "unsupported",
-    alwaysPass,
+    irsSide,
     "The IRS Submission type that was filed is not being accepted by Modernized e-File (MeF) at this time.  Please check the MeF web page under irs.gov for more information.  The submission type filed was <type>.",
   ),
   rule(
     "R0000-121",
     "reject_and_stop",
     "unsupported",
-    alwaysPass,
+    irsSide,
     "The ETIN associated with the Individual submission is not a participating transmitter.  Please check the Modernized e-File (MeF) web page under irs.gov for more information on participation rules.",
   ),
   rule(
@@ -295,7 +333,10 @@ export const R0000_RULES: readonly RuleDef[] = [
     "R0000-142-01",
     "alert",
     "incorrect_data",
-    alwaysPass,
+    ifThen(
+      hasValue("PaidPreparerInformationGrp"),
+      all(noValue("PreparerSSN"), allMatch("PTIN", /^P\d{8}$/)),
+    ),
     "If you are a paid tax return preparer, you must use a Preparer Tax Identification Number (PTIN) issued by the Internal Revenue Service (IRS) to identify yourself in the paid preparer section of the tax return. In future years, tax returns may be rejected if an SSN, or any number that is not a valid PTIN, is included in this field.",
   ),
   rule(
@@ -309,7 +350,7 @@ export const R0000_RULES: readonly RuleDef[] = [
     "R0000-180",
     "reject_and_stop",
     "incorrect_data",
-    alwaysPass,
+    alwaysPass, // checked on the manifest: mef/submissions/submission-manifest.ts
     "'TaxYr' specified in the Submission Manifest must equal the year of the schema version ('YYYY' digits of the attribute 'returnVersion' of the Return) that is being used to file the return.",
   ),
   rule(
@@ -323,21 +364,26 @@ export const R0000_RULES: readonly RuleDef[] = [
     "R0000-193",
     "reject",
     "incorrect_data",
-    alwaysPass,
+    all(
+      allMatch("ReturnHeader/DepositorAccountNum", /[^0]/),
+      allMatch("1040/DepositorAccountNum", /[^0]/),
+      allMatch("8888/DepositorAccountNum", /[^0]/),
+      allMatch("Payment/DepositorAccountNum", /[^0]/),
+    ),
     "Bank Account Number provided in the return must not be all zeros.",
   ),
   rule(
     "R0000-194",
     "reject_and_stop",
     "duplicate",
-    alwaysPass,
+    irsSide,
     "Submission must not be a duplicate of a previously accepted submission.",
   ),
   rule(
     "R0000-198",
     "reject_and_stop",
     "incorrect_data",
-    alwaysPass,
+    irsSide,
     "This return is ineligible to be filed electronically.",
   ),
   rule(
@@ -351,14 +397,29 @@ export const R0000_RULES: readonly RuleDef[] = [
     "R0000-205",
     "reject",
     "math_error",
-    alwaysPass,
+    ifThen(
+      hasNonZero("1040/QualifiedBusinessIncomeDedAmt"),
+      any(
+        all(formAbsent("form8995"), formAbsent("form8995a")),
+        amountLte(
+          amount("1040/QualifiedBusinessIncomeDedAmt"),
+          plus(
+            total("8995A/DPADSect199AgAllocAgricHortAmt"),
+            (ctx) => {
+              const form = ctx.hasForm("form8995a") ? "8995A" : "8995";
+              return Math.min(ctx.num(`${form}/QBIDedBfrIncomeLimitationAmt`), ctx.num(`${form}/IncomeLimitationAmt`));
+            },
+          ),
+        ),
+      ),
+    ),
     "If 'QualifiedBusinessIncomeDedAmt' in the return (1040, 1040NR, 1041) has a non-zero value, then it cannot be more than the sum of Form 8995-A, 'DPADSect199AGAllocAgricHortAmt' and the lesser of the QBI Limitation or TXI Limitation.",
   ),
   rule(
     "R0000-225",
     "reject_and_stop",
     "unsupported",
-    alwaysPass,
+    irsSide,
     "This submission contains a form or schedule that is not currently supported for electronic filing.",
   ),
   rule(
@@ -386,63 +447,63 @@ export const R0000_RULES: readonly RuleDef[] = [
     "R0000-236",
     "reject_and_stop",
     "unsupported",
-    alwaysPass,
+    irsSide,
     "This submission contains a form or schedule which MeF is not accepting as a binary attachment. Please verify whether it is valid for your submission to include the form or schedule. If valid, complete the form or schedule in XML format and resubmit.",
   ),
   rule(
     "R0000-500-01",
     "reject_and_stop",
     "database",
-    alwaysPass,
+    irsSide,
     "'PrimarySSN' and 'PrimaryNameControlTxt' in the Return Header must match the e-File database.",
   ),
   rule(
     "R0000-503-02",
     "reject_and_stop",
     "database",
-    alwaysPass,
+    irsSide,
     "Spouse SSN and Spouse Name Control in the return must match the e-File database.",
   ),
   rule(
     "R0000-504-02",
     "reject",
     "database",
-    alwaysPass,
+    irsSide,
     "Each 'DependentSSN' and the corresponding 'DependentNameControlTxt' that has a value in 'DependentDetail' in the return must match the SSN and Name Control in the e-File database.",
   ),
   rule(
     "R0000-533-02",
     "reject",
     "incorrect_data",
-    alwaysPass,
+    irsSide,
     "If a Dependent's Date of Death has a value in the e-File database, then it must not be prior to 'TaxYr' in the Return Header.",
   ),
   rule(
     "R0000-571-02",
     "reject",
     "database",
-    alwaysPass,
+    irsSide,
     "For each DependentSSN in the tax return, the Year of Birth in the e-File database must not be greater than 'TaxYr' in the Return Header.",
   ),
   rule(
     "R0000-904-03",
     "reject_and_stop",
     "database",
-    alwaysPass,
+    irsSide,
     "Software ID in the Return Header must have passed testing for the form family and 'TaxYr'.",
   ),
   rule(
     "R0000-905-01",
     "reject_and_stop",
     "database",
-    alwaysPass,
+    irsSide,
     "Electronic Filing Identification Number (EFIN) in the Return Header must be listed in the e-File database and in accepted status.",
   ),
   rule(
     "R0000-906-02",
     "reject",
     "database",
-    alwaysPass,
+    irsSide,
     "Routing Transit Number (RTN) included in the return must be present in the e-File database.",
   ),
 ];

@@ -6,7 +6,7 @@
  */
 
 import { formRefFromPrefix, ruleFormPrefix } from "./rule-builder.ts";
-import { alwaysPass } from "./predicates.ts";
+import { alwaysPass, irsSide } from "./predicates.ts";
 import type {
   DiagnosticEntry,
   DiagnosticsReport,
@@ -63,8 +63,10 @@ export function evaluateRules(
       continue;
     }
 
-    // An unimplemented rule is not checked, never counted as passed.
-    if (rule.check === null || rule.check === alwaysPass) {
+    // An unimplemented or IRS-side rule is not checked, never counted as passed.
+    if (
+      rule.check === null || rule.check === alwaysPass || rule.check === irsSide
+    ) {
       skipped++;
       continue;
     }

@@ -5,7 +5,8 @@
  * Each returns (ctx: ReturnContext) => boolean where true = rule passes.
  */
 
-import type { RuleCheck } from "./types.ts";
+import type { ReturnContext, RuleCheck } from "./types.ts";
+import { zipMatchesState } from "./zip-codes.ts";
 
 // ─── Field Value Checks ─────────────────────────────────
 
@@ -405,6 +406,12 @@ export const ifThenUnless = (
 /** Always passes — used for rules that can't be checked client-side. */
 export const alwaysPass: RuleCheck = () => true;
 
+/**
+ * A rule only the IRS can check: its e-File database, prior-year data or
+ * other submissions. Reported as not checked, like `alwaysPass`.
+ */
+export const irsSide: RuleCheck = () => true;
+
 /** Always fails — used for unconditional reject rules. */
 export const alwaysFail: RuleCheck = () => false;
 
@@ -542,6 +549,245 @@ export const allDistinct = (xml: string): RuleCheck =>
       .filter(Boolean);
     return new Set(items).size === items.length;
   };
+
+// ─── Groups, Amounts and Attachments ───────────────────
+
+/** An amount computed from the return. */
+export type Amount = (ctx: ReturnContext) => number;
+
+/**
+ * Every emitted instance of `group` satisfies `check`, which reads the group's
+ * elements and `locals` from that instance. Passes when the group is absent.
+ */
+export const eachGroup = (
+  group: string,
+  check: RuleCheck,
+  ...locals: string[]
+): RuleCheck =>
+  (ctx) => (ctx.groupInstances?.(group, locals) ?? []).every(check);
+
+/**
+ * Evaluate `check` against the rule's own document, so an element it lacks is
+ * never taken from an unrelated document that happens to share the name.
+ */
+export const inOwnDocument = (check: RuleCheck): RuleCheck =>
+  (ctx) => check(ctx.ownDocumentOnly?.() ?? ctx);
+
+/** How many emitted instances of `group` satisfy `check`. */
+export const groupCount = (
+  group: string,
+  check: RuleCheck = () => true,
+  ...locals: string[]
+): Amount =>
+  (ctx) => (ctx.groupInstances?.(group, locals) ?? []).filter(check).length;
+
+/** One field's value. */
+export const amount = (xml: string): Amount => (ctx) => ctx.num(xml);
+
+/** Constant amount. */
+export const constant = (n: number): Amount => () => n;
+
+/** Sum of every value of each field, repeated documents and groups included. */
+export const total = (...xml: string[]): Amount =>
+  (ctx) =>
+    xml.flatMap((f) => ctx.fieldArray(f))
+      .reduce<number>((s, v) => s + (Number(v) || 0), 0);
+
+/** Sum of `value` over the instances of `group` that satisfy `when`. */
+export const groupTotal = (
+  group: string,
+  value: Amount,
+  when: RuleCheck = () => true,
+  ...locals: string[]
+): Amount =>
+  (ctx) =>
+    (ctx.groupInstances?.(group, locals) ?? []).filter(when)
+      .reduce((s, g) => s + value(g), 0);
+
+/** Sum of amounts. */
+export const plus = (...amounts: Amount[]): Amount =>
+  (ctx) => amounts.reduce((s, a) => s + a(ctx), 0);
+
+/** a − b. */
+export const minus = (a: Amount, b: Amount): Amount => (ctx) => a(ctx) - b(ctx);
+
+/** |a − b| ≤ tolerance. */
+export const amountEq = (a: Amount, b: Amount, tolerance = 0.01): RuleCheck =>
+  (ctx) => Math.abs(a(ctx) - b(ctx)) <= tolerance;
+
+/** a ≤ b + tolerance. */
+export const amountLte = (a: Amount, b: Amount, tolerance = 0): RuleCheck =>
+  (ctx) => a(ctx) <= b(ctx) + tolerance;
+
+/** a < b. */
+export const amountLt = (a: Amount, b: Amount): RuleCheck =>
+  (ctx) => a(ctx) < b(ctx);
+
+/** Field value is one of the given strings. */
+export const strIn = (xml: string, ...values: string[]): RuleCheck =>
+  (ctx) => values.includes(String(ctx.field(xml) ?? ""));
+
+/** Every value of the field matches the pattern. */
+export const allMatch = (xml: string, pattern: RegExp): RuleCheck =>
+  (ctx) => ctx.fieldArray(xml).every((v) => pattern.test(String(v)));
+
+/** Field has a value whose length is at least n. */
+export const strLenAtLeast = (xml: string, n: number): RuleCheck =>
+  (ctx) => String(ctx.field(xml) ?? "").length >= n;
+
+const descriptions = (ctx: ReturnContext, document: string): string[] =>
+  ctx.fieldArray(`${document}/Desc`).map((v) => String(v).trim().toUpperCase());
+
+/** A binary attachment's Description begins with one of `prefixes` (case-insensitive). */
+export const attachmentDescStartsWith = (...prefixes: string[]): RuleCheck =>
+  (ctx) =>
+    descriptions(ctx, "BinaryAttachment").some((d) =>
+      prefixes.some((p) => d.startsWith(p.toUpperCase()))
+    );
+
+/** A binary attachment's Description is one of `descs` (case-insensitive). */
+export const attachmentDescIs = (...descs: string[]): RuleCheck =>
+  (ctx) =>
+    descriptions(ctx, "BinaryAttachment").some((d) =>
+      descs.some((desc) => d === desc.toUpperCase())
+    );
+
+/** A [GeneralDependencySmall] statement's Description begins with `prefix`. */
+export const generalDependencyDescStartsWith = (prefix: string): RuleCheck =>
+  (ctx) =>
+    descriptions(ctx, "GeneralDependencySmall").some((d) =>
+      d.startsWith(prefix.toUpperCase())
+    );
+
+/** Number of binary attachments whose Description is `desc` (case-insensitive). */
+export const attachmentCount = (desc: string): Amount =>
+  (ctx) =>
+    descriptions(ctx, "BinaryAttachment")
+      .filter((d) => d === desc.toUpperCase()).length;
+
+/** Number of emitted copies of a form. */
+export const formCountOf = (formId: string): Amount =>
+  (ctx) => ctx.formCount(formId);
+
+/** The smallest of the amounts. */
+export const lesser = (...amounts: Amount[]): Amount =>
+  (ctx) => Math.min(...amounts.map((a) => a(ctx)));
+
+/** Sum of `value` over each emitted document with the rule prefix. */
+export const documentTotal = (prefix: string, value: Amount): Amount =>
+  (ctx) =>
+    (ctx.emittedDocuments?.(prefix) ?? []).reduce((s, d) => s + value(d), 0);
+
+/** Number of binary attachments whose Description begins with one of `prefixes`. */
+export const attachmentCountStartingWith = (...prefixes: string[]): Amount =>
+  (ctx) =>
+    descriptions(ctx, "BinaryAttachment").filter((d) =>
+      prefixes.some((p) => d.startsWith(p.toUpperCase()))
+    ).length;
+
+const digits = (v: unknown): string => String(v ?? "").replace(/\D/g, "");
+
+/** No value of the fields is the PrimarySSN or SpouseSSN in the Return Header. */
+export const noneMatchHeaderSSN = (...xml: string[]): RuleCheck =>
+  (ctx) => {
+    const filers = [ctx.primarySSN(), ctx.spouseSSN()].map(digits)
+      .filter(Boolean);
+    return xml.flatMap((f) => ctx.fieldArray(f))
+      .every((v) => !filers.includes(digits(v)));
+  };
+
+/** Some value of the fields is the given filer's SSN from the Return Header. */
+export const someMatchesFilerSSN = (
+  filer: "primary" | "spouse",
+  ...xml: string[]
+): RuleCheck =>
+  (ctx) => {
+    const ssn = digits(filer === "primary" ? ctx.primarySSN() : ctx.spouseSSN());
+    return ssn !== "" &&
+      xml.flatMap((f) => ctx.fieldArray(f)).some((v) => digits(v) === ssn);
+  };
+
+/** Every value of `xml` is a value of one of the `allowed` fields, or a filer SSN when `filers`. */
+export const everyTinAmong = (
+  xml: readonly string[],
+  allowed: readonly string[],
+  filers = false,
+): RuleCheck =>
+  (ctx) => {
+    const known = new Set([
+      ...allowed.flatMap((f) => ctx.fieldArray(f)).map(digits),
+      ...(filers ? [ctx.primarySSN(), ctx.spouseSSN()].map(digits) : []),
+    ]);
+    return xml.flatMap((f) => ctx.fieldArray(f))
+      .every((v) => known.has(digits(v)));
+  };
+
+/** No value of `xml` is a value of one of the `forbidden` fields. */
+export const noTinAmong = (
+  xml: readonly string[],
+  forbidden: readonly string[],
+): RuleCheck =>
+  (ctx) => {
+    const taken = new Set(forbidden.flatMap((f) => ctx.fieldArray(f)).map(digits));
+    return xml.flatMap((f) => ctx.fieldArray(f))
+      .every((v) => !taken.has(digits(v)));
+  };
+
+/** A document with this rule prefix (or supporting-statement tag) is emitted. */
+export const documentPresent = (prefix: string): RuleCheck =>
+  (ctx) => (ctx.emittedDocuments?.(prefix) ?? []).length > 0;
+
+/** Some value occurs at least twice across the fields (TINs compared by digits). */
+export const someRepeated = (...xml: string[]): RuleCheck =>
+  (ctx) => {
+    const values = xml.flatMap((f) => ctx.fieldArray(f)).map(digits)
+      .filter(Boolean);
+    return new Set(values).size < values.length;
+  };
+
+/** Four-digit year of a date or year field, or NaN when absent. */
+export const yearOf = (xml: string): Amount =>
+  (ctx) => {
+    const m = String(ctx.field(xml) ?? "").match(/^(\d{4})/);
+    return m ? Number(m[1]) : NaN;
+  };
+
+/**
+ * Age at the end of 'TaxYr'. Someone born on January 1 reaches an age on
+ * December 31 of the year before (Pub 596; Pub 501). NaN when absent.
+ */
+export const ageAtYearEnd = (birthDateXml: string): Amount =>
+  (ctx) => {
+    const d = String(ctx.field(birthDateXml) ?? "");
+    const m = d.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+    if (!m) return NaN;
+    const age = ctx.num("TaxYr") - Number(m[1]);
+    return m[2] === "01" && m[3] === "01" ? age + 1 : age;
+  };
+
+/** The amount is known (not NaN). */
+export const known = (a: Amount): RuleCheck => (ctx) => !Number.isNaN(a(ctx));
+
+/** For a US address, the ZIP code is valid for its state (IRS ZIP list, Pub 4164 §13.8). */
+export const zipValidForState = (zipXml: string, stateXml: string): RuleCheck =>
+  (ctx) => {
+    const zip = String(ctx.field(zipXml) ?? "");
+    const state = String(ctx.field(stateXml) ?? "");
+    if (!zip || !state) return true;
+    return zipMatchesState(zip, state);
+  };
+
+/** The emitted ReturnData holds as many documents as its 'documentCnt' declares. */
+export const documentCntMatches: RuleCheck = (ctx) => {
+  const count = ctx.emittedDocumentCount?.();
+  return count?.declared === undefined || count.declared === count.actual;
+};
+
+/** An IRS-issued ITIN or ATIN: the SSA never issues an SSN beginning with 9. */
+export const isItinOrAtin = (v: unknown): boolean => {
+  const d = digits(v);
+  return d.length === 9 && d.startsWith("9");
+};
 
 // ─── Rule Builder Helper ────────────────────────────────
 

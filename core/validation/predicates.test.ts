@@ -5,7 +5,7 @@ import { test } from "bun:test";
 
 import { assertEquals } from "@std/assert";
 import { createReturnContext } from "./context.ts";
-import { allDistinct, betweenNum, diffLteNum, eqCappedProduct, everyItem, forEach, notGtPctOfField, ssnMiddleDigitsEq, sumOfAll, validEIN } from "./predicates.ts";
+import { ageAtYearEnd, allDistinct, betweenNum, diffLteNum, eqCappedProduct, everyItem, forEach, notGtPctOfField, ssnMiddleDigitsEq, sumOfAll, validEIN } from "./predicates.ts";
 
 /** Build a ReturnContext with the given flat fields under "f1040". */
 function ctx(fields: Record<string, unknown>) {
@@ -235,4 +235,10 @@ test("eqCappedProduct: a capped form line equals the smaller of the product and 
   assertEquals(check(ctx({ Cost: 600, Credit: 180 })), true);
   assertEquals(check(ctx({ Cost: 685, Credit: 206 })), true);
   assertEquals(check(ctx({ Cost: 600, Credit: 250 })), false);
+});
+
+test("ageAtYearEnd: a January 1 birthday counts as reached on December 31", () => {
+  assertEquals(ageAtYearEnd("Born")(ctx({ Born: "2001-01-01", TaxYr: 2025 })), 25);
+  assertEquals(ageAtYearEnd("Born")(ctx({ Born: "2001-01-02", TaxYr: 2025 })), 24);
+  assertEquals(Number.isNaN(ageAtYearEnd("Born")(ctx({ TaxYr: 2025 }))), true);
 });

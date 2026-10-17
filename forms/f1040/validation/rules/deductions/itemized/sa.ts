@@ -1,11 +1,49 @@
 /**
  * MeF Business Rules: SA
  * Auto-generated from 1040_Business_Rules_2025v3.0.csv
- * 61 rules (52 implemented, 9 stubs)
+ * 61 rules (57 implemented, 4 IRS-side)
  */
 
 import type { RuleDef } from "../../../../../../core/validation/types.ts";
-import { rule, allDistinct, alwaysPass, dateGteField, dateLteField, decimalPlacesEq, eqField, eqMin, eqMinNum, eqNum, eqProduct, eqStr, eqSum, hasValue, hasNonZero, gt, gte, ifThen, isZero, lt, noValue, not, notGtField, notGtNum, notLtSum, strLenEq, any, all, formPresent, filingStatusIs, filingStatusNot, sumOfAll, } from "../../../../../../core/validation/mod.ts";
+import {
+  all,
+  allDistinct,
+  amount,
+  amountLte,
+  any,
+  attachmentDescStartsWith,
+  dateGteField,
+  dateLteField,
+  decimalPlacesEq,
+  eqField,
+  eqMin,
+  eqMinNum,
+  eqNum,
+  eqProduct,
+  eqStr,
+  eqSum,
+  filingStatusIs,
+  filingStatusNot,
+  formPresent,
+  groupTotal,
+  gt,
+  gte,
+  hasNonZero,
+  hasValue,
+  ifThen,
+  inOwnDocument,
+  irsSide,
+  isZero,
+  lt,
+  noValue,
+  not,
+  notGtField,
+  notGtNum,
+  notLtSum,
+  rule,
+  strLenEq,
+  sumOfAll,
+} from "../../../../../../core/validation/mod.ts";
 
 export const SA_RULES: readonly RuleDef[] = [
   rule(
@@ -26,7 +64,12 @@ export const SA_RULES: readonly RuleDef[] = [
     "SA-F1040-003-02",
     "reject",
     "missing_document",
-    alwaysPass, // requires binary attachment check: Art Appraisal attachment or Form8283PaperDocumentInd in Return Header
+    inOwnDocument(
+      ifThen(
+        all(gte("OtherThanByCashOrCheckAmt", 20000), hasValue("8283/ArtWorthAtLeast20000DollarsInd")),
+        any(attachmentDescStartsWith("Art Appraisal"), hasValue("Form8283PaperDocumentInd")),
+      ),
+    ),
     "If Schedule A (Form 1040), 'OtherThanByCashOrCheckAmt' is greater than or equal to 20000 and Form 8283, Section B, Part 1, 'ArtWorthAtLeast20000DollarsInd' is checked, then a binary attachment with Description beginning with \"Art Appraisal\" must be attached to Form 8283 or 'Form8283PaperDocumentInd' in the Return Header must be checked.",
   ),
   rule(
@@ -82,7 +125,17 @@ export const SA_RULES: readonly RuleDef[] = [
     "SA-F1040-023-01",
     "reject",
     "missing_document",
-    alwaysPass, // requires string value check in repeating group: MiscellaneousDeductionTypeDesc matching specific values
+    inOwnDocument(
+      ifThen(
+        all(
+          hasNonZero("OtherMiscellaneousDedAmt"),
+          (ctx) => ctx.fieldArray("OtherMiscDeductionsStmt/MiscellaneousDeductionTypeDesc").some((d) =>
+            ["NET QUALIFIED DISASTER LOSS", "STANDARD DEDUCTION CLAIMED WITH QUALIFIED DISASTER LOSS"].includes(String(d))
+          ),
+        ),
+        formPresent("form4684"),
+      ),
+    ),
     "If Schedule A (Form 1040), 'OtherMiscellaneousDedAmt' has a non-zero value and 'MiscellaneousDeductionTypeDesc' in [OtherMiscellaneousDeductionsStatement] has the value [\"NET QUALIFIED DISASTER LOSS\" or \"STANDARD DEDUCTION CLAIMED WITH QUALIFIED DISASTER LOSS\"], then Form 4684 must be present in the return.",
   ),
   rule(
@@ -96,7 +149,21 @@ export const SA_RULES: readonly RuleDef[] = [
     "SA-F1040-025-01",
     "reject",
     "incorrect_data",
-    alwaysPass, // requires cross-form comparison with repeating group value filtered by MiscellaneousDeductionTypeDesc = "GAMBLING LOSSES"
+    inOwnDocument(
+      ifThen(
+        hasNonZero("OtherMiscellaneousDedAmt"),
+        amountLte(
+          groupTotal(
+            "OtherMiscDeductionsStmt/MiscellaneousDeductionDetail",
+            amount("MiscellaneousDeductionAmt"),
+            eqStr("MiscellaneousDeductionTypeDesc", "GAMBLING LOSSES"),
+            "MiscellaneousDeductionTypeDesc",
+            "MiscellaneousDeductionAmt",
+          ),
+          amount("Schedule1/GamblingReportableWinningAmt"),
+        ),
+      ),
+    ),
     "If Schedule A (Form 1040), 'OtherMiscellaneousDedAmt' has a non-zero value, then Schedule 1 (Form 1040), 'GamblingReportableWinningAmt' must be greater than or equal to 'MiscellaneousDeductionAmt' in [OtherMiscDeductionsStmt] with corresponding 'MiscellaneousDeductionTypeDesc' having the value \"GAMBLING LOSSES\".",
   ),
   rule(
@@ -264,7 +331,7 @@ export const SA_RULES: readonly RuleDef[] = [
     "SA-F8936-030-01",
     "reject",
     "incorrect_data",
-    alwaysPass, // requires e-File database lookup: VIN validation against IRS vehicle database
+    irsSide,
     "Schedule A (Form 8936), 'VIN' does not match the e-File database. Please resubmit the return using the correct VIN. If the VIN originally entered is correct, then a binary attachment or [GeneralDependencySmall] with description beginning with \"Substantiate VIN\" must be present in the return.",
   ),
   rule(
@@ -376,21 +443,21 @@ export const SA_RULES: readonly RuleDef[] = [
     "SA-F8936-046",
     "reject",
     "incorrect_data",
-    alwaysPass, // requires e-File database lookup: TIN/VIN cross-reference validation against IRS Time of Sale database
+    irsSide,
     "Schedule A (Form 8936), 'TIN' does not match 'VIN' shown in the e-File database. Please refer to your Time of Sale report and resubmit your return.",
   ),
   rule(
     "SA-F8936-047",
     "reject",
     "incorrect_data",
-    alwaysPass, // requires e-File database lookup: credit type validation against IRS vehicle credit database
+    irsSide,
     "Schedule A (Form 8936) credit amount does not match the type of credit reported in e-File database.",
   ),
   rule(
     "SA-F8936-048",
     "reject",
     "incorrect_data",
-    alwaysPass, // requires e-File database lookup: vehicle purchase date validation against IRS Time of Sale database
+    irsSide,
     "The e-File database indicates this vehicle was not purchased during the tax period of the return.",
   ),
   rule(

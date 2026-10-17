@@ -1,11 +1,37 @@
 /**
  * MeF Business Rules: S1
  * Auto-generated from 1040_Business_Rules_2025v3.0.csv
- * 28 rules (25 implemented, 3 stubs)
+ * 28 rules (28 implemented)
  */
 
 import type { RuleDef } from "../../../../../../core/validation/types.ts";
-import { rule, alwaysPass, eqField, eqSum, hasValue, hasNonZero, gt, ifThen, isZero, noValue, not, any, all, formPresent, filingStatusIs, filingStatusNot, sumGtNum, sumOfAll, validSSN, ssnNotEqual, } from "../../../../../../core/validation/mod.ts";
+import {
+  all,
+  amount,
+  amountEq,
+  any,
+  eqField,
+  eqSum,
+  filingStatusIs,
+  filingStatusNot,
+  formPresent,
+  gt,
+  hasNonZero,
+  hasValue,
+  ifThen,
+  inOwnDocument,
+  isZero,
+  minus,
+  noValue,
+  not,
+  plus,
+  rule,
+  ssnNotEqual,
+  sumGtNum,
+  sumOfAll,
+  total,
+  validSSN,
+} from "../../../../../../core/validation/mod.ts";
 
 export const S1_RULES: readonly RuleDef[] = [
   rule(
@@ -68,14 +94,42 @@ export const S1_RULES: readonly RuleDef[] = [
     "S1-F1040-080-03",
     "reject",
     "math_error",
-    alwaysPass, // requires cross-instance aggregation: sum across multiple repeating groups minus exclusions
+    inOwnDocument(
+      amountEq(
+        amount("TotalOtherIncomeAmt"),
+        minus(
+          plus(
+            total(
+              "GamblingReportableWinningAmt", "DebtCancellationAmt", "TotArcherMSAMedcrLTCAmt",
+              "TotHSADistriHDHPAmt", "AlaskaPermanentFundDivAmt", "JuryDutyPayAmt", "PrizesAwardsAmt",
+              "ActivityNotForProfitIncmAmt", "StockOptionsAmt", "RentalIncomePersonalPropAmt",
+              "OlympicParalympicMedalUSOCAmt", "Section951aInclusionAmt", "Section951AaInclusionAmt",
+              "ExcessBusinessLossAmt", "TaxableABLEDistributionsAmt", "GrantsOrScholarshipsAmt",
+              "NonqlfyDeferredCompensationAmt", "CertainPenalInstnWagesAmt", "DigitalAssetsAmt",
+            ),
+            total("OtherIncomeTypeStatement/OtherIncomeAmt"),
+          ),
+          total("NetOperatingLossDeductionAmt", "TotalIncomeExclusionAmt", "NontxMedicaidWaiverPymtAmt"),
+        ),
+      ),
+    ),
     "Schedule 1 (Form 1040), 'TotalOtherIncomeAmt' must be equal to the sum of [ 'GamblingReportableWinningAmt' and 'DebtCancellationAmt' and 'TotArcherMSAMedcrLTCAmt' and 'TotHSADistriHDHPAmt' and 'AlaskaPermanentFundDivAmt' and 'JuryDutyPayAmt' and 'PrizesAwardsAmt' and 'ActivityNotForProfitIncmAmt' and 'StockOptionsAmt' and 'RentalIncomePersonalPropAmt' and 'OlympicParalympicMedalUSOCAmt' and 'Section951aInclusionAmt' and 'Section951AaInclusionAmt' and 'ExcessBusinessLossAmt' and 'TaxableABLEDistributionsAmt' and 'GrantsOrScholarshipsAmt' and 'NonqlfyDeferredCompensationAmt' and 'CertainPenalInstnWagesAmt' and 'DigitalAssetsAmt' and the sum of all 'OtherIncomeAmt' in [OtherIncomeTypeStatement] ] minus (-) the sum of [ 'NetOperatingLossDeductionAmt' and 'TotalIncomeExclusionAmt' and 'NontxMedicaidWaiverPymtAmt' ].",
   ),
   rule(
     "S1-F1040-115",
     "reject",
     "data_mismatch",
-    alwaysPass, // requires cross-form conditional: non-zero from ScheduleE TotalIncomeOrLossAmt or TotalSuppIncomeOrLossAmt, unless Form 8958 present
+    inOwnDocument(
+      any(
+        formPresent("form8958"),
+        (ctx) => {
+          const total = ctx.num("ScheduleE/TotalIncomeOrLossAmt");
+          const supplemental = ctx.num("ScheduleE/TotalSuppIncomeOrLossAmt");
+          const expected = supplemental !== 0 ? supplemental : total;
+          return Math.abs(ctx.num("RentalRealEstateIncomeLossAmt") - expected) < 0.01;
+        },
+      ),
+    ),
     "Schedule 1 (Form 1040), 'RentalRealEstateIncomeLossAmt' must be equal to the non-zero amount from Schedule E (Form 1040), ['TotalIncomeOrLossAmt' or 'TotalSuppIncomeOrLossAmt'] unless Form 8958 is present in the return. If both 'TotalIncomeOrLossAmt' and 'TotalSuppIncomeOrLossAmt' have non-zero values, then 'RentalRealEstateIncomeLossAmt' must be equal to 'TotalSuppIncomeOrLossAmt'.",
   ),
   rule(

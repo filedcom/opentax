@@ -3,6 +3,7 @@ import { assertEquals } from "@std/assert";
 import { createReturnContext } from "../../../../../../core/validation/context.ts";
 import { parseEmittedReturn } from "../../../../../../core/validation/emitted-documents.ts";
 import type { RuleDef } from "../../../../../../core/validation/types.ts";
+import { emittedRulePasses } from "../../../../../../core/test-utils/emitted-rule.ts";
 import { FIELD_REGISTRY } from "../../../field-registry.ts";
 import { F1040_RULES } from "../submission/return-assembly/f1040.ts";
 import { S3_RULES } from "./s3.ts";
@@ -40,4 +41,16 @@ test("S3-F1040-013-02 accepts line 6c nonrefundable adoption credit as an other 
     ),
     false,
   );
+});
+
+const ret = (line18: number, schedule3: number, form8978: number) =>
+  `<IRS1040 documentId="a"><TotalTaxBeforeCrAndOthTaxesAmt>${line18}</TotalTaxBeforeCrAndOthTaxesAmt></IRS1040>` +
+  `<IRS1040Schedule3 documentId="s"><TotRptgYrTxIncreaseDecreaseAmt>${schedule3}</TotRptgYrTxIncreaseDecreaseAmt></IRS1040Schedule3>` +
+  `<IRS8978 documentId="p"><TotRptgYrTxIncreaseDecreaseAmt>${form8978}</TotRptgYrTxIncreaseDecreaseAmt></IRS8978>`;
+
+test("S3-F1040-109-01 and S3-F1040-021 limit a Form 8978 decrease to the line 18 tax", () => {
+  assertEquals(emittedRulePasses(S3_RULES, "S3-F1040-109-01", { documents: ret(1_000, 400, -400) }), true);
+  assertEquals(emittedRulePasses(S3_RULES, "S3-F1040-109-01", { documents: ret(1_000, 300, -400) }), false);
+  assertEquals(emittedRulePasses(S3_RULES, "S3-F1040-021", { documents: ret(300, 300, -400) }), true);
+  assertEquals(emittedRulePasses(S3_RULES, "S3-F1040-021", { documents: ret(300, 400, -400) }), false);
 });

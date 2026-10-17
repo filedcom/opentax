@@ -1,18 +1,53 @@
 /**
  * MeF Business Rules: FW2
  * Auto-generated from 1040_Business_Rules_2025v3.0.csv
- * 10 rules (11 implemented, 0 stubs)
+ * 10 rules (8 implemented, 2 IRS-side)
  */
 
 import type { RuleDef } from "../../../../../../core/validation/types.ts";
-import { rule, alwaysPass, any, eqStr, hasValue, ifThen, matchesHeaderSSN, validEIN, } from "../../../../../../core/validation/mod.ts";
+import {
+  amount,
+  amountLte,
+  any,
+  documentTotal,
+  eachGroup,
+  eqStr,
+  formPresent,
+  hasNonZero,
+  hasValue,
+  ifThen,
+  inOwnDocument,
+  irsSide,
+  matchesHeaderSSN,
+  plus,
+  rule,
+  strLenAtLeast,
+  total,
+  validEIN,
+} from "../../../../../../core/validation/mod.ts";
 
 export const FW2_RULES: readonly RuleDef[] = [
   rule(
     "FW2-001-03",
     "reject",
     "math_error",
-    alwaysPass, // requires cross-form sum comparison with tolerance: sum(W2 wages) <= return wages + sum(SchC statutory gross receipts), unless Form 8958 present or certain Schedule 1 fields nonzero
+    inOwnDocument(
+      any(
+        amountLte(
+          total("W2/WagesAmt"),
+          plus(
+            amount("1040/WagesAmt"),
+            documentTotal("SC", (d) => d.hasValue("StatutoryEmployeeFromW2Ind") ? d.num("TotalGrossReceiptsAmt") : 0),
+          ),
+          5,
+        ),
+        any(
+          formPresent("form8958"),
+          hasNonZero("Schedule1/CertainPenalInstnWagesAmt"),
+          hasNonZero("Schedule1/NonqlfyDeferredCompensationAmt"),
+        ),
+      ),
+    ),
     "The sum of all Form W-2s, 'WagesAmt' must not be greater than the sum of ['WagesAmt' in the return and (sum of all Schedule C (Form 1040), 'TotalGrossReceiptsAmt' when 'StatutoryEmployeeFromW2Ind' is checked)] unless Form 8958 is present in the return or Schedule 1 (Form 1040), 'CertainPenalInstnWagesAmt' or 'NonqlfyDeferredCompensationAmt' has a non-zero value. When evaluating this, a tolerance of $5.00 is allowed.",
   ),
   rule(
@@ -33,14 +68,14 @@ export const FW2_RULES: readonly RuleDef[] = [
     "FW2-007-01",
     "reject",
     "incorrect_data",
-    alwaysPass, // requires string length validation: CityNm in EmployerUSAddress must have >= 3 chars
+    inOwnDocument(ifThen(hasValue("EmployerUSAddress/CityNm"), strLenAtLeast("EmployerUSAddress/CityNm", 3))),
     "'CityNm' of Form W-2, Line C 'EmployerUSAddress' must contain at least three characters.",
   ),
   rule(
     "FW2-008-01",
     "reject",
     "incorrect_data",
-    alwaysPass, // requires string length validation: CityNm in EmployerForeignAddress must have >= 3 chars
+    inOwnDocument(ifThen(hasValue("EmployerForeignAddress/CityNm"), strLenAtLeast("EmployerForeignAddress/CityNm", 3))),
     "'CityNm' of Form W-2, Line C 'EmployerForeignAddress' must contain at least three characters.",
   ),
   rule(
@@ -54,7 +89,14 @@ export const FW2_RULES: readonly RuleDef[] = [
     "FW2-012",
     "reject",
     "missing_data",
-    alwaysPass, // requires per-item mutual presence check within EmployersUseGrp repeating group
+    inOwnDocument(
+      eachGroup(
+        "EmployersUseGrp",
+        (ctx) => ctx.hasValue("EmployersUseCd") === ctx.hasValue("EmployersUseAmt"),
+        "EmployersUseCd",
+        "EmployersUseAmt",
+      ),
+    ),
     "In 'EmployersUseGrp' on Form W-2, if one of the following has a value, then the other must also have a value: 'EmployersUseCd' and 'EmployersUseAmt'.",
   ),
   rule(
@@ -68,14 +110,14 @@ export const FW2_RULES: readonly RuleDef[] = [
     "FW2-502",
     "reject",
     "incorrect_data",
-    alwaysPass, // requires e-File database lookup
+    irsSide,
     "Form W-2, Line B 'EmployerEIN' must match data in the eFile database.",
   ),
   rule(
     "FW2-505-01",
     "reject",
     "incorrect_data",
-    alwaysPass, // requires e-File database lookup for EIN issuance date
+    irsSide,
     "Form W-2, Line B 'EmployerEIN' was issued after the Tax Year in the Return Header.",
   ),
 ];

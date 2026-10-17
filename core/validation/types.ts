@@ -63,6 +63,32 @@ export interface ReturnContext {
 
   /** One context per emitted document governed by a rule prefix. */
   forRulePrefix?(prefix: string): readonly ReturnContext[];
+
+  /**
+   * One context per emitted instance of a group ("Grp", or "Doc/Grp" for
+   * another document), where the group's own elements, and any `locals`, are
+   * read from that instance only. Empty when the group is absent or nothing
+   * was emitted.
+   */
+  groupInstances?(
+    group: string,
+    locals?: readonly string[],
+  ): readonly ReturnContext[];
+
+  /**
+   * One context per emitted document with this rule prefix, reading the
+   * document's own elements from itself only; empty when none.
+   */
+  emittedDocuments?(prefix: string): readonly ReturnContext[];
+
+  /**
+   * This context, except that an element absent from its own document is not
+   * read from another document unless the Return Header or Form 1040 has it.
+   */
+  ownDocumentOnly?(): ReturnContext;
+
+  /** Emitted ReturnData documents: those counted and the declared 'documentCnt'. */
+  emittedDocumentCount?(): { readonly actual: number; readonly declared?: number };
 }
 
 /** A rule check function. Returns true if the rule PASSES (no violation). */
