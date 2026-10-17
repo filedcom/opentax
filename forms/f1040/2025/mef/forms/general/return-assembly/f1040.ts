@@ -870,6 +870,20 @@ function buildIRS1040(fields: Input, context?: MefBuildContext): string {
           : undefined,
       );
     }
+    if (key === "line25b_withheld_1099") {
+      const statementId = context?.documentIdsByPendingKey
+        ?.other_withholding_statement?.[0];
+      return element(
+        tag,
+        value,
+        statementId
+          ? {
+            referenceDocumentId: statementId,
+            referenceDocumentName: "OtherWithholdingStatement",
+          }
+          : undefined,
+      );
+    }
     if (key === "line27_eitc" && value > 0) {
       const scheduleId = context?.documentIdsByPendingKey?.eitc?.[0];
       return element(

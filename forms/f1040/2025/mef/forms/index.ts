@@ -125,6 +125,7 @@ import { form8978 } from "./taxes/passthrough/f8978.ts";
 import { form8978ScheduleA } from "./taxes/passthrough/f8978_schedule_a.ts";
 import { form8994 } from "./credits/business/f8994.ts";
 import { anyOtherTaxesStatement } from "./taxes/other/any_other_taxes_statement.ts";
+import { otherWithholdingStatement } from "./payments/withholding/other_withholding_statement.ts";
 import { schedule1OtherIncomeStatement } from "./general/return-assembly/schedule1/schedule1_other_income_statement.ts";
 import { scheduleAOtherTaxStatement } from "./deductions/itemized/schedule_a_other_tax_statement.ts";
 import { scheduleALine8bSellerStatement } from "./deductions/itemized/schedule_a_line8b_seller_statement.ts";
@@ -376,6 +377,8 @@ export const ALL_MEF_FORMS = [
   schedule1OtherIncomeStatement,
   // Schedule 2 line 17z statement precedes WagesNotShownSchedule in ReturnData.
   anyOtherTaxesStatement,
+  // Form 1040 line 25b statement precedes WagesNotShownSchedule in ReturnData.
+  otherWithholdingStatement,
   wagesNotShownSchedule,
   scheduleAOtherTaxStatement,
   scheduleALine16EstateStatement,
