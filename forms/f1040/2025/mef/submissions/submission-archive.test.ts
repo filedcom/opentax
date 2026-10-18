@@ -124,6 +124,7 @@ function filer(): FilerIdentity {
     primarySSN: "123456789",
     nameLine1: "TAXPAYER TEST",
     nameControl: "TAXP",
+    firstName: "Test",
     firstNameWithInitial: "Test",
     lastName: "Taxpayer",
     fullName: "Test Taxpayer",
@@ -153,6 +154,18 @@ test("prepared ReturnData rejects a second IRS1040 document", () => {
   );
 });
 
+/** A transmission carries one return per taxpayer (R0000-194). */
+function otherTaxpayer(index: number) {
+  const primarySSN = `12345678${9 - index}`;
+  return {
+    filer: { ...filer(), primarySSN },
+    residencyReview: {
+      ...residencyReview,
+      taxpayer: { ...residencyReview.taxpayer, tin: primarySSN },
+    },
+  };
+}
+
 async function makeSubmissionArchive(
   pending: MefFormsPending,
   options: {
@@ -160,16 +173,14 @@ async function makeSubmissionArchive(
     submissionId: string;
     processingDate: Date;
     attachments: ReadonlyArray<MefPdfAttachment>;
+    residencyReview?: typeof residencyReview;
   },
 ) {
   const bundle = await buildMefBundle(pending, {
     filer: options.filer,
     attachments: options.attachments,
   });
-  return buildMefSubmissionArchive(bundle, {
-    ...options,
-    residencyReview,
-  });
+  return buildMefSubmissionArchive(bundle, { residencyReview, ...options });
 }
 
 test("MeF submission refuses an unanswered digital-asset question", async () => {
@@ -1044,11 +1055,11 @@ test("MeF submission ZIP includes Form 8824 gain statement linked from the form"
 test("A2A request entries match both ZIP attachments in order", async () => {
   const ids = ["1234562026269abcdefg", "1234562026269abcdefh"];
   const archives = await Promise.all(
-    ids.map((id) =>
+    ids.map((id, index) =>
       makeSubmissionArchive({
         f1040: { filing_status: "single", digital_assets: false },
       }, {
-        filer: filer(),
+        ...otherTaxpayer(index),
         submissionId: id,
         processingDate,
         attachments: [],
@@ -1072,11 +1083,11 @@ test("A2A request entries match both ZIP attachments in order", async () => {
 
 test("A2A request omits an absent electronic postmark per Publication 5830", async () => {
   const ids = ["1234562026269abcdefg", "1234562026269abcdefh"];
-  const archives = await Promise.all(ids.map((id) =>
+  const archives = await Promise.all(ids.map((id, index) =>
     makeSubmissionArchive({
       f1040: { filing_status: "single", digital_assets: false },
     }, {
-      filer: filer(),
+      ...otherTaxpayer(index),
       submissionId: id,
       processingDate,
       attachments: [],

@@ -5,7 +5,6 @@ Income tax, additional taxes, recapture, interest, and penalties.
 | Area | Contents |
 | --- | --- |
 | [amt](amt) | 6 files |
-| [other](other/README.md) | 1 files |
 | [retirement](retirement) | 6 files |
 | [self-employment](self-employment) | 3 files |
 

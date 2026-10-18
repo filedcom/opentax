@@ -35,7 +35,7 @@ positive Schedule 2 route. Both were incorrect and have been removed.
 
 The positive path and native MeF documents are in the current build pass but
 have not yet passed the requested full-batch tests. The negative path currently
-fails explicitly. See `product_board.md` for the release gate.
+fails explicitly.
 
 Sources: [Form 8978 instructions](https://www.irs.gov/instructions/i8978),
 [2025 Form 1040 instructions](https://www.irs.gov/instructions/i1040gi), and

@@ -4,7 +4,8 @@ You extract complete tax scenarios from IRS publications where the IRS itself pr
 
 ## Your Input
 
-- Source type: `vita` | `pub17` | `mef` | free-form description
+- Source type: `vita` | `pub17` | `instructions` | free-form description
+- Form and tax year (default `f1040`, 2025); use that year's editions
 - Output path: `.state/bench/irs-cases-raw.json`
 
 ## Primary Sources (in priority order)
@@ -12,6 +13,7 @@ You extract complete tax scenarios from IRS publications where the IRS itself pr
 ### 1. VITA/TCE Pub 4491 — Best source
 
 IRS Volunteer Income Tax Assistance training. Contains complete exercises with:
+
 - Taxpayer interview summary (all input values)
 - Completed forms with every line filled in
 - Answer keys with AGI, taxable income, total tax, refund/owed
@@ -20,6 +22,10 @@ Fetch: `https://www.irs.gov/pub/irs-pdf/p4491.pdf`
 
 Also check the accompanying workbook: `https://www.irs.gov/pub/irs-pdf/p4491x.pdf`
 
+`irs-pdf/` holds the current revision; a past year's edition is at
+`https://www.irs.gov/pub/irs-prior/p4491--{year}.pdf` (same pattern for other
+publications).
+
 Each exercise is a full tax scenario. Extract every exercise that has a complete answer key.
 
 ### 2. Publication 17 — "Your Federal Income Tax"
@@ -27,6 +33,7 @@ Each exercise is a full tax scenario. Extract every exercise that has a complete
 `https://www.irs.gov/pub/irs-pdf/p17.pdf`
 
 Contains dozens of worked examples showing specific computations. Best for:
+
 - SSA taxability worksheet
 - EITC phase-out examples
 - Capital gains tax worksheet
@@ -34,18 +41,12 @@ Contains dozens of worked examples showing specific computations. Best for:
 
 These are usually partial (not full returns), so combine with surrounding context to reconstruct the full scenario.
 
-### 3. IRS MeF Test Cases
-
-IRS publishes test scenarios for software developers. Search for "IRS Modernized e-File test cases 1040" or check:
-`https://www.irs.gov/e-file-providers/modernized-e-file-mef-test-packages`
-
-These are the most authoritative — the IRS uses them to certify tax software.
-
-### 4. Form Instructions (targeted)
+### 3. Form Instructions (targeted)
 
 When sourcing specific edge cases, form instructions often have filled-in examples:
+
 - Form 8812 instructions → CTC/ACTC worksheet examples
-- Form 8960 instructions → NIIT examples  
+- Form 8960 instructions → NIIT examples
 - Form 8959 instructions → Additional Medicare Tax examples
 - Schedule D instructions → capital gains tax worksheet examples
 
@@ -56,6 +57,7 @@ When sourcing specific edge cases, form instructions often have filled-in exampl
 **Step 1** — Verify it's complete: must have at minimum the values for total tax (line 24) AND either refund (line 35a) or amount owed (line 37).
 
 **Step 2** — Extract inputs. These are the taxpayer's raw documents:
+
 - Filing status
 - W-2 box values (wages, withholding, SS wages/withheld, Medicare wages/withheld)
 - 1099 amounts (interest, dividends, unemployment, Social Security, pension/IRA)
@@ -66,6 +68,7 @@ When sourcing specific edge cases, form instructions often have filled-in exampl
 - Any other deductions or adjustments
 
 **Step 3** — Extract IRS-provided correct values. Record every line the IRS shows:
+
 - line11_agi
 - line15_taxable_income
 - line24_total_tax
@@ -73,6 +76,7 @@ When sourcing specific edge cases, form instructions often have filled-in exampl
 - line35a_refund OR line37_amount_owed (whichever applies)
 
 **Step 4** — Record the source citation precisely:
+
 - Publication name and number
 - Tax year
 - Exercise/example number

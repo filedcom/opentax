@@ -31,7 +31,7 @@ export function rule(
   ruleNumber: string,
   severity: Severity,
   category: ErrorCategory,
-  check: RuleCheck | null,
+  check: RuleCheck,
   ruleText = "",
 ): RuleDef {
   return { ruleNumber, ruleText, severity, category, check };
@@ -47,8 +47,15 @@ export function parseCategory(csv: string): ErrorCategory {
   return CATEGORY_MAP[csv.trim()] ?? "incorrect_data";
 }
 
-/** Extract the form prefix from a rule number (e.g., "F1040" from "F1040-003-02"). */
+/**
+ * The prefix of the document a rule governs: "F1040" for "F1040-003-02", and
+ * "F8936ScheduleA" for "SA-F8936-001", a schedule of another form.
+ */
 export function ruleFormPrefix(ruleNumber: string): string {
+  const schedule = /^S([A-Z][A-Z0-9]*)-F([0-9][0-9A-Z]*)-/.exec(ruleNumber);
+  if (schedule && schedule[2] !== "1040" && schedule[1] !== "SA") {
+    return `F${schedule[2]}Schedule${schedule[1]}`;
+  }
   const dash = ruleNumber.indexOf("-");
   return dash === -1 ? ruleNumber : ruleNumber.slice(0, dash);
 }
@@ -97,6 +104,8 @@ export function formRefFromPrefix(prefix: string): string {
     SCHK3: "Schedule K-3",
   };
   if (MAP[prefix]) return MAP[prefix];
+  const schedule = /^F([0-9][0-9A-Z]*?)Schedule([A-Z0-9]+)$/.exec(prefix);
+  if (schedule) return `Schedule ${schedule[2]} (Form ${schedule[1]})`;
   if (prefix.startsWith("F")) return `Form ${prefix.slice(1)}`;
   return prefix;
 }

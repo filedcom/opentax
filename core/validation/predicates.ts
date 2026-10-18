@@ -121,11 +121,11 @@ const VALID_EIN_PREFIXES = new Set([
   "93","94","95","98","99",
 ]);
 
-/** EIN is 9 numeric digits with a valid IRS-assigned prefix (Pub 1586). */
 /** An Assurance Testing System return (Pub 1436), not a production filing. */
 export const isAtsTest: RuleCheck = (ctx) =>
   ctx.field("ats_test_submission") === true;
 
+/** EIN is 9 numeric digits with a valid IRS-assigned prefix (Pub 1586). */
 export const validEIN = (xml: string): RuleCheck =>
   (ctx) => {
     const v = String(ctx.field(xml) ?? "").replace(/\D/g, "");
@@ -150,7 +150,6 @@ export const validSSN = (xml: string): RuleCheck =>
     const v = String(ctx.field(xml) ?? "").replace(/\D/g, "");
     if (v.length !== 9) return false;
     if (v === "000000000" || v === "999999999") return false;
-    if (v.startsWith("9") && !v.startsWith("9")) return true; // ITIN starts with 9
     return true;
   };
 
@@ -403,15 +402,6 @@ export const ifThenUnless = (
   exception: RuleCheck,
 ): RuleCheck =>
   (ctx) => !condition(ctx) || requirement(ctx) || exception(ctx);
-
-/** Always passes — used for rules that can't be checked client-side. */
-export const alwaysPass: RuleCheck = () => true;
-
-/**
- * A rule only the IRS can check: its e-File database, prior-year data or
- * other submissions. Reported as not checked, like `alwaysPass`.
- */
-export const irsSide: RuleCheck = () => true;
 
 /** Always fails — used for unconditional reject rules. */
 export const alwaysFail: RuleCheck = () => false;
@@ -792,30 +782,6 @@ export const isItinOrAtin = (v: unknown): boolean => {
 
 // ─── Forms and schedules: offline checks of e-File database rules ───
 
-/**
- * A number the SSA or IRS can issue: an SSN outside area 000, 666 and 9XX,
- * group 00 and serial 0000, or a 9XX ITIN or ATIN whose 4th and 5th digits are
- * 50-65, 70-88 or 90-99. Pub 1436 ATS packets use group 00.
- */
-export const issuableTin = (v: unknown, ats = false): boolean => {
-  const d = digits(v);
-  if (d.length !== 9) return false;
-  const group = Number(d.slice(3, 5));
-  if (d.startsWith("9")) {
-    return (group >= 50 && group <= 65) || (group >= 70 && group <= 88) ||
-      group >= 90;
-  }
-  if (d.startsWith("000") || d.startsWith("666")) return false;
-  if (d.endsWith("0000")) return false;
-  return group !== 0 || ats;
-};
-
-/** Every value of the fields is an issuable SSN, ITIN or ATIN. */
-export const everyIssuableTin = (...xml: string[]): RuleCheck =>
-  (ctx) =>
-    xml.flatMap((f) => ctx.fieldArray(f))
-      .every((v) => issuableTin(v, isAtsTest(ctx)));
-
 const PERSON_NAME_CONTROL = /^[A-Z][A-Z\- ]{0,3}$/;
 
 /**
@@ -845,11 +811,6 @@ export const personNameControlAgrees = (
       ssn !== tin || !other || String(other).trim() === nc.trim()
     );
   };
-
-/** Every value is a six-digit IP PIN other than 000000. */
-export const wellFormedIpPins = (xml: string): RuleCheck =>
-  (ctx) =>
-    ctx.fieldArray(xml).every((v) => /^\d{6}$/.test(String(v)) && v !== "000000");
 
 /** Every emitted document with the prefix satisfies `check`, read from that document only. */
 export const everyDocument = (prefix: string, check: RuleCheck): RuleCheck =>
@@ -1156,7 +1117,7 @@ export const isoDay = (v: unknown): number | undefined => {
 
 /** efileTypes PersonNameControlType: a letter, then up to three letters, hyphens or spaces. */
 export const isPersonNameControl = (v: unknown): boolean =>
-  /^[A-Z][A-Z\- ]{0,3}$/.test(String(v ?? ""));
+  PERSON_NAME_CONTROL.test(String(v ?? ""));
 
 /** A five-digit Electronic Transmitter Identification Number. */
 export const isEtin = (v: unknown): boolean => /^\d{5}$/.test(String(v ?? ""));

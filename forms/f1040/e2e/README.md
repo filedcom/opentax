@@ -4,7 +4,6 @@ Read tax files in the same seven return sections across source nodes, calculatio
 
 | Area | Contents |
 | --- | --- |
-| [General](general/README.md) | Filing identity, information reporting, and complete-return assembly. |
 | [ats](ats) | 14 files |
 | [Income](income/README.md) | Income sources, exclusions, and net-income reconciliation. |
 | [Adjustments](adjustments/README.md) | Adjustments to income before adjusted gross income. |
