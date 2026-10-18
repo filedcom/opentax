@@ -533,9 +533,6 @@
     "single-1099r-code8-corrective-line1h": [
       "calculation f1099r"
     ],
-    "single-form2555-full-year-physical-presence": [
-      "calculation form2555"
-    ],
     "single-form4562-section179-w2-income-limit": [
       "rule F4562-003-11"
     ],
@@ -546,9 +543,6 @@
       "calculation form8960",
       "calculation standard_deduction",
       "calculation start"
-    ],
-    "single-form8815-series-ee-bond-exclusion": [
-      "calculation form8815"
     ],
     "single-form8915f-disaster-and-ordinary-plan-distributions": [
       "rule F8915F-001",
@@ -810,11 +804,9 @@
     "single-five-sequential-corrected-slcsp-policies": "TY2026 law: the shifted household is above 400% FPL, which IRC \u00a736B(c)(1)(A) again excludes after 2025 (Rev. Proc. 2025-25); the MeF reconciliation has no APTC-only above-limit route yet (open TY2026 work)",
     "single-w2-code-d-excess-line1h": "Named TY2025-only route: the node refuses TY2026 until that year's law is implemented",
     "single-1099r-code8-corrective-line1h": "Named TY2025-only route: the node refuses TY2026 until that year's law is implemented",
-    "single-form2555-full-year-physical-presence": "Named TY2025-only route: the node refuses TY2026 until that year's law is implemented",
     "single-form4562-section179-w2-income-limit": "MeF schema gap: the 2026v1.0 rules cap Form 4562 line 3 at $4,000,000 (F4562-003-12) while Rev. Proc. 2025-32 sets the 2026 section 179 phase-out threshold at $4,090,000",
     "single-form8863-lifetime-learning-scholarship": "Sample fixture input: its Form 8863 filer MAGI and Credit Limit Worksheet operands are TY2025 amounts",
     "single-form8606-post-year-contribution-and-distribution": "Open TY2026 work: the Roth/IRA basis sources pin 2024/2025 years and the April 15, 2026 contribution deadline",
-    "single-form8815-series-ee-bond-exclusion": "Named TY2025-only route: the node refuses TY2026 until that year's law is implemented",
     "single-form8915f-disaster-and-ordinary-plan-distributions": "MeF rules gap: the 2026v1.0 package words F8915F-001-01 and F8915F-002-01 for a return filed for Tax Year 2025 (rejecting CalendarYrDisasterCd and TaxYearFilingFormCd 2026); until a package states the TY2026 check, the engine keeps the coded TY2025 rule, which rejects this 2026 disaster and filing year",
     "single-form7203-capital-and-debt-basis-loss": "Open TY2026 work: Form 7203 debt and stock ledgers pin 2025 dates",
     "single-form982-qpri-exclusion": "TY2026 law: shifted a year, the QPRI discharge falls in 2026; IRC \u00a7108(a)(1)(E) excludes qualified principal residence indebtedness discharged before January 1, 2026 unless under an arrangement entered into and evidenced in writing before then (Instructions for Form 982, line 1e), and the sample has no such arrangement",

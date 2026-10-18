@@ -60,14 +60,15 @@ const permittedPropertyFields = new Set([
 export function reconcileForm4952MiscRoyaltyPath(
   fields: Record<string, unknown>,
   pending: Readonly<Record<string, unknown>>,
-  filer?: FilerIdentity,
+  filer: FilerIdentity | undefined,
+  taxYear: number,
 ): void {
   const retained = form4952Schema.safeParse(pending.form4952);
   if (
     fields.royalty_debt_trace !== undefined ||
     (retained.success && retained.data.royalty_debt_trace !== undefined)
   ) {
-    reconcileRoyaltyDebtReturn(fields, pending, filer);
+    reconcileRoyaltyDebtReturn(fields, pending, filer, taxYear);
     return;
   }
   const misc = miscSchema.safeParse(pending.f1099m);
@@ -138,7 +139,7 @@ export function reconcileForm4952MiscRoyaltyPath(
       "Form 4952 royalty needs exactly one matched, expense-free Schedule E property",
     );
   }
-  verifyMiscRoyaltySource(row, pending.f1099m, filer);
+  verifyMiscRoyaltySource(row, pending.f1099m, filer, undefined, taxYear);
   if (
     !sourceAmountsMatch(form.data.source_1099_royalties, [royalty]) ||
     form.data

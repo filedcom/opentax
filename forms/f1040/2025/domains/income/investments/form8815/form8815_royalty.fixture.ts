@@ -75,7 +75,7 @@ export function royaltyBondInputs(entry: typeof royaltyBondCases[number]) {
       coverdell_beneficiaries: base.form8815.education_contributions!
         .coverdell_beneficiaries.map((row) => ({
           ...row,
-          other_2025_contributions_all_sources: 0,
+          other_contributions_all_sources: 0,
         })),
     },
     line9_worksheet: {

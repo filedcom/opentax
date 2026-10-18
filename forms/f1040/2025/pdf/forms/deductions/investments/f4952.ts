@@ -1,3 +1,4 @@
+import { mefTaxYear } from "../../../../mef/support/year-config.ts";
 import type {
   PdfFieldEntry,
   PdfFormDescriptor,
@@ -121,7 +122,12 @@ export const form4952Pdf: PdfFormDescriptor = {
     if (
       fields.source_1099_royalties !== undefined
     ) {
-      reconcileForm4952MiscRoyaltyPath(fields, allPending);
+      reconcileForm4952MiscRoyaltyPath(
+        fields,
+        allPending,
+        undefined,
+        mefTaxYear(),
+      );
     } else if (
       fields.source_1099_dividends !== undefined &&
       fields.source_k1_investment_interest !== undefined
@@ -212,7 +218,12 @@ export const form4952Pdf: PdfFormDescriptor = {
       if (!filer || !allPending) {
         throw new Error("Form 4952 PDF linked royalty needs filer identity");
       }
-      reconcileForm4952MiscRoyaltyPath(fields, allPending, filer);
+      reconcileForm4952MiscRoyaltyPath(
+        fields,
+        allPending,
+        filer,
+        mefTaxYear(),
+      );
     }
     return [fields];
   },

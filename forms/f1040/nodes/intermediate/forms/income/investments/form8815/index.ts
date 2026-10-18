@@ -18,7 +18,7 @@ import {
 import { OutputNodes } from "../../../../../../../../core/types/output-nodes.ts";
 import type { NodeContext } from "../../../../../../../../core/types/node-context.ts";
 import { FilingStatus, filingStatusSchema } from "../../../../../types.ts";
-import { CONFIG_BY_YEAR } from "../../../../../config/index.ts";
+import { CONFIG_BY_YEAR, configForYear } from "../../../../../config/index.ts";
 import { schedule_b } from "../../../../aggregation/income/investments/schedule_b/index.ts";
 import { isTy2025IrsCountryCode } from "../../../../../irs_country_code.ts";
 
@@ -32,7 +32,7 @@ const usInstitutionAddressSchema = z.object({
   zip: z.string().regex(/^\d{5}(?:-\d{4})?$/),
 }).strict();
 
-// TY2025 ForeignAddressType: IRS country codes, not ISO codes; the city,
+// MeF ForeignAddressType: IRS country codes, not ISO codes; the city,
 // province and postal code are optional and must not be invented.
 const street = z.string().trim().min(1).max(35).regex(
   /^[A-Za-z0-9]( ?[A-Za-z0-9\-/])*$/,
@@ -66,7 +66,7 @@ export const eligibleStudentSchema = z.object({
   contribution_account: contributionAccountSchema.optional(),
 });
 
-// TY2025 tuition/fees and reviewed Coverdell/QTP cash contributions.
+// Tuition/fees and reviewed Coverdell/QTP cash contributions paid in the return year.
 // The two worksheet objects preserve the source lines used for Form 8815
 // lines 6 and 9. Callers must not provide a guessed exclusion or MAGI.
 export const inputSchema = z.object({
@@ -99,7 +99,7 @@ export const inputSchema = z.object({
     other_1040_and_schedule1_income: z.number().int(),
     schedule1_adjustments: amount,
     foreign_adoption_and_puerto_rico_addbacks: amount,
-    finalized_2025_income_lines_reviewed: z.literal(true),
+    finalized_income_lines_reviewed: z.literal(true),
     no_royalty_interest_special_computation: z.boolean(),
     royalty_debt_special_computation: royaltySpecialSchema.optional(),
   }).superRefine((worksheet, ctx) => {
@@ -171,11 +171,9 @@ function phaseoutRange(
     };
 }
 
-export function calculateForm8815(
-  input: Form8815Input,
-  cfg: NonNullable<(typeof CONFIG_BY_YEAR)[number]>,
-) {
-  assertEducationContributions(input);
+export function calculateForm8815(input: Form8815Input, taxYear: number) {
+  const cfg = configForYear(taxYear);
+  assertEducationContributions(input, taxYear);
   if (input.filing_status === FilingStatus.MFS) {
     throw new Error(
       "Form 8815 exclusion is not available to married filing separately",
@@ -196,7 +194,9 @@ export function calculateForm8815(
   const line9 = line9ModifiedAgi(input);
   const { start: line10, end } = phaseoutRange(input.filing_status, cfg);
   if (line9 >= end) {
-    throw new Error("Form 8815 MAGI is at or above the 2025 exclusion ceiling");
+    throw new Error(
+      `Form 8815 MAGI is at or above the ${taxYear} exclusion ceiling`,
+    );
   }
   const line11 = Math.max(0, line9 - line10);
   const line12 = Number((line11 / (end - line10)).toFixed(3));
@@ -230,13 +230,8 @@ class Form8815Node extends TaxNode<typeof inputSchema> {
   readonly outputNodes = new OutputNodes([schedule_b, form4952]);
 
   compute(ctx: NodeContext, rawInput: Form8815Input): NodeResult {
-    const cfg = CONFIG_BY_YEAR[ctx.taxYear];
-    if (!cfg) throw new Error(`No f1040 config for year ${ctx.taxYear}`);
-    if (ctx.taxYear !== 2025) {
-      throw new Error("Form 8815 source-backed path supports TY2025 only");
-    }
     const input = inputSchema.parse(rawInput);
-    const lines = calculateForm8815(input, cfg);
+    const lines = calculateForm8815(input, ctx.taxYear);
     return {
       outputs: [
         { nodeType: this.nodeType, fields: lines },

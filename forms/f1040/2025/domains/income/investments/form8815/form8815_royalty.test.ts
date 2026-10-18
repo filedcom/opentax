@@ -239,7 +239,7 @@ test("Combined royalty/bond review rejects source omissions at public preparatio
     // Exercise the inventory guard directly, so malformed source builders cannot mask it.
     await assertRejects(
       async () => {
-        reconcileBondRoyaltyInterest({ ...pending, [key]: {} });
+        reconcileBondRoyaltyInterest({ ...pending, [key]: {} }, 2025);
       },
       Error,
       "complete supported investment-income inventory",

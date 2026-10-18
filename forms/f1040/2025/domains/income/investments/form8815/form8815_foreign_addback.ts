@@ -16,10 +16,11 @@ const foreignSourceSchema = z.object({
 /** Recompute the supported employee exclusion, never trust a supplied addback. */
 export function form8815ForeignAddback(
   pending: Readonly<Record<string, unknown>>,
+  taxYear: number,
 ): number {
   if (Object.keys(pending.form2555 ?? {}).length === 0) return 0;
   const source = foreignSourceSchema.parse(pending.form2555);
-  const lines = calculatePhysicalPresence2555(source.filing_details, 2025);
+  const lines = calculatePhysicalPresence2555(source.filing_details, taxYear);
   const wages = z.object({ line1h_other_earned: z.number().int() }).parse(
     pending.f1040,
   );

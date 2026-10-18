@@ -1,3 +1,4 @@
+import { mefTaxYear } from "../../../../mef/support/year-config.ts";
 import {
   institutionAddressLines,
   institutionPrintedName,
@@ -11,7 +12,6 @@ import {
   calculateForm8815,
   inputSchema,
 } from "../../../../../nodes/intermediate/forms/income/investments/form8815/index.ts";
-import { CONFIG_BY_YEAR } from "../../../../../nodes/config/index.ts";
 import { FilingStatus as NodeFilingStatus } from "../../../../../nodes/types.ts";
 import { FilingStatus as MefFilingStatus } from "../../../../../mef/header.ts";
 import { assertForm8815FinalReturn } from "../../../../domains/income/investments/form8815/form8815_final_return.ts";
@@ -82,7 +82,7 @@ export const form8815Pdf: PdfFormDescriptor = {
     const source = inputSchema.parse(Object.fromEntries(
       Object.keys(inputSchema.shape).map((key) => [key, fields[key]]),
     ));
-    const lines = calculateForm8815(source, CONFIG_BY_YEAR[2025]);
+    const lines = calculateForm8815(source, mefTaxYear());
     for (const [key, value] of Object.entries(lines)) {
       if (fields[key] !== value) {
         throw new Error(`Form 8815 PDF ${key} differs from source calculation`);
@@ -133,8 +133,8 @@ export const form8815Pdf: PdfFormDescriptor = {
         "Form 8815 PDF filing status differs from the final return",
       );
     }
-    const lines = calculateForm8815(source, CONFIG_BY_YEAR[2025]);
-    assertForm8815FinalReturn(source, lines, allPending);
+    const lines = calculateForm8815(source, mefTaxYear());
+    assertForm8815FinalReturn(source, lines, allPending, mefTaxYear());
     return [projected];
   },
 };

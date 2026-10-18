@@ -326,7 +326,12 @@ for (const entry of cases) {
     ) {
       assertThrows(
         () =>
-          reconcileRoyaltyDebtReturn(pending.form4952, pending, alteredFiler),
+          reconcileRoyaltyDebtReturn(
+            pending.form4952,
+            pending,
+            alteredFiler,
+            2025,
+          ),
         Error,
         "owner differs",
       );

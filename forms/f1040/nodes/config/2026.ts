@@ -152,6 +152,8 @@ export const config2026: F1040Config = {
   // RP §4.39; housing base is 16% of the exclusion, IRC §911(c)(1)(B)(i).
   feieLimit: 132_900,
   feieHousingBase: 21_264,
+  // Notice 2026-25 sets the 2026 housing limits; its table is not transcribed.
+  foreignHousingLimitTableTranscribed: false,
   // RP §4.24; Rev. Proc. 2026-15 Tables 1-2. The third-year limit is $11,900
   // and each succeeding year $7,160; this field holds the third-year amount.
   section179Limit: 2_560_000,

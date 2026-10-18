@@ -670,6 +670,8 @@ export const config2025: F1040Config = {
   kiddieStandardDeductionFloor: KIDDIE_TAX_STANDARD_DEDUCTION_FLOOR_2025,
   feieLimit: FEIE_LIMIT_2025,
   feieHousingBase: FEIE_HOUSING_BASE_2025,
+  // Notice 2025-16.
+  foreignHousingLimitTableTranscribed: true,
   section179Limit: SECTION_179_LIMIT_2025,
   section179PhaseoutThreshold: SECTION_179_PHASEOUT_THRESHOLD_2025,
   luxuryAutoYear1NoBonus: LUXURY_AUTO_YEAR1_NO_BONUS_2025,

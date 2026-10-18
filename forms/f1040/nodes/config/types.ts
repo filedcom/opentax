@@ -182,6 +182,8 @@ export interface F1040Config {
   // ── FEIE (2555) ───────────────────────────────────────────────────────────
   feieLimit: number;
   feieHousingBase: number;
+  /** Form 2555 line 29b: the year's housing-limit notice table is in housing_limits_2025.ts. */
+  foreignHousingLimitTableTranscribed: boolean;
 
   // ── Section 179 / Depreciation (4562) ────────────────────────────────────
   section179Limit: number;

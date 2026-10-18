@@ -13,6 +13,7 @@ import {
   resolveHousingLimit2025,
 } from "../../../../../nodes/intermediate/forms/income/foreign/form2555/housing_limits_2025.ts";
 import { registry } from "../../../../registry.ts";
+import { shiftDatedFacts } from "../../../../../../../scripts/testing/sample-year.ts";
 import { buildMefXml } from "../../../builder.ts";
 import { type FilerIdentity, FilingStatus } from "../../../types.ts";
 
@@ -567,4 +568,32 @@ test.skipIf(!xsdAvailable)("XSD: Form 2555 employee housing excludes the housing
     '<TotalIncomeExclusionAmt referenceDocumentId="IRS2555',
   );
   await validateXsd(xml);
+});
+
+// Draft 2026 Form 2555 (lines 32, 37 and 39): a $132,900 exclusion
+// (Rev. Proc. 2025-32 §4.39) prorated by days in the 2026 tax year. The 2026
+// housing limits (Notice 2026-25) are not transcribed, so a housing claim is
+// refused rather than computed with the 2025 table.
+test("Form 2555 reads the 2026 exclusion and refuses untranscribed 2026 housing limits", () => {
+  const in2026 = shiftDatedFacts(filingDetails, 1);
+  const fullYear = calculatePhysicalPresence2555(in2026, 2026);
+  assertEquals([fullYear.qualifyingDays, fullYear.line39], [365, 1]);
+  assertEquals([fullYear.line40, fullYear.line42], [132_900, 100_000]);
+  const partYear = calculatePhysicalPresence2555({
+    ...in2026,
+    tax_home_established_date: "2025-06-01",
+    physical_presence_begin: "2025-07-01",
+    physical_presence_end: "2026-06-30",
+  }, 2026);
+  assertEquals(partYear.qualifyingDays, 181);
+  assertEquals(partYear.line40, 65_904);
+  assertThrows(
+    () =>
+      calculatePhysicalPresence2555(
+        shiftDatedFacts(employeeHousingDetails, 1),
+        2026,
+      ),
+    Error,
+    "housing limits for TY2026 are not transcribed",
+  );
 });

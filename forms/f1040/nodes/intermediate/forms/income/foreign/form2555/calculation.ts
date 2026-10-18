@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { CONFIG_BY_YEAR } from "../../../../../config/index.ts";
+import { configForYear } from "../../../../../config/index.ts";
 import { resolveHousingLimit2025 } from "./housing_limits_2025.ts";
 
 const dateSchema = z.string().regex(/^\d{4}-\d{2}-\d{2}$/);
@@ -138,9 +138,7 @@ export function calculatePhysicalPresence2555(
   taxYear: number,
 ): PhysicalPresenceLines {
   const filing = physicalPresenceFilingSchema.parse(raw);
-  if (taxYear !== 2025) {
-    throw new Error("Form 2555 structured filing is available for TY2025 only");
-  }
+  const cfg = configForYear(taxYear);
   const begin = utcDay(filing.physical_presence_begin);
   const end = utcDay(filing.physical_presence_end);
   const expectedEnd = new Date(begin);
@@ -156,16 +154,21 @@ export function calculatePhysicalPresence2555(
   }
   const yearBegin = Date.UTC(taxYear, 0, 1);
   const yearEnd = Date.UTC(taxYear, 11, 31);
+  const daysInYear = (yearEnd - yearBegin) / 86_400_000 + 1;
   const overlapBegin = Math.max(begin, yearBegin);
   const overlapEnd = Math.min(end, yearEnd);
   const qualifyingDays = overlapEnd >= overlapBegin
     ? (overlapEnd - overlapBegin) / 86_400_000 + 1
     : 0;
   if (qualifyingDays === 0) {
-    throw new Error("Form 2555 qualifying period does not overlap TY2025");
+    throw new Error(
+      `Form 2555 qualifying period does not overlap TY${taxYear}`,
+    );
   }
-  const line39 = Math.round(qualifyingDays / 365 * 100_000) / 100_000;
-  const line40 = Math.round(CONFIG_BY_YEAR[2025].feieLimit * line39);
+  const line39 = qualifyingDays === daysInYear
+    ? 1
+    : Math.round(qualifyingDays / daysInYear * 100_000) / 100_000;
+  const line40 = Math.round(cfg.feieLimit * line39);
   const line19 = filing.foreign_wages;
   const line24 = line19;
   const line25 = 0;
@@ -207,12 +210,17 @@ export function calculatePhysicalPresence2555(
         housingBegin > housingEnd
       ) {
         throw new Error(
-          "Form 2555 housing expense must be incurred in TY2025 for housing entirely within qualifying days",
+          `Form 2555 housing expense must be incurred in TY${taxYear} for housing entirely within qualifying days`,
         );
       }
       line28 += expense.amount;
     }
     line31 = qualifyingDays;
+    if (!cfg.foreignHousingLimitTableTranscribed) {
+      throw new Error(
+        `Form 2555 housing limits for TY${taxYear} are not transcribed yet`,
+      );
+    }
     const housingLimit = resolveHousingLimit2025(
       housing.country_code,
       housing.city,
@@ -222,9 +230,13 @@ export function calculatePhysicalPresence2555(
     line29a = housingLimit.line29a;
     line29b = housingLimit.line29b;
     line30 = Math.min(line28, line29b);
-    line32 = qualifyingDays === 365
-      ? 20_800
-      : Math.round(56.99 * qualifyingDays);
+    // Line 32: the housing base (16% of the exclusion) per day, in cents.
+    line32 = qualifyingDays === daysInYear
+      ? cfg.feieHousingBase
+      : Math.round(
+        Math.round(cfg.feieHousingBase / daysInYear * 100) / 100 *
+          qualifyingDays,
+      );
     line33 = Math.max(0, line30 - line32);
     if (line33 > 0) {
       // This narrow filing has one foreign employer and wages as its only

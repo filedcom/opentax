@@ -64,7 +64,8 @@ function royaltyOwners(
 export function reconcileRoyaltyDebtReturn(
   fields: Readonly<Record<string, unknown>>,
   pending: Readonly<Record<string, unknown>>,
-  filer?: FilerIdentity,
+  filer: FilerIdentity | undefined,
+  taxYear: number,
 ) {
   const source = formSchema.parse(pending.form4952);
   const printed = formSchema.parse(fields);
@@ -133,7 +134,10 @@ export function reconcileRoyaltyDebtReturn(
       "Form 4952 royalty debt requires complete plain owned interest and no unsupported combined source",
     );
   }
-  const { exclusion, foreignExclusion } = reconcileBondRoyaltyInterest(pending);
+  const { exclusion, foreignExclusion } = reconcileBondRoyaltyInterest(
+    pending,
+    taxYear,
+  );
   const lines = calculateForm4952(source);
   const property = royaltyDebtProperty(trace, lines.line8);
   const row = scheduleE.schedule_es[0];
