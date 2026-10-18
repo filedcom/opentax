@@ -4,6 +4,7 @@
  * "RP §x" is Rev. Proc. 2025-32 section x (the 2026 inflation adjustments,
  * reflecting P.L. 119-21, the OBBBA). "N 25-67" is Notice 2025-67 (2026
  * retirement limits). Statutory amounts that are not indexed cite the Code.
+ * Source map: docs/ty2026/readiness/CONSTANTS.md.
  */
 
 import { FilingStatus } from "../types.ts";
@@ -227,4 +228,113 @@ export const config2026: F1040Config = {
   sepContributionRate: 0.25,
   sepMaxContribution: 72_000,
   simpleEmployerMatchRate: 0.03,
+  // Rev. Proc. 2026-15 Tables 1-2, each succeeding year.
+  luxuryAutoSucceedingYears: 7_160,
+  // RP §4.06(1); credit and phaseout rates IRC §32(b)(1).
+  eitcByChildren: [
+    {
+      creditRate: 0.0765,
+      phaseoutRate: 0.0765,
+      earnedIncomeAmount: 8_680,
+      maxCredit: 664,
+      phaseoutStart: 10_860,
+      phaseoutStartMfj: 18_140,
+      phaseoutEnd: 19_540,
+      phaseoutEndMfj: 26_820,
+    },
+    {
+      creditRate: 0.34,
+      phaseoutRate: 0.1598,
+      earnedIncomeAmount: 13_020,
+      maxCredit: 4_427,
+      phaseoutStart: 23_890,
+      phaseoutStartMfj: 31_160,
+      phaseoutEnd: 51_593,
+      phaseoutEndMfj: 58_863,
+    },
+    {
+      creditRate: 0.40,
+      phaseoutRate: 0.2106,
+      earnedIncomeAmount: 18_290,
+      maxCredit: 7_316,
+      phaseoutStart: 23_890,
+      phaseoutStartMfj: 31_160,
+      phaseoutEnd: 58_629,
+      phaseoutEndMfj: 65_899,
+    },
+    {
+      creditRate: 0.45,
+      phaseoutRate: 0.2106,
+      earnedIncomeAmount: 18_290,
+      maxCredit: 8_231,
+      phaseoutStart: 23_890,
+      phaseoutStartMfj: 31_160,
+      phaseoutEnd: 62_974,
+      phaseoutEndMfj: 70_244,
+    },
+  ],
+  // IRC §21(a)(2) as amended by P.L. 119-21 §70405: 50%, less 1 point per
+  // $2,000 (or fraction) over $15,000 to 35%, then 1 point per $2,000
+  // ($4,000 MFJ) over $75,000 ($150,000 MFJ) to 20%.
+  depCareCreditMaxRate: 0.50,
+  depCareCreditFirstFloorRate: 0.35,
+  depCareCreditSecondPhaseout: {
+    agiThreshold: 75_000,
+    agiThresholdMfj: 150_000,
+    bracketSize: 2_000,
+    bracketSizeMfj: 4_000,
+    floorRate: 0.20,
+  },
+  // IRC §224(b), §225(b), §163(h)(4)(C) (P.L. 119-21 §§70201-70203, 2025-2028;
+  // not indexed); draft 2026 Schedule 1-A lines 9-14, 21-23, 30-32.
+  qualifiedTipsCap: 25_000,
+  qualifiedOvertimeCap: 12_500,
+  qualifiedOvertimeCapMfj: 25_000,
+  tipsOvertimePhaseoutThreshold: 150_000,
+  tipsOvertimePhaseoutThresholdMfj: 300_000,
+  tipsOvertimePhaseoutPerThousand: 100,
+  vehicleLoanInterestCap: 10_000,
+  vehicleLoanInterestPhaseoutThreshold: 100_000,
+  vehicleLoanInterestPhaseoutThresholdMfj: 200_000,
+  vehicleLoanInterestPhaseoutPerThousand: 200,
+  // IRC §170(p) (P.L. 119-21 §70424); §170(b)(1)(I) (§70425); §68(a) (§70111):
+  // itemized deductions reduced by 2/37 of the lesser of the deductions or
+  // taxable income over the start of the 37% bracket.
+  nonitemizerCharitableLimit: 1_000,
+  nonitemizerCharitableLimitMfj: 2_000,
+  charitableAgiFloorRate: 0.005,
+  itemizedDeductionReductionRate: 2 / 37,
+  // IRC §199A(i) (P.L. 119-21 §70105); RP §2.12: indexed only after 2026.
+  qbiMinimumDeduction: 400,
+  qbiMinimumDeductionQbiFloor: 1_000,
+  // RP §4.04: completely phased out at $305,080.
+  adoptionCreditMax: 17_670,
+  adoptionCreditRefundableMax: 5_120,
+  adoptionPhaseoutStart: 265_080,
+  adoptionPhaseoutRange: 40_000,
+  // RP §§4.23, 4.14(2), 4.12.
+  qualifyingRelativeGrossIncomeLimit: 5_300,
+  dependentStandardDeductionFloor: 1_350,
+  dependentStandardDeductionEarnedIncomeAddOn: 450,
+  educatorExpenseLimit: 350,
+  // Notice 2026-10 §3, modified from July 1 by Announcement 2026-11
+  // (IRB 2026-29); charitable rate IRC §170(i).
+  standardMileageRates: [
+    {
+      from: "2026-01-01",
+      business: 0.725,
+      medicalMoving: 0.205,
+      charitable: 0.14,
+    },
+    {
+      from: "2026-07-01",
+      business: 0.76,
+      medicalMoving: 0.235,
+      charitable: 0.14,
+    },
+  ],
+  // IRC §530A(c)(2)(A) and §128(b)(1) (P.L. 119-21 §70204); no contribution
+  // is accepted before July 4, 2026, IRC §530A(b)(1)(C)(i)(I).
+  trumpAccountContributionLimit: 5_000,
+  trumpAccountEmployerExclusionLimit: 2_500,
 };

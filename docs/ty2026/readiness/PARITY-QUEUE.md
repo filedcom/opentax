@@ -8,9 +8,14 @@ ledger, 84-MeF-module ledger, and
 interpret a TY2025 module or a TY2026 registry entry as a completed 2026
 filing route.
 
-The current `forms/f1040/2026/registry.ts` has **35** registered node keys.
-The current `forms/f1040/2026/pdf/builder.ts` passes **18** attachment slots
-to its renderer. There is **no** `forms/f1040/2026/mef` directory. The
+> Current TY2026 status: `forms/f1040/2026/README.md`. This document is a
+> research snapshot; the 2026-only modules it names (`2026/registry.ts`,
+> `2026/inputs.ts`, `2026/pdf/`, `2026/validation.ts`,
+> `config/2026-indexed.ts`, `nodes/f1040.ts`, `itemized-deductions.ts`,
+> `schedule-a.ts`, `form2441/year-rules.ts`) are not in the current code.
+
+At the 2026-09-27 snapshot a separate 2026 registry had 35 node keys and a
+2026 PDF builder passed 18 attachment slots; neither exists now. The
 [route-gap inventory](../graphs/GRAPH-ROUTES.md) records **33** declared edges from
 registered nodes to absent targets. The 2025 inventories are broader than
 these counts: one tax form can need multiple graph nodes, and some 2026 forms

@@ -1,10 +1,13 @@
 # TY2026 Form 1040 entry point — implementation plan
 
-Status: research snapshot, 2026-09-27, from code commit `b7c07b61`.
-The 2026 code snapshot had a calculation registry for a verified subset;
-`f1040_2026` was not registered in `catalog.ts` yet. This plan belongs with
-the corpus in `docs/ty2026`; compare code references with the current checkout
-before implementing a route. **Goal: the same full
+> Current TY2026 status: `forms/f1040/2026/README.md`. This document is a
+> research snapshot; the 2026-only modules it names (`2026/registry.ts`,
+> `2026/inputs.ts`, `2026/pdf/`, `2026/validation.ts`,
+> `config/2026-indexed.ts`, `nodes/f1040.ts`, `itemized-deductions.ts`,
+> `schedule-a.ts`, `form2441/year-rules.ts`) are not in the current code.
+
+Below: research snapshot of 2026-09-27 (code commit `b7c07b61`). Compare its
+code references with the current checkout before implementing a route. **Goal: the same full
 calculation → validation → MeF XML → PDF → ATS/XSD workflow as TY2025, across
 the supported 1040 form surface.** Do not call registration alone TY2026
 support.
@@ -357,11 +360,10 @@ to build.
 The [Form 2441 contract](../graphs/FORM2441-GRAPH.md) uses the
 pinned draft instructions to specify provider/benefit facts, the pre-AGI
 benefit stage, post-AGI credit stage, and the full attachment work.
-The `forms/f1040/nodes/config/2026-indexed.ts` module contains all 111 TY2026
-config members, including the distinct MFS QBI threshold and standard/enhanced
-SIMPLE plan limits. `forms/f1040/nodes/config/2026.ts` registers the complete
-config for shared nodes; the TY2026 registry is an audited subset and still
-needs the remaining source and form routes.
+`forms/f1040/nodes/config/2026.ts` holds the complete TY2026 config for the
+shared nodes ([sources](./CONSTANTS.md)); the 2026 core output, Schedule A and
+itemized-limit modules described next were in the snapshot, not the current
+code.
 `nodes/f1040.ts` is a dedicated 2026 core output node: it computes the revised
 deduction, tax, payment, and balance lines and emits Schedule 3-A data. It is
 registered in the TY2026 calculation graph. Expand its upstream input surface and preserve
