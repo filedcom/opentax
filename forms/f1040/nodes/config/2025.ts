@@ -672,6 +672,13 @@ export const config2025: F1040Config = {
   feieHousingBase: FEIE_HOUSING_BASE_2025,
   // Notice 2025-16.
   foreignHousingLimitTableTranscribed: true,
+  // Instructions for Form 8864 (Rev. December 2025): P.L. 119-21 raises the
+  // credit to $.20 a gallon for fuel sold or used after June 30, 2025, and
+  // ends it for fuel sold or used after 2026.
+  smallAgriBiodieselSales: {
+    twentyCentRateFrom: "2025-07-01",
+    soldBefore: "2027-01-01",
+  },
   section179Limit: SECTION_179_LIMIT_2025,
   section179PhaseoutThreshold: SECTION_179_PHASEOUT_THRESHOLD_2025,
   luxuryAutoYear1NoBonus: LUXURY_AUTO_YEAR1_NO_BONUS_2025,

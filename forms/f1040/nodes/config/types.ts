@@ -184,6 +184,11 @@ export interface F1040Config {
   feieHousingBase: number;
   /** Form 2555 line 29b: the year's housing-limit notice table is in housing_limits_2025.ts. */
   foreignHousingLimitTableTranscribed: boolean;
+  /** IRC §40A(b)(4) small agri-biodiesel producer credit sale-date window, as amended by P.L. 119-21. */
+  smallAgriBiodieselSales: {
+    readonly twentyCentRateFrom: string;
+    readonly soldBefore: string;
+  };
 
   // ── Section 179 / Depreciation (4562) ────────────────────────────────────
   section179Limit: number;

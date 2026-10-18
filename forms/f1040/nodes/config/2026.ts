@@ -154,6 +154,13 @@ export const config2026: F1040Config = {
   feieHousingBase: 21_264,
   // Notice 2026-25 sets the 2026 housing limits; its table is not transcribed.
   foreignHousingLimitTableTranscribed: false,
+  // Instructions for Form 8864 (Rev. December 2025): P.L. 119-21 raises the
+  // credit to $.20 a gallon for fuel sold or used after June 30, 2025, and
+  // ends it for fuel sold or used after 2026.
+  smallAgriBiodieselSales: {
+    twentyCentRateFrom: "2025-07-01",
+    soldBefore: "2027-01-01",
+  },
   // RP §4.24; Rev. Proc. 2026-15 Tables 1-2. The third-year limit is $11,900
   // and each succeeding year $7,160; this field holds the third-year amount.
   section179Limit: 2_560_000,

@@ -47,10 +47,10 @@ export const directAgriBiodieselSource = inputSchema.parse({
 export const directAgriBiodieselPending = {
   f8864: directAgriBiodieselSource,
   f3800: {
-    ...form8864DirectClaims(directAgriBiodieselSource).form3800,
+    ...form8864DirectClaims(directAgriBiodieselSource, 2025).form3800,
     form8864_applied_credit: 500,
   },
-  form6251: form8864DirectClaims(directAgriBiodieselSource).form6251,
+  form6251: form8864DirectClaims(directAgriBiodieselSource, 2025).form6251,
   f1040: { taxpayer_ssn: "123-45-6789" },
   schedule_c: {
     schedule_cs: [{

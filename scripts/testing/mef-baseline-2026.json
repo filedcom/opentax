@@ -409,11 +409,6 @@
     "single-reviewed-adoption-credit": [
       "calculation threw [ { \"code\": \"custom\", \"message\": \"Invalid input\", \"path\": [ \"children\", 0, \"final_decree\", \"finalization_date\" ] } ]"
     ],
-    "single-agri-biodiesel-producer-credit": [
-      "calculation form8960",
-      "calculation standard_deduction",
-      "calculation start"
-    ],
     "single-unreported-refinance-points": [
       "calculation form8960",
       "calculation standard_deduction",
@@ -754,7 +749,6 @@
     "single-passive-partnership-new-markets": "Sample amount: the reviewed Form 8582-CR line 6 worksheet carries tax computed under the 2025 rate schedule; amounts are not shifted",
     "single-mixed-passive-new-markets": "Sample amount: the reviewed Form 8582-CR line 6 worksheet carries tax computed under the 2025 rate schedule; amounts are not shifted",
     "single-reviewed-adoption-credit": "Open TY2026 work: the staged Form 8839 route requires a 2025 decree (childSchema finalization_date) and carries TY2025 amounts through prepare/settle ($17,280 maximum, $259,190 phase-out start, $5,000 refundable), its carryforward (origin 2025) and MeF; the Rev. Proc. 2025-32 \u00a74.04 2026 amounts are in config but not threaded through that route",
-    "single-agri-biodiesel-producer-credit": "Open TY2026 work: Form 8864 accepts only 2025 small agri-biodiesel sales",
     "single-unreported-refinance-points": "Open TY2026 work: refinance-points ledger names its prior years in field names (prior_year_2023/2024)",
     "single-2023-refinance-points-ledger": "Open TY2026 work: refinance-points ledger names its prior years in field names (prior_year_2023/2024)",
     "single-8862-ctc-reinstatement": "Sample amount: the reviewed Schedule 8812 carries the TY2025 Form 1040 line 18 tax ($9,055 on $80,000 single AGI); the 2026 return figures line 18 with the Rev. Proc. 2025-32 standard deduction and rates, and amounts are not shifted",
