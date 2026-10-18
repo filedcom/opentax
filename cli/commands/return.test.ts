@@ -275,3 +275,34 @@ test("getReturnCommand names the SSN answers a 65+ spouse's senior deduction nee
     await sys.remove(tmpDir, { recursive: true });
   }
 });
+
+// 2025 Schedule R, Part I (boxes 2, 4, 5, 6, 9) and Part II: a filer under 65
+// retired on permanent and total disability with taxable disability income.
+test("getReturnCommand points disability income under 65 to Schedule R", async () => {
+  const tmpDir = await sys.makeTempDir();
+  try {
+    const returnId = await makeReturn(tmpDir);
+    const returnPath = `${tmpDir}/${returnId}`;
+    await appendInput(returnPath, "general", {
+      filing_status: "single",
+      taxpayer_ssn: "400-45-6789",
+      taxpayer_dob: "1975-10-06",
+    });
+    await appendInput(returnPath, "f1099r", {
+      payer_name: "Plan",
+      payer_ein: "123456789",
+      box1_gross_distribution: 11000,
+      box2a_taxable_amount: 11000,
+      box7_distribution_code: "3",
+      disability_flag: true,
+      disability_as_wages: true,
+    });
+    const result = await getReturnCommand({ returnId, baseDir: tmpDir });
+    const hints = result.warnings.filter((w) => w.includes("Schedule R"));
+    assertEquals(hints.length, 1);
+    assertMatch(hints[0], /taxpayer_disability_evidence/);
+    assertMatch(hints[0], /physician_statement "prior_year"/);
+  } finally {
+    await sys.remove(tmpDir, { recursive: true });
+  }
+});
