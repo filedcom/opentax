@@ -554,7 +554,10 @@ function buildIRS1040(fields: Input, context?: MefBuildContext): string {
         "Form 1040 line 1h needs valid retained W-2 deferral facts",
       );
     }
-    const excess = codeDExcessDeferral(source.data.w2s);
+    const excess = codeDExcessDeferral(
+      source.data.w2s,
+      mefTaxYear(context),
+    );
     if (excess.amount > 0) {
       const filer = context.filer;
       const allowedOwners = [

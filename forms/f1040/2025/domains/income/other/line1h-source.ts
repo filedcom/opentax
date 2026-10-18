@@ -80,7 +80,10 @@ export function assertLine1hSupportedSource(
     sources.push(physicalPresenceFilingSchema.parse(filing).foreign_wages);
   }
   if (pending?.w2 !== undefined) {
-    const excess = codeDExcessDeferral(w2InputSchema.parse(pending.w2).w2s);
+    const excess = codeDExcessDeferral(
+      w2InputSchema.parse(pending.w2).w2s,
+      taxYear,
+    );
     if (excess.amount > 0) {
       sources.push(excess.amount);
       excess.owners.forEach((owner) => owners.add(owner));

@@ -1,3 +1,4 @@
+import { mefTaxYear } from "../../../../mef/support/year-config.ts";
 import { assertDependentKiddieTaxFamilyReturn } from "../../../../../nodes/inputs/taxes/investments/f8615/dependent-source-review.ts";
 import { assertW2ArcherContributionSources } from "../../../../domains/adjustments/health/form8853/form8853_contributions_reconciliation.ts";
 import { assertEducationIncomeSource } from "../../../../../nodes/inputs/income/other/education_income/index.ts";
@@ -737,6 +738,7 @@ function line1hType(
   if (allPending.w2 !== undefined) {
     const excess = codeDExcessDeferral(
       w2InputSchema.parse(allPending.w2).w2s,
+      mefTaxYear(),
     );
     if (excess.amount > 0) {
       sources.push({ type: "EXCESS DEFERRALS", amount: excess.amount });

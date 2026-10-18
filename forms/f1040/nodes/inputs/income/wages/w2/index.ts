@@ -36,7 +36,7 @@ import { f1040 } from "../../../../outputs/general/return-assembly/f1040/index.t
 import { schedule1 } from "../../../../outputs/general/return-assembly/schedule1/index.ts";
 import { f8812 } from "../../../credits/child/f8812/index.ts";
 import type { NodeContext } from "../../../../../../../core/types/node-context.ts";
-import { CONFIG_BY_YEAR } from "../../../../config/index.ts";
+import { CONFIG_BY_YEAR, configForYear } from "../../../../config/index.ts";
 import {
   isQualifiedTipsOccupationCode,
   schedule1a,
@@ -175,7 +175,7 @@ export const w2ItemSchema = z.object({
     "Coded benefit/deferral entries (up to 4 per W-2)",
   ),
   excess_deferral_review: excessDeferralReviewSchema.optional().describe(
-    "Reviewed non-SIMPLE 401(k), age, and W-2 evidence for a 2025 code D excess deferral",
+    "Reviewed non-SIMPLE 401(k), age, and W-2 evidence for a code D excess deferral",
   ),
   box13_statutory_employee: z.boolean().optional().describe(
     "Statutory employee — wages go to Schedule C, not line 1a",
@@ -333,32 +333,13 @@ const ELECTIVE_DEFERRAL_CODES = new Set<Box12Code>([
   Box12Code.EE,
 ]);
 
-/** Below the year's base deferral limit no owner can have a line 1h excess. */
-function noCodeDExcessDeferral(
-  w2s: W2Items,
-  baseLimit: number,
-): { amount: number; owners: string[] } {
-  const byOwner = new Map<string, number>();
-  for (const item of w2s) {
-    const owner = item.employee_ssn?.replaceAll("-", "") ?? "";
-    const codeD = (item.box12_entries ?? [])
-      .filter((entry) => entry.code === Box12Code.D)
-      .reduce((sum, entry) => sum + entry.amount, 0);
-    byOwner.set(owner, (byOwner.get(owner) ?? 0) + codeD);
-  }
-  if ([...byOwner.values()].some((total) => total > baseLimit)) {
-    throw new Error(
-      "W-2 code D above the base deferral limit needs the TY2025 excess review, not yet available for this year",
-    );
-  }
-  return { amount: 0, owners: [] };
-}
-
-/** The one supported 2025 line 1h W-2 excess: traditional, non-SIMPLE code D. */
-export function codeDExcessDeferral(w2s: W2Items): {
+/** The one supported line 1h W-2 excess: traditional, non-SIMPLE code D. */
+export function codeDExcessDeferral(w2s: W2Items, taxYear: number): {
   amount: number;
   owners: string[];
 } {
+  const limits = configForYear(taxYear).retirementLimits["401k"];
+  const baseLimit = limits[49];
   const candidateOwners = new Set<string>();
   for (const item of w2s) {
     if (
@@ -385,7 +366,7 @@ export function codeDExcessDeferral(w2s: W2Items): {
           .reduce((subtotal, entry) => subtotal + entry.amount, 0),
       0,
     );
-    if (codeD <= 23_500) continue;
+    if (codeD <= baseLimit) continue;
     const sourceItems = items.filter((item) =>
       (item.box12_entries ?? []).some((entry) =>
         entry.code === Box12Code.D && entry.amount > 0
@@ -401,7 +382,7 @@ export function codeDExcessDeferral(w2s: W2Items): {
     const birth = date ? new Date(`${date}T00:00:00Z`) : new Date(Number.NaN);
     const reviewedAge = Number.isFinite(birth.getTime()) &&
         birth.toISOString().slice(0, 10) === date
-      ? 2025 - birth.getUTCFullYear()
+      ? taxYear - birth.getUTCFullYear()
       : undefined;
     const reviewedCatchUp = reviewedAge !== undefined && reviewedAge >= 50 &&
       reviewedAge <= 100 &&
@@ -422,7 +403,7 @@ export function codeDExcessDeferral(w2s: W2Items): {
       );
     if (
       reviewedCatchUp && Number.isSafeInteger(codeD) &&
-      codeD <= (reviewedAge >= 60 && reviewedAge <= 63 ? 34_750 : 31_000)
+      codeD <= (reviewedAge >= 60 && reviewedAge <= 63 ? limits[63] : limits[59])
     ) continue;
     if (
       items.some((item) =>
@@ -455,17 +436,17 @@ export function codeDExcessDeferral(w2s: W2Items): {
       dates.some((value) => value !== date) ||
       !Number.isFinite(birth.getTime()) ||
       birth.toISOString().slice(0, 10) !== date ||
-      date! < "1976-01-01" || date! > "2025-12-31" ||
+      date! < `${taxYear - 49}-01-01` || date! > `${taxYear}-12-31` ||
       sourceItems.some((item) =>
         item.taxpayer_age !== undefined &&
-        item.taxpayer_age !== 2025 - birth.getUTCFullYear()
+        item.taxpayer_age !== taxYear - birth.getUTCFullYear()
       )
     ) {
       throw new Error(
         "W-2 line 1h code D excess needs distinct employer W-2s, one under-50 owner, reviewed non-SIMPLE plans, and no competing deferrals",
       );
     }
-    amount += codeD - 23_500;
+    amount += codeD - baseLimit;
     owners.push(owner);
   }
   return { amount, owners };
@@ -1314,9 +1295,7 @@ class W2Node extends TaxNode<typeof inputSchema> {
         "Patron reviewed owner W-2 sources differ from public issued copies",
       );
     }
-    const excessDeferral = ctx.taxYear === 2025
-      ? codeDExcessDeferral(input.w2s)
-      : noCodeDExcessDeferral(input.w2s, cfg.retirementLimits["401k"][49]);
+    const excessDeferral = codeDExcessDeferral(input.w2s, ctx.taxYear);
 
     const incomeTaxFields = input.f8958_allocation
       ? communityW2Fields(input.w2s, input.f8958_allocation)
