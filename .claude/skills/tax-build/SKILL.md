@@ -1,125 +1,55 @@
 ---
 name: tax-build
-description: Autonomous form builder. Given a form number (e.g. 1120), researches IRS instructions, extracts ground truth from IRS sample returns, builds all nodes section by section, then runs a validate+fix loop until ≥95% of benchmark cases pass.
+description: Build a new form product (e.g. 1120) from IRS instructions — research the lines into node specs, source IRS benchmark cases, build the nodes section by section, then hand off to the tax-fix loop.
 ---
 
-# Tax Build — Autonomous Form Builder
+# Tax Build
 
-**Form:** $ARGUMENTS
+**Form:** $ARGUMENTS — `<form-number> [year]`, e.g. `1120 2025` (year defaults
+to 2025).
 
-## Overview
+A form filed with the 1040 (a schedule or attachment) is a node under
+`forms/f1040/nodes/`, not a new product: build it with
+`agents/node-builder.md` alone and test it with `/tax-fix f1040:<year>`.
 
-This skill autonomously builds a new tax form from scratch. It runs in phases, tracking progress in the harness state file so it can resume if interrupted.
+Read `AGENTS.md`, `docs/architecture/STRUCTURE.md` and `forms/f1040/FORM.md`,
+and pass them to every agent. `forms/f4868/` is the smallest complete product
+to copy the shape from. Each phase resumes from what is already on disk.
 
-## Phase 0 — Derive Paths + Load State
+## 1. Research
 
-Parse `$ARGUMENTS` as form number (e.g. `1120`). Prepend `f` to get form dir prefix: `f1120`.
+Skip if `.state/bench/node-specs/{form}-{year}-nodes.json` exists (`.state/` is
+untracked; create the folder). Otherwise spawn one agent with
+`agents/researcher.md` to write it, and check it holds a `nodes` array.
 
-Derive all paths from convention:
-- Form dir:     `forms/f{ARGUMENTS}/`
-- Shared nodes: `forms/f{ARGUMENTS}/nodes/`
-- Year dir:     `forms/f{ARGUMENTS}/2025/`
-- Policy doc:   `forms/f{ARGUMENTS}/FORM.md`  (create if building new form)
-- Benchmark cases: `benchmark/cases/f{ARGUMENTS}/2025/`
-- State key:    `f{ARGUMENTS}:2025` in `.state/bench/state.json` under `forms`
-- Node specs:   `.state/bench/node-specs/{ARGUMENTS}-2025-nodes.json`
-- Progress log: `.state/bench/progress.md`
+## 2. Product skeleton
 
-Read `AGENTS.md` and (if it exists) `forms/f{ARGUMENTS}/FORM.md`.
-Pass both as context to all spawned agents throughout this skill.
+Create, following `forms/f4868/` and `forms/f1040/2026/`:
 
-Read `.state/bench/state.json`. `.state/` is untracked, so if the file is missing, create it as
-`{"version": 2, "forms": {}}` (and `.state/bench/node-specs/`). Navigate to `forms.f{ARGUMENTS}:2025.build`:
-- `null` or missing → start from Phase 1
-- `"research"` → skip to Phase 2
-- `"ground_truth"` → skip to Phase 3
-- `"build"` → skip to Phase 4
-- `"validate"` → skip to Phase 4 (re-validate)
+- `forms/f{form}/FORM.md`: the form's IRS specs, conventions and benchmark
+  command, as in `forms/f1040/FORM.md`
+- `forms/f{form}/{year}/index.ts`, `config.ts`, `inputs.ts`, `registry.ts`
+- a `"f{form}:{year}"` entry in `catalog.ts`
 
-Set `status` to `"running"` and write state.json.
+`benchmark/run_benchmark.ts` creates every return without `--form` (so as
+f1040) and scores only the 1040 keys in `SUMMARY_FIELDS` and `RAW_FIELDS`.
+Extend it for the new product first, or every case fails.
 
-## Phase 1 — Research
+## 3. Cases
 
-Spawn one researcher agent (see `agents/researcher.md`). Pass:
-- Form number: $ARGUMENTS
-- Output path: `.state/bench/node-specs/$ARGUMENTS-2025-nodes.json`
+Skip if `benchmark/cases/f{form}/{year}/` has cases. Otherwise run the
+`/tax-cases f{form}:{year} instructions` flow with sources for this form (its
+instructions, the publication that covers it, IRS sample returns).
 
-Wait for completion. Verify the file exists and is valid JSON with a `nodes` array.
+## 4. Build
 
-Update state.json: `phase → "research"`, `node_specs_path` set.
+Group the node specs by section and spawn one `agents/node-builder.md` agent
+per section in a single message, each with its specs, form and year.
 
-Append to `.state/bench/progress.md`:
-```
-## [Form $ARGUMENTS] Phase 1 Complete — Research
-- Nodes identified: N
-- Sections: [income, deductions, tax_computation, credits, payments]
-```
+## 5. Fix
 
-## Phase 2 — Ground Truth
-
-Spawn one extractor agent (see `agents/extractor.md`). Pass:
-- Form number: $ARGUMENTS
-- Cases output dir: `benchmark/cases/f{ARGUMENTS}/2025/`
-
-Wait for completion. Count the case directories created in `benchmark/cases/f{ARGUMENTS}/2025/`.
-
-Update state.json: `phase → "ground_truth"`, `benchmark_cases_created` set.
-
-Append to progress.md:
-```
-## [Form $ARGUMENTS] Phase 2 Complete — Ground Truth
-- Benchmark cases created: N
-- Case directories: [list]
-```
-
-## Phase 3 — Build
-
-Read `.state/bench/node-specs/$ARGUMENTS-2025-nodes.json`. Group nodes into sections (income, deductions, tax_computation, credits, payments, other).
-
-For each section, spawn one node-builder agent in parallel (see `agents/node-builder.md`). Pass:
-- The node specs for that section (JSON subset)
-- Form number and year (2025)
-- Path to the most similar existing form for reference patterns
-
-Spawn ALL section agents in a single message (parallel). Wait for all to complete.
-
-Update state.json: `phase → "build"`, `nodes_built` array populated.
-
-Append to progress.md:
-```
-## [Form $ARGUMENTS] Phase 3 Complete — Build
-- Sections built: [list]
-- Nodes implemented: N
-```
-
-## Phase 4 — Validate + Fix Loop
-
-Repeat until ≥95% pass or 3 consecutive rounds with no improvement:
-
-**4a. Validate**
-
-Spawn validator agent (see `agents/validator.md`). Pass form: $ARGUMENTS.
-
-Parse `VALIDATOR_RESULT:` line from output. Record in state.json `benchmark_runs`.
-
-**4b. Evaluate**
-
-- If pass rate ≥ 95%: set `status → "done"`, commit, append final summary to progress.md, stop.
-- If net-positive vs. previous round: commit, continue.
-- If no improvement for 3 rounds: set `status → "stalled"`, stop.
-
-**4c. Fix**
-
-For each failing case, spawn one bug-fixer agent (`.claude/skills/tax-fix/agents/bug-fixer.md`). Pass:
-- Failing case name + input.json + correct.json content
-- Form: $ARGUMENTS
-- Root cause: "unknown — investigate from scratch"
-
-Spawn all failing-case fix agents in parallel. Wait. Then go back to 4a.
-
-## Key Constraints
-
-- Always check the existing `forms/f1040/` structure before building anything in `forms/f$ARGUMENTS/` — follow the exact same patterns
-- Read `AGENTS.md` before spawning node-builder agents — pass its contents as context
-- Never skip the research phase — node specs are the contract everything else depends on
-- Only commit after a net-positive validation round
+Run `bun run check:structure`, `bun run check:cases` and
+`bun run verify:changed`, fix what they report, then run
+`/tax-fix f{form}:{year}` until it is clean or stalls. Commit each phase,
+staging its files by name. Before a pull request, run the full list in
+`AGENTS.md`.

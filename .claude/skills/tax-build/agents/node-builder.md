@@ -16,7 +16,7 @@ Read these files to understand conventions:
 AGENTS.md
 forms/f1040/nodes/inputs/income/wages/w2/index.ts         (example input node)
 forms/f1040/nodes/intermediate/aggregation/income/investments/schedule_b/index.ts  (example intermediate node)
-forms/f1040/2025/registry.ts                  (example registry)
+forms/f4868/2026/registry.ts                  (example registry)
 core/types/tax-node.ts                        (base class, NodeResult)
 core/types/node-context.ts                    (NodeContext)
 core/types/output-nodes.ts                    (OutputNodes helper)
@@ -27,7 +27,7 @@ docs/architecture/STRUCTURE.md                (where each node lives)
 
 ### Step 1 — Create the Directory
 
-Nodes are shared per form, not per year (`bun run check:structure` enforces the path):
+Nodes are shared per form, not per year (`bun run check:structure` enforces the path; use the spec's `role`, `section` and `group`):
 
 ```
 forms/f{FORM}/nodes/<inputs|intermediate|outputs>/[<aggregation|forms|worksheets>/]{section}/{group}/{node_id}/
@@ -35,7 +35,7 @@ forms/f{FORM}/nodes/<inputs|intermediate|outputs>/[<aggregation|forms|worksheets
   index.test.ts
 ```
 
-Wait — first check if this directory already exists. If `index.ts` exists, read it before overwriting.
+If `index.ts` already exists, read it before changing it.
 
 ### Step 2 — Write Tests First (TDD)
 
@@ -45,10 +45,14 @@ Test structure:
 ```typescript
 import { test } from "bun:test";
 import { assertEquals } from "@std/assert";
-import { nodeInstance, inputSchema } from "./index.ts";
+import type { z } from "zod";
+import { {node_id}, inputSchema } from "./index.ts";
 
-function compute(input: Record<string, unknown>) {
-  return nodeInstance.compute({ taxYear: 2025 }, inputSchema.parse(input));
+function compute(input: z.input<typeof inputSchema>) {
+  return {node_id}.compute(
+    { taxYear: {YEAR}, formType: "f{FORM}" },
+    inputSchema.parse(input),
+  );
 }
 
 test("{node_id} — zero input returns no outputs", () => {
@@ -69,10 +73,11 @@ Use the values from the node spec's IRS reference to write concrete assertions.
 Follow AGENTS.md file shape exactly:
 ```typescript
 import { z } from "zod";
-import { TaxNode } from "../../../../../core/types/tax-node.ts";
-import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
-import type { NodeResult } from "../../../../../core/types/tax-node.ts";
-import type { NodeContext } from "../../../../../core/types/node-context.ts";
+// Seven levels up from nodes/<role>/<section>/<group>/<name>/; eight under a <kind>/.
+import { TaxNode } from "../../../../../../../core/types/tax-node.ts";
+import { OutputNodes } from "../../../../../../../core/types/output-nodes.ts";
+import type { NodeResult } from "../../../../../../../core/types/tax-node.ts";
+import type { NodeContext } from "../../../../../../../core/types/node-context.ts";
 // Import downstream nodes for output routing
 
 // 1. Input schema
@@ -117,8 +122,6 @@ For any constants (tax rates, limits, phaseouts):
 2. If yes, add constants there following the existing pattern
 3. Read them in the node through `CONFIG_BY_YEAR[ctx.taxYear]` from `nodes/config/index.ts`
 
-For 1120: the main constant is `CORPORATE_TAX_RATE = 0.21` (IRC §11(b)).
-
 ### Step 5 — Run Tests
 
 ```bash
@@ -129,7 +132,7 @@ Fix until all tests pass green.
 
 ### Step 6 — Register the Node
 
-Add to `forms/f{FORM}/{YEAR}/registry.ts`:
+Add to `forms/f{FORM}/{YEAR}/registry.ts` (for a 1040 attachment, `forms/f1040/2025/registry.ts`, which later years reuse):
 ```typescript
 import { {node_id} } from "../nodes/<role>/.../{node_id}/index.ts";
 // ...
@@ -139,10 +142,10 @@ const registry = {
 };
 ```
 
-Run type check:
+Then run:
 ```bash
-bun run typecheck 2>&1 | tail -5
 bun run check:structure
+bun run verify:changed
 ```
 
 ### Step 7 — Report
