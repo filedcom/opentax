@@ -10,6 +10,7 @@
 import { FilingStatus } from "../types.ts";
 import type { Bracket } from "./2025.ts";
 import type { F1040Config } from "./types.ts";
+import { housingLimitTable as noticeHousingLimits } from "../intermediate/forms/income/foreign/form2555/housing_limits_2026.ts";
 
 // RP §4.01, Tables 1-4.
 export const BRACKETS_MFJ_2026: ReadonlyArray<Bracket> = [
@@ -152,8 +153,9 @@ export const config2026: F1040Config = {
   // RP §4.39; housing base is 16% of the exclusion, IRC §911(c)(1)(B)(i).
   feieLimit: 132_900,
   feieHousingBase: 21_264,
-  // Notice 2026-25 sets the 2026 housing limits; its table is not transcribed.
-  foreignHousingLimitTableTranscribed: false,
+  // Notice 2026-25 sec. 3; standard $39,870 ($109.23 a day), draft 2026
+  // Instructions for Form 2555, line 29b.
+  foreignHousingLimits: noticeHousingLimits,
   // Instructions for Form 8864 (Rev. December 2025): P.L. 119-21 raises the
   // credit to $.20 a gallon for fuel sold or used after June 30, 2025, and
   // ends it for fuel sold or used after 2026.

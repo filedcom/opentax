@@ -1,3 +1,9 @@
+import {
+  type HousingLimitSelection,
+  type HousingLimitTable,
+  resolveHousingLimit,
+} from "./housing_limits.ts";
+
 /** Notice 2025-16, Section 3: https://www.irs.gov/irb/2025-13_IRB#NOT-2025-16 */
 export const NOTICE_2025_16_ROWS = [
   ["AO", "Angola", "Luanda", 84000, 230.14],
@@ -144,72 +150,58 @@ export const NOTICE_2025_16_ROWS = [
   ["VN", "Vietnam", "Ho Chi Minh City", 42000, 115.07],
 ] as const;
 
-export type HousingLimitSelection2025 =
-  | {
-    kind: "notice_table";
-    location: string;
-    location_match_verified: true;
-    review_document_reference: string;
-  }
-  | {
-    kind: "standard_unlisted";
-    verified_not_listed: true;
-    notice_review_document_reference: string;
-  };
+export type HousingLimitSelection2025 = HousingLimitSelection;
 
-const STANDARD_FULL_YEAR = 39_000;
-const STANDARD_DAILY = 106.85;
-const MEXICO_OTHER_EXCEPTIONS = new Set([
-  "ciudad juarez",
-  "cuernavaca",
-  "guadalajara",
-  "hermosillo",
-  "matamoros",
-  "mazatlan",
-  "merida",
-  "mexico city",
-  "monterrey",
-  "nogales",
-  "nuevo laredo",
-  "tijuana",
-  "veracruz",
-]);
+const MEXICO_OTHER_EXCEPTIONS = [
+  "Ciudad Juarez",
+  "Cuernavaca",
+  "Guadalajara",
+  "Hermosillo",
+  "Matamoros",
+  "Mazatlan",
+  "Merida",
+  "Mexico City",
+  "Monterrey",
+  "Nogales",
+  "Nuevo Laredo",
+  "Tijuana",
+  "Veracruz",
+];
 
-function normalize(value: string): string {
-  return value.normalize("NFD").replace(/[\u0300-\u036f]/g, "")
-    .trim().toLowerCase().replace(/\s+/g, " ");
-}
-
-function broadRowMatches(
-  country: string,
-  location: string,
-  city: string,
-): boolean {
-  const normalizedCity = normalize(city);
-  if (country === "AW" && location === "Other") {
-    return normalizedCity !== "oranjestad";
-  }
-  if (country === "CO" && location === "All cities other than Bogota") {
-    return normalizedCity !== "bogota";
-  }
-  if (country === "KW" && location === "All cities other than Kuwait City") {
-    return normalizedCity !== "kuwait city";
-  }
-  if (country === "MX" && location.startsWith("All cities other than ")) {
-    return !MEXICO_OTHER_EXCEPTIONS.has(normalizedCity);
-  }
-  return false;
-}
-
-const AREA_LOCATIONS = new Set([
-  "Kaiserslautern, Landkreis",
-  "Okinawa Prefecture",
-  "Osaka-Kobe",
-  "West Bank",
-  "Surrey",
-  "Hague, The",
-  "Holy See, The",
-]);
+export const housingLimitTable: HousingLimitTable = {
+  notice: "Notice 2025-16",
+  standardFullYear: 39_000,
+  standardDaily: 106.85,
+  rows: NOTICE_2025_16_ROWS,
+  broadRows: [
+    { countryCode: "AW", location: "Other", exceptCities: ["Oranjestad"] },
+    {
+      countryCode: "CO",
+      location: "All cities other than Bogota",
+      exceptCities: ["Bogota"],
+    },
+    {
+      countryCode: "KW",
+      location: "All cities other than Kuwait City",
+      exceptCities: ["Kuwait City"],
+    },
+    {
+      countryCode: "MX",
+      location:
+        "All cities other than Ciudad Juarez, Cuernavaca, Guadalajara, Hermosillo, Matamoros, Mazatlan, Merida, Mexico City, Monterrey, Nogales, Nuevo Laredo, Tijuana, and Veracruz",
+      exceptCities: MEXICO_OTHER_EXCEPTIONS,
+    },
+  ],
+  areaLocations: [
+    "Kaiserslautern, Landkreis",
+    "Okinawa Prefecture",
+    "Osaka-Kobe",
+    "West Bank",
+    "Surrey",
+    "Hague, The",
+    "Holy See, The",
+  ],
+};
 
 /** Explicit reviewed selection; an unknown city never falls into a standard cap implicitly. */
 export function resolveHousingLimit2025(
@@ -218,69 +210,11 @@ export function resolveHousingLimit2025(
   selection: HousingLimitSelection2025,
   qualifyingDays: number,
 ): { line29a?: string; line29b: number } {
-  if (
-    !/^[A-Z]{2}$/.test(countryCode) || !city.trim() ||
-    !Number.isInteger(qualifyingDays) || qualifyingDays < 1 ||
-    qualifyingDays > 365
-  ) {
-    throw new Error(
-      "Form 2555 housing needs a valid country, city, and qualifying day count",
-    );
-  }
-  if (selection.kind === "notice_table") {
-    if (!selection.review_document_reference.trim()) {
-      throw new Error(
-        "Form 2555 adjusted location needs a review document reference",
-      );
-    }
-    const row = NOTICE_2025_16_ROWS.find(([country, , location]) =>
-      country === countryCode && location === selection.location
-    );
-    if (!row) {
-      throw new Error(
-        "Form 2555 adjusted housing location is not in Notice 2025-16 for this country",
-      );
-    }
-    const [country, noticeCountry, location, fullYear, daily] = row;
-    if (location.startsWith("All cities other than ") || location === "Other") {
-      if (!broadRowMatches(country, location, city)) {
-        throw new Error(
-          "Form 2555 adjusted housing location does not cover the residence city",
-        );
-      }
-    } else if (
-      !AREA_LOCATIONS.has(location) &&
-      normalize(city) !== normalize(location)
-    ) {
-      throw new Error(
-        "Form 2555 adjusted housing location does not match the residence city",
-      );
-    }
-    return {
-      line29a: `${city.trim()}, ${noticeCountry}`,
-      line29b: qualifyingDays === 365
-        ? fullYear
-        : Math.round(daily * qualifyingDays),
-    };
-  }
-  if (!selection.notice_review_document_reference.trim()) {
-    throw new Error(
-      "Form 2555 standard housing limit needs Notice 2025-16 review evidence",
-    );
-  }
-  const listed = NOTICE_2025_16_ROWS.some(([country, , location]) =>
-    country === countryCode &&
-    (normalize(location) === normalize(city) ||
-      broadRowMatches(country, location, city))
+  return resolveHousingLimit(
+    housingLimitTable,
+    countryCode,
+    city,
+    selection,
+    qualifyingDays,
   );
-  if (listed) {
-    throw new Error(
-      "Form 2555 listed housing location cannot use the standard limit",
-    );
-  }
-  return {
-    line29b: qualifyingDays === 365
-      ? STANDARD_FULL_YEAR
-      : Math.round(STANDARD_DAILY * qualifyingDays),
-  };
 }

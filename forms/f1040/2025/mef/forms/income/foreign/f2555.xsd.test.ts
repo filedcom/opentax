@@ -14,6 +14,8 @@ import {
 } from "../../../../../nodes/intermediate/forms/income/foreign/form2555/housing_limits_2025.ts";
 import { registry } from "../../../../registry.ts";
 import { shiftDatedFacts } from "../../../../../../../scripts/testing/sample-year.ts";
+import { CONFIG_BY_YEAR } from "../../../../../nodes/config/index.ts";
+import { resolveHousingLimit } from "../../../../../nodes/intermediate/forms/income/foreign/form2555/housing_limits.ts";
 import { buildMefXml } from "../../../builder.ts";
 import { type FilerIdentity, FilingStatus } from "../../../types.ts";
 
@@ -571,10 +573,8 @@ test.skipIf(!xsdAvailable)("XSD: Form 2555 employee housing excludes the housing
 });
 
 // Draft 2026 Form 2555 (lines 32, 37 and 39): a $132,900 exclusion
-// (Rev. Proc. 2025-32 §4.39) prorated by days in the 2026 tax year. The 2026
-// housing limits (Notice 2026-25) are not transcribed, so a housing claim is
-// refused rather than computed with the 2025 table.
-test("Form 2555 reads the 2026 exclusion and refuses untranscribed 2026 housing limits", () => {
+// (Rev. Proc. 2025-32 §4.39) prorated by days in the 2026 tax year.
+test("Form 2555 reads the 2026 exclusion", () => {
   const in2026 = shiftDatedFacts(filingDetails, 1);
   const fullYear = calculatePhysicalPresence2555(in2026, 2026);
   assertEquals([fullYear.qualifyingDays, fullYear.line39], [365, 1]);
@@ -587,13 +587,69 @@ test("Form 2555 reads the 2026 exclusion and refuses untranscribed 2026 housing 
   }, 2026);
   assertEquals(partYear.qualifyingDays, 181);
   assertEquals(partYear.line40, 65_904);
+});
+
+// Notice 2026-25: an unlisted location takes the generally applicable
+// $39,870 (30% of $132,900), $109.23 a day in the draft 2026 Instructions
+// for Form 2555, line 29b; Toronto is $62,700 ($171.78 a day). The housing
+// base is $21,264 (16% of $132,900, sec. 2).
+test("Form 2555 reads the Notice 2026-25 housing limits for 2026", () => {
+  const gothenburg = calculatePhysicalPresence2555(
+    shiftDatedFacts(employeeHousingDetails, 1),
+    2026,
+  );
+  assertEquals(
+    [gothenburg.line29b, gothenburg.line30, gothenburg.line32],
+    [39_870, 30_000, 21_264],
+  );
+  assertEquals(gothenburg.line33, 8_736);
+  const torontoSelection = {
+    kind: "notice_table" as const,
+    location: "Toronto",
+    location_match_verified: true as const,
+    review_document_reference: "Notice 2026-25 Section 3 reviewed for Toronto",
+  };
+  const table = CONFIG_BY_YEAR[2026]!.foreignHousingLimits;
+  assertEquals(
+    resolveHousingLimit(table, "CA", "Toronto", torontoSelection, 365),
+    { line29a: "Toronto, Canada", line29b: 62_700 },
+  );
+  assertEquals(
+    resolveHousingLimit(table, "CA", "Toronto", torontoSelection, 181).line29b,
+    31_092,
+  );
+  const standard = {
+    kind: "standard_unlisted" as const,
+    verified_not_listed: true as const,
+    notice_review_document_reference: "Notice 2026-25 Section 3 reviewed",
+  };
+  assertEquals(
+    resolveHousingLimit(table, "SE", "Gothenburg", standard, 181).line29b,
+    19_771,
+  );
+  // The United Kingdom's other-cities row covers Manchester; Belfast takes
+  // the generally applicable limitation.
+  assertEquals(
+    resolveHousingLimit(table, "GB", "Manchester", {
+      ...torontoSelection,
+      location: table.rows.find(([country, , location]) =>
+        country === "GB" && location.startsWith("All cities other than")
+      )![2],
+    }, 365).line29b,
+    44_200,
+  );
   assertThrows(
-    () =>
-      calculatePhysicalPresence2555(
-        shiftDatedFacts(employeeHousingDetails, 1),
-        2026,
-      ),
+    () => resolveHousingLimit(table, "GB", "Manchester", standard, 365),
     Error,
-    "housing limits for TY2026 are not transcribed",
+    "listed housing location",
+  );
+  assertEquals(
+    resolveHousingLimit(table, "GB", "Belfast", standard, 365).line29b,
+    39_870,
+  );
+  // Notice 2026-25 lists Mexico City alone; other Mexican cities are unlisted.
+  assertEquals(
+    resolveHousingLimit(table, "MX", "Puebla", standard, 365).line29b,
+    39_870,
   );
 });

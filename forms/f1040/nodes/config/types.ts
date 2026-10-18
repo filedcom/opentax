@@ -1,6 +1,7 @@
 // forms/f1040/nodes/config/types.ts
 import type { FilingStatus } from "../types.ts";
 import type { Bracket } from "./2025.ts";
+import type { HousingLimitTable } from "../intermediate/forms/income/foreign/form2555/housing_limits.ts";
 
 /** IRC §32(b) amounts for one qualifying-child count. */
 export type EitcParameters = {
@@ -182,8 +183,8 @@ export interface F1040Config {
   // ── FEIE (2555) ───────────────────────────────────────────────────────────
   feieLimit: number;
   feieHousingBase: number;
-  /** Form 2555 line 29b: the year's housing-limit notice table is in housing_limits_2025.ts. */
-  foreignHousingLimitTableTranscribed: boolean;
+  /** Form 2555 line 29b: the year's IRC 911(c)(2)(B) housing-limit notice. */
+  foreignHousingLimits: HousingLimitTable;
   /** IRC §40A(b)(4) small agri-biodiesel producer credit sale-date window, as amended by P.L. 119-21. */
   smallAgriBiodieselSales: {
     readonly twentyCentRateFrom: string;

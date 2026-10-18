@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { configForYear } from "../../../../../config/index.ts";
-import { resolveHousingLimit2025 } from "./housing_limits_2025.ts";
+import { resolveHousingLimit } from "./housing_limits.ts";
 
 const dateSchema = z.string().regex(/^\d{4}-\d{2}-\d{2}$/);
 
@@ -216,12 +216,8 @@ export function calculatePhysicalPresence2555(
       line28 += expense.amount;
     }
     line31 = qualifyingDays;
-    if (!cfg.foreignHousingLimitTableTranscribed) {
-      throw new Error(
-        `Form 2555 housing limits for TY${taxYear} are not transcribed yet`,
-      );
-    }
-    const housingLimit = resolveHousingLimit2025(
+    const housingLimit = resolveHousingLimit(
+      cfg.foreignHousingLimits,
       housing.country_code,
       housing.city,
       housing.limit_selection,
