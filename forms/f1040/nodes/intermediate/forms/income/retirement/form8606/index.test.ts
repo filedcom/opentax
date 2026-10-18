@@ -371,3 +371,56 @@ test("form8606: zero-denominator with positive basis and Roth distribution — n
   const f1040 = findOutput(result, "f1040");
   assertEquals(f1040?.fields?.line4b_ira_taxable, 2_000);
 });
+
+// 2025 Instructions for Form 8606, Total Basis Chart—Line 2: if the last Form
+// 8606 filed was for a year after 2000, line 2 is line 14 of that form. The
+// basis record may be the taxpayer's own statement of that amount.
+function statedBasisDistribution(taxYear: number) {
+  return {
+    nondeductible_contributions: 0,
+    prior_basis: 5_444,
+    traditional_distributions: 8_000,
+    year_end_ira_value: 58_999,
+    filing_details: {
+      owner: IraOwner.Spouse,
+      prior_basis_documented_from_2024_form8606: true as const,
+      no_ira_distributions_or_conversions_confirmed: false,
+    },
+    distribution_evidence: {
+      prior_form8606: {
+        tax_year: taxYear,
+        source_document_reference: "intake: spouse's total traditional IRA basis",
+        owner_ssn: "400456788",
+        filed_line14_basis: 5_444,
+      },
+      year_end_statement: {
+        as_of: "2025-12-31" as const,
+        source_document_reference:
+          "intake: spouse's traditional, SEP and SIMPLE IRA values at 12/31/2025",
+        owner_ssn: "400456788",
+        all_traditional_ira_balances_included_confirmed: true as const,
+        total_fair_market_value: 58_999,
+      },
+      form1099r_source_document_reference: "1099r_2.pdf",
+      no_current_nondeductible_contribution_confirmed: true,
+      no_other_traditional_ira_distribution_or_conversion_confirmed:
+        true as const,
+      no_rollover_repayment_qcd_hsa_or_disaster_amount_confirmed:
+        true as const,
+    },
+  };
+}
+
+test("form8606: line 2 basis from the last Form 8606 filed in an earlier year", () => {
+  const result = compute(statedBasisDistribution(2019));
+  // Line 10: 5,444 / (58,999 + 8,000) = 0.081; line 12: 8,000 × 0.081 = 648.
+  assertEquals(findOutput(result, "f1040")?.fields.line4b_ira_taxable, 7_352);
+});
+
+test("form8606: line 2 basis cannot come from a current-year Form 8606", () => {
+  assertThrows(
+    () => compute(statedBasisDistribution(2025)),
+    Error,
+    "Form 8606 filed for an earlier year",
+  );
+});

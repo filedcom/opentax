@@ -33,21 +33,39 @@ export const filingDetailsSchema = z.object({
   other_spouse_form8606_not_required_confirmed: z.literal(true).optional(),
 });
 
+// Form 8606 line 2 is line 14 of the last Form 8606 filed for 2001 or later
+// (2025 Instructions for Form 8606, Total Basis Chart—Line 2).
+const FIRST_LINE14_BASIS_YEAR = 2001;
+
 export const distributionEvidenceSchema = z.object({
   prior_form8606: z.object({
-    tax_year: z.literal(2024),
-    source_document_reference: z.string().trim().min(1),
+    tax_year: z.number().int().min(FIRST_LINE14_BASIS_YEAR).describe(
+      "Year of the last Form 8606 filed (2001 or later, before this tax year); its line 14 is this year's line 2",
+    ),
+    source_document_reference: z.string().trim().min(1).describe(
+      "Record showing the basis: that Form 8606, or the taxpayer's statement of it, such as an intake answer",
+    ),
     owner_ssn: z.string().regex(/^\d{9}$/),
-    filed_line14_basis: z.number().int().positive(),
+    filed_line14_basis: z.number().int().positive().describe(
+      "Total traditional IRA basis; equals the 1099-R prior_ira_basis",
+    ),
   }).strict(),
   year_end_statement: z.object({
     as_of: z.literal("2025-12-31"),
-    source_document_reference: z.string().trim().min(1),
+    source_document_reference: z.string().trim().min(1).describe(
+      "Record of the December 31 value, such as the custodian statement or the taxpayer's stated value; a different reference from the basis record",
+    ),
     owner_ssn: z.string().regex(/^\d{9}$/),
-    all_traditional_ira_balances_included_confirmed: z.literal(true),
-    total_fair_market_value: z.number().int().nonnegative(),
+    all_traditional_ira_balances_included_confirmed: z.literal(true).describe(
+      "The value covers all of the owner's traditional, SEP and SIMPLE IRAs (Form 8606 line 6)",
+    ),
+    total_fair_market_value: z.number().int().nonnegative().describe(
+      "Form 8606 line 6; equals the 1099-R year_end_ira_value",
+    ),
   }).strict(),
-  form1099r_source_document_reference: z.string().trim().min(1),
+  form1099r_source_document_reference: z.string().trim().min(1).describe(
+    "The 1099-R's source_document_reference",
+  ),
   no_current_nondeductible_contribution_confirmed: z.boolean(),
   no_other_traditional_ira_distribution_or_conversion_confirmed: z.literal(
     true,
@@ -549,8 +567,14 @@ class Form8606Node extends TaxNode<typeof inputSchema> {
   readonly inputSchema = inputSchema;
   readonly outputNodes = new OutputNodes([f1040, agi_aggregator]);
 
-  compute(_ctx: NodeContext, rawInput: Form8606Input): NodeResult {
+  compute(ctx: NodeContext, rawInput: Form8606Input): NodeResult {
     const input = inputSchema.parse(rawInput);
+    const priorYear = input.distribution_evidence?.prior_form8606.tax_year;
+    if (priorYear !== undefined && priorYear >= ctx.taxYear) {
+      throw new Error(
+        "Form 8606 line 2 basis comes from a Form 8606 filed for an earlier year",
+      );
+    }
     if (input.roth_owner_inventory_reviews) {
       if (
         Object.entries(input).some(([key, value]) =>
