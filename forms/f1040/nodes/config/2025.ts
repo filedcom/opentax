@@ -848,4 +848,13 @@ export const config2025: F1040Config = {
   // Instructions for Form 8994 (Rev. December 2024), Compensation Limit
   // Per Year: 60% of the 2024 IRC §414(q)(1)(B) amount of $155,000.
   paidLeaveCompensationLimit: 93_000,
+  // IRC §45F(a) and (b) before P.L. 119-21; Form 8882 (Rev. 12/2017) lines
+  // 2, 4 and 7.
+  employerProvidedChildcare: {
+    facilityRate: 0.25,
+    smallBusinessFacilityRate: 0.25,
+    referralRate: 0.10,
+    creditLimit: 150_000,
+    smallBusinessCreditLimit: 150_000,
+  },
 };

@@ -7,20 +7,22 @@ import {
 import { OutputNodes } from "../../../../../../../core/types/output-nodes.ts";
 import type { NodeContext } from "../../../../../../../core/types/node-context.ts";
 import { f3800 } from "../f3800/index.ts";
+import { configForYear } from "../../../../config/index.ts";
 
-// Form 8882 (Rev. 12/2017) remains the TY2025 direct-employer form. This
-// bounded source covers one non-group Schedule C employer's current-year
-// contracted facility and/or resource-referral expense, not capital property,
-// pass-through credits, controlled groups, or recapture.
+// Form 8882 (Rev. 12/2017) for TY2025 and the draft Rev. December 2026 form
+// for P.L. 119-21 §70401. This bounded source covers one non-group Schedule C
+// employer's current-year contracted facility and/or resource-referral
+// expense, not capital property, jointly owned facilities, pass-through
+// credits, controlled groups, or recapture.
 const positiveMoney = z.number().int().finite().positive().refine(
   Number.isSafeInteger,
 );
 const reference = z.string().trim().min(1);
-const paidDate = z.string().regex(/^2025-\d{2}-\d{2}$/).refine((value) => {
+const paidDate = z.string().regex(/^\d{4}-\d{2}-\d{2}$/).refine((value) => {
   const parsed = new Date(`${value}T00:00:00Z`);
   return !Number.isNaN(parsed.getTime()) &&
     parsed.toISOString().slice(0, 10) === value;
-}, "Use a valid TY2025 date");
+}, "Use a valid date");
 
 const contractSource = z.object({
   provider_name: reference,
@@ -51,26 +53,11 @@ const facilityContract = contractSource.extend({
       message: "Contracted care expenditure cannot exceed fair market value",
     });
   }
-  if (contract.gross_expenditure_usd % 4 !== 0) {
-    ctx.addIssue({
-      code: "custom",
-      path: ["gross_expenditure_usd"],
-      message: "Bounded Form 8882 source needs a whole-dollar 25% credit",
-    });
-  }
 });
 
 const referralContract = contractSource.extend({
   childcare_resource_and_referral_services_confirmed: z.literal(true),
-}).strict().superRefine((contract, ctx) => {
-  if (contract.gross_expenditure_usd % 10 !== 0) {
-    ctx.addIssue({
-      code: "custom",
-      path: ["gross_expenditure_usd"],
-      message: "Bounded Form 8882 source needs a whole-dollar 10% credit",
-    });
-  }
-});
+}).strict();
 
 export const inputSchema = z.object({
   source_type: z.literal("direct_schedule_c"),
@@ -79,6 +66,8 @@ export const inputSchema = z.object({
   no_controlled_group_or_common_control_confirmed: z.literal(true),
   no_pass_through_credit_confirmed: z.literal(true),
   no_prior_facility_credit_recapture_event_confirmed: z.literal(true),
+  /** Item A: an IRC §45F(c)(4) eligible small business. */
+  eligible_small_business: z.boolean().optional(),
   facility_contract: facilityContract.optional(),
   referral_contract: referralContract.optional(),
 }).strict().superRefine((source, ctx) => {
@@ -103,30 +92,58 @@ export const inputSchema = z.object({
         "Facility and referral need distinct ledger rows and expense descriptions",
     });
   }
-  const facilityCredit =
-    (source.facility_contract?.gross_expenditure_usd ?? 0) / 4;
-  const referralCredit =
-    (source.referral_contract?.gross_expenditure_usd ?? 0) / 10;
-  if (facilityCredit + referralCredit > 150_000) {
-    ctx.addIssue({
-      code: "custom",
-      path: ["facility_contract"],
-      message: "Capped credit allocation needs a separate deduction workpaper",
-    });
-  }
 });
 
 export type F8882Input = z.infer<typeof inputSchema>;
 
+/** The tax year of the contracts' payments; each contract is current-year. */
+export function form8882ContractYear(source: F8882Input): number {
+  const years = new Set(
+    [source.facility_contract, source.referral_contract].flatMap((contract) =>
+      contract ? [Number(contract.paid_or_incurred_date.slice(0, 4))] : []
+    ),
+  );
+  if (years.size !== 1) {
+    throw new Error("Form 8882 contracts must be paid or incurred in one year");
+  }
+  return [...years][0];
+}
+
+function wholeDollars(amount: number, line: string): number {
+  const rounded = Math.round(amount);
+  if (Math.abs(amount - rounded) > 1e-9) {
+    throw new Error(`Bounded Form 8882 source needs a whole-dollar ${line}`);
+  }
+  return rounded;
+}
+
+/** Lines in the Rev. 12/2017 order: 2 is the facility credit, 7 the limit. */
 export function calculateForm8882(raw: F8882Input) {
   const source = inputSchema.parse(raw);
+  const year = form8882ContractYear(source);
+  const terms = configForYear(year).employerProvidedChildcare;
+  const tiered = terms.smallBusinessFacilityRate !== terms.facilityRate ||
+    terms.smallBusinessCreditLimit !== terms.creditLimit;
+  if (tiered && source.eligible_small_business === undefined) {
+    throw new Error(
+      `Form 8882 for ${year} needs item A: whether the employer is an eligible small business`,
+    );
+  }
+  const small = tiered && source.eligible_small_business === true;
+  const rate = small ? terms.smallBusinessFacilityRate : terms.facilityRate;
+  const limit = small ? terms.smallBusinessCreditLimit : terms.creditLimit;
   const line1 = source.facility_contract?.gross_expenditure_usd ?? 0;
-  const line2 = line1 / 4;
+  const line2 = wholeDollars(line1 * rate, "facility credit");
   const line3 = source.referral_contract?.gross_expenditure_usd ?? 0;
-  const line4 = line3 / 10;
+  const line4 = wholeDollars(line3 * terms.referralRate, "referral credit");
   const line5 = 0; // Direct-employer source; pass-through credits are separate.
   const line6 = line2 + line4 + line5;
-  const line7 = Math.min(line6, 150_000);
+  if (line6 > limit) {
+    throw new Error(
+      "Capped credit allocation needs a separate deduction workpaper",
+    );
+  }
+  const line7 = line6;
   return { line1, line2, line3, line4, line5, line6, line7 };
 }
 
@@ -135,8 +152,13 @@ class F8882Node extends TaxNode<typeof inputSchema> {
   readonly inputSchema = inputSchema;
   readonly outputNodes = new OutputNodes([f3800]);
 
-  compute(_ctx: NodeContext, rawInput: F8882Input): NodeResult {
+  compute(ctx: NodeContext, rawInput: F8882Input): NodeResult {
     const source = inputSchema.parse(rawInput);
+    if (form8882ContractYear(source) !== ctx.taxYear) {
+      throw new Error(
+        `Form 8882 contracts must be paid or incurred in ${ctx.taxYear}`,
+      );
+    }
     return {
       outputs: [output(f3800, {
         f8882_direct_employer_credit: {

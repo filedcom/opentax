@@ -382,4 +382,13 @@ export const config2026: F1040Config = {
   // Per Year: 60% of the 2025 IRC §414(q)(1)(B) amount of $160,000
   // (Notice 2024-80).
   paidLeaveCompensationLimit: 96_000,
+  // IRC §45F as amended by P.L. 119-21 §70401; draft Form 8882 (Rev.
+  // December 2026) lines 2, 5 and 8.
+  employerProvidedChildcare: {
+    facilityRate: 0.40,
+    smallBusinessFacilityRate: 0.50,
+    referralRate: 0.10,
+    creditLimit: 500_000,
+    smallBusinessCreditLimit: 600_000,
+  },
 };

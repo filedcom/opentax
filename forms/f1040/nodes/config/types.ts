@@ -42,6 +42,16 @@ export type RenewableProductionRates = {
   readonly placedAfter2021: { readonly full: number; readonly half: number };
 };
 
+/** IRC §45F(a)-(b): Form 8882 rates and credit limit. */
+export type EmployerProvidedChildcareTerms = {
+  readonly facilityRate: number;
+  /** IRC §45F(c)(4) eligible small business; equal when the year has no tier. */
+  readonly smallBusinessFacilityRate: number;
+  readonly referralRate: number;
+  readonly creditLimit: number;
+  readonly smallBusinessCreditLimit: number;
+};
+
 /** IRC §36B(b)(3)(A) applicable percentage band, in hundredths of a percent. */
 export type PtcApplicablePercentageBand = {
   /** Household income as a percentage of the FPL: at least this. */
@@ -337,4 +347,5 @@ export interface F1040Config {
   renewableProductionRates: RenewableProductionRates;
   /** IRC §45S(d)(2): a qualifying employee's prior-year compensation limit. */
   paidLeaveCompensationLimit: number;
+  employerProvidedChildcare: EmployerProvidedChildcareTerms;
 }

@@ -82,7 +82,7 @@ test("f8882: rejects unsupported legacy totals, missing contracts, and false qua
 test("f8882: unsupported cap allocation and fractional line credit fail closed", () => {
   const source = form8882Fixture();
   assertThrows(() =>
-    inputSchema.parse({
+    calculateForm8882({
       ...source,
       facility_contract: {
         ...source.facility_contract,
@@ -96,12 +96,60 @@ test("f8882: unsupported cap allocation and fractional line credit fail closed",
     })
   );
   assertThrows(() =>
-    inputSchema.parse({
+    calculateForm8882({
       ...source,
       facility_contract: {
         ...source.facility_contract,
         gross_expenditure_usd: 40_001,
       },
     })
+  );
+});
+
+// Draft Form 8882 (Rev. December 2026), item A and lines 2 and 8: 40% of
+// facility expenditures (50% for an IRC §45F(c)(4) eligible small business),
+// limited to $500,000 ($600,000); P.L. 119-21 §70401.
+test("f8882: 2026 facility credit applies the P.L. 119-21 rates and limits", () => {
+  const source = form8882Fixture();
+  const in2026 = (eligible_small_business?: boolean) => ({
+    ...source,
+    eligible_small_business,
+    facility_contract: {
+      ...source.facility_contract,
+      paid_or_incurred_date: "2026-03-15",
+    },
+    referral_contract: {
+      ...source.referral_contract,
+      paid_or_incurred_date: "2026-04-15",
+    },
+  });
+  assertEquals(calculateForm8882(in2026(false)).line2, 16_000);
+  assertEquals(calculateForm8882(in2026(false)).line7, 17_000);
+  assertEquals(calculateForm8882(in2026(true)).line2, 20_000);
+  assertThrows(
+    () => calculateForm8882(in2026()),
+    Error,
+    "needs item A",
+  );
+  assertThrows(
+    () => f8882.compute({ taxYear: 2026, formType: "f1040" }, source),
+    Error,
+    "paid or incurred in 2026",
+  );
+  const large = (eligible_small_business: boolean, spent: number) => ({
+    ...in2026(eligible_small_business),
+    facility_contract: {
+      ...in2026(eligible_small_business).facility_contract,
+      gross_expenditure_usd: spent,
+      fair_market_value_of_care_usd: spent,
+    },
+    referral_contract: undefined,
+  });
+  assertEquals(calculateForm8882(large(true, 1_200_000)).line7, 600_000);
+  assertEquals(calculateForm8882(large(false, 1_250_000)).line7, 500_000);
+  assertThrows(
+    () => calculateForm8882(large(false, 1_300_000)),
+    Error,
+    "separate deduction workpaper",
   );
 });

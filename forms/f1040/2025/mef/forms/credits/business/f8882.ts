@@ -26,6 +26,18 @@ export const form8882: MefFormDescriptor<"f8882", unknown> = {
     ) {
       throw new Error("Form 8882 proprietor differs from prepared filer");
     }
+    // 2026v1.0 IRS8882 still carries the Rev. 12/2017 lines: a 25% facility
+    // amount and a $150,000 limit, with no item A or B.
+    if (lines.line2 * 4 !== lines.line1 || lines.line7 > 150_000) {
+      throw new Error(
+        "Form 8882 P.L. 119-21 facility rate or limit has no MeF element in this schema; export waits for a schema that carries it",
+      );
+    }
+    if (source.eligible_small_business !== undefined) {
+      throw new Error(
+        "Form 8882 item A has no MeF element in this schema; export waits for a schema that carries it",
+      );
+    }
     return elements("IRS8882", [
       element("QlfyChldCareFcltyExpendAmt", lines.line1 || undefined),
       element("TwentyFivePctOfFcltyExpendAmt", lines.line2 || undefined),
