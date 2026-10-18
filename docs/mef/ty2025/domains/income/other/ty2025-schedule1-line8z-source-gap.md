@@ -217,7 +217,7 @@ recipient matching the filer or joint-filing spouse, and both native and PDF
 Schedule 1 exports reconcile the sourced taxable amount. A synthetic
 $1,200 recovery in a full return passes local TY2025 v5.4 XSD and its
 five-page filled PDF was inspected; see the
-[Form 1098 review](../../../testing/ty2025-filled-pdf-review-2026-09-29.md).
+Form 1098 review.
 
 Two generic scalar keys, `line8z_other` and `line8z_other_income`, have no
 known current producers. Schedule 1 now rejects either key, including a zero
