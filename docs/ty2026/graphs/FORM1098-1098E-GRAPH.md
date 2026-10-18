@@ -1,12 +1,12 @@
 # TY2026 mortgage and student-loan interest source graph
 
 Snapshot: September 27, 2026. The IRS [April 2025 continuous-use Form
-1098](../corpus/authorities/f1098--2025.pdf) is the form specified by the
-[December 2026 instructions](../corpus/authorities/i1098--2026.pdf) for 2026
+1098](../../../irs/corpus/ty2026/authorities/f1098--2025.pdf) is the form specified by the
+[December 2026 instructions](../../../irs/corpus/ty2026/authorities/i1098--2026.pdf) for 2026
 payments. Their SHA-256 hashes are `304da9c0f67a46ff04ba831359185dc13dde335199cbf7c413dc879e5410dd87`
 and `ad68e1d312b85a66601477014d1e933a8b0e9fa008fae3fdf04a889e755be20b`.
-The [2026 Form 1098-E](../corpus/authorities/f1098e--2026.pdf) and [combined
-1098-E/T instructions](../corpus/authorities/i1098et--2026.pdf) are pinned at
+The [2026 Form 1098-E](../../../irs/corpus/ty2026/authorities/f1098e--2026.pdf) and [combined
+1098-E/T instructions](../../../irs/corpus/ty2026/authorities/i1098et--2026.pdf) are pinned at
 `bffb9b5ec4f06d47391a5fa7b773d1c4197c587428ace03a96914a9038389602`
 and `a06256fece2bfc5352e8647856b3c1aca0a4c96a79a5a5dd1324f4049c2f5655`.
 These lender statements are source evidence; the current MeF package must
@@ -17,9 +17,9 @@ decide whether any source copy or explanation is a filed attachment.
 | Source facts | 2026 calculation and handoff |
 | --- | --- |
 | Borrower, loan, property, boxes 2/3/7–9/11 | Keep stable loan/property IDs, dates, acquisition/refinancing history, principal balances, proceeds use, qualified first/second residence and ownership. Apply the acquisition-debt cap across loans, including grandfathered debt and MFS amounts. Box 2 is a year-end snapshot, not enough to calculate the year's average balance or deductible fraction. Separate personal, rental and business use. The lender's $600 reporting rule is not a deduction threshold. |
-| Box 1 interest | Reconcile cash paid, overpayment corrections, each loan's acquisition-use fraction and debt limit. Send eligible interest **reported on Form 1098** to the [2026 Schedule A draft](../corpus/draft/f1040sa.pdf) line 8a. Other personal acquisition interest belongs on 8b, with seller-identification details when required. Send rental/business/home-office shares through Schedule E/C/Form 8829 once, with activity ID; Form 8396 mortgage-credit interest reduction must be reflected in the Schedule A deduction. |
+| Box 1 interest | Reconcile cash paid, overpayment corrections, each loan's acquisition-use fraction and debt limit. Send eligible interest **reported on Form 1098** to the [2026 Schedule A draft](../../../irs/corpus/ty2026/draft/f1040sa.pdf) line 8a. Other personal acquisition interest belongs on 8b, with seller-identification details when required. Send rental/business/home-office shares through Schedule E/C/Form 8829 once, with activity ID; Form 8396 mortgage-credit interest reduction must be reflected in the Schedule A deduction. |
 | Box 6 principal-residence purchase points | Distinguish lender-reported points from deductible current-year points. Apply purchase/construction qualification, seller-paid treatment, excess debt and refinancing amortization; preserve basis/remaining amortization for later years or payoff. The deductible portion **reported on Form 1098 belongs on Schedule A 8a**. Line 8c is only for deductible points **not** reported on Form 1098. |
-| Box 5 mortgage insurance premiums | The [2026 Publication 505](../corpus/authorities/p505--2026.pdf) states the qualified home-acquisition MIP deduction returns from 2026. The 2026 Schedule A draft has **line 8d**. Check contract issue date, qualified home/debt, premium allocation and any income limitation in final Schedule A instructions before calculating the allowed amount. Keep rental MIP with Schedule E, not personal 8d. |
+| Box 5 mortgage insurance premiums | The [2026 Publication 505](../../../irs/corpus/ty2026/authorities/p505--2026.pdf) states the qualified home-acquisition MIP deduction returns from 2026. The 2026 Schedule A draft has **line 8d**. Check contract issue date, qualified home/debt, premium allocation and any income limitation in final Schedule A instructions before calculating the allowed amount. Keep rental MIP with Schedule E, not personal 8d. |
 | Box 4 overpaid-interest refund | A same-year correction adjusts the corresponding interest paid, bounded at zero. A prior-year refund requires a tax-benefit recovery calculation using the actual year and deduction claimed; the gross refund is not automatically Schedule 1 line 8z income. Preserve recovered year and whether the earlier interest was personal, business or rental. |
 
 The shared [`f1098` node](../../../forms/f1040/nodes/inputs/deductions/mortgage/f1098/index.ts)

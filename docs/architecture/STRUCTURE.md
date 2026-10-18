@@ -10,6 +10,7 @@ Public entrypoints are `mod.ts`, `catalog.ts`, `cli/main.ts`, and `forms/f1040/2
 ├── cli/
 │   ├── commands/                  # Return, form, node and export operations
 │   ├── store/                     # Return persistence and guarded carry archives
+│   ├── mef/                       # IRS MeF A2A client: SOAP, WS-Security, MTOM; test-only mock IRS
 │   └── utils/
 ├── core/
 │   ├── runtime/                   # Execution, graph and source-document contracts
@@ -39,23 +40,22 @@ Public entrypoints are `mod.ts`, `catalog.ts`, `cli/main.ts`, and `forms/f1040/2
 │   ├── architecture/              # Internal design and repository navigation
 │   ├── mef/ty2025/                # Readiness, inventory and source evidence by topic
 │   ├── ty2026/                    # Source research by topic
-│   ├── ats/ / releases/           # ATS correspondence drafts and release documents
+│   ├── ats/                       # ATS preparation and correspondence drafts
 │   └── index.html / build/        # Existing static documentation site
 ├── scripts/
 │   ├── testing/                   # Harness: structure and oracle checks, test runner (see its README)
 │   ├── research/                  # PDF review generation and source checks
 │   ├── verification/              # Inventory verification
-│   ├── maintenance/               # Rule generation and independent source oracles
+│   ├── maintenance/               # Independent source oracles
 │   ├── release/                   # Compiled binary checks
 │   └── site/                      # Static site statistics
 ├── benchmark/
 │   ├── run_benchmark.ts           # Expected-output comparison against IRS ground truth
-│   ├── run_case.ts / run_all.ts   # Individual and bulk case execution
 │   ├── check_cases.ts             # Case contract without running the engine
 │   ├── cases/baseline.json        # Known-invalid cases, with reason and expiry
 │   ├── cases/<form>/<year>/ledger.json # Every expected-value change, with its publication
-│   └── cases/<form>/<year>/<case>/ # Paired input, expected and retained output files
-├── .state/                        # Existing state and retained private evidence
+│   └── cases/<form>/<year>/<case>/ # Paired input and expected files
+├── .state/                        # Untracked skill state and private evidence
 └── .pdf-cache/                    # Existing downloaded form cache
 ```
 

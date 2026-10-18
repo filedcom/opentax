@@ -1,10 +1,10 @@
 # TY2026 Form 3468 investment-credit source and facility ledger
 
 Snapshot: September 27, 2026. The IRS [product page](https://www.irs.gov/forms-pubs/about-form-3468)
-currently serves [2025 Form 3468](../corpus/authorities/f3468--2025.pdf)
-and [2025 instructions](../corpus/authorities/i3468--2025.pdf), pinned as
-comparators with [321 PDF fields](../inventories/pdf-fields/pdf-fields-f3468.csv). No 2026 Form 3468
-revision is pinned. [Notice 2026-15](../corpus/authorities/n26-15--2026.pdf)
+currently serves [2025 Form 3468](../../../irs/corpus/ty2026/authorities/f3468--2025.pdf)
+and [2025 instructions](../../../irs/corpus/ty2026/authorities/i3468--2025.pdf), pinned as
+comparators with 321 PDF fields. No 2026 Form 3468
+revision is pinned. [Notice 2026-15](../../../irs/corpus/ty2026/authorities/n26-15--2026.pdf)
 adds prohibited-foreign-entity/material-assistance guidance for applicable
 energy credits. The IRS [September 2026 correction](https://www.irs.gov/forms-pubs/correction-to-the-2025-instructions-for-form-3468-of-the-applicability-of-the-35-rate-on-line-1c-in-part-iv-advanced-manufacturing-investment-credit-under-section-48d)
 clarifies Part IV's 35% §48D rate for qualified property placed in service
@@ -20,8 +20,8 @@ service dates, location/coordinates, IRS pre-filing registration, capacity,
 technology, recapture history and any related credit claim. Determine
 eligibility and required proof before applying a percentage. Shared data
 with [Form 8835](../readiness/FORM8826-8835-STATEMENTS.md), [Form 7207](./GENERAL-BUSINESS-CREDIT-GRAPH.md),
-[Form 7220](../corpus/authorities/f7220--2025.pdf) and
-[Schedule A (Form 3800)](../corpus/authorities/f3800a--2025.pdf) needs the same
+[Form 7220](../../../irs/corpus/ty2026/authorities/f7220--2025.pdf) and
+[Schedule A (Form 3800)](../../../irs/corpus/ty2026/authorities/f3800a--2025.pdf) needs the same
 facility/credit identity so one benefit is not claimed twice.
 
 | Printed 2025 comparator part | TY2026 calculation and filing decision |

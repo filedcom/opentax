@@ -1,7 +1,7 @@
 # TY2026 Schedule H calculation and attachment contract
 
-Sources: pinned [2026 draft Schedule H](../corpus/draft/f1040sh.pdf) and
-[2026 draft instructions](../corpus/draft/i1040sh.pdf) (SHA-256
+Sources: pinned [2026 draft Schedule H](../../../irs/corpus/ty2026/draft/f1040sh.pdf) and
+[2026 draft instructions](../../../irs/corpus/ty2026/draft/i1040sh.pdf) (SHA-256
 `685fa1486b3a6e5712c5552da3ef0eb5f7b245dec3d3f28e642e37efe15dbf1e`).
 The draft is three physical PDF pages: an IRS cover followed by two printed
 pages with 72 AcroForm widgets. ATS [scenario 1](../ats/ATS-SCENARIO-01.md) has

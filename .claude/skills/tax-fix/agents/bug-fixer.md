@@ -16,11 +16,11 @@ Pick 1–2 representative cases (directory names start with the case number, e.g
 
 Run `bun run check:cases` first. If it reports your case, its inputs no longer fit the node schema: stop and report `case input drift: <message>`. Do not patch the engine around it.
 
-Otherwise run the engine on the case:
+Otherwise run the benchmark:
 ```bash
-bun benchmark/run_case.ts {cases_dir}/{case}
+bun run bench --form {form} --year {year} --json
 ```
-Compare the printed summary with `correct.json`. Name the field and the delta.
+Find your case under `failures`; its `lineFailures` give the field and the delta against `correct.json`.
 
 ## Step 3 — Locate
 

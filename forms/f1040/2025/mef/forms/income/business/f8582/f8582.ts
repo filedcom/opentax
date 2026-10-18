@@ -33,6 +33,7 @@ import {
 import {
   computePropertyNet,
   inputSchema as scheduleEInputSchema,
+  isPassiveProperty,
   qualifiedEntireDispositionGain,
   qualifiedFirstYearRetainedPropertySale,
   qualifiedRetainedPropertySale,
@@ -364,7 +365,7 @@ function linkedActivities(context: MefBuildContext): Array<{
     );
   }
   const properties = scheduleE.schedule_es.filter((item) =>
-    (item.activity_type === "A" || item.activity_type === "B") &&
+    isPassiveProperty(item) &&
     ((item.current_property_source
       ? currentPropertyPassiveAmounts(item.current_property_source)
         .passiveOperating !== 0

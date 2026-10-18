@@ -7,11 +7,11 @@ rules remain a release gate.
 
 ## Form 8911 and Schedule A — refueling property
 
-The IRS [December 2025 form](../corpus/authorities/f8911--2025.pdf),
-[Schedule A](../corpus/authorities/f8911sa--2025.pdf) and
-[instructions](../corpus/authorities/i8911--2025.pdf) explicitly apply to tax
+The IRS [December 2025 form](../../../irs/corpus/ty2026/authorities/f8911--2025.pdf),
+[Schedule A](../../../irs/corpus/ty2026/authorities/f8911sa--2025.pdf) and
+[instructions](../../../irs/corpus/ty2026/authorities/i8911--2025.pdf) explicitly apply to tax
 years beginning in 2025 **or later** until superseded. Their inventories
-have [15](../inventories/pdf-fields/pdf-fields-f8911.csv) and [35](../inventories/pdf-fields/pdf-fields-f8911sa.csv) fields.
+have 15 and 35 fields.
 The instructions end eligibility for property placed in service **after
 June 30, 2026**; dates in TY2026 therefore split an active and expired
 period. Recheck the current IRS product, eligible census-tract list and
@@ -41,11 +41,11 @@ MeF release before filing.
 
 ## Form 8978, Schedule A and other-tax statement
 
-The current IRS [Form 8978](../corpus/authorities/f8978--2023.pdf) and
-[Schedule A](../corpus/authorities/f8978sa--2023.pdf) are January 2023
-revisions, with [December 2024 instructions](../corpus/authorities/i8978--2024.pdf).
-The PDF inventories have [91](../inventories/pdf-fields/pdf-fields-f8978.csv) and
-[154](../inventories/pdf-fields/pdf-fields-f8978sa.csv) widgets. Keep BBA audit and AAR sources,
+The current IRS [Form 8978](../../../irs/corpus/ty2026/authorities/f8978--2023.pdf) and
+[Schedule A](../../../irs/corpus/ty2026/authorities/f8978sa--2023.pdf) are January 2023
+revisions, with [December 2024 instructions](../../../irs/corpus/ty2026/authorities/i8978--2024.pdf).
+The PDF inventories have 91 and
+154 widgets. Keep BBA audit and AAR sources,
 Form 8986 adjustment identity, affected-year tax rules and reporting-year
 timing separate from ordinary current-year income.
 
@@ -59,8 +59,8 @@ timing separate from ordinary current-year income.
 - Sum each Form 8978 line 14 into the reporting-year return. A **positive**
   line 14 increases income tax; for a **negative** line 14, the existing
   reporting-year worksheet first offsets applicable tax and can place a
-  remaining credit on pinned 2026 [Schedule 3](../corpus/draft/f1040s3.pdf)
-  line 6l. The [Schedule 2](../corpus/draft/f1040s2.pdf) line 17z reduction
+  remaining credit on pinned 2026 [Schedule 3](../../../irs/corpus/ty2026/draft/f1040s3.pdf)
+  line 6l. The [Schedule 2](../../../irs/corpus/ty2026/draft/f1040s2.pdf) line 17z reduction
   and `AnyOtherTaxesStatement` must match that worksheet. Reconcile this
   allocation against final 2026 return instructions. Keep penalties and
   interest distinct from line 14. Never substitute a marginal-rate estimate
@@ -83,7 +83,7 @@ timing separate from ordinary current-year income.
 | `f1116_direct_expense_statement` | [Form 1116](../graphs/FORM1116-GRAPH.md) owns each category/country source column, directly allocable expense and explanation. Emit a `ForeignIncmRelatedExpensesStmt` per applicable group, link it to that Form 1116 Part I column, and reconcile expense totals to the foreign-tax limit. Current MeF document order and IDs must be checked. |
 | `f4136_diesel_government_sales_statement` | [Form 4136](../graphs/FORM4136-GRAPH.md) line 6a government diesel sales need each purchaser name/EIN/gallons. The TY2025 `ToWhomDieselFuelSoldStatement` groups buyers; keep claim/business provenance and reconcile gallons to the line and any per-business Schedule A. Check 2026 instructions and MeF tag/placement. |
 | `f4835_at_risk` | This is an `IRS6198` produced for a loss-making [Form 4835](../graphs/FORM4835-GRAPH.md), not a distinct IRS form. Use the [Form 6198 contract](../graphs/FORM6198-GRAPH.md) per activity with source liabilities/carryforward; reconcile 4835 line 34b, Schedule E and the Form 6198 attachment. |
-| `f8283_vehicle_statement` | A claimed noncash vehicle deduction can require a Form 1098-C or equivalent donee statement and a document reference on Form 8283. Preserve donor, donee, VIN/vehicle, sale or significant-intervening-use facts, gross proceeds and dates; attach only when the claimed deduction and current [Form 8283 authority](../corpus/authorities/f8283--2025.pdf) require it. [ATS 2](../ats/ATS-SCENARIO-02.md) has a separate deduction-choice conflict. |
+| `f8283_vehicle_statement` | A claimed noncash vehicle deduction can require a Form 1098-C or equivalent donee statement and a document reference on Form 8283. Preserve donor, donee, VIN/vehicle, sale or significant-intervening-use facts, gross proceeds and dates; attach only when the claimed deduction and current [Form 8283 authority](../../../irs/corpus/ty2026/authorities/f8283--2025.pdf) require it. [ATS 2](../ats/ATS-SCENARIO-02.md) has a separate deduction-choice conflict. |
 | `f8621_excess_statement` | [Form 8621](../graphs/FORM8621-GRAPH.md) Part V excess distribution/stock disposition needs a per-event, per-PFIC-year allocation and interest explanation. Emit and link `TaxationOfExcessDistriStmt` for each affected Form 8621; its totals must equal Part V and 2026 Schedule 2 lines 19a/b. |
 | `f8936_schedule_a` | [Form 8936](../graphs/FORM8936-GRAPH.md) needs a Schedule A for every eligible vehicle, VIN, acquisition/service dates, credit and personal/business allocation. Reconcile Schedule A documents to the main Form 8936, Schedule 2/3, Form 3800 and any dealer transfer. Its TY2025 serializer is a starting XML shape only. |
 | `schedule_8812` | [Schedule 8812](../readiness/SCHEDULE2-8812.md) is a filed MeF form, not merely a 1040 calculated credit. Rebuild TY2026 child/other-dependent eligibility, phaseout, nonrefundable limit and refundable ACTC Part II-B, then reconcile the PDF attachment to 1040 lines 19/28. The TY2025 serializer calls `calculateSchedule8812Lines(2025, ...)` and must use the 2026 graph and current XSD. |

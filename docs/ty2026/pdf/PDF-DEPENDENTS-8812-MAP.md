@@ -1,8 +1,8 @@
 # TY2026 dependent table and Schedule 8812 PDF map
 
-Sources: pinned draft [`f1040.pdf`](../corpus/draft/f1040.pdf), SHA-256
+Sources: pinned draft [`f1040.pdf`](../../../irs/corpus/ty2026/draft/f1040.pdf), SHA-256
 `e044e765ace334c76bda7910bd3193fc813c7789d06340124359b885c98d58d0`,
-and draft [`f1040s8.pdf`](../corpus/draft/f1040s8.pdf), SHA-256
+and draft [`f1040s8.pdf`](../../../irs/corpus/ty2026/draft/f1040s8.pdf), SHA-256
 `0638b2863bdaeadfd3fccee12a9145bf92a442d8de156584c5602cc7e3881422`.
 Both are research drafts, not filing-ready forms. Recheck widgets and printed
 instructions against the final IRS releases before TY2026 export acceptance.

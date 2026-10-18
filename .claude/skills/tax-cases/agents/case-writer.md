@@ -6,7 +6,7 @@ You convert a raw IRS-sourced scenario into a benchmark case: an `input.json` th
 
 - Raw case object (from irs-cases-raw.json): description, source, year, inputs, correct values
 - Case number (e.g. 98)
-- Cases directory: `benchmark/cases/`
+- Cases directory: `benchmark/cases/{form}/{year}/` (e.g. `benchmark/cases/f1040/2025/`)
 
 ## Step 1 — Name the Case Directory
 
@@ -19,11 +19,11 @@ Examples:
 
 Use the filing status and the primary income forms present. Keep it short (max 5 segments).
 
-Create the directory: `benchmark/cases/{name}/`
+Create the directory: `benchmark/cases/{form}/{year}/{name}/`
 
 ## Step 2 — Write input.json
 
-Map the raw inputs to engine node types. Follow the exact format of existing cases (read `benchmark/cases/01-single-w2-minimal/input.json` as a reference).
+Map the raw inputs to engine node types. Follow the exact format of existing cases (read `benchmark/cases/f1040/2025/01-single-w2-minimal/input.json` as a reference).
 
 ```json
 {
@@ -123,7 +123,7 @@ Check that:
 
 Report:
 ```
-Created: benchmark/cases/98-single-w2-interest/
+Created: benchmark/cases/f1040/2025/98-single-w2-interest/
   input.json:   3 forms (start, w2, f1099int)
   correct.json: line24_total_tax=1763, line35a_refund=4052, line37_amount_owed=0
   Source: IRS VITA Pub 4491 TY2025, Exercise 2, p. 34

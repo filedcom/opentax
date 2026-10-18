@@ -9,6 +9,11 @@ import {
   exportMefCommand,
 } from "../../../../cli/commands/export.ts";
 import { createReturnCommand } from "../../../../cli/commands/return.ts";
+import {
+  type AttachSourceFileArgs,
+  attachSourceFileCommand,
+  detachInlineBytes,
+} from "../../../../cli/commands/return-source-files.ts";
 import { appendInput } from "../../../../cli/store/store.ts";
 import { f1040_2025 } from "../../2025/index.ts";
 import type { MefPdfAttachment } from "../../2025/mef/form-descriptor.ts";
@@ -101,6 +106,54 @@ export async function cliExport(
   );
 }
 
+/** Save the fixture as a CLI return in `baseDir` with its attachments and retained copies. */
+export async function saveCliReturn(
+  baseDir: string,
+  inputs: Record<string, unknown>,
+  attachments: readonly MefPdfAttachment[],
+  retained: readonly RetainedDocument[],
+): Promise<string> {
+  const { returnId } = await createReturnCommand({ year: 2025, baseDir });
+  const returnPath = join(baseDir, returnId);
+  const detached = detachInlineBytes(signed(inputs));
+  for (
+    const [nodeType, value] of Object.entries(
+      detached.value as Record<string, unknown>,
+    )
+  ) {
+    for (const fields of Array.isArray(value) ? value : [value]) {
+      await appendInput(returnPath, nodeType, fields);
+    }
+  }
+  const source = await sys.makeTempFile();
+  try {
+    const attach = async (
+      bytes: Uint8Array,
+      file: Omit<AttachSourceFileArgs, "returnId" | "baseDir" | "file">,
+    ) => {
+      await fs.writeFile(source, bytes);
+      await attachSourceFileCommand({
+        returnId,
+        baseDir,
+        file: source,
+        ...file,
+      });
+    };
+    for (const a of attachments) {
+      await attach(a.bytes, { name: a.fileName, description: a.description });
+    }
+    for (const d of retained) {
+      await attach(d.bytes, { reference: d.document_reference });
+    }
+    for (const [sha256, bytes] of detached.files) {
+      await attach(bytes, { reference: `inline-${sha256}` });
+    }
+  } finally {
+    await sys.remove(source);
+  }
+  return returnId;
+}
+
 /** Run `fn` against the fixture saved as a temporary CLI return with its files. */
 export async function withCliReturn<T>(
   inputs: Record<string, unknown>,
@@ -110,29 +163,10 @@ export async function withCliReturn<T>(
 ): Promise<T> {
   const baseDir = await sys.makeTempDir();
   try {
-    const { returnId } = await createReturnCommand({ year: 2025, baseDir });
-    const returnPath = join(baseDir, returnId);
-    for (const [nodeType, value] of Object.entries(signed(inputs))) {
-      for (const fields of Array.isArray(value) ? value : [value]) {
-        await appendInput(returnPath, nodeType, fields);
-      }
-    }
-    for (
-      const [folder, files] of [
-        ["attachments", attachments.map((a) => [a.fileName, a.bytes] as const)],
-        [
-          "retained",
-          retained.map((d) => [d.document_reference, d.bytes] as const),
-        ],
-      ] as const
-    ) {
-      if (files.length === 0) continue;
-      await fs.mkdir(join(returnPath, folder), { recursive: true });
-      for (const [name, bytes] of files) {
-        await fs.writeFile(join(returnPath, folder, name), bytes);
-      }
-    }
-    return await fn(returnId, baseDir);
+    return await fn(
+      await saveCliReturn(baseDir, inputs, attachments, retained),
+      baseDir,
+    );
   } finally {
     await sys.remove(baseDir, { recursive: true });
   }

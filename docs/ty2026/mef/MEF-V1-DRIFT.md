@@ -14,7 +14,7 @@ research directory still contains only the May v1 package. Obtain the current
 SOR package before selecting XML field names or declaring ATS readiness.
 
 Observed in the v1 `IRS1040.xsd` versus the pinned September draft
-[`f1040.pdf`](../corpus/draft/f1040.pdf):
+[`f1040.pdf`](../../../irs/corpus/ty2026/draft/f1040.pdf):
 
 | 2026 draft 1040 | May v1 XSD observation | Consequence |
 | --- | --- | --- |
@@ -36,8 +36,7 @@ Observed in the v1 `IRS1040.xsd` versus the pinned September draft
    element in that selected schema. Resolve Schedule 3-A, Form 1062,
    dependents, and work-authorization groups before writing the 2026 builder.
 4. Validate a complete wages-only and source-backed ATS XML return against
-   the selected XSD, then extend the same checks to every retained form in
-   [`mef-coverage.csv`](../inventories/mef-coverage.csv). Keep version-specific reject-rule
+   the selected XSD, then extend the same checks to every retained form. Keep version-specific reject-rule
    evidence beside those fixtures.
 
 Until step 1, MeF XML can be prototyped as unverified code but cannot satisfy
@@ -46,12 +45,12 @@ continue independently.
 
 ## What the public September 24 inventory already establishes
 
-The pinned [accepted-forms workbook](../corpus/mef/accepted-forms.xlsx) has a
+The pinned [accepted-forms workbook](../../../irs/corpus/ty2026/mef/accepted-forms.xlsx) has a
 stale worksheet tab name (`taxyear2025 processingyear2026`), but its rows
 include the 2026-only Form 1062, Form 4562-B and Schedule 3-A, and its URL is
 the IRS TY2026 accepted-forms resource. Treat its **rows** as the published
 September 24 planning inventory; the tab label does not make it a 2025
-schema. The companion [forms/attachments workbook](../corpus/mef/forms-attachments.xlsx)
+schema. The companion [forms/attachments workbook](../../../irs/corpus/ty2026/mef/forms-attachments.xlsx)
 is dated September 24, 2026. These are form/attachment availability and
 dependency references, **not** a substitute for XSD, business rules, or an
 ATS acceptance test.

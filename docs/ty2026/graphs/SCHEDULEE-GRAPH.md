@@ -6,9 +6,9 @@ allocate allowed Schedule E loss before the return-wide
 [Form 461 limit](./FORM461-GRAPH.md). Preserve the originating activity and
 reporting form through both stages.
 
-Source snapshot: the pinned [2026 draft Schedule E](../corpus/draft/f1040se.pdf)
+Source snapshot: the pinned [2026 draft Schedule E](../../../irs/corpus/ty2026/draft/f1040se.pdf)
 (`0bee231f1ecb2470fb884b1f9cee7707eddee8994ce479fc563850b2dd3c5aed`)
-and [September 21 draft instructions](../corpus/draft/i1040se.pdf)
+and [September 21 draft instructions](../../../irs/corpus/ty2026/draft/i1040se.pdf)
 (`71d19faaf741cf3c9841c3b44e7a4a8d3f380ab5d3723140c1b859ae97b0459a`).
 The [TY2026 ATS scenarios 3 and 6](../ats/ATS.md) include Schedule E pages; scenario
 6 has a partnership Part II row. Refresh the draft and the current MeF package
@@ -90,6 +90,6 @@ page cannot be mistaken for the complete activity list.
   year-specific input change explicit; do not silently reinterpret the old
   `expense_other_interest` field.
 
-The [node coverage ledger](../inventories/node-coverage.csv) keeps `schedule_e`
+The node coverage ledger keeps `schedule_e`
 `audit-required` until those calculation, output, schema, and scenario gates
 pass. This document is a build contract, not a claim of Schedule E readiness.

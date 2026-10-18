@@ -1,8 +1,8 @@
 # TY2026 Form 8606 graph contract
 
-Sources: pinned [2026 draft form](../corpus/draft/f8606.pdf)
+Sources: pinned [2026 draft form](../../../irs/corpus/ty2026/draft/f8606.pdf)
 (SHA-256 `4d7e8fe466cf0534817d78bc5e6e84d78971b59cbbed0523eaa6448a20c2f2a6`)
-and [2026 draft instructions](../corpus/draft/i8606.pdf)
+and [2026 draft instructions](../../../irs/corpus/ty2026/draft/i8606.pdf)
 (SHA-256 `d2717dedf7b5f7025fbbec73f1be0093adbe306cdb6e97b2e32f8a54b8e51878`).
 The instructions were posted September 23, 2026. Both remain drafts and need
 final-version review before filing.

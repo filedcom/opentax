@@ -1,13 +1,13 @@
 # TY2026 Form 8621 PFIC/QEF filing contract
 
-Source snapshot: the current IRS [Form 8621 (Rev. December 2025)](../corpus/authorities/f8621--2025.pdf),
+Source snapshot: the current IRS [Form 8621 (Rev. December 2025)](../../../irs/corpus/ty2026/authorities/f8621--2025.pdf),
 SHA-256 `9c063d71a970eff604d9c3f05449422f86fbe29d99407282a87d94fc6c10a2d0`,
-and [instructions of the same revision](../corpus/authorities/i8621--2025.pdf),
+and [instructions of the same revision](../../../irs/corpus/ty2026/authorities/i8621--2025.pdf),
 SHA-256 `f16061fd6ddd952a39f986bab7e7c561d25de61d2ed40938e5e560b9baba477b`.
 The form is a December 2025 **revision**, with tax-year blanks rather than a
 printed 2025 return year; the instruction examples and 1040 line references
 name 2025. No newer 2026 Form 8621 draft was found in this snapshot. The
-pinned [2026 Schedule 2 draft](../corpus/draft/f1040s2.pdf) establishes its
+pinned [2026 Schedule 2 draft](../../../irs/corpus/ty2026/draft/f1040s2.pdf) establishes its
 2026 interest destinations. Recheck Form 8621 revision, final 2026 return
 instructions and selected MeF XSD/rules before filing.
 
@@ -61,7 +61,7 @@ they differ from the pinned 2026 Schedule 2 draft. Do not use an old line
   statement, but hardcode shareholder tax year `2025` and currency `USD`.
   They cannot be reused as TY2026 filed XML without current schema and
   year/currency/Part VI review. The TY2025 PDF inventory has no Form 8621
-  descriptor. The [current revision PDF inventory](../inventories/pdf-fields/pdf-fields-f8621.csv)
+  descriptor. The current revision PDF inventory
   has **151 terminal widgets** in its field tree: 127 text and 24 buttons
   over four pages. This is a field baseline, not proof of a final 2026 form.
 - `f8621` and its form/statement attachment have no TY2026 registry, PDF or

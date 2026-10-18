@@ -1,9 +1,9 @@
 # TY2026 Form 8582 passive-activity-loss contract
 
-Source snapshot: pinned [2026 draft Form 8582](../corpus/draft/f8582.pdf),
+Source snapshot: pinned [2026 draft Form 8582](../../../irs/corpus/ty2026/draft/f8582.pdf),
 SHA-256 `4329950c160bc4e72b545166728e317a80802d1eae5c626deb66520ba42b4f89`.
 The [draft instruction URL](https://www.irs.gov/pub/irs-dft/i8582--dft.pdf)
-still serves 2025. Pinned [2025 instructions](../corpus/authorities/i8582--2025.pdf),
+still serves 2025. Pinned [2025 instructions](../../../irs/corpus/ty2026/authorities/i8582--2025.pdf),
 SHA-256 `76787e11a385d1205faf70a07924cdec4efd5e66628e6f47e5316d29e6035f71`,
 are a **prior-year comparator** for worksheet sequence and definitions. The
 2026 form prints the $25,000 active-rental allowance and $150,000 Part II
@@ -48,7 +48,7 @@ reconciliation of allowed loss, not an extra Schedule 1 deduction.
 | IX | For an activity with loss on two or more forms/schedules or with separately taxed transactions, split allowed and suspended amounts **by source form and tax character**, including Form 4797 parts and Form 8949 28%-rate versus other capital losses. Keep a separate copy/continuation per activity as required. |
 
 The draft has three printed form pages after its coversheet. The
-[PDF field inventory](../inventories/pdf-fields/pdf-fields-f8582.csv) records **205 terminal widgets**,
+PDF field inventory records **205 terminal widgets**,
 all in the field tree: 54 on printed page 1, 125 on page 2 and 26 on page 3
 (PDF pages 2–4). The first two fields are return name/ID; Part I line 11 is
 `f1_19`. Parts IV–IX include row tables and ratios. The TY2025 PDF

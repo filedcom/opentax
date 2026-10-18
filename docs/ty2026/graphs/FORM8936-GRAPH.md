@@ -1,10 +1,10 @@
 # TY2026 clean vehicle credit and dealer-transfer contract
 
-Sources: pinned [2026 draft Form 8936](../corpus/draft/f8936.pdf), SHA-256
+Sources: pinned [2026 draft Form 8936](../../../irs/corpus/ty2026/draft/f8936.pdf), SHA-256
 `6a9cf4ed1f329541950bb822c0771c10529b7d4d2c1089f3f1ddd109fa0f1e27`,
-[2026 draft Schedule A](../corpus/draft/f8936sa.pdf), SHA-256
+[2026 draft Schedule A](../../../irs/corpus/ty2026/draft/f8936sa.pdf), SHA-256
 `a654516609524f2b7f4ec475e50aff6ac5c9470e42f20672fa03488b408d2524`,
-and [combined 2026 draft instructions](../corpus/draft/i8936.pdf). Recheck
+and [combined 2026 draft instructions](../../../irs/corpus/ty2026/draft/i8936.pdf). Recheck
 final versions and the current MeF package before filing. The expected
 separate Schedule A instruction URL is absent because the combined Form
 8936 instructions explicitly cover Schedule A.
@@ -28,8 +28,8 @@ Schedule A; a dealer transfer still requires both forms on the return.
 | Qualified commercial vehicle | Schedule A Part V lines 18–26: depreciable character, acquisition for use/lease, GVWR, cost less §179, 15%/30% amount, incremental cost and $7,500/$40,000 ceiling; identify any elective-payment registration. | Form 8936 line 21 → Form 3800 Part III line **1aa** and its applicable limitations/election. Reduce basis by Schedule A line 26 when claimed or transferred; coordinate depreciation with Form 4562. |
 | Dealer transfer and repayment | Schedule A line 4a seller-reported transfer amount, line 4b directed repayment check, and the applicable line 8/13 disqualification answer. The transferred amount is **not** a second Schedule 3 credit. | Disallowed transferred new credit → Schedule 2 **line 1b**; disallowed transferred previously owned credit → **line 1c**. File Form 8936/Schedule A even if the credit was fully received at sale. |
 
-The 2026 PDF inventories are [Form 8936, 31 widgets](../inventories/pdf-fields/pdf-fields-f8936.csv)
-and [Schedule A, 65 widgets](../inventories/pdf-fields/pdf-fields-f8936sa.csv), all in their field
+The 2026 PDF inventories are Form 8936, 31 widgets
+and Schedule A, 65 widgets, all in their field
 trees. The Schedule A draft has a coversheet and three form pages. Render one
 copy per vehicle, including the transfer indicator and all answers that led
 to a stop/repayment decision. The TY2025 descriptor and serializer are

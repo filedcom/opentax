@@ -1,9 +1,9 @@
 # TY2026 Schedule R elderly/disabled credit graph
 
-Snapshot: September 27, 2026. The pinned IRS [2026 Schedule R draft](../corpus/draft/f1040sr.pdf),
+Snapshot: September 27, 2026. The pinned IRS [2026 Schedule R draft](../../../irs/corpus/ty2026/draft/f1040sr.pdf),
 SHA-256 `0fcbd9fe296b470b2a0ceadc497380159f7d872f7aa11d86ae856bbd2234f5b6`,
-and [2026 instructions](../corpus/draft/i1040sr.pdf) define this route. The
-[PDF inventory](../inventories/pdf-fields/pdf-fields-f1040sr.csv) has 27 AcroForm widgets, including
+and [2026 instructions](../../../irs/corpus/ty2026/draft/i1040sr.pdf) define this route. The
+PDF inventory has 27 AcroForm widgets, including
 all nine Part I choices, the Part II certification and lines 10–22.
 Refresh both documents when the final IRS revision appears.
 

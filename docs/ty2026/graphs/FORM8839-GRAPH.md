@@ -1,16 +1,16 @@
 # TY2026 Form 8839 adoption credit and benefits contract
 
-The pinned [2026 draft Form 8839](../corpus/draft/f8839.pdf), SHA-256
+The pinned [2026 draft Form 8839](../../../irs/corpus/ty2026/draft/f8839.pdf), SHA-256
 `b8eefaaeb9faad7972f65d9f1457d8eb15ce9b2b2c84ee042620e95614384770`,
 prints a **$17,670** per-child credit/exclusion maximum, **$5,120** maximum
 refundable credit per child, and a phaseout beginning at **$265,080** over
 **$40,000**. Check its hash in the [manifest](../corpus/manifest.json) before
 using the values; the form is still a draft. The pinned [2025
-instructions](../corpus/authorities/i8839--2025.pdf), SHA-256
+instructions](../../../irs/corpus/ty2026/authorities/i8839--2025.pdf), SHA-256
 `90dd5f4de0ca435d4e92666b5b50434e1ece488c67fc43a8c6697765bfb684eb`,
 are a **prior-year comparator** for timing, worksheets and evidence. Obtain
 the 2026 instructions before finalizing those branches. The
-[101-widget inventory](../inventories/pdf-fields/pdf-fields-f8839.csv) covers both pages.
+101-widget inventory covers both pages.
 
 ## Per-child source and timing ledger
 

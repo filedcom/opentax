@@ -39,7 +39,6 @@ export function verificationInputPaths(paths: string[]): string[] {
         "benchmark/",
         "core/",
         "cli/",
-        ".state/field-dumps/",
         "scripts/testing/",
       ].some((
         prefix,

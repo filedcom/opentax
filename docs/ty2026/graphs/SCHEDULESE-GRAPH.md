@@ -1,8 +1,8 @@
 # TY2026 Schedule SE calculation, output, and ATS contract
 
-Sources: pinned [2026 draft Schedule SE](../corpus/draft/f1040sse.pdf), SHA-256
+Sources: pinned [2026 draft Schedule SE](../../../irs/corpus/ty2026/draft/f1040sse.pdf), SHA-256
 `a59fa5dcf2f0a8a5a71c46aa3837e9e8e605eeecc0a666bcb784a368900d141c`,
-and [2026 draft instructions](../corpus/draft/i1040sse.pdf), SHA-256
+and [2026 draft instructions](../../../irs/corpus/ty2026/draft/i1040sse.pdf), SHA-256
 `8c6b42b7d5852813bd03030c05afcd7d3126f3271a463ed007918165a0e388d3`.
 Both are drafts. The form PDF has a coversheet plus two printed pages; its
 AcroForm has 27 terminal fields. The printed form and its field tooltips were

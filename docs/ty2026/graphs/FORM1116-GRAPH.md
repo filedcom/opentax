@@ -1,13 +1,13 @@
 # TY2026 foreign tax credit and Form 1116 contract
 
-Source: pinned [2026 draft Form 1116](../corpus/draft/f1116.pdf), SHA-256
+Source: pinned [2026 draft Form 1116](../../../irs/corpus/ty2026/draft/f1116.pdf), SHA-256
 `9899d7fbd5401ca26d5677cbc87e221c983c86f8f43130347e8f2329cc6c9779`.
-The [2025 Form 1116 instructions](../corpus/authorities/i1116--2025.pdf)
+The [2025 Form 1116 instructions](../../../irs/corpus/ty2026/authorities/i1116--2025.pdf)
 are a **prior-year comparator**: the expected 2026 draft instruction URL still
-serves 2025. The [December 2022 Schedule B](../corpus/authorities/f1116sb--2022.pdf)
-and [instructions](../corpus/authorities/i1116sb--2022.pdf) cover foreign tax
-carryovers. The [December 2025 Schedule C](../corpus/authorities/f1116sc--2025.pdf)
-and [instructions](../corpus/authorities/i1116sc--2025.pdf) cover foreign tax
+serves 2025. The [December 2022 Schedule B](../../../irs/corpus/ty2026/authorities/f1116sb--2022.pdf)
+and [instructions](../../../irs/corpus/ty2026/authorities/i1116sb--2022.pdf) cover foreign tax
+carryovers. The [December 2025 Schedule C](../../../irs/corpus/ty2026/authorities/f1116sc--2025.pdf)
+and [instructions](../../../irs/corpus/ty2026/authorities/i1116sc--2025.pdf) cover foreign tax
 redeterminations; its instructions explicitly apply to 2025 and subsequent
 years until superseded. Recheck all revisions and 2026 Form 1116 instructions
 before filing.
@@ -26,9 +26,9 @@ before filing.
 | Schedule B (1116) | Per-category, per-origin-year amounts: prior carryover, corrections/redeterminations, current use, expiry, new excess, carryback and closing balance. Its two printed pages span the 10th preceding through current year. | Attachment when current instructions require it; line 3 column (xiv) feeds Form 1116 line 10. Do not lose opening balances when no current credit is usable. |
 | Schedule C (1116) | Foreign tax redetermination with affected prior tax year, category, country, payment/refund/contested-tax facts and U.S. tax effect. | File its Part I–V as applicable and determine whether an amended prior-year return/Form 7204 is also required; do not insert a redetermination as ordinary current-year tax. |
 
-The PDF inventories are [Form 1116, 130 widgets](../inventories/pdf-fields/pdf-fields-f1116.csv),
-[Schedule B, 222 widgets](../inventories/pdf-fields/pdf-fields-f1116sb.csv), and [Schedule C, 256
-widgets](../inventories/pdf-fields/pdf-fields-f1116sc.csv), all in their field trees. The 2026 Form
+The PDF inventories are Form 1116, 130 widgets,
+Schedule B, 222 widgets, and Schedule C, 256
+widgets, all in their field trees. The 2026 Form
 1116 draft PDF has a coversheet followed by two form pages. In the inventory,
 line 18 is `Page2.f2_53[0]` and line 35 is `Page2.f2_70[0]`; the full field
 names and coordinates are in the CSV. Map both pages, multiple category

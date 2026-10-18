@@ -1,6 +1,6 @@
 # TY2026 Schedule 3 calculation and PDF map
 
-Source: pinned draft [`f1040s3.pdf`](../corpus/draft/f1040s3.pdf), SHA-256
+Source: pinned draft [`f1040s3.pdf`](../../../irs/corpus/ty2026/draft/f1040s3.pdf), SHA-256
 `5feb6f8d0f08191a2da153573d195fc354f385e26915b99b57d4588893b7cef0`,
 created April 27, 2026. It is a research draft; replace the hash and recheck
 line positions against the final release before filing acceptance.

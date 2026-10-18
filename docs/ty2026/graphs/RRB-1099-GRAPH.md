@@ -1,16 +1,16 @@
 # TY2026 railroad retirement statement graph
 
 Snapshot: September 27, 2026. The Railroad Retirement Board's current
-[RRB-1099 SSEB explanation](../corpus/authorities/rrb-txl-1099--2012.pdf)
+[RRB-1099 SSEB explanation](../../../irs/corpus/ty2026/authorities/rrb-txl-1099--2012.pdf)
 (SHA-256 `bb3769d1577800d0320b1f0ce1b5241390e49e119432887d799fe7478f5cfd21`)
-and [RRB-1099-R pension explanation](../corpus/authorities/rrb-txl-1099r--2019.pdf)
+and [RRB-1099-R pension explanation](../../../irs/corpus/ty2026/authorities/rrb-txl-1099r--2019.pdf)
 (`0e643a1c7696bedc5869e7e151236a5009c806df6eb5fc96fc60b1469d3c9e5f`)
-are pinned issuer guidance. IRS [Publication 915 for 2025](../corpus/authorities/p915--2025.pdf)
+are pinned issuer guidance. IRS [Publication 915 for 2025](../../../irs/corpus/ty2026/authorities/p915--2025.pdf)
 (`44c4053dab046c737e4eadff7cf8a8d23fe55d6147bde995c6055b55af6db22b`)
-and [Publication 575 for 2025](../corpus/authorities/p575--2025.pdf)
+and [Publication 575 for 2025](../../../irs/corpus/ty2026/authorities/p575--2025.pdf)
 (`30bd37ccfcb1fe2e191abadbb38ce7cf7fcbb638e3065335436dd6025a35caa5`)
 are **method comparators**, not TY2026 line authority. [Publication 939,
-December 2025](../corpus/authorities/p939--2025.pdf)
+December 2025](../../../irs/corpus/ty2026/authorities/p939--2025.pdf)
 (`83bc40482e7bd7c8ef7b7f34e5e37586402143ef007ec42bc7e5cd79f65df651`)
 covers the General Rule. Refresh the 2026 publications and final Form 1040
 instructions before coding annual taxability and return-line references.

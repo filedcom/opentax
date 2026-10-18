@@ -91,6 +91,8 @@ export interface PdfFormDescriptor {
     filer?: FilerIdentity,
     allPending?: Record<string, Record<string, unknown>>,
     preparedForm3800?: Form3800DocumentParts,
+    /** Digests of the prepared return's retained source documents. */
+    retainedSourceSha256ByReference?: Readonly<Record<string, string>>,
   ) => ReadonlyArray<Record<string, unknown>>;
   /** Zero-based source PDF pages to retain for a particular instance. */
   readonly pageIndices?: (fields: Record<string, unknown>) => readonly number[];

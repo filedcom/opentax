@@ -1,10 +1,10 @@
 # TY2026 Form 8824 like-kind exchange and §1043 contract
 
-Source snapshot: [draft 2026 Form 8824](../corpus/draft/f8824.pdf), SHA-256
+Source snapshot: [draft 2026 Form 8824](../../../irs/corpus/ty2026/draft/f8824.pdf), SHA-256
 `631b24c2dc686e2a9b5c2df9a65b800a79e6a64a0bc611f32b376c1b6e17dc2f`,
-and the [2025 instructions](../corpus/authorities/i8824--2025.pdf), SHA-256
+and the [2025 instructions](../../../irs/corpus/ty2026/authorities/i8824--2025.pdf), SHA-256
 `a7a45184306e15249a415f24b0fe16f678c92491e0923fc0d7b4b4931ae6e562`,
-plus [Publication 544 (2025)](../corpus/authorities/p544--2025.pdf), SHA-256
+plus [Publication 544 (2025)](../../../irs/corpus/ty2026/authorities/p544--2025.pdf), SHA-256
 `b8282a22f637e147b6435787bf9e20db6c24d08d8124386cce75eaab05de0cfd`,
 both **prior-year comparators**. The draft `i8824--dft.pdf` URL still serves
 2025. Obtain the final 2026 form/instructions and current MeF rules before
@@ -57,7 +57,7 @@ boolean cannot represent that cross-year state.
 | IV, 26–38 | Distinct §1043 conflict-of-interest **sale** and replacement-purchase election for an eligible federal officer/employee or covered person with a certificate of divestiture. Require certificate number, properties, sale/purchase dates, 60-day replacement test, proceeds/basis, ordinary recapture, recognized and deferred gain, and replacement basis. This is not a §1031 real-property exchange; route recognized gain by asset character and carry deferred basis forward. |
 
 For a multi-asset exchange or exchange with boot, the 2025 instructions require
-a [realized/recognized-gain statement](../corpus/authorities/i8824--2025.pdf)
+a [realized/recognized-gain statement](../../../irs/corpus/ty2026/authorities/i8824--2025.pdf)
 and direct lines 19–25 rather than a naive single-property lines 12–18
 calculation. Group assets under the applicable like-kind classes and allocate
 basis, expenses, liabilities, recognized gain and recapture per asset. This
@@ -82,7 +82,7 @@ recapture is counted twice.
   boot/multi-asset case. Select the 2026 schema and statement requirements
   instead of carrying that artifact forward.
 - The TY2025 PDF descriptor covers only a subset of Part I and Part III and
-  assumes 2025 widget names. The [draft 2026 inventory](../inventories/pdf-fields/pdf-fields-f8824.csv)
+  assumes 2025 widget names. The draft 2026 inventory
   has **68 terminal widgets**, all in the field tree, across two printed
   pages plus the draft cover. Part II, 25a–c, Part IV and attachments need
   a full map and rendered inspection. `form8824` is absent from the TY2026

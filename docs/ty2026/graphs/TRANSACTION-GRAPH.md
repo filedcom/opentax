@@ -1,12 +1,12 @@
 # TY2026 capital transaction graph contract
 
-Source snapshot: the pinned [2026 draft Form 8949](../corpus/draft/f8949.pdf)
+Source snapshot: the pinned [2026 draft Form 8949](../../../irs/corpus/ty2026/draft/f8949.pdf)
 (SHA-256 `891d869c87ffe9c6d7f79079d19ebf4ac0afa7257f6374cd95936e44a7079ffe`),
-final [2026 Form 1099-B](../corpus/authorities/f1099b--2026.pdf) and
-[instructions](../corpus/authorities/i1099b--2026.pdf), and final
-[2026 Form 1099-DA](../corpus/authorities/f1099da--2026.pdf) and
-[instructions](../corpus/authorities/i1099da--2026.pdf). The pinned
-[2025 Form 8949 instructions](../corpus/authorities/i8949--2025.pdf) are a
+final [2026 Form 1099-B](../../../irs/corpus/ty2026/authorities/f1099b--2026.pdf) and
+[instructions](../../../irs/corpus/ty2026/authorities/i1099b--2026.pdf), and final
+[2026 Form 1099-DA](../../../irs/corpus/ty2026/authorities/f1099da--2026.pdf) and
+[instructions](../../../irs/corpus/ty2026/authorities/i1099da--2026.pdf). The pinned
+[2025 Form 8949 instructions](../../../irs/corpus/ty2026/authorities/i8949--2025.pdf) are a
 **prior-year comparator**, not final 2026 filing authority. Obtain and diff
 the 2026 instructions when issued.
 

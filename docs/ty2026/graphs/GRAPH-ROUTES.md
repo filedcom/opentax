@@ -1,12 +1,10 @@
 # TY2026 calculation graph route gaps
 
 The current dedicated registry declares **33 edges to targets it has not
-registered**. `graph-route-gaps.csv` is generated from the executable registry
-by running `bun forms/f1040/2026/build_route_gaps.ts` from
-the repository root. Every target on these 33 edges exists in the TY2025 registry, but that
+registered**. Every target on these 33 edges exists in the TY2025 registry, but that
 does not establish that their tax-year behavior or output lines are correct
 for 2026. This inventory covers edges from the currently registered nodes;
-it does not cover the remaining nodes in `node-coverage.csv`.
+it does not cover the remaining TY2025 nodes.
 
 The planner orders registered nodes and ignores edges to absent ones. The
 executor still deposits output values into the absent target's pending slot.
@@ -43,9 +41,8 @@ calculation therefore does not prove that every upstream route was consumed.
    Forms 8839/8853/8880/8889/8959, the IRA deduction worksheet, and the
    remaining tax/credit nodes. Add their input and registry entries together
    with year-specific validation and output tests.
-5. **Coverage gate:** regenerate the CSV after every registry expansion.
-   Before product registration, every supported TY2025 node in
-   `node-coverage.csv` needs a 2026 disposition and the active scenarios
+5. **Coverage gate:** recheck the route gaps after every registry expansion.
+   Before product registration, every supported TY2025 node needs a 2026 disposition and the active scenarios
    must leave no material values in unregistered pending targets. An
    unsupported 2026 branch must produce an explicit diagnostic. Then
    validate the full CLI, MeF, PDF, ATS, and TY2025 regression gates in

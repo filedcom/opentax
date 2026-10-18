@@ -17,16 +17,20 @@ AGENTS.md
 forms/f1040/nodes/inputs/income/wages/w2/index.ts         (example input node)
 forms/f1040/nodes/intermediate/aggregation/income/investments/schedule_b/index.ts  (example intermediate node)
 forms/f1040/2025/registry.ts                  (example registry)
-core/types/tax-node.ts                        (base class)
+core/types/tax-node.ts                        (base class, NodeResult)
+core/types/node-context.ts                    (NodeContext)
 core/types/output-nodes.ts                    (OutputNodes helper)
+docs/architecture/STRUCTURE.md                (where each node lives)
 ```
 
 ## For Each Node in the Section
 
 ### Step 1 — Create the Directory
 
+Nodes are shared per form, not per year (`bun run check:structure` enforces the path):
+
 ```
-forms/f{FORM}/{YEAR}/nodes/{section}/{node_id}/
+forms/f{FORM}/nodes/<inputs|intermediate|outputs>/[<aggregation|forms|worksheets>/]{section}/{group}/{node_id}/
   index.ts
   index.test.ts
 ```
@@ -67,7 +71,8 @@ Follow AGENTS.md file shape exactly:
 import { z } from "zod";
 import { TaxNode } from "../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
-import { NodeContext, NodeResult } from "../../../../../core/types/index.ts";
+import type { NodeResult } from "../../../../../core/types/tax-node.ts";
+import type { NodeContext } from "../../../../../core/types/node-context.ts";
 // Import downstream nodes for output routing
 
 // 1. Input schema
@@ -108,16 +113,16 @@ export const {node_id} = new {NodeId}Node();
 ### Step 4 — Year Config Constants
 
 For any constants (tax rates, limits, phaseouts):
-1. Check if `forms/f{FORM}/{YEAR}/config.ts` exists
+1. Check if `forms/f{FORM}/nodes/config/{YEAR}.ts` exists (as in `forms/f1040/nodes/config/`)
 2. If yes, add constants there following the existing pattern
-3. Import them in the node from `../../config.ts`
+3. Read them in the node through `CONFIG_BY_YEAR[ctx.taxYear]` from `nodes/config/index.ts`
 
 For 1120: the main constant is `CORPORATE_TAX_RATE = 0.21` (IRC §11(b)).
 
 ### Step 5 — Run Tests
 
 ```bash
-bun test ./forms/f{FORM}/{YEAR}/nodes/{section}/{node_id}/ 2>&1 | tail -10
+bun test ./forms/f{FORM}/nodes/<role>/.../{node_id}/ 2>&1 | tail -10
 ```
 
 Fix until all tests pass green.
@@ -126,7 +131,7 @@ Fix until all tests pass green.
 
 Add to `forms/f{FORM}/{YEAR}/registry.ts`:
 ```typescript
-import { {node_id} } from "./nodes/{section}/{node_id}/index.ts";
+import { {node_id} } from "../nodes/<role>/.../{node_id}/index.ts";
 // ...
 const registry = {
   // existing nodes
@@ -137,6 +142,7 @@ const registry = {
 Run type check:
 ```bash
 bun run typecheck 2>&1 | tail -5
+bun run check:structure
 ```
 
 ### Step 7 — Report
