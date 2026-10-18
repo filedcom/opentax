@@ -493,9 +493,6 @@
     "single-form461-schedule-c-excess-business-loss": [
       "rule F461-002-05"
     ],
-    "single-schedule-j-farm-income-averaging": [
-      "calculation income_tax_calculation"
-    ],
     "mfj-form2210f-first-joint-filing": [
       "calculation f1040"
     ],
@@ -727,7 +724,6 @@
     "single-form982-qpri-exclusion": "TY2026 law: shifted a year, the QPRI discharge falls in 2026; IRC \u00a7108(a)(1)(E) excludes qualified principal residence indebtedness discharged before January 1, 2026 unless under an arrangement entered into and evidenced in writing before then (Instructions for Form 982, line 1e), and the sample has no such arrangement",
     "single-form5695-door-and-air-conditioner": "TY2026 law: P.L. 119-21 \u00a7\u00a770505-70506 end the \u00a725C and \u00a725D credits for property placed in service after 2025",
     "single-form461-schedule-c-excess-business-loss": "Same finding in the TY2025 baseline: not a TY2026 difference",
-    "single-schedule-j-farm-income-averaging": "Open TY2026 work: draft 2026 Schedule J (Created 4/30/26) lines 5-16 average over base years 2023-2025 with each year's rates, but the Schedule J source keys its filed base returns year2022-year2024, its prior-year rate and preferential worksheets end in 2024, and line 4 uses the 2025 tax table; a 2026 route needs those keys made relative and the 2025 rate schedules added",
     "mfj-form2210f-first-joint-filing": "Sample amount: the Form 2210-F box B source carries the TY2025 Form 1040 line 22 tax, which the 2026 return refigures with Rev. Proc. 2025-32 rates; with matching amounts, an underpayment still needs the line 16 rate the draft 2026 Form 2210-F prints as x.xx (not yet published)",
     "single-certified-work-opportunity-credit": "TY2026 law: shifted a year, the sample hires its WOTC employee in 2026; IRC \u00a751(c)(4) ends the work opportunity credit for individuals who begin work after December 31, 2025, so the 2026 return correctly cannot claim it",
     "single-reported-tax-credit-bond": "Dated fact outside TY2026: shifting the sample moves its 2017 QECB issue date past the December 31, 2017 cutoff (P.L. 115-97 \u00a713404 repealed tax credit bonds issued after 2017); a 2026 version of this bond cannot exist",

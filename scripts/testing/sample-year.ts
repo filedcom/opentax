@@ -1,14 +1,16 @@
 /**
  * Moves a TY2025 sample return's dated facts to a later tax year, so a TY2026
  * run tests a TY2026 version of the same return rather than 2025 documents
- * filed late. Only dates and year fields move; amounts, identifiers and text
- * never do.
+ * filed late. Only dates, year fields and year-named keys move; amounts,
+ * identifiers and text never do.
  */
 
 const ISO_DATE = /^(\d{4})-(\d{2})-(\d{2})$/;
 const US_DATE = /^(\d{2})\/(\d{2})\/(\d{4})$/;
 /** A field whose value is a year: `tax_year`, `calendar_year`, `disallowed_year`. */
 const YEAR_FIELD = /(^|_)year$/;
+/** A key naming a year, such as Schedule J's `year2024` base return. */
+const YEAR_KEY = /^year(\d{4})$/;
 const MIN_YEAR = 1900;
 const MAX_YEAR = 2100;
 
@@ -55,12 +57,21 @@ function isPlainObject(value: unknown): value is Record<string, unknown> {
   return proto === Object.prototype || proto === null;
 }
 
+function shiftKey(key: string, years: number): string {
+  const match = YEAR_KEY.exec(key);
+  return match && isYear(Number(match[1]))
+    ? `year${Number(match[1]) + years}`
+    : key;
+}
+
 /** Document bytes and other non-plain values are carried over untouched. */
 function shiftValue(value: unknown, key: string, years: number): unknown {
   if (Array.isArray(value)) return value.map((item) => shiftValue(item, key, years));
   if (isPlainObject(value)) {
     return Object.fromEntries(
-      Object.entries(value).map(([k, v]) => [k, shiftValue(v, k, years)]),
+      Object.entries(value).map((
+        [k, v],
+      ) => [shiftKey(k, years), shiftValue(v, k, years)]),
     );
   }
   if (YEAR_FIELD.test(key)) return shiftYearField(value, years);
