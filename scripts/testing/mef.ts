@@ -12,6 +12,10 @@ import { normalizeAllPending } from "../../forms/f1040/2025/return-processing/pe
 import { extractFilerIdentity } from "../../forms/f1040/mef/filer.ts";
 import { shiftDatedFacts } from "./sample-year.ts";
 import { withSyntheticForm1098Copy } from "../../forms/f1040/2025/pdf/reviews/deductions/mortgage/review-1098-copy.fixture.ts";
+import { withSyntheticW2GCopy } from "../../forms/f1040/2025/pdf/reviews/income/other/review-w2g-copy.fixture.ts";
+import type { FilerIdentity } from "../../forms/f1040/mef/header.ts";
+import { itemSchema as w2gItemSchema } from "../../forms/f1040/nodes/inputs/income/gambling/w2g/index.ts";
+import type { MefPdfAttachment } from "../../forms/f1040/2025/mef/form-descriptor.ts";
 import {
   businessRuleReport,
   emittedValidationScope,
@@ -171,6 +175,72 @@ export async function sampleForYear(
   );
 }
 
+const W2G_COPY_SUFFIX = "-W2G-CopyB.pdf";
+
+/**
+ * A synthetic W-2G Copy B is printed on the form revision issued for its
+ * calendar year, so a moved sample is issued that year's Copy B in place of
+ * the attachment it carried.
+ */
+async function reissuedW2GCopies(
+  inputs: Record<string, unknown>,
+  attachments: readonly MefPdfAttachment[],
+  filer: FilerIdentity | undefined,
+  taxYear: number,
+): Promise<{
+  inputs: Record<string, unknown>;
+  attachments: readonly MefPdfAttachment[];
+}> {
+  if (!Array.isArray(inputs.w2g) || !filer) return { inputs, attachments };
+  const replaced = new Map<string, MefPdfAttachment>();
+  const w2g = await Promise.all(
+    inputs.w2g.map(async (item: Record<string, unknown>) => {
+      const fileName = item.issued_copy_attachment_file_name;
+      if (typeof fileName !== "string" || !fileName.endsWith(W2G_COPY_SUFFIX)) {
+        return item;
+      }
+      const {
+        issued_copy_attachment_file_name: _,
+        issued_copy_pdf_sha256: __,
+        ...source
+      } = item;
+      const copy = await withSyntheticW2GCopy(
+        fileName.slice(0, -W2G_COPY_SUFFIX.length),
+        w2gItemSchema.parse(source),
+        filer,
+        taxYear,
+      );
+      replaced.set(fileName, copy.attachment);
+      return copy.item;
+    }),
+  );
+  return {
+    inputs: { ...inputs, w2g },
+    attachments: attachments.map((a) => replaced.get(a.fileName) ?? a),
+  };
+}
+
+/** A sample's attachments as issued for `taxYear`, matching `sampleForYear`. */
+export async function sampleDocumentsForYear(
+  shifted: Record<string, unknown>,
+  documents: Pick<PdfReviewFixture, "attachments"> & {
+    readonly filer?: FilerIdentity;
+  },
+  taxYear: number,
+): Promise<{
+  inputs: Record<string, unknown>;
+  attachments: readonly MefPdfAttachment[];
+}> {
+  const attachments = documents.attachments ?? [];
+  if (taxYear === SAMPLE_TAX_YEAR) return { inputs: shifted, attachments };
+  return await reissuedW2GCopies(
+    shifted,
+    attachments,
+    documents.filer,
+    taxYear,
+  );
+}
+
 function oneLine(error: unknown): string {
   const message = error instanceof Error ? error.message : String(error);
   return message.replace(/\s+/g, " ").trim().slice(0, 160);
@@ -179,19 +249,21 @@ function oneLine(error: unknown): string {
 /** What stops one signed sample return from filing, as sorted findings. */
 export async function returnFindings(
   inputs: Record<string, unknown>,
-  documents: Pick<
-    PdfReviewFixture,
-    "attachments" | "retainedSourceDocuments"
-  > = {},
+  documents:
+    & Pick<PdfReviewFixture, "attachments" | "retainedSourceDocuments">
+    & { readonly filer?: FilerIdentity } = {},
   taxYear = 2025,
 ): Promise<string[]> {
   const form = SAMPLE_YEARS[taxYear]?.form;
   if (!form) throw new Error(`No sample returns for tax year ${taxYear}`);
+  const sample = await sampleDocumentsForYear(
+    await sampleForYear(inputs, taxYear),
+    documents,
+    taxYear,
+  );
   let result: ReturnType<FormDefinition["executeReturn"]>;
   try {
-    result = form.executeReturn(
-      signedForYear(await sampleForYear(inputs, taxYear), taxYear),
-    );
+    result = form.executeReturn(signedForYear(sample.inputs, taxYear));
   } catch (error) {
     return [`calculation threw ${oneLine(error)}`];
   }
@@ -212,7 +284,7 @@ export async function returnFindings(
     xml = (await form.prepareReturn(
       pending,
       filer,
-      documents.attachments ?? [],
+      sample.attachments,
       documents.retainedSourceDocuments ?? [],
     )).bundle.xml;
   } catch (error) {

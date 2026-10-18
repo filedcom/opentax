@@ -766,6 +766,7 @@ async function buildPdfBytesInternal(
       preparedBundle.pending,
       filer,
       preparedBundle.attachments,
+      mefTaxYear(),
     );
     if (
       (preparedBundle.form3800Parts === undefined) !==

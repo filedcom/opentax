@@ -410,17 +410,11 @@
     "single-five-dependent-continuation": [
       "calculation f8812"
     ],
-    "single-withheld-w2g": [
-      "xml Withheld W-2G needs the issued 2025 form, structured payer identity, standard code, winnings, and withholding"
-    ],
     "single-schedule-h-fica-and-futa": [
       "calculation schedule_h"
     ],
     "single-schedule-h-three-state-futa": [
       "calculation schedule_h"
-    ],
-    "single-partnership-code-k-and-w2g": [
-      "xml Withheld W-2G needs the issued 2025 form, structured payer identity, standard code, winnings, and withholding"
     ],
     "single-two-w2-flsa-overtime-schedule1a": [
       "xml Schedule 1-A 2026 overtime filing needs W-2 box 12 code TT amounts"
@@ -715,10 +709,8 @@
     "single-reviewed-adoption-credit": "Open TY2026 work: the staged Form 8839 route requires a 2025 decree (childSchema finalization_date) and carries TY2025 amounts through prepare/settle ($17,280 maximum, $259,190 phase-out start, $5,000 refundable), its carryforward (origin 2025) and MeF; the Rev. Proc. 2025-32 \u00a74.04 2026 amounts are in config but not threaded through that route",
     "single-8862-ctc-reinstatement": "Sample amount: the reviewed Schedule 8812 carries the TY2025 Form 1040 line 18 tax ($9,055 on $80,000 single AGI); the 2026 return figures line 18 with the Rev. Proc. 2025-32 standard deduction and rates, and amounts are not shifted",
     "single-five-dependent-continuation": "Sample amount: the reviewed Schedule 8812 carries the TY2025 Form 1040 line 18 tax ($9,055 on $80,000 single AGI); the 2026 return figures line 18 with the Rev. Proc. 2025-32 standard deduction and rates, and amounts are not shifted",
-    "single-withheld-w2g": "Named TY2025-only route: W-2G payer Copy B verification reads the 2025 Form W-2G template; the 2026 template (irs/corpus/ty2026/authorities/fw2g--2026.pdf) is not mapped yet",
     "single-schedule-h-fica-and-futa": "Named TY2025-only route: Schedule H FUTA credit-reduction states for 2026 are not yet published",
     "single-schedule-h-three-state-futa": "Named TY2025-only route: Schedule H FUTA credit-reduction states for 2026 are not yet published",
-    "single-partnership-code-k-and-w2g": "Named TY2025-only route: W-2G payer Copy B verification reads the 2025 Form W-2G template; the 2026 template (irs/corpus/ty2026/authorities/fw2g--2026.pdf) is not mapped yet",
     "single-two-w2-flsa-overtime-schedule1a": "TY2026 law: the sample reports overtime on a box 14 or employer statement, the TY2025 reporting route; 2026 W-2s report it in box 12 code TT (2026 W-2 instructions, irs/corpus/ty2026/authorities/iw2w3--2026.pdf)",
     "single-employer-statement-flsa-overtime-schedule1a": "TY2026 law: the sample reports overtime on a box 14 or employer statement, the TY2025 reporting route; 2026 W-2s report it in box 12 code TT (2026 W-2 instructions, irs/corpus/ty2026/authorities/iw2w3--2026.pdf)",
     "single-aggregate-payroll-flsa-overtime-schedule1a": "TY2026 law: the sample reports overtime on a box 14 or employer statement, the TY2025 reporting route; 2026 W-2s report it in box 12 code TT (2026 W-2 instructions, irs/corpus/ty2026/authorities/iw2w3--2026.pdf)",

@@ -704,7 +704,12 @@ export async function buildMefBundle(
     options.filer,
     attachments,
   );
-  await assertW2GPayerCopyContents(pending, options.filer, attachments);
+  await assertW2GPayerCopyContents(
+    pending,
+    options.filer,
+    attachments,
+    mefTaxYear({ taxYear: options.year }),
+  );
   const attachmentSha256ByFileName = Object.fromEntries(
     await Promise.all(attachments.map(async ({ fileName, bytes }) => {
       return [fileName, await sha256Hex(bytes)] as const;
