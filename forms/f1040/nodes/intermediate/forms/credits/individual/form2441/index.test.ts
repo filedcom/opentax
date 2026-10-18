@@ -5,7 +5,9 @@ import { test } from "bun:test";
 //
 // Design notes:
 //   - This node receives dep_care_benefits (W-2 Box 10 total) from the w2 input node.
-//   - It applies the IRC §129 exclusion limit ($5,000) and routes taxable excess to f1040 line1e.
+//   - It excludes the smallest of the benefits, the qualified expenses incurred
+//     (Form 2441 Part III line 16) and the IRC §129 limit ($5,000), and routes
+//     the rest to f1040 line1e. Limit tests give ample expenses.
 //   - MFS ($2,500 limit) is handled by the f2441 input node, not here.
 //   - No credit computation occurs in this node.
 
@@ -19,6 +21,9 @@ import { FilingStatus } from "../../../../../types.ts";
 function compute(input: Record<string, unknown>) {
   return form2441.compute({ taxYear: 2025, formType: "f1040" }, input);
 }
+
+// Qualified expenses well above every benefit amount tested against the limit.
+const AMPLE_EXPENSES = { qualifying_expenses: 100_000 };
 
 function findOutput(result: ReturnType<typeof compute>, nodeType: string) {
   return result.outputs.find((o) => o.nodeType === nodeType);
@@ -47,19 +52,19 @@ test("form2441: absent dep_care_benefits produces no outputs", () => {
 // ---------------------------------------------------------------------------
 
 test("form2441: benefits below $5000 produce no f1040 output", () => {
-  const result = compute({ dep_care_benefits: 3000 });
+  const result = compute({ ...AMPLE_EXPENSES, dep_care_benefits: 3000 });
   assertEquals(findOutput(result, "f1040"), undefined);
   assertEquals(result.outputs.length, 0);
 });
 
 test("form2441: benefits exactly at $5000 produce no f1040 output", () => {
-  const result = compute({ dep_care_benefits: 5000 });
+  const result = compute({ ...AMPLE_EXPENSES, dep_care_benefits: 5000 });
   assertEquals(findOutput(result, "f1040"), undefined);
   assertEquals(result.outputs.length, 0);
 });
 
 test("form2441: benefits of $1 above $5000 route $1 taxable to f1040 line1e", () => {
-  const result = compute({ dep_care_benefits: 5001 });
+  const result = compute({ ...AMPLE_EXPENSES, dep_care_benefits: 5001 });
   const out = findOutput(result, "f1040");
   assertEquals(out !== undefined, true);
   const input = fieldsOf(result.outputs, f1040)!;
@@ -67,7 +72,7 @@ test("form2441: benefits of $1 above $5000 route $1 taxable to f1040 line1e", ()
 });
 
 test("form2441: benefits of $6000 route $1000 taxable to f1040 line1e", () => {
-  const result = compute({ dep_care_benefits: 6000 });
+  const result = compute({ ...AMPLE_EXPENSES, dep_care_benefits: 6000 });
   const out = findOutput(result, "f1040");
   assertEquals(out !== undefined, true);
   const input = fieldsOf(result.outputs, f1040)!;
@@ -75,11 +80,24 @@ test("form2441: benefits of $6000 route $1000 taxable to f1040 line1e", () => {
 });
 
 test("form2441: benefits of $10000 route $5000 taxable to f1040 line1e", () => {
-  const result = compute({ dep_care_benefits: 10000 });
+  const result = compute({ ...AMPLE_EXPENSES, dep_care_benefits: 10000 });
   const out = findOutput(result, "f1040");
   assertEquals(out !== undefined, true);
   const input = fieldsOf(result.outputs, f1040)!;
   assertEquals(input.line1e_taxable_dep_care, 5000);
+});
+
+// 2025 Form 2441 Part III: line 16 is the qualified expenses incurred, line 17
+// the smaller of lines 15 and 16, and line 26 the taxable benefits. With no
+// qualified expenses nothing is excluded.
+test("form2441: benefits without qualified expenses are all taxable", () => {
+  const result = compute({ dep_care_benefits: 5000 });
+  assertEquals(fieldsOf(result.outputs, f1040)?.line1e_taxable_dep_care, 5000);
+});
+
+test("form2441: the exclusion cannot exceed qualified expenses", () => {
+  const result = compute({ dep_care_benefits: 5000, qualifying_expenses: 1200 });
+  assertEquals(fieldsOf(result.outputs, f1040)?.line1e_taxable_dep_care, 3800);
 });
 
 // ---------------------------------------------------------------------------
@@ -87,17 +105,17 @@ test("form2441: benefits of $10000 route $5000 taxable to f1040 line1e", () => {
 // ---------------------------------------------------------------------------
 
 test("form2441: benefits of $4999 (just below limit) produce no output", () => {
-  const result = compute({ dep_care_benefits: 4999 });
+  const result = compute({ ...AMPLE_EXPENSES, dep_care_benefits: 4999 });
   assertEquals(result.outputs.length, 0);
 });
 
 test("form2441: benefits of $5000 (at limit) produce no output", () => {
-  const result = compute({ dep_care_benefits: 5000 });
+  const result = compute({ ...AMPLE_EXPENSES, dep_care_benefits: 5000 });
   assertEquals(result.outputs.length, 0);
 });
 
 test("form2441: benefits of $5001 (just above limit) route $1 to f1040", () => {
-  const result = compute({ dep_care_benefits: 5001 });
+  const result = compute({ ...AMPLE_EXPENSES, dep_care_benefits: 5001 });
   const out = findOutput(result, "f1040");
   assertEquals(out !== undefined, true);
   const input = fieldsOf(result.outputs, f1040)!;
@@ -109,14 +127,14 @@ test("form2441: benefits of $5001 (just above limit) route $1 to f1040", () => {
 // ---------------------------------------------------------------------------
 
 test("form2441: output nodeType is 'f1040' when taxable excess exists", () => {
-  const result = compute({ dep_care_benefits: 6000 });
+  const result = compute({ ...AMPLE_EXPENSES, dep_care_benefits: 6000 });
   assertEquals(result.outputs.length, 2);
   assertEquals(result.outputs[0].nodeType, "f1040");
   assertEquals(result.outputs[1].nodeType, "agi_aggregator");
 });
 
 test("form2441: output field is line1e_taxable_dep_care (not another field)", () => {
-  const result = compute({ dep_care_benefits: 7500 });
+  const result = compute({ ...AMPLE_EXPENSES, dep_care_benefits: 7500 });
   const fields = fieldsOf(result.outputs, f1040)!;
   const keys = Object.keys(fields);
   assertEquals(keys, ["line1e_taxable_dep_care"]);
@@ -124,7 +142,7 @@ test("form2441: output field is line1e_taxable_dep_care (not another field)", ()
 });
 
 test("form2441: no schedule3 output is emitted (credit not computed here)", () => {
-  const result = compute({ dep_care_benefits: 10000 });
+  const result = compute({ ...AMPLE_EXPENSES, dep_care_benefits: 10000 });
   assertEquals(findOutput(result, "schedule3"), undefined);
 });
 
@@ -134,7 +152,7 @@ test("form2441: no schedule3 output is emitted (credit not computed here)", () =
 
 test("form2441: very large benefits route correct taxable excess", () => {
   // $100,000 - $5,000 exclusion = $95,000 taxable
-  const result = compute({ dep_care_benefits: 100000 });
+  const result = compute({ ...AMPLE_EXPENSES, dep_care_benefits: 100000 });
   const out = findOutput(result, "f1040");
   assertEquals(out !== undefined, true);
   const input = fieldsOf(result.outputs, f1040)!;
@@ -142,12 +160,12 @@ test("form2441: very large benefits route correct taxable excess", () => {
 });
 
 test("form2441: fractional benefits handled correctly (below limit)", () => {
-  const result = compute({ dep_care_benefits: 4999.99 });
+  const result = compute({ ...AMPLE_EXPENSES, dep_care_benefits: 4999.99 });
   assertEquals(result.outputs.length, 0);
 });
 
 test("form2441: fractional benefits above limit route correct decimal excess", () => {
-  const result = compute({ dep_care_benefits: 5000.01 });
+  const result = compute({ ...AMPLE_EXPENSES, dep_care_benefits: 5000.01 });
   const out = findOutput(result, "f1040");
   assertEquals(out !== undefined, true);
   const input = fieldsOf(result.outputs, f1040)!;
@@ -163,7 +181,7 @@ test("form2441 smoke test: $7500 employer benefits → $2500 taxable on f1040 li
   // $7,500 employer dep care benefits
   // Exclusion: min($7,500, $5,000) = $5,000
   // Taxable: $7,500 - $5,000 = $2,500
-  const result = compute({ dep_care_benefits: 7500 });
+  const result = compute({ ...AMPLE_EXPENSES, dep_care_benefits: 7500 });
 
   assertEquals(result.outputs.length, 2);
 
@@ -309,6 +327,7 @@ test("form2441 MFS: employer exclusion capped at $2,500", () => {
   // Exclusion: min($3,500, $2,500) = $2,500
   // Taxable excess: $3,500 - $2,500 = $1,000 → routes to f1040 line1e
   const result = compute({
+    ...AMPLE_EXPENSES,
     dep_care_benefits: 3_500,
     filing_status: FilingStatus.MFS,
   });
@@ -318,6 +337,7 @@ test("form2441 MFS: employer exclusion capped at $2,500", () => {
 
 test("form2441 MFS: benefits at $2,500 — no taxable excess", () => {
   const result = compute({
+    ...AMPLE_EXPENSES,
     dep_care_benefits: 2_500,
     filing_status: FilingStatus.MFS,
   });
@@ -326,6 +346,7 @@ test("form2441 MFS: benefits at $2,500 — no taxable excess", () => {
 
 test("form2441 non-MFS: employer exclusion still $5,000", () => {
   const result = compute({
+    ...AMPLE_EXPENSES,
     dep_care_benefits: 4_999,
     filing_status: FilingStatus.Single,
   });
@@ -368,9 +389,10 @@ test("form2441 TY2026: the credit rate follows the 2026 phaseout schedule", () =
 });
 
 test("form2441 TY2026: the employer benefit exclusion is $7,500 ($3,750 MFS)", () => {
-  const joint = compute2026({ dep_care_benefits: 8_000 });
+  const joint = compute2026({ ...AMPLE_EXPENSES, dep_care_benefits: 8_000 });
   assertEquals(fieldsOf(joint.outputs, f1040)?.line1e_taxable_dep_care, 500);
   const separate = compute2026({
+    ...AMPLE_EXPENSES,
     dep_care_benefits: 4_000,
     filing_status: FilingStatus.MFS,
   });
@@ -378,6 +400,6 @@ test("form2441 TY2026: the employer benefit exclusion is $7,500 ($3,750 MFS)", (
     fieldsOf(separate.outputs, f1040)?.line1e_taxable_dep_care,
     250,
   );
-  const ty2025 = compute({ dep_care_benefits: 8_000 });
+  const ty2025 = compute({ ...AMPLE_EXPENSES, dep_care_benefits: 8_000 });
   assertEquals(fieldsOf(ty2025.outputs, f1040)?.line1e_taxable_dep_care, 3_000);
 });

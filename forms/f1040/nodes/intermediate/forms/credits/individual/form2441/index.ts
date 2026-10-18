@@ -60,13 +60,15 @@ type Form2441Input = z.infer<typeof inputSchema>;
 
 // ─── Pure helpers ─────────────────────────────────────────────────────────────
 
-// Amount of employer benefits that exceeds the §129 exclusion → taxable income (f1040 line 1e)
-function taxableExcess(
-  benefits: number,
-  status: FilingStatus | undefined,
-  cfg: F1040Config,
-): number {
-  return Math.max(0, benefits - dependentCareExclusionLimit(status, cfg));
+// Form 2441 Part III: the exclusion is the smallest of the benefits, the
+// qualified expenses incurred (line 16) and the §129 limit, so benefits
+// without qualified expenses are all taxable (line 26 → Form 1040 line 1e).
+function excludedBenefits(input: Form2441Input, cfg: F1040Config): number {
+  return Math.min(
+    input.dep_care_benefits ?? 0,
+    input.qualifying_expenses ?? 0,
+    dependentCareExclusionLimit(input.filing_status, cfg),
+  );
 }
 
 // Earned income cap: MFJ uses lesser of two spouses' earned incomes (IRC §21(d))
@@ -90,17 +92,11 @@ function computeSection21Credit(
   const persons = input.qualifying_persons ?? 0;
   const agi = input.agi ?? 0;
   const taxpayerEarned = input.taxpayer_earned_income ?? 0;
-  const benefits = input.dep_care_benefits ?? 0;
-  const excludedBenefits = Math.min(
-    benefits,
-    dependentCareExclusionLimit(input.filing_status, cfg),
-  );
-
   if (expenses <= 0 || persons <= 0) return 0;
 
   const dollarCap = dependentCareExpenseLimit(persons, cfg);
   // Employer-excluded benefits reduce the qualifying expense base (Form 2441 line 9)
-  const reducedCap = Math.max(0, dollarCap - excludedBenefits);
+  const reducedCap = Math.max(0, dollarCap - excludedBenefits(input, cfg));
   const earnedCap = earnedIncomeCap(
     taxpayerEarned,
     input.spouse_earned_income,
@@ -168,8 +164,8 @@ class Form2441Node extends TaxNode<typeof inputSchema> {
       return { outputs };
     }
 
-    // Part III — §129 employer exclusion: excess above limit is taxable income
-    const taxable = taxableExcess(benefits, parsed.filing_status, cfg);
+    // Part III — §129 employer exclusion: the rest is taxable income
+    const taxable = benefits - excludedBenefits(parsed, cfg);
     if (taxable > 0) {
       outputs.push(
         this.outputNodes.output(f1040, { line1e_taxable_dep_care: taxable }),
