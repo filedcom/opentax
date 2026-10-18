@@ -2593,10 +2593,14 @@ test("final MeF and PDF exports reject 1099 withholding changed after source cal
     },
   };
   const filerIdentity = sampleFiler();
+  const xml = buildMefXml(payer, filerIdentity);
+  const statementId = /<OtherWithholdingStatement documentId="([^"]+)"/.exec(xml)?.[1];
+  assertEquals(typeof statementId, "string");
   assertStringIncludes(
-    buildMefXml(payer, filerIdentity),
-    "<Form1099WithheldTaxAmt>80</Form1099WithheldTaxAmt>",
+    xml,
+    `<Form1099WithheldTaxAmt referenceDocumentId="${statementId}" referenceDocumentName="OtherWithholdingStatement">80</Form1099WithheldTaxAmt>`,
   );
+  assertStringIncludes(xml, "<WithholdingAmt>80</WithholdingAmt>");
   const tampered = {
     ...payer,
     f1040: { ...payer.f1040, line25b_withheld_1099: 79 },
