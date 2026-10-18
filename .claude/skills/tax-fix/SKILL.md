@@ -19,7 +19,13 @@ Read `AGENTS.md` and `forms/{form}/FORM.md`; pass both to every spawned agent.
 
 ## Step 1 — Load State
 
-Read `.state/bench/state.json`. Navigate to `forms.{form}:{year}.fix`:
+Read `.state/bench/state.json`. `.state/` is untracked, so it may be missing:
+- No file → create it as `{"version": 2, "forms": {}}`.
+- No `forms.{form}:{year}.fix` entry → run `bun run bench --form {form} --year {year} --json`, set
+  `benchmark_baseline` to its `pass`/`fail`/`total`, and add one `"pending"` root cause per group of
+  `failures` that share a failing line, with its `cases` and the `node_path` that produces that line.
+
+Navigate to `forms.{form}:{year}.fix`:
 - If `"done"` → print "All cases passing. Nothing to do." and stop.
 - If `"stalled"` → print stall message and stop.
 - Otherwise → set `status` to `"running"` and write state.json back.

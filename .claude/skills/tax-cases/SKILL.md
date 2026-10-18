@@ -34,7 +34,7 @@ If no argument, default to `vita`.
 
 ## Step 2 — Spawn IRS Sourcer Agent
 
-Spawn one agent using `agents/irs-sourcer.md`. Pass:
+Create `.state/bench/` if it is missing (`.state/` is untracked). Spawn one agent using `agents/irs-sourcer.md`. Pass:
 - Source type / description: $ARGUMENTS
 - Output path: `.state/bench/irs-cases-raw.json`
 

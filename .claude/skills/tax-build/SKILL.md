@@ -28,7 +28,8 @@ Derive all paths from convention:
 Read `AGENTS.md` and (if it exists) `forms/f{ARGUMENTS}/FORM.md`.
 Pass both as context to all spawned agents throughout this skill.
 
-Read `.state/bench/state.json`. Navigate to `forms.f{ARGUMENTS}:2025.build`:
+Read `.state/bench/state.json`. `.state/` is untracked, so if the file is missing, create it as
+`{"version": 2, "forms": {}}` (and `.state/bench/node-specs/`). Navigate to `forms.f{ARGUMENTS}:2025.build`:
 - `null` or missing → start from Phase 1
 - `"research"` → skip to Phase 2
 - `"ground_truth"` → skip to Phase 3
