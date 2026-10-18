@@ -1597,3 +1597,48 @@ test("Schedule 8812 Part II-B uses each printed line source", () => {
   assertEquals(lines?.line17, 5_100);
   assertEquals(lines?.line27, 3_800);
 });
+
+// 2025 Instructions for Schedule 8812, Credit Limit Worksheet A line 2:
+// Schedule 3 lines 1, 2, 3, 4, 5b, 6d, 6f, 6l and 6m.
+test("Credit Limit Worksheet A uses the computed Schedule 3 credits", () => {
+  const lines = calculateSchedule8812Lines(2025, {
+    f8812s: [minimalItem({
+      other_dependents_count: 1,
+      agi: 16_000,
+      filing_status: FilingStatus.QSS,
+      income_tax_liability: 758,
+    })],
+    schedule3_credit_limit_worksheet: {
+      ...zeroCreditWorksheet,
+      schedule3_line2: 272,
+      schedule3_line6d: 113,
+    },
+  });
+  assertEquals(lines?.line13, 373);
+  assertEquals(lines?.line14, 373);
+});
+
+test("a supplied Credit Limit Worksheet A must agree with Schedule 3", () => {
+  assertThrows(
+    () =>
+      calculateSchedule8812Lines(2025, {
+        f8812s: [minimalItem({
+          other_dependents_count: 1,
+          agi: 16_000,
+          filing_status: FilingStatus.QSS,
+          income_tax_liability: 758,
+          credit_limit_worksheet: {
+            ...zeroCreditWorksheet,
+            schedule3_line2: 272,
+          },
+        })],
+        schedule3_credit_limit_worksheet: {
+          ...zeroCreditWorksheet,
+          schedule3_line2: 272,
+          schedule3_line6d: 113,
+        },
+      }),
+    Error,
+    "differs from the return's Schedule 3 credits",
+  );
+});

@@ -29,6 +29,12 @@ export type ParsedArgs = {
   readonly name?: string;
   readonly description?: string;
   readonly reference?: string;
+  readonly submissionId?: string;
+  readonly "poll-seconds"?: string;
+  readonly "max-polls"?: string;
+  readonly ats?: boolean;
+  readonly production?: boolean;
+  readonly new?: boolean;
   readonly json?: boolean;
   readonly help?: boolean;
 };

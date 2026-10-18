@@ -34,6 +34,7 @@
     "check:cli": "bun scripts/testing/cli.ts",
     "check:ats": "bun scripts/testing/ats.ts",
     "check:irs": "bun scripts/testing/irs.ts",
+    "ats:stage": "bun forms/f1040/e2e/ats/ty2025-stage.ts",
     "typecheck": "tsc --project tsconfig.json",
     "bench": "bun benchmark/run_benchmark.ts",
     "bench:cached": "bun scripts/testing/bench-cached.ts",

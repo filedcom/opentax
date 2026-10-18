@@ -8,6 +8,7 @@ import {
   computeExpenses,
   computePropertyNet,
   type inputSchema,
+  isPassiveProperty,
   isVacationHomeExcluded,
   isVacationHomeLimited,
   itemSchema,
@@ -491,7 +492,7 @@ export function validatePassiveActivityLink(
     return new Map([[0, entireGain]]);
   }
   const needsLimitation = items.some((item) =>
-    (item.activity_type === "A" || item.activity_type === "B") &&
+    isPassiveProperty(item) &&
     ((item.current_property_source
       ? currentPropertyPassiveAmounts(item.current_property_source)
         .passiveOperating < 0
@@ -500,7 +501,7 @@ export function validatePassiveActivityLink(
   );
   if (!needsLimitation) return new Map();
   const activityItems = items.flatMap((item, index) =>
-    (item.activity_type === "A" || item.activity_type === "B") &&
+    isPassiveProperty(item) &&
       ((item.current_property_source
         ? currentPropertyPassiveAmounts(item.current_property_source)
           .passiveOperating !== 0
