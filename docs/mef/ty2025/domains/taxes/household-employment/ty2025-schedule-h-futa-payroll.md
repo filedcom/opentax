@@ -171,7 +171,7 @@ tax reaches Schedule 2 and Form 1040, offset by the spouse's W-2 withholding.
 Its five pages also passed review. All three packets passed source replay,
 local TY2025v5.4 XSD, artifact hashes, page-origin checks, and visual review.
 Their manifest digests and paths are in the
-[validation batch](../../../testing/ty2025-form1040-validation-batch.md). Referenced payroll,
+validation batch. Referenced payroll,
 W-2, and state records remain unverified bytes, and the other worker and
 state/rate branches still require review.
 

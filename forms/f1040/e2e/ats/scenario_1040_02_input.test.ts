@@ -22,6 +22,7 @@ import {
   xsdAvailable,
 } from "./ty2025-export.ts";
 import { SCENARIO_1040_02_FACTS } from "./ty2025_cases.ts";
+import { cliExport } from "./ats-export.ts";
 
 test("ATS 1040 Scenario 2 issued W-2s reconcile to statutory Schedule C", async () => {
   const input = await scenario104002Input();
@@ -182,3 +183,15 @@ test("ATS 1040 Scenario 2 exports without force, XSD-valid, with the packet valu
   assertEquals(amount("IRS8283", "FairMarketValueAmt"), facts.form8283.fairMarketValue);
   assertEquals(xmlDocuments(xml, "IRS8995").length, 0);
 }, 120_000);
+
+test("ATS 1040 Scenario 2 exports through the CLI return store without force", async () => {
+  const xml = await cliExport(
+    await scenario104002Input(),
+    await scenario104002Attachments(),
+  );
+  assertStringIncludes(
+    xml,
+    "<NRASpouseTreatedAsResidentInd>X</NRASpouseTreatedAsResidentInd>",
+  );
+  assertStringIncludes(xml, "<Desc>Nonresident Spouse Choice Statement</Desc>");
+});

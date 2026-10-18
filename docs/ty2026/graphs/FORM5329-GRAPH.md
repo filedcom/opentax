@@ -1,8 +1,8 @@
 # TY2026 Form 5329 graph contract
 
-Sources: pinned [2026 draft Form 5329](../corpus/draft/f5329.pdf)
+Sources: pinned [2026 draft Form 5329](../../../irs/corpus/ty2026/draft/f5329.pdf)
 (SHA-256 `f8822ccc8d14eca9424255d3b9606a8c210143ad8a317018f50222d03740edbe`)
-and [draft instructions](../corpus/draft/i5329.pdf)
+and [draft instructions](../../../irs/corpus/ty2026/draft/i5329.pdf)
 (SHA-256 `55f531aad380ec1ac63cc697e0f5d0cd603c503e18cebd9fb04b0bd46633aa35`).
 The form is still a draft, so its fields and instructions must be checked
 against the final version before filing.

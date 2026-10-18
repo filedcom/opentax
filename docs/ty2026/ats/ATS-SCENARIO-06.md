@@ -1,10 +1,10 @@
 # TY2026 ATS Form 1040 scenario 6 fixture contract
 
-Source: pinned [10-page IRS draft scenario 6 packet](../corpus/ats/1040-scenario-06.pdf),
+Source: pinned [10-page IRS draft scenario 6 packet](../../../irs/corpus/ty2026/ats/1040-scenario-06.pdf),
 SHA-256 `43e5eeb8eb511cab7eda09148c57df9cdc962b0dcdb88365236536a408ba01fa`.
-The independent source contracts are the January 2026 [Form W-2G](../corpus/authorities/fw2g--2026.pdf)
+The independent source contracts are the January 2026 [Form W-2G](../../../irs/corpus/ty2026/authorities/fw2g--2026.pdf)
 (`2d75e44d5ea6574aec1c5b68884cdf1bd2bcc96f9f897a57c3b15cc691631168`)
-and [its instructions](../corpus/authorities/iw2g--2026.pdf)
+and [its instructions](../../../irs/corpus/ty2026/authorities/iw2g--2026.pdf)
 (`79246b47e0e8a1224d56eb55cb85c15ee590c787f3551117550c83827e138115`).
 Preserve **printed fact**, **independent expectation**, and **application
 output** separately. Empty calculated fields are unknown, not printed zeros.
@@ -26,7 +26,7 @@ the packet prints no Form 1040 income total. The $985 W-2 withholding is the
 only positive federal withholding printed.
 
 The dependent standard deduction needs an earned-income classification, not
-only the dependent checkbox. [Rev. Proc. 2025-32](../corpus/authorities/rp-25-32.pdf)
+only the dependent checkbox. [Rev. Proc. 2025-32](../../../irs/corpus/ty2026/authorities/rp-25-32.pdf)
 sets the 2026 dependent floor at $1,350 and adds $450 to earned income, capped
 at the $16,100 single base. W-2 wages alone imply **$2,750**, but the packet
 does not include enough K-1 facts to decide whether any partnership amount is

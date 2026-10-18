@@ -13,7 +13,7 @@ TY2025v5.4 XSD checks. Form 5329 page 2 visibly prints $1,000 on Part VII lines
 47 and 48 and $60 on line 49; Schedule 2 line 8 and Form 1040 line 23 show
 $60. The two Form 8889 line-13 deductions total $8,000 on Schedule 1 and
 Form 1040 line 10. The focused review-fixture XSD test also passed. The
-manifest digest is in the [validation batch](../../../../testing/ty2025-form1040-validation-batch.md).
+manifest digest is in the validation batch.
 External source proof, other HSA branches, IRS business rules, and ATS remain
 open.
 
@@ -621,7 +621,7 @@ omitted because the current source route has no Part IX accumulation facts.
 The existing source guard still rejects unsupported positive excess amounts
 in Parts V, VI, and VIII. Six focused PDF tests passed, including a real
 filled-form page-copy check and a line-43-only selection. The selected packet
-review is recorded separately in the [validation batch](../../../../testing/ty2025-form1040-validation-batch.md).
+review is recorded separately in the validation batch.
 This page selection does not authenticate prior HSA records or complete the
 owner-specific funding and distribution paths described above.
 

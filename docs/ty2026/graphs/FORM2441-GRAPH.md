@@ -1,8 +1,8 @@
 # TY2026 Form 2441 graph contract
 
-Sources: pinned [2026 draft Form 2441](../corpus/draft/f2441.pdf)
+Sources: pinned [2026 draft Form 2441](../../../irs/corpus/ty2026/draft/f2441.pdf)
 (SHA-256 `67eca7567ce5ff06e72d40a07db487f406da33139e664c0c0d9c67a4e31e9385`)
-and [draft instructions](../corpus/draft/i2441.pdf)
+and [draft instructions](../../../irs/corpus/ty2026/draft/i2441.pdf)
 (SHA-256 `7fdecfe193df435542bb452ba108bee011bef7032fda8abe972d6fbd5de233e7`).
 Recheck both against the final release before filing.
 

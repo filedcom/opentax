@@ -20,10 +20,10 @@ import type {
   DiagnosticsReport,
 } from "../../core/validation/types.ts";
 import type { ExecutorDiagnosticEntry } from "../../core/runtime/executor.ts";
-import { loadForm8839Attachments } from "./form8839-attachments.ts";
 import {
-  loadForm8835PurchaseAttachments,
-  loadForm8862RetainedNotices,
+  loadReturnSourceFiles,
+  resolveSourceBytes,
+  withMissingSourceFiles,
 } from "./return-source-files.ts";
 import { normalizeAllPending } from "../../forms/f1040/2025/return-processing/pending.ts";
 import { buildForm4972PaperPdfBytes } from "../../forms/f1040/2025/pdf/builder.ts";
@@ -282,7 +282,10 @@ export async function runReturnPipeline(
   const returnPath = join(args.baseDir, args.returnId);
   const { meta, inputs } = await loadReturn(returnPath);
   const def = getCatalogEntry(meta.formType ?? "f1040", meta.year);
-  const engineInputs = buildEngineInputs(inputs, singletonPublicInputKeys(def));
+  const engineInputs = await resolveSourceBytes(
+    returnPath,
+    buildEngineInputs(inputs, singletonPublicInputKeys(def)),
+  );
   const result = def.executeReturn(engineInputs);
 
   // Warn about executor node failures before building output
@@ -335,23 +338,36 @@ async function addDraftWatermark(pdfBytes: Uint8Array): Promise<Uint8Array> {
   return doc.save();
 }
 
+/** Prepare the return with the files in its attachments/ and retained/ folders. */
+export async function prepareWithSourceFiles(
+  args: ExportReturnArgs,
+  pending: PipelineResult["pending"],
+  def: PipelineResult["def"],
+  filer: PipelineResult["filer"],
+) {
+  const files = await loadReturnSourceFiles(
+    join(args.baseDir, args.returnId),
+    pending,
+  );
+  try {
+    return await def.prepareReturn(
+      pending,
+      filer,
+      files.attachments,
+      files.retained,
+    );
+  } catch (error) {
+    throw withMissingSourceFiles(error, files.missing);
+  }
+}
+
 export async function exportMefCommand(
   args: ExportReturnArgs,
 ): Promise<string> {
   const { pending, def, filer, executorDiagnostics } = await runReturnPipeline(
     args,
   );
-  const returnPath = join(args.baseDir, args.returnId);
-  const attachments = [
-    ...await loadForm8839Attachments(returnPath, pending),
-    ...await loadForm8835PurchaseAttachments(returnPath, pending),
-  ];
-  const prepared = await def.prepareReturn(
-    pending,
-    filer,
-    attachments,
-    await loadForm8862RetainedNotices(returnPath, pending),
-  );
+  const prepared = await prepareWithSourceFiles(args, pending, def, filer);
   const xml = prepared.bundle.xml;
   validateSubmissionRules(def, pending, filer, args.force, xml);
   return args.draft ? draftXmlNotice(executorDiagnostics) + xml : xml;
@@ -368,18 +384,10 @@ export async function exportPdfCommand(
   const { pending, def, filer } = await runReturnPipeline(
     args,
   );
-  const returnPath = join(args.baseDir, args.returnId);
-  const attachments = [
-    ...await loadForm8839Attachments(returnPath, pending),
-    ...await loadForm8835PurchaseAttachments(returnPath, pending),
-  ];
   // An unidentified draft is a PDF preview; it has no fileable MeF return.
-  const prepared = args.draft && !filer ? undefined : await def.prepareReturn(
-    pending,
-    filer,
-    attachments,
-    await loadForm8862RetainedNotices(returnPath, pending),
-  );
+  const prepared = args.draft && !filer
+    ? undefined
+    : await prepareWithSourceFiles(args, pending, def, filer);
   if (prepared) {
     validateSubmissionRules(
       def,
@@ -540,15 +548,7 @@ export async function prepareMefSubmissionArchive(
     args.softwareId,
   );
   const returnPath = join(args.baseDir, args.returnId);
-  const prepared = await def.prepareReturn(
-    pending,
-    filer,
-    [
-      ...await loadForm8839Attachments(returnPath, pending),
-      ...await loadForm8835PurchaseAttachments(returnPath, pending),
-    ],
-    await loadForm8862RetainedNotices(returnPath, pending),
-  );
+  const prepared = await prepareWithSourceFiles(args, pending, def, filer);
   validateBusinessRules(
     pending,
     filer,

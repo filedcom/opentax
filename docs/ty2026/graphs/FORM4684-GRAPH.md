@@ -1,12 +1,12 @@
 # TY2026 Form 4684 casualty, theft and disaster contract
 
-Source snapshot: [draft 2026 Form 4684](../corpus/draft/f4684.pdf), SHA-256
+Source snapshot: [draft 2026 Form 4684](../../../irs/corpus/ty2026/draft/f4684.pdf), SHA-256
 `f7c5cfa5ba93b0b22b7e8e93f7eccc7db42e0ed04159664889cda0dc3c3ca9db`,
-and the [2025 instructions](../corpus/authorities/i4684--2025.pdf), SHA-256
+and the [2025 instructions](../../../irs/corpus/ty2026/authorities/i4684--2025.pdf), SHA-256
 `830b752edd1e945dc98ccb0ea91992643106840091c42ce0fcc0bf319ba5271a`,
 as a **prior-year comparator only**. The draft `i4684--dft.pdf` URL still
-serves 2025. [Revenue Procedure 2009-20](../corpus/authorities/rp-09-20.pdf)
-and [2011-58](../corpus/authorities/rp-11-58.pdf) govern the optional Ponzi
+serves 2025. [Revenue Procedure 2009-20](../../../irs/corpus/ty2026/authorities/rp-09-20.pdf)
+and [2011-58](../../../irs/corpus/ty2026/authorities/rp-11-58.pdf) govern the optional Ponzi
 safe harbor. The form is draft, so confirm the final 2026 form, instructions,
 applicable disaster legislation and current MeF release before filing.
 
@@ -44,7 +44,7 @@ property relationships. A single aggregate `personal_basis` and
 | A, 13–18 | Use one summary copy: gains from all line 4s (13), event losses from all line 12s (14). Line 15 separates the eligible $500-floor qualified-disaster portion and goes to **2026 Schedule A line 17b**, or the instruction's increased-standard-deduction route. Remaining net losses face 10% of **Form 1040 line 11b** AGI at lines 16–18; line 18 goes to **Schedule A line 16**. If gains equal/exceed losses, the line 15 instructions instead direct the difference to Schedule D. Gain/loss netting, qualified-loss allocation and standard-deduction treatment must follow the 2026 instructions, not a generic `max(loss − 10% AGI, 0)` shortcut. |
 | B Part I, 19–28 | For each business/income-producing property, track basis (20), reimbursement (21), gain (22), FMV (23/24), decline (25), smaller basis/decline (26), and loss (27). For **total destruction or theft**, line 26 uses basis, regardless of FMV decline. Line 28 totals the event. Ponzi safe-harbor line 51 enters line 28 without lines 19–27. Link home-office casualty loss from [Form 8829 line 35](./FORM8829-GRAPH.md) to line 27. |
 | B Part II, 29–39 | Classify each event/property by **held one year or less** (29–32) versus **more than one year** (33–39), and loss column as trade/business/rental/royalty versus income-producing. Short-hold trade/business net at line 31 goes to **Form 4797 line 15**; income-producing line 32 goes to **Schedule A line 17d** for individuals. Long-hold losses versus gains, including Form 4797 line 34 at line 33, determine line 38a trade/business net to **Form 4797 line 15**, line 38b income-producing loss to **Schedule A line 17d**, or line 39 net gain to **Form 4797 line 3**. Preserve other entity destinations and exceptions for the instructions. |
-| C, 40–51 | Optional [Rev. Proc. 2009-20](../corpus/authorities/rp-09-20.pdf) safe harbor, as [modified](../corpus/authorities/rp-11-58.pdf): qualified investment, 95% without potential third-party recovery or 75% with it, actual/potential recoveries, and deduction to Section B line 28. Require scheme, qualified-investor, recovery and declarations evidence; ordinary financial-scam thefts do not automatically qualify. |
+| C, 40–51 | Optional [Rev. Proc. 2009-20](../../../irs/corpus/ty2026/authorities/rp-09-20.pdf) safe harbor, as [modified](../../../irs/corpus/ty2026/authorities/rp-11-58.pdf): qualified investment, 95% without potential third-party recovery or 75% with it, actual/potential recoveries, and deduction to Section B line 28. Require scheme, qualified-investor, recovery and declarations evidence; ordinary financial-scam thefts do not automatically qualify. |
 | D, 52–57 | §165(i) prior-year election or revocation for **federally declared** disaster, including disaster name, loss dates, property address, prior election date and repayment evidence. This attaches to the preceding year's return/amendment, so carry an election record across returns and do not silently shift the current-year loss. |
 
 This form feeds [Form 6198](./FORM6198-GRAPH.md) for any activity loss subject
@@ -74,7 +74,7 @@ year-specific records.
   business loss, rejects personal losses and casualties outside 2025, and
   asserts the obsolete Form 4797 line 14 route. It is not a 2026 schema map.
 - `form4684` is absent from the TY2026 registry/PDF builder and has no 2026
-  MeF serializer. The [PDF inventory](../inventories/pdf-fields/pdf-fields-f4684.csv) has **162
+  MeF serializer. The PDF inventory has **162
   terminal widgets**, all in the field tree, across four printed pages plus
   the draft cover. Tooltips identify many lines, but repeated A/B columns,
   checkbox exports and rendered appearance still need visual verification.

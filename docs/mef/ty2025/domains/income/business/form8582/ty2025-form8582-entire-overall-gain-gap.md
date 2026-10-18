@@ -24,7 +24,7 @@ future item 40, unworked; complete PDF instruction parity remains unproved.
 These are unverified candidates, not accepted filings or a production 2026
 import. Prior-accepted-return proof, wider disposition characters, matching
 business rules and ATS remain open. See the [activity ledger checkpoint](./ty2025-form8582-activity-id-gap.md#current-evidence-checkpoint--october-8-2026)
-and [execution journal](../../../../readiness/ty2025-readiness-execution-2026-10-07.md).
+and execution journal.
 
 
 ## First-year active rental entire disposition with overall loss (2026-10-01, unrun)

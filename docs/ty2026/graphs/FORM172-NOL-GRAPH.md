@@ -1,11 +1,11 @@
 # TY2026 Form 172 and NOL carryforward contract
 
 Source snapshot: the IRS [current Form 172 product page](https://www.irs.gov/forms-pubs/about-form-172)
-still serves the December 2024 [form](../corpus/authorities/f172--2024.pdf)
-and [instructions](../corpus/authorities/i172--2024.pdf). The PDFs are pinned
+still serves the December 2024 [form](../../../irs/corpus/ty2026/authorities/f172--2024.pdf)
+and [instructions](../../../irs/corpus/ty2026/authorities/i172--2024.pdf). The PDFs are pinned
 with hashes in the [manifest](../corpus/manifest.json). Form 172 has a blank
 calendar-year header and **109 fillable widgets across three pages**; the
-[field inventory](../inventories/pdf-fields/pdf-fields-f172.csv) records each page and rectangle.
+field inventory records each page and rectangle.
 The PDF's 225 named field-tree entries include 116 nonterminal containers;
 do not count or fill those as line widgets.
 The 2026 draft URL serves that same older revision and remains `wrong-year`
@@ -14,9 +14,9 @@ and selected MeF release before treating the December 2024 booklet as final
 2026 tax-law authority: its notes about the suspension of miscellaneous and
 overall itemized deductions stop at 2025.
 
-The public [TY2026 accepted-forms workbook](../corpus/mef/accepted-forms.xlsx)
+The public [TY2026 accepted-forms workbook](../../../irs/corpus/ty2026/mef/accepted-forms.xlsx)
 lists `Form 172` as **unbounded** for 1040 (row 43). The companion
-[forms/attachments workbook](../corpus/mef/forms-attachments.xlsx) lists
+[forms/attachments workbook](../../../irs/corpus/ty2026/mef/forms-attachments.xlsx) lists
 `IRS172` at form level (row 812) and a distinct
 `NetOperatingLossCarryforwardDeductionStatement` at Schedule 1 line 8a
 (row 397). These are public inventory entries, not final XSD element or
@@ -58,7 +58,7 @@ has a line 8a input but no registered NOL source.
   columns, including modified taxable income, carryover, medical, mortgage,
   charitable and casualty recomputations. Render both columns only when the
   applicable carryback path requires them. The fields have no tooltip
-  labels; use the [coordinate inventory](../inventories/pdf-fields/pdf-fields-f172.csv) plus visual
+  labels; use the coordinate inventory plus visual
   inspection, and retain one form per origin-year NOL.
 - **MeF:** build `IRS172` and any separately required line-8a limitation
   statement in the selected XSD order. Compare form count, document IDs,

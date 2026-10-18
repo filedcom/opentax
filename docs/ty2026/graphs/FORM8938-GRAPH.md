@@ -1,14 +1,14 @@
 # TY2026 Form 8938 foreign financial asset disclosure
 
 Snapshot: September 27, 2026. The [December 2026 draft Form
-8938](../corpus/draft/f8938.pdf) is pinned at SHA-256
+8938](../../../irs/corpus/ty2026/draft/f8938.pdf) is pinned at SHA-256
 `39a92cb3e8c67dc507a1fd53ff031081b8070f853da8574eace54e3f0e2b8a4c`.
 The currently published [November 2021 continuous-use
-instructions](../corpus/authorities/i8938--2021.pdf) are pinned at
+instructions](../../../irs/corpus/ty2026/authorities/i8938--2021.pdf) are pinned at
 `6c6a5317c4a5f561b7b96ea48747a340b3cada7406538cbbca899d9eef83d430`.
 The expected draft instruction URL still serves a 2021 document. Reconcile
-the final form and instructions before filing. The [PDF field
-inventory](../inventories/pdf-fields/pdf-fields-f8938.csv) has **131 widgets**, all in the field tree;
+the final form and instructions before filing. The PDF field
+inventory has **131 widgets**, all in the field tree;
 the draft cover sheet is PDF page 1 and form pages are PDF pages 2–3.
 The [public TY2026 MeF inventory](../mef/MEF-V1-DRIFT.md#what-the-public-september-24-inventory-already-establishes)
 lists one `IRS8938` at form level for 1040; asset/continuation cardinality

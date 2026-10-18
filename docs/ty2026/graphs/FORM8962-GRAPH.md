@@ -1,10 +1,10 @@
 # TY2026 Form 8962 premium tax credit contract
 
-Source: pinned [2026 draft Form 8962](../corpus/draft/f8962.pdf), SHA-256
+Source: pinned [2026 draft Form 8962](../../../irs/corpus/ty2026/draft/f8962.pdf), SHA-256
 `5b692171ee43a4596eabfcaad83bea920e6356c492656a1648f2aaf018cd1d35`,
-plus [Rev. Proc. 2025-25](../corpus/authorities/rp-25-25.pdf) for 2026 applicable
-percentages, [Rev. Proc. 2025-32](../corpus/authorities/rp-25-32.pdf) §2.04,
-and the pinned [2025 HHS poverty guidelines](../corpus/authorities/hhs-2025-poverty-guidelines.pdf).
+plus [Rev. Proc. 2025-25](../../../irs/corpus/ty2026/authorities/rp-25-25.pdf) for 2026 applicable
+percentages, [Rev. Proc. 2025-32](../../../irs/corpus/ty2026/authorities/rp-25-32.pdf) §2.04,
+and the pinned [2025 HHS poverty guidelines](../../../irs/corpus/ty2026/authorities/hhs-2025-poverty-guidelines.pdf).
 The expected IRS draft instruction URL `i8962--dft.pdf` still serves 2025;
 its rules are a comparator, **not** confirmation of 2026 Table 2, household
 definitions, or special worksheets. Reconcile this contract with final 2026
@@ -24,8 +24,7 @@ even though none of the seven linked 1040 ATS packets exercises it.
 | 30–34 | Up to four printed shared-policy allocation rows, with policy number, other SSN, start/stop months, and three percentages; line 34 attests completeness. | More than four requires the current IRS continuation/MeF representation. Sum allocated and unallocated policy amounts into monthly rows exactly once. |
 | 35–36 | Alternative family size, monthly contribution and coverage months for taxpayer/spouse when electing the year-of-marriage calculation. | Recompute affected month rows rather than inserting an end-of-form adjustment. |
 
-The draft PDF has a coversheet followed by two form pages. The generated
-[`pdf-fields-f8962.csv`](../inventories/pdf-fields/pdf-fields-f8962.csv) records **143** widgets, all
+The draft PDF has a coversheet followed by two form pages. It has **143** widgets, all
 in the field tree. Key changed fields are page-2
 `Page1.f1_93[0]` for line 27 and `Page1.f1_94[0]`/`f1_95[0]` for reserved
 lines 28/29. Full field names, widgets, tooltips and coordinates are in the

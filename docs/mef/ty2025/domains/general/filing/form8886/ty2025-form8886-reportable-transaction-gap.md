@@ -281,7 +281,7 @@ return source families (including K-1 and other casualty branches), joint-disclo
 foreign filer projection, public intake/CLI/registry integration, global native
 document ID/order integration and full-return business rules remain unfinished.
 Existing loss review guards apply. See the
-[execution evidence](../../../../readiness/ty2025-readiness-execution-2026-10-07.md)
+execution evidence
 for exact scopes and private checkpoints.
 
 

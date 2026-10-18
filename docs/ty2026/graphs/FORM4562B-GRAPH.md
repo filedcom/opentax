@@ -4,10 +4,10 @@ Depreciable assets and section 179 elections remain on
 [Form 4562](./FORM4562-GRAPH.md); reconcile asset basis and activity expense
 between the two attachments before routing either deduction downstream.
 
-Source: pinned [December 2026 draft Form 4562-B](../corpus/draft/f4562b.pdf),
+Source: pinned [December 2026 draft Form 4562-B](../../../irs/corpus/ty2026/draft/f4562b.pdf),
 SHA-256 `16c23110b7ad4483b47f20269807566177881234b0fd9b7679cd648a169f7bf6`,
-retrieved 2026-09-27 from the IRS draft directory. The [2026 Schedule E](../corpus/draft/i1040se.pdf)
-and [Schedule F](../corpus/draft/i1040sf.pdf) instructions explicitly direct
+retrieved 2026-09-27 from the IRS draft directory. The [2026 Schedule E](../../../irs/corpus/ty2026/draft/i1040se.pdf)
+and [Schedule F](../../../irs/corpus/ty2026/draft/i1040sf.pdf) instructions explicitly direct
 2026 amortization to Form 4562-B, which replaces Form 4562 Part VI. The
 current draft directory does not provide a verified 2026 Form 4562-B
 instruction booklet. Do not infer amortization periods or elections from the
