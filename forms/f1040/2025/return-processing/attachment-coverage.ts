@@ -1,3 +1,4 @@
+import { hasUnstatusedForm8874Investment } from "../domains/credits/business/form8874/form8874_cde_status_evidence.ts";
 import {
   form8886CoversLargeCapitalSources,
   type PreparedForm8886ReturnPackets,
@@ -215,7 +216,7 @@ const MISSING_ATTACHMENTS: readonly MissingAttachment[] = [
     exportKinds: ["mef", "pdf"],
     reason:
       "Form 8874 direct QEI needs authenticated CDE status and recapture history",
-    isActive: (fields) => nonempty(fields.investments),
+    isActive: hasUnstatusedForm8874Investment,
   },
   {
     pendingKey: "f8882",

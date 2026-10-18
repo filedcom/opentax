@@ -3,6 +3,8 @@ import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import { FilingStatus } from "../../../../../mef/header.ts";
 import { scheduleA } from "./schedule_a.ts";
 import { purchasePointsCrossLoanFixture } from "../../../../../nodes/inputs/deductions/mortgage/f1098/purchase_points_cross_loan.fixture.ts";
+import { f1040_2025 } from "../../../../index.ts";
+import { normalizeAllPending } from "../../../../return-processing/pending.ts";
 
 // Descriptor tests exercise source ownership; final bundle tests verify Copy B bytes.
 const descriptorCopy = {
@@ -269,5 +271,36 @@ test("Schedule A line 11 carries the dotted-line qualified contributions", () =>
   assertStringIncludes(
     xml,
     '<GiftsByCashOrCheckAmt qualifiedContributionsAmt="200">250</GiftsByCashOrCheckAmt>',
+  );
+});
+
+// Pub. 526 (2025), Carryovers; 2025 Schedule A line 13 instructions.
+test("Schedule A line 13 files prior-year carryovers the limits fully allow", () => {
+  const result = f1040_2025.executeReturn({
+    general: { filing_status: "single", taxpayer_ssn: "400-11-2222" },
+    w2: [{ box1_wages: 100_000, box2_fed_withheld: 10_000 }],
+    schedule_a: {
+      force_itemized: true,
+      cash_contributions_to_50_percent_organizations: 20_000,
+      prior_charitable_carryovers: [{
+        contribution_year: 2023,
+        category: "cash_60",
+        amount: 1_500,
+        source_document_reference: "2024 return carryover worksheet",
+        ordinary_carryover_rules_confirmed: true,
+      }],
+    },
+  });
+  assertEquals(result.diagnostics, []);
+  const pending = normalizeAllPending(result.pending);
+  assertEquals(pending.f1040.line12e_itemized_deductions, 21_500);
+  const xml = scheduleA.build(pending.schedule_a, { pending });
+  assertStringIncludes(
+    xml,
+    "<CarryoverFromPriorYearAmt>1500</CarryoverFromPriorYearAmt>",
+  );
+  assertStringIncludes(
+    xml,
+    "<TotalCharitableContriAmt>21500</TotalCharitableContriAmt>",
   );
 });

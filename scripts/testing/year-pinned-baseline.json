@@ -2967,7 +2967,7 @@
   {
     "path": "forms/f1040/nodes/intermediate/forms/income/retirement/form8606/index.ts",
     "pattern": "z-literal",
-    "count": 5
+    "count": 4
   },
   {
     "path": "forms/f1040/nodes/intermediate/forms/income/retirement/form8606/recharacterization.ts",

@@ -20,13 +20,30 @@ export interface FilerCreditEligibility {
   eitc: boolean;
 }
 
+/** An SSN issued before the due date is also a TIN issued by it; an explicit
+ * `tin_issued_by_due_date: false` still governs. */
+function timelyTin(
+  ssn: string | undefined,
+  ssnIssuedBeforeDueDate: boolean | undefined,
+  tinIssuedByDueDate: boolean | undefined,
+): boolean {
+  return Boolean(ssn) &&
+    (tinIssuedByDueDate ?? ssnIssuedBeforeDueDate) === true;
+}
+
 export function filerCreditEligibility(
   facts: FilerCreditFacts,
 ): FilerCreditEligibility {
-  const taxpayerTimelyTin = Boolean(facts.taxpayer_ssn) &&
-    facts.taxpayer_tin_issued_by_due_date === true;
-  const spouseTimelyTin = Boolean(facts.spouse_ssn) &&
-    facts.spouse_tin_issued_by_due_date === true;
+  const taxpayerTimelyTin = timelyTin(
+    facts.taxpayer_ssn,
+    facts.taxpayer_ssn_issued_before_due_date,
+    facts.taxpayer_tin_issued_by_due_date,
+  );
+  const spouseTimelyTin = timelyTin(
+    facts.spouse_ssn,
+    facts.spouse_ssn_issued_before_due_date,
+    facts.spouse_tin_issued_by_due_date,
+  );
   const taxpayerEitcSsn = taxpayerTimelyTin &&
     facts.taxpayer_ssn_valid_for_employment === true;
   const spouseEitcSsn = spouseTimelyTin &&

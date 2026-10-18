@@ -7,6 +7,8 @@ import { FilingStatus } from "../../../../../types.ts";
 import { CONFIG_BY_YEAR } from "../../../../../config/index.ts";
 import { normalizeArray } from "../../../../../utils.ts";
 import { schedule1 } from "../../../../../outputs/general/return-assembly/schedule1/index.ts";
+import { agi_aggregator } from "../../../../aggregation/general/return-assembly/agi_aggregator/index.ts";
+import { form8995 } from "../../../deductions/business/form8995/index.ts";
 
 const signedAmount = z.union([z.number(), z.array(z.number())]);
 
@@ -69,7 +71,7 @@ function sumAmount(value: Form461Input["line2_schedule_c"]): number {
 class Form461Node extends TaxNode<typeof inputSchema> {
   readonly nodeType = "form461";
   readonly inputSchema = inputSchema;
-  readonly outputNodes = new OutputNodes([schedule1]);
+  readonly outputNodes = new OutputNodes([schedule1, agi_aggregator, form8995]);
 
   compute(ctx: NodeContext, rawInput: Form461Input): NodeResult {
     const input = inputSchema.parse(rawInput);
@@ -139,9 +141,17 @@ class Form461Node extends TaxNode<typeof inputSchema> {
       outputs: [
         { nodeType: this.nodeType, fields },
         ...(line16 < 0
-          ? [this.outputNodes.output(schedule1, {
-            line8p_excess_business_loss: -line16,
-          })]
+          ? [
+            this.outputNodes.output(schedule1, {
+              line8p_excess_business_loss: -line16,
+            }),
+            this.outputNodes.output(agi_aggregator, {
+              line8p_excess_business_loss: -line16,
+            }),
+            this.outputNodes.output(form8995, {
+              excess_business_loss_disallowed: -line16,
+            }),
+          ]
           : []),
       ],
       ...(line16 < 0

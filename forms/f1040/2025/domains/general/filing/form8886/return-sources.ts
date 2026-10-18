@@ -57,8 +57,8 @@ export const returnSourceSchema = z.discriminatedUnion("kind", [
   ...k1ActivityReturnSourceSchema.options,
   z.object({
     kind: z.literal(ReturnSourceKind.BusinessCasualty),
-    // AGI is recalculated return context, not a business casualty source fact.
-    row: casualtySchema.omit({ agi: true }),
+    // Personal-use casualties are not a business casualty source fact.
+    row: casualtySchema.omit({ personal_casualties: true }),
   }).strict(),
 ]);
 type ReturnSource = z.infer<typeof returnSourceSchema>;

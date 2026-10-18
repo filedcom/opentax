@@ -1,6 +1,6 @@
 import { test } from "bun:test";
-import { assertEquals } from "@std/assert";
-import { form4684 } from "./index.ts";
+import { assertEquals, assertThrows } from "@std/assert";
+import { form4684, PersonalCasualtyKind, personalSectionA } from "./index.ts";
 
 function compute(input: Record<string, unknown>) {
   return form4684.compute({ taxYear: 2025, formType: "f1040" }, input);
@@ -17,163 +17,143 @@ test("smoke — empty input returns no outputs", () => {
   assertEquals(result.outputs.length, 0);
 });
 
-// ─── Personal Loss — Federal Disaster Requirement ────────────────────────────
+// ─── Section A — Personal-Use Property ───────────────────────────────────────
 
-test("personal loss — not federal disaster → no deduction", () => {
-  const result = compute({
-    personal_fmv_before: 50_000,
-    personal_fmv_after: 30_000,
-    personal_basis: 60_000,
-    personal_insurance: 0,
-    is_federal_disaster: false,
-    agi: 50_000,
-  });
-  assertEquals(findOutput(result, "schedule_a"), undefined);
+function property(overrides: Record<string, unknown> = {}) {
+  return {
+    property_type: "House",
+    city: "Anchorage",
+    state: "AK",
+    zip: "99501",
+    acquired_date: "2000-01-01",
+    basis: 15_000,
+    insurance: 2_000,
+    fmv_before: 14_000,
+    fmv_after: 2_000,
+    ...overrides,
+  };
+}
+
+const fire = {
+  description: "Fire",
+  casualty_date: "2025-01-01",
+  kind: PersonalCasualtyKind.FederallyDeclaredDisaster,
+  fema_declaration_number: "EM-1234",
+  properties: [property()],
+};
+const monsoon = {
+  description: "Monsoon",
+  casualty_date: "2025-02-01",
+  kind: PersonalCasualtyKind.QualifiedDisaster,
+  fema_declaration_number: "EM-2345",
+  qualified_disaster_confirmed: true as const,
+  properties: [property({
+    property_type: "Shed",
+    basis: 12_000,
+    fmv_before: 11_000,
+    fmv_after: 6_000,
+  })],
+};
+const hurricane = {
+  description: "Hurricane",
+  casualty_date: "2025-03-01",
+  kind: PersonalCasualtyKind.NotFederallyDeclared,
+  properties: [property({
+    property_type: "Barn",
+    basis: 8_000,
+    insurance: 0,
+    fmv_before: 7_000,
+    fmv_after: 3_000,
+  })],
+};
+
+// 2025 Form 4684 lines 2-12 per casualty: line 9 is the smaller of basis or
+// the value decline, less reimbursement; line 11 is $100, or $500 for a
+// qualified disaster loss. Line 14 adds line 12 of the federally declared
+// forms (Worksheet 1-1 adds a non-federal loss only up to line 13 gains).
+// Line 15 is the smaller of line 14 less line 13 or the qualified disaster
+// line 12; line 16 is line 14 less lines 13 and 15.
+test("Section A: three casualties give lines 12, 14, 15 and 16", () => {
+  const summary = personalSectionA([fire, monsoon, hurricane]);
+  assertEquals(summary.forms.map((form) => form.line12), [9_900, 2_500, 3_900]);
+  assertEquals(summary.forms.map((form) => form.line11), [100, 500, 100]);
+  assertEquals(summary.line13, 0);
+  assertEquals(summary.line14, 12_400);
+  assertEquals(summary.line15, 2_500);
+  assertEquals(summary.line16, 9_900);
 });
 
-test("personal loss — is_federal_disaster=undefined → no deduction", () => {
-  const result = compute({
-    personal_fmv_before: 50_000,
-    personal_fmv_after: 30_000,
-    personal_basis: 60_000,
-    personal_insurance: 0,
-    agi: 50_000,
-  });
-  assertEquals(findOutput(result, "schedule_a"), undefined);
+// Line 15 goes to Schedule A line 16 and, for a non-itemizer, increases the
+// standard deduction (2025 Instructions for Form 1040, Line 12e, Exception 5);
+// line 16 is limited by 10% of AGI on Schedule A.
+test("Section A routes line 15 and line 16", () => {
+  const result = compute({ personal_casualties: [fire, monsoon, hurricane] });
+  const scheduleA = result.outputs.filter((o) => o.nodeType === "schedule_a")
+    .map((o) => o.fields);
+  assertEquals(scheduleA, [
+    { form4684_line16_loss: 9_900 },
+    { net_qualified_disaster_loss: 2_500 },
+  ]);
+  assertEquals(
+    findOutput(result, "standard_deduction")?.fields,
+    { net_qualified_disaster_loss: 2_500 },
+  );
 });
 
-test("personal loss — federal disaster qualifies", () => {
-  // FMV decline: $20,000, basis: $60,000, loss = min($20,000, $60,000) = $20,000
-  // After $100 floor: $19,900
-  // AGI = $50,000 → 10% = $5,000
-  // Net: $19,900 - $5,000 = $14,900
-  const result = compute({
-    personal_fmv_before: 50_000,
-    personal_fmv_after: 30_000,
-    personal_basis: 60_000,
-    personal_insurance: 0,
-    is_federal_disaster: true,
-    agi: 50_000,
-  });
-  assertEquals(findOutput(result, "schedule_a")?.fields.line_15_casualty_theft_loss, 14_900);
+// "Do not complete the rest of this section if all of your casualty or theft
+// losses are subject to the $500 reduction" (2025 Form 4684, line 15).
+test("Section A stops at line 15 when every loss is a qualified disaster loss", () => {
+  const summary = personalSectionA([monsoon]);
+  assertEquals(summary.line15, 2_500);
+  assertEquals(summary.line16, undefined);
+  assertEquals(
+    findOutput(compute({ personal_casualties: [monsoon] }), "schedule_a")
+      ?.fields,
+    { net_qualified_disaster_loss: 2_500 },
+  );
 });
 
-// ─── $100 Per-Event Floor ─────────────────────────────────────────────────────
-
-test("$100 per-event floor applies before 10% AGI floor", () => {
-  // FMV decline: $500, basis: $1,000, insurance $0
-  // Loss = min($500, $1,000) = $500
-  // After $100 floor: $400
-  // AGI = $1,000, 10% = $100
-  // Net: $400 - $100 = $300
-  const result = compute({
-    personal_fmv_before: 1_000,
-    personal_fmv_after: 500,
-    personal_basis: 1_000,
-    personal_insurance: 0,
-    is_federal_disaster: true,
-    agi: 1_000,
-  });
-  const sa = findOutput(result, "schedule_a");
-  assertEquals(sa?.fields.line_15_casualty_theft_loss, 300);
+test("a loss not attributable to a federally declared disaster deducts nothing without gains", () => {
+  const result = compute({ personal_casualties: [hurricane] });
+  assertEquals(result.outputs.length, 0);
 });
 
-test("loss of exactly $100 → eliminated by per-event floor", () => {
-  // FMV decline: $100, loss = min($100, $1000) = $100
-  // After $100 floor: $0
-  const result = compute({
-    personal_fmv_before: 1_000,
-    personal_fmv_after: 900,
-    personal_basis: 1_000,
-    personal_insurance: 0,
-    is_federal_disaster: true,
-    agi: 0,
-  });
-  assertEquals(findOutput(result, "schedule_a"), undefined);
+// Worksheet 1-1: a non-federal loss offsets personal casualty gains (line 13);
+// line 13 equal to line 14 enters zero on line 15 and stops.
+test("Worksheet 1-1 lets a non-federal loss offset a casualty gain", () => {
+  const gain = {
+    ...hurricane,
+    description: "Theft",
+    properties: [property({ basis: 1_000, insurance: 4_000 })],
+  };
+  const summary = personalSectionA([hurricane, gain]);
+  assertEquals(summary.line13, 3_000);
+  assertEquals(summary.line14, 3_000);
+  assertEquals(summary.line15, 0);
+  assertEquals(summary.line16, undefined);
 });
 
-// ─── 10% AGI Floor ───────────────────────────────────────────────────────────
-
-test("10% AGI floor eliminates small loss", () => {
-  // Loss after $100 floor: $400
-  // AGI = $5,000, 10% = $500
-  // Net: $400 - $500 = -$100 → $0
-  const result = compute({
-    personal_fmv_before: 1_000,
-    personal_fmv_after: 500,
-    personal_basis: 1_000,
-    personal_insurance: 0,
-    is_federal_disaster: true,
-    agi: 5_000,
-  });
-  assertEquals(findOutput(result, "schedule_a"), undefined);
+test("a net personal casualty gain is refused", () => {
+  const gain = { ...fire, properties: [property({ basis: 1_000, insurance: 20_000 })] };
+  assertThrows(() => personalSectionA([gain]), Error, "Schedule D");
 });
 
-// ─── Insurance Reimbursement ─────────────────────────────────────────────────
-
-test("insurance reimbursement reduces loss", () => {
-  // FMV decline: $20,000, basis: $60,000, insurance $15,000
-  // Loss = min($20,000, $60,000) - $15,000 = $5,000
-  // After $100 floor: $4,900
-  // AGI = $10,000, 10% = $1,000
-  // Net: $4,900 - $1,000 = $3,900
-  const result = compute({
-    personal_fmv_before: 50_000,
-    personal_fmv_after: 30_000,
-    personal_basis: 60_000,
-    personal_insurance: 15_000,
-    is_federal_disaster: true,
-    agi: 10_000,
-  });
-  const sa = findOutput(result, "schedule_a");
-  assertEquals(sa?.fields.line_15_casualty_theft_loss, 3_900);
-});
-
-test("insurance fully covers loss → no deduction", () => {
-  // Loss $20,000, insurance $20,000 → net loss = $0
-  const result = compute({
-    personal_fmv_before: 50_000,
-    personal_fmv_after: 30_000,
-    personal_basis: 60_000,
-    personal_insurance: 20_000,
-    is_federal_disaster: true,
-    agi: 10_000,
-  });
-  assertEquals(findOutput(result, "schedule_a"), undefined);
-});
-
-// ─── Loss Capped at Lesser of FMV Decline or Basis ───────────────────────────
-
-test("loss capped at FMV decline when less than basis", () => {
-  // FMV decline: $10,000, basis: $100,000
-  // Deductible loss = $10,000 (FMV decline < basis)
-  const result = compute({
-    personal_fmv_before: 100_000,
-    personal_fmv_after: 90_000,
-    personal_basis: 100_000,
-    personal_insurance: 0,
-    is_federal_disaster: true,
-    agi: 0,
-  });
-  const sa = findOutput(result, "schedule_a");
-  // After $100 floor: $9,900; AGI 10% = $0; net = $9,900
-  assertEquals(sa?.fields.line_15_casualty_theft_loss, 9_900);
-});
-
-test("loss capped at basis when less than FMV decline", () => {
-  // FMV decline: $60,000 (total loss), basis: $40,000
-  // Deductible = min($60,000, $40,000) = $40,000
-  const result = compute({
-    personal_fmv_before: 80_000,
-    personal_fmv_after: 20_000,
-    personal_basis: 40_000,
-    personal_insurance: 0,
-    is_federal_disaster: true,
-    agi: 0,
-  });
-  const sa = findOutput(result, "schedule_a");
-  // After $100 floor: $39,900; no AGI floor (agi=0)
-  assertEquals(sa?.fields.line_15_casualty_theft_loss, 39_900);
+test("a federally declared or qualified disaster needs its FEMA number and confirmation", () => {
+  assertThrows(
+    () => compute({ personal_casualties: [{ ...fire, fema_declaration_number: undefined }] }),
+    Error,
+    "FEMA declaration number",
+  );
+  assertThrows(
+    () => compute({ personal_casualties: [{ ...monsoon, qualified_disaster_confirmed: undefined }] }),
+    Error,
+    "qualified_disaster_confirmed",
+  );
+  assertThrows(
+    () => compute({ personal_casualties: [{ ...hurricane, fema_declaration_number: "DR-1234" }] }),
+    Error,
+    "no FEMA number",
+  );
 });
 
 // ─── Business Property Losses ────────────────────────────────────────────────
@@ -217,46 +197,4 @@ test("business loss reduced by insurance", () => {
   });
   const f4797 = findOutput(result, "form4797");
   assertEquals(f4797?.fields.ordinary_gain_form4684, -20_000);
-});
-
-// ─── Personal + Business Combined ────────────────────────────────────────────
-
-test("personal federal disaster loss + business §1231 loss combined", () => {
-  // Personal: FMV decline $20k, basis $60k → loss $20k, after $100 floor $19,900, AGI $50k → 10%=$5k → net $14,900
-  // Business: FMV decline $30k, basis $50k → loss $30k
-  const result = compute({
-    // Personal
-    personal_fmv_before: 50_000,
-    personal_fmv_after: 30_000,
-    personal_basis: 60_000,
-    personal_insurance: 0,
-    is_federal_disaster: true,
-    agi: 50_000,
-    // Business
-    business_fmv_before: 80_000,
-    business_fmv_after: 50_000,
-    business_basis: 50_000,
-    business_insurance: 0,
-    business_is_section_1231: true,
-  });
-  assertEquals(findOutput(result, "schedule_a")?.fields.line_15_casualty_theft_loss, 14_900);
-  assertEquals(findOutput(result, "form4797")?.fields.ordinary_gain_form4684, -30_000);
-});
-
-// ─── Output Field Routing ─────────────────────────────────────────────────────
-
-test("spec_scenario: FMV_loss=15000, AGI=60000 → deductible=max(0,15000-100-6000)=8900", () => {
-  // FMV before=$15,000, after=$0, basis=$15,000 → loss=min($15,000,$15,000)=$15,000
-  // After $100 floor: $14,900
-  // AGI=$60,000, 10%=$6,000
-  // Net: $14,900 - $6,000 = $8,900
-  const result = compute({
-    personal_fmv_before: 15_000,
-    personal_fmv_after: 0,
-    personal_basis: 15_000,
-    personal_insurance: 0,
-    is_federal_disaster: true,
-    agi: 60_000,
-  });
-  assertEquals(findOutput(result, "schedule_a")?.fields.line_15_casualty_theft_loss, 8_900);
 });

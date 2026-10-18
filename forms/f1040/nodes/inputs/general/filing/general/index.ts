@@ -350,8 +350,12 @@ export const inputSchema = z.object({
   taxpayer_middle_initial: z.string().max(1).optional(),
   taxpayer_suffix: z.string().optional(),
   taxpayer_ssn: z.string().optional(),
-  taxpayer_ssn_valid_for_employment: z.boolean().optional(),
-  taxpayer_ssn_issued_before_due_date: z.boolean().optional(),
+  taxpayer_ssn_valid_for_employment: z.boolean().optional().describe(
+    "SSN card is valid for employment. With taxpayer_ssn_issued_before_due_date it is the valid SSN that the Schedule 1-A senior deduction (Part V) and the child tax credit require",
+  ),
+  taxpayer_ssn_issued_before_due_date: z.boolean().optional().describe(
+    "SSN issued by SSA before the return's due date (including extensions); also implies taxpayer_tin_issued_by_due_date",
+  ),
   taxpayer_tin_issued_by_due_date: z.boolean().optional(),
   taxpayer_dob: z.string().optional(),
   taxpayer_form8880_student_five_months: z.boolean().optional(),
@@ -389,8 +393,12 @@ export const inputSchema = z.object({
   spouse_middle_initial: z.string().max(1).optional(),
   spouse_suffix: z.string().optional(),
   spouse_ssn: z.string().optional(),
-  spouse_ssn_valid_for_employment: z.boolean().optional(),
-  spouse_ssn_issued_before_due_date: z.boolean().optional(),
+  spouse_ssn_valid_for_employment: z.boolean().optional().describe(
+    "SSN card is valid for employment. With spouse_ssn_issued_before_due_date it is the valid SSN that the Schedule 1-A senior deduction (Part V) and the child tax credit require",
+  ),
+  spouse_ssn_issued_before_due_date: z.boolean().optional().describe(
+    "SSN issued by SSA before the return's due date (including extensions); also implies spouse_tin_issued_by_due_date",
+  ),
   spouse_tin_issued_by_due_date: z.boolean().optional(),
   spouse_dob: z.string().optional(),
   spouse_form8880_student_five_months: z.boolean().optional(),

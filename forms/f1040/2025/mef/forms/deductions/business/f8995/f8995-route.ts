@@ -1,3 +1,4 @@
+import { assertExcessBusinessLoss8995 } from "./f8995-excess-business-loss.ts";
 import { projectPassiveSCorpLossCopies } from "../../../../../domains/income/business/passive-s-corp-loss-copies.ts";
 import { assertCurrentPropertyQbi } from "./f8995-current-property.ts";
 import { assertCurrentK1Qbi } from "./f8995-current-k1.ts";
@@ -1458,6 +1459,9 @@ export function assertPositive8995(
   }
   if (fields.joint_owner_filing_rows !== undefined) {
     return assertJointOwner8995(fields, pending, taxYear);
+  }
+  if (fields.excess_business_loss_filing_row !== undefined) {
+    return assertExcessBusinessLoss8995(fields, pending);
   }
   if (fields.multi_business_filing_rows !== undefined) {
     return assertMultipleScheduleC8995(fields, pending, taxYear);

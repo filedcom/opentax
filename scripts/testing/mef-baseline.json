@@ -3,33 +3,6 @@
   "approvedBy": "pending-review",
   "expires": "2027-01-31",
   "returns": {
-    "single-withheld-w2g": [
-      "xml W-2G payer copy content needs its exact attached PDF"
-    ],
-    "single-new-markets-business-credit": [
-      "xml [MEF] Form 8874 direct QEI needs authenticated CDE status and recapture history; export blocked"
-    ],
-    "single-long-name-new-markets-investment": [
-      "xml [MEF] Form 8874 direct QEI needs authenticated CDE status and recapture history; export blocked"
-    ],
-    "single-two-new-markets-investments": [
-      "xml [MEF] Form 8874 direct QEI needs authenticated CDE status and recapture history; export blocked"
-    ],
-    "single-six-new-markets-investments": [
-      "xml [MEF] Form 8874 direct QEI needs authenticated CDE status and recapture history; export blocked"
-    ],
-    "single-seven-new-markets-investments": [
-      "xml [MEF] Form 8874 direct QEI needs authenticated CDE status and recapture history; export blocked"
-    ],
-    "single-twenty-four-new-markets-investments": [
-      "xml [MEF] Form 8874 direct QEI needs authenticated CDE status and recapture history; export blocked"
-    ],
-    "single-geothermal-and-new-markets-credits": [
-      "xml [MEF] Form 8874 direct QEI needs authenticated CDE status and recapture history; export blocked"
-    ],
-    "single-partnership-code-k-and-w2g": [
-      "xml W-2G payer copy content needs its exact attached PDF"
-    ],
     "single-k-reported-error": [
       "rule F1040-065-05"
     ],
@@ -38,12 +11,6 @@
     ],
     "single-form2555-full-year-physical-presence": [
       "rule F1040-065-05"
-    ],
-    "single-form461-schedule-c-excess-business-loss": [
-      "calculation form8995"
-    ],
-    "single-multiple-schedule-c-net-loss": [
-      "rule S1-F1040-195"
     ],
     "tip-health-mfj-fully-phased-out": [
       "calculation form7206",
@@ -74,20 +41,9 @@
     ]
   },
   "reasons": {
-    "single-withheld-w2g": "The W-2G guard requires the payer-issued copy as an exact attached PDF; this static fixture carries none (the XSD test builds one from the IRS template over the network).",
-    "single-new-markets-business-credit": "Product boundary: export has no input or attachment route for the CDE's year-end status statement and Form 8874-A/B history; the f8874 evidence reconcilers are not wired into export.",
-    "single-long-name-new-markets-investment": "Product boundary: export has no input or attachment route for the CDE's year-end status statement and Form 8874-A/B history; the f8874 evidence reconcilers are not wired into export.",
-    "single-two-new-markets-investments": "Product boundary: export has no input or attachment route for the CDE's year-end status statement and Form 8874-A/B history; the f8874 evidence reconcilers are not wired into export.",
-    "single-six-new-markets-investments": "Product boundary: export has no input or attachment route for the CDE's year-end status statement and Form 8874-A/B history; the f8874 evidence reconcilers are not wired into export.",
-    "single-seven-new-markets-investments": "Product boundary: export has no input or attachment route for the CDE's year-end status statement and Form 8874-A/B history; the f8874 evidence reconcilers are not wired into export.",
-    "single-twenty-four-new-markets-investments": "Product boundary: export has no input or attachment route for the CDE's year-end status statement and Form 8874-A/B history; the f8874 evidence reconcilers are not wired into export.",
-    "single-geothermal-and-new-markets-credits": "Product boundary: export has no input or attachment route for the CDE's year-end status statement and Form 8874-A/B history; the f8874 evidence reconcilers are not wired into export.",
-    "single-partnership-code-k-and-w2g": "The W-2G guard requires the payer-issued copy as an exact attached PDF; this static fixture carries none (the XSD test builds one from the IRS template over the network).",
     "single-k-reported-error": "All Form 1040 amounts the rule lists are zero; MeF rejects an all-zero return.",
-    "single-two-at-risk-business-losses": "Schedule 1 line 3 correctly takes the Form 6198 allowable losses (1,600), while S1-F1040-195 demands the sum of Schedule C line 31 (-2,000); how MeF expects the at-risk limit on NetProfitOrLossAmt is unverified.",
+    "single-two-at-risk-business-losses": "Schedule 1 line 3 correctly takes the Form 6198 allowable losses (1,600). S1-F1040-195 requires it to equal the sum of Schedule C NetProfitOrLossAmt (-2,000), while SC-F1040-023-01 requires each NetProfitOrLossAmt to equal line 29 minus line 30, so no line 31 value satisfies both when the at-risk limit binds. How MeF expects the limit (the otherLossAmt attribute is one candidate) is unverified.",
     "single-form2555-full-year-physical-presence": "The full Form 2555 exclusion leaves every amount F1040-065-05 lists at zero; MeF rejects an all-zero return.",
-    "single-form461-schedule-c-excess-business-loss": "Form 8995 has no filing route yet for a single-business net QBI loss carryforward alongside a Form 461 excess business loss; the node guard stops it.",
-    "single-multiple-schedule-c-net-loss": "Schedule C lines 31 round 10,000.49 and -20,000.50 separately (-10,001) while Schedule 1 line 3 rounds the cent total (-10,000), as the Form 1040 rounding instructions allow; S1-F1040-195 needs exact equality.",
     "tip-health-mfj-fully-phased-out": "Frozen tip-health fixture predates the issued policy and monthly premium records the Form 7206 health-plan guard requires; it may not be edited.",
     "tip-health-mfj-owned-cap-phaseout": "Frozen tip-health fixture predates the issued policy and monthly premium records the Form 7206 health-plan guard requires; it may not be edited.",
     "tip-health-mfj-primary-health-limited": "Frozen tip-health fixture predates the issued policy and monthly premium records the Form 7206 health-plan guard requires; it may not be edited.",

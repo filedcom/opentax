@@ -28,16 +28,15 @@ for (
     { id: "single-seven-new-markets-investments", credit: 3500 },
   ]
 ) {
-  test(`Form8874 public investment inventory retains source-authentication export block: ${c.id}`, async () => {
+  test(`Form8874 public investment inventory exports only with retained CDE status: ${c.id}`, async () => {
     const fixture = pdfReviewFixtures.find((f) => f.id === c.id)!;
     const r = f1040_2025.executeReturn(fixture.inputs);
     assertEquals(r.diagnostics, []);
     assertEquals(r.pending.schedule3.line6a_total, c.credit);
     assertEquals(r.pending.f1040.line20_nonrefundable_credits, c.credit);
     assertEquals(r.pending.f1040.line24_total_tax, 25067 - c.credit);
-    // Older rendered packets predate the current authenticated-status gate.
     const reason =
-      "Form 8874 direct QEI needs authenticated CDE status and recapture history";
+      "Form 8874 CDE status needs exactly one retained copy of each statement and notice";
     await assertRejects(
       () => f1040_2025.prepareReturn(r.pending, fixture.filer),
       Error,
@@ -48,6 +47,14 @@ for (
       Error,
       reason,
     );
+    const prepared = await f1040_2025.prepareReturn(
+      r.pending,
+      fixture.filer,
+      [],
+      fixture.retainedSourceDocuments,
+    );
+    assertStringIncludes(prepared.bundle.xml, "<IRS8874");
+    await validate(prepared.bundle.xml);
   });
 }
 const base = pdfReviewFixtures.find((f) => f.id === "single-w2-refund")!;

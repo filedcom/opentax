@@ -6,6 +6,10 @@ import type { NodeContext } from "../../../../../../../core/types/node-context.t
 import { f3800 } from "../f3800/index.ts";
 import { form8582cr } from "../../../../intermediate/forms/credits/business/form8582cr/index.ts";
 import { form8874AIssuanceSchema } from "./issuance_schema.ts";
+import {
+  form8874BHistoryEntrySchema,
+  form8874NoEventStatusSchema,
+} from "./no_event_status_evidence.ts";
 
 // Form 8874 line 1 is one row per qualified equity investment held on a
 // current-year credit allowance date. Prior-year carryovers belong on Form
@@ -40,7 +44,25 @@ export const investmentSchema = z.object({
   subject_to_passive_activity_limit: z.boolean(),
   passive_activity_reference: z.string().trim().min(1).optional(),
   passive_source_document_reference: z.string().trim().min(1).optional(),
+  // The CDE's signed year-end statement and Form 8874-B history; export
+  // checks both against retained source bytes.
+  cde_year_end_status: form8874NoEventStatusSchema.optional(),
+  reviewed_form8874b_history: z.array(form8874BHistoryEntrySchema).optional(),
 }).superRefine((investment, ctx) => {
+  const status = investment.cde_year_end_status;
+  if (
+    status
+      ? status.issuance_notice_document_reference !==
+        investment.designation_notice_reference
+      : investment.reviewed_form8874b_history !== undefined
+  ) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ["cde_year_end_status"],
+      message:
+        "Form 8874 CDE year-end status must cover this QEI's Form 8874-A notice",
+    });
+  }
   const initial = investment.initial_investment_date;
   const allowance = investment.credit_allowance_date;
   const year = Number(allowance.slice(0, 4)) - Number(initial.slice(0, 4)) + 1;

@@ -7,6 +7,7 @@ import {
   calculateScheduleCAtRiskNet,
   inputSchema as scheduleCSchema,
   projectScheduleCItems,
+  scheduleCSchedule1Line3,
   wotcReductionsByBusiness,
 } from "../../../../nodes/inputs/income/business/schedule_c/model.ts";
 import {
@@ -37,21 +38,18 @@ export function assertBusinessSchedule1Amounts(
         schedule_cs: items,
         wotc_wage_reductions: source.wotc_wage_reductions,
       });
-      const expected = items.reduce(
-        (sum, item) =>
-          sum +
-          (source.patron_filing_review
-            ? patronFiledBusinessLines("schedule_c", item).profit
-            : filedOwnedScheduleC(
-              item,
-              false,
-              reductions.get(item.business_reference ?? "") ?? 0,
-            )?.profit ?? calculateScheduleCAtRiskNet(
-              item,
-              reductions.get(item.business_reference ?? "") ?? 0,
-            ).atRiskNet),
-        0,
-      );
+      const expected = scheduleCSchedule1Line3(items.map((item) =>
+        source.patron_filing_review
+          ? patronFiledBusinessLines("schedule_c", item).profit
+          : filedOwnedScheduleC(
+            item,
+            false,
+            reductions.get(item.business_reference ?? "") ?? 0,
+          )?.profit ?? calculateScheduleCAtRiskNet(
+            item,
+            reductions.get(item.business_reference ?? "") ?? 0,
+          ).atRiskNet
+      ));
       if (Math.abs(filed("line3_schedule_c") - expected) >= 0.01) {
         throw new Error(
           "Schedule 1 line 3 differs from filed Schedule C net profit or loss",

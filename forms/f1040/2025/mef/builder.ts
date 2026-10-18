@@ -81,6 +81,7 @@ import { assertForm8858FilingSource } from "../../nodes/inputs/general/foreign/f
 import { assertBox11Line10Sources } from "../../nodes/inputs/income/rental-passthrough/k1_partnership/box11_line10.ts";
 import { assertForm8915FSourceLinks } from "../../nodes/inputs/income/retirement/f8915f/index.ts";
 import { assertW2GPayerCopyContents } from "./identity/w2g-payer-copy.ts";
+import { assertForm8874CdeStatusEvidence } from "../domains/credits/business/form8874/form8874_cde_status_evidence.ts";
 import { assertLine1bHouseholdWageSource } from "../domains/income/other/line1b-household-wages.ts";
 import { assertBusinessSchedule1Amounts } from "../domains/income/business/business-schedule1-reconciliation.ts";
 import { assertPositiveW2GRecipient } from "./forms/income/gambling/w2g.ts";
@@ -632,6 +633,11 @@ export async function buildMefBundle(
     pending,
     options.filer,
     retainedSourceDocuments,
+  );
+  await assertForm8874CdeStatusEvidence(
+    pending,
+    retainedSourceDocuments,
+    options.year ?? 2025,
   );
   const retainedSourceSha256ByReference = Object.fromEntries(
     await Promise.all(retainedSourceDocuments.map(async (d) =>

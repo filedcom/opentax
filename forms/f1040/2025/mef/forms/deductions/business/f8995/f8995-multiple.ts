@@ -7,6 +7,7 @@ import { normalizeAllPending } from "../../../../../return-processing/pending.ts
 import {
   inputSchema as cSchema,
   projectScheduleCItems,
+  scheduleCSchedule1Line3,
 } from "../../../../../../nodes/inputs/income/business/schedule_c/model.ts";
 import { reviewedMultipleScheduleCQbi } from "../../../../../../nodes/inputs/income/business/schedule_c/qbi-multiple.ts";
 import { inputSchema as qbiSchema } from "../../../../../../nodes/intermediate/forms/deductions/business/form8995/index.ts";
@@ -52,6 +53,7 @@ export function assertMultipleScheduleC8995(
   const deduction = sum(parsed.se_tax_deduction);
   const amounts = reviewedMultipleScheduleCQbi(items, deduction);
   const profit = amounts.profits.reduce((sum, value) => sum + value, 0);
+  const schedule1Profit = scheduleCSchedule1Line3(amounts.profits);
   const seExpected = scheduleSELines({
     net_profit_schedule_c: profit,
     w2_ss_wages: ssWages,
@@ -95,7 +97,7 @@ export function assertMultipleScheduleC8995(
     JSON.stringify(a) === JSON.stringify(b);
   const filedIncome = [
     wages,
-    profit,
+    schedule1Profit,
     investment.interest,
     investment.ordinary,
     investment.returnCapital,
@@ -184,14 +186,14 @@ export function assertMultipleScheduleC8995(
         parsed.taxpayer_ssn!.replace(/\D/g, "") ||
       row.box13_statutory_employee === true
     ) ||
-    s1.line3_schedule_c !== profit ||
+    s1.line3_schedule_c !== schedule1Profit ||
     number(s1.line15_se_deduction) !== deduction ||
     number(s1.line16_sep_simple) !== 0 ||
     number(s1.line17_se_health_insurance) !== 0 ||
     number(pending.schedule2?.line4_se_tax) !== (seExpected?.line12 ?? 0) ||
     number(f1040.line1a_wages) !== wages ||
     number(f1040.line1z_total_wages) !== wages ||
-    f1040.line8_additional_income !== profit ||
+    f1040.line8_additional_income !== schedule1Profit ||
     // Line 9 adds the whole-dollar income lines.
     !sameAmount(f1040.line9_total_income, filedIncome) ||
     number(f1040.line10_adjustments) !== deduction ||

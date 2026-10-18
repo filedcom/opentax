@@ -67,6 +67,7 @@ import {
 } from "../../nodes/inputs/credits/business/f8864/fixture.ts";
 import { type FilerIdentity, FilingStatus } from "../../mef/header.ts";
 import { withReviewedForm8874A } from "../../nodes/inputs/credits/business/f8874/issuance_fixture.ts";
+import { withSyntheticCdeYearEndStatus } from "../../nodes/inputs/credits/business/f8874/cde_status_fixture.ts";
 import {
   DistributionCode,
   RolloverCode,
@@ -87,6 +88,7 @@ import {
   form8882ScheduleCFixture,
 } from "../../nodes/inputs/credits/business/f8882/fixture.ts";
 import { withSyntheticForm1098Copy } from "./reviews/deductions/mortgage/review-1098-copy.fixture.ts";
+import { withSyntheticW2GCopy } from "./reviews/income/other/review-w2g-copy.fixture.ts";
 import type { MefPdfAttachment } from "../mef/form-descriptor.ts";
 import {
   adoptionReviewAttachments,
@@ -126,6 +128,64 @@ const singleFiler: FilerIdentity = {
   },
   filingStatus: FilingStatus.Single,
 };
+
+const withheldW2G = await withSyntheticW2GCopy(
+  "single-withheld-w2g",
+  {
+    calendar_year: 2025,
+    source_document_reference: "2025 Casino W-2G recipient copy",
+    payer_name: "Casino Inc",
+    payer_name_control: "CASI",
+    payer_us_address: {
+      line1: "500 Casino Way",
+      city: "Las Vegas",
+      state: "NV",
+      zip: "89101",
+    },
+    payer_ein: "12-3456789",
+    winner_name: "Alex Example",
+    winner_us_address: {
+      line1: "1 Example Way",
+      city: "Austin",
+      state: "TX",
+      zip: "78701",
+    },
+    box9_winner_tin: "111-22-3333",
+    box1_winnings: 10_000,
+    box4_federal_withheld: 2_400,
+    standard_or_nonstandard_code: "S",
+  },
+  singleFiler,
+);
+
+const partnershipW2G = await withSyntheticW2GCopy(
+  "single-partnership-code-k-and-w2g",
+  {
+    calendar_year: 2025,
+    source_document_reference: "Synthetic casino W-2G recipient copy",
+    payer_name: "Casino Inc",
+    payer_name_control: "CASI",
+    payer_us_address: {
+      line1: "500 Casino Way",
+      city: "Las Vegas",
+      state: "NV",
+      zip: "89101",
+    },
+    payer_ein: "12-3456789",
+    winner_name: "Alex Example",
+    winner_us_address: {
+      line1: "1 Example Way",
+      city: "Austin",
+      state: "TX",
+      zip: "78701",
+    },
+    box9_winner_tin: "111-22-3333",
+    box1_winnings: 200,
+    box4_federal_withheld: 50,
+    standard_or_nonstandard_code: "S",
+  },
+  singleFiler,
+);
 
 const stockBasisFiler: FilerIdentity = {
   ...singleFiler,
@@ -338,7 +398,7 @@ function noAptcPolicyForMonths(
   };
 }
 
-const basePdfReviewFixtures: readonly PdfReviewFixture[] = [
+const sourcePdfReviewFixtures: readonly PdfReviewFixture[] = [
   {
     id: "single-reviewed-adoption-credit",
     inputs: {
@@ -1571,32 +1631,10 @@ const basePdfReviewFixtures: readonly PdfReviewFixture[] = [
     id: "single-withheld-w2g",
     inputs: {
       general: singleGeneral,
-      w2g: [{
-        calendar_year: 2025,
-        source_document_reference: "2025 Casino W-2G recipient copy",
-        payer_name: "Casino Inc",
-        payer_name_control: "CASI",
-        payer_us_address: {
-          line1: "500 Casino Way",
-          city: "Las Vegas",
-          state: "NV",
-          zip: "89101",
-        },
-        payer_ein: "12-3456789",
-        winner_name: "Alex Example",
-        winner_us_address: {
-          line1: "1 Example Way",
-          city: "Austin",
-          state: "TX",
-          zip: "78701",
-        },
-        box9_winner_tin: "111-22-3333",
-        box1_winnings: 10_000,
-        box4_federal_withheld: 2_400,
-        standard_or_nonstandard_code: "S",
-      }],
+      w2g: [withheldW2G.item],
     },
     filer: singleFiler,
+    attachments: [withheldW2G.attachment],
     expectedPdfForms: ["f1040", "schedule1", "w2g"],
     reviewFocus: [
       "Schedule 1 line 8b and Form 1040 income include the $10,000 box 1 winnings once",
@@ -2843,30 +2881,7 @@ const basePdfReviewFixtures: readonly PdfReviewFixture[] = [
     inputs: {
       general: singleGeneral,
       w2: [wage(30_000, 3_000, "Example Employer", "12-3456789")],
-      w2g: [{
-        calendar_year: 2025,
-        source_document_reference: "Synthetic casino W-2G recipient copy",
-        payer_name: "Casino Inc",
-        payer_name_control: "CASI",
-        payer_us_address: {
-          line1: "500 Casino Way",
-          city: "Las Vegas",
-          state: "NV",
-          zip: "89101",
-        },
-        payer_ein: "12-3456789",
-        winner_name: "Alex Example",
-        winner_us_address: {
-          line1: "1 Example Way",
-          city: "Austin",
-          state: "TX",
-          zip: "78701",
-        },
-        box9_winner_tin: "111-22-3333",
-        box1_winnings: 200,
-        box4_federal_withheld: 50,
-        standard_or_nonstandard_code: "S",
-      }],
+      w2g: [partnershipW2G.item],
       k1_partnership: [
         {
           partnership_name: "Alpha Partnership",
@@ -2899,6 +2914,7 @@ const basePdfReviewFixtures: readonly PdfReviewFixture[] = [
       ],
     },
     filer: singleFiler,
+    attachments: [partnershipW2G.attachment],
     expectedPdfForms: ["f1040", "schedule1", "w2g"],
     reviewFocus: [
       "Two partnership code K winnings of $400/$600 and distinct $200 W-2G make $1,200 on Schedule 1 line 8b",
@@ -8138,6 +8154,8 @@ const basePdfReviewFixtures: readonly PdfReviewFixture[] = [
     inputs: {
       general: {
         ...singleGeneral,
+        qbi_no_prior_loss_or_suspended_loss_confirmed: true,
+        qbi_not_patron_of_specified_cooperative_confirmed: true,
         form461_scope_review: {
           only_schedule_c_and_f_business_items: true,
           other_part_i_lines_zero: true,
@@ -8156,17 +8174,28 @@ const basePdfReviewFixtures: readonly PdfReviewFixture[] = [
         business_reference: "south-2025",
         line_f_accounting_method: "cash",
         line_g_material_participation: true,
+        line_i_made_1099_payments: false,
         line_32_at_risk: "a",
         line_1_gross_receipts: 0,
-        line_27b_other_expenses: 400_000,
+        part_v_other_expenses: [{
+          description: "Synthetic shop operating expenses",
+          amount: 400_000,
+        }],
       }],
     },
     filer: singleFiler,
-    expectedPdfForms: ["f1040", "schedule_c", "schedule1", "form461"],
+    expectedPdfForms: [
+      "f1040",
+      "schedule_c",
+      "schedule1",
+      "form461",
+      "form8995",
+    ],
     reviewFocus: [
       "Form 461 reports the 400,000 Schedule C loss and 87,000 excess business loss",
       "The 87,000 addback reaches Schedule 1 while the business loss stays on Schedule C",
       "Form 1040 AGI and the separate next-year loss workpaper trace the same source review",
+      "Form 8995 line 1 excludes the 87,000 disallowed loss: -313,000 QBI and a 313,000 line 16 carryforward",
     ],
   },
   {
@@ -9034,6 +9063,32 @@ const basePdfReviewFixtures: readonly PdfReviewFixture[] = [
     ],
   },
 ];
+
+/** Direct QEIs carry their CDE's synthetic year-end status and its retained copies. */
+async function withNewMarketsCdeStatus(
+  fixture: PdfReviewFixture,
+): Promise<PdfReviewFixture> {
+  const f8874 = fixture.inputs.f8874 as
+    | { investments: Parameters<typeof withSyntheticCdeYearEndStatus>[0] }
+    | undefined;
+  if (!f8874) return fixture;
+  const status = await withSyntheticCdeYearEndStatus(f8874.investments);
+  return {
+    ...fixture,
+    inputs: {
+      ...fixture.inputs,
+      f8874: { ...f8874, investments: status.investments },
+    },
+    retainedSourceDocuments: [
+      ...(fixture.retainedSourceDocuments ?? []),
+      ...status.retainedSourceDocuments,
+    ],
+  };
+}
+
+const basePdfReviewFixtures: readonly PdfReviewFixture[] = await Promise.all(
+  sourcePdfReviewFixtures.map(withNewMarketsCdeStatus),
+);
 
 const educationBase = basePdfReviewFixtures.find((fixture) =>
   fixture.id === "single-form8863-lifetime-learning-scholarship"

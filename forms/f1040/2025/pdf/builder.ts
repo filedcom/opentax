@@ -32,6 +32,7 @@ import {
 } from "../mef/builder.ts";
 import { assertPreparedAttachmentManifest } from "../mef/attachments/prepared-attachment-manifest.ts";
 import { assertW2GPayerCopyContents } from "../mef/identity/w2g-payer-copy.ts";
+import { assertForm8874CdeStatusEvidence } from "../domains/credits/business/form8874/form8874_cde_status_evidence.ts";
 import {
   preparedSourceSha256,
   sha256Hex,
@@ -623,6 +624,11 @@ async function buildPdfBytesInternal(
     normalized,
     filer,
     preparedBundle?.retainedSourceDocuments ?? [],
+  );
+  await assertForm8874CdeStatusEvidence(
+    normalized,
+    preparedBundle?.retainedSourceDocuments ?? [],
+    mefTaxYear(),
   );
   reconcileForm8606RothInventories(normalized, filer);
   reconcileForm8606RothActivity(normalized, filer);

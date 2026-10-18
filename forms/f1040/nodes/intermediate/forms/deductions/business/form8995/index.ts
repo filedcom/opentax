@@ -72,7 +72,10 @@ import {
   calculateScheduleFAtRiskNet,
   itemSchema as farmItemSchema,
 } from "../../../income/business/schedule_f/model.ts";
-import { calculateScheduleCAtRiskNet } from "../../../../../inputs/income/business/schedule_c/model.ts";
+import {
+  calculateScheduleCAtRiskNet,
+  scheduleCSchedule1Line3,
+} from "../../../../../inputs/income/business/schedule_c/model.ts";
 import type { NodeContext } from "../../../../../../../../core/types/node-context.ts";
 import { CONFIG_BY_YEAR, type F1040Config } from "../../../../../config/index.ts";
 import { withMinimumDeduction } from "./minimum-deduction.ts";
@@ -205,6 +208,16 @@ export const inputSchema = z.object({
       se_tax_deduction: z.number().nonnegative(),
     }).strict(),
   ).optional(),
+  // Form 461 line 16 excess business loss, disallowed this year (section 461(l))
+  excess_business_loss_disallowed: z.number().nonnegative().optional(),
+  excess_business_loss_filing_row: z.object({
+    business_reference: z.string(),
+    business_name: z.string(),
+    tin: z.object({ kind: z.enum(["ein", "ssn"]), value: z.string() }),
+    schedule_c_net_loss: z.number().int().negative(),
+    excess_business_loss_disallowed: z.number().int().positive(),
+    qbi: z.number().int().nonpositive(),
+  }).strict().optional(),
   schedule_c_qbi_businesses: z.array(scheduleCQbiBusinessWithCentsSchema)
     .optional(),
   schedule_f_qbi_businesses: z.array(scheduleFQbiBusinessSchema).optional(),
@@ -636,8 +649,8 @@ function advancedFormOutput(
       }, taxableIncome, cfg, taxYear);
       return result.fields as Form8995AInput;
     });
-    const wages = input.agi! - businesses.reduce((sum, b) => sum + b.qbi, 0) +
-      owned.deduction;
+    const wages = input.agi! -
+      scheduleCSchedule1Line3(businesses.map((b) => b.qbi)) + owned.deduction;
     return output(form8995a, {
       ...children[0],
       single_schedule_c_source: undefined,
@@ -1312,6 +1325,81 @@ function multipleScheduleCLines(
   };
 }
 
+/**
+ * One Schedule C loss limited by Form 461. Losses disallowed under section
+ * 461(l) are not QBI until they are allowed (Form 8995 instructions), so line 1
+ * is the Schedule C loss less the excess business loss and its net loss
+ * carries forward on line 16.
+ */
+function excessBusinessLossLines(
+  input: Form8995Input,
+  cfg: F1040Config,
+): (Record<string, unknown> & { line15: number }) | undefined {
+  const disallowed = input.excess_business_loss_disallowed ?? 0;
+  const businesses = input.schedule_c_qbi_businesses;
+  const business = businesses?.[0];
+  if (
+    disallowed <= 0 || businesses?.length !== 1 || !business ||
+    input.schedule_f_qbi_businesses !== undefined ||
+    !Number.isSafeInteger(business.qbi) || !Number.isSafeInteger(disallowed) ||
+    business.qbi + disallowed >= 0 ||
+    sumField(input.qbi_from_schedule_c) + sumField(input.sstb_qbi) !==
+      business.qbi ||
+    sumField(input.qbi_from_schedule_f) !== 0 || sumField(input.qbi) !== 0 ||
+    sumField(input.qbi_suspended_passive_loss) !== 0 ||
+    businessDeductions(input) !== 0 ||
+    sumField(input.line6_sec199a_dividends) !== 0 ||
+    (input.qbi_loss_carryforward ?? 0) !== 0 ||
+    (input.reit_loss_carryforward ?? 0) !== 0 ||
+    input.qualified_tip_qbi_source !== undefined ||
+    input.qbi_no_prior_loss_or_suspended_loss_confirmed !== true ||
+    input.qbi_not_patron_of_specified_cooperative_confirmed !== true ||
+    input.agi === undefined || !input.taxpayer_ssn ||
+    !business.business_reference || !business.business_name
+  ) return undefined;
+  const qbi = business.qbi + disallowed;
+  const line11 = Math.round(
+    Math.max(
+      0,
+      input.agi - sourceDeductionAmount(input, cfg) -
+        (input.additional_deductions ?? 0),
+    ),
+  );
+  const line12 = qbiCapitalTotal(input, true);
+  const line13 = Math.max(0, line11 - line12);
+  return {
+    excess_business_loss_filing_row: {
+      business_reference: business.business_reference,
+      business_name: business.business_name,
+      tin: business.ein
+        ? { kind: "ein" as const, value: business.ein }
+        : {
+          kind: "ssn" as const,
+          value: input.taxpayer_ssn.replace(/\D/g, ""),
+        },
+      schedule_c_net_loss: business.qbi,
+      excess_business_loss_disallowed: disallowed,
+      qbi,
+    },
+    line2: qbi,
+    line3: 0,
+    line4: 0,
+    line5: 0,
+    line6: 0,
+    line7: 0,
+    line8: 0,
+    line9: 0,
+    line10: 0,
+    line11,
+    line12,
+    line13,
+    line14: Math.round(line13 * QBI_RATE),
+    line15: 0,
+    line16: -qbi,
+    line17: 0,
+  };
+}
+
 /** One same-owner Schedule C and owned cash Schedule F with reviewed shared SE allocation. */
 function mixedScheduleCFLines(
   input: Form8995Input,
@@ -1853,8 +1941,9 @@ class Form8995Node extends TaxNode<typeof inputSchema> {
       })()
       : undefined;
     const mixedLines = mixedScheduleCFLines(input, cfg);
+    const excessLossLines = excessBusinessLossLines(input, cfg);
     const multipleLines = ownedSCorp ?? ownedLines ?? mixedLines ??
-      multipleScheduleCLines(input, cfg);
+      excessLossLines ?? multipleScheduleCLines(input, cfg);
     if (
       netQbi(input) < 0 && multipleLines === undefined &&
       input.current_passive_property_sources === undefined

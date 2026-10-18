@@ -160,7 +160,50 @@ function softValidationWarnings(
     );
   }
 
+  warnings.push(...seniorDeductionSsnWarnings(pending["schedule1a"] ?? {}));
+  warnings.push(...scheduleRDisabilityWarnings(pending));
+
   return warnings;
+}
+
+/** Taxable disability income of a filer under 65 can qualify for the credit
+ * for the elderly or the disabled (2025 Schedule R, Part I boxes 2, 4, 5, 6
+ * and 9; Part II). */
+function scheduleRDisabilityWarnings(
+  pending: Readonly<Record<string, Record<string, unknown>>>,
+): string[] {
+  if (pending["schedule_r"] !== undefined) return [];
+  const items = pending["f1099r"]?.["f1099rs"];
+  if (!Array.isArray(items)) return [];
+  const ages = pending["schedule1a"] ?? {};
+  const owners = new Set(
+    items.flatMap((item: Record<string, unknown>) => {
+      if (item["disability_flag"] !== true) return [];
+      const owner = item["ts"] === "S" ? "spouse" : "taxpayer";
+      return ages[`${owner}_age_65_or_older`] === false ? [owner] : [];
+    }),
+  );
+  return [...owners].map((owner) =>
+    `Form 1099-R disability income for the ${owner}, who is under 65: Schedule R may give a credit for the elderly or the disabled. Add schedule_r with ${owner}_disabled, ${owner}_disability_income and ${owner}_disability_evidence; a physician's statement from an earlier year (1983 or earlier, or signed on line B) is physician_statement "prior_year" with prior_year_line_b_or_1983_verified (Part II). See 'opentax node template schedule_r --full'.`
+  );
+}
+
+/** A filer 65 or older whose SSN is not confirmed valid gets no Schedule 1-A
+ * senior deduction (2025 Schedule 1-A instructions, Part V, Valid SSN). */
+function seniorDeductionSsnWarnings(
+  schedule1a: Readonly<Record<string, unknown>>,
+): string[] {
+  const status = schedule1a["filing_status"];
+  if (status === undefined || status === "mfs") return [];
+  const owners = status === "mfj"
+    ? (["taxpayer", "spouse"] as const)
+    : (["taxpayer"] as const);
+  return owners.filter((owner) =>
+    schedule1a[`${owner}_age_65_or_older`] === true &&
+    schedule1a[`${owner}_has_valid_ssn`] !== true
+  ).map((owner) =>
+    `Schedule 1-A senior deduction not claimed for the ${owner}: Part V needs an SSN valid for employment and issued before the return's due date. If so, set ${owner}_ssn_valid_for_employment and ${owner}_ssn_issued_before_due_date to true on general.`
+  );
 }
 
 export async function getReturnCommand(

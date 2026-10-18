@@ -13,6 +13,8 @@ import { inputSchema as f3800InputSchema } from "../../../../../nodes/inputs/cre
 import { inputSchema as partnershipK1InputSchema } from "../../../../../nodes/inputs/income/rental-passthrough/k1_partnership/index.ts";
 import { inputSchema as sCorpK1InputSchema } from "../../../../../nodes/inputs/income/rental-passthrough/k1_s_corp/index.ts";
 import type { MefBuildContext, MefFormDescriptor } from "../../../form-descriptor.ts";
+import { mefTaxYear } from "../../../support/year-config.ts";
+import { assertCdeStatusCoversTaxYear } from "../../../../domains/credits/business/form8874/form8874_cde_status_evidence.ts";
 
 type Form8874K1Credit = {
   source_type: "partnership" | "s_corporation";
@@ -125,6 +127,47 @@ export function reconciledForm8874K1Line2(
   return line2;
 }
 
+/** The CDE status bytes reconciled at bundle time are the ones retained. */
+function assertRetainedCdeStatusDigests(
+  source: ReturnType<typeof inputSchema.parse>,
+  context: MefBuildContext,
+): void {
+  const retained = context.retainedSourceSha256ByReference;
+  for (const investment of source.investments) {
+    const status = investment.cde_year_end_status;
+    const digests = status
+      ? [
+        [
+          status.status_statement_document_reference,
+          status.status_statement_sha256,
+        ],
+        [
+          status.issuance_notice_document_reference,
+          status.issuance_notice_sha256,
+        ],
+        ...(investment.reviewed_form8874b_history ?? []).map((entry) => [
+          entry.notice.notice_document_reference,
+          entry.notice_sha256,
+        ]),
+      ]
+      : [];
+    if (status) {
+      assertCdeStatusCoversTaxYear(
+        status.coverage_end_date,
+        mefTaxYear(context),
+      );
+    }
+    if (
+      !status ||
+      digests.some(([reference, digest]) => retained?.[reference] !== digest)
+    ) {
+      throw new Error(
+        "Form 8874 direct QEI needs its retained CDE status and notice copies with matching SHA-256",
+      );
+    }
+  }
+}
+
 export function buildForm8874Document(
   raw: unknown,
   passThroughCredit: number,
@@ -181,6 +224,7 @@ export const form8874: MefFormDescriptor<"f8874", unknown> = {
       );
     }
     assertForm8874AIssuanceOwners(source, context.pending);
+    assertRetainedCdeStatusDigests(source, context);
     const lines = calculateForm8874(source);
     if (context?.pending) {
       const claim = context.pending.f3800;
