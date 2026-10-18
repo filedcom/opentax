@@ -39,12 +39,15 @@ test("a TY2026 return refuses inputs whose path still applies TY2025 law", () =>
   assertThrows(
     () =>
       assertTy2026Inputs({
-        general: { dependents: [{ first_name: "A" }] },
+        general: { ptc_residence_states_2025: ["NV"] },
       }),
     Error,
-    "dependents",
+    "ptc_residence_states_2025",
   );
-  assertTy2026Inputs({ general: { dependents: [] }, w2: [] });
+  assertTy2026Inputs({
+    general: { dependents: [{ first_name: "A" }], ptc_residence_states_2025: [] },
+    w2: [],
+  });
 });
 
 test("TY2026 PDF output is refused rather than printed on 2025 forms", async () => {
