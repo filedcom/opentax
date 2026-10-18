@@ -43,7 +43,10 @@ async function exported() {
   const def = catalog["f1040:2026"];
   const result = def.executeReturn(signedInput());
   const pending = normalizeAllPending(result.pending);
-  const filer = extractFilerIdentity(pending.f1040 ?? {});
+  // ReturnTs is the processing date: pin it to the 2027 signature date so
+  // IND-002 and IND-689-01 do not depend on the day the test runs.
+  const identity = extractFilerIdentity(pending.f1040 ?? {});
+  const filer = identity && { ...identity, timestamp: "2027-02-01T12:00:00Z" };
   const xml = (await def.prepareReturn(pending, filer, [])).bundle.xml;
   return { result, pending, filer, xml };
 }

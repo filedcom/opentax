@@ -12,9 +12,17 @@ test(
     const main = fromFileUrl(
       new URL("../../../../cli/main.ts", import.meta.url),
     );
+    // The export gate checks IND-002 and IND-689-01 against the processing
+    // date, so the CLI runs on the 2027 signature date, not the test's day.
+    const processingDate = `${cwd}/processing-date.ts`;
+    await sys.writeText(
+      processingDate,
+      'import { setSystemTime } from "bun:test";\n' +
+        'setSystemTime(new Date("2027-02-01T17:00:00Z"));\n',
+    );
     const run = (...args: string[]) =>
       new sys.Command(process.execPath, {
-        args: [main, ...args],
+        args: ["--preload", processingDate, main, ...args],
         cwd,
         stdout: "piped",
         stderr: "piped",
@@ -72,10 +80,15 @@ test(
         "--returnId",
         returnId,
         "--node_type",
-        "schedule_h",
+        "schedule_f",
         "{}",
       );
       assertEquals(refused.code === 0, false);
+      // TY2026 lists only supported inputs; schedule_f is still refused.
+      assertStringIncludes(
+        text(refused.stderr),
+        "Unknown node type: schedule_f",
+      );
     } finally {
       await sys.remove(cwd, { recursive: true });
     }
