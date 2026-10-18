@@ -34,9 +34,9 @@ export function projectForm8621ParentSource(item: F8621Item) {
   const compatible = item.regime === PficRegime.EXCESS_DISTRIBUTION
     ? source.election_status === "section1291_no_new_election"
     : item.regime === PficRegime.QEF
-    ? source.election_status === "qef_new_2025" ||
+    ? source.election_status === "qef_new_election" ||
       source.election_status === "qef_continuing"
-    : source.election_status === "mtm_new_2025" ||
+    : source.election_status === "mtm_new_election" ||
       source.election_status === "mtm_continuing";
   if (!compatible) {
     throw new Error(
@@ -155,8 +155,8 @@ export function assertForm8621PrintableSource(item: F8621Item): void {
       throw new Error("Form 8621 MTM value or basis differs from source");
     }
     if (
-      parent.election_status === "mtm_new_2025" &&
-      !parent.shares_acquired_during_2025
+      parent.election_status === "mtm_new_election" &&
+      !parent.shares_acquired_during_tax_year
     ) {
       throw new Error(
         "Form 8621 first-year MTM on older stock needs section 1291 coordination",

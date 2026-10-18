@@ -1,6 +1,10 @@
+import { mefTaxYear } from "../../../support/year-config.ts";
 import { element, elements } from "../../../../../mef/xml.ts";
 import type { Form8621Lines } from "../../../../../nodes/inputs/income/foreign/f8621/index.ts";
-import { PficRegime } from "../../../../../nodes/inputs/income/foreign/f8621/index.ts";
+import {
+  assertForm8621ParentSourceYear,
+  PficRegime,
+} from "../../../../../nodes/inputs/income/foreign/f8621/index.ts";
 import { ExcessEventKind } from "../../../../../nodes/inputs/income/foreign/f8621/excess_distribution.ts";
 import { calculateMtmDisposition } from "../../../../../nodes/inputs/income/foreign/f8621/mtm_disposition.ts";
 import { calculateSection1294PriorStatus } from "../../../../../nodes/inputs/income/foreign/f8621/section1294.ts";
@@ -74,9 +78,11 @@ function buildItem(
 ): string {
   const { item } = line;
   if (context?.pending) assertForm8621PrintableSource(item);
+  const taxYear = mefTaxYear(context);
   const parent = item.parent_source
     ? projectForm8621ParentSource(item)
     : undefined;
+  if (parent) assertForm8621ParentSourceYear(parent, taxYear);
   const filer = context?.filer;
   const statementId = statementIndex === undefined ? undefined : context
     ?.documentIdsByPendingKey?.form8621_excess_statement?.[statementIndex];
@@ -132,7 +138,7 @@ function buildItem(
       ? element("ShareholderPersonNm", filer.fullName ?? filer.nameLine1)
       : "",
     filer ? element("SSN", filer.primarySSN.replaceAll("-", "")) : "",
-    element("ShareholderTaxYr", "2025"),
+    element("ShareholderTaxYr", String(taxYear)),
     element("IndividualShareholderInd", "X"),
     elements("PFICOrQEFName", [
       element("BusinessNameLine1Txt", item.company_name),
@@ -158,9 +164,9 @@ function buildItem(
         element("ForeignEntityReferenceIdNum", item.company_ein_or_ref),
       ])
       : "",
-    parent?.corporation_tax_year_start === "2025-01-01" &&
-      parent?.corporation_tax_year_end === "2025-12-31"
-      ? element("TaxYr", "2025")
+    parent?.corporation_tax_year_start === `${taxYear}-01-01` &&
+      parent?.corporation_tax_year_end === `${taxYear}-12-31`
+      ? element("TaxYr", String(taxYear))
       : parent
       ? element("TaxYearBeginDt", parent.corporation_tax_year_start) +
         element("TaxYearEndDt", parent.corporation_tax_year_end)
@@ -200,11 +206,11 @@ function buildItem(
         Section1296Amt: String(Math.round(mtmIncome)),
       })
       : "",
-    parent?.election_status === "qef_new_2025"
+    parent?.election_status === "qef_new_election"
       ? element("ElectionToTreatThePFICAsQEFInd", "X")
       : "",
     qef1294 ? element("ElectToExtndTmForPymtOfTxInd", "X") : "",
-    parent?.election_status === "mtm_new_2025"
+    parent?.election_status === "mtm_new_election"
       ? element("ElectionToMarkToMrktPFICStkInd", "X")
       : "",
     item.regime === PficRegime.QEF

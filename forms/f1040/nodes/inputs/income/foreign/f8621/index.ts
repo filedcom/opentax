@@ -74,13 +74,13 @@ export const form8621ParentSourceSchema = z.object({
     }).strict(),
   ).min(1),
   jointly_owned_with_spouse: z.boolean(),
-  shares_acquired_during_2025: z.boolean(),
-  acquisition_date: z.string().regex(/^2025-\d{2}-\d{2}$/).optional(),
+  shares_acquired_during_tax_year: z.boolean(),
+  acquisition_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
   election_status: z.enum([
     "section1291_no_new_election",
-    "qef_new_2025",
+    "qef_new_election",
     "qef_continuing",
-    "mtm_new_2025",
+    "mtm_new_election",
     "mtm_continuing",
   ]),
   no_outstanding_section1294_election: z.boolean(),
@@ -101,7 +101,7 @@ export const form8621ParentSourceSchema = z.object({
   // Election continuity is a claim about an earlier filed form, not a result
   // inferred from this year's ordinary income or market price.
   prior_election_filing: retainedSourceCopySchema.extend({
-    tax_year: z.number().int().min(1987).max(2024),
+    tax_year: z.number().int().min(1987),
     election_kind: z.enum(["qef", "mtm"]),
     accepted_submission_id: z.string().trim().min(1),
     acceptance_record: retainedSourceCopySchema.extend({
@@ -123,7 +123,7 @@ export const form8621ParentSourceSchema = z.object({
   section1291_prior_distribution_records: z.array(
     z.object({
       source_event_index: z.number().int().nonnegative(),
-      tax_year: z.number().int().min(2022).max(2024),
+      tax_year: z.number().int(),
       currency_code: z.string().regex(/^[A-Z]{3}$/),
       amount: z.number().nonnegative(),
       document_id: z.string().trim().min(1),
@@ -152,13 +152,10 @@ export const form8621ParentSourceSchema = z.object({
       message: "PFIC tax year must end after it starts",
     });
   }
-  if (source.corporation_tax_year_end.slice(0, 4) !== "2025") {
-    ctx.addIssue({ code: "custom", message: "PFIC tax year must end in 2025" });
-  }
-  if (source.shares_acquired_during_2025 !== Boolean(source.acquisition_date)) {
+  if (source.shares_acquired_during_tax_year !== Boolean(source.acquisition_date)) {
     ctx.addIssue({
       code: "custom",
-      message: "2025 share acquisition needs its date",
+      message: "A current-year share acquisition needs its date",
     });
   }
   if (
@@ -181,6 +178,31 @@ export const form8621ParentSourceSchema = z.object({
     });
   }
 });
+
+/**
+ * The PFIC tax year ends, and any new shares are acquired, in the return
+ * year; earlier elections and Part V history precede it (three years back).
+ */
+export function assertForm8621ParentSourceYear(
+  source: z.infer<typeof form8621ParentSourceSchema>,
+  taxYear: number,
+): void {
+  const inYear = (date: string) => date.startsWith(`${taxYear}-`);
+  if (
+    !inYear(source.corporation_tax_year_end) ||
+    (source.acquisition_date !== undefined &&
+      !inYear(source.acquisition_date)) ||
+    (source.prior_election_filing !== undefined &&
+      source.prior_election_filing.tax_year >= taxYear) ||
+    (source.section1291_prior_distribution_records ?? []).some((record) =>
+      record.tax_year < taxYear - 3 || record.tax_year >= taxYear
+    )
+  ) {
+    throw new Error(
+      `Form 8621 PFIC year, acquisition and prior records must fit TY${taxYear}`,
+    );
+  }
+}
 
 // Per-item schema — each Form 8621 covers one PFIC/QEF holding
 export const itemSchema = z.object({
@@ -408,9 +430,14 @@ class F8621Node extends TaxNode<typeof inputSchema> {
     form8949,
   ]);
 
-  compute(_ctx: NodeContext, input: z.infer<typeof inputSchema>): NodeResult {
+  compute(ctx: NodeContext, input: z.infer<typeof inputSchema>): NodeResult {
     const { f8621s } = inputSchema.parse(input);
     validateHoldings(f8621s);
+    for (const item of f8621s) {
+      if (item.parent_source) {
+        assertForm8621ParentSourceYear(item.parent_source, ctx.taxYear);
+      }
+    }
     const elected = f8621s.filter((item) => item.qef_1294_election);
     const lines = calculatedLines(f8621s);
     const currentAndPrePficIncome = totalEventLine(

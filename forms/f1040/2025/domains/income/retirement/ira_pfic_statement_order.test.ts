@@ -120,9 +120,9 @@ test("Reviewed IRA recharacterization and multiple PFIC MTM dispositions reconci
           year_end_value_usd: 20000,
         }],
         jointly_owned_with_spouse: false,
-        shares_acquired_during_2025: true,
+        shares_acquired_during_tax_year: true,
         acquisition_date: "2025-01-01",
-        election_status: "mtm_new_2025",
+        election_status: "mtm_new_election",
         no_outstanding_section1294_election: true,
         issuer_record: copy(
           "mtm-issuer",

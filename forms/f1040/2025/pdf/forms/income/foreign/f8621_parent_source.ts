@@ -88,9 +88,9 @@ export function projectForm8621Page1(
       source.election_status === "section1291_no_new_election",
     [`${page}c1_7[0]`]: source.election_status.startsWith("qef_"),
     [`${page}c1_8[0]`]: source.election_status.startsWith("mtm_"),
-    [`${page}c1_9[0]`]: source.election_status === "qef_new_2025",
+    [`${page}c1_9[0]`]: source.election_status === "qef_new_election",
     [`${page}c1_10[0]`]: item.qef_1294_election !== undefined,
-    [`${page}c1_11[0]`]: source.election_status === "mtm_new_2025",
+    [`${page}c1_11[0]`]: source.election_status === "mtm_new_election",
   };
   if (section1291Amount > 0) {
     fields[`${page}f1_27[0]`] = dollars(section1291Amount);
