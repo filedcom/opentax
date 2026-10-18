@@ -228,3 +228,50 @@ test("getReturnCommand nonexistent returnId throws descriptive error", async () 
     await sys.remove(tmpDir, { recursive: true });
   }
 });
+
+// 2025 Schedule 1-A instructions, Part V: the senior deduction needs a valid
+// SSN, one valid for employment and issued before the return's due date.
+test("getReturnCommand names the SSN answers a 65+ spouse's senior deduction needs", async () => {
+  const tmpDir = await sys.makeTempDir();
+  try {
+    const returnId = await makeReturn(tmpDir);
+    const returnPath = `${tmpDir}/${returnId}`;
+    const general = {
+      filing_status: "mfj",
+      taxpayer_ssn: "400-45-6789",
+      taxpayer_dob: "1961-05-10",
+      spouse_ssn: "400-45-6788",
+      spouse_dob: "1960-07-07",
+      spouse_ssn_valid_for_employment: true,
+    };
+    await appendInput(returnPath, "general", general);
+    await appendInput(returnPath, "w2", {
+      box1_wages: 60000,
+      box2_fed_withheld: 0,
+    });
+
+    const missing = await getReturnCommand({ returnId, baseDir: tmpDir });
+    assertEquals(
+      missing.warnings.filter((w) => w.startsWith("Schedule 1-A senior")),
+      [
+        "Schedule 1-A senior deduction not claimed for the spouse: Part V needs an SSN valid for employment and issued before the return's due date. If so, set spouse_ssn_valid_for_employment and spouse_ssn_issued_before_due_date to true on general.",
+      ],
+    );
+    assertEquals(missing.lines.schedule1a_line37_senior_deduction, undefined);
+
+    const json = JSON.parse(
+      await fs.readFile(`${returnPath}/return.json`, "utf8"),
+    );
+    json.inputs.general[0].fields.spouse_ssn_issued_before_due_date = true;
+    await fs.writeFile(`${returnPath}/return.json`, JSON.stringify(json));
+
+    const claimed = await getReturnCommand({ returnId, baseDir: tmpDir });
+    assertEquals(
+      claimed.warnings.some((w) => w.startsWith("Schedule 1-A senior")),
+      false,
+    );
+    assertEquals(claimed.lines.schedule1a_line37_senior_deduction, 6000);
+  } finally {
+    await sys.remove(tmpDir, { recursive: true });
+  }
+});

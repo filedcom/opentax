@@ -160,7 +160,27 @@ function softValidationWarnings(
     );
   }
 
+  warnings.push(...seniorDeductionSsnWarnings(pending["schedule1a"] ?? {}));
+
   return warnings;
+}
+
+/** A filer 65 or older whose SSN is not confirmed valid gets no Schedule 1-A
+ * senior deduction (2025 Schedule 1-A instructions, Part V, Valid SSN). */
+function seniorDeductionSsnWarnings(
+  schedule1a: Readonly<Record<string, unknown>>,
+): string[] {
+  const status = schedule1a["filing_status"];
+  if (status === undefined || status === "mfs") return [];
+  const owners = status === "mfj"
+    ? (["taxpayer", "spouse"] as const)
+    : (["taxpayer"] as const);
+  return owners.filter((owner) =>
+    schedule1a[`${owner}_age_65_or_older`] === true &&
+    schedule1a[`${owner}_has_valid_ssn`] !== true
+  ).map((owner) =>
+    `Schedule 1-A senior deduction not claimed for the ${owner}: Part V needs an SSN valid for employment and issued before the return's due date. If so, set ${owner}_ssn_valid_for_employment and ${owner}_ssn_issued_before_due_date to true on general.`
+  );
 }
 
 export async function getReturnCommand(
