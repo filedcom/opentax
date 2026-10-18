@@ -1,7 +1,6 @@
 import * as fs from "node:fs/promises";
 import { test } from "bun:test";
 import * as sys from "../../../../../../../scripts/support/sys.ts";
-import { w2gPayerCopyFixture } from "../../../../domains/income/other/w2g_payer_copy.fixture.ts";
 import {
   assertEquals,
   assertRejects,
@@ -13,15 +12,12 @@ import { buildExecutionPlan } from "../../../../../../../core/runtime/planner.ts
 import { registry } from "../../../../registry.ts";
 import { buildMefBundle, buildMefXml } from "../../../../mef/builder.ts";
 import { buildPending } from "../../../../mef/execution/pending.ts";
-import { sha256Hex } from "../../../../return-processing/prepared-source.ts";
 import { buildPdfBytes } from "../../../builder.ts";
 import { f1040_2025 } from "../../../../index.ts";
-import { inputSchema as w2gInputSchema } from "../../../../../nodes/inputs/income/gambling/w2g/index.ts";
 import { pdfReviewFixtures } from "../../../review-fixtures.ts";
 import { irs1040Pdf } from "../../../forms/general/return-assembly/f1040.ts";
 import { form8911Pdf } from "../../../forms/credits/business/f8911.ts";
 import { form8911ScheduleAPdf } from "../../../forms/credits/business/f8911_schedule_a.ts";
-import { w2gPdf } from "../../../forms/income/gambling/w2g.ts";
 
 const xsd = new URL(
   "../../../../../../../irs/mef/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd",
@@ -36,41 +32,6 @@ const xsdAvailable = (() => {
   }
 })();
 const plan = buildExecutionPlan(registry);
-
-async function withheldW2GXml(
-  pending: ReturnType<typeof buildPending>,
-  filer: (typeof pdfReviewFixtures)[number]["filer"],
-): Promise<string> {
-  const [issued] = w2gInputSchema.parse(pending.w2g).w2gs;
-  if (!issued) throw new Error("Missing W-2G source");
-  const projected = w2gPdf.instances?.(
-    { w2gs: [issued] },
-    filer,
-    { f1040: { line25c_total: pending.f1040?.line25c_total } },
-  )?.[0];
-  if (!projected) throw new Error("Missing W-2G recipient copy projection");
-  const bytes = await w2gPayerCopyFixture(projected);
-  const hash = await sha256Hex(bytes);
-  const fileName = "IssuedW2G.pdf";
-  const bundle = await buildMefBundle({
-    ...pending,
-    w2g: {
-      w2gs: [{
-        ...issued,
-        issued_copy_attachment_file_name: fileName,
-        issued_copy_pdf_sha256: hash,
-      }],
-    },
-  }, {
-    filer,
-    attachments: [{
-      fileName,
-      description: "Payer-issued Form W-2G recipient copy",
-      bytes,
-    }],
-  });
-  return bundle.xml;
-}
 
 async function section1231ExchangeXml(
   pending: ReturnType<typeof buildPending>,
@@ -152,9 +113,32 @@ for (const fixture of pdfReviewFixtures) {
         assertThrows(
           () => buildMefXml(pending, fixture.filer),
           Error,
-          "Form 8874 direct QEI needs authenticated CDE status",
+          "retained CDE status and notice copies with matching SHA-256",
         );
-        return;
+        const [statement, ...others] = fixture.retainedSourceDocuments ?? [];
+        await assertRejects(
+          () =>
+            buildMefBundle(pending, {
+              filer: fixture.filer,
+              attachments: [],
+              retainedSourceDocuments: [
+                { ...statement, bytes: new TextEncoder().encode("altered") },
+                ...others,
+              ],
+            }),
+          Error,
+          "bytes differ",
+        );
+        await assertRejects(
+          () =>
+            buildMefBundle(pending, {
+              filer: fixture.filer,
+              attachments: [],
+              retainedSourceDocuments: others,
+            }),
+          Error,
+          "exactly one retained copy",
+        );
       }
       if (
         fixture.id === "single-two-employers-excess-social-security" ||
@@ -190,9 +174,6 @@ for (const fixture of pdfReviewFixtures) {
           attachments: fixture.attachments ?? [],
           retainedSourceDocuments: fixture.retainedSourceDocuments,
         })).xml
-        : fixture.id === "single-withheld-w2g" ||
-            fixture.id === "single-partnership-code-k-and-w2g"
-        ? await withheldW2GXml(pending, fixture.filer)
         : fixture.id === "single-form8824-section1231-exchange"
         ? await section1231ExchangeXml(pending, fixture.filer)
         : fixture.id === "single-form8995a-two-business-aggregation"

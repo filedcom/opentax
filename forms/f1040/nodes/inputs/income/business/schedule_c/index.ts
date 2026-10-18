@@ -47,6 +47,7 @@ import {
   projectScheduleCItems,
   projectSection481aScheduleCItems,
   type ScheduleCItem,
+  scheduleCSchedule1Line3,
   wagesLessEmploymentCredits,
   wotcReductionsByBusiness,
 } from "./model.ts";
@@ -425,8 +426,7 @@ class ScheduleCNode extends TaxNode<typeof inputSchema> {
       },
     }));
 
-    // Aggregate net profits → single schedule1 output and AGI aggregator
-    const totalNetProfit = netProfits.reduce((sum, p) => sum + p, 0);
+    const totalNetProfit = scheduleCSchedule1Line3(netProfits);
     outputs.push(
       this.outputNodes.output(schedule1, { line3_schedule_c: totalNetProfit }),
     );

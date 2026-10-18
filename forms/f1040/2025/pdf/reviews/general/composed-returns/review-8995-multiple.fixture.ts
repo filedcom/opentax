@@ -2,6 +2,7 @@ import type { PdfReviewFixture } from "../../../review-fixtures.ts";
 import { allocateSharedSeDeduction } from "../../../../../nodes/inputs/income/business/schedule_c/qbi-multiple.ts";
 import { scheduleSELines } from "../../../../../nodes/intermediate/forms/taxes/self-employment/schedule_se/calculation.ts";
 import { CONFIG_BY_YEAR } from "../../../../../nodes/config/index.ts";
+import { roundWholeDollars } from "../../../../../whole-dollars.ts";
 
 export function multipleScheduleCInputs(
   base: PdfReviewFixture,
@@ -34,7 +35,7 @@ export function multipleScheduleCInputs(
             part_ii_adjustments_zero: true,
             post_at_risk_and_passive_limits_confirmed: true,
             line2_schedule_c_amount: profits.reduce(
-              (sum, value) => sum + value,
+              (sum, value) => sum + roundWholeDollars(value),
               0,
             ),
             line6_schedule_f_amount: 0,

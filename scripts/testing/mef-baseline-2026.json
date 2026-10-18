@@ -1,5 +1,5 @@
 {
-  "reason": "TY2025 sample returns run as TY2026: known blockers per return, each with why; a finding leaves when its fix lands",
+  "reason": "Known MeF blockers per sample return; a finding leaves when its fix lands",
   "approvedBy": "pending-review",
   "expires": "2027-01-31",
   "returns": {
@@ -239,25 +239,25 @@
       "xml Form 8283 ordinary Section A differs from recomputed Schedule A or Form 1040 itemized deductions"
     ],
     "single-new-markets-business-credit": [
-      "xml [MEF] Form 8874 direct QEI needs authenticated CDE status and recapture history; export blocked"
+      "xml Form 8874 CDE year-end status must cover the QEI through December 31, 2026"
     ],
     "single-long-name-new-markets-investment": [
-      "xml [MEF] Form 8874 direct QEI needs authenticated CDE status and recapture history; export blocked"
+      "xml Form 8874 CDE year-end status must cover the QEI through December 31, 2026"
     ],
     "single-two-new-markets-investments": [
-      "xml [MEF] Form 8874 direct QEI needs authenticated CDE status and recapture history; export blocked"
+      "xml Form 8874 CDE year-end status must cover the QEI through December 31, 2026"
     ],
     "single-six-new-markets-investments": [
-      "xml [MEF] Form 8874 direct QEI needs authenticated CDE status and recapture history; export blocked"
+      "xml Form 8874 CDE year-end status must cover the QEI through December 31, 2026"
     ],
     "single-seven-new-markets-investments": [
-      "xml [MEF] Form 8874 direct QEI needs authenticated CDE status and recapture history; export blocked"
+      "xml Form 8874 CDE year-end status must cover the QEI through December 31, 2026"
     ],
     "single-twenty-four-new-markets-investments": [
-      "xml [MEF] Form 8874 direct QEI needs authenticated CDE status and recapture history; export blocked"
+      "xml Form 8874 CDE year-end status must cover the QEI through December 31, 2026"
     ],
     "single-geothermal-and-new-markets-credits": [
-      "xml [MEF] Form 8874 direct QEI needs authenticated CDE status and recapture history; export blocked"
+      "xml Form 8874 CDE year-end status must cover the QEI through December 31, 2026"
     ],
     "single-partnership-code-k-and-w2g": [
       "calculation w2g"
@@ -449,9 +449,6 @@
     "single-form8863-two-school-aoc": [
       "xml Form 8863 filing needs source MAGI, Credit Limit Worksheet, and finalized Form 1040/Schedule 3 credit lines to reconcile"
     ],
-    "single-multiple-schedule-c-net-loss": [
-      "rule S1-F1040-195"
-    ],
     "qualified-tip-qbi-mfj-independent-owner-tips": [
       "calculation schedule1a"
     ],
@@ -600,13 +597,13 @@
     "single-section-a-capital-gain-reduction-gift": "Open TY2026 work: Form 8283/Schedule A reconciliation replays TY2025 itemized rules (charitable work owned elsewhere)",
     "single-section-a-donor-prepared-manuscript-reduction": "Dated 2025 fact: a source document or date in the sample belongs to TY2025 (Form 8283 contribution dated 2025, rule F8283-006-02)",
     "single-two-short-term-reduced-gifts": "Open TY2026 work: Form 8283/Schedule A reconciliation replays TY2025 itemized rules (charitable work owned elsewhere)",
-    "single-new-markets-business-credit": "Correct block in every year: Form 8874 direct QEI needs authenticated CDE status (also baselined for TY2025)",
-    "single-long-name-new-markets-investment": "Correct block in every year: Form 8874 direct QEI needs authenticated CDE status (also baselined for TY2025)",
-    "single-two-new-markets-investments": "Correct block in every year: Form 8874 direct QEI needs authenticated CDE status (also baselined for TY2025)",
-    "single-six-new-markets-investments": "Correct block in every year: Form 8874 direct QEI needs authenticated CDE status (also baselined for TY2025)",
-    "single-seven-new-markets-investments": "Correct block in every year: Form 8874 direct QEI needs authenticated CDE status (also baselined for TY2025)",
-    "single-twenty-four-new-markets-investments": "Correct block in every year: Form 8874 direct QEI needs authenticated CDE status (also baselined for TY2025)",
-    "single-geothermal-and-new-markets-credits": "Correct block in every year: Form 8874 direct QEI needs authenticated CDE status (also baselined for TY2025)",
+    "single-new-markets-business-credit": "Correct block: the sample's CDE year-end statement covers the QEI only through 2025, and its 2025 credit allowance date is not a 2026 anniversary; a TY2026 claim needs a statement through December 31, 2026.",
+    "single-long-name-new-markets-investment": "Correct block: the sample's CDE year-end statement covers the QEI only through 2025, and its 2025 credit allowance date is not a 2026 anniversary; a TY2026 claim needs a statement through December 31, 2026.",
+    "single-two-new-markets-investments": "Correct block: the sample's CDE year-end statement covers the QEI only through 2025, and its 2025 credit allowance date is not a 2026 anniversary; a TY2026 claim needs a statement through December 31, 2026.",
+    "single-six-new-markets-investments": "Correct block: the sample's CDE year-end statement covers the QEI only through 2025, and its 2025 credit allowance date is not a 2026 anniversary; a TY2026 claim needs a statement through December 31, 2026.",
+    "single-seven-new-markets-investments": "Correct block: the sample's CDE year-end statement covers the QEI only through 2025, and its 2025 credit allowance date is not a 2026 anniversary; a TY2026 claim needs a statement through December 31, 2026.",
+    "single-twenty-four-new-markets-investments": "Correct block: the sample's CDE year-end statement covers the QEI only through 2025, and its 2025 credit allowance date is not a 2026 anniversary; a TY2026 claim needs a statement through December 31, 2026.",
+    "single-geothermal-and-new-markets-credits": "Correct block: the sample's CDE year-end statement covers the QEI only through 2025, and its 2025 credit allowance date is not a 2026 anniversary; a TY2026 claim needs a statement through December 31, 2026.",
     "single-partnership-code-k-and-w2g": "Dated 2025 fact: a source document or date in the sample belongs to TY2025",
     "single-employer-statement-qualified-tips-schedule1a": "Named TY2025-only route: the node refuses TY2026 until that year's law is implemented",
     "single-form4070-high-wage-qualified-tips-schedule1a": "Named TY2025-only route: the node refuses TY2026 until that year's law is implemented",
@@ -670,7 +667,6 @@
     "single-new-clean-vehicle-personal-credit": "Dated 2025 fact: a source document or date in the sample belongs to TY2025 (vehicle placed in service in 2025, rules SA-F8936-001/048)",
     "single-form8863-two-school-llc": "Open TY2026 work: TY2026 executeReturn does not run the TY2025 staged source pipeline",
     "single-form8863-two-school-aoc": "Open TY2026 work: TY2026 executeReturn does not run the TY2025 staged source pipeline",
-    "single-multiple-schedule-c-net-loss": "Same finding in the TY2025 baseline: not a TY2026 difference",
     "qualified-tip-qbi-mfj-independent-owner-tips": "Open TY2026 pin: Schedule 1-A business-tip SE attribution reads the TY2025 SS wage base (schedule1a/calculation.ts); left for the Schedule 1-A owner",
     "qualified-tip-qbi-mfj-cap-phaseout-owner-allocation": "Open TY2026 pin: Schedule 1-A business-tip SE attribution reads the TY2025 SS wage base (schedule1a/calculation.ts); left for the Schedule 1-A owner",
     "qualified-tip-qbi-mfj-employee-business-tip-allocation": "Open TY2026 pin: Schedule 1-A business-tip SE attribution reads the TY2025 SS wage base (schedule1a/calculation.ts); left for the Schedule 1-A owner",

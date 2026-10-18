@@ -22,7 +22,14 @@ for (
   const [id, c, farm, line16, carry, blocked] of [
     ["farm-profit", -200000, 210000, 323000, 0, "Form 8995 positive filing"],
     ["shop-profit", 210000, -200000, 323000, 0, "Form 8995 positive filing"],
-    ["two-losses", -200000, -200000, -87000, 87000, "Form 1040 line 8 differs"],
+    [
+      "two-losses",
+      -200000,
+      -200000,
+      -87000,
+      87000,
+      "cannot omit an unfiled QBI or REIT/PTP loss carryforward",
+    ],
   ] as const
 ) {
   test(`Form 461 signed C/F ${id} verifies form amounts and retains full-return rejection`, async () => {

@@ -228,6 +228,8 @@ export const inputSchema = z.object({
   at_risk_recapture: z.number().nonnegative().optional(),
   // Form 8990 §163(j) disallowed business interest add-back
   biz_interest_disallowed_add_back: z.number().nonnegative().optional(),
+  // Form 461 line 16 excess business loss, added back on Schedule 1 line 8p
+  line8p_excess_business_loss: z.number().nonnegative().optional(),
   // Form 7203 basis disallowance adjusts Schedule 1 line 5 income.
   basis_disallowed_add_back: z.number().nonnegative().optional(),
 
@@ -444,7 +446,8 @@ function nonSsaIncomeBeforePal(input: AgiInput): number {
     (input.line8z_taxable_grants ?? 0) +
     (input.at_risk_disallowed_add_back ?? 0) +
     (input.at_risk_recapture ?? 0) +
-    (input.biz_interest_disallowed_add_back ?? 0)
+    (input.biz_interest_disallowed_add_back ?? 0) +
+    (input.line8p_excess_business_loss ?? 0)
   );
 }
 
@@ -697,7 +700,8 @@ function scheduleOnePartI(input: AgiInput): number {
     (input.line8z_taxable_grants ?? 0) +
     (input.at_risk_disallowed_add_back ?? 0) +
     (input.at_risk_recapture ?? 0) +
-    (input.biz_interest_disallowed_add_back ?? 0) -
+    (input.biz_interest_disallowed_add_back ?? 0) +
+    (input.line8p_excess_business_loss ?? 0) -
     remainingAllowedPassiveLoss(input) -
     (input.line8d_foreign_earned_income_exclusion ?? 0)
   );

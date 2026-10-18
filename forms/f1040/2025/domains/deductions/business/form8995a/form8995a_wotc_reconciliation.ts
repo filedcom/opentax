@@ -12,6 +12,7 @@ import {
 } from "../../../../../nodes/intermediate/forms/deductions/business/form8995a/index.ts";
 import {
   inputSchema as scheduleCInputSchema,
+  scheduleCSchedule1Line3,
   wotcReductionsByBusiness,
 } from "../../../../../nodes/inputs/income/business/schedule_c/model.ts";
 import {
@@ -126,6 +127,9 @@ export function assertForm8995AWotcReturn(
     0,
   );
   const profit = sources.reduce((sum, s) => sum + s.business.qbi, 0);
+  const schedule1Profit = scheduleCSchedule1Line3(
+    sources.map((s) => s.business.qbi),
+  );
   const retained = scheduleC.schedule_cs[0];
   const reductions = wotcReductionsByBusiness(scheduleC);
   const credit = pending.f3800?.f5884_credit as
@@ -267,24 +271,24 @@ export function assertForm8995AWotcReturn(
       sources.reduce((sum, s) => sum + s.se_tax_deduction, 0) ||
     schedule1?.line15_se_deduction !== seLines.line13 ||
     pending.schedule2?.line4_se_tax !== seLines.line12 ||
-    schedule1?.line3_schedule_c !== profit ||
-    schedule1?.line10_total_additional_income !== profit ||
+    schedule1?.line3_schedule_c !== schedule1Profit ||
+    schedule1?.line10_total_additional_income !== schedule1Profit ||
     !noAmount(schedule1?.line16_sep_simple) ||
     !noAmount(schedule1?.line17_se_health_insurance) ||
-    f1040?.line8_additional_income !== profit ||
+    f1040?.line8_additional_income !== schedule1Profit ||
     (joint &&
       (f1040?.line1a_wages !== wagesTotal ||
         f1040?.line1z_total_wages !== roundWholeDollars(wagesTotal))) ||
     f1040?.line9_total_income !==
       (joint
-        ? roundWholeDollars(profit) + roundWholeDollars(wagesTotal)
-        : Math.round(profit + wagesTotal)) ||
+        ? roundWholeDollars(schedule1Profit) + roundWholeDollars(wagesTotal)
+        : Math.round(schedule1Profit + wagesTotal)) ||
     f1040?.line10_adjustments !== seLines.line13 ||
     f1040?.line11_agi !==
       (joint
-        ? roundWholeDollars(profit) + roundWholeDollars(wagesTotal) -
+        ? roundWholeDollars(schedule1Profit) + roundWholeDollars(wagesTotal) -
           seLines.line13
-        : Math.round(profit + wagesTotal - seLines.line13)) ||
+        : Math.round(schedule1Profit + wagesTotal - seLines.line13)) ||
     input.taxable_income !==
       Math.max(
         0,

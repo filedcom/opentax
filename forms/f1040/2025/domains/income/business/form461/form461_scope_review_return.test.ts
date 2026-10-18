@@ -68,6 +68,11 @@ test("signed Schedule C loss reaches Form 461, Schedule 1 addback, native, and P
   assertEquals(pending.form461?.line6_net_farm_profit_loss, 0);
   assertEquals(pending.form461?.line16_excess_business_loss, -87_000);
   assertEquals(pending.schedule1?.line8p_excess_business_loss, 87_000);
+  // Instructions for Form 461 (2025), line 16: the excess business loss is
+  // a positive Schedule 1 line 8p adjustment, so it reaches Form 1040 line 8
+  // and AGI ($200,000 wages - $400,000 loss + $87,000).
+  assertEquals(pending.f1040?.line8_additional_income, -313_000);
+  assertEquals(pending.f1040?.line11_agi, -113_000);
   assertEquals(result.carryforwards.excess_business_loss_nol_origin, 87_000);
   assertStringIncludes(
     native.build(filedForm461Schema.parse(pending.form461), { filer, pending }),

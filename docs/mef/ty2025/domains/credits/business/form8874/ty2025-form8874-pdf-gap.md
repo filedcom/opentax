@@ -1,10 +1,10 @@
 # TY2025 Form 8874 PDF print route
 
-Current status (October10): direct-QEI credit exports are blocked for missing
-authenticated CDE status/history. Historical credit packets below predate that
-gate. The latest checkpoint verifies reported-event recapture exports and the
-current credit boundary; it supersedes older authored/unrun wording for the
-checks it names.
+Current status: a direct QEI exports only when it carries its CDE's signed
+year-end status (`cde_year_end_status`) and Form 8874-B history
+(`reviewed_form8874b_history`), and the return supplies retained bytes for the
+status statement, the Form 8874-A notice and each Form 8874-B. Without them
+export stays blocked. Historical credit packets below predate that gate.
 
 The
 [IRS Form 8874 (Rev. November 2021)](https://www.irs.gov/pub/irs-pdf/f8874.pdf)
@@ -103,12 +103,10 @@ requires `recapture_notice_received: false` and does not use a 2025 event notice
 to claim another credit.
 
 Form 8874-B is issued **when a recapture event occurs**. An absent notice cannot
-establish that no event occurred, and the return graph has no authenticated CDE
-status or notice-history record covering every day through December 31, 2025.
-The no-event branch therefore remains unsupported. A direct QEI still needs
-affirmative CDE status/history evidence before its recapture status can be
-considered proven; a taxpayer's unchecked "no notice received" assertion is
-insufficient.
+establish that no event occurred, so the no-event branch needs the CDE's
+affirmative status statement and notice history covering every day through
+December 31 of the tax year; a taxpayer's unchecked "no notice received"
+assertion is insufficient.
 
 A separate, staged CDE no-event evidence helper now accepts an affirmative
 year-end statement for one QEI, signed after December 31, 2025. It requires a
@@ -119,9 +117,13 @@ distinct SHA-256 digests against the supplied issuance and statement bytes. Any
 reviewed Form 8874-B notice is separately byte-bound and an event through 2025
 conflicts with that status. These checks establish consistency of reviewed
 records and bytes; they cannot authenticate the CDE official's signature or
-prove the CDE's internal history is complete. The helper is not called by public
-direct-credit export, which remains guarded pending authenticated issuer
-evidence.
+prove the CDE's internal history is complete. MeF and PDF export
+now call the helper for every direct QEI
+(`domains/credits/business/form8874/form8874_cde_status_evidence.ts`), with the
+bytes passed as retained source documents, and require the statement to cover
+December 31 of the return's tax year. The native `IRS8874` builder also checks
+each retained digest. The seven direct-QEI sample returns carry synthetic
+statements and retained copies.
 
 One fully synthetic nonpassive source return now supplies a $10,000 qualified
 equity investment with a 2025 initial investment and credit allowance date. It

@@ -65,6 +65,12 @@ export const form8874NoEventStatusSchema = z.object({
   }
 });
 
+/** One reviewed Form 8874-B in the CDE's notice history, bound to its retained bytes. */
+export const form8874BHistoryEntrySchema = z.object({
+  notice: form8874BNoticeSchema,
+  notice_sha256: sha256,
+}).strict();
+
 async function digest(bytes: Uint8Array): Promise<string> {
   if (bytes.byteLength === 0) {
     throw new Error("Form 8874 evidence bytes are empty");

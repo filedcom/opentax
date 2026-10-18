@@ -11,6 +11,7 @@ import { mfsSstbFilingReviewSchema } from "./mfs-sstb-review.ts";
 import { inputSchema as patronReviewSchema } from "../../../deductions/business/qbi_patron/schema.ts";
 import { itemSchema as patrItemSchema } from "../f1099patr/schema.ts";
 import { z } from "zod";
+import { roundWholeDollars } from "../../../../../whole-dollars.ts";
 import {
   type AtRiskNet,
   calculateSimplifiedAtRiskLoss,
@@ -1095,6 +1096,16 @@ export function computeNetProfit(
   return item.professional_gambler === true
     ? Math.max(0, rawProfit)
     : rawProfit;
+}
+
+/**
+ * Schedule 1 line 3. Each attached Schedule C rounds its own line 31, so with
+ * several of them line 3 adds those whole-dollar amounts (MeF S1-F1040-195).
+ */
+export function scheduleCSchedule1Line3(netProfits: readonly number[]): number {
+  return netProfits.length > 1
+    ? netProfits.reduce((sum, profit) => sum + roundWholeDollars(profit), 0)
+    : netProfits.reduce((sum, profit) => sum + profit, 0);
 }
 
 export function isSeExempt(item: ScheduleCItem): boolean {

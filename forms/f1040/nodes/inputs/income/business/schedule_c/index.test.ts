@@ -395,6 +395,31 @@ test("routing_gross_receipts_to_schedule1: income-only item routes to schedule1"
   assertEquals(s1 !== undefined, true);
 });
 
+test("several Schedule Cs: Schedule 1 line 3 adds each whole-dollar line 31", () => {
+  // MeF S1-F1040-195 (1040 Business Rules 2025v3.0): Schedule 1
+  // BusinessIncomeLossAmt must equal the sum of every Schedule C
+  // NetProfitOrLossAmt, and each Schedule C rounds its own line 31.
+  const result = compute([
+    minimalItem({ business_reference: "A", line_1_gross_receipts: 10_000.49 }),
+    minimalItem({
+      business_reference: "B",
+      line_1_gross_receipts: 0,
+      line_18_office_expense: 20_000.5,
+    }),
+  ]);
+  assertEquals(
+    findOutput(result, "schedule1")?.fields.line3_schedule_c,
+    10_000 - 20_001,
+  );
+  const single = compute([
+    minimalItem({ line_1_gross_receipts: 10_000.49 }),
+  ]);
+  assertEquals(
+    findOutput(single, "schedule1")?.fields.line3_schedule_c,
+    10_000.49,
+  );
+});
+
 test("routing_returns_allowances_reduce_net_sales: line_1=10000, line_2=2000 → net_sales=8000", () => {
   const result = compute([
     minimalItem({

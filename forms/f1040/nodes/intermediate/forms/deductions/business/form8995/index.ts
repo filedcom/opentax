@@ -72,7 +72,10 @@ import {
   calculateScheduleFAtRiskNet,
   itemSchema as farmItemSchema,
 } from "../../../income/business/schedule_f/model.ts";
-import { calculateScheduleCAtRiskNet } from "../../../../../inputs/income/business/schedule_c/model.ts";
+import {
+  calculateScheduleCAtRiskNet,
+  scheduleCSchedule1Line3,
+} from "../../../../../inputs/income/business/schedule_c/model.ts";
 import type { NodeContext } from "../../../../../../../../core/types/node-context.ts";
 import { CONFIG_BY_YEAR, type F1040Config } from "../../../../../config/index.ts";
 import { withMinimumDeduction } from "./minimum-deduction.ts";
@@ -636,8 +639,8 @@ function advancedFormOutput(
       }, taxableIncome, cfg, taxYear);
       return result.fields as Form8995AInput;
     });
-    const wages = input.agi! - businesses.reduce((sum, b) => sum + b.qbi, 0) +
-      owned.deduction;
+    const wages = input.agi! -
+      scheduleCSchedule1Line3(businesses.map((b) => b.qbi)) + owned.deduction;
     return output(form8995a, {
       ...children[0],
       single_schedule_c_source: undefined,
