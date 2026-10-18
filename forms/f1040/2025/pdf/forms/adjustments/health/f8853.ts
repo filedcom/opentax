@@ -1,3 +1,4 @@
+import { mefTaxYear } from "../../../../mef/support/year-config.ts";
 import { calculateArcherContributions } from "../../../../../nodes/intermediate/forms/adjustments/health/form8853/archer_contributions.ts";
 import {
   appendLtcStatement,
@@ -207,9 +208,14 @@ export const form8853Pdf: PdfFormDescriptor = {
     ) {
       return ltcPdfInstances(raw, filer, allPending);
     }
-    const source = normalizeArcherContributionSource(normalizeMedicareSource(
-      normalizeArcherSource(inputSchema.parse(raw)),
-    ));
+    const taxYear = mefTaxYear();
+    const source = normalizeArcherContributionSource(
+      normalizeMedicareSource(
+        normalizeArcherSource(inputSchema.parse(raw), taxYear),
+        taxYear,
+      ),
+      taxYear,
+    );
     nativeForm8853.build(source, { filer, pending: allPending ?? {} });
     const ltcInstances = source.ltc_ledger
       ? ltcPdfInstances(source, filer, allPending)
@@ -243,7 +249,7 @@ export const form8853Pdf: PdfFormDescriptor = {
           line5_archer_deduction: lines.line5,
           ...(source.archer_distribution_ledger
             ? (() => {
-              const dist = calculateArcherMsaDistribution(source);
+              const dist = calculateArcherMsaDistribution(source, mefTaxYear());
               return {
                 archer_msa_distributions: dist.line6a,
                 archer_msa_qualified_expenses: dist.line7,
@@ -316,7 +322,7 @@ export const form8853Pdf: PdfFormDescriptor = {
     }
     if (source.medicare_distribution_ledger) {
       const ledger = source.medicare_distribution_ledger;
-      const lines = calculateMedicareLedger(ledger);
+      const lines = calculateMedicareLedger(ledger, mefTaxYear());
       return [{
         ...source,
         msa_reporting_ssn: ledger.source.kind === "normal"
@@ -330,7 +336,7 @@ export const form8853Pdf: PdfFormDescriptor = {
         medicare_death_transfer: lines.deathTransfer,
       }, ...ltcInstances];
     }
-    const lines = calculateArcherMsaDistribution(source);
+    const lines = calculateArcherMsaDistribution(source, mefTaxYear());
     return [{
       ...source,
       archer_msa_distributions: lines.line6a,

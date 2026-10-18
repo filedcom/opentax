@@ -55,7 +55,7 @@ function holder(
       }],
     },
     prior_year: {
-      had_account_at_end_2024: false,
+      had_account_at_prior_year_end: false,
       year_end_account_review_source_reference: `${owner} 2024 account review`,
     },
   };
@@ -65,11 +65,11 @@ export const mixedPrior: MedicareHolderLedger[] = [
   holder("spouse", 2000.4, 500.6),
 ];
 mixedPrior[0].prior_year = {
-  had_account_at_end_2024: true,
-  balance_on_2024_12_31: 10000,
+  had_account_at_prior_year_end: true,
+  balance_at_prior_year_end: 10000,
   balance_source_reference: "taxpayer 2024 year-end balance",
   balance_includes_all_holder_medicare_msas_confirmed: true,
-  annual_hdhp_deductible_on_2025_01_01: 8000,
+  annual_hdhp_deductible_at_year_start: 8000,
   deductible_policy_source_reference: "taxpayer Jan1 2025 deductible",
 };
 export const partialException: MedicareHolderLedger[] = structuredClone(
@@ -95,10 +95,10 @@ partialException[0].source.distributions = ["14", "15", "16"].map((day) => ({
   unreimbursed_holder_qualified_expenses: 1000,
   qualified_expense_source_references: [`taxpayer bill${day}`],
 }));
-if (!partialException[0].prior_year?.had_account_at_end_2024) {
+if (!partialException[0].prior_year?.had_account_at_prior_year_end) {
   throw new Error("fixture prior year");
 }
-partialException[0].prior_year.annual_hdhp_deductible_on_2025_01_01 = 12000;
+partialException[0].prior_year.annual_hdhp_deductible_at_year_start = 12000;
 partialException[1] = holder("spouse");
 export const bothCents: MedicareHolderLedger[] = [
   holder("taxpayer", 1000.49, 100.51),
@@ -169,7 +169,7 @@ for (
     assertEquals(result.pending.f1040?.line23_other_taxes ?? 0, tax);
     const filer = extractFilerIdentity(result.pending.f1040);
     assertExists(filer);
-    const computed = calculateMedicareJointLedgers(ledgers);
+    const computed = calculateMedicareJointLedgers(ledgers, 2025);
     const xml = buildMefXml(buildPending(result.pending), filer);
     assertEquals((xml.match(/<IRS8853\b/g) ?? []).length, 1);
     assertEquals(

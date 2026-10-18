@@ -1859,7 +1859,12 @@ test("2026 reviewed W-2 box 12 code TT overtime routes to Schedule 1-A", () => {
       w2_box12_code_tt: true,
     }],
   );
-  const { flsa_overtime_review: _, ...unreviewed } = item;
+  const unreviewed = minimalItem({
+    employee_ssn: "111223333",
+    employer_ein: "123456789",
+    box1_wages: 80_000,
+    box12_entries: [{ code: Box12Code.TT, amount: 5_000 }],
+  });
   assertEquals(
     fieldsOf(run(2026, [unreviewed]).outputs, schedule1a)
       ?.qualified_w2_overtime,
@@ -1868,14 +1873,18 @@ test("2026 reviewed W-2 box 12 code TT overtime routes to Schedule 1-A", () => {
   assertThrows(() => run(2025, [item]), Error, "W-2 FLSA overtime review");
   assertThrows(
     () =>
-      run(2026, [{
-        ...item,
+      run(2026, [minimalItem({
+        employee_ssn: "111223333",
+        employer_ein: "123456789",
+        box1_wages: 80_000,
+        box12_entries: [{ code: Box12Code.TT, amount: 5_000 }],
+        flsa_overtime_review: review,
         box14_entries: [{
           description: "FLSA Overtime Premium",
           amount: 5_000,
           is_state_sdi_pfml: false,
         }],
-      }]),
+      })]),
     Error,
     "W-2 FLSA overtime review",
   );

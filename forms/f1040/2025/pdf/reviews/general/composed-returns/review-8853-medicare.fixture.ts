@@ -43,7 +43,7 @@ export const noPriorLedger: MedicareDistributionLedger = {
     distributions: [row("first")],
   },
   prior_year: {
-    had_account_at_end_2024: false,
+    had_account_at_prior_year_end: false,
     year_end_account_review_source_reference:
       "custodian opening history and 2024 review",
   },
@@ -58,11 +58,11 @@ export const priorBalanceLedger: MedicareDistributionLedger = {
     distributions: [row("first", "2025-06-14", 10000, 2000)],
   },
   prior_year: {
-    had_account_at_end_2024: true,
-    balance_on_2024_12_31: 10000,
+    had_account_at_prior_year_end: true,
+    balance_at_prior_year_end: 10000,
     balance_source_reference: "2024 year-end custodian statement",
     balance_includes_all_holder_medicare_msas_confirmed: true,
-    annual_hdhp_deductible_on_2025_01_01: 8000,
+    annual_hdhp_deductible_at_year_start: 8000,
     deductible_policy_source_reference:
       "January1 2025 annual HDHP deductible policy",
   },
@@ -90,9 +90,9 @@ export const partialLedger: MedicareDistributionLedger = {
   prior_year: {
     ...priorBalanceLedger.prior_year as Extract<
       NonNullable<MedicareDistributionLedger["prior_year"]>,
-      { had_account_at_end_2024: true }
+      { had_account_at_prior_year_end: true }
     >,
-    annual_hdhp_deductible_on_2025_01_01: 12000,
+    annual_hdhp_deductible_at_year_start: 12000,
   },
 };
 export const centsLedger: MedicareDistributionLedger = {

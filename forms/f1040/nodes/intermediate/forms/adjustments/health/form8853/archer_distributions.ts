@@ -82,7 +82,7 @@ export type ArcherDistributionLedger = z.infer<
 /** IRS 2025 i8853: Archer exceptions begin AFTER the event date, not on it. */
 export function calculateArcherLedger(
   raw: ArcherDistributionLedger,
-  taxYear = 2025,
+  taxYear: number,
 ) {
   const ledger = archerDistributionLedgerSchema.parse(raw);
   const source = ledger.source;

@@ -1,3 +1,4 @@
+import { mefTaxYear } from "../../../support/year-config.ts";
 import { calculateLtcLedger } from "../../../../../nodes/intermediate/forms/adjustments/health/form8853/ltc.ts";
 import {
   reconcileArcherContributions,
@@ -33,7 +34,10 @@ type Input = Form8853Input | readonly [];
 
 export const FIELD_MAP: ReadonlyArray<readonly [string, string]> = [];
 
-function validateBoundedArcherDistribution(fields: Form8853Input) {
+function validateBoundedArcherDistribution(
+  fields: Form8853Input,
+  taxYear: number,
+) {
   const details = fields.archer_distribution_filing_details;
   if (!details && !fields.archer_distribution_ledger) {
     throw new Error(
@@ -64,7 +68,7 @@ function validateBoundedArcherDistribution(fields: Form8853Input) {
       "Form 8853 MeF only supports an Archer MSA distribution without contributions, Medicare MSA, or LTC activity",
     );
   }
-  const lines = calculateArcherMsaDistribution(fields);
+  const lines = calculateArcherMsaDistribution(fields, taxYear);
   if (
     ![lines.line6a, lines.line6b, lines.line6c, lines.line7].every(
       fields.archer_distribution_ledger ? Number.isFinite : Number.isInteger,
@@ -238,14 +242,16 @@ export function buildMedicareJointDocumentParts(
   raw: Form8853Input,
   context?: MefBuildContext,
 ) {
+  const taxYear = mefTaxYear(context);
   const fields = normalizeMedicareSource(
-    normalizeArcherSource(inputSchema.parse(raw)),
+    normalizeArcherSource(inputSchema.parse(raw), taxYear),
+    taxYear,
   );
   const ledgers = fields.medicare_joint_distribution_ledgers;
   if (!ledgers) {
     throw new Error("Form8853 joint Medicare source ledgers required");
   }
-  assertLtcSourceActivity(fields);
+  assertLtcSourceActivity(fields, taxYear);
   validateMedicareOtherActivity(fields);
   if (
     context?.filer?.filingStatus !== FilingStatus.MarriedFilingJointly ||
@@ -255,7 +261,7 @@ export function buildMedicareJointDocumentParts(
       "Form8853 joint Medicare holders require MFJ with spouse identity",
     );
   }
-  const computed = calculateMedicareJointLedgers(ledgers);
+  const computed = calculateMedicareJointLedgers(ledgers, taxYear);
   const primarySSN = validateReturnContext(
     context,
     { line8: computed.line12, line9b: 0 },
@@ -313,9 +319,10 @@ function buildMedicareIRS8853(
   context?: MefBuildContext,
 ): string {
   const ledger = fields.medicare_distribution_ledger!;
-  assertLtcSourceActivity(fields);
+  const taxYear = mefTaxYear(context);
+  assertLtcSourceActivity(fields, taxYear);
   validateMedicareOtherActivity(fields);
-  const lines = calculateMedicareLedger(ledger);
+  const lines = calculateMedicareLedger(ledger, taxYear);
   const primarySSN = validateReturnContext(
     context,
     { line8: lines.line12, line9b: 0 },
@@ -341,10 +348,15 @@ function buildIRS8853(rawFields: Input, context?: MefBuildContext): string {
   if (Object.keys(rawFields).length === 0) {
     throw new Error("Form 8853 MeF cannot file an empty pending record");
   }
-  const fields = normalizeArcherContributionSource(normalizeMedicareSource(
-    normalizeArcherSource(inputSchema.parse(rawFields)),
-  ));
-  assertLtcSourceActivity(fields);
+  const taxYear = mefTaxYear(context);
+  const fields = normalizeArcherContributionSource(
+    normalizeMedicareSource(
+      normalizeArcherSource(inputSchema.parse(rawFields), taxYear),
+      taxYear,
+    ),
+    taxYear,
+  );
+  assertLtcSourceActivity(fields, taxYear);
   if (fields.archer_contribution_ledger) {
     return elements("IRS8853", [
       buildArcherContributionGroup(fields, context),
@@ -362,7 +374,7 @@ function buildIRS8853(rawFields: Input, context?: MefBuildContext): string {
   if (fields.medicare_distribution_ledger) {
     return buildMedicareIRS8853(fields, context);
   }
-  const lines = validateBoundedArcherDistribution(fields);
+  const lines = validateBoundedArcherDistribution(fields, taxYear);
   const holderSSN = validateReturnContext(
     context,
     lines,
@@ -490,7 +502,10 @@ function buildArcherContributionGroup(
     element("ArcherMSADeductionAmt", lines.line5),
     ...(fields.archer_distribution_ledger
       ? (() => {
-        const dist = calculateArcherMsaDistribution(fields);
+        const dist = calculateArcherMsaDistribution(
+          fields,
+          mefTaxYear(context),
+        );
         return [
           element("TotalArcherMSADistributionAmt", dist.line6a),
           element("ArcherMSADistriRollOverAmt", dist.line6b),

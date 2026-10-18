@@ -82,7 +82,7 @@ function medicare(
       }],
     },
     prior_year: {
-      had_account_at_end_2024: false,
+      had_account_at_prior_year_end: false,
       year_end_account_review_source_reference:
         `Synthetic ${owner} 2024 accounts review`,
     },
@@ -130,11 +130,11 @@ const death: ArcherDistributionLedger = {
 };
 const prior = medicare("taxpayer", 10000, 2000);
 prior.prior_year = {
-  had_account_at_end_2024: true,
-  balance_on_2024_12_31: 10000,
+  had_account_at_prior_year_end: true,
+  balance_at_prior_year_end: 10000,
   balance_source_reference: "Synthetic 2024 custodian balance",
   balance_includes_all_holder_medicare_msas_confirmed: true,
-  annual_hdhp_deductible_on_2025_01_01: 8000,
+  annual_hdhp_deductible_at_year_start: 8000,
   deductible_policy_source_reference: "Synthetic January 1 HDHP deductible",
 };
 const partial = structuredClone(prior);
@@ -149,8 +149,8 @@ partial.source.distributions = ["14", "15", "16"].map((day) => ({
   unreimbursed_holder_qualified_expenses: 1000,
   qualified_expense_source_references: [`Medicare separate dental ${day}`],
 }));
-if (!partial.prior_year?.had_account_at_end_2024) throw new Error("fixture");
-partial.prior_year.annual_hdhp_deductible_on_2025_01_01 = 12000;
+if (!partial.prior_year?.had_account_at_prior_year_end) throw new Error("fixture");
+partial.prior_year.annual_hdhp_deductible_at_year_start = 12000;
 if (death.source.kind !== "death_transfer") throw new Error("fixture");
 const medicareDeath: MedicareHolderLedger = {
   ...medicare("taxpayer"),

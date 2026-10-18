@@ -330,9 +330,6 @@
       "calculation standard_deduction",
       "calculation start"
     ],
-    "single-medicare-msa-partial-disability-prior-account": [
-      "calculation form8853"
-    ],
     "mfs-ny-primary-form8995a-accounting-sstb-phasein": [
       "xml Form 8995-A FilingStatusThresholdCd 201775 is not a value the MeF schema enumerates; export waits for a schema that carries the return year's amounts"
     ],
@@ -760,7 +757,6 @@
     "same-proprietor-two-business-shop-common-control": "Open TY2026 work: Form 8941 checks each employee against the 2025 IRS rating-area average premium table and 2025 payroll year; the 2026 Form 8941 instructions table is not in irs/corpus/ty2026",
     "same-proprietor-three-business-shop-common-control": "Open TY2026 work: Form 8941 checks each employee against the 2025 IRS rating-area average premium table and 2025 payroll year; the 2026 Form 8941 instructions table is not in irs/corpus/ty2026",
     "independent-mf-joint-spouse-shop-two-form8941": "Open TY2026 work: Form 8941 checks each employee against the 2025 IRS rating-area average premium table and 2025 payroll year; the 2026 Form 8941 instructions table is not in irs/corpus/ty2026",
-    "single-medicare-msa-partial-disability-prior-account": "Open TY2026 work: Form 8853 Medicare MSA ledger names 2024/2025 in its fields",
     "mfs-ny-primary-form8995a-accounting-sstb-phasein": "MeF schema gap: 2026v1.0 IRS8995A/IRS8995AScheduleA enumerate only the TY2025 FilingStatusThresholdCd values (197300, 394600); Rev. Proc. 2025-32 \u00a74.26 sets 201750/201775/403500 for 2026",
     "mfs-ak-primary-form8995a-accounting-sstb-phasein": "MeF schema gap: 2026v1.0 IRS8995A/IRS8995AScheduleA enumerate only the TY2025 FilingStatusThresholdCd values (197300, 394600); Rev. Proc. 2025-32 \u00a74.26 sets 201750/201775/403500 for 2026",
     "mfs-tn-primary-form8995a-accounting-sstb-phasein": "MeF schema gap: 2026v1.0 IRS8995A/IRS8995AScheduleA enumerate only the TY2025 FilingStatusThresholdCd values (197300, 394600); Rev. Proc. 2025-32 \u00a74.26 sets 201750/201775/403500 for 2026",

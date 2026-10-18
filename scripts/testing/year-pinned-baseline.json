@@ -2080,11 +2080,6 @@
     "count": 2
   },
   {
-    "path": "forms/f1040/nodes/intermediate/forms/adjustments/health/form8853/archer_distributions.ts",
-    "pattern": "year-value",
-    "count": 1
-  },
-  {
     "path": "forms/f1040/nodes/intermediate/forms/adjustments/health/form8853/index.ts",
     "pattern": "year-comparison",
     "count": 2
@@ -2095,24 +2090,9 @@
     "count": 1
   },
   {
-    "path": "forms/f1040/nodes/intermediate/forms/adjustments/health/form8853/index.ts",
-    "pattern": "year-value",
-    "count": 4
-  },
-  {
     "path": "forms/f1040/nodes/intermediate/forms/adjustments/health/form8853/ltc.ts",
     "pattern": "z-literal",
     "count": 1
-  },
-  {
-    "path": "forms/f1040/nodes/intermediate/forms/adjustments/health/form8853/medicare_distributions.ts",
-    "pattern": "year-identifier",
-    "count": 10
-  },
-  {
-    "path": "forms/f1040/nodes/intermediate/forms/adjustments/health/form8853/medicare_distributions.ts",
-    "pattern": "year-value",
-    "count": 3
   },
   {
     "path": "forms/f1040/nodes/intermediate/forms/adjustments/health/form8889/employer-postyear-evidence-schema.ts",

@@ -55,7 +55,7 @@ export function reconcileArcherContributions(
         "Paired Archer ledgers must match retained Schedule1 sources",
       );
     }
-    const dist = calculateArcherLedger(source);
+    const dist = calculateArcherLedger(source, mefTaxYear(context));
     const otherTax = z.object({ line17e_archer_msa_tax: z.number().optional() })
       .parse(context?.pending?.schedule2 ?? {});
     if (

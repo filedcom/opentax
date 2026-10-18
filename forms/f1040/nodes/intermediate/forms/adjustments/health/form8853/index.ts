@@ -173,9 +173,10 @@ function archerMsaNetDistributions(input: Form8853Input): number {
 
 // Line 8: Taxable Archer MSA distributions = max(0, line6c - line7)
 // IRC §220(f)(1); Form 8853 Part II line 8 → Schedule 1 line 8e
-function archerMsaTaxableDist(input: Form8853Input): number {
+function archerMsaTaxableDist(input: Form8853Input, taxYear: number): number {
   if (input.archer_distribution_ledger) {
-    return calculateArcherLedger(input.archer_distribution_ledger).line8;
+    return calculateArcherLedger(input.archer_distribution_ledger, taxYear)
+      .line8;
   }
   const net = archerMsaNetDistributions(input);
   if (net <= 0) return 0;
@@ -185,29 +186,33 @@ function archerMsaTaxableDist(input: Form8853Input): number {
 
 // Line 9b: 20% additional tax on taxable Archer MSA distributions
 // IRC §220(f)(4); Form 8853 Part II line 9b → Schedule 2 line 17e
-function archerMsaPenaltyTax(input: Form8853Input): number {
+function archerMsaPenaltyTax(input: Form8853Input, taxYear: number): number {
   if (input.archer_distribution_ledger) {
-    return calculateArcherLedger(input.archer_distribution_ledger).line9b;
+    return calculateArcherLedger(input.archer_distribution_ledger, taxYear)
+      .line9b;
   }
   if (input.archer_msa_exception === true) {
     throw new Error(
       "Form 8853 Archer additional-tax exception needs sourced distribution-level ledger",
     );
   }
-  const taxable = archerMsaTaxableDist(input);
+  const taxable = archerMsaTaxableDist(input, taxYear);
   return taxable * ARCHER_MSA_PENALTY_RATE;
 }
 
-export function calculateArcherMsaDistribution(input: Form8853Input) {
+export function calculateArcherMsaDistribution(
+  input: Form8853Input,
+  taxYear: number,
+) {
   if (input.archer_distribution_ledger) {
-    return calculateArcherLedger(input.archer_distribution_ledger);
+    return calculateArcherLedger(input.archer_distribution_ledger, taxYear);
   }
   const line6a = input.archer_msa_distributions ?? 0;
   const line6b = input.archer_msa_rollover ?? 0;
   const line6c = archerMsaNetDistributions(input);
   const line7 = input.archer_msa_qualified_expenses ?? 0;
-  const line8 = archerMsaTaxableDist(input);
-  const line9b = archerMsaPenaltyTax(input);
+  const line8 = archerMsaTaxableDist(input, taxYear);
+  const line9b = archerMsaPenaltyTax(input, taxYear);
   return {
     line6a,
     line6b,
@@ -225,14 +230,19 @@ export function calculateArcherMsaDistribution(input: Form8853Input) {
 
 // Line 12: Taxable Medicare Advantage MSA distributions = max(0, line10 - line11)
 // IRC §138(c)(2); Form 8853 Section B line 12 → Schedule 1 line 8e
-function medicareAdvantaxableDist(input: Form8853Input): number {
+function medicareAdvantaxableDist(
+  input: Form8853Input,
+  taxYear: number,
+): number {
   if (input.medicare_joint_distribution_ledgers) {
     return calculateMedicareJointLedgers(
       input.medicare_joint_distribution_ledgers,
+      taxYear,
     ).line12;
   }
   if (input.medicare_distribution_ledger) {
-    return calculateMedicareLedger(input.medicare_distribution_ledger).line12;
+    return calculateMedicareLedger(input.medicare_distribution_ledger, taxYear)
+      .line12;
   }
   const gross = input.medicare_advantage_distributions ?? 0;
   if (gross <= 0) return 0;
@@ -242,21 +252,26 @@ function medicareAdvantaxableDist(input: Form8853Input): number {
 
 // Line 13b: 50% additional tax on taxable Medicare Advantage MSA distributions
 // IRC §138(c)(2); Form 8853 Section B line 13b → Schedule 2 line 17f
-function medicareAdvantagePenaltyTax(input: Form8853Input): number {
+function medicareAdvantagePenaltyTax(
+  input: Form8853Input,
+  taxYear: number,
+): number {
   if (input.medicare_joint_distribution_ledgers) {
     return calculateMedicareJointLedgers(
       input.medicare_joint_distribution_ledgers,
+      taxYear,
     ).line13b;
   }
   if (input.medicare_distribution_ledger) {
-    return calculateMedicareLedger(input.medicare_distribution_ledger).line13b;
+    return calculateMedicareLedger(input.medicare_distribution_ledger, taxYear)
+      .line13b;
   }
   if (input.medicare_advantage_exception === true) {
     throw new Error(
       "Form8853 Medicare exception needs sourced distribution-level ledger",
     );
   }
-  const taxable = medicareAdvantaxableDist(input);
+  const taxable = medicareAdvantaxableDist(input, taxYear);
   return taxable * MEDICARE_ADVANTAGE_PENALTY_RATE;
 }
 
@@ -314,10 +329,11 @@ function ltcTaxablePayments(
 function schedule1Output(
   input: Form8853Input,
   ltcDailyLimit: number,
+  taxYear: number,
 ): NodeOutput[] {
   const deduction = archerMsaDeduction(input);
-  const taxableArcher = archerMsaTaxableDist(input);
-  const taxableMedicareAdv = medicareAdvantaxableDist(input);
+  const taxableArcher = archerMsaTaxableDist(input, taxYear);
+  const taxableMedicareAdv = medicareAdvantaxableDist(input, taxYear);
   const taxableLtc = ltcTaxablePayments(input, ltcDailyLimit);
   const totalTaxableIncome = taxableArcher + taxableMedicareAdv + taxableLtc;
   const employerExcess = input.archer_contribution_ledger
@@ -387,9 +403,9 @@ function schedule1Output(
 }
 
 // Schedule 2 output: line 17e (20% Archer MSA tax) and line 17f (50% Medicare Advantage MSA tax)
-function schedule2Output(input: Form8853Input): NodeOutput[] {
-  const archerTax = archerMsaPenaltyTax(input);
-  const medicareTax = medicareAdvantagePenaltyTax(input);
+function schedule2Output(input: Form8853Input, taxYear: number): NodeOutput[] {
+  const archerTax = archerMsaPenaltyTax(input, taxYear);
+  const medicareTax = medicareAdvantagePenaltyTax(input, taxYear);
 
   if (archerTax <= 0 && medicareTax <= 0) return [];
 
@@ -438,8 +454,8 @@ class Form8853Node extends TaxNode<typeof inputSchema> {
     );
     return {
       outputs: [
-        ...schedule1Output(input, cfg.ltcPerDiemDailyLimit),
-        ...schedule2Output(input),
+        ...schedule1Output(input, cfg.ltcPerDiemDailyLimit, ctx.taxYear),
+        ...schedule2Output(input, ctx.taxYear),
         ...archerContributionExcessOutput(input),
         ...(hasForm8853Activity(input)
           ? [{ nodeType: this.nodeType, fields: input }]
@@ -474,7 +490,7 @@ export function assertPairedArcherActivity(input: Form8853Input): boolean {
 
 export function normalizeArcherSource(
   input: Form8853Input,
-  taxYear = 2025,
+  taxYear: number,
 ): Form8853Input {
   if (!input.archer_distribution_ledger) return input;
   if (!assertPairedArcherActivity(input)) {
@@ -504,7 +520,7 @@ export function normalizeArcherSource(
 
 export function normalizeMedicareSource(
   input: Form8853Input,
-  taxYear = 2025,
+  taxYear: number,
 ): Form8853Input {
   if (
     input.medicare_distribution_ledger &&
@@ -552,7 +568,7 @@ export const form8853 = new Form8853Node();
 
 export function assertLtcSourceActivity(
   input: Form8853Input,
-  taxYear = 2025,
+  taxYear: number,
 ): void {
   if (!input.ltc_ledger) return;
   if (taxYear !== 2025) {
@@ -649,7 +665,7 @@ export function assertLtcSourceActivity(
 
 export function normalizeArcherContributionSource(
   input: Form8853Input,
-  taxYear = 2025,
+  taxYear: number,
 ): Form8853Input {
   if (!input.archer_contribution_ledger) return input;
   if (taxYear !== 2025) {
@@ -715,6 +731,10 @@ function archerContributionExcessOutput(input: Form8853Input): NodeOutput[] {
   })];
 }
 
-export function calculateMsaDistributionIncome(input: Form8853Input): number {
-  return archerMsaTaxableDist(input) + medicareAdvantaxableDist(input);
+export function calculateMsaDistributionIncome(
+  input: Form8853Input,
+  taxYear: number,
+): number {
+  return archerMsaTaxableDist(input, taxYear) +
+    medicareAdvantaxableDist(input, taxYear);
 }

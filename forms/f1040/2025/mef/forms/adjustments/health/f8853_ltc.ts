@@ -1,3 +1,4 @@
+import { mefTaxYear } from "../../../support/year-config.ts";
 import { archerDistributionLedgerSchema } from "../../../../../nodes/intermediate/forms/adjustments/health/form8853/archer_distributions.ts";
 import {
   medicareDistributionLedgerSchema,
@@ -61,10 +62,15 @@ export const LTC_LINE_TAGS = [
 ] as const;
 
 export function reconcileLtcReturn(raw: unknown, context?: MefBuildContext) {
+  const taxYear = mefTaxYear(context);
   const source = normalizeArcherContributionSource(
-    normalizeMedicareSource(normalizeArcherSource(inputSchema.parse(raw))),
+    normalizeMedicareSource(
+      normalizeArcherSource(inputSchema.parse(raw), taxYear),
+      taxYear,
+    ),
+    taxYear,
   );
-  assertLtcSourceActivity(source);
+  assertLtcSourceActivity(source, taxYear);
   if (!source.ltc_ledger) {
     throw new Error("LTC filing needs its complete reviewed ledger");
   }
@@ -138,7 +144,7 @@ export function reconcileLtcReturn(raw: unknown, context?: MefBuildContext) {
   );
   if (
     (s1.line8e_archer_msa_dist ?? 0) !==
-      result.taxable + calculateMsaDistributionIncome(source)
+      result.taxable + calculateMsaDistributionIncome(source, taxYear)
   ) {
     throw new Error("LTC taxable payments conflict with Schedule 1 line 8e");
   }

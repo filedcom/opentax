@@ -33,9 +33,9 @@ import {
 } from "../../../../nodes/intermediate/forms/adjustments/health/form8853/medicare_distributions.ts";
 
 test("Medicare worksheet uses balance less60% deductible without reducing taxable income", () => {
-  assertEquals(calculateMedicareLedger(priorBalanceLedger).worksheet, {
+  assertEquals(calculateMedicareLedger(priorBalanceLedger, 2025).worksheet, {
     line1: 8000,
-    hadAccountAtEnd2024: true,
+    hadAccountAtPriorYearEnd: true,
     line2: 10000,
     line3: 8000,
     line4: 4800,
@@ -43,9 +43,9 @@ test("Medicare worksheet uses balance less60% deductible without reducing taxabl
     line6: 2800,
     line7: 1400,
   });
-  assertEquals(calculateMedicareLedger(partialLedger).worksheet, {
+  assertEquals(calculateMedicareLedger(partialLedger, 2025).worksheet, {
     line1: 3000,
-    hadAccountAtEnd2024: true,
+    hadAccountAtPriorYearEnd: true,
     line2: 10000,
     line3: 12000,
     line4: 7200,
@@ -53,29 +53,29 @@ test("Medicare worksheet uses balance less60% deductible without reducing taxabl
     line6: 200,
     line7: 100,
   });
-  assertEquals(calculateMedicareLedger(partialLedger).line12, 9000);
+  assertEquals(calculateMedicareLedger(partialLedger, 2025).line12, 9000);
   const zeroPenalty = structuredClone(priorBalanceLedger);
-  if (!zeroPenalty.prior_year?.had_account_at_end_2024) {
+  if (!zeroPenalty.prior_year?.had_account_at_prior_year_end) {
     throw new Error("fixture prior-year kind");
   }
-  zeroPenalty.prior_year.balance_on_2024_12_31 = 20000;
-  assertEquals(calculateMedicareLedger(zeroPenalty).line13b, 0);
-  assertEquals(calculateMedicareLedger(zeroPenalty).line13a, false);
+  zeroPenalty.prior_year.balance_at_prior_year_end = 20000;
+  assertEquals(calculateMedicareLedger(zeroPenalty, 2025).line13b, 0);
+  assertEquals(calculateMedicareLedger(zeroPenalty, 2025).line13a, false);
 });
 test("Medicare worksheet and source rejects absent review, duplicate distributions and missing holder bills", () => {
   assertThrows(
-    () => calculateMedicareLedger({ ...noPriorLedger, prior_year: undefined }),
+    () => calculateMedicareLedger({ ...noPriorLedger, prior_year: undefined }, 2025),
     Error,
-    "2024 account review",
+    "prior-year account review",
   );
   const duplicate = structuredClone(noPriorLedger);
   if (duplicate.source.kind !== "normal") throw new Error("fixture source");
   duplicate.source.distributions.push(duplicate.source.distributions[0]);
-  assertThrows(() => calculateMedicareLedger(duplicate), Error, "duplicate");
+  assertThrows(() => calculateMedicareLedger(duplicate, 2025), Error, "duplicate");
   duplicate.source.distributions.pop();
   duplicate.source.distributions[0].qualified_expense_source_references = [];
   assertThrows(
-    () => calculateMedicareLedger(duplicate),
+    () => calculateMedicareLedger(duplicate, 2025),
     Error,
     "holder medical sources",
   );
@@ -111,7 +111,7 @@ for (
     assertEquals(result.pending.f1040?.line23_other_taxes ?? 0, tax);
     const filer = extractFilerIdentity(result.pending.f1040);
     assertExists(filer);
-    const lines = calculateMedicareLedger(ledger);
+    const lines = calculateMedicareLedger(ledger, 2025);
     const xml = buildMefXml(buildPending(result.pending), filer);
     assertStringIncludes(
       xml,
@@ -327,8 +327,27 @@ test("Form8853 medicare rejects reused medical expense references through native
   }
   invalidDeath.source.expenses.push({ ...invalidDeath.source.expenses[0] });
   assertThrows(
-    () => calculateMedicareLedger(invalidDeath),
+    () => calculateMedicareLedger(invalidDeath, 2025),
     Error,
     "qualified expense reference cannot be reused",
+  );
+});
+
+// IRC §138(c)(2) and the Form 8853 Section B worksheet are not indexed: a
+// 2026 ledger with 2026 distributions computes the same lines as TY2025.
+test("Medicare MSA ledger reads the return year's distribution dates", () => {
+  const in2026 = structuredClone(priorBalanceLedger);
+  if (in2026.source.kind !== "normal") throw new Error("fixture source kind");
+  for (const row of in2026.source.distributions) {
+    row.distribution_date = `2026${row.distribution_date.slice(4)}`;
+  }
+  assertEquals(
+    calculateMedicareLedger(in2026, 2026).worksheet,
+    calculateMedicareLedger(priorBalanceLedger, 2025).worksheet,
+  );
+  assertThrows(
+    () => calculateMedicareLedger(priorBalanceLedger, 2026),
+    Error,
+    "distribution date must be in filing year",
   );
 });

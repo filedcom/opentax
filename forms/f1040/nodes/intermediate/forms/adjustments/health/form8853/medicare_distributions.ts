@@ -47,17 +47,17 @@ const normal = z.object({
 // The death FMV/medical source facts are the same as Section A; Section B
 // applies its own reporting lines and 50% exception rather than an age test.
 const death = deathTransferSourceSchema;
-const priorYear = z.discriminatedUnion("had_account_at_end_2024", [
+const priorYear = z.discriminatedUnion("had_account_at_prior_year_end", [
   z.object({
-    had_account_at_end_2024: z.literal(false),
+    had_account_at_prior_year_end: z.literal(false),
     year_end_account_review_source_reference: reference,
   }).strict(),
   z.object({
-    had_account_at_end_2024: z.literal(true),
-    balance_on_2024_12_31: amount,
+    had_account_at_prior_year_end: z.literal(true),
+    balance_at_prior_year_end: amount,
     balance_source_reference: reference,
     balance_includes_all_holder_medicare_msas_confirmed: z.literal(true),
-    annual_hdhp_deductible_on_2025_01_01: amount,
+    annual_hdhp_deductible_at_year_start: amount,
     deductible_policy_source_reference: reference,
   }).strict(),
 ]);
@@ -100,7 +100,7 @@ export const medicareJointLedgersSchema = z.array(
 
 export function calculateMedicareLedger(
   raw: MedicareDistributionLedger,
-  taxYear = 2025,
+  taxYear: number,
 ) {
   const { sole_medicare_msa_holder_on_return_confirmed: _sole, ...holder } =
     medicareDistributionLedgerSchema.parse(raw);
@@ -109,7 +109,7 @@ export function calculateMedicareLedger(
 
 export function calculateMedicareJointLedgers(
   raw: MedicareHolderLedger[],
-  taxYear = 2025,
+  taxYear: number,
 ) {
   const ledgers = medicareJointLedgersSchema.parse(raw);
   if (new Set(ledgers.map((ledger) => ledger.owner)).size !== 2) {
@@ -181,7 +181,7 @@ export function calculateMedicareJointLedgers(
 
 export function calculateMedicareHolderLedger(
   raw: MedicareHolderLedger,
-  taxYear = 2025,
+  taxYear: number,
 ) {
   const ledger = medicareHolderLedgerSchema.parse(raw);
   const source = ledger.source;
@@ -264,10 +264,10 @@ export function calculateMedicareHolderLedger(
   }
   if (!ledger.prior_year) {
     throw new Error(
-      "Form8853 Medicare additional-tax worksheet needs 2024 account review",
+      "Form8853 Medicare additional-tax worksheet needs prior-year account review",
     );
   }
-  if (!ledger.prior_year.had_account_at_end_2024) {
+  if (!ledger.prior_year.had_account_at_prior_year_end) {
     const line13b = Math.round(worksheetLine1 * 0.5);
     return {
       rawGross: gross,
@@ -280,14 +280,14 @@ export function calculateMedicareHolderLedger(
       deathTransfer: false,
       worksheet: {
         line1: worksheetLine1,
-        hadAccountAtEnd2024: false,
+        hadAccountAtPriorYearEnd: false,
         line7: line13b,
       },
     };
   }
-  const line2 = Math.round(ledger.prior_year.balance_on_2024_12_31);
+  const line2 = Math.round(ledger.prior_year.balance_at_prior_year_end);
   const line3 = Math.round(
-    ledger.prior_year.annual_hdhp_deductible_on_2025_01_01,
+    ledger.prior_year.annual_hdhp_deductible_at_year_start,
   );
   const line4 = Math.round(line3 * 0.6);
   const line5 = Math.max(0, line2 - line4);
@@ -304,7 +304,7 @@ export function calculateMedicareHolderLedger(
     deathTransfer: false,
     worksheet: {
       line1: worksheetLine1,
-      hadAccountAtEnd2024: true,
+      hadAccountAtPriorYearEnd: true,
       line2,
       line3,
       line4,

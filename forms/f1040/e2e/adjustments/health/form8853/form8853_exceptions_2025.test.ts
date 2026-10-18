@@ -198,7 +198,7 @@ export function fixture(ledger: ArcherDistributionLedger) {
 
 test("Form8853 sourced mixed age65 and disability distributions retain on-event taxable penalty", () => {
   for (const ledger of [ageLedger, disabilityLedger]) {
-    assertEquals(calculateArcherLedger(ledger), {
+    assertEquals(calculateArcherLedger(ledger, 2025), {
       rawGross: 6000,
       rawQualified: 1500,
       rawExceptedTaxable: 1500,
@@ -216,33 +216,33 @@ test("Form8853 sourced mixed age65 and disability distributions retain on-event 
   const allExcepted = structuredClone(ageLedger);
   if (allExcepted.source.kind !== "normal") throw new Error("fixture kind");
   allExcepted.source.distributions = [row("2025-06-16", "after")];
-  assertEquals(calculateArcherLedger(allExcepted).line9b, 0);
+  assertEquals(calculateArcherLedger(allExcepted, 2025).line9b, 0);
   allExcepted.source.distributions[0].unreimbursed_qualified_expenses = 2000;
-  assertEquals(calculateArcherLedger(allExcepted).line9a, false);
+  assertEquals(calculateArcherLedger(allExcepted, 2025).line9a, false);
 });
 
 test("Form8853 source evidence rejects missing, invalid, duplicate, and death timing facts", () => {
   const duplicate = structuredClone(ageLedger);
   if (duplicate.source.kind !== "normal") throw new Error("fixture kind");
   duplicate.source.distributions.push(duplicate.source.distributions[0]);
-  assertThrows(() => calculateArcherLedger(duplicate), Error, "duplicate");
+  assertThrows(() => calculateArcherLedger(duplicate, 2025), Error, "duplicate");
   const missing = structuredClone(disabilityLedger);
   if (missing.source.kind !== "normal") throw new Error("fixture kind");
   missing.source.disability = undefined;
   missing.source.distributions[0].form1099sa_distribution_code = "3";
   assertThrows(
-    () => calculateArcherLedger(missing),
+    () => calculateArcherLedger(missing, 2025),
     Error,
     "sourced disability facts",
   );
   const invalid = structuredClone(deathLedger);
   if (invalid.source.kind !== "death_transfer") throw new Error("fixture kind");
   invalid.source.expenses[0].paid_date = "2026-04-16";
-  assertThrows(() => calculateArcherLedger(invalid), Error, "within one year");
+  assertThrows(() => calculateArcherLedger(invalid, 2025), Error, "within one year");
   invalid.source.expenses[0].paid_date = "2025-05-20";
   invalid.source.expenses[0].incurred_date = "2025-04-15";
   assertThrows(
-    () => calculateArcherLedger(invalid),
+    () => calculateArcherLedger(invalid, 2025),
     Error,
     "incurred before death",
   );
@@ -277,7 +277,7 @@ for (
     const filer = extractFilerIdentity(result.pending.f1040);
     assertExists(filer);
     const xml = buildMefXml(buildPending(result.pending), filer);
-    const lines = calculateArcherLedger(ledger);
+    const lines = calculateArcherLedger(ledger, 2025);
     assertEquals(
       xml.includes(
         "<ArcherMSADistriMeetTaxExcInd>X</ArcherMSADistriMeetTaxExcInd>",
@@ -476,7 +476,7 @@ test("Form8853 archer rejects reused medical expense references through native a
   }
   invalidDeath.source.expenses.push({ ...invalidDeath.source.expenses[0] });
   assertThrows(
-    () => calculateArcherLedger(invalidDeath),
+    () => calculateArcherLedger(invalidDeath, 2025),
     Error,
     "qualified expense reference cannot be reused",
   );
