@@ -170,11 +170,6 @@
     "count": 2
   },
   {
-    "path": "forms/f1040/2025/domains/credits/individual/form8839/form8839_two_pass.ts",
-    "pattern": "year-identifier",
-    "count": 1
-  },
-  {
     "path": "forms/f1040/2025/domains/credits/individual/form8863/form8863_two_pass.ts",
     "pattern": "year-value",
     "count": 1
@@ -461,11 +456,6 @@
   },
   {
     "path": "forms/f1040/2025/domains/income/wages/form4852/form4852_retained_evidence.ts",
-    "pattern": "year-comparison",
-    "count": 1
-  },
-  {
-    "path": "forms/f1040/2025/domains/income/wages/form4852/form4852_source.ts",
     "pattern": "year-comparison",
     "count": 1
   },
@@ -1755,11 +1745,6 @@
     "count": 1
   },
   {
-    "path": "forms/f1040/nodes/inputs/income/wages/f4852/index.ts",
-    "pattern": "z-literal",
-    "count": 1
-  },
-  {
     "path": "forms/f1040/nodes/inputs/income/wages/w2/index.ts",
     "pattern": "date-pinned",
     "count": 2
@@ -2030,36 +2015,6 @@
     "count": 1
   },
   {
-    "path": "forms/f1040/nodes/intermediate/forms/credits/individual/form8839/current_year_carryforward.ts",
-    "pattern": "year-value",
-    "count": 2
-  },
-  {
-    "path": "forms/f1040/nodes/intermediate/forms/credits/individual/form8839/current_year_carryforward.ts",
-    "pattern": "z-literal",
-    "count": 2
-  },
-  {
-    "path": "forms/f1040/nodes/intermediate/forms/credits/individual/form8839/pending_reconciliation.ts",
-    "pattern": "year-value",
-    "count": 1
-  },
-  {
-    "path": "forms/f1040/nodes/intermediate/forms/credits/individual/form8839/pre_adoption_reconciliation.ts",
-    "pattern": "year-value",
-    "count": 1
-  },
-  {
-    "path": "forms/f1040/nodes/intermediate/forms/credits/individual/form8839/reviewed_source.ts",
-    "pattern": "year-identifier",
-    "count": 1
-  },
-  {
-    "path": "forms/f1040/nodes/intermediate/forms/credits/individual/form8839/staged_sink_finalizer.ts",
-    "pattern": "year-value",
-    "count": 1
-  },
-  {
     "path": "forms/f1040/nodes/intermediate/forms/credits/individual/form8880/able_contribution_review.ts",
     "pattern": "year-identifier",
     "count": 1
@@ -2113,11 +2068,6 @@
     "path": "forms/f1040/nodes/intermediate/forms/deductions/additional/schedule1a/calculation.ts",
     "pattern": "year-comparison",
     "count": 2
-  },
-  {
-    "path": "forms/f1040/nodes/intermediate/forms/deductions/additional/schedule1a/index.ts",
-    "pattern": "year-identifier",
-    "count": 1
   },
   {
     "path": "forms/f1040/nodes/intermediate/forms/deductions/business/form4562/bonus.ts",
@@ -2365,14 +2315,9 @@
     "count": 1
   },
   {
-    "path": "forms/f1040/nodes/intermediate/forms/income/foreign/form2555/calculation.ts",
-    "pattern": "year-identifier",
-    "count": 3
-  },
-  {
     "path": "forms/f1040/nodes/intermediate/forms/income/foreign/form2555/housing_limits_2025.ts",
     "pattern": "year-identifier",
-    "count": 6
+    "count": 5
   },
   {
     "path": "forms/f1040/nodes/intermediate/forms/income/investments/form8815/index.ts",
