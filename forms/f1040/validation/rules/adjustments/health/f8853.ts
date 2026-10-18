@@ -18,7 +18,7 @@ import {
   validSSN,
 } from "../../../../../../core/validation/mod.ts";
 import {
-  everyIssuableTin,
+  issuableTins,
   personNameControlAgrees,
 } from "../../../../../../core/validation/predicates.ts";
 
@@ -80,7 +80,7 @@ export const F8853_RULES: readonly RuleDef[] = [
       eachGroup(
         "SectCLTCInsuranceCntrctGrp",
         all(
-          everyIssuableTin("LTCInsuredSSN"),
+          issuableTins("LTCInsuredSSN"),
           personNameControlAgrees("LTCInsuredNameControlTxt", "LTCInsuredSSN"),
         ),
         "LTCInsuredSSN",

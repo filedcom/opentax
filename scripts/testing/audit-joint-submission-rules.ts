@@ -43,14 +43,11 @@ for (let i = 0; i < 5; i++) {
   );
   const rules = ALL_RULES.filter((r) => !isTransmissionOnlyRule(r.ruleNumber));
   const report = evaluateRules(rules, ctx, scope.rulePrefixes);
-  const counts = { outsideScope: 0, serverOnly: 0, stub: 0, executable: 0 };
+  const counts = { outsideScope: 0, executable: 0 };
   for (const r of rules) {
     if (!scope.rulePrefixes.has(ruleFormPrefix(r.ruleNumber))) {
       counts.outsideScope++;
-    } else if (["database", "duplicate"].includes(r.category)) {
-      counts.serverOnly++;
-    } else if (r.check === null) counts.stub++;
-    else counts.executable++;
+    } else counts.executable++;
   }
   let exportResult = "passed";
   try {

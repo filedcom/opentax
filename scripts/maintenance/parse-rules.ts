@@ -9,7 +9,8 @@ import * as sys from "../support/sys.ts";
  *   forms/f1040/validation/rules/index.ts    — registry importing all
  *
  * For recognizable patterns (~60% of rules), auto-generates the
- * predicate DSL check function. Complex rules get check: null (stub).
+ * predicate DSL check function. Other rules are emitted with check: null,
+ * which fails the type check until a real check replaces it.
  *
  * Usage: bun scripts/maintenance/parse-rules.ts
  */
@@ -115,11 +116,6 @@ function autoGenerate(r: CsvRule): string | null {
   const text = r.ruleText;
   const names = extractXmlNames(text);
 
-  // Server-side only — always pass
-  if (r.errorCategory === "Database Validation Error" || r.errorCategory === "Duplicate Condition") {
-    return "alwaysPass"; // can't check client-side
-  }
-
   // Simple "must have a value" (non-conditional)
   if (!text.toLowerCase().startsWith("if ") && names.length === 1) {
     if (/must have a (non-zero )?value/i.test(text)) {
@@ -194,14 +190,14 @@ function generateRuleFile(prefix: string, rules: GeneratedRule[]): string {
       // Extract predicate function names (both calls and bare identifiers)
       const fns = r.checkCode.match(/[a-zA-Z]+(?=\()/g);
       if (fns) fns.forEach((f) => usedPredicates.add(f));
-      // Also match bare identifiers like alwaysPass, alwaysFail
+      // Also match bare identifiers like alwaysFail
       if (/^[a-zA-Z]+$/.test(r.checkCode)) usedPredicates.add(r.checkCode);
     }
   }
 
   // Available predicates from the DSL
   const allPredicates = [
-    "alwaysFail", "alwaysPass", "all", "any", "eqField", "eqNum", "eqStr",
+    "alwaysFail", "all", "any", "eqField", "eqNum", "eqStr",
     "eqSum", "filingStatusIs", "filingStatusNot", "formAbsent",
     "formCountAtMost", "formPresent", "gt", "gte", "hasNonZero",
     "hasValue", "ifThen", "ifThenUnless", "isZero", "lt", "not",

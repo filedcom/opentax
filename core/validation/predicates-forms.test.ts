@@ -5,14 +5,14 @@ import { parseEmittedReturn } from "./emitted-documents.ts";
 import {
   documentCountWhere,
   everyDocument,
-  everyIssuableTin,
+  issuableTins,
   hasValue,
-  issuableTin,
+  isIssuableTin,
   personNameControlAgrees,
   scheduleReferencedOnce,
   statementAttached,
   validVin,
-  wellFormedIpPins,
+  validIpPins,
 } from "./predicates.ts";
 import type { ReturnContext } from "./types.ts";
 
@@ -35,23 +35,26 @@ const dependent = (ssn: string, nc: string) =>
   `<IRS1040 documentId="a"><DependentDetail><DependentNameControlTxt>${nc}</DependentNameControlTxt>` +
   `<DependentSSN>${ssn}</DependentSSN></DependentDetail></IRS1040>`;
 
-test("issuableTin accepts SSNs, ITINs and ATINs the SSA or IRS issue", () => {
+test("isIssuableTin accepts SSNs, ITINs and ATINs the SSA or IRS issue", () => {
   for (const tin of ["123456789", "111-22-3333", "912701234", "987654321", "912931234"]) {
-    assertEquals(issuableTin(tin), true, tin);
+    assertEquals(isIssuableTin(tin), true, tin);
   }
 });
 
-test("issuableTin rejects area 000, 666 and 9XX outside ITIN ranges, group 00 and serial 0000", () => {
+test("isIssuableTin rejects area 000, 666 and 9XX outside ITIN ranges, group 00 and serial 0000", () => {
   for (const tin of ["000123456", "666123456", "912891234", "912401234", "123001234", "123450000", "12345678"]) {
-    assertEquals(issuableTin(tin), false, tin);
+    assertEquals(isIssuableTin(tin), false, tin);
   }
-  assertEquals(issuableTin("400001057", true), true);
+  assertEquals(isIssuableTin("400001057", true), true);
+  // SSNs the SSA voided after they were published (078-05-1120, 219-09-9999).
+  assertEquals(isIssuableTin("078051120"), false);
+  assertEquals(isIssuableTin("219099999"), false);
 });
 
-test("everyIssuableTin keeps the Pub 1436 group-00 exception for ATS returns", () => {
+test("issuableTins keeps the Pub 1436 group-00 exception for ATS returns", () => {
   const doc = '<IRSW2G documentId="g"><PayerSSN>400001057</PayerSSN></IRSW2G>';
-  assertEquals(everyIssuableTin("PayerSSN")(emitted(doc)), false);
-  assertEquals(everyIssuableTin("PayerSSN")(emitted(doc, true)), true);
+  assertEquals(issuableTins("PayerSSN")(emitted(doc)), false);
+  assertEquals(issuableTins("PayerSSN")(emitted(doc, true)), true);
 });
 
 test("personNameControlAgrees needs the person format and one name control per TIN", () => {
@@ -66,11 +69,11 @@ test("personNameControlAgrees needs the person format and one name control per T
   assertEquals(personNameControlAgrees("Missing", "SSN")(ctx), true);
 });
 
-test("wellFormedIpPins needs six digits other than 000000", () => {
+test("validIpPins needs six digits other than 000000", () => {
   const pin = (v: string) => emitted(`<X documentId="x"><IdentityProtectionPIN>${v}</IdentityProtectionPIN></X>`);
-  assertEquals(wellFormedIpPins("IdentityProtectionPIN")(pin("123456")), true);
-  assertEquals(wellFormedIpPins("IdentityProtectionPIN")(pin("000000")), false);
-  assertEquals(wellFormedIpPins("IdentityProtectionPIN")(pin("12345")), false);
+  assertEquals(validIpPins("IdentityProtectionPIN")(pin("123456")), true);
+  assertEquals(validIpPins("IdentityProtectionPIN")(pin("000000")), false);
+  assertEquals(validIpPins("IdentityProtectionPIN")(pin("12345")), false);
 });
 
 test("documentCountWhere and everyDocument read each copy of a form on its own", () => {
