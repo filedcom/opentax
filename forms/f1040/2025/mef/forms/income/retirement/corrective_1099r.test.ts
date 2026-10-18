@@ -125,3 +125,14 @@ test("code-8 correction cannot mask a second line 1h wage source", () => {
     "line 1h needs exactly one supported retained source",
   );
 });
+
+// 2026 Instructions for Forms 1099-R and 5498, box 7 code 8: excess
+// contributions or deferrals taxable in 2026, so line 1h of the 2026 return.
+test("2026 non-IRA code-8 correction reaches line 1h", () => {
+  const result = execute(buildExecutionPlan(registry), registry, {
+    ...base.inputs,
+    f1099r: [corrective],
+  }, { taxYear: 2026, formType: "f1040" });
+  assertEquals(result.diagnostics, []);
+  assertEquals(buildPending(result.pending).f1040?.line1h_other_earned, 1_000);
+});

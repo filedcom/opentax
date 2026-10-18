@@ -1158,7 +1158,7 @@ function validateItem(item: R1099Item, taxYear: number): void {
     )
   ) {
     throw new Error(
-      "Non-IRA code 8 corrective distribution needs one identified 2025 Form 1099-R, owner, payer and positive taxable box 2a",
+      "Non-IRA code 8 corrective distribution needs one identified Form 1099-R, owner, payer and positive taxable box 2a",
     );
   }
   validateIraRolloverEvidence(item, taxYear);
@@ -2109,14 +2109,15 @@ class F1099rNode extends TaxNode<typeof inputSchema> {
         sum + (item.box14_state_tax ?? 0) + (item.box17_local_tax ?? 0),
       0,
     );
+    // Code 8: corrective distributions taxable in the return year (2025 and
+    // 2026 Instructions for Forms 1099-R and 5498, box 7 code 8).
     if (
       corrective.length > 0 &&
-      (ctx.taxYear !== 2025 ||
-        new Set(corrective.map((item) => item.source_document_reference))
-            .size !== corrective.length)
+      new Set(corrective.map((item) => item.source_document_reference))
+          .size !== corrective.length
     ) {
       throw new Error(
-        "TY2025 corrective plan distributions need distinct Form 1099-R source references",
+        "Corrective plan distributions need distinct Form 1099-R source references",
       );
     }
     assertIraRolloverEvidence(r1099s, ctx.taxYear);
