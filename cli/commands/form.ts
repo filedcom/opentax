@@ -81,7 +81,23 @@ export type FormAddArgs = {
 export type FormAddResult = {
   readonly id: string;
   readonly nodeType: string;
+  readonly hint?: string;
 };
+
+/** A box 7 code 3 disability distribution can qualify a recipient under 65
+ * for the credit for the elderly or the disabled (2025 Schedule R, Part I
+ * boxes 2, 4, 5, 6 and 9). */
+function addHint(
+  nodeType: string,
+  fields: Readonly<Record<string, unknown>>,
+  inputs: Readonly<Record<string, readonly unknown[]>>,
+): string | undefined {
+  if (nodeType !== "f1099r" || inputs["schedule_r"]?.length) return undefined;
+  if (
+    fields["box7_distribution_code"] !== "3" && fields["box7_code2"] !== "3"
+  ) return undefined;
+  return "Box 7 code 3 is a disability distribution: if the recipient is under 65 and retired on permanent and total disability, add schedule_r for the credit for the elderly or the disabled ('opentax node template schedule_r --full').";
+}
 
 export async function formAddCommand(
   args: FormAddArgs,
@@ -116,9 +132,9 @@ export async function formAddCommand(
   const publicEntry = def.inputNodes.find((entry) =>
     (entry.inputKey ?? entry.node.nodeType) === args.nodeType
   );
+  const existing = await loadInputs(returnPath);
   if (
-    publicEntry && !publicEntry.isArray &&
-    (await loadInputs(returnPath))[args.nodeType]?.length
+    publicEntry && !publicEntry.isArray && existing[args.nodeType]?.length
   ) {
     throw new Error(`Singleton input ${args.nodeType} already exists`);
   }
@@ -129,7 +145,8 @@ export async function formAddCommand(
     storedFields(parsed.data),
   );
 
-  return { id, nodeType: args.nodeType };
+  const hint = addHint(args.nodeType, data, existing);
+  return { id, nodeType: args.nodeType, ...(hint ? { hint } : {}) };
 }
 
 // ─── form list ────────────────────────────────────────────────────────────────

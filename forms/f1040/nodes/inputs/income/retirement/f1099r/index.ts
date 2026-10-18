@@ -431,8 +431,12 @@ export const itemSchema = z.object({
   direct_rollover_confirmed: z.boolean().optional(),
 
   // Disability flags
-  disability_flag: z.boolean().optional(),
-  disability_as_wages: z.boolean().optional(),
+  disability_flag: z.boolean().optional().describe(
+    "Box 7 code 3 disability distribution; a recipient under 65 may claim Schedule R (add schedule_r)",
+  ),
+  disability_as_wages: z.boolean().optional().describe(
+    "Disability pension paid before the plan's minimum retirement age: Form 1040 line 1h",
+  ),
 
   // Special treatment flags
   carry_to_5329: z.boolean().optional(),
