@@ -1,5 +1,5 @@
 import { test } from "bun:test";
-import { assertEquals, assertThrows } from "@std/assert";
+import { assertEquals } from "@std/assert";
 import { income_tax_calculation, inputSchema } from "./index.ts";
 import { f1040 } from "../../../../../outputs/general/return-assembly/f1040/index.ts";
 import { fieldsOf } from "../../../../../../../../core/test-utils/output.ts";
@@ -73,20 +73,19 @@ test("TY2026 Schedule D Tax Worksheet stops 25% gain at the $201,775 ceiling", (
 });
 
 // Draft 2026 Form 8814 line 15: the child's tax on the first $2,700 is at
-// most $135 (10% of $1,350), added to the parent's tax as in 2025.
-test("TY2026 adds Form 8814 tax and still refuses Schedule J", () => {
+// most $135 (10% of $1,350), added to the parent's tax as in 2025. Draft
+// 2026 Schedule J line 23 is entered on Form 1040 line 16 as in 2025.
+test("TY2026 adds Form 8814 tax and takes the Schedule J line 23 tax", () => {
   const base = { taxable_income: 40_000, filing_status: FilingStatus.Single };
   const parentTax = tax2026(base);
   if (parentTax === undefined) throw new Error("expected line 16 tax");
   assertEquals(tax2026({ ...base, form8814_tax: 135 }), parentTax + 135);
-  assertThrows(
-    () =>
-      tax2026({
-        ...base,
-        schedule_j_election_requested: true,
-        schedule_j_calculated_tax: 4_000,
-      }),
-    Error,
-    "TY2026 Schedule J tax worksheets are not supported yet",
+  assertEquals(
+    tax2026({
+      ...base,
+      schedule_j_election_requested: true,
+      schedule_j_calculated_tax: 4_000,
+    }),
+    4_000,
   );
 });
