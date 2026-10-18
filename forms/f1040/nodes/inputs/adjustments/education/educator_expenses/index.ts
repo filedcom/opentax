@@ -9,16 +9,12 @@ import { schedule1 } from "../../../../outputs/general/return-assembly/schedule1
 import { agi_aggregator } from "../../../../intermediate/aggregation/general/return-assembly/agi_aggregator/index.ts";
 import { FilingStatus } from "../../../../types.ts";
 import type { NodeContext } from "../../../../../../../core/types/node-context.ts";
+import { CONFIG_BY_YEAR } from "../../../../config/index.ts";
 
-// TY2025 — Educator Expenses Deduction
-// Schedule 1 Part II Line 11, IRC §62(a)(2)(D).
-// Eligible educators may deduct up to $300 each ($600 if MFJ and both are educators).
-// Per-educator cap: $300. Total cap: $300 (single/HOH/MFS/QSS) or $600 (MFJ).
-// Rev Proc 2024-40 §3.12: $300 per eligible educator for TY2025.
-
-// ── Constants ─────────────────────────────────────────────────────────────────
-
-const PER_EDUCATOR_CAP = 300; // IRC §62(a)(2)(D)(ii)
+// Educator Expenses Deduction, Schedule 1 Part II Line 11, IRC §62(a)(2)(D).
+// The per-educator cap is `educatorExpenseLimit`: $300 for TY2025 (Rev. Proc.
+// 2024-40 §3.12), $350 for TY2026 (Rev. Proc. 2025-32 §4.12); MFJ with two
+// eligible educators doubles it.
 
 // ── Schemas ───────────────────────────────────────────────────────────────────
 
@@ -39,12 +35,12 @@ export const inputSchema = z.object({
   educator2_hours_worked: z.number().nonnegative().optional()
     .describe("Hours educator 2 worked as a K-12 teacher/instructor during the school year (must be ≥900 to qualify)"),
   // Qualified professional development expenses for educator 1 — courses related to
-  // curriculum or students; included in the $300 per-educator cap (Rev Proc 2024-40)
+  // curriculum or students; included in the per-educator cap
   educator1_professional_development: z.number().nonnegative().optional()
-    .describe("Educator 1 qualified professional development expenses (included in $300 cap)"),
+    .describe("Educator 1 qualified professional development expenses (included in the per-educator cap)"),
   // Qualified professional development expenses for educator 2 (MFJ only)
   educator2_professional_development: z.number().nonnegative().optional()
-    .describe("Educator 2 qualified professional development expenses (included in $300 cap)"),
+    .describe("Educator 2 qualified professional development expenses (included in the per-educator cap)"),
 });
 
 export type EducatorExpensesInput = z.infer<typeof inputSchema>;
@@ -62,33 +58,31 @@ function educator2Eligible(input: EducatorExpensesInput): boolean {
   return input.educator2_hours_worked === undefined || input.educator2_hours_worked >= 900;
 }
 
-// Professional development expenses count toward the $300 per-educator cap
-// alongside unreimbursed supplies/books (Rev Proc 2024-40 §3.12).
-function educator1Deduction(input: EducatorExpensesInput): number {
+// Professional development expenses count toward the per-educator cap
+// alongside unreimbursed supplies/books.
+function educator1Deduction(input: EducatorExpensesInput, cap: number): number {
   if (!educator1Eligible(input)) return 0;
   const total = input.educator1_expenses + (input.educator1_professional_development ?? 0);
-  return Math.min(total, PER_EDUCATOR_CAP);
+  return Math.min(total, cap);
 }
 
-function educator2Deduction(input: EducatorExpensesInput): number {
+function educator2Deduction(input: EducatorExpensesInput, cap: number): number {
   if (input.filing_status !== FilingStatus.MFJ) return 0;
   if (!educator2Eligible(input)) return 0;
   const total = (input.educator2_expenses ?? 0) + (input.educator2_professional_development ?? 0);
-  return Math.min(total, PER_EDUCATOR_CAP);
+  return Math.min(total, cap);
 }
 
-function totalDeduction(input: EducatorExpensesInput): number {
-  return educator1Deduction(input) + educator2Deduction(input);
+function totalDeduction(input: EducatorExpensesInput, cap: number): number {
+  return educator1Deduction(input, cap) + educator2Deduction(input, cap);
 }
 
-function schedule1Output(input: EducatorExpensesInput): NodeOutput[] {
-  const deduction = totalDeduction(input);
+function schedule1Output(deduction: number): NodeOutput[] {
   if (deduction === 0) return [];
   return [output(schedule1, { line11_educator_expenses: deduction })];
 }
 
-function agiOutput(input: EducatorExpensesInput): NodeOutput[] {
-  const deduction = totalDeduction(input);
+function agiOutput(deduction: number): NodeOutput[] {
   if (deduction === 0) return [];
   return [output(agi_aggregator, { line11_educator_expenses: deduction })];
 }
@@ -100,11 +94,14 @@ class EducatorExpensesNode extends TaxNode<typeof inputSchema> {
   readonly inputSchema = inputSchema;
   readonly outputNodes = new OutputNodes([schedule1, agi_aggregator]);
 
-  compute(_ctx: NodeContext, input: z.infer<typeof inputSchema>): NodeResult {
+  compute(ctx: NodeContext, input: z.infer<typeof inputSchema>): NodeResult {
+    const cfg = CONFIG_BY_YEAR[ctx.taxYear];
+    if (!cfg) throw new Error(`No f1040 config for year ${ctx.taxYear}`);
     const parsed = inputSchema.parse(input);
+    const deduction = totalDeduction(parsed, cfg.educatorExpenseLimit);
     const outputs: NodeOutput[] = [
-      ...schedule1Output(parsed),
-      ...agiOutput(parsed),
+      ...schedule1Output(deduction),
+      ...agiOutput(deduction),
     ];
     return { outputs };
   }
