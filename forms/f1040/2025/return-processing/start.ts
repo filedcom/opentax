@@ -5,6 +5,7 @@ import { TaxNode } from "../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../core/types/output-nodes.ts";
 import type { NodeContext } from "../../../../core/types/node-context.ts";
 import { inputNodes } from "../inputs.ts";
+import { hasPartnershipSeEarnings } from "../../nodes/inputs/income/rental-passthrough/k1_partnership/index.ts";
 
 export { inputNodes };
 
@@ -75,7 +76,9 @@ export function buildStartNode(entries: readonly InputNodeEntry[]): TaxNode {
         | undefined;
       const jointSE = general?.filing_status === "mfj" &&
         (publicInput.schedule_c !== undefined ||
-          publicInput.schedule_f !== undefined);
+          publicInput.schedule_f !== undefined ||
+          (Array.isArray(publicInput.k1_partnership) &&
+            hasPartnershipSeEarnings(publicInput.k1_partnership)));
       const ownerIdentity = jointSE
         ? {
           primary_ssn: String(general?.taxpayer_ssn ?? "").replaceAll("-", ""),
@@ -90,7 +93,10 @@ export function buildStartNode(entries: readonly InputNodeEntry[]): TaxNode {
       }
       const ownerContext = (nodeType: string): Record<string, unknown> => {
         if (!ownerIdentity) return {};
-        if (nodeType === "w2" || nodeType === "f4852") {
+        if (
+          nodeType === "w2" || nodeType === "f4852" ||
+          nodeType === "k1_partnership"
+        ) {
           return { owner_identity: ownerIdentity };
         }
         if (nodeType === "schedule_c") return { filing_status: "mfj" };

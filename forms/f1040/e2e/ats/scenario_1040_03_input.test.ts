@@ -9,7 +9,10 @@ import { scheduleEPdf } from "../../2025/pdf/forms/income/rental-passthrough/sch
 import { assert, assertEquals, assertStringIncludes } from "@std/assert";
 import { DistributionCode } from "../../nodes/inputs/income/retirement/f1099r/index.ts";
 import { schedule_f } from "../../nodes/intermediate/forms/income/business/schedule_f/index.ts";
-import { schedule_se } from "../../nodes/intermediate/forms/taxes/self-employment/schedule_se/index.ts";
+import {
+  inputSchema as scheduleSEInputSchema,
+  schedule_se,
+} from "../../nodes/intermediate/forms/taxes/self-employment/schedule_se/index.ts";
 import { scheduleF } from "../../2025/mef/forms/income/business/schedule_f.ts";
 import { scheduleSE as scheduleSeMef } from "../../2025/mef/forms/taxes/self-employment/schedule_se.ts";
 import { scheduleFPdf } from "../../2025/pdf/forms/income/business/schedule_f.ts";
@@ -200,7 +203,7 @@ test("ATS 1040 Scenario 3 farm source matches native and printable Schedule F an
   const seFields = farmResult.outputs.find((item) =>
     item.nodeType === "schedule_se"
   )?.fields;
-  const parsedSe = schedule_se.inputSchema.parse(seFields);
+  const parsedSe = scheduleSEInputSchema.parse(seFields);
   const filer = {
     ...testFiler(),
     primarySSN: SCENARIO_1040_03_FACTS.taxpayer.ssn,

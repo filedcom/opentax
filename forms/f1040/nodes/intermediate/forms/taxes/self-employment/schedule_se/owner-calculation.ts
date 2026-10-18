@@ -9,7 +9,9 @@ export const ownerBusinessSchema = z.object({
   recipient: z.enum(["T", "S"]),
   source_reference: z.string().trim().min(1),
   net_profit: z.number().finite(),
-  kind: z.enum(["schedule_c", "schedule_f"]),
+  // "partnership" is K-1 (Form 1065) box 14 code A, which joins Schedule C on
+  // Schedule SE line 2 (i1040sse, Line 2).
+  kind: z.enum(["schedule_c", "schedule_f", "partnership"]),
   business_name: z.string().trim().min(1).optional(),
   ein: z.string().regex(/^\d{9}$/).optional(),
   qbi_no_other_adjustments_confirmed: z.boolean().optional(),
@@ -85,7 +87,7 @@ export function ownedScheduleSE(
       net_profit_schedule_f: 0,
       w2_ss_wages: 0,
     };
-    if (business.kind === "schedule_c") {
+    if (business.kind !== "schedule_f") {
       if (
         business.farm_optional_method_elected !== undefined ||
         business.gross_farm_income !== undefined
