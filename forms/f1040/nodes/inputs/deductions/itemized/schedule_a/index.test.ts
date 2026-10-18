@@ -1,6 +1,10 @@
 import { test } from "bun:test";
 import { assertEquals, assertThrows } from "@std/assert";
-import { inputSchema, scheduleA } from "./index.ts";
+import {
+  CharitableCarryoverCategory,
+  inputSchema,
+  scheduleA,
+} from "./index.ts";
 import { FilingStatus } from "../../../../types.ts";
 
 type ScheduleAInput = Parameters<typeof scheduleA.compute>[1];
@@ -1074,4 +1078,96 @@ test("TY2025 Schedule A does not send the non-itemizer charity source", () => {
   assertEquals("nonitemizer_charitable_cash" in fields, false);
   assertEquals("nonitemizer_charitable_cash_unclassified" in fields, false);
   assertEquals(deductionInput(result).itemized_deductions, 300);
+});
+
+// Pub. 526 (2025), Carryovers: a carryover keeps its contribution-year limit
+// category and is deducted after this year's gifts in that category.
+function priorCarryover(
+  category: CharitableCarryoverCategory,
+  amount: number,
+  contribution_year = 2024,
+) {
+  return {
+    contribution_year,
+    category,
+    amount,
+    source_document_reference: "2024 return carryover worksheet",
+    ordinary_carryover_rules_confirmed: true as const,
+    ...(category === CharitableCarryoverCategory.Cash60 ||
+        category === CharitableCarryoverCategory.CashOther30
+      ? {}
+      : { original_gift_500_or_less_confirmed: true as const }),
+  };
+}
+
+test("scheduleA.compute: prior-year carryovers within their limits fill line 13", () => {
+  const result = compute({
+    agi: 160_154,
+    cash_contributions_to_50_percent_organizations: 30_000,
+    cash_contributions_other_30: 300,
+    noncash_contribution_items: [
+      { source: "stock", amount: 100, category: "capital_gain_30" },
+      { source: "goods", amount: 200, category: "other_30" },
+    ],
+    prior_charitable_carryovers: [
+      priorCarryover(CharitableCarryoverCategory.Cash60, 3),
+      priorCarryover(CharitableCarryoverCategory.CashOther30, 3),
+      priorCarryover(CharitableCarryoverCategory.CapitalGain30, 1),
+      priorCarryover(CharitableCarryoverCategory.NoncashOther30, 2),
+      priorCarryover(CharitableCarryoverCategory.Noncash50, 1),
+    ],
+  });
+  const fields = result.finalizations?.[0]?.fields;
+  assertEquals(fields?.line_11_cash_contributions, 30_300);
+  assertEquals(fields?.line_12_noncash_contributions, 300);
+  assertEquals(fields?.line_13_contribution_carryover, 10);
+  assertEquals(deductionInput(result).itemized_deductions, 30_610);
+});
+
+test("scheduleA.compute: a carryover the 60% limit does not fully allow is refused", () => {
+  assertThrows(
+    () =>
+      compute({
+        agi: 10_000,
+        cash_contributions_to_50_percent_organizations: 5_900,
+        prior_charitable_carryovers: [
+          priorCarryover(CharitableCarryoverCategory.Cash60, 200),
+        ],
+      }),
+    Error,
+    "carryover ordering",
+  );
+});
+
+test("scheduleA.compute: a carryover older than five years has expired", () => {
+  assertThrows(
+    () =>
+      compute({
+        agi: 50_000,
+        prior_charitable_carryovers: [
+          priorCarryover(CharitableCarryoverCategory.Cash60, 100, 2019),
+        ],
+      }),
+    Error,
+    "five-year carryover window",
+  );
+});
+
+test("scheduleA.inputSchema: a noncash carryover needs the Form 8283 threshold answer", () => {
+  const parsed = inputSchema.safeParse({
+    prior_charitable_carryovers: [{
+      ...priorCarryover(CharitableCarryoverCategory.Noncash50, 50),
+      original_gift_500_or_less_confirmed: undefined,
+    }],
+  });
+  assertEquals(parsed.success, false);
+});
+
+test("scheduleA.inputSchema: line 13 input names the carryover field", () => {
+  const parsed = inputSchema.safeParse({ line_13_contribution_carryover: 10 });
+  assertEquals(parsed.success, false);
+  assertEquals(
+    parsed.error?.issues[0].message.includes("prior_charitable_carryovers"),
+    true,
+  );
 });
