@@ -394,7 +394,10 @@ export function section731Form8949Transaction(
 }
 
 /** Keep each filed Form 7217 to one identified date and complete Part II basis. */
-export function assertForm7217FilingSource(input: Form7217Input): void {
+export function assertForm7217FilingSource(
+  input: Form7217Input,
+  taxYear: number,
+): void {
   const dates = new Set<string>();
   const gainStatementReferences = new Set<string>();
   for (const item of input.form7217s) {
@@ -403,9 +406,11 @@ export function assertForm7217FilingSource(input: Form7217Input): void {
       !Number.isFinite(timestamp) ||
       new Date(timestamp).toISOString().slice(0, 10) !==
         item.distribution_date ||
-      !item.distribution_date.startsWith("2025-")
+      !item.distribution_date.startsWith(`${taxYear}-`)
     ) {
-      throw new Error("Form 7217 needs an actual 2025 distribution date");
+      throw new Error(
+        `Form 7217 needs an actual ${taxYear} distribution date`,
+      );
     }
     const key = `${
       item.partnership_ein.replace(/\D/g, "")
@@ -515,9 +520,9 @@ class F7217Node extends TaxNode<typeof inputSchema> {
   readonly inputSchema = inputSchema;
   readonly outputNodes = new OutputNodes([form8949]);
 
-  compute(_ctx: NodeContext, rawInput: Form7217Input): NodeResult {
+  compute(ctx: NodeContext, rawInput: Form7217Input): NodeResult {
     const input = inputSchema.parse(rawInput);
-    assertForm7217FilingSource(input);
+    assertForm7217FilingSource(input, ctx.taxYear);
     return {
       outputs: input.form7217s.flatMap((item) => {
         const transaction = section731Form8949Transaction(item);

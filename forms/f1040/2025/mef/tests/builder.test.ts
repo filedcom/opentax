@@ -2344,7 +2344,7 @@ test("IRS6251 present when calculated AMT is positive", () => {
     },
     f3921: {
       f3921s,
-      iso_amt_basis_ledger: buildIsoAmtBasisLedger({ f3921s }),
+      iso_amt_basis_ledger: buildIsoAmtBasisLedger({ f3921s }, 2025),
     },
   }, sampleFiler());
   assertStringIncludes(xml, "<IRS6251 ");

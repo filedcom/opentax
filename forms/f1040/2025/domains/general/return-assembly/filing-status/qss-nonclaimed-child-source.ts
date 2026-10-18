@@ -14,6 +14,7 @@ const filedChildSchema = z.object({
 export function assertQssNonclaimedChildSource(
   fields: Readonly<Record<string, unknown>>,
   pending: Readonly<Record<string, unknown>>,
+  taxYear: number,
 ): void {
   const filed = fields.qss_nonclaimed_child;
   const raw = pending.general;
@@ -29,7 +30,7 @@ export function assertQssNonclaimedChildSource(
     );
   }
   const source = generalInputSchema.parse(raw);
-  const expected = qssNonclaimedChildFromGeneral(source);
+  const expected = qssNonclaimedChildFromGeneral(source, taxYear);
   const parsed = filedChildSchema.safeParse(filed);
   if (
     fields.filing_status !== "qss" || !parsed.success ||

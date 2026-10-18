@@ -238,6 +238,7 @@ function buildIRS6251(fields: Input, context?: MefBuildContext): string {
       context?.pending?.f3921,
       fields.iso_adjustment!,
       recipients,
+      mefTaxYear(context),
     );
   }
   const line7ExceedsLine10 = typeof fields.tentative_tax === "number" &&

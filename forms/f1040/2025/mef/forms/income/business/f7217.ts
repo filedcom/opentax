@@ -1,3 +1,4 @@
+import { mefTaxYear } from "../../../support/year-config.ts";
 import { element, elements } from "../../../../../mef/xml.ts";
 import {
   assertForm7217FilingSource,
@@ -92,7 +93,7 @@ export const form7217: MefFormDescriptor<"f7217", Input, readonly string[]> = {
   build(fields, context = {}) {
     if (Object.keys(fields).length === 0) return [];
     const input = inputSchema.parse(fields);
-    assertForm7217FilingSource(input);
+    assertForm7217FilingSource(input, mefTaxYear(context));
     return input.form7217s.map((item) => buildForm7217(item, context));
   },
 };

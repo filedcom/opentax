@@ -1,3 +1,4 @@
+import { mefTaxYear } from "../../../support/year-config.ts";
 import { element, elements } from "../../../../../mef/xml.ts";
 import {
   casualtyLossLines,
@@ -186,8 +187,9 @@ function buildIRS4684(
   }
   const acquired = parseDate(input.business_acquired_date, "acquisition date");
   const casualty = parseDate(input.business_casualty_date, "casualty date");
-  if (casualty.getUTCFullYear() !== 2025) {
-    throw new Error("Form 4684 casualty date must be in tax year 2025");
+  const taxYear = mefTaxYear(context);
+  if (casualty.getUTCFullYear() !== taxYear) {
+    throw new Error(`Form 4684 casualty date must be in tax year ${taxYear}`);
   }
   const anniversary = new Date(acquired);
   anniversary.setUTCFullYear(anniversary.getUTCFullYear() + 1);

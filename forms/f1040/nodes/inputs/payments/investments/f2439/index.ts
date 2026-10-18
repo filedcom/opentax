@@ -72,6 +72,7 @@ function totalBox1d(items: F2439Item[]): number {
 export function assertSourcedForm2439(
   item: F2439Item,
   index: number,
+  taxYear: number,
 ): void {
   if ((item.box1c ?? 0) > 0) {
     throw new Error(
@@ -113,9 +114,11 @@ export function assertSourcedForm2439(
   }
   if (
     item.tax_period_begin > item.tax_period_end ||
-    !item.tax_period_end.startsWith("2025-")
+    !item.tax_period_end.startsWith(`${taxYear}-`)
   ) {
-    throw new Error(`Form 2439 ${index + 1} tax period must end in 2025`);
+    throw new Error(
+      `Form 2439 ${index + 1} tax period must end in ${taxYear}`,
+    );
   }
 }
 
@@ -145,11 +148,13 @@ class F2439Node extends TaxNode<typeof inputSchema> {
   readonly inputSchema = inputSchema;
   readonly outputNodes = new OutputNodes([schedule_d, schedule3]);
 
-  compute(_ctx: NodeContext, rawInput: F2439Input): NodeResult {
+  compute(ctx: NodeContext, rawInput: F2439Input): NodeResult {
     const { f2439s } = inputSchema.parse(rawInput);
 
     if (f2439s.length === 0) return { outputs: [] };
-    f2439s.forEach(assertSourcedForm2439);
+    f2439s.forEach((item, index) =>
+      assertSourcedForm2439(item, index, ctx.taxYear)
+    );
 
     const outputs: NodeOutput[] = [];
 

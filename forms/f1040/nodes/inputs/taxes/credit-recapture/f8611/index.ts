@@ -293,7 +293,11 @@ class F8611Node extends TaxNode<typeof inputSchema> {
   compute(ctx: NodeContext, rawInput: z.infer<typeof inputSchema>): NodeResult {
     const input = inputSchema.parse(rawInput);
     for (const item of input.f8611s) {
-      if (item.recapture_year !== ctx.taxYear) {
+      if (
+        item.recapture_year !== ctx.taxYear ||
+        (item.issuer_source !== undefined &&
+          item.issuer_source.tax_year !== ctx.taxYear)
+      ) {
         throw new Error("Form 8611 recapture year must match the return year");
       }
     }

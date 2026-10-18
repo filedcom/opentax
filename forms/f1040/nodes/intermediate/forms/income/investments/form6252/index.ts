@@ -111,7 +111,7 @@ function installmentSaleIncome(
   return gpr * paymentsReceived;
 }
 
-function saleContributions(input: F6252Item): {
+function saleContributions(input: F6252Item, taxYear: number): {
   recapture: number;
   longTerm: number;
   shortTerm: number;
@@ -120,8 +120,10 @@ function saleContributions(input: F6252Item): {
   const hasSaleFacts = input.property_description !== undefined ||
     input.date_acquired !== undefined || input.date_sold !== undefined ||
     input.cost_basis !== undefined;
-  const lines = hasSaleFacts ? calculateInstallmentSale(input) : undefined;
-  if (lines) validatePriorYearForm6252Source(input, lines);
+  const lines = hasSaleFacts
+    ? calculateInstallmentSale(input, taxYear)
+    : undefined;
+  if (lines) validatePriorYearForm6252Source(input, lines, taxYear);
   if (lines && (input.depreciation_allowed ?? 0) > 0) {
     throw new Error(
       "Form 6252 depreciated property needs section 1245/1250 and unrecaptured gain treatment",
@@ -176,12 +178,13 @@ function saleContributions(input: F6252Item): {
   };
 }
 
-/** Reconcile a 2025 payment with the actual ratio and payments reported in 2024. */
+/** Reconcile a later-year payment with the ratio and payments reported the year before. */
 export function validatePriorYearForm6252Source(
   input: F6252Item,
   lines: ReturnType<typeof calculateInstallmentSale>,
+  taxYear: number,
 ): void {
-  if (!input.date_sold || input.date_sold >= "2025-01-01") {
+  if (!input.date_sold || input.date_sold >= `${taxYear}-01-01`) {
     if (input.prior_year_form6252_source !== undefined) {
       throw new Error(
         "Form 6252 sale-year filing cannot use a prior-year filed form",
@@ -189,7 +192,7 @@ export function validatePriorYearForm6252Source(
     }
     return;
   }
-  if (input.date_sold < "2024-01-01") {
+  if (input.date_sold < `${taxYear - 1}-01-01`) {
     throw new Error(
       "Form 6252 sales before 2024 need longer filed-payment history",
     );
@@ -228,9 +231,9 @@ class Form6252Node extends TaxNode<typeof inputSchema> {
   readonly inputSchema = inputSchema;
   readonly outputNodes = new OutputNodes([schedule_d, form4797]);
 
-  compute(_ctx: NodeContext, rawInput: F6252Input): NodeResult {
+  compute(ctx: NodeContext, rawInput: F6252Input): NodeResult {
     const { f6252s } = inputSchema.parse(rawInput);
-    const sales = f6252s.map(saleContributions);
+    const sales = f6252s.map((sale) => saleContributions(sale, ctx.taxYear));
     const total = (key: keyof ReturnType<typeof saleContributions>) =>
       sales.reduce((sum, sale) => sum + sale[key], 0);
     const outputs: NodeOutput[] = [];

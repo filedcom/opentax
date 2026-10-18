@@ -23,7 +23,7 @@ export const singleAssetSchema = z.object({
   activity_description: z.string().trim().min(1).max(40),
   asset_description: z.string().trim().min(1).max(100),
   source_document_ref: z.string().trim().min(1),
-  placed_in_service_date: z.string().regex(/^2025-\d{2}-\d{2}$/),
+  placed_in_service_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
   cost: z.number().int().positive(),
   elected_cost: z.number().int().nonnegative(),
   taxpayer_active_business_income: z.number().int().nonnegative(),
@@ -167,10 +167,11 @@ class Form4562Node extends TaxNode<typeof inputSchema> {
     if (!input.asset) return { outputs: [] };
     const asset = input.asset;
     if (
-      ctx.taxYear !== 2025 || !validServiceDate(asset.placed_in_service_date)
+      !asset.placed_in_service_date.startsWith(`${ctx.taxYear}-`) ||
+      !validServiceDate(asset.placed_in_service_date)
     ) {
       throw new Error(
-        "Form 4562 single-asset path needs a valid 2025 placed-in-service date",
+        `Form 4562 single-asset path needs a valid ${ctx.taxYear} placed-in-service date`,
       );
     }
     if (asset.filing_status === FilingStatus.MFS) {

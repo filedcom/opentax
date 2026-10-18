@@ -73,7 +73,7 @@ export const form2439Pdf: PdfFormDescriptor = {
     if (!Array.isArray(items)) return [];
     const reportable = items.map((raw, index) => {
       const item = itemSchema.parse(raw);
-      assertSourcedForm2439(item, index);
+      assertSourcedForm2439(item, index, 2025);
       return item;
     }).filter((item) => (item.box1a ?? 0) > 0);
     if (reportable.length === 0) return [];

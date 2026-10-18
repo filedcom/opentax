@@ -76,7 +76,7 @@ export const form6252Pdf: PdfFormDescriptor = {
       allPending ? { pending: allPending } : undefined,
     );
     return f6252s.map((item) => {
-      const lines = validateFiledForm6252(item);
+      const lines = validateFiledForm6252(item, 2025);
       const instance: Record<string, unknown> = {
         property_description: item.property_description,
         date_acquired_printed: printedDate(item.date_acquired!),

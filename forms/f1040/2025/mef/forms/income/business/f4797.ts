@@ -1,3 +1,4 @@
+import { mefTaxYear } from "../../../support/year-config.ts";
 import { currentLossFilingProjection } from "../../../../domains/income/business/current-loss-filing-projection.ts";
 import { assertSection1231HistoryFilingEvidence } from "../../../../../nodes/intermediate/forms/income/business/form4797/prior_history.ts";
 import { currentPropertyPassiveAmounts } from "../../../../../nodes/inputs/income/rental-passthrough/schedule_e/current-property-source.ts";
@@ -417,7 +418,11 @@ function buildIRS4797(fields: Input, context?: MefBuildContext): string {
     const sales = form6252InputSchema.parse(source).f6252s;
     const sourceGain = sales
       .filter((sale) => sale.is_capital_asset === false)
-      .reduce((sum, sale) => sum + calculateInstallmentSale(sale).line26, 0);
+      .reduce(
+        (sum, sale) =>
+          sum + calculateInstallmentSale(sale, mefTaxYear(context)).line26,
+        0,
+      );
     if (sourceGain !== installmentGain) {
       throw new Error("Form 4797 line 4 must match Form 6252 line 26");
     }

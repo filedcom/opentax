@@ -161,7 +161,7 @@ export const form7217Pdf = {
   ) {
     if (Object.keys(source).length === 0) return [];
     const input = inputSchema.parse(source);
-    assertForm7217FilingSource(input);
+    assertForm7217FilingSource(input, 2025);
     if (!filer) throw new Error("Form 7217 PDF needs partner filer identity");
     const identity = filerIdentity(filer);
     return input.form7217s.flatMap((item) => {

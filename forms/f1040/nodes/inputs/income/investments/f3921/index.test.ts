@@ -71,7 +71,7 @@ test("Form 3921 boxes 3–5 route a vested, retained ISO spread to Form 6251 lin
       pending: {
         f3921: {
           f3921s: copies,
-          iso_amt_basis_ledger: buildIsoAmtBasisLedger({ f3921s: copies }),
+          iso_amt_basis_ledger: buildIsoAmtBasisLedger({ f3921s: copies }, 2025),
         },
       },
     }),
@@ -131,7 +131,7 @@ test("Form 3921 rejects an exercise outside 2025 and ignores a nonpositive sprea
 });
 
 test("retained ISO exercise emits a cent-precise regular and AMT basis lot", () => {
-  const ledger = buildIsoAmtBasisLedger({ f3921s: [exercise] });
+  const ledger = buildIsoAmtBasisLedger({ f3921s: [exercise] }, 2025);
   assertEquals(ledger, [{
     tax_year: 2025,
     source_document_reference: "Issued Form 3921 copy 1",
@@ -150,30 +150,30 @@ test("retained ISO exercise emits a cent-precise regular and AMT basis lot", () 
 test("Form 3921 issued copies reject duplicates and reconcile owner and amount", () => {
   const prepared = {
     f3921s: [exercise],
-    iso_amt_basis_ledger: buildIsoAmtBasisLedger({ f3921s: [exercise] }),
+    iso_amt_basis_ledger: buildIsoAmtBasisLedger({ f3921s: [exercise] }, 2025),
   };
   assertEquals(
     inputSchema.safeParse({ f3921s: [exercise, exercise] }).success,
     false,
   );
-  assertForm3921IsoSource(prepared, 1_500, ["111223333"]);
+  assertForm3921IsoSource(prepared, 1_500, ["111223333"], 2025);
   assertThrows(
-    () => assertForm3921IsoSource(prepared, 1_500, ["999887777"]),
+    () => assertForm3921IsoSource(prepared, 1_500, ["999887777"], 2025),
     Error,
     "employee must match",
   );
   assertThrows(
-    () => assertForm3921IsoSource(prepared, 1_499, ["111223333"]),
+    () => assertForm3921IsoSource(prepared, 1_499, ["111223333"], 2025),
     Error,
     "must equal",
   );
   assertThrows(
-    () => assertForm3921IsoSource({ f3921s: [exercise] }, 1_500, ["111223333"]),
+    () => assertForm3921IsoSource({ f3921s: [exercise] }, 1_500, ["111223333"], 2025),
     Error,
     "AMT basis ledger",
   );
   assertThrows(
-    () => assertForm3921IsoSource(undefined, 1_500, ["111223333"]),
+    () => assertForm3921IsoSource(undefined, 1_500, ["111223333"], 2025),
     Error,
     "issued Form 3921",
   );

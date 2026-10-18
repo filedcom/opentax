@@ -40,7 +40,7 @@ function isoContext(amount: number) {
     pending: {
       f3921: {
         f3921s,
-        iso_amt_basis_ledger: buildIsoAmtBasisLedger({ f3921s }),
+        iso_amt_basis_ledger: buildIsoAmtBasisLedger({ f3921s }, 2025),
       },
     },
   };

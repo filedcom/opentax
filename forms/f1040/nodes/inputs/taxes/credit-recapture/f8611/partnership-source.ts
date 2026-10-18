@@ -1,8 +1,9 @@
 import { z } from "zod";
 const ref = z.string().trim().min(1);
 const money = z.number().int().nonnegative();
+// The recapture year must be the return year; Form 8611 checks it in compute().
 export const partnershipRecaptureSchema = z.object({
-  tax_year: z.literal(2025),
+  tax_year: z.number().int(),
   statement_reference: ref,
   section42j5_partnership_confirmed: z.literal(true),
   box20_code_f_amount: money.positive(),
@@ -17,7 +18,7 @@ export const partnershipRecaptureSchema = z.object({
         zip: z.string().regex(/^\d{5}$/),
       }).strict(),
       placed_in_service_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
-      recapture_event_date: z.string().regex(/^2025-\d{2}-\d{2}$/),
+      recapture_event_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
       issuer_form8611_line17_total_including_interest: money.positive(),
       distributive_share: z.number().positive().max(1),
       allocated_code_f_amount_including_interest: money.positive(),
@@ -65,6 +66,12 @@ export const partnershipRecaptureSchema = z.object({
         });
       }
     }
+    if (!b.recapture_event_date.startsWith(`${s.tax_year}-`)) {
+      ctx.addIssue({
+        code: "custom",
+        message: "Building recapture event must fall in the statement's tax year",
+      });
+    }
     if (b.placed_in_service_date >= b.recapture_event_date) {
       ctx.addIssue({
         code: "custom",
@@ -86,7 +93,7 @@ export const issuerIdentitySchema = z.object({
   recipient_tin: z.string().regex(/^\d{9}$/),
   statement_reference: ref,
   building_reference: ref,
-  tax_year: z.literal(2025),
+  tax_year: z.number().int(),
 }).strict();
 export function issuedPartnershipRecaptures(
   items: readonly {

@@ -1,3 +1,4 @@
+import { mefTaxYear } from "../../../support/year-config.ts";
 import { element, elements } from "../../../../../mef/xml.ts";
 import {
   calculateInstallmentSale,
@@ -17,7 +18,7 @@ type Input = F6252Input;
 // Most elements are derived form lines, not direct input-to-XML mappings.
 export const FIELD_MAP: ReadonlyArray<readonly [string, string]> = [];
 
-export function validateFiledForm6252(input: F6252Item) {
+export function validateFiledForm6252(input: F6252Item, taxYear: number) {
   if (
     !input.property_description || !input.date_acquired || !input.date_sold ||
     input.selling_price_determinable !== true ||
@@ -38,9 +39,9 @@ export function validateFiledForm6252(input: F6252Item) {
     );
   }
   const sold = installmentSaleDate(input.date_sold, "sale date");
-  const lines = calculateInstallmentSale(input);
-  validatePriorYearForm6252Source(input, lines);
-  if (sold.getUTCFullYear() === 2025) {
+  const lines = calculateInstallmentSale(input, taxYear);
+  validatePriorYearForm6252Source(input, lines, taxYear);
+  if (sold.getUTCFullYear() === taxYear) {
     if (lines.line23 !== 0) {
       throw new Error(
         "Form 6252 year-of-sale filing cannot have prior-year payments",
@@ -71,8 +72,8 @@ export function validateFiledForm6252(input: F6252Item) {
   return lines;
 }
 
-function buildIRS6252(input: F6252Item): string {
-  const lines = validateFiledForm6252(input);
+function buildIRS6252(input: F6252Item, taxYear: number): string {
+  const lines = validateFiledForm6252(input, taxYear);
   return elements("IRS6252", [
     element("PropertyDesc", input.property_description),
     element("AcquiredDt", input.date_acquired),
@@ -110,7 +111,7 @@ export function validateDestinations(
 ): void {
   if (!context?.pending) return;
   const totals = items.reduce((sum, item) => {
-    const gain = calculateInstallmentSale(item).line26;
+    const gain = calculateInstallmentSale(item, mefTaxYear(context)).line26;
     if (item.is_capital_asset === false) {
       return { ...sum, business: sum.business + gain };
     }
@@ -148,7 +149,9 @@ export const form6252: MefFormDescriptor<"form6252", Input, readonly string[]> =
     build(fields, context) {
       if (Array.isArray(fields) && fields.length === 0) return [];
       const { f6252s } = inputSchema.parse(fields);
-      const documents = f6252s.map(buildIRS6252);
+      const documents = f6252s.map((item) =>
+        buildIRS6252(item, mefTaxYear(context))
+      );
       validateDestinations(f6252s, context);
       return documents;
     },

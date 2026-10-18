@@ -166,7 +166,7 @@ test("QSS child review rejects a wrong year, status, duplicate dependent, or mis
   ];
   for (const variant of variants) {
     assertThrows(
-      () => qssNonclaimedChildFromGeneral(generalInputSchema.parse(variant)),
+      () => qssNonclaimedChildFromGeneral(generalInputSchema.parse(variant), 2025),
       Error,
       "QSS nonclaimed child needs matching status",
     );
@@ -176,7 +176,7 @@ test("QSS child review rejects a wrong year, status, duplicate dependent, or mis
       qssNonclaimedChildFromGeneral(generalInputSchema.parse({
         ...source,
         qss_nonclaimed_child_review: undefined,
-      })),
+      }), 2025),
     Error,
     "QSS qualifying child SSN needs a reviewed nondependent child route",
   );

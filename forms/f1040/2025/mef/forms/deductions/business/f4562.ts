@@ -1,4 +1,5 @@
 import { section179PartIXml } from "./f4562_section179.ts";
+import { mefYearConfig } from "../../../support/year-config.ts";
 import type { section179SummarySchema } from "../../../../../nodes/intermediate/forms/deductions/business/form4562/section179-inventory.ts";
 import type {
   currentYearActivitySchema,
@@ -280,10 +281,11 @@ function validateLines(fields: Fields, context?: MefBuildContext): void {
   if (fields.filing_status === "mfs") {
     throw new Error("Form 4562 MFS section 179 allocation is not supported");
   }
+  const cfg = mefYearConfig(context);
   if (
     fields.line1_maximum_dollar_limitation !==
-      Math.min(fields.line2_total_cost, 2_500_000) ||
-    fields.line3_threshold_cost !== 4_000_000 ||
+      Math.min(fields.line2_total_cost, cfg.section179Limit) ||
+    fields.line3_threshold_cost !== cfg.section179PhaseoutThreshold ||
     fields.line4_reduction !==
       Math.max(0, fields.line2_total_cost - fields.line3_threshold_cost) ||
     fields.line5_dollar_limitation !==

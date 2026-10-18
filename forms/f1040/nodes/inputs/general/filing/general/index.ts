@@ -518,6 +518,7 @@ export interface HohQualifyingChild {
 
 export function qssNonclaimedChildFromGeneral(
   input: GeneralInput,
+  taxYear: number,
 ): HohQualifyingChild | undefined {
   const review = input.qss_nonclaimed_child_review;
   if (!review) {
@@ -531,7 +532,8 @@ export function qssNonclaimedChildFromGeneral(
   const ssn = input.qss_qualifying_child_ssn?.replaceAll("-", "");
   if (
     input.filing_status !== FilingStatus.QSS ||
-    ![2023, 2024].includes(input.qss_spouse_death_year ?? 0) ||
+    // IRC §2(a): the spouse died in either of the two prior tax years.
+    ![taxYear - 2, taxYear - 1].includes(input.qss_spouse_death_year ?? 0) ||
     !ssn || !/^\d{9}$/.test(ssn) ||
     ssn !== review.child_ssn.replaceAll("-", "") ||
     `${review.child_first_name} ${review.child_last_name}`.length > 35 ||
@@ -1179,7 +1181,7 @@ function buildF1040Input(
   addIfDefined(
     fields,
     "qss_nonclaimed_child",
-    qssNonclaimedChildFromGeneral(input),
+    qssNonclaimedChildFromGeneral(input, taxYear),
   );
   addIfDefined(
     fields,

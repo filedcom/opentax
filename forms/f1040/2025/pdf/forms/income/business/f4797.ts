@@ -736,7 +736,7 @@ export const form4797Pdf: PdfFormDescriptor = {
       }
       const sales = form6252InputSchema.parse(allPending.form6252).f6252s;
       const gain = sales.filter((sale) => sale.is_capital_asset === false)
-        .reduce((sum, sale) => sum + calculateInstallmentSale(sale).line26, 0);
+        .reduce((sum, sale) => sum + calculateInstallmentSale(sale, 2025).line26, 0);
       if (gain !== fields.gain_form6252) {
         throw new Error("Form 4797 PDF line 4 must match Form 6252 line 26");
       }

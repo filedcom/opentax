@@ -813,7 +813,7 @@ export const irs1040Pdf: PdfFormDescriptor = {
   pdfUrl: "https://www.irs.gov/pub/irs-prior/f1040--2025.pdf",
   projectFields(fields, allPending) {
     assertHohQualifyingChildSource(fields, allPending, 2025);
-    assertQssNonclaimedChildSource(fields, allPending);
+    assertQssNonclaimedChildSource(fields, allPending, 2025);
     const hasForm8888 = allPending.f8888 !== undefined;
     if (
       hasForm8888 &&

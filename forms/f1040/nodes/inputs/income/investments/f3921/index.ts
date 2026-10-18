@@ -47,7 +47,7 @@ export const inputSchema = z.object({ f3921s: z.array(itemSchema).min(1) })
   });
 
 export interface IsoAmtBasisLot {
-  readonly tax_year: 2025;
+  readonly tax_year: number;
   readonly source_document_reference: string;
   readonly corporation_ein: string;
   readonly employee_tin: string;
@@ -58,14 +58,15 @@ export interface IsoAmtBasisLot {
   readonly amt_basis_cents: number;
 }
 
-/** Retained 2025 exercise lots for a later-year regular/AMT basis comparison. */
+/** Retained exercise lots of the return year for a later-year regular/AMT basis comparison. */
 export function buildIsoAmtBasisLedger(
   source: unknown,
+  taxYear: number,
 ): readonly IsoAmtBasisLot[] {
   const parsed = inputSchema.parse(source);
   return parsed.f3921s.map((item) => {
-    if (!item.box2_date_option_exercised.startsWith("2025-")) {
-      throw new Error("Form 3921 line 2i exercise must occur in 2025");
+    if (!item.box2_date_option_exercised.startsWith(`${taxYear}-`)) {
+      throw new Error(`Form 3921 line 2i exercise must occur in ${taxYear}`);
     }
     const regularBasisCents = Math.round(
       item.box3_exercise_price_per_share * item.box5_shares_transferred * 100,
@@ -81,7 +82,7 @@ export function buildIsoAmtBasisLedger(
     }
     const adjustmentCents = Math.max(0, fairValueCents - regularBasisCents);
     return {
-      tax_year: 2025 as const,
+      tax_year: taxYear,
       source_document_reference: item.source_document_reference,
       corporation_ein: item.corporation_ein.replaceAll("-", ""),
       employee_tin: item.employee_tin.replaceAll("-", ""),
@@ -94,8 +95,11 @@ export function buildIsoAmtBasisLedger(
   });
 }
 
-function isoSpread(source: z.infer<typeof inputSchema>): number {
-  const totalCents = buildIsoAmtBasisLedger(source).reduce(
+function isoSpread(
+  source: z.infer<typeof inputSchema>,
+  taxYear: number,
+): number {
+  const totalCents = buildIsoAmtBasisLedger(source, taxYear).reduce(
     (sum, lot) => sum + lot.amt_adjustment_cents,
     0,
   );
@@ -113,6 +117,7 @@ export function assertForm3921IsoSource(
   source: unknown,
   claimedAdjustment: number,
   recipientTins: readonly string[],
+  taxYear: number,
 ): void {
   if (claimedAdjustment <= 0) return;
   if (source === undefined) {
@@ -123,7 +128,8 @@ export function assertForm3921IsoSource(
     .iso_amt_basis_ledger;
   if (
     !Array.isArray(ledger) ||
-    JSON.stringify(ledger) !== JSON.stringify(buildIsoAmtBasisLedger(parsed))
+    JSON.stringify(ledger) !==
+      JSON.stringify(buildIsoAmtBasisLedger(parsed, taxYear))
   ) {
     throw new Error(
       "Form 6251 line 2i needs its prepared Form 3921 AMT basis ledger",
@@ -139,7 +145,7 @@ export function assertForm3921IsoSource(
       "Form 6251 line 2i Form 3921 employee must match the taxpayer or joint-filing spouse",
     );
   }
-  if (isoSpread(parsed) !== claimedAdjustment) {
+  if (isoSpread(parsed, taxYear) !== claimedAdjustment) {
     throw new Error(
       "Form 6251 line 2i must equal the issued Form 3921 exercise spreads",
     );
@@ -152,12 +158,12 @@ class F3921Node extends TaxNode<typeof inputSchema> {
   readonly outputNodes = new OutputNodes([form6251]);
 
   compute(
-    _ctx: NodeContext,
+    ctx: NodeContext,
     rawInput: z.infer<typeof inputSchema>,
   ): NodeResult {
     const parsed = inputSchema.parse(rawInput);
-    const ledger = buildIsoAmtBasisLedger(parsed);
-    const adjustment = isoSpread(parsed);
+    const ledger = buildIsoAmtBasisLedger(parsed, ctx.taxYear);
+    const adjustment = isoSpread(parsed, ctx.taxYear);
     return {
       outputs: [
         ...(adjustment > 0

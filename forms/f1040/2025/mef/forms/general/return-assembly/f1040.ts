@@ -493,7 +493,11 @@ function buildIRS1040(fields: Input, context?: MefBuildContext): string {
     context?.pending ?? {},
     mefTaxYear(context),
   );
-  assertQssNonclaimedChildSource(fields, context?.pending ?? {});
+  assertQssNonclaimedChildSource(
+    fields,
+    context?.pending ?? {},
+    mefTaxYear(context),
+  );
   assertIdentified1099IntOwner(
     fields as Record<string, unknown>,
     context?.pending,

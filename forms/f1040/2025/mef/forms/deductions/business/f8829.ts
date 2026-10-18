@@ -1,4 +1,8 @@
-import { reconcileRentedHomeEvidence } from "../../../../../nodes/intermediate/forms/deductions/business/form_8829/source.ts";
+import { mefTaxYear } from "../../../support/year-config.ts";
+import {
+  assertRentedHomeEvidenceYear,
+  reconcileRentedHomeEvidence,
+} from "../../../../../nodes/intermediate/forms/deductions/business/form_8829/source.ts";
 import { element, elements } from "../../../../../mef/xml.ts";
 import { TS } from "../../../../../nodes/types.ts";
 import {
@@ -143,6 +147,7 @@ function buildIRS8829(fields: Input, context?: MefBuildContext): string {
   checkScheduleC(source, lines, context);
   const proprietor = identity(source, context);
   reconcileRentedHomeEvidence(source, proprietor.ssn);
+  assertRentedHomeEvidenceYear(source, mefTaxYear(context));
   return elements("IRS8829", [
     element("ProprietorNm", proprietor.name),
     element("SSN", proprietor.ssn.replaceAll("-", "")),

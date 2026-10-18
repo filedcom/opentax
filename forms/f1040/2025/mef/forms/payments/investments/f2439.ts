@@ -1,3 +1,4 @@
+import { mefTaxYear } from "../../../support/year-config.ts";
 import type { z } from "zod";
 import { element, elements } from "../../../../../mef/xml.ts";
 import {
@@ -103,7 +104,7 @@ export const form2439: MefFormDescriptor<"f2439", Input, readonly string[]> = {
   build(fields, context) {
     const items = (fields.f2439s ?? []).map((raw, index) => {
       const item = itemSchema.parse(raw);
-      assertSourcedForm2439(item, index);
+      assertSourcedForm2439(item, index, mefTaxYear(context));
       return item;
     });
     const reportable = items.filter((item) => (item.box1a ?? 0) > 0);

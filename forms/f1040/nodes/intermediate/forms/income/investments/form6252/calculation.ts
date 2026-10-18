@@ -69,6 +69,7 @@ export function isLongTermInstallmentSale(
 /** Form 6252, Part I and Part II, for a determinable-price sale. */
 export function calculateInstallmentSale(
   facts: InstallmentSaleFacts,
+  taxYear: number,
 ): InstallmentSaleLines {
   const required = [
     "selling_price",
@@ -97,9 +98,9 @@ export function calculateInstallmentSale(
   }
   const sold = installmentSaleDate(facts.date_sold, "sale date");
   const acquired = installmentSaleDate(facts.date_acquired, "acquisition date");
-  if (sold <= acquired || sold.getUTCFullYear() > 2025) {
+  if (sold <= acquired || sold.getUTCFullYear() > taxYear) {
     throw new Error(
-      "Form 6252 sale must follow acquisition and occur by tax year 2025",
+      `Form 6252 sale must follow acquisition and occur by tax year ${taxYear}`,
     );
   }
   const line5 = facts.selling_price!;
@@ -137,7 +138,7 @@ export function calculateInstallmentSale(
     );
   }
   const line19 = line16 / line18;
-  const line20 = sold.getUTCFullYear() === 2025 ? line17 : 0;
+  const line20 = sold.getUTCFullYear() === taxYear ? line17 : 0;
   const line21 = facts.payments_received!;
   const line22 = line20 + line21;
   const line23 = facts.payments_received_prior_years ?? 0;

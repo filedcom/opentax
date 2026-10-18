@@ -22,8 +22,8 @@ export const rentedHomeEvidenceSchema = z.object({
     source_reference: reference,
     business_area_sqft: z.number().int().positive(),
     total_area_sqft: z.number().int().positive(),
-    use_started_on: z.string().date().regex(/^2025-/),
-    use_ended_on: z.string().date().regex(/^2025-/),
+    use_started_on: z.string().date(),
+    use_ended_on: z.string().date(),
     qualifying_use: z.enum([
       "principal_place_of_business",
       "client_meeting_place",
@@ -38,9 +38,9 @@ export const rentedHomeEvidenceSchema = z.object({
       payment_reference: reference,
       category: z.enum(expenseCategories),
       amount: wholeDollars.positive(),
-      covered_from: z.string().date().regex(/^2025-/),
-      covered_through: z.string().date().regex(/^2025-/),
-      paid_on: z.string().date().regex(/^2025-/),
+      covered_from: z.string().date(),
+      covered_through: z.string().date(),
+      paid_on: z.string().date(),
       not_claimed_elsewhere_confirmed: z.literal(true),
       no_reimbursement_or_tax_exempt_allocation_confirmed: z.literal(true),
       direct_repairs_business_area_only_confirmed: z.boolean(),
@@ -53,7 +53,7 @@ export const rentedHomeEvidenceSchema = z.object({
     }).strict(),
     z.object({
       kind: z.literal("prior_actual_return"),
-      tax_year: z.literal(2024),
+      tax_year: z.number().int(),
       return_reference: reference,
       form8829_reference: reference,
       home_identifier: reference,
@@ -63,6 +63,33 @@ export const rentedHomeEvidenceSchema = z.object({
     }).strict(),
   ]),
 }).strict();
+
+/** Home use and expenses fall in the return year; a carryover comes from the year before. */
+export function assertRentedHomeEvidenceYear(
+  source: RentedHomeSource,
+  taxYear: number,
+): void {
+  if (!source.source_evidence) return;
+  const evidence = rentedHomeEvidenceSchema.parse(source.source_evidence);
+  const dates = [
+    evidence.home_use_record.use_started_on,
+    evidence.home_use_record.use_ended_on,
+    ...evidence.expenses.flatMap((row) => [
+      row.covered_from,
+      row.covered_through,
+      row.paid_on,
+    ]),
+  ];
+  if (
+    dates.some((date) => !date.startsWith(`${taxYear}-`)) ||
+    (evidence.carryover.kind === "prior_actual_return" &&
+      evidence.carryover.tax_year !== taxYear - 1)
+  ) {
+    throw new Error(
+      `Form 8829 home-use records must be for ${taxYear} with a ${taxYear - 1} carryover`,
+    );
+  }
+}
 
 export function reconcileRentedHomeEvidence(
   source: RentedHomeSource,
