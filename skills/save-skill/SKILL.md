@@ -18,7 +18,7 @@ Install as a plugin:
 ```bash
 # In Claude Code, run:
 /plugin marketplace add filedcom/opentax
-/plugin install opentax@filedcom-opentax
+/plugin install opentax@opentax
 ```
 
 Once installed, the skills are always available:
