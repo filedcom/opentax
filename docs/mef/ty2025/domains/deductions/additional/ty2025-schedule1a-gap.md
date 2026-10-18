@@ -249,7 +249,7 @@ full-return XSD. All four pages of the `v41` PDF were rendered and inspected:
 Part II prints those amounts and zero on line 4b; line 8 prints $30,000 MAGI,
 line 9 prints the $150,000 threshold, lines 10–12 are blank, and
 Form 1040 line 13b prints $5,000. The page review and SHA-256 are in the
-[filled-PDF notes](../../../testing/ty2025-filled-pdf-review-2026-09-29.md). This is a
+filled-PDF notes. This is a
 synthetic source check; payer-issued bytes and IRS business-rule acceptance
 remain open.
 Source commit `46d7d080` passed `deno task test` at 8,938/8,938 with zero
@@ -275,7 +275,7 @@ $8,175 tax, and $175 owed. Native Schedule 1-A prints $4,000 on lines
 14a/14c/15/21/38 and zero on line 14b; the full return passes local TY2025
 v5.4 XSD. All four pages of the `v42` PDF were rendered and inspected; the
 amounts, filer identity, and blank unrelated parts agree with the source,
-graph, and XML. The [filled-PDF notes](../../../testing/ty2025-filled-pdf-review-2026-09-29.md)
+graph, and XML. The filled-PDF notes
 retain the page review and SHA-256. Source references are review assertions;
 payer-issued W-2 and payroll bytes, IRS business rules, and ATS acceptance
 remain open.
@@ -290,7 +290,7 @@ elsewhere review. The graph reports $80,000 AGI, $4,000 on Form 1040 line
 prints the VIN, zero on line 22(ii), $4,000 on lines 22(iii)/23/24/30/38,
 and passes local TY2025 v5.4 full-return XSD. All four pages of the `v43`
 PDF were rendered and inspected; the Part IV rows, filer identity, and Form
-1040 totals agree with the source, graph, and XML. The [filled-PDF notes](../../../testing/ty2025-filled-pdf-review-2026-09-29.md)
+1040 totals agree with the source, graph, and XML. The filled-PDF notes
 retain the page review and SHA-256. The references are review assertions,
 not authentication of the underlying lender or purchase documents. IRS
 business rules and ATS acceptance remain open.
@@ -318,7 +318,7 @@ once. The $1,500 unreported portion reaches Form 1040 line 1c, and Form
 4137's $115 tax reaches Schedule 2 lines 5/7/21 and Form 1040 line 23.
 The source graph and native XML pass local TY2025 v5.4 full-return XSD.
 The corrected seven-page `v79` packet was visually inspected; its hash is
-in the [filled-PDF notes](../../../testing/ty2025-filled-pdf-review-2026-09-29.md).
+in the filled-PDF notes.
 This route requires a matching employer, W-2 occupation code, recipient
 SSN, and Form 4137 amount at export. Multiple-employer greater-of
 arithmetic and the worksheet pass focused tests. Form 4070 employer-report bytes,

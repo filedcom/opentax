@@ -40,7 +40,7 @@ Public entrypoints are `mod.ts`, `catalog.ts`, `cli/main.ts`, and `forms/f1040/2
 │   ├── architecture/              # Internal design and repository navigation
 │   ├── mef/ty2025/                # Readiness, inventory and source evidence by topic
 │   ├── ty2026/                    # Source research by topic
-│   ├── ats/ / releases/           # ATS correspondence drafts and release documents
+│   ├── ats/                       # ATS preparation and correspondence drafts
 │   └── index.html / build/        # Existing static documentation site
 ├── scripts/
 │   ├── testing/                   # Harness: structure and oracle checks, test runner (see its README)

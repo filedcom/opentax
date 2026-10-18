@@ -1,9 +1,10 @@
 # IRS MeF files
 
-The IRS schemas and business rules the harness validates against. IRS e-Services
-releases them only to registered software developers, so this folder is in the
-repository but its contents are not: `.gitignore` here admits only this README,
-`manifest.json` and itself.
+The IRS schemas and business rules the harness validates against, plus the public
+IRS PDFs the research docs cite. IRS e-Services releases the schemas and rules
+only to registered software developers, so this folder is in the repository but
+its contents are not: `.gitignore` here admits only this README, `manifest.json`
+and itself.
 
 Every file below is listed in [`manifest.json`](./manifest.json) with its
 SHA-256. `bun run check:irs` reports what is present, missing or altered. Tests
@@ -19,6 +20,7 @@ case in CI.
 | `4868/2026v1.0/` | TY2026 Form 4868 extension schemas (`Extensions/4868/Return4868.xsd`); the 2025v5.4 package has no 4868 schema | `IMF_Series_2026v1.0.zip` › `4868_2026v1.0.zip` › `4868_Schema_2026v1.0.zip` › `2026v1.0/` |
 | `4868/rules/4868_Business_Rules_2026v1.0.pdf` | TY2026 Form 4868 rules that `forms/f4868/validation/rules` implements | `IMF_Series_2026v1.0.zip` › `4868_2026v1.0.zip` › `4868_Business_Rules_2026v1.0.zip` |
 | `wsdl/10.9/` | MeF A2A WSDL 10.9: `MeFMSIServices` (Login, Logout, ETIN services), `MeFTransmitterServicesMTOM` (SendSubmissions, acks, status), `MeFHeader.xsd` and the release notes; `cli/mef` builds against them and its mock IRS server validates with them | `WSDLs_10.9/`, all files as released |
+| `corpus/ty2026/` | Public irs.gov TY2026 research snapshot cited by `docs/ty2026`: draft forms and instructions, prior-year comparators, authorities, ATS scenario packets and the MeF workbooks (250 files, 88 MB) | Not an e-Services package: `python3 docs/ty2026/corpus/download.py` refetches it; URLs and retrieval times are in `docs/ty2026/corpus/manifest.json` |
 
 Each `mef/<version>/` folder holds the schema package's version folder as
 released (`Common/`, `IndividualIncomeTax/`, `Shared/`, ...), so for example

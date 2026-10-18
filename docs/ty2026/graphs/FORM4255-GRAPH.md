@@ -1,9 +1,9 @@
 # TY2026 Form 4255 credit recapture and excessive-payment ledger
 
 Snapshot: September 27, 2026. The IRS currently serves [Form 4255
-(December 2025)](../corpus/authorities/f4255--2025.pdf) and matching
-[instructions](../corpus/authorities/i4255--2025.pdf), pinned with
-[646 PDF fields](../inventories/pdf-fields/pdf-fields-f4255.csv). Its source is each originally
+(December 2025)](../../../irs/corpus/ty2026/authorities/f4255--2025.pdf) and matching
+[instructions](../../../irs/corpus/ty2026/authorities/i4255--2025.pdf), pinned with
+646 PDF fields. Its source is each originally
 claimed property/credit, not a taxpayer-entered aggregate recapture amount.
 Recheck the form and current MeF release before a TY2026 filing route.
 
@@ -29,7 +29,7 @@ Recheck the form and current MeF release before a TY2026 filing route.
   increased tax. Adjust remaining Form 3800 carryovers and asset/partner
   basis from the same ledger. Part III computes §48 clean-hydrogen emissions
   tier recapture from the corresponding Form 3468 property.
-- The pinned 2026 [Schedule 2 draft](../corpus/draft/f1040s2.pdf) has line
+- The pinned 2026 [Schedule 2 draft](../../../irs/corpus/ty2026/draft/f1040s2.pdf) has line
   **10** for net EPE recapture from Form 4255 line 1d column (l), and line
   **13a** for recapture of other credits. Route other Form 4255 taxes and
   penalties by their exact source/type only after reconciling final 2026

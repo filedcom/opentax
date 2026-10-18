@@ -2,7 +2,7 @@
 
 Sources: the IRS continuous-use [Form 1099-DIV](https://www.irs.gov/pub/irs-prior/f1099div--2024.pdf)
 and [instructions](https://www.irs.gov/pub/irs-prior/i1099div--2024.pdf), both January
-2024 revisions pinned under `corpus/authorities/`, plus the pinned 2026 draft
+2024 revisions pinned under `irs/corpus/ty2026/authorities/`, plus the pinned 2026 draft
 Schedule B and its instructions. The 1099-DIV revision is not a TY2026-specific
 form. Recheck the continuous-use source when IRS changes it, and reconcile the
 2026 1040 instructions and current MeF rules before XML output. The pinned

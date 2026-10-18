@@ -1,6 +1,6 @@
 # TY2026 ATS Form 1040 scenario 3 fixture contract
 
-Source: pinned [18-page IRS scenario 3 packet](../corpus/ats/1040-scenario-03.pdf),
+Source: pinned [18-page IRS scenario 3 packet](../../../irs/corpus/ty2026/ats/1040-scenario-03.pdf),
 SHA-256 `c52160656064f83aed27b72683d3247b654f3c81b30f02a4c50ac76041c1bc79`.
 It is a draft packet with many calculation fields blank. Keep **printed
 source**, **independent expectation**, and **application output** separate in

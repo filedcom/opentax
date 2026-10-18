@@ -1,10 +1,10 @@
 # TY2026 self-employed health insurance deduction contract
 
-Sources: pinned [2026 draft Form 7206](../corpus/draft/f7206.pdf), SHA-256
+Sources: pinned [2026 draft Form 7206](../../../irs/corpus/ty2026/draft/f7206.pdf), SHA-256
 `66d95039b0ee96857505db5b2d3882c51082a73ea70d532bd94dacddb2156700`,
-and [2026 draft instructions](../corpus/draft/i7206.pdf), SHA-256
+and [2026 draft instructions](../../../irs/corpus/ty2026/draft/i7206.pdf), SHA-256
 `0b06657958a23088806040d89fe8ff66ff1b28742eec5f5c21fb0d6e67376ff4`.
-The pinned [2025 Publication 974](../corpus/authorities/p974--2025.pdf), SHA-256
+The pinned [2025 Publication 974](../../../irs/corpus/ty2026/authorities/p974--2025.pdf), SHA-256
 `e17265a7ff82e0b2541dbf7bd90797bdaa1eb5678c3d23d059f42939274f0845`,
 is **only a prior-year comparator** for the Marketplace premium-tax-credit
 loop. Obtain the 2026 publication or updated IRS method before finalizing
@@ -41,7 +41,7 @@ Schedule 1 line 17 and the premium cap without blindly subtracting a PTC
 total from all premiums. Keep the 2025 publication labeled comparator until
 the 2026 method is available.
 
-The [2026 PDF inventory](../inventories/pdf-fields/pdf-fields-f7206.csv) contains **16 widgets**, all
+The 2026 PDF inventory contains **16 widgets**, all
 in the field tree: name/TIN plus lines 1–14 on the single printed page (PDF
 page 2 after the coversheet). Fields `f1_3[0]` through `f1_16[0]` follow
 printed lines 1–14. Render each plan's own values and inspect the result.

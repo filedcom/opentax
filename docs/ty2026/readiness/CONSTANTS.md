@@ -5,7 +5,7 @@ field of `F1040Config` in `forms/f1040/nodes/config/types.ts`, plus explicit
 year rules where a single config value cannot describe the calculation. This table is a
 work list, not permission to copy a TY2025 value. Cite the exact authority and
 page/section in the code review for each value. The linked PDFs are pinned by
-SHA-256 in `corpus/manifest.json`.
+SHA-256 in `docs/ty2026/corpus/manifest.json`.
 
 | Config members or rule | TY2026 authority / decision |
 | --- | --- |
@@ -54,8 +54,7 @@ SHA-256 in `corpus/manifest.json`.
   against annual business miles. Medical/moving mileage remains to implement.
 - Credits and deductions with effective-date sunsets (for example residential
   energy and clean-vehicle provisions) need source-specific TY2026 eligibility
-  decisions. `year-literals.csv` identifies every shared-node 2025 literal to
-  inspect; never infer that an old credit remains available from an existing
+  decisions. Inspect every shared-node 2025 literal; never infer that an old credit remains available from an existing
   serializer or PDF descriptor.
 
 For every row, record the final implemented value/rule, precise source

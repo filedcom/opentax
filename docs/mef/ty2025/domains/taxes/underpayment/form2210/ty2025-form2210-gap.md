@@ -60,7 +60,7 @@ handler stays unchanged and the new document contract excludes that branch.
 Full filing/return reconciliation, accepted source proof, wider methods,
 business rules and IRS acceptance remain open. Private proof:
 `form2210-regular-pdf-20261008-v1/` (failed development) and `v2/` (final);
-see the [execution journal](../../../../readiness/ty2025-readiness-execution-2026-10-07.md).
+see the execution journal.
 
 
 ## October 8 regular-method native document checkpoint
@@ -88,8 +88,7 @@ unchanged. The XML fragment remains unregistered, no Form 1040 line 38 is
 inserted, and both public exporters remain guarded. PDF, full filing/return
 reconciliation, source/payment authentication, wider methods and IRS proof
 remain open. `filingReady` stays false. Private evidence:
-`form2210-regular-native-20261008-v1/`; see the
-[execution journal](../../../../readiness/ty2025-readiness-execution-2026-10-07.md).
+`form2210-regular-native-20261008-v1/`.
 
 
 ## October 8 actual-withholding comparison checkpoint
@@ -121,8 +120,7 @@ source authentication, AI, relief, broader source branches and IRS proof
 remain open. Future 44 records the return-balance filing-date gap; its
 `paid_on` handler and tests remain unchanged and unqualified for that rule.
 No future work, packet, rendered page or schema result is counted here.
-Private proof: `form2210-actual-withholding-20261008-v1/`; see the
-[execution journal](../../../../readiness/ty2025-readiness-execution-2026-10-07.md).
+Private proof: `form2210-actual-withholding-20261008-v1/`.
 
 
 ## October 8 public-return payment join checkpoint
@@ -159,7 +157,7 @@ completion stays open.
 
 Private proof: `form2210-finalized-payments-20261008-v1/`; full command,
 timestamps, source hashes and review are in the
-[execution journal](../../../../readiness/ty2025-readiness-execution-2026-10-07.md).
+execution journal.
 
 
 ## October 8 dated-payment calculation checkpoint

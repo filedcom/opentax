@@ -80,9 +80,7 @@ pages. These are source projections, not a registered positive filing route.
 The helper explicitly retains `filingReady:false`, `issuerVerified:false`
 and `printedContentsVerified:false`; source/calculation joins, supplemental
 statements, static-page/checkbox authenticity, line25c and prepared-copy packet
-integration remain required. Both final exports remain guarded. See the
-[execution record](../readiness/ty2025-readiness-execution-2026-10-07.md) for immutable
-commit, artifact and test digests. The broader ownership/attachment task stays
+integration remain required. Both final exports remain guarded. The broader ownership/attachment task stays
 open; no blanket entity-root exclusion is approved.
 
 

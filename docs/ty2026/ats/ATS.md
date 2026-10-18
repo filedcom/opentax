@@ -2,7 +2,7 @@
 
 Source: [IRS TY2026 ATS index](https://www.irs.gov/e-file-providers/tax-year-2026-form-1040-series-and-extensions-modernized-e-file-mef-assurance-testing-system-ats-information),
 captured 2026-09-27, and the pinned [TY2026 Publication 1436
-guidelines](../corpus/authorities/p1436--2026.pdf), SHA-256
+guidelines](../../../irs/corpus/ty2026/authorities/p1436--2026.pdf), SHA-256
 `cf856032c7104b5ad1765b07a1769642b24e771c4fe87089d85c613331d2ce3a`.
 The manifest pins each linked PDF's exact URL and hash.
 These are **draft** scenarios. The index lists 1040 scenarios 13 and 14 but
@@ -40,7 +40,7 @@ business-rule expectations, and PDF fields. Keep three distinct columns:
 **application result**. Some scenario PDFs contain blank or inconsistent
 computed amounts; a printed number is never sufficient evidence by itself.
 Verify forms and attachment sequence against the current 2026 XSD and the
-accepted-form XLSX in `corpus/mef/`. Record any unsupported form as a visible
+accepted-form XLSX in `irs/corpus/ty2026/mef/`. Record any unsupported form as a visible
 gap in the coverage ledger, rather than declaring the scenario passed from the
 1040 total alone.
 

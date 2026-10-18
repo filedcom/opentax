@@ -1,10 +1,10 @@
 # TY2026 Form 6781 contracts and straddles contract
 
-Source snapshot: the pinned [2026 draft Form 6781](../corpus/draft/f6781.pdf),
+Source snapshot: the pinned [2026 draft Form 6781](../../../irs/corpus/ty2026/draft/f6781.pdf),
 SHA-256 `4796657aa0fc3336740b5909701b6813219c9dadf466325d694780876e235a1a`.
 Its printed pages 2–4 contain the **2026 instructions**. The separate
 `i6781--dft.pdf` URL is not required for this draft. The pinned
-[2025 Publication 550](../corpus/authorities/p550--2025.pdf) is a prior-year
+[2025 Publication 550](../../../irs/corpus/ty2026/authorities/p550--2025.pdf) is a prior-year
 comparator for straddle basis and carryover rules. Confirm the final 2026
 form/instructions, current Pub. 550, Schedule D/8949 instructions and MeF
 XSD/rules before filing.
@@ -52,7 +52,7 @@ input also makes the 1040 direct-capital-distribution exception inapplicable.
 - The TY2025 MeF serializer emits Part I account rows and derived totals
   only. The TY2025 PDF descriptor prints at most three accounts, omits
   elections, lines 4/6, and Parts II/III. Neither is a complete 2026 filed
-  form; the draft has [71 terminal widgets](../inventories/pdf-fields/pdf-fields-f6781.csv), all in the
+  form; the draft has 71 terminal widgets, all in the
   field tree. Its five PDF pages are a draft cover, one form page and three
   instruction pages.
 - `form6781` has no TY2026 graph registration, PDF builder or MeF descriptor.

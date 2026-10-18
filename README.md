@@ -165,6 +165,13 @@ transmission, applicable IRS testing/identifiers, state coverage and acceptance
 handling must be established separately. Export is neither filing nor acceptance;
 these facts do not establish any commercial product's IRS authorization.
 
+Export offers MeF preparation the files a return names: PDFs from the return's
+`attachments/` folder, matched by the file name its inputs use, and retained
+copies from `retained/`, matched by reference. A source copy whose bytes an
+input needs is stored as `"bytes": {"sha256": "<digest>"}` (or
+`{"retained": "<file name>"}`) and read from `retained/`. A missing file is
+reported with the path it belongs at.
+
 The CLI stores returns locally. Uploading source documents into a hosted
 assistant is a separate disclosure to that provider, not local-only processing.
 
@@ -182,6 +189,13 @@ opentax return export --returnId a1b2c3 --type mef > return.xml
 # by its Submission ID. Needs the originator EFIN, the IRS-assigned Software ID
 # and a reviewed residency JSON (default returns/<id>/residency-review.json).
 opentax return export --returnId a1b2c3 --type mef-submission --efin 123456 --software-id 25000000
+
+# Add a PDF filed with the return, under the file name its inputs use;
+# --description when the form needs a specific MeF attachment description
+opentax return attach --returnId a1b2c3 --file ./policy.pdf --name 2025-leave-policy.pdf
+
+# Add a retained source copy (kept, not transmitted) under the reference its inputs use
+opentax return attach --returnId a1b2c3 --file ./notice.pdf --reference "2023 CTC notice copy"
 
 # List entries in a return
 opentax form list --returnId a1b2c3
@@ -289,18 +303,9 @@ bun run compile
 ### TY2026 research sources
 
 The [TY2026 research corpus](./docs/ty2026/README.md) contains the implementation
-plans, source manifest, and pinned IRS PDFs. These PDFs use Git LFS so they do
-not become ordinary Git blobs. Install Git LFS before working with the corpus:
-
-```bash
-git lfs install
-git lfs pull
-```
-
-When refreshing IRS sources, follow the [corpus instructions](./docs/ty2026/README.md#working-with-the-pinned-pdfs).
-Verify that new or changed PDFs appear in `git lfs ls-files` before pushing.
-Adding LFS tracking after a regular PDF commit does not remove that PDF from
-Git history.
+plans and the source manifest. The IRS PDFs it cites are not in Git: fetch them
+into the gitignored `irs/corpus/ty2026/` with `python3 docs/ty2026/corpus/download.py`
+and check them with `bun run check:irs` (see [`irs/README.md`](./irs/README.md)).
 
 ### Contributing with Claude Code
 

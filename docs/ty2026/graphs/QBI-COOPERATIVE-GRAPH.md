@@ -1,15 +1,15 @@
 # TY2026 QBI and cooperative filing contract
 
-The 2026 [Form 8995](../corpus/draft/f8995.pdf), [Form 8995-A](../corpus/draft/f8995a.pdf),
-[Form 8995-A Schedule A](../corpus/draft/f8995aa.pdf), and [Form 8995
-instructions](../corpus/draft/i8995.pdf) are pinned in the manifest. The
-continuous-use [Form 1099-PATR](../corpus/authorities/f1099ptr--2025.pdf) and
-[instructions](../corpus/authorities/i1099ptr--2025.pdf) expressly apply to 2025
+The 2026 [Form 8995](../../../irs/corpus/ty2026/draft/f8995.pdf), [Form 8995-A](../../../irs/corpus/ty2026/draft/f8995a.pdf),
+[Form 8995-A Schedule A](../../../irs/corpus/ty2026/draft/f8995aa.pdf), and [Form 8995
+instructions](../../../irs/corpus/ty2026/draft/i8995.pdf) are pinned in the manifest. The
+continuous-use [Form 1099-PATR](../../../irs/corpus/ty2026/authorities/f1099ptr--2025.pdf) and
+[instructions](../../../irs/corpus/ty2026/authorities/i1099ptr--2025.pdf) expressly apply to 2025
 and later years until superseded. Forms 8995-A
-[Schedules B](../corpus/authorities/f8995ab--2022.pdf),
-[C](../corpus/authorities/f8995ac--2022.pdf), and
-[D](../corpus/authorities/f8995ad--2022.pdf) are still posted as December 2022
-continuous-use forms. The latest [Form 8995-A instructions](../corpus/authorities/i8995a--2025.pdf)
+[Schedules B](../../../irs/corpus/ty2026/authorities/f8995ab--2022.pdf),
+[C](../../../irs/corpus/ty2026/authorities/f8995ac--2022.pdf), and
+[D](../../../irs/corpus/ty2026/authorities/f8995ad--2022.pdf) are still posted as December 2022
+continuous-use forms. The latest [Form 8995-A instructions](../../../irs/corpus/ty2026/authorities/i8995a--2025.pdf)
 are **2025 only**, so use them as a comparator for the cooperative mechanism,
 not proof of a 2026 limit or filing rule. The 2026 Form 8995 draft instruction
 title and new $400 paragraph say 2026, but several internal page footers still
@@ -77,9 +77,9 @@ active-participation checkbox.
 ## PDF and MeF build targets
 
 The generated field inventories capture canonical names, tooltip, physical
-page, rectangle, and field-tree membership: [Form 8995](../inventories/pdf-fields/pdf-fields-f8995.csv)
-has **36** terminal fields; [Form 8995-A](../inventories/pdf-fields/pdf-fields-f8995a.csv) has **114**;
-the 2026 [Schedule A (8995-A)](../inventories/pdf-fields/pdf-fields-f8995aa.csv) has **67**. All are in
+page, rectangle, and field-tree membership: Form 8995
+has **36** terminal fields; Form 8995-A has **114**;
+the 2026 Schedule A (8995-A) has **67**. All are in
 their AcroForm field trees. The three December 2022 Schedules B/C/D are XFA
 forms, so their PDF production path needs a separate render/fill decision and
 visual verification. A final 2026 revision can change any widget.

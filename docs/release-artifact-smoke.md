@@ -38,65 +38,49 @@ bun scripts/release/smoke-release-binary.ts ./opentax-linux-x64 1.2.3 [transcrip
 
 Use the actual asset path and injected version. The optional third argument
 records every call's output, masked only for return IDs, the temporary
-directory and the MeF clock, so two builds can be compared byte for byte; see
-[scripts/parity/README.md](../scripts/parity/README.md). Cross-compiled assets must be
+directory and the MeF clock, so two builds can be compared byte for byte.
+Cross-compiled assets must be
 run on the corresponding architecture. This check proves only that one simple
 source-backed return works through the packaged binary on that platform. It is
 not the full test suite, TY2025 XSD validation, PDF visual inspection, tax-rule
 coverage, malware/signature verification, or IRS ATS acceptance. Those remain
 separate release gates. No smoke result is claimed until the workflow runs.
 
-## Proposed next CLI release: v2.0.6
+## Cutting a release
 
-Read-only inventory on 2026-10-02: `v2.0.5` is the latest published GitHub
-release and tag. It has the five native binaries but no `SHA256SUMS` asset;
-that tag predates the current checksum step. PR
-[#59](https://github.com/filedcom/opentax/pull/59) is open as a draft against
-`main`. `cli/version.ts` stays `dev` in source; the release workflow injects the
-tag version before compiling. `deno.json` still has package version `0.0.1`,
-which is separate from the CLI binary release and is not changed by that
-workflow.
+`cli/version.ts` stays `dev` in source; the release workflow injects the tag
+version before compiling. The `package.json` version is separate from the CLI
+release and is not changed by the workflow.
 
-After PR #59 implementation is complete, run the agreed full tests, local
-TY2025 XSD checks, and filled-PDF review, resolve PR review/checks, and merge
-it. Then build all five targets from the merged commit without publishing:
+Build all five targets from the merged commit without publishing:
 
 ```sh
 gh workflow run Release --ref main -f dry_run=true
 gh run list --workflow Release --limit 3
 ```
 
-Check the selected dry-run run's five build/smoke jobs and downloadable Actions
-artifacts. Its injected version is `0.0.0-dev` because the ref is `main`.
-After that gate passes, tag the verified merged commit and let the tag-push
-workflow publish; do not tag the moving PR branch:
+Check the run's five build/smoke jobs and downloadable Actions artifacts; the
+injected version is `0.0.0-dev` because the ref is `main`. Then tag the
+verified merged commit and let the tag-push workflow publish:
 
 ```sh
 git switch main
 git pull --ff-only origin main
-git tag v2.0.6
-git push origin v2.0.6
-gh run list --workflow Release --limit 3
-gh release view v2.0.6 --json tagName,assets,publishedAt
+git tag vX.Y.Z
+git push origin vX.Y.Z
+gh release view vX.Y.Z --json tagName,assets,publishedAt
 ```
 
 Expected release assets are `opentax-linux-x64`, `opentax-linux-arm64`,
-`opentax-macos-x64`, `opentax-macos-arm64`,
-`opentax-windows-x64.exe`, and `SHA256SUMS`. The release job depends on all five
-native build/smoke jobs, fails on a missing upload, and requires exactly five
-nonempty downloaded binaries before writing checksums. Verify each published
-digest against `SHA256SUMS`, then download the matching host binary and rerun
-the compiled-asset smoke with
-expected version `2.0.6`:
+`opentax-macos-x64`, `opentax-macos-arm64`, `opentax-windows-x64.exe` and
+`SHA256SUMS`. The release job depends on all five build/smoke jobs, fails on a
+missing upload, and requires exactly five nonempty binaries before writing
+checksums. Verify each published digest against `SHA256SUMS`, then rerun the
+smoke on the matching host binary:
 
 ```sh
-deno run --allow-read --allow-write --allow-run --allow-net=www.irs.gov \
-  scripts/release/smoke-release-binary.ts ./opentax-macos-arm64 2.0.6
+bun scripts/release/smoke-release-binary.ts ./opentax-macos-arm64 X.Y.Z
 ```
 
-Use the binary name for the actual host architecture. The smoke exercises a
-synthetic Form 1040/W-2 calculation, validation, finalized MeF XML, and a
-loadable PDF with those filled Form 1040 values. It does not establish TY2025
-IRS ATS acceptance. The ATS certificate, enrollment, endpoint/WSDL/trust
-package, and authorized test transmission remain separate prerequisites in
-[the ATS plan](./ats/ty2025.md).
+The smoke does not establish IRS ATS acceptance; see
+[the ATS plan](./ats/ty2025.md) and [A2A transmission](./mef/transmission.md).

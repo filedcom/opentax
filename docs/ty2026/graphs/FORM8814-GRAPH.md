@@ -1,8 +1,8 @@
 # TY2026 Form 8814 parent election contract
 
-Source snapshot: pinned [2026 draft Form 8814](../corpus/draft/f8814.pdf),
+Source snapshot: pinned [2026 draft Form 8814](../../../irs/corpus/ty2026/draft/f8814.pdf),
 SHA-256 `4ba275126e96f31984373285c48e53fad3c82aa8f01e0f72100f7cff962dae0d`,
-and [2026 draft instructions](../corpus/draft/i8814.pdf), SHA-256
+and [2026 draft instructions](../../../irs/corpus/ty2026/draft/i8814.pdf), SHA-256
 `66431f1f4588c1195fbca28f35cec7c9659d2a68eccf98afac62e8729362233d`.
 Confirm final form/instructions, current Schedule D/1040/6251/8960/8962
 instructions and MeF rules before filing.
@@ -66,7 +66,7 @@ election can be less favorable.
   established by the shared source record.
 - The TY2025 MeF serializer emits one form per child and the TY2025 PDF
   descriptor maps the ordinary numeric/check fields. The
-  [2026 draft inventory](../inventories/pdf-fields/pdf-fields-f8814.csv) has **26 terminal widgets**,
+  2026 draft inventory has **26 terminal widgets**,
   all in its field tree: 23 text and three buttons. The current 2026
   registry has no Form 8814 calculation, PDF or MeF route.
 

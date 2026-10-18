@@ -72,7 +72,6 @@ issuer authenticity, a complete filing route or IRS acceptance.
 | Next-year import | Source-reconciled synthetic opening contracts preserve activity and reporting character. Authenticated acceptance, durable accepted-ledger promotion and a production 2026 engine import remain unproved. |
 | Full completion | Main Form 8582 requirement remains unchecked. Joint name-header parity (future 35), active first-year entire-gain graph (future 39), broader source/owner/disposition combinations, authentic source/acceptance records, matching business rules and IRS ATS remain open. Future items are unworked. |
 
-Evidence is linked in the [execution journal](../../../../readiness/ty2025-readiness-execution-2026-10-07.md).
 The October 8 private `form8582-evidence-index-20261008-v1/reconciliation.json`
 rechecks the five packet XML/PDF/pending hashes, all 57 rendered-image hashes,
 52 matching-image hashes and the filing/storage/first-year-ledger commit

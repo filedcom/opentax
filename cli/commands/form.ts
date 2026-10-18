@@ -11,6 +11,10 @@ import {
   loadMeta,
   updateInput,
 } from "../store/store.ts";
+import {
+  detachInlineBytes,
+  resolveSourceBytes,
+} from "./return-source-files.ts";
 
 function getCatalogEntry(formType: string, year: number) {
   const key = `${formType}:${year}`;
@@ -58,6 +62,13 @@ export function rejectUnknownFields(
   }
 }
 
+/** Inline source bytes are stored as digests of files in retained/. */
+function storedFields(
+  fields: Record<string, unknown>,
+): Record<string, unknown> {
+  return detachInlineBytes(fields).value;
+}
+
 // ─── form add ─────────────────────────────────────────────────────────────────
 
 export type FormAddArgs = {
@@ -97,7 +108,7 @@ export async function formAddCommand(
 
   const schema = getUserInputSchema(def, args.nodeType);
   rejectUnknownFields(schema, data);
-  const parsed = schema.safeParse(data);
+  const parsed = schema.safeParse(await resolveSourceBytes(returnPath, data));
   if (!parsed.success) {
     throw new Error(`Validation error: ${parsed.error.message}`);
   }
@@ -112,7 +123,11 @@ export async function formAddCommand(
     throw new Error(`Singleton input ${args.nodeType} already exists`);
   }
 
-  const { id } = await appendInput(returnPath, args.nodeType, parsed.data);
+  const { id } = await appendInput(
+    returnPath,
+    args.nodeType,
+    storedFields(parsed.data),
+  );
 
   return { id, nodeType: args.nodeType };
 }
@@ -199,12 +214,12 @@ export async function formUpdateCommand(
 
   const schema = getUserInputSchema(def, existing.nodeType);
   rejectUnknownFields(schema, data);
-  const parsed = schema.safeParse(data);
+  const parsed = schema.safeParse(await resolveSourceBytes(returnPath, data));
   if (!parsed.success) {
     throw new Error(`Validation error: ${parsed.error.message}`);
   }
 
-  return updateInput(returnPath, args.entryId, parsed.data);
+  return updateInput(returnPath, args.entryId, storedFields(parsed.data));
 }
 
 // ─── form delete ──────────────────────────────────────────────────────────────

@@ -1,6 +1,6 @@
 # TY2026 ATS Form 1040 scenario 12 fixture contract
 
-Source: pinned [37-page IRS draft packet](../corpus/ats/1040-scenario-12.pdf),
+Source: pinned [37-page IRS draft packet](../../../irs/corpus/ty2026/ats/1040-scenario-12.pdf),
 SHA-256 `6d44ae53fe842b804258ca1a49400f0cc5d15a17b6fdb0cc74c016927b54c9bf`.
 Keep printed amounts, independently derived amounts, and application output in
 separate fixture fields. A printed amount that contradicts another page is a

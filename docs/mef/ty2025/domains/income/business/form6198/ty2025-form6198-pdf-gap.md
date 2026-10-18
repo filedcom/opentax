@@ -59,7 +59,7 @@ current source and all 16 pages were visually reviewed against its source,
 pending graph, and native XML. The selected-scope checker passed exact source
 replay, PDF/XML hashes, page origins, and local TY2025v5.4 XSD. The current
 manifest digest and packet location are in the
-[validation batch](../../../../testing/ty2025-form1040-validation-batch.md).
+validation batch.
 
 The full XML/PDF joint, business-rule, and ATS gates remain open. This
 focused fixture covers the simplified Schedule C route, not the other

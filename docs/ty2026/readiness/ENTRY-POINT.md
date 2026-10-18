@@ -24,7 +24,7 @@ workbooks. Current XSD and business rules remain the filing gate.
 The [public MeF serializer crosswalk](../mef/MEF-PUBLIC-CROSSWALK.md)
 maps all 84 TY2025 serializer modules to the published 1040 accepted-form
 counts and attachment-name occurrences, with statement and missing-row
-review states. Its [descriptor ledger](../inventories/mef-descriptor-coverage.csv)
+review states. Its descriptor ledger
 records 85 runtime descriptors, including two foreign-wage descriptors
 from one module. The crosswalk also names 2026 additions outside the
 TY2025 inventory.
@@ -569,9 +569,7 @@ work-authorization topology. Do not serialize TY2026 from those v1 fields.
    shared node that consumes it. The [source map](./CONSTANTS.md)
    records the values and conditional rules; config registration alone does not
    make a shared node TY2026 correct.
-2. Audit every shared node listed in
-   [`node-coverage.csv`](../inventories/node-coverage.csv), using
-   [`year-literals.csv`](../inventories/year-literals.csv) to find
+2. Audit every shared node, searching its 2025 literals to find
    literal-driven paths. A year literal
    that changes behavior must use `ctx.taxYear` or a year-specific node;
    comments alone still need source review. The highest-risk files are

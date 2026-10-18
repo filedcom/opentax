@@ -1,7 +1,9 @@
 #!/usr/bin/env python3
 """Download the public IRS TY2026 research snapshot and record provenance.
 
-Run from the repository root. Draft PDFs can be replaced by the IRS, so every
+Files land in the gitignored irs/corpus/ty2026/ (see irs/README.md); this
+manifest keeps URLs and retrieval times, irs/manifest.json the SHA-256s that
+`bun run check:irs` verifies. Draft PDFs can be replaced by the IRS, so every
 snapshot records SHA-256 and retrieval time. MeF SOR packages are not public.
 """
 
@@ -15,6 +17,7 @@ from pathlib import Path
 from urllib.parse import urljoin
 
 ROOT = Path(__file__).resolve().parent
+STORE = ROOT.parents[2] / "irs" / "corpus" / "ty2026"
 IRS = "https://www.irs.gov"
 ATS_PAGE = IRS + "/e-file-providers/tax-year-2026-form-1040-series-and-extensions-modernized-e-file-mef-assurance-testing-system-ats-information"
 MEF_PAGE = IRS + "/tax-professionals/tax-year-2026-modernized-e-file-schema-and-business-rules-for-individual-tax-returns-and-extensions"
@@ -221,7 +224,7 @@ for relative, url, kind in sources:
         signature = b"%PDF-" if relative.endswith(".pdf") else b"PK\x03\x04"
         if not data.startswith(signature):
             raise ValueError("unexpected file signature")
-        target = ROOT / relative
+        target = STORE / relative
         target.parent.mkdir(parents=True, exist_ok=True)
         target.write_bytes(data)
         # A draft URL can still point to a 2025 document. Keep it for review,

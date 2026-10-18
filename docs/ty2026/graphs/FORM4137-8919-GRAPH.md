@@ -1,7 +1,7 @@
 # TY2026 Forms 4137 and 8919 wage/FICA contract
 
-The pinned [2026 Form 4137](../corpus/draft/f4137.pdf) and [2026 Form
-8919](../corpus/draft/f8919.pdf) each include their instructions in the draft
+The pinned [2026 Form 4137](../../../irs/corpus/ty2026/draft/f4137.pdf) and [2026 Form
+8919](../../../irs/corpus/ty2026/draft/f8919.pdf) each include their instructions in the draft
 PDF. Separate instruction URLs are unnecessary for these two products. Both
 forms calculate employee Social Security and Medicare tax, but their income
 and evidence routes differ. Preserve taxpayer/spouse identity, employer or
@@ -15,7 +15,7 @@ and MeF.
 | 1–4 | One row per employer, including EIN, total cash/charge tips received and reported. W-2 box 8 allocated tips are included unless records prove a lower unreported amount. Sum all employers, including continuation rows. Line 4 is received minus reported tips and flows to 2026 Form 1040 line 1c/AGI. Keep W-2 box 1 reported tips out of this extra income. |
 | 5–6 | Remove tips under the per-employer $20 monthly reporting threshold from the FICA base, but retain them in line 4 income. Line 6 also feeds Form 8959 line 2 when Additional Medicare Tax applies. |
 | 7–10 | Use the printed 2026 Social Security wage base **$184,500**. Line 8 combines W-2 boxes 3 and 7 and applicable RRTA compensation; line 10 is the smaller of line 6 (with the stated government-employee comparison adjustment) or remaining wage base. Reconcile the same recipient's Form 8919 line 8 so the base is shared once. |
-| 11–13 | Apply 6.2% Social Security and 1.45% Medicare, then combine. The draft Form 4137 line 13 says Schedule 2 **line 5**, but the pinned [2026 Schedule 2](../corpus/draft/f1040s2.pdf) prints Form 4137 on **line 16a**. The current graph/PDF uses 16a. Treat the cross-reference as a source conflict and recheck final forms/instructions before filing. |
+| 11–13 | Apply 6.2% Social Security and 1.45% Medicare, then combine. The draft Form 4137 line 13 says Schedule 2 **line 5**, but the pinned [2026 Schedule 2](../../../irs/corpus/ty2026/draft/f1040s2.pdf) prints Form 4137 on **line 16a**. The current graph/PDF uses 16a. Treat the cross-reference as a source conflict and recheck final forms/instructions before filing. |
 
 The 2026 draft requires a separate Form 4137 for each spouse with unreported
 tips. Its printed instructions allow a statement or additional first-page
@@ -45,8 +45,8 @@ latter. The 2026 draft no longer prints reason codes B, D, E or F.
   builder](https://github.com/filedcom/opentax/blob/b7c07b616564167a91bc588dba05caab2a28e054/forms/f1040/2026/pdf/f4137.ts) renders separate recipient
   forms and employer continuations. Check its line 8 W-2/RRTA base, $20
   month evidence, government-employee exception and Form 8959 handoff
-  against the embedded instructions. Its [draft field
-  inventory](../inventories/pdf-fields/pdf-fields-f4137.csv) includes all widgets.
+  against the embedded instructions. Its draft field
+  inventory includes all widgets.
 - The shared [Form 8919 node](../../../forms/f1040/nodes/intermediate/forms/taxes/employment/form8919/index.ts)
   is **not** registered in the 2026 registry. It accepts a single aggregate
   `wages` amount and reason code A–H, has no per-firm evidence, and still

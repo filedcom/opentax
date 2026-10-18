@@ -1,8 +1,8 @@
 # TY2026 Form 982 cancellation-of-debt exclusion contract
 
-Current official authority: [Form 982 (Rev. March 2018)](../corpus/authorities/f982--2018.pdf),
+Current official authority: [Form 982 (Rev. March 2018)](../../../irs/corpus/ty2026/authorities/f982--2018.pdf),
 SHA-256 `2ef53d44f52617e93b7fc2b987e84986fcde26b6a5cf45415f5679299d1e8678`,
-and [instructions (Rev. December 2021)](../corpus/authorities/i982--2021.pdf),
+and [instructions (Rev. December 2021)](../../../irs/corpus/ty2026/authorities/i982--2021.pdf),
 SHA-256 `638f899cf49c04265f20f5c3bacbc53f1d0270118a3311555c8551847a54b7a0`.
 These are the IRS current products in the September 2026 snapshot; the
 missing 2026 draft URL does not mean the form is unavailable. Recheck
@@ -54,7 +54,7 @@ current taxable COD income.
   it rejects other exclusion types. TY2025 PDF descriptor maps
   `line2_excluded_cod` to `f1_7` (printed **line 7**) and
   `insolvency_amount` to `f1_8` (printed **line 8**). The actual line 2
-  widget is `f1_3`. The [current PDF inventory](../inventories/pdf-fields/pdf-fields-f982.csv)
+  widget is `f1_3`. The current PDF inventory
   lists **27 terminal widgets**, including the five reason buttons,
   yes/no election, Part II lines and corporate fields. Build a new verified
   mapping. Form 982 has no TY2026 registry, PDF or MeF route.

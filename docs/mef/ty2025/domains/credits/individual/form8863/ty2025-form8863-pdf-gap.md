@@ -261,8 +261,7 @@ restrictions below are historical for these verified routes.
 The registered two-page TY2025 descriptor now emits a positive, source-guarded
 Form 8863 PDF. The earlier preflight-only status below is historical. A selected
 five-page Form 1040/Schedule 3/Form 8863 lifetime-learning packet has been
-visually reviewed with source and native XML parity; see the
-[validation batch](../../../../testing/ty2025-form1040-validation-batch.md). The latest field audit
+visually reviewed with source and native XML parity. The latest field audit
 also makes Part III lines 28 and 29 print numeric zero for an American
 Opportunity Credit student with $2,000 first-tier expenses, as directed by the
 [official form](https://www.irs.gov/pub/irs-prior/f8863--2025.pdf); four focused

@@ -15,12 +15,9 @@ import { saveCliReturn } from "./ats-export.ts";
 import { ATS_SCENARIO_INPUTS } from "./ty2025-check-replay.ts";
 import { atsResidencyReview } from "./ty2025-submission.ts";
 
-/** Scenario 2's Form 1098 issuer copy is raw bytes the JSON CLI store cannot hold yet. */
-export const ATS_CLI_INPUT_GAP: ReadonlySet<string> = new Set(["1040-02"]);
-
 export const ATS_STAGEABLE_SCENARIOS: readonly string[] = Object.keys(
   ATS_SCENARIO_INPUTS,
-).filter((id) => !ATS_CLI_INPUT_GAP.has(id));
+);
 
 export type StagedReturn = {
   readonly scenario: string;

@@ -1,12 +1,11 @@
 # TY2026 Form 2441 PDF map
 
-Pinned source: [draft Form 2441](../corpus/draft/f2441.pdf), SHA-256
+Pinned source: [draft Form 2441](../../../irs/corpus/ty2026/draft/f2441.pdf), SHA-256
 `67eca7567ce5ff06e72d40a07db487f406da33139e664c0c0d9c67a4e31e9385`.
 The source has three physical pages: a draft cover and two printed form pages.
 Retain source page 1 for a credit-only return and pages 1 and 2 when Part III
 benefits apply (zero-based indices). Its
-AcroForm has 72 terminal widgets on the printed pages; the complete field
-inventory is [`pdf-fields-f2441.csv`](../inventories/pdf-fields/pdf-fields-f2441.csv). The printed pages
+AcroForm has 72 terminal widgets on the printed pages. The printed pages
 were rendered and visually inspected on 2026-09-27. Re-map against the final
 IRS release before filing.
 

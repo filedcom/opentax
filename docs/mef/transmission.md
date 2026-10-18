@@ -69,9 +69,8 @@ a rejection.
 ## First ATS run
 
 1. Put the credentials in place and run `opentax mef login-check`.
-2. `bun run ats:stage` writes the TY2025 ATS scenarios (all but 1040-02,
-   whose Form 1098 source copy the JSON store cannot hold yet) into
-   `./.state/returns` with their residency reviews.
+2. `bun run ats:stage` writes the TY2025 ATS scenarios into `./.state/returns`
+   with their attachments, retained source copies and residency reviews.
 3. `opentax mef ats-run`. Rejected scenarios keep their ack under the return;
    fix and rerun, and only the rejected ones go again.
 4. Acks that arrive after the polls end: `opentax mef acks --new`.
