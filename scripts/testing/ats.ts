@@ -11,7 +11,6 @@ import {
 } from "../../forms/f1040/e2e/ats/ats-export.ts";
 import type { MefPdfAttachment } from "../../forms/f1040/2025/mef/form-descriptor.ts";
 import {
-  rankRefusedInputs,
   scoreTy2026Scenarios,
   type Ty2026ScenarioScore,
   ty2026Passes,
@@ -156,7 +155,7 @@ function ty2026Row(score: Ty2026ScenarioScore): string {
     score.valuesConflicting - score.valuesUnrepresentable;
   const gaps = [...score.schemaGaps, ...score.unsupportedFacts];
   return `${
-    ty2026Passes(score) ? "PASS" : score.refusedInputs.length ? "BLOCKED" : "FAIL"
+    ty2026Passes(score) ? "PASS" : "FAIL"
   }  ${score.id}  values ${score.valuesMatched}/${score.valuesCompared} match, ${score.valuesConflicting} packet conflicts, ${score.valuesUnrepresentable} not in 2026v1.0, ${unexplained} unexplained  xsd ${schema}  blockers: ${
     score.findings.length === 0 ? "none" : score.findings.join("; ")
   }${gaps.length ? `  gaps: ${gaps.join("; ")}` : ""}`;
@@ -186,13 +185,6 @@ async function main(args: string[]): Promise<number> {
     console.log(
       `${ty2026.filter(ty2026Passes).length} of ${ty2026.length} TY2026 ATS scenarios pass (2026v1.0 schema and rules)`,
     );
-    for (const { input, scenarios, soleBlocker } of rankRefusedInputs(ty2026)) {
-      console.log(
-        `  refused ${input}: needed by ${scenarios.join(", ")}; alone unblocks ${
-          soleBlocker.length ? soleBlocker.join(", ") : "none"
-        }`,
-      );
-    }
   }
   // A readiness report, not a gate: scenarios are still being completed.
   return 0;

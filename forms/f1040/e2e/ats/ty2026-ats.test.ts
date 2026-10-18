@@ -1,7 +1,6 @@
 import { test } from "bun:test";
 import { assertEquals, assertStringIncludes } from "@std/assert";
 import {
-  refusedTy2026Inputs,
   RETURN_1040_2026_XSD,
   TY2026_ATS_FIXTURES,
   ty2026ScenarioValues,
@@ -66,25 +65,11 @@ test("TY2026 ATS 1040 Scenario 5 matches every printed W-2 and Form 8888 value",
   assertEquals(built?.values.length, 16);
 });
 
-test("TY2026 ATS scenarios without a fixture name the inputs TY2026 refuses", () => {
-  const refused = Object.fromEntries(
-    TY2026_ATS_CASES.map((c) => [c.id, refusedTy2026Inputs(c)]),
-  );
-  assertEquals(refused, {
-    "1040-01": [],
-    "1040-02": ["f8283", "preparer"],
-    "1040-03": ["schedule_f", "f4835"],
-    "1040-04": ["f8862", "f8863", "f3903"],
-    "1040-05": [],
-    "1040-06": ["k1_partnership"],
-    "1040-12": ["f3800", "f7207"],
-    "1040-13": ["schedule_f", "f4136"],
-    "1040-14": [],
-  });
-  assertEquals(
-    Object.keys(TY2026_ATS_FIXTURES).sort(),
-    Object.entries(refused).filter(([, r]) => r.length === 0).map(([id]) => id),
-  );
+test("TY2026 ATS scenarios without a fixture report that, not a refused input", async () => {
+  const fixtured = new Set(Object.keys(TY2026_ATS_FIXTURES));
+  for (const c of TY2026_ATS_CASES.filter((c) => !fixtured.has(c.id))) {
+    assertEquals(await ty2026ScenarioValues(c.id), null);
+  }
 });
 
 test("TY2026 ATS fixture assumptions stay explicit", () => {

@@ -6,8 +6,7 @@
  *
  * `ty2025Comparison` contrasts each packet with the TY2025 scenario of the
  * same number in `ty2025_cases.ts`. `inputs` are the public input keys the
- * packet's facts enter through; `bun run check:ats` reports those the
- * f1040:2026 product still refuses (`forms/f1040/2026/supported/`).
+ * packet's facts enter through.
  * `unsupportedFacts` have no input in any year, and `schemaGaps` have no
  * element in the IRS 2026v1.0 schema the engine targets.
  */

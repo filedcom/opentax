@@ -53,7 +53,6 @@ export type DocumentListing = {
   readonly document: string;
   readonly node_type: string;
   readonly form: string;
-  readonly supported: boolean;
 };
 
 function f1040(year: number): FormDefinition {
@@ -66,17 +65,8 @@ function inputKeys(def: FormDefinition): readonly string[] {
   return def.inputNodes.map((entry) => entry.inputKey ?? entry.node.nodeType);
 }
 
-function isSupported(def: FormDefinition, nodeType: string): boolean {
-  return nodeType === "start" || inputKeys(def).includes(nodeType);
-}
-
 function requireInput(def: FormDefinition, nodeType: string): void {
-  if (isSupported(def, nodeType)) return;
-  if (inputKeys(f1040(2025)).includes(nodeType)) {
-    throw new Error(
-      `TY${def.taxYear} does not yet support input ${nodeType}`,
-    );
-  }
+  if (nodeType === "start" || inputKeys(def).includes(nodeType)) return;
   throw new Error(
     `Unknown input: ${nodeType}. Run 'opentax node list' for keyed inputs.`,
   );
@@ -121,11 +111,10 @@ export function nodeTemplateCommand(args: NodeTemplateArgs): NodeTemplate {
 }
 
 export function listDocumentsCommand(year: number): DocumentListing[] {
-  const def = f1040(year);
+  f1040(year);
   return SOURCE_DOCUMENTS.map((entry) => ({
     document: entry.document,
     node_type: entry.nodeType,
     form: entry.form,
-    supported: isSupported(def, entry.nodeType),
   }));
 }

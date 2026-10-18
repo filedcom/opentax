@@ -6,7 +6,6 @@ import {
   businessRuleReport,
   emittedValidationScope,
 } from "../../../../cli/commands/export.ts";
-import { TY2026_SUPPORTED_INPUTS } from "../../2026/index.ts";
 import { normalizeAllPending } from "../../2025/return-processing/pending.ts";
 import { extractFilerIdentity } from "../../mef/filer.ts";
 import { validateAgainstXsd, xsdAvailable } from "./ats-export.ts";
@@ -14,7 +13,6 @@ import { compareAtsW2Values, type W2Target } from "./ty2025-w2-value-coverage.ts
 import {
   SCENARIO_1040_05_TY2026_FACTS,
   TY2026_ATS_CASES,
-  type Ty2026AtsCase,
 } from "./ty2026_cases.ts";
 import { ty2026Scenario104005Input } from "./ty2026_scenario_1040_05_input.ts";
 import {
@@ -130,8 +128,6 @@ export type Ty2026ValueResult =
 export type Ty2026ScenarioScore = {
   readonly id: string;
   readonly taxYear: 2026;
-  /** Input keys the packet needs that f1040:2026 still refuses. */
-  readonly refusedInputs: readonly string[];
   readonly unsupportedFacts: readonly string[];
   readonly schemaGaps: readonly string[];
   /** Reject-level findings: graph errors, XML build stops, IRS rules. */
@@ -144,10 +140,6 @@ export type Ty2026ScenarioScore = {
   readonly valuesUnrepresentable: number;
   readonly valuesCompared: number;
 };
-
-export function refusedTy2026Inputs(c: Ty2026AtsCase): string[] {
-  return c.inputs.filter((key) => !TY2026_SUPPORTED_INPUTS.has(key));
-}
 
 /** Build the TY2026 return as `return export --type mef` does; reject-level rule ids. */
 export async function exportedTy2026Return(inputs: Record<string, unknown>) {
@@ -265,26 +257,15 @@ export async function ty2026ScenarioValues(id: string) {
 export async function scoreTy2026Scenarios(): Promise<Ty2026ScenarioScore[]> {
   const scores: Ty2026ScenarioScore[] = [];
   for (const c of TY2026_ATS_CASES.filter((c) => c.returnType === "1040")) {
-    const refusedInputs = refusedTy2026Inputs(c);
-    const base = {
-      id: c.id,
-      taxYear: 2026 as const,
-      refusedInputs,
-      unsupportedFacts: c.unsupportedFacts,
-      schemaGaps: c.schemaGaps,
-    };
-    const built = refusedInputs.length === 0
-      ? await ty2026ScenarioValues(c.id)
-      : null;
+    const built = await ty2026ScenarioValues(c.id);
     const count = (result: Ty2026ValueResult) =>
       built?.values.filter((v) => v.result === result).length ?? 0;
     scores.push({
-      ...base,
-      findings: built?.findings ?? [
-        refusedInputs.length > 0
-          ? `refused ${refusedInputs.join(", ")}`
-          : "no fixture transcribed",
-      ],
+      id: c.id,
+      taxYear: 2026,
+      unsupportedFacts: c.unsupportedFacts,
+      schemaGaps: c.schemaGaps,
+      findings: built?.findings ?? ["no fixture transcribed"],
       schemaValid: built?.schemaValid ?? null,
       valuesMatched: count("match"),
       valuesConflicting: count("conflict"),
@@ -304,23 +285,4 @@ export function ty2026Passes(score: Ty2026ScenarioScore): boolean {
     score.schemaValid !== false && score.unsupportedFacts.length === 0 &&
     score.schemaGaps.length === 0 && score.valuesUnrepresentable === 0 &&
     score.valuesMatched + score.valuesConflicting === score.valuesCompared;
-}
-
-/** Refused inputs by how many blocked scenarios need each, and how many each alone unblocks. */
-export function rankRefusedInputs(scores: readonly Ty2026ScenarioScore[]) {
-  const inputs = [...new Set(scores.flatMap((s) => s.refusedInputs))];
-  return inputs.map((input) => {
-    const needing = scores.filter((s) => s.refusedInputs.includes(input));
-    return {
-      input,
-      scenarios: needing.map((s) => s.id),
-      soleBlocker: needing.filter((s) =>
-        s.refusedInputs.length === 1 && s.unsupportedFacts.length === 0 &&
-        s.schemaGaps.length === 0
-      ).map((s) => s.id),
-    };
-  }).sort((a, b) =>
-    b.soleBlocker.length - a.soleBlocker.length ||
-    b.scenarios.length - a.scenarios.length || a.input.localeCompare(b.input)
-  );
 }

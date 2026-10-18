@@ -1,10 +1,10 @@
 import { test } from "bun:test";
 import * as fs from "node:fs/promises";
 import { assertEquals } from "@std/assert";
-import * as sys from "../../../../scripts/support/sys.ts";
-import { extractFilerIdentity } from "../../mef/filer.ts";
-import { f1040_2025 } from "../../2025/index.ts";
-import { f1040_2026 } from "../index.ts";
+import * as sys from "../../../scripts/support/sys.ts";
+import { extractFilerIdentity } from "../mef/filer.ts";
+import { f1040_2025 } from "../2025/index.ts";
+import { f1040_2026 } from "./index.ts";
 
 const zeroWorksheetA = {
   schedule3_line1: 0,
@@ -122,7 +122,7 @@ async function validatedXml(
   });
   await fs.writeFile(path, xml);
   const schema = new URL(
-    "../../../../irs/mef/2026v1.0/IndividualIncomeTax/Ind1040/Return1040.xsd",
+    "../../../irs/mef/2026v1.0/IndividualIncomeTax/Ind1040/Return1040.xsd",
     import.meta.url,
   ).pathname;
   const validation = await new sys.Command("xmllint", {

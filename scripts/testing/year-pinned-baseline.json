@@ -1,0 +1,3302 @@
+[
+  {
+    "path": "forms/f1040/2025/domains/adjustments/education/f1098e/f1098e-source-reconciliation.ts",
+    "pattern": "year-value",
+    "count": 1
+  },
+  {
+    "path": "forms/f1040/2025/domains/adjustments/health/form7206/form7206_independent_owner_source.ts",
+    "pattern": "config-index",
+    "count": 1
+  },
+  {
+    "path": "forms/f1040/2025/domains/adjustments/health/form8853/form8853_contributions_reconciliation.ts",
+    "pattern": "year-value",
+    "count": 1
+  },
+  {
+    "path": "forms/f1040/2025/domains/adjustments/health/form8889/form8889_employer_code2_source.ts",
+    "pattern": "date-pinned",
+    "count": 3
+  },
+  {
+    "path": "forms/f1040/2025/domains/adjustments/health/form8889/form8889_employer_postyear_source.ts",
+    "pattern": "date-pinned",
+    "count": 2
+  },
+  {
+    "path": "forms/f1040/2025/domains/adjustments/health/form8889/form8889_employer_postyear_source.ts",
+    "pattern": "year-comparison",
+    "count": 1
+  },
+  {
+    "path": "forms/f1040/2025/domains/adjustments/health/form8889/form8889_employer_postyear_source.ts",
+    "pattern": "year-identifier",
+    "count": 4
+  },
+  {
+    "path": "forms/f1040/2025/domains/adjustments/health/form8889/form8889_employer_postyear_source.ts",
+    "pattern": "year-value",
+    "count": 1
+  },
+  {
+    "path": "forms/f1040/2025/domains/adjustments/health/form8889/form8889_employer_postyear_source.ts",
+    "pattern": "z-literal",
+    "count": 1
+  },
+  {
+    "path": "forms/f1040/2025/domains/adjustments/health/form8889/form8889_employer_return_source.ts",
+    "pattern": "date-pinned",
+    "count": 2
+  },
+  {
+    "path": "forms/f1040/2025/domains/adjustments/health/form8889/form8889_employer_return_source.ts",
+    "pattern": "year-identifier",
+    "count": 5
+  },
+  {
+    "path": "forms/f1040/2025/domains/adjustments/health/form8889/form8889_employer_return_source.ts",
+    "pattern": "z-literal",
+    "count": 1
+  },
+  {
+    "path": "forms/f1040/2025/domains/adjustments/health/form8889/form8889_mixed_medical_reconciliation.ts",
+    "pattern": "year-value",
+    "count": 1
+  },
+  {
+    "path": "forms/f1040/2025/domains/adjustments/health/form8889/form8889_postyear_single_reconciliation.ts",
+    "pattern": "year-comparison",
+    "count": 1
+  },
+  {
+    "path": "forms/f1040/2025/domains/adjustments/health/form8889/form8889_postyear_single_reconciliation.ts",
+    "pattern": "year-identifier",
+    "count": 2
+  },
+  {
+    "path": "forms/f1040/2025/domains/adjustments/health/form8889/form8889_postyear_single_reconciliation.ts",
+    "pattern": "year-value",
+    "count": 1
+  },
+  {
+    "path": "forms/f1040/2025/domains/adjustments/health/form8889/form8889_spouse_reconciliation.ts",
+    "pattern": "year-comparison",
+    "count": 6
+  },
+  {
+    "path": "forms/f1040/2025/domains/adjustments/health/form8889/form8889_spouse_reconciliation.ts",
+    "pattern": "year-identifier",
+    "count": 14
+  },
+  {
+    "path": "forms/f1040/2025/domains/adjustments/health/form8889/form8889_spouse_reconciliation.ts",
+    "pattern": "year-value",
+    "count": 6
+  },
+  {
+    "path": "forms/f1040/2025/domains/credits/amt/form8801/form8801_calculation.ts",
+    "pattern": "year-identifier",
+    "count": 1
+  },
+  {
+    "path": "forms/f1040/2025/domains/credits/amt/form8801/form8801_calculation.ts",
+    "pattern": "z-literal",
+    "count": 2
+  },
+  {
+    "path": "forms/f1040/2025/domains/credits/amt/form8801/form8801_carry_record.ts",
+    "pattern": "year-identifier",
+    "count": 1
+  },
+  {
+    "path": "forms/f1040/2025/domains/credits/amt/form8801/form8801_carry_record.ts",
+    "pattern": "year-value",
+    "count": 5
+  },
+  {
+    "path": "forms/f1040/2025/domains/credits/amt/form8801/form8801_mtcnol.ts",
+    "pattern": "year-comparison",
+    "count": 1
+  },
+  {
+    "path": "forms/f1040/2025/domains/credits/amt/form8801/form8801_mtcnol.ts",
+    "pattern": "year-identifier",
+    "count": 6
+  },
+  {
+    "path": "forms/f1040/2025/domains/credits/amt/form8801/form8801_mtcnol.ts",
+    "pattern": "z-literal",
+    "count": 1
+  },
+  {
+    "path": "forms/f1040/2025/domains/credits/amt/form8801/form8801_mtftce.ts",
+    "pattern": "z-literal",
+    "count": 1
+  },
+  {
+    "path": "forms/f1040/2025/domains/credits/amt/form8801/form8801_prior_return_bytes.ts",
+    "pattern": "date-pinned",
+    "count": 2
+  },
+  {
+    "path": "forms/f1040/2025/domains/credits/amt/form8801/form8801_reviewed_return.ts",
+    "pattern": "year-identifier",
+    "count": 2
+  },
+  {
+    "path": "forms/f1040/2025/domains/credits/amt/form8801/form8801_settled_return.ts",
+    "pattern": "year-value",
+    "count": 1
+  },
+  {
+    "path": "forms/f1040/2025/domains/credits/amt/form8801/form8801_staged_pdf.ts",
+    "pattern": "year-identifier",
+    "count": 3
+  },
+  {
+    "path": "forms/f1040/2025/domains/credits/business/form8908/form8908_source.ts",
+    "pattern": "date-pinned",
+    "count": 1
+  },
+  {
+    "path": "forms/f1040/2025/domains/credits/business/form8908/form8908_source.ts",
+    "pattern": "year-identifier",
+    "count": 3
+  },
+  {
+    "path": "forms/f1040/2025/domains/credits/earned-income/earned-income/eic-birth-residency.ts",
+    "pattern": "date-pinned",
+    "count": 6
+  },
+  {
+    "path": "forms/f1040/2025/domains/credits/earned-income/earned-income/eic-birth-residency.ts",
+    "pattern": "year-identifier",
+    "count": 4
+  },
+  {
+    "path": "forms/f1040/2025/domains/credits/earned-income/earned-income/eic-dated-residency.ts",
+    "pattern": "date-pinned",
+    "count": 4
+  },
+  {
+    "path": "forms/f1040/2025/domains/credits/earned-income/earned-income/eic-death-residency.ts",
+    "pattern": "date-pinned",
+    "count": 3
+  },
+  {
+    "path": "forms/f1040/2025/domains/credits/earned-income/earned-income/eic-source.ts",
+    "pattern": "year-identifier",
+    "count": 2
+  },
+  {
+    "path": "forms/f1040/2025/domains/credits/earned-income/earned-income/eic-source.ts",
+    "pattern": "year-value",
+    "count": 1
+  },
+  {
+    "path": "forms/f1040/2025/domains/credits/foreign/form1116/form1116_carryover_source.ts",
+    "pattern": "year-identifier",
+    "count": 3
+  },
+  {
+    "path": "forms/f1040/2025/domains/credits/foreign/form1116/form1116_schedule_b_filed_documents.ts",
+    "pattern": "year-identifier",
+    "count": 1
+  },
+  {
+    "path": "forms/f1040/2025/domains/credits/health/form8962/form8962-family-eligibility.ts",
+    "pattern": "date-pinned",
+    "count": 3
+  },
+  {
+    "path": "forms/f1040/2025/domains/credits/health/form8962/form8962-family-eligibility.ts",
+    "pattern": "z-literal",
+    "count": 2
+  },
+  {
+    "path": "forms/f1040/2025/domains/credits/health/form8962/form8962-joint-income.ts",
+    "pattern": "date-pinned",
+    "count": 1
+  },
+  {
+    "path": "forms/f1040/2025/domains/credits/health/form8962/form8962-joint-income.ts",
+    "pattern": "year-comparison",
+    "count": 1
+  },
+  {
+    "path": "forms/f1040/2025/domains/credits/health/form8962/form8962-joint-income.ts",
+    "pattern": "z-literal",
+    "count": 2
+  },
+  {
+    "path": "forms/f1040/2025/domains/credits/individual/form8839/form8839_two_pass.ts",
+    "pattern": "year-identifier",
+    "count": 1
+  },
+  {
+    "path": "forms/f1040/2025/domains/credits/individual/form8839/form8839_two_pass.ts",
+    "pattern": "year-value",
+    "count": 2
+  },
+  {
+    "path": "forms/f1040/2025/domains/credits/individual/form8863/form8863_two_pass.ts",
+    "pattern": "year-value",
+    "count": 1
+  },
+  {
+    "path": "forms/f1040/2025/domains/credits/individual/form8880/able_self_employment_sources.ts",
+    "pattern": "config-index",
+    "count": 1
+  },
+  {
+    "path": "forms/f1040/2025/domains/credits/individual/form8880/form8880_tax_limit.ts",
+    "pattern": "year-value",
+    "count": 1
+  },
+  {
+    "path": "forms/f1040/2025/domains/deductions/additional/schedule1a-senior-source.ts",
+    "pattern": "year-value",
+    "count": 1
+  },
+  {
+    "path": "forms/f1040/2025/domains/deductions/business/form8990/form8990_projection.ts",
+    "pattern": "year-identifier",
+    "count": 3
+  },
+  {
+    "path": "forms/f1040/2025/domains/deductions/business/form8990/form8990_projection.ts",
+    "pattern": "z-literal",
+    "count": 2
+  },
+  {
+    "path": "forms/f1040/2025/domains/deductions/business/form8995/form8995_farm_wotc_reconciliation.ts",
+    "pattern": "config-index",
+    "count": 5
+  },
+  {
+    "path": "forms/f1040/2025/domains/deductions/business/form8995a/form8995a_independent_patron_reconciliation.ts",
+    "pattern": "year-identifier",
+    "count": 3
+  },
+  {
+    "path": "forms/f1040/2025/domains/deductions/business/form8995a/form8995a_patron_reconciliation.ts",
+    "pattern": "config-index",
+    "count": 1
+  },
+  {
+    "path": "forms/f1040/2025/domains/deductions/business/form8995a/form8995a_producing_mining_source.ts",
+    "pattern": "year-value",
+    "count": 1
+  },
+  {
+    "path": "forms/f1040/2025/domains/deductions/business/form8995a/form8995a_sstb_service_checks.ts",
+    "pattern": "year-identifier",
+    "count": 5
+  },
+  {
+    "path": "forms/f1040/2025/domains/deductions/business/form8995a/form8995a_sstb_service_checks.ts",
+    "pattern": "year-value",
+    "count": 1
+  },
+  {
+    "path": "forms/f1040/2025/domains/deductions/business/form8995a/form8995a_wotc_reconciliation.ts",
+    "pattern": "config-index",
+    "count": 1
+  },
+  {
+    "path": "forms/f1040/2025/domains/deductions/investments/form4952/form4952_debt_reconciliation.ts",
+    "pattern": "year-identifier",
+    "count": 2
+  },
+  {
+    "path": "forms/f1040/2025/domains/deductions/investments/form4952/form4952_dividend_reconciliation.ts",
+    "pattern": "config-index",
+    "count": 1
+  },
+  {
+    "path": "forms/f1040/2025/domains/deductions/investments/form4952/form4952_k1_election.ts",
+    "pattern": "config-index",
+    "count": 1
+  },
+  {
+    "path": "forms/f1040/2025/domains/deductions/investments/form4952/form4952_prior_carryforward_reconciliation.ts",
+    "pattern": "year-identifier",
+    "count": 5
+  },
+  {
+    "path": "forms/f1040/2025/domains/deductions/itemized/schedule-a/schedule_a_line16_estate_source.ts",
+    "pattern": "year-value",
+    "count": 1
+  },
+  {
+    "path": "forms/f1040/2025/domains/general/filing/form8886/document.ts",
+    "pattern": "date-pinned",
+    "count": 1
+  },
+  {
+    "path": "forms/f1040/2025/domains/general/filing/form8886/handoff.ts",
+    "pattern": "date-pinned",
+    "count": 2
+  },
+  {
+    "path": "forms/f1040/2025/domains/general/filing/form8886/k1-source.ts",
+    "pattern": "year-comparison",
+    "count": 1
+  },
+  {
+    "path": "forms/f1040/2025/domains/general/filing/form8886/k1-source.ts",
+    "pattern": "z-literal",
+    "count": 1
+  },
+  {
+    "path": "forms/f1040/2025/domains/general/filing/form8886/pdf.ts",
+    "pattern": "year-identifier",
+    "count": 3
+  },
+  {
+    "path": "forms/f1040/2025/domains/general/filing/form8886/return-packets.ts",
+    "pattern": "year-identifier",
+    "count": 2
+  },
+  {
+    "path": "forms/f1040/2025/domains/general/filing/form8886/return-sources.ts",
+    "pattern": "date-pinned",
+    "count": 1
+  },
+  {
+    "path": "forms/f1040/2025/domains/general/filing/form8886/source.ts",
+    "pattern": "z-literal",
+    "count": 1
+  },
+  {
+    "path": "forms/f1040/2025/domains/general/return-assembly/filer-source-reconciliation.ts",
+    "pattern": "date-pinned",
+    "count": 1
+  },
+  {
+    "path": "forms/f1040/2025/domains/general/return-assembly/filer-source-reconciliation.ts",
+    "pattern": "year-identifier",
+    "count": 6
+  },
+  {
+    "path": "forms/f1040/2025/domains/income/business/form172/form172_amt_annual_limit.ts",
+    "pattern": "year-comparison",
+    "count": 2
+  },
+  {
+    "path": "forms/f1040/2025/domains/income/business/form172/form172_amt_annual_limit.ts",
+    "pattern": "year-identifier",
+    "count": 2
+  },
+  {
+    "path": "forms/f1040/2025/domains/income/business/form172/form172_amt_annual_limit.ts",
+    "pattern": "z-literal",
+    "count": 1
+  },
+  {
+    "path": "forms/f1040/2025/domains/income/business/form172/form172_amt_modified_income.ts",
+    "pattern": "year-comparison",
+    "count": 2
+  },
+  {
+    "path": "forms/f1040/2025/domains/income/business/form172/form172_amt_modified_income.ts",
+    "pattern": "year-identifier",
+    "count": 4
+  },
+  {
+    "path": "forms/f1040/2025/domains/income/business/form172/form172_amt_projected_return.ts",
+    "pattern": "year-comparison",
+    "count": 1
+  },
+  {
+    "path": "forms/f1040/2025/domains/income/business/form172/form172_carry_absorption.ts",
+    "pattern": "year-comparison",
+    "count": 1
+  },
+  {
+    "path": "forms/f1040/2025/domains/income/business/form172/form172_carry_history_source.ts",
+    "pattern": "z-literal",
+    "count": 1
+  },
+  {
+    "path": "forms/f1040/2025/domains/income/business/form172/form172_carry_history.ts",
+    "pattern": "z-literal",
+    "count": 1
+  },
+  {
+    "path": "forms/f1040/2025/domains/income/business/form172/form172_current_deduction_source.ts",
+    "pattern": "z-literal",
+    "count": 1
+  },
+  {
+    "path": "forms/f1040/2025/domains/income/business/form172/form172_current_deduction.ts",
+    "pattern": "year-comparison",
+    "count": 2
+  },
+  {
+    "path": "forms/f1040/2025/domains/income/business/form172/form172_current_deduction.ts",
+    "pattern": "year-identifier",
+    "count": 2
+  },
+  {
+    "path": "forms/f1040/2025/domains/income/business/form172/form172_current_deduction.ts",
+    "pattern": "year-value",
+    "count": 1
+  },
+  {
+    "path": "forms/f1040/2025/domains/income/business/form172/form172_farming_carry_history.ts",
+    "pattern": "z-literal",
+    "count": 1
+  },
+  {
+    "path": "forms/f1040/2025/domains/income/business/form172/form172_farming_carry_source.ts",
+    "pattern": "z-literal",
+    "count": 1
+  },
+  {
+    "path": "forms/f1040/2025/domains/income/business/form172/form172_form8990_return.ts",
+    "pattern": "year-identifier",
+    "count": 1
+  },
+  {
+    "path": "forms/f1040/2025/domains/income/business/form172/form172_loss_year_native.ts",
+    "pattern": "z-literal",
+    "count": 1
+  },
+  {
+    "path": "forms/f1040/2025/domains/income/business/form172/form172_modified_income.ts",
+    "pattern": "year-comparison",
+    "count": 1
+  },
+  {
+    "path": "forms/f1040/2025/domains/income/business/form172/form172_modified_income.ts",
+    "pattern": "year-value",
+    "count": 1
+  },
+  {
+    "path": "forms/f1040/2025/domains/income/business/form172/form172_projected_return.ts",
+    "pattern": "year-value",
+    "count": 2
+  },
+  {
+    "path": "forms/f1040/2025/domains/income/business/form172/form172_reviewed_return.ts",
+    "pattern": "year-identifier",
+    "count": 2
+  },
+  {
+    "path": "forms/f1040/2025/domains/income/business/form172/form172_reviewed_return.ts",
+    "pattern": "year-value",
+    "count": 1
+  },
+  {
+    "path": "forms/f1040/2025/domains/income/business/form7203/form7203_debt_inventory.ts",
+    "pattern": "year-identifier",
+    "count": 1
+  },
+  {
+    "path": "forms/f1040/2025/domains/income/business/form7203/form7203_prior_reduced_execution.ts",
+    "pattern": "year-value",
+    "count": 1
+  },
+  {
+    "path": "forms/f1040/2025/domains/income/business/form7203/form7203_stock_loss_projection.ts",
+    "pattern": "year-identifier",
+    "count": 3
+  },
+  {
+    "path": "forms/f1040/2025/domains/income/business/passive-s-corp-loss-copies.ts",
+    "pattern": "year-value",
+    "count": 2
+  },
+  {
+    "path": "forms/f1040/2025/domains/income/foreign/form8621/form8621_1294_refigure.ts",
+    "pattern": "year-value",
+    "count": 1
+  },
+  {
+    "path": "forms/f1040/2025/domains/income/foreign/form8621/form8621_parent_source.ts",
+    "pattern": "year-identifier",
+    "count": 4
+  },
+  {
+    "path": "forms/f1040/2025/domains/income/foreign/schedule1-form8621-source.ts",
+    "pattern": "year-value",
+    "count": 2
+  },
+  {
+    "path": "forms/f1040/2025/domains/income/investments/broker-sale-source-reconciliation.ts",
+    "pattern": "year-value",
+    "count": 1
+  },
+  {
+    "path": "forms/f1040/2025/domains/income/investments/f1099b/f1099b-recipient-owner.ts",
+    "pattern": "year-identifier",
+    "count": 1
+  },
+  {
+    "path": "forms/f1040/2025/domains/income/investments/form8815/form8815_contribution_return.ts",
+    "pattern": "year-identifier",
+    "count": 1
+  },
+  {
+    "path": "forms/f1040/2025/domains/income/investments/form8815/form8815_royalty_return.ts",
+    "pattern": "config-index",
+    "count": 1
+  },
+  {
+    "path": "forms/f1040/2025/domains/income/investments/schedule-b/schedule-b-interest-reconciliation.ts",
+    "pattern": "year-value",
+    "count": 1
+  },
+  {
+    "path": "forms/f1040/2025/domains/income/other/form982/form982-qpri.ts",
+    "pattern": "config-index",
+    "count": 2
+  },
+  {
+    "path": "forms/f1040/2025/domains/income/other/form982/form982-qpri.ts",
+    "pattern": "year-value",
+    "count": 2
+  },
+  {
+    "path": "forms/f1040/2025/domains/income/rental-passthrough/k1_trust/trust-k1-native-copy-review.ts",
+    "pattern": "year-identifier",
+    "count": 2
+  },
+  {
+    "path": "forms/f1040/2025/domains/income/retirement/form8606/form8606_distribution_reconciliation.ts",
+    "pattern": "date-pinned",
+    "count": 2
+  },
+  {
+    "path": "forms/f1040/2025/domains/income/retirement/form8606/form8606_recharacterization_source.ts",
+    "pattern": "date-pinned",
+    "count": 1
+  },
+  {
+    "path": "forms/f1040/2025/domains/income/retirement/form8606/form8606_roth_history_evidence.ts",
+    "pattern": "year-comparison",
+    "count": 2
+  },
+  {
+    "path": "forms/f1040/2025/domains/income/retirement/form8606/form8606_roth_inventory_reconciliation.ts",
+    "pattern": "year-comparison",
+    "count": 2
+  },
+  {
+    "path": "forms/f1040/2025/domains/income/retirement/form8606/form8606_roth_reconciliation.ts",
+    "pattern": "date-pinned",
+    "count": 3
+  },
+  {
+    "path": "forms/f1040/2025/domains/income/retirement/ira1099r-income-reconciliation.ts",
+    "pattern": "year-value",
+    "count": 1
+  },
+  {
+    "path": "forms/f1040/2025/domains/income/retirement/rrb1099r-pension-reconciliation.ts",
+    "pattern": "year-value",
+    "count": 1
+  },
+  {
+    "path": "forms/f1040/2025/domains/income/wages/form4852/form4852_retained_evidence.ts",
+    "pattern": "year-comparison",
+    "count": 1
+  },
+  {
+    "path": "forms/f1040/2025/domains/income/wages/form4852/form4852_source.ts",
+    "pattern": "year-comparison",
+    "count": 1
+  },
+  {
+    "path": "forms/f1040/2025/domains/payments/settlement/line36-estimated-tax-source.ts",
+    "pattern": "year-identifier",
+    "count": 3
+  },
+  {
+    "path": "forms/f1040/2025/domains/taxes/amt/form6251/form6251_prior_iso_sale.ts",
+    "pattern": "year-identifier",
+    "count": 11
+  },
+  {
+    "path": "forms/f1040/2025/domains/taxes/amt/form6251/form6251_refund_source.ts",
+    "pattern": "year-comparison",
+    "count": 1
+  },
+  {
+    "path": "forms/f1040/2025/domains/taxes/employment/form8959/form8959-source.ts",
+    "pattern": "year-value",
+    "count": 2
+  },
+  {
+    "path": "forms/f1040/2025/domains/taxes/income-averaging/schedule-j/schedule_j_fishing_ledger.ts",
+    "pattern": "date-pinned",
+    "count": 2
+  },
+  {
+    "path": "forms/f1040/2025/domains/taxes/income-averaging/schedule-j/schedule_j_fishing_ledger.ts",
+    "pattern": "year-identifier",
+    "count": 1
+  },
+  {
+    "path": "forms/f1040/2025/domains/taxes/income-averaging/schedule-j/schedule_j_fishing_ledger.ts",
+    "pattern": "z-literal",
+    "count": 1
+  },
+  {
+    "path": "forms/f1040/2025/domains/taxes/income-averaging/schedule-j/schedule_j_source_return.ts",
+    "pattern": "date-pinned",
+    "count": 2
+  },
+  {
+    "path": "forms/f1040/2025/domains/taxes/income-averaging/schedule-j/schedule_j_source_return.ts",
+    "pattern": "year-value",
+    "count": 1
+  },
+  {
+    "path": "forms/f1040/2025/domains/taxes/income-averaging/schedule-j/schedule_j_source_return.ts",
+    "pattern": "z-literal",
+    "count": 1
+  },
+  {
+    "path": "forms/f1040/2025/domains/taxes/retirement/form4972/form4972_amt_reconciliation.ts",
+    "pattern": "year-identifier",
+    "count": 7
+  },
+  {
+    "path": "forms/f1040/2025/domains/taxes/retirement/form4972/form4972_collection_reconciliation.ts",
+    "pattern": "year-value",
+    "count": 1
+  },
+  {
+    "path": "forms/f1040/2025/domains/taxes/retirement/form4972/form4972_estate_part2_reconciliation.ts",
+    "pattern": "year-value",
+    "count": 1
+  },
+  {
+    "path": "forms/f1040/2025/domains/taxes/retirement/form4972/form4972_full_share_reconciliation.ts",
+    "pattern": "year-value",
+    "count": 1
+  },
+  {
+    "path": "forms/f1040/2025/domains/taxes/retirement/form4972/form4972_multiple_1099r_reconciliation.ts",
+    "pattern": "year-value",
+    "count": 1
+  },
+  {
+    "path": "forms/f1040/2025/domains/taxes/retirement/form4972/form4972_multiple_recipient_reconciliation.ts",
+    "pattern": "year-value",
+    "count": 1
+  },
+  {
+    "path": "forms/f1040/2025/domains/taxes/retirement/form4972/form4972_nua_reconciliation.ts",
+    "pattern": "year-value",
+    "count": 3
+  },
+  {
+    "path": "forms/f1040/2025/domains/taxes/self-employment/schedule-se/schedule-se-owner-source.ts",
+    "pattern": "year-value",
+    "count": 1
+  },
+  {
+    "path": "forms/f1040/2025/domains/taxes/underpayment/form2210/form2210_box_e_finalized.ts",
+    "pattern": "year-identifier",
+    "count": 1
+  },
+  {
+    "path": "forms/f1040/2025/domains/taxes/underpayment/form2210/form2210_box_e_payment_return.ts",
+    "pattern": "year-identifier",
+    "count": 2
+  },
+  {
+    "path": "forms/f1040/2025/domains/taxes/underpayment/form2210/form2210_box_e_payment_return.ts",
+    "pattern": "year-value",
+    "count": 1
+  },
+  {
+    "path": "forms/f1040/2025/domains/taxes/underpayment/form2210/form2210_box_e_prior_bytes.ts",
+    "pattern": "date-pinned",
+    "count": 2
+  },
+  {
+    "path": "forms/f1040/2025/domains/taxes/underpayment/form2210/form2210_box_e_staged_chain.ts",
+    "pattern": "year-identifier",
+    "count": 6
+  },
+  {
+    "path": "forms/f1040/2025/domains/taxes/underpayment/form2210/form2210_box_e.ts",
+    "pattern": "z-literal",
+    "count": 1
+  },
+  {
+    "path": "forms/f1040/2025/domains/taxes/underpayment/form2210/form2210_payments.ts",
+    "pattern": "date-pinned",
+    "count": 16
+  },
+  {
+    "path": "forms/f1040/2025/domains/taxes/underpayment/form2210/form2210_payments.ts",
+    "pattern": "year-value",
+    "count": 1
+  },
+  {
+    "path": "forms/f1040/2025/domains/taxes/underpayment/form2210/form2210_payments.ts",
+    "pattern": "z-literal",
+    "count": 2
+  },
+  {
+    "path": "forms/f1040/2025/domains/taxes/underpayment/form2210/form2210_regular_staged_pdf.ts",
+    "pattern": "year-identifier",
+    "count": 5
+  },
+  {
+    "path": "forms/f1040/2025/domains/taxes/underpayment/form2210f/form2210f_box_b.ts",
+    "pattern": "date-pinned",
+    "count": 5
+  },
+  {
+    "path": "forms/f1040/2025/domains/taxes/underpayment/form2210f/form2210f_box_b.ts",
+    "pattern": "year-comparison",
+    "count": 2
+  },
+  {
+    "path": "forms/f1040/2025/domains/taxes/underpayment/form2210f/form2210f_box_b.ts",
+    "pattern": "year-identifier",
+    "count": 2
+  },
+  {
+    "path": "forms/f1040/2025/domains/taxes/underpayment/form2210f/form2210f_box_b.ts",
+    "pattern": "z-literal",
+    "count": 2
+  },
+  {
+    "path": "forms/f1040/2025/domains/taxes/underpayment/form2210f/form2210f_settlement.ts",
+    "pattern": "date-pinned",
+    "count": 1
+  },
+  {
+    "path": "forms/f1040/2025/domains/taxes/underpayment/form2210f/form2210f_settlement.ts",
+    "pattern": "year-identifier",
+    "count": 2
+  },
+  {
+    "path": "forms/f1040/2025/domains/taxes/underpayment/form2210f/form2210f_settlement.ts",
+    "pattern": "z-literal",
+    "count": 1
+  },
+  {
+    "path": "forms/f1040/2025/mef/builder.ts",
+    "pattern": "year-identifier",
+    "count": 2
+  },
+  {
+    "path": "forms/f1040/2025/mef/builder.ts",
+    "pattern": "year-value",
+    "count": 1
+  },
+  {
+    "path": "forms/f1040/2025/mef/forms/adjustments/health/f7206.ts",
+    "pattern": "year-value",
+    "count": 1
+  },
+  {
+    "path": "forms/f1040/2025/mef/forms/credits/business/f3800/f3800_passive_rows.ts",
+    "pattern": "year-comparison",
+    "count": 2
+  },
+  {
+    "path": "forms/f1040/2025/mef/forms/credits/business/f3800/f3800_passive_tags.ts",
+    "pattern": "year-comparison",
+    "count": 1
+  },
+  {
+    "path": "forms/f1040/2025/mef/forms/credits/business/f8826_cap_ledger.ts",
+    "pattern": "year-value",
+    "count": 1
+  },
+  {
+    "path": "forms/f1040/2025/mef/forms/credits/business/f8835_domestic_statement.ts",
+    "pattern": "year-comparison",
+    "count": 1
+  },
+  {
+    "path": "forms/f1040/2025/mef/forms/credits/business/f8835_pwa_statement.ts",
+    "pattern": "date-pinned",
+    "count": 1
+  },
+  {
+    "path": "forms/f1040/2025/mef/forms/credits/business/f8835_pwa_statement.ts",
+    "pattern": "year-identifier",
+    "count": 2
+  },
+  {
+    "path": "forms/f1040/2025/mef/forms/credits/business/f8835.ts",
+    "pattern": "year-comparison",
+    "count": 1
+  },
+  {
+    "path": "forms/f1040/2025/mef/forms/credits/earned-income/eitc.ts",
+    "pattern": "year-comparison",
+    "count": 1
+  },
+  {
+    "path": "forms/f1040/2025/mef/forms/credits/elderly-disabled/schedule_r.ts",
+    "pattern": "year-value",
+    "count": 1
+  },
+  {
+    "path": "forms/f1040/2025/mef/forms/credits/foreign/f1116/f1116_schedule_c_current_year.ts",
+    "pattern": "year-value",
+    "count": 1
+  },
+  {
+    "path": "forms/f1040/2025/mef/forms/credits/foreign/f1116/f1116_schedule_c_documents.ts",
+    "pattern": "z-literal",
+    "count": 1
+  },
+  {
+    "path": "forms/f1040/2025/mef/forms/credits/foreign/f1116/f1116_schedule_c.ts",
+    "pattern": "date-pinned",
+    "count": 1
+  },
+  {
+    "path": "forms/f1040/2025/mef/forms/credits/foreign/f1116/f1116.ts",
+    "pattern": "year-identifier",
+    "count": 2
+  },
+  {
+    "path": "forms/f1040/2025/mef/forms/credits/health/f8962/f8962.ts",
+    "pattern": "date-pinned",
+    "count": 4
+  },
+  {
+    "path": "forms/f1040/2025/mef/forms/credits/health/f8962/f8962.ts",
+    "pattern": "year-identifier",
+    "count": 13
+  },
+  {
+    "path": "forms/f1040/2025/mef/forms/credits/health/f8962/f8962.ts",
+    "pattern": "year-value",
+    "count": 8
+  },
+  {
+    "path": "forms/f1040/2025/mef/forms/credits/individual/f8396.ts",
+    "pattern": "year-identifier",
+    "count": 1
+  },
+  {
+    "path": "forms/f1040/2025/mef/forms/credits/individual/f8862.ts",
+    "pattern": "year-identifier",
+    "count": 1
+  },
+  {
+    "path": "forms/f1040/2025/mef/forms/credits/individual/f8863.ts",
+    "pattern": "year-identifier",
+    "count": 1
+  },
+  {
+    "path": "forms/f1040/2025/mef/forms/credits/individual/f8880.ts",
+    "pattern": "year-identifier",
+    "count": 1
+  },
+  {
+    "path": "forms/f1040/2025/mef/forms/deductions/additional/schedule1a/schedule1a.ts",
+    "pattern": "year-comparison",
+    "count": 3
+  },
+  {
+    "path": "forms/f1040/2025/mef/forms/deductions/additional/schedule1a/schedule1a.ts",
+    "pattern": "year-value",
+    "count": 4
+  },
+  {
+    "path": "forms/f1040/2025/mef/forms/deductions/business/f8995/f8995-investment.ts",
+    "pattern": "year-identifier",
+    "count": 1
+  },
+  {
+    "path": "forms/f1040/2025/mef/forms/deductions/business/f8995/f8995-investment.ts",
+    "pattern": "year-value",
+    "count": 2
+  },
+  {
+    "path": "forms/f1040/2025/mef/forms/deductions/business/f8995/f8995-route.ts",
+    "pattern": "config-index",
+    "count": 1
+  },
+  {
+    "path": "forms/f1040/2025/mef/forms/deductions/business/f8995/f8995-route.ts",
+    "pattern": "year-value",
+    "count": 1
+  },
+  {
+    "path": "forms/f1040/2025/mef/forms/deductions/business/f8995a/f8995a-sstb-source.ts",
+    "pattern": "config-index",
+    "count": 1
+  },
+  {
+    "path": "forms/f1040/2025/mef/forms/deductions/business/f8995a/f8995a.ts",
+    "pattern": "config-index",
+    "count": 3
+  },
+  {
+    "path": "forms/f1040/2025/mef/forms/deductions/charitable/f8283/f8283_carryover_evidence.ts",
+    "pattern": "year-identifier",
+    "count": 3
+  },
+  {
+    "path": "forms/f1040/2025/mef/forms/deductions/charitable/f8283/f8283_carryover.ts",
+    "pattern": "year-identifier",
+    "count": 1
+  },
+  {
+    "path": "forms/f1040/2025/mef/forms/deductions/charitable/f8283/f8283_carryover.ts",
+    "pattern": "year-value",
+    "count": 1
+  },
+  {
+    "path": "forms/f1040/2025/mef/forms/deductions/charitable/f8283/f8283_depreciation_return.ts",
+    "pattern": "year-value",
+    "count": 1
+  },
+  {
+    "path": "forms/f1040/2025/mef/forms/deductions/charitable/f8283/f8283_election.ts",
+    "pattern": "year-value",
+    "count": 6
+  },
+  {
+    "path": "forms/f1040/2025/mef/forms/deductions/charitable/f8283/f8283_natural_resource_return.ts",
+    "pattern": "year-value",
+    "count": 1
+  },
+  {
+    "path": "forms/f1040/2025/mef/forms/deductions/charitable/f8283/f8283_return.ts",
+    "pattern": "year-value",
+    "count": 1
+  },
+  {
+    "path": "forms/f1040/2025/mef/forms/deductions/charitable/f8283/f8283.ts",
+    "pattern": "year-identifier",
+    "count": 2
+  },
+  {
+    "path": "forms/f1040/2025/mef/forms/general/foreign/f8854/f8854_annual.ts",
+    "pattern": "year-identifier",
+    "count": 2
+  },
+  {
+    "path": "forms/f1040/2025/mef/forms/general/foreign/f8854/f8854_part_ii_a.ts",
+    "pattern": "year-identifier",
+    "count": 1
+  },
+  {
+    "path": "forms/f1040/2025/mef/forms/general/investments/f8997.staged.ts",
+    "pattern": "year-identifier",
+    "count": 1
+  },
+  {
+    "path": "forms/f1040/2025/mef/forms/general/return-assembly/f1040.ts",
+    "pattern": "year-identifier",
+    "count": 2
+  },
+  {
+    "path": "forms/f1040/2025/mef/forms/general/return-assembly/schedule1/schedule1.ts",
+    "pattern": "year-identifier",
+    "count": 1
+  },
+  {
+    "path": "forms/f1040/2025/mef/forms/income/business/f7203_stock_loss.ts",
+    "pattern": "year-identifier",
+    "count": 4
+  },
+  {
+    "path": "forms/f1040/2025/mef/forms/income/business/f8582/f8582-current-loss-review.ts",
+    "pattern": "year-value",
+    "count": 1
+  },
+  {
+    "path": "forms/f1040/2025/mef/forms/income/business/f8582/f8582.ts",
+    "pattern": "year-identifier",
+    "count": 6
+  },
+  {
+    "path": "forms/f1040/2025/mef/forms/income/business/f8582/f8582.ts",
+    "pattern": "year-value",
+    "count": 1
+  },
+  {
+    "path": "forms/f1040/2025/mef/forms/income/business/f8824.ts",
+    "pattern": "year-identifier",
+    "count": 1
+  },
+  {
+    "path": "forms/f1040/2025/mef/forms/income/business/schedule_c.ts",
+    "pattern": "config-index",
+    "count": 1
+  },
+  {
+    "path": "forms/f1040/2025/mef/forms/income/foreign/f8621.ts",
+    "pattern": "date-pinned",
+    "count": 2
+  },
+  {
+    "path": "forms/f1040/2025/mef/forms/income/foreign/f8621.ts",
+    "pattern": "year-identifier",
+    "count": 2
+  },
+  {
+    "path": "forms/f1040/2025/mef/forms/income/investments/f8815.ts",
+    "pattern": "config-index",
+    "count": 1
+  },
+  {
+    "path": "forms/f1040/2025/mef/forms/income/investments/schedule_b.ts",
+    "pattern": "year-identifier",
+    "count": 2
+  },
+  {
+    "path": "forms/f1040/2025/mef/forms/income/retirement/f8915f_groups.ts",
+    "pattern": "date-pinned",
+    "count": 2
+  },
+  {
+    "path": "forms/f1040/2025/mef/forms/income/retirement/f8915f_repayment_worksheet.ts",
+    "pattern": "date-pinned",
+    "count": 2
+  },
+  {
+    "path": "forms/f1040/2025/mef/forms/taxes/foreign/f965a.ts",
+    "pattern": "year-comparison",
+    "count": 1
+  },
+  {
+    "path": "forms/f1040/2025/mef/forms/taxes/foreign/f965a.ts",
+    "pattern": "year-identifier",
+    "count": 1
+  },
+  {
+    "path": "forms/f1040/2025/mef/forms/taxes/household-employment/schedule_h.ts",
+    "pattern": "date-pinned",
+    "count": 1
+  },
+  {
+    "path": "forms/f1040/2025/mef/forms/taxes/household-employment/schedule_h.ts",
+    "pattern": "year-identifier",
+    "count": 6
+  },
+  {
+    "path": "forms/f1040/2025/mef/forms/taxes/other/schedule2.ts",
+    "pattern": "year-identifier",
+    "count": 3
+  },
+  {
+    "path": "forms/f1040/2025/mef/forms/taxes/passthrough/f8978_statement.ts",
+    "pattern": "date-pinned",
+    "count": 2
+  },
+  {
+    "path": "forms/f1040/2025/mef/forms/taxes/underpayment/f2210_box_e.ts",
+    "pattern": "year-identifier",
+    "count": 2
+  },
+  {
+    "path": "forms/f1040/2025/mef/submissions/a2a-evidence.ts",
+    "pattern": "date-pinned",
+    "count": 2
+  },
+  {
+    "path": "forms/f1040/2025/mef/submissions/residency-review.ts",
+    "pattern": "date-pinned",
+    "count": 1
+  },
+  {
+    "path": "forms/f1040/2025/mef/submissions/residency-review.ts",
+    "pattern": "year-identifier",
+    "count": 1
+  },
+  {
+    "path": "forms/f1040/2025/mef/submissions/residency-review.ts",
+    "pattern": "z-literal",
+    "count": 1
+  },
+  {
+    "path": "forms/f1040/2025/mef/submissions/submission-archive.ts",
+    "pattern": "date-pinned",
+    "count": 2
+  },
+  {
+    "path": "forms/f1040/2025/pdf/forms/adjustments/health/f7206.ts",
+    "pattern": "year-value",
+    "count": 1
+  },
+  {
+    "path": "forms/f1040/2025/pdf/forms/credits/business/f3800/f3800_carryover_statement.ts",
+    "pattern": "year-identifier",
+    "count": 6
+  },
+  {
+    "path": "forms/f1040/2025/pdf/forms/credits/business/f3800/f3800_detail_projection.ts",
+    "pattern": "year-comparison",
+    "count": 1
+  },
+  {
+    "path": "forms/f1040/2025/pdf/forms/credits/business/f3800/f3800.ts",
+    "pattern": "year-comparison",
+    "count": 2
+  },
+  {
+    "path": "forms/f1040/2025/pdf/forms/credits/business/f8911_shared.ts",
+    "pattern": "year-identifier",
+    "count": 4
+  },
+  {
+    "path": "forms/f1040/2025/pdf/forms/credits/foreign/f1116/f1116_general_wage.ts",
+    "pattern": "date-pinned",
+    "count": 1
+  },
+  {
+    "path": "forms/f1040/2025/pdf/forms/credits/foreign/f1116/f1116_general_wage.ts",
+    "pattern": "year-identifier",
+    "count": 2
+  },
+  {
+    "path": "forms/f1040/2025/pdf/forms/credits/foreign/f1116/f1116_single_source.ts",
+    "pattern": "date-pinned",
+    "count": 1
+  },
+  {
+    "path": "forms/f1040/2025/pdf/forms/credits/foreign/f1116/f1116_single_source.ts",
+    "pattern": "year-identifier",
+    "count": 4
+  },
+  {
+    "path": "forms/f1040/2025/pdf/forms/credits/health/f8962.ts",
+    "pattern": "year-identifier",
+    "count": 1
+  },
+  {
+    "path": "forms/f1040/2025/pdf/forms/credits/individual/f2441.ts",
+    "pattern": "config-index",
+    "count": 1
+  },
+  {
+    "path": "forms/f1040/2025/pdf/forms/credits/individual/f8862.ts",
+    "pattern": "year-value",
+    "count": 1
+  },
+  {
+    "path": "forms/f1040/2025/pdf/forms/credits/individual/f8863.ts",
+    "pattern": "year-identifier",
+    "count": 3
+  },
+  {
+    "path": "forms/f1040/2025/pdf/forms/deductions/additional/schedule1a/schedule1a.ts",
+    "pattern": "year-value",
+    "count": 5
+  },
+  {
+    "path": "forms/f1040/2025/pdf/forms/deductions/business/f8995a_aggregation_statement.ts",
+    "pattern": "year-identifier",
+    "count": 1
+  },
+  {
+    "path": "forms/f1040/2025/pdf/forms/deductions/itemized/schedule_a.ts",
+    "pattern": "year-value",
+    "count": 1
+  },
+  {
+    "path": "forms/f1040/2025/pdf/forms/general/foreign/f8854_annual.ts",
+    "pattern": "year-identifier",
+    "count": 1
+  },
+  {
+    "path": "forms/f1040/2025/pdf/forms/general/foreign/f8854_initial.ts",
+    "pattern": "year-identifier",
+    "count": 2
+  },
+  {
+    "path": "forms/f1040/2025/pdf/forms/general/return-assembly/f1040.ts",
+    "pattern": "year-identifier",
+    "count": 3
+  },
+  {
+    "path": "forms/f1040/2025/pdf/forms/income/business/f7203_stock_loss.ts",
+    "pattern": "year-identifier",
+    "count": 4
+  },
+  {
+    "path": "forms/f1040/2025/pdf/forms/income/business/schedule_c.ts",
+    "pattern": "config-index",
+    "count": 1
+  },
+  {
+    "path": "forms/f1040/2025/pdf/forms/income/foreign/f8621_parent_source.ts",
+    "pattern": "date-pinned",
+    "count": 2
+  },
+  {
+    "path": "forms/f1040/2025/pdf/forms/income/foreign/f8621_parent_source.ts",
+    "pattern": "year-identifier",
+    "count": 4
+  },
+  {
+    "path": "forms/f1040/2025/pdf/forms/income/investments/f8815_address.ts",
+    "pattern": "year-identifier",
+    "count": 2
+  },
+  {
+    "path": "forms/f1040/2025/pdf/forms/income/investments/f8815_institutions.ts",
+    "pattern": "config-index",
+    "count": 1
+  },
+  {
+    "path": "forms/f1040/2025/pdf/forms/income/investments/f8815.ts",
+    "pattern": "config-index",
+    "count": 2
+  },
+  {
+    "path": "forms/f1040/2025/pdf/forms/income/investments/f8949.ts",
+    "pattern": "year-value",
+    "count": 1
+  },
+  {
+    "path": "forms/f1040/2025/pdf/forms/income/retirement/f8915f_groups.ts",
+    "pattern": "year-identifier",
+    "count": 2
+  },
+  {
+    "path": "forms/f1040/2025/pdf/forms/income/retirement/f8915f.ts",
+    "pattern": "year-identifier",
+    "count": 4
+  },
+  {
+    "path": "forms/f1040/2025/pdf/forms/payments/investments/f2439.ts",
+    "pattern": "date-pinned",
+    "count": 2
+  },
+  {
+    "path": "forms/f1040/2025/pdf/forms/taxes/employment/f4137.ts",
+    "pattern": "config-index",
+    "count": 1
+  },
+  {
+    "path": "forms/f1040/2025/pdf/forms/taxes/employment/f8919.ts",
+    "pattern": "config-index",
+    "count": 1
+  },
+  {
+    "path": "forms/f1040/2025/pdf/forms/taxes/foreign/f965a.ts",
+    "pattern": "year-comparison",
+    "count": 1
+  },
+  {
+    "path": "forms/f1040/2025/pdf/forms/taxes/foreign/f965a.ts",
+    "pattern": "year-identifier",
+    "count": 1
+  },
+  {
+    "path": "forms/f1040/2025/pdf/forms/taxes/household-employment/schedule_h.ts",
+    "pattern": "year-identifier",
+    "count": 6
+  },
+  {
+    "path": "forms/f1040/2025/pdf/forms/taxes/other/schedule2.ts",
+    "pattern": "year-identifier",
+    "count": 2
+  },
+  {
+    "path": "forms/f1040/2025/pdf/forms/taxes/self-employment/schedule_se.ts",
+    "pattern": "config-index",
+    "count": 1
+  },
+  {
+    "path": "forms/f1040/2025/pdf/forms/taxes/underpayment/f2210_box_e.ts",
+    "pattern": "year-identifier",
+    "count": 2
+  },
+  {
+    "path": "forms/f1040/2025/pdf/support/current-loss-return-review.ts",
+    "pattern": "year-value",
+    "count": 1
+  },
+  {
+    "path": "forms/f1040/2025/pdf/support/irs_country_name.ts",
+    "pattern": "year-identifier",
+    "count": 5
+  },
+  {
+    "path": "forms/f1040/2025/return-processing/return-wide-arithmetic.ts",
+    "pattern": "year-identifier",
+    "count": 3
+  },
+  {
+    "path": "forms/f1040/mef/header.ts",
+    "pattern": "year-value",
+    "count": 1
+  },
+  {
+    "path": "forms/f1040/nodes/inputs/adjustments/education/f1098e/index.ts",
+    "pattern": "date-pinned",
+    "count": 1
+  },
+  {
+    "path": "forms/f1040/nodes/inputs/adjustments/education/f8917/index.ts",
+    "pattern": "year-identifier",
+    "count": 1
+  },
+  {
+    "path": "forms/f1040/nodes/inputs/adjustments/employment/f2106/index.ts",
+    "pattern": "date-pinned",
+    "count": 1
+  },
+  {
+    "path": "forms/f1040/nodes/inputs/adjustments/employment/f2106/index.ts",
+    "pattern": "z-literal",
+    "count": 1
+  },
+  {
+    "path": "forms/f1040/nodes/inputs/adjustments/employment/f2106/reservist.ts",
+    "pattern": "date-pinned",
+    "count": 2
+  },
+  {
+    "path": "forms/f1040/nodes/inputs/adjustments/employment/f2106/reservist.ts",
+    "pattern": "year-identifier",
+    "count": 1
+  },
+  {
+    "path": "forms/f1040/nodes/inputs/adjustments/retirement/sep_retirement/index.ts",
+    "pattern": "year-comparison",
+    "count": 1
+  },
+  {
+    "path": "forms/f1040/nodes/inputs/adjustments/retirement/sep_retirement/index.ts",
+    "pattern": "year-identifier",
+    "count": 1
+  },
+  {
+    "path": "forms/f1040/nodes/inputs/adjustments/retirement/sep_retirement/owned-source.ts",
+    "pattern": "date-pinned",
+    "count": 4
+  },
+  {
+    "path": "forms/f1040/nodes/inputs/adjustments/retirement/sep_retirement/owned-source.ts",
+    "pattern": "z-literal",
+    "count": 1
+  },
+  {
+    "path": "forms/f1040/nodes/inputs/credits/amt/f8801/index.ts",
+    "pattern": "z-literal",
+    "count": 2
+  },
+  {
+    "path": "forms/f1040/nodes/inputs/credits/business/f3800/calculation.ts",
+    "pattern": "year-comparison",
+    "count": 2
+  },
+  {
+    "path": "forms/f1040/nodes/inputs/credits/business/f3800/calculation.ts",
+    "pattern": "year-value",
+    "count": 2
+  },
+  {
+    "path": "forms/f1040/nodes/inputs/credits/business/f3800/carryover-ledger.ts",
+    "pattern": "year-identifier",
+    "count": 20
+  },
+  {
+    "path": "forms/f1040/nodes/inputs/credits/business/f3800/current-allocation.ts",
+    "pattern": "z-literal",
+    "count": 1
+  },
+  {
+    "path": "forms/f1040/nodes/inputs/credits/business/f3800/index.ts",
+    "pattern": "year-identifier",
+    "count": 1
+  },
+  {
+    "path": "forms/f1040/nodes/inputs/credits/business/f3800/production-allocation.ts",
+    "pattern": "z-literal",
+    "count": 1
+  },
+  {
+    "path": "forms/f1040/nodes/inputs/credits/business/f5884/index.ts",
+    "pattern": "date-pinned",
+    "count": 1
+  },
+  {
+    "path": "forms/f1040/nodes/inputs/credits/business/f6478/index.ts",
+    "pattern": "year-identifier",
+    "count": 1
+  },
+  {
+    "path": "forms/f1040/nodes/inputs/credits/business/f8820/index.ts",
+    "pattern": "date-pinned",
+    "count": 1
+  },
+  {
+    "path": "forms/f1040/nodes/inputs/credits/business/f8826/index.ts",
+    "pattern": "date-pinned",
+    "count": 2
+  },
+  {
+    "path": "forms/f1040/nodes/inputs/credits/business/f8835/bond-source.ts",
+    "pattern": "date-pinned",
+    "count": 2
+  },
+  {
+    "path": "forms/f1040/nodes/inputs/credits/business/f8835/domestic-source.ts",
+    "pattern": "date-pinned",
+    "count": 1
+  },
+  {
+    "path": "forms/f1040/nodes/inputs/credits/business/f8835/domestic-source.ts",
+    "pattern": "year-comparison",
+    "count": 2
+  },
+  {
+    "path": "forms/f1040/nodes/inputs/credits/business/f8835/energy-community-source.ts",
+    "pattern": "date-pinned",
+    "count": 16
+  },
+  {
+    "path": "forms/f1040/nodes/inputs/credits/business/f8835/energy-community-source.ts",
+    "pattern": "z-literal",
+    "count": 1
+  },
+  {
+    "path": "forms/f1040/nodes/inputs/credits/business/f8835/increase-source.ts",
+    "pattern": "date-pinned",
+    "count": 1
+  },
+  {
+    "path": "forms/f1040/nodes/inputs/credits/business/f8835/increase-source.ts",
+    "pattern": "z-literal",
+    "count": 1
+  },
+  {
+    "path": "forms/f1040/nodes/inputs/credits/business/f8835/index.ts",
+    "pattern": "date-pinned",
+    "count": 6
+  },
+  {
+    "path": "forms/f1040/nodes/inputs/credits/business/f8835/index.ts",
+    "pattern": "year-identifier",
+    "count": 1
+  },
+  {
+    "path": "forms/f1040/nodes/inputs/credits/business/f8835/purchase-source.ts",
+    "pattern": "date-pinned",
+    "count": 1
+  },
+  {
+    "path": "forms/f1040/nodes/inputs/credits/business/f8835/pwa-source.ts",
+    "pattern": "date-pinned",
+    "count": 6
+  },
+  {
+    "path": "forms/f1040/nodes/inputs/credits/business/f8835/pwa-source.ts",
+    "pattern": "year-identifier",
+    "count": 3
+  },
+  {
+    "path": "forms/f1040/nodes/inputs/credits/business/f8835/transfer-source.ts",
+    "pattern": "date-pinned",
+    "count": 5
+  },
+  {
+    "path": "forms/f1040/nodes/inputs/credits/business/f8835/transfer-source.ts",
+    "pattern": "z-literal",
+    "count": 3
+  },
+  {
+    "path": "forms/f1040/nodes/inputs/credits/business/f8844/index.ts",
+    "pattern": "year-identifier",
+    "count": 1
+  },
+  {
+    "path": "forms/f1040/nodes/inputs/credits/business/f8864/index.ts",
+    "pattern": "date-pinned",
+    "count": 4
+  },
+  {
+    "path": "forms/f1040/nodes/inputs/credits/business/f8874/no_event_status_evidence.ts",
+    "pattern": "date-pinned",
+    "count": 2
+  },
+  {
+    "path": "forms/f1040/nodes/inputs/credits/business/f8874/no_event_status_evidence.ts",
+    "pattern": "year-identifier",
+    "count": 4
+  },
+  {
+    "path": "forms/f1040/nodes/inputs/credits/business/f8874/recapture.ts",
+    "pattern": "date-pinned",
+    "count": 2
+  },
+  {
+    "path": "forms/f1040/nodes/inputs/credits/business/f8874/recapture.ts",
+    "pattern": "year-comparison",
+    "count": 1
+  },
+  {
+    "path": "forms/f1040/nodes/inputs/credits/business/f8874/recapture.ts",
+    "pattern": "year-identifier",
+    "count": 6
+  },
+  {
+    "path": "forms/f1040/nodes/inputs/credits/business/f8881/index.ts",
+    "pattern": "year-comparison",
+    "count": 1
+  },
+  {
+    "path": "forms/f1040/nodes/inputs/credits/business/f8881/index.ts",
+    "pattern": "year-identifier",
+    "count": 6
+  },
+  {
+    "path": "forms/f1040/nodes/inputs/credits/business/f8882/index.ts",
+    "pattern": "date-pinned",
+    "count": 1
+  },
+  {
+    "path": "forms/f1040/nodes/inputs/credits/business/f8882/index.ts",
+    "pattern": "year-identifier",
+    "count": 1
+  },
+  {
+    "path": "forms/f1040/nodes/inputs/credits/business/f8994/evidence_bytes.ts",
+    "pattern": "year-identifier",
+    "count": 5
+  },
+  {
+    "path": "forms/f1040/nodes/inputs/credits/business/f8994/evidence_schema.ts",
+    "pattern": "year-identifier",
+    "count": 1
+  },
+  {
+    "path": "forms/f1040/nodes/inputs/credits/business/f8994/index.ts",
+    "pattern": "year-identifier",
+    "count": 5
+  },
+  {
+    "path": "forms/f1040/nodes/inputs/credits/health/f1095a/index.ts",
+    "pattern": "date-pinned",
+    "count": 2
+  },
+  {
+    "path": "forms/f1040/nodes/inputs/credits/health/f1095a/index.ts",
+    "pattern": "z-literal",
+    "count": 3
+  },
+  {
+    "path": "forms/f1040/nodes/inputs/credits/health/f8941/arrangements.ts",
+    "pattern": "date-pinned",
+    "count": 1
+  },
+  {
+    "path": "forms/f1040/nodes/inputs/credits/health/f8941/arrangements.ts",
+    "pattern": "year-identifier",
+    "count": 2
+  },
+  {
+    "path": "forms/f1040/nodes/inputs/credits/health/f8941/index.ts",
+    "pattern": "date-pinned",
+    "count": 4
+  },
+  {
+    "path": "forms/f1040/nodes/inputs/credits/health/f8941/index.ts",
+    "pattern": "year-comparison",
+    "count": 1
+  },
+  {
+    "path": "forms/f1040/nodes/inputs/credits/health/f8941/index.ts",
+    "pattern": "year-identifier",
+    "count": 6
+  },
+  {
+    "path": "forms/f1040/nodes/inputs/credits/health/f8941/index.ts",
+    "pattern": "z-literal",
+    "count": 3
+  },
+  {
+    "path": "forms/f1040/nodes/inputs/credits/health/f8941/multiple_plans.ts",
+    "pattern": "date-pinned",
+    "count": 8
+  },
+  {
+    "path": "forms/f1040/nodes/inputs/credits/health/f8941/multiple_plans.ts",
+    "pattern": "year-identifier",
+    "count": 4
+  },
+  {
+    "path": "forms/f1040/nodes/inputs/credits/health/f8941/multiple_plans.ts",
+    "pattern": "z-literal",
+    "count": 2
+  },
+  {
+    "path": "forms/f1040/nodes/inputs/credits/health/f8941/shop_evidence.ts",
+    "pattern": "date-pinned",
+    "count": 3
+  },
+  {
+    "path": "forms/f1040/nodes/inputs/credits/health/f8941/shop_evidence.ts",
+    "pattern": "year-identifier",
+    "count": 2
+  },
+  {
+    "path": "forms/f1040/nodes/inputs/credits/health/f8941/shop_evidence.ts",
+    "pattern": "z-literal",
+    "count": 2
+  },
+  {
+    "path": "forms/f1040/nodes/inputs/credits/individual/f8863/business-review.ts",
+    "pattern": "config-index",
+    "count": 1
+  },
+  {
+    "path": "forms/f1040/nodes/inputs/credits/individual/f8863/business-review.ts",
+    "pattern": "z-literal",
+    "count": 2
+  },
+  {
+    "path": "forms/f1040/nodes/inputs/credits/individual/f8863/claimant-review.ts",
+    "pattern": "date-pinned",
+    "count": 1
+  },
+  {
+    "path": "forms/f1040/nodes/inputs/credits/individual/f8863/claimant-review.ts",
+    "pattern": "z-literal",
+    "count": 2
+  },
+  {
+    "path": "forms/f1040/nodes/inputs/credits/individual/f8863/index.ts",
+    "pattern": "date-pinned",
+    "count": 5
+  },
+  {
+    "path": "forms/f1040/nodes/inputs/credits/individual/f8863/index.ts",
+    "pattern": "year-identifier",
+    "count": 1
+  },
+  {
+    "path": "forms/f1040/nodes/inputs/credits/individual/f8863/index.ts",
+    "pattern": "z-literal",
+    "count": 3
+  },
+  {
+    "path": "forms/f1040/nodes/inputs/credits/individual/f8912/allowance.ts",
+    "pattern": "date-pinned",
+    "count": 7
+  },
+  {
+    "path": "forms/f1040/nodes/inputs/credits/individual/f8936/index.ts",
+    "pattern": "date-pinned",
+    "count": 1
+  },
+  {
+    "path": "forms/f1040/nodes/inputs/deductions/business/k1_qbi_source.ts",
+    "pattern": "z-literal",
+    "count": 1
+  },
+  {
+    "path": "forms/f1040/nodes/inputs/deductions/business/k1_rpe_aggregation_source.ts",
+    "pattern": "date-pinned",
+    "count": 7
+  },
+  {
+    "path": "forms/f1040/nodes/inputs/deductions/business/k1_rpe_aggregation_source.ts",
+    "pattern": "year-identifier",
+    "count": 3
+  },
+  {
+    "path": "forms/f1040/nodes/inputs/deductions/business/k1_rpe_aggregation_source.ts",
+    "pattern": "z-literal",
+    "count": 1
+  },
+  {
+    "path": "forms/f1040/nodes/inputs/deductions/business/qbi_patron/independent.ts",
+    "pattern": "config-index",
+    "count": 3
+  },
+  {
+    "path": "forms/f1040/nodes/inputs/deductions/charitable/f8283/carryover-source.ts",
+    "pattern": "year-identifier",
+    "count": 3
+  },
+  {
+    "path": "forms/f1040/nodes/inputs/deductions/charitable/f8283/carryover-source.ts",
+    "pattern": "z-literal",
+    "count": 1
+  },
+  {
+    "path": "forms/f1040/nodes/inputs/deductions/charitable/f8283/depreciation-source.ts",
+    "pattern": "year-comparison",
+    "count": 1
+  },
+  {
+    "path": "forms/f1040/nodes/inputs/deductions/charitable/f8283/depreciation-source.ts",
+    "pattern": "year-identifier",
+    "count": 1
+  },
+  {
+    "path": "forms/f1040/nodes/inputs/deductions/charitable/f8283/intellectual-property-source.ts",
+    "pattern": "year-identifier",
+    "count": 2
+  },
+  {
+    "path": "forms/f1040/nodes/inputs/deductions/charitable/f8283/natural-resource-source.ts",
+    "pattern": "year-comparison",
+    "count": 2
+  },
+  {
+    "path": "forms/f1040/nodes/inputs/deductions/charitable/f8283/natural-resource-source.ts",
+    "pattern": "year-identifier",
+    "count": 4
+  },
+  {
+    "path": "forms/f1040/nodes/inputs/deductions/charitable/f8283/natural-resource-source.ts",
+    "pattern": "year-value",
+    "count": 2
+  },
+  {
+    "path": "forms/f1040/nodes/inputs/deductions/charitable/f8283/prior-mining-charity.ts",
+    "pattern": "year-comparison",
+    "count": 1
+  },
+  {
+    "path": "forms/f1040/nodes/inputs/deductions/charitable/f8283/prior-mining-charity.ts",
+    "pattern": "year-identifier",
+    "count": 12
+  },
+  {
+    "path": "forms/f1040/nodes/inputs/deductions/charitable/f8283/prior-mining-charity.ts",
+    "pattern": "year-value",
+    "count": 5
+  },
+  {
+    "path": "forms/f1040/nodes/inputs/deductions/charitable/f8283/prior-mining-charity.ts",
+    "pattern": "z-literal",
+    "count": 5
+  },
+  {
+    "path": "forms/f1040/nodes/inputs/deductions/charitable/f8283/section_b_carryover_source.ts",
+    "pattern": "date-pinned",
+    "count": 8
+  },
+  {
+    "path": "forms/f1040/nodes/inputs/deductions/charitable/f8283/section_b_carryover_source.ts",
+    "pattern": "year-identifier",
+    "count": 18
+  },
+  {
+    "path": "forms/f1040/nodes/inputs/deductions/charitable/f8283/section_b_carryover_source.ts",
+    "pattern": "year-value",
+    "count": 1
+  },
+  {
+    "path": "forms/f1040/nodes/inputs/deductions/charitable/f8283/section_b_carryover_source.ts",
+    "pattern": "z-literal",
+    "count": 3
+  },
+  {
+    "path": "forms/f1040/nodes/inputs/deductions/itemized/schedule_a/index.ts",
+    "pattern": "year-identifier",
+    "count": 3
+  },
+  {
+    "path": "forms/f1040/nodes/inputs/deductions/mortgage/f1098/cashout_refinance.ts",
+    "pattern": "date-pinned",
+    "count": 13
+  },
+  {
+    "path": "forms/f1040/nodes/inputs/deductions/mortgage/f1098/cashout_refinance.ts",
+    "pattern": "year-identifier",
+    "count": 8
+  },
+  {
+    "path": "forms/f1040/nodes/inputs/deductions/mortgage/f1098/index.ts",
+    "pattern": "date-pinned",
+    "count": 1
+  },
+  {
+    "path": "forms/f1040/nodes/inputs/deductions/mortgage/f1098/index.ts",
+    "pattern": "year-identifier",
+    "count": 10
+  },
+  {
+    "path": "forms/f1040/nodes/inputs/deductions/mortgage/f1098/index.ts",
+    "pattern": "year-value",
+    "count": 1
+  },
+  {
+    "path": "forms/f1040/nodes/inputs/deductions/mortgage/f1098/issuer_copy.ts",
+    "pattern": "year-value",
+    "count": 2
+  },
+  {
+    "path": "forms/f1040/nodes/inputs/deductions/mortgage/mortgage_refinance_points/index.ts",
+    "pattern": "date-pinned",
+    "count": 5
+  },
+  {
+    "path": "forms/f1040/nodes/inputs/deductions/mortgage/mortgage_refinance_points/index.ts",
+    "pattern": "year-comparison",
+    "count": 6
+  },
+  {
+    "path": "forms/f1040/nodes/inputs/deductions/mortgage/mortgage_refinance_points/index.ts",
+    "pattern": "year-identifier",
+    "count": 39
+  },
+  {
+    "path": "forms/f1040/nodes/inputs/deductions/mortgage/mortgage_refinance_points/index.ts",
+    "pattern": "z-literal",
+    "count": 2
+  },
+  {
+    "path": "forms/f1040/nodes/inputs/general/filing/f8958/source.ts",
+    "pattern": "date-pinned",
+    "count": 2
+  },
+  {
+    "path": "forms/f1040/nodes/inputs/general/filing/f8958/source.ts",
+    "pattern": "year-identifier",
+    "count": 1
+  },
+  {
+    "path": "forms/f1040/nodes/inputs/general/filing/f8958/source.ts",
+    "pattern": "z-literal",
+    "count": 1
+  },
+  {
+    "path": "forms/f1040/nodes/inputs/general/filing/f8958/staged_documents.ts",
+    "pattern": "date-pinned",
+    "count": 2
+  },
+  {
+    "path": "forms/f1040/nodes/inputs/general/filing/f8958/staged_documents.ts",
+    "pattern": "year-value",
+    "count": 1
+  },
+  {
+    "path": "forms/f1040/nodes/inputs/general/filing/general/index.ts",
+    "pattern": "date-pinned",
+    "count": 1
+  },
+  {
+    "path": "forms/f1040/nodes/inputs/general/filing/general/index.ts",
+    "pattern": "year-comparison",
+    "count": 1
+  },
+  {
+    "path": "forms/f1040/nodes/inputs/general/filing/general/index.ts",
+    "pattern": "year-identifier",
+    "count": 19
+  },
+  {
+    "path": "forms/f1040/nodes/inputs/general/filing/general/index.ts",
+    "pattern": "z-literal",
+    "count": 3
+  },
+  {
+    "path": "forms/f1040/nodes/inputs/general/foreign/f5471/index.ts",
+    "pattern": "date-pinned",
+    "count": 6
+  },
+  {
+    "path": "forms/f1040/nodes/inputs/general/foreign/f5471/worksheet-source.ts",
+    "pattern": "date-pinned",
+    "count": 20
+  },
+  {
+    "path": "forms/f1040/nodes/inputs/general/foreign/f5471/worksheet-source.ts",
+    "pattern": "z-literal",
+    "count": 3
+  },
+  {
+    "path": "forms/f1040/nodes/inputs/general/foreign/f8854/annual_node.ts",
+    "pattern": "year-identifier",
+    "count": 2
+  },
+  {
+    "path": "forms/f1040/nodes/inputs/general/foreign/f8854/annual.ts",
+    "pattern": "date-pinned",
+    "count": 1
+  },
+  {
+    "path": "forms/f1040/nodes/inputs/general/foreign/f8854/annual.ts",
+    "pattern": "year-identifier",
+    "count": 11
+  },
+  {
+    "path": "forms/f1040/nodes/inputs/general/foreign/f8854/constants.ts",
+    "pattern": "year-identifier",
+    "count": 1
+  },
+  {
+    "path": "forms/f1040/nodes/inputs/general/foreign/f8854/index.ts",
+    "pattern": "year-identifier",
+    "count": 9
+  },
+  {
+    "path": "forms/f1040/nodes/inputs/general/foreign/f8854/mark-to-market.ts",
+    "pattern": "year-identifier",
+    "count": 2
+  },
+  {
+    "path": "forms/f1040/nodes/inputs/general/foreign/f8854/reconcile-annual-capital.ts",
+    "pattern": "year-identifier",
+    "count": 2
+  },
+  {
+    "path": "forms/f1040/nodes/inputs/general/foreign/f8938/index.ts",
+    "pattern": "date-pinned",
+    "count": 8
+  },
+  {
+    "path": "forms/f1040/nodes/inputs/general/foreign/f8938/index.ts",
+    "pattern": "year-identifier",
+    "count": 5
+  },
+  {
+    "path": "forms/f1040/nodes/inputs/general/investments/f8997/holding_only_source.ts",
+    "pattern": "date-pinned",
+    "count": 1
+  },
+  {
+    "path": "forms/f1040/nodes/inputs/general/investments/f8997/holding_only_source.ts",
+    "pattern": "year-identifier",
+    "count": 5
+  },
+  {
+    "path": "forms/f1040/nodes/inputs/general/investments/f8997/ledger.ts",
+    "pattern": "date-pinned",
+    "count": 5
+  },
+  {
+    "path": "forms/f1040/nodes/inputs/general/investments/f8997/ledger.ts",
+    "pattern": "z-literal",
+    "count": 1
+  },
+  {
+    "path": "forms/f1040/nodes/inputs/income/business/f1099k/index.ts",
+    "pattern": "year-comparison",
+    "count": 1
+  },
+  {
+    "path": "forms/f1040/nodes/inputs/income/business/f1099k/index.ts",
+    "pattern": "year-identifier",
+    "count": 2
+  },
+  {
+    "path": "forms/f1040/nodes/inputs/income/business/f4835/qbi-source.ts",
+    "pattern": "z-literal",
+    "count": 1
+  },
+  {
+    "path": "forms/f1040/nodes/inputs/income/business/form8582_prior_year_record/index.ts",
+    "pattern": "year-identifier",
+    "count": 3
+  },
+  {
+    "path": "forms/f1040/nodes/inputs/income/business/nol_carryforward/reviewed_2024_business_loss.ts",
+    "pattern": "year-identifier",
+    "count": 7
+  },
+  {
+    "path": "forms/f1040/nodes/inputs/income/business/nol_carryforward/reviewed_2024_business_loss.ts",
+    "pattern": "year-value",
+    "count": 2
+  },
+  {
+    "path": "forms/f1040/nodes/inputs/income/business/nol_carryforward/reviewed_2024_business_loss.ts",
+    "pattern": "z-literal",
+    "count": 4
+  },
+  {
+    "path": "forms/f1040/nodes/inputs/income/business/schedule_c/index.ts",
+    "pattern": "year-comparison",
+    "count": 3
+  },
+  {
+    "path": "forms/f1040/nodes/inputs/income/business/schedule_c/index.ts",
+    "pattern": "year-identifier",
+    "count": 2
+  },
+  {
+    "path": "forms/f1040/nodes/inputs/income/business/schedule_c/long_term_contract.ts",
+    "pattern": "year-identifier",
+    "count": 3
+  },
+  {
+    "path": "forms/f1040/nodes/inputs/income/business/schedule_c/mining.ts",
+    "pattern": "date-pinned",
+    "count": 1
+  },
+  {
+    "path": "forms/f1040/nodes/inputs/income/business/schedule_c/model.ts",
+    "pattern": "date-pinned",
+    "count": 2
+  },
+  {
+    "path": "forms/f1040/nodes/inputs/income/business/schedule_c/model.ts",
+    "pattern": "year-identifier",
+    "count": 4
+  },
+  {
+    "path": "forms/f1040/nodes/inputs/income/foreign/f8621/excess_distribution.ts",
+    "pattern": "year-comparison",
+    "count": 5
+  },
+  {
+    "path": "forms/f1040/nodes/inputs/income/foreign/f8621/index.ts",
+    "pattern": "date-pinned",
+    "count": 1
+  },
+  {
+    "path": "forms/f1040/nodes/inputs/income/foreign/f8621/index.ts",
+    "pattern": "year-identifier",
+    "count": 7
+  },
+  {
+    "path": "forms/f1040/nodes/inputs/income/foreign/f8621/mtm_disposition.ts",
+    "pattern": "date-pinned",
+    "count": 1
+  },
+  {
+    "path": "forms/f1040/nodes/inputs/income/foreign/f8621/section1294.ts",
+    "pattern": "date-pinned",
+    "count": 6
+  },
+  {
+    "path": "forms/f1040/nodes/inputs/income/foreign/f8621/section1294.ts",
+    "pattern": "year-comparison",
+    "count": 1
+  },
+  {
+    "path": "forms/f1040/nodes/inputs/income/foreign/f8621/section1294.ts",
+    "pattern": "year-identifier",
+    "count": 15
+  },
+  {
+    "path": "forms/f1040/nodes/inputs/income/foreign/f8873/index.ts",
+    "pattern": "year-identifier",
+    "count": 1
+  },
+  {
+    "path": "forms/f1040/nodes/inputs/income/foreign/fec/index.ts",
+    "pattern": "date-pinned",
+    "count": 1
+  },
+  {
+    "path": "forms/f1040/nodes/inputs/income/foreign/fec/index.ts",
+    "pattern": "year-identifier",
+    "count": 2
+  },
+  {
+    "path": "forms/f1040/nodes/inputs/income/investments/f1099div/index.ts",
+    "pattern": "year-identifier",
+    "count": 2
+  },
+  {
+    "path": "forms/f1040/nodes/inputs/income/investments/f1099int/index.ts",
+    "pattern": "year-identifier",
+    "count": 2
+  },
+  {
+    "path": "forms/f1040/nodes/inputs/income/investments/f3921/index.ts",
+    "pattern": "year-value",
+    "count": 2
+  },
+  {
+    "path": "forms/f1040/nodes/inputs/income/investments/f8814/index.ts",
+    "pattern": "z-literal",
+    "count": 1
+  },
+  {
+    "path": "forms/f1040/nodes/inputs/income/investments/f8814/issuer_byte_binding.ts",
+    "pattern": "z-literal",
+    "count": 1
+  },
+  {
+    "path": "forms/f1040/nodes/inputs/income/other/education_income/dependent-scholarship-review.ts",
+    "pattern": "year-comparison",
+    "count": 3
+  },
+  {
+    "path": "forms/f1040/nodes/inputs/income/other/education_income/dependent-scholarship-review.ts",
+    "pattern": "year-identifier",
+    "count": 1
+  },
+  {
+    "path": "forms/f1040/nodes/inputs/income/other/education_income/dependent-scholarship-review.ts",
+    "pattern": "z-literal",
+    "count": 3
+  },
+  {
+    "path": "forms/f1040/nodes/inputs/income/other/education_income/index.ts",
+    "pattern": "year-value",
+    "count": 1
+  },
+  {
+    "path": "forms/f1040/nodes/inputs/income/other/education_income/required-service-scholarship.ts",
+    "pattern": "z-literal",
+    "count": 1
+  },
+  {
+    "path": "forms/f1040/nodes/inputs/income/other/education_income/sources.ts",
+    "pattern": "z-literal",
+    "count": 1
+  },
+  {
+    "path": "forms/f1040/nodes/inputs/income/rental-passthrough/k1_partnership/box11_line10.ts",
+    "pattern": "z-literal",
+    "count": 1
+  },
+  {
+    "path": "forms/f1040/nodes/inputs/income/rental-passthrough/k1_partnership/index.ts",
+    "pattern": "year-identifier",
+    "count": 2
+  },
+  {
+    "path": "forms/f1040/nodes/inputs/income/rental-passthrough/k1_partnership/index.ts",
+    "pattern": "z-literal",
+    "count": 1
+  },
+  {
+    "path": "forms/f1040/nodes/inputs/income/rental-passthrough/k1_passive_source.ts",
+    "pattern": "z-literal",
+    "count": 2
+  },
+  {
+    "path": "forms/f1040/nodes/inputs/income/rental-passthrough/k1_s_corp_passive_loss_source.ts",
+    "pattern": "z-literal",
+    "count": 4
+  },
+  {
+    "path": "forms/f1040/nodes/inputs/income/rental-passthrough/k1_s_corp/index.ts",
+    "pattern": "year-identifier",
+    "count": 2
+  },
+  {
+    "path": "forms/f1040/nodes/inputs/income/rental-passthrough/k1_s_corp/index.ts",
+    "pattern": "z-literal",
+    "count": 1
+  },
+  {
+    "path": "forms/f1040/nodes/inputs/income/rental-passthrough/k1_trust/index.ts",
+    "pattern": "year-identifier",
+    "count": 2
+  },
+  {
+    "path": "forms/f1040/nodes/inputs/income/rental-passthrough/k1_trust/index.ts",
+    "pattern": "z-literal",
+    "count": 2
+  },
+  {
+    "path": "forms/f1040/nodes/inputs/income/rental-passthrough/schedule_e/current-property-source.ts",
+    "pattern": "z-literal",
+    "count": 1
+  },
+  {
+    "path": "forms/f1040/nodes/inputs/income/rental-passthrough/schedule_e/index.ts",
+    "pattern": "date-pinned",
+    "count": 8
+  },
+  {
+    "path": "forms/f1040/nodes/inputs/income/rental-passthrough/schedule_e/index.ts",
+    "pattern": "year-comparison",
+    "count": 1
+  },
+  {
+    "path": "forms/f1040/nodes/inputs/income/rental-passthrough/schedule_e/index.ts",
+    "pattern": "year-identifier",
+    "count": 15
+  },
+  {
+    "path": "forms/f1040/nodes/inputs/income/retirement/f1099r/index.ts",
+    "pattern": "date-pinned",
+    "count": 4
+  },
+  {
+    "path": "forms/f1040/nodes/inputs/income/retirement/f1099r/index.ts",
+    "pattern": "year-comparison",
+    "count": 3
+  },
+  {
+    "path": "forms/f1040/nodes/inputs/income/retirement/f1099r/index.ts",
+    "pattern": "year-identifier",
+    "count": 6
+  },
+  {
+    "path": "forms/f1040/nodes/inputs/income/retirement/f8915d/index.ts",
+    "pattern": "year-identifier",
+    "count": 2
+  },
+  {
+    "path": "forms/f1040/nodes/inputs/income/retirement/f8915f/index.ts",
+    "pattern": "date-pinned",
+    "count": 3
+  },
+  {
+    "path": "forms/f1040/nodes/inputs/income/wages/clergy/index.ts",
+    "pattern": "year-identifier",
+    "count": 1
+  },
+  {
+    "path": "forms/f1040/nodes/inputs/income/wages/f4852/index.ts",
+    "pattern": "z-literal",
+    "count": 1
+  },
+  {
+    "path": "forms/f1040/nodes/inputs/income/wages/w2/index.ts",
+    "pattern": "date-pinned",
+    "count": 3
+  },
+  {
+    "path": "forms/f1040/nodes/inputs/income/wages/w2/index.ts",
+    "pattern": "year-comparison",
+    "count": 1
+  },
+  {
+    "path": "forms/f1040/nodes/inputs/income/wages/w2/index.ts",
+    "pattern": "year-identifier",
+    "count": 1
+  },
+  {
+    "path": "forms/f1040/nodes/inputs/income/wages/w2/index.ts",
+    "pattern": "z-literal",
+    "count": 3
+  },
+  {
+    "path": "forms/f1040/nodes/inputs/payments/estimated/f1040es/index.ts",
+    "pattern": "date-pinned",
+    "count": 4
+  },
+  {
+    "path": "forms/f1040/nodes/inputs/payments/estimated/f1040es/index.ts",
+    "pattern": "year-comparison",
+    "count": 1
+  },
+  {
+    "path": "forms/f1040/nodes/inputs/payments/estimated/f1040es/index.ts",
+    "pattern": "year-identifier",
+    "count": 11
+  },
+  {
+    "path": "forms/f1040/nodes/inputs/payments/installments/f9465/index.ts",
+    "pattern": "year-identifier",
+    "count": 1
+  },
+  {
+    "path": "forms/f1040/nodes/inputs/payments/installments/f9465/index.ts",
+    "pattern": "z-literal",
+    "count": 1
+  },
+  {
+    "path": "forms/f1040/nodes/inputs/taxes/amt/pab_allocable_deduction.ts",
+    "pattern": "date-pinned",
+    "count": 1
+  },
+  {
+    "path": "forms/f1040/nodes/inputs/taxes/amt/pab_allocable_deduction.ts",
+    "pattern": "year-identifier",
+    "count": 7
+  },
+  {
+    "path": "forms/f1040/nodes/inputs/taxes/amt/pab_allocable_deduction.ts",
+    "pattern": "z-literal",
+    "count": 2
+  },
+  {
+    "path": "forms/f1040/nodes/inputs/taxes/credit-recapture/f4255/index.ts",
+    "pattern": "z-literal",
+    "count": 1
+  },
+  {
+    "path": "forms/f1040/nodes/inputs/taxes/credit-recapture/f8611/partnership-source.ts",
+    "pattern": "date-pinned",
+    "count": 1
+  },
+  {
+    "path": "forms/f1040/nodes/inputs/taxes/credit-recapture/f8611/partnership-source.ts",
+    "pattern": "z-literal",
+    "count": 2
+  },
+  {
+    "path": "forms/f1040/nodes/inputs/taxes/income-averaging/schedule_j/base_years.ts",
+    "pattern": "year-comparison",
+    "count": 1
+  },
+  {
+    "path": "forms/f1040/nodes/inputs/taxes/income-averaging/schedule_j/base_years.ts",
+    "pattern": "year-identifier",
+    "count": 9
+  },
+  {
+    "path": "forms/f1040/nodes/inputs/taxes/income-averaging/schedule_j/base_years.ts",
+    "pattern": "z-literal",
+    "count": 1
+  },
+  {
+    "path": "forms/f1040/nodes/inputs/taxes/income-averaging/schedule_j/index.ts",
+    "pattern": "year-identifier",
+    "count": 2
+  },
+  {
+    "path": "forms/f1040/nodes/inputs/taxes/interest/f453a_interest/index.ts",
+    "pattern": "date-pinned",
+    "count": 1
+  },
+  {
+    "path": "forms/f1040/nodes/inputs/taxes/interest/f453a_interest/index.ts",
+    "pattern": "year-comparison",
+    "count": 1
+  },
+  {
+    "path": "forms/f1040/nodes/inputs/taxes/investments/f8615/dependent-source-review.ts",
+    "pattern": "config-index",
+    "count": 2
+  },
+  {
+    "path": "forms/f1040/nodes/inputs/taxes/investments/f8615/dependent-source-review.ts",
+    "pattern": "date-pinned",
+    "count": 2
+  },
+  {
+    "path": "forms/f1040/nodes/inputs/taxes/investments/f8615/dependent-source-review.ts",
+    "pattern": "year-identifier",
+    "count": 9
+  },
+  {
+    "path": "forms/f1040/nodes/inputs/taxes/other/f5405/index.ts",
+    "pattern": "year-identifier",
+    "count": 2
+  },
+  {
+    "path": "forms/f1040/nodes/inputs/taxes/passthrough/f8978/index.ts",
+    "pattern": "date-pinned",
+    "count": 1
+  },
+  {
+    "path": "forms/f1040/nodes/inputs/taxes/passthrough/f8978/index.ts",
+    "pattern": "z-literal",
+    "count": 1
+  },
+  {
+    "path": "forms/f1040/nodes/inputs/taxes/underpayment/f2210/calculation.ts",
+    "pattern": "date-pinned",
+    "count": 5
+  },
+  {
+    "path": "forms/f1040/nodes/intermediate/aggregation/general/return-assembly/agi_aggregator/index.ts",
+    "pattern": "year-value",
+    "count": 1
+  },
+  {
+    "path": "forms/f1040/nodes/intermediate/aggregation/income/investments/schedule_b/index.ts",
+    "pattern": "year-identifier",
+    "count": 2
+  },
+  {
+    "path": "forms/f1040/nodes/intermediate/aggregation/taxes/other/schedule2/index.ts",
+    "pattern": "year-identifier",
+    "count": 3
+  },
+  {
+    "path": "forms/f1040/nodes/intermediate/forms/adjustments/health/form7206/index.ts",
+    "pattern": "year-comparison",
+    "count": 3
+  },
+  {
+    "path": "forms/f1040/nodes/intermediate/forms/adjustments/health/form7206/policy-records.ts",
+    "pattern": "date-pinned",
+    "count": 1
+  },
+  {
+    "path": "forms/f1040/nodes/intermediate/forms/adjustments/health/form7206/pub974_worksheets.ts",
+    "pattern": "year-identifier",
+    "count": 4
+  },
+  {
+    "path": "forms/f1040/nodes/intermediate/forms/adjustments/health/form7206/pub974_worksheets.ts",
+    "pattern": "year-value",
+    "count": 1
+  },
+  {
+    "path": "forms/f1040/nodes/intermediate/forms/adjustments/health/form8853/archer_contributions.ts",
+    "pattern": "date-pinned",
+    "count": 3
+  },
+  {
+    "path": "forms/f1040/nodes/intermediate/forms/adjustments/health/form8853/archer_contributions.ts",
+    "pattern": "year-identifier",
+    "count": 1
+  },
+  {
+    "path": "forms/f1040/nodes/intermediate/forms/adjustments/health/form8853/archer_contributions.ts",
+    "pattern": "z-literal",
+    "count": 2
+  },
+  {
+    "path": "forms/f1040/nodes/intermediate/forms/adjustments/health/form8853/archer_distributions.ts",
+    "pattern": "year-value",
+    "count": 1
+  },
+  {
+    "path": "forms/f1040/nodes/intermediate/forms/adjustments/health/form8853/index.ts",
+    "pattern": "year-comparison",
+    "count": 2
+  },
+  {
+    "path": "forms/f1040/nodes/intermediate/forms/adjustments/health/form8853/index.ts",
+    "pattern": "year-identifier",
+    "count": 1
+  },
+  {
+    "path": "forms/f1040/nodes/intermediate/forms/adjustments/health/form8853/index.ts",
+    "pattern": "year-value",
+    "count": 4
+  },
+  {
+    "path": "forms/f1040/nodes/intermediate/forms/adjustments/health/form8853/ltc.ts",
+    "pattern": "z-literal",
+    "count": 1
+  },
+  {
+    "path": "forms/f1040/nodes/intermediate/forms/adjustments/health/form8853/medicare_distributions.ts",
+    "pattern": "year-identifier",
+    "count": 10
+  },
+  {
+    "path": "forms/f1040/nodes/intermediate/forms/adjustments/health/form8853/medicare_distributions.ts",
+    "pattern": "year-value",
+    "count": 3
+  },
+  {
+    "path": "forms/f1040/nodes/intermediate/forms/adjustments/health/form8889/employer-postyear-evidence-schema.ts",
+    "pattern": "year-identifier",
+    "count": 3
+  },
+  {
+    "path": "forms/f1040/nodes/intermediate/forms/adjustments/health/form8889/index.ts",
+    "pattern": "year-comparison",
+    "count": 7
+  },
+  {
+    "path": "forms/f1040/nodes/intermediate/forms/adjustments/health/form8889/index.ts",
+    "pattern": "year-identifier",
+    "count": 4
+  },
+  {
+    "path": "forms/f1040/nodes/intermediate/forms/adjustments/health/form8889/index.ts",
+    "pattern": "z-literal",
+    "count": 6
+  },
+  {
+    "path": "forms/f1040/nodes/intermediate/forms/credits/business/form8582cr/carryforward-ledger.ts",
+    "pattern": "year-value",
+    "count": 2
+  },
+  {
+    "path": "forms/f1040/nodes/intermediate/forms/credits/business/form8582cr/carryforward-ledger.ts",
+    "pattern": "z-literal",
+    "count": 2
+  },
+  {
+    "path": "forms/f1040/nodes/intermediate/forms/credits/business/form8582cr/line6_ordinary_worksheet.ts",
+    "pattern": "year-identifier",
+    "count": 4
+  },
+  {
+    "path": "forms/f1040/nodes/intermediate/forms/credits/business/form8582cr/line6_source.ts",
+    "pattern": "z-literal",
+    "count": 1
+  },
+  {
+    "path": "forms/f1040/nodes/intermediate/forms/credits/business/form8582cr/next_year_import.ts",
+    "pattern": "year-identifier",
+    "count": 7
+  },
+  {
+    "path": "forms/f1040/nodes/intermediate/forms/credits/business/form8582cr/next_year_import.ts",
+    "pattern": "z-literal",
+    "count": 2
+  },
+  {
+    "path": "forms/f1040/nodes/intermediate/forms/credits/business/form8582cr/prior_year_opening.ts",
+    "pattern": "year-comparison",
+    "count": 1
+  },
+  {
+    "path": "forms/f1040/nodes/intermediate/forms/credits/business/form8582cr/prior_year_opening.ts",
+    "pattern": "year-identifier",
+    "count": 25
+  },
+  {
+    "path": "forms/f1040/nodes/intermediate/forms/credits/business/form8582cr/prior_year_opening.ts",
+    "pattern": "year-value",
+    "count": 1
+  },
+  {
+    "path": "forms/f1040/nodes/intermediate/forms/credits/business/form8582cr/prior_year_opening.ts",
+    "pattern": "z-literal",
+    "count": 2
+  },
+  {
+    "path": "forms/f1040/nodes/intermediate/forms/credits/earned-income/eitc/index.ts",
+    "pattern": "year-comparison",
+    "count": 2
+  },
+  {
+    "path": "forms/f1040/nodes/intermediate/forms/credits/earned-income/eitc/index.ts",
+    "pattern": "year-identifier",
+    "count": 4
+  },
+  {
+    "path": "forms/f1040/nodes/intermediate/forms/credits/earned-income/eitc/table_2025.ts",
+    "pattern": "year-identifier",
+    "count": 1
+  },
+  {
+    "path": "forms/f1040/nodes/intermediate/forms/credits/foreign/form_1116/index.ts",
+    "pattern": "date-pinned",
+    "count": 4
+  },
+  {
+    "path": "forms/f1040/nodes/intermediate/forms/credits/foreign/form_1116/index.ts",
+    "pattern": "year-identifier",
+    "count": 15
+  },
+  {
+    "path": "forms/f1040/nodes/intermediate/forms/credits/foreign/form_1116/index.ts",
+    "pattern": "z-literal",
+    "count": 2
+  },
+  {
+    "path": "forms/f1040/nodes/intermediate/forms/credits/individual/form5695/index.ts",
+    "pattern": "year-comparison",
+    "count": 1
+  },
+  {
+    "path": "forms/f1040/nodes/intermediate/forms/credits/individual/form5695/index.ts",
+    "pattern": "z-literal",
+    "count": 4
+  },
+  {
+    "path": "forms/f1040/nodes/intermediate/forms/credits/individual/form5695/terminated-2026.ts",
+    "pattern": "year-comparison",
+    "count": 1
+  },
+  {
+    "path": "forms/f1040/nodes/intermediate/forms/credits/individual/form8396/calculation.ts",
+    "pattern": "date-pinned",
+    "count": 2
+  },
+  {
+    "path": "forms/f1040/nodes/intermediate/forms/credits/individual/form8396/calculation.ts",
+    "pattern": "year-identifier",
+    "count": 13
+  },
+  {
+    "path": "forms/f1040/nodes/intermediate/forms/credits/individual/form8396/index.ts",
+    "pattern": "year-identifier",
+    "count": 2
+  },
+  {
+    "path": "forms/f1040/nodes/intermediate/forms/credits/individual/form8839/current_year_carryforward.ts",
+    "pattern": "year-value",
+    "count": 2
+  },
+  {
+    "path": "forms/f1040/nodes/intermediate/forms/credits/individual/form8839/current_year_carryforward.ts",
+    "pattern": "z-literal",
+    "count": 2
+  },
+  {
+    "path": "forms/f1040/nodes/intermediate/forms/credits/individual/form8839/pending_reconciliation.ts",
+    "pattern": "year-value",
+    "count": 1
+  },
+  {
+    "path": "forms/f1040/nodes/intermediate/forms/credits/individual/form8839/pre_adoption_reconciliation.ts",
+    "pattern": "year-value",
+    "count": 1
+  },
+  {
+    "path": "forms/f1040/nodes/intermediate/forms/credits/individual/form8839/reviewed_source.ts",
+    "pattern": "year-identifier",
+    "count": 1
+  },
+  {
+    "path": "forms/f1040/nodes/intermediate/forms/credits/individual/form8839/staged_sink_finalizer.ts",
+    "pattern": "year-value",
+    "count": 1
+  },
+  {
+    "path": "forms/f1040/nodes/intermediate/forms/credits/individual/form8880/able_contribution_review.ts",
+    "pattern": "year-identifier",
+    "count": 1
+  },
+  {
+    "path": "forms/f1040/nodes/intermediate/forms/credits/individual/form8880/able_contribution_review.ts",
+    "pattern": "z-literal",
+    "count": 1
+  },
+  {
+    "path": "forms/f1040/nodes/intermediate/forms/credits/individual/form8880/able_distribution_review.ts",
+    "pattern": "date-pinned",
+    "count": 2
+  },
+  {
+    "path": "forms/f1040/nodes/intermediate/forms/credits/individual/form8880/able_employment_review.ts",
+    "pattern": "date-pinned",
+    "count": 2
+  },
+  {
+    "path": "forms/f1040/nodes/intermediate/forms/credits/individual/form8880/able_employment_review.ts",
+    "pattern": "year-identifier",
+    "count": 3
+  },
+  {
+    "path": "forms/f1040/nodes/intermediate/forms/credits/individual/form8880/calculation.ts",
+    "pattern": "date-pinned",
+    "count": 4
+  },
+  {
+    "path": "forms/f1040/nodes/intermediate/forms/credits/individual/form8880/calculation.ts",
+    "pattern": "year-comparison",
+    "count": 2
+  },
+  {
+    "path": "forms/f1040/nodes/intermediate/forms/credits/individual/form8880/calculation.ts",
+    "pattern": "year-identifier",
+    "count": 13
+  },
+  {
+    "path": "forms/f1040/nodes/intermediate/forms/credits/individual/form8880/employee_contribution_review.ts",
+    "pattern": "z-literal",
+    "count": 1
+  },
+  {
+    "path": "forms/f1040/nodes/intermediate/forms/credits/individual/form8880/nonjoint_distribution_review.ts",
+    "pattern": "date-pinned",
+    "count": 3
+  },
+  {
+    "path": "forms/f1040/nodes/intermediate/forms/deductions/additional/schedule1a/calculation.ts",
+    "pattern": "config-index",
+    "count": 2
+  },
+  {
+    "path": "forms/f1040/nodes/intermediate/forms/deductions/additional/schedule1a/calculation.ts",
+    "pattern": "year-comparison",
+    "count": 4
+  },
+  {
+    "path": "forms/f1040/nodes/intermediate/forms/deductions/additional/schedule1a/index.ts",
+    "pattern": "year-identifier",
+    "count": 1
+  },
+  {
+    "path": "forms/f1040/nodes/intermediate/forms/deductions/business/form_8829/index.ts",
+    "pattern": "year-comparison",
+    "count": 1
+  },
+  {
+    "path": "forms/f1040/nodes/intermediate/forms/deductions/business/form_8829/index.ts",
+    "pattern": "year-identifier",
+    "count": 1
+  },
+  {
+    "path": "forms/f1040/nodes/intermediate/forms/deductions/business/form_8829/source.ts",
+    "pattern": "date-pinned",
+    "count": 5
+  },
+  {
+    "path": "forms/f1040/nodes/intermediate/forms/deductions/business/form_8829/source.ts",
+    "pattern": "z-literal",
+    "count": 1
+  },
+  {
+    "path": "forms/f1040/nodes/intermediate/forms/deductions/business/form4562/bonus.ts",
+    "pattern": "date-pinned",
+    "count": 3
+  },
+  {
+    "path": "forms/f1040/nodes/intermediate/forms/deductions/business/form4562/current-year.ts",
+    "pattern": "date-pinned",
+    "count": 2
+  },
+  {
+    "path": "forms/f1040/nodes/intermediate/forms/deductions/business/form4562/elections.ts",
+    "pattern": "date-pinned",
+    "count": 2
+  },
+  {
+    "path": "forms/f1040/nodes/intermediate/forms/deductions/business/form4562/index.ts",
+    "pattern": "date-pinned",
+    "count": 1
+  },
+  {
+    "path": "forms/f1040/nodes/intermediate/forms/deductions/business/form4562/index.ts",
+    "pattern": "year-comparison",
+    "count": 4
+  },
+  {
+    "path": "forms/f1040/nodes/intermediate/forms/deductions/business/form4562/index.ts",
+    "pattern": "year-identifier",
+    "count": 3
+  },
+  {
+    "path": "forms/f1040/nodes/intermediate/forms/deductions/business/form4562/section179-inventory.ts",
+    "pattern": "config-index",
+    "count": 1
+  },
+  {
+    "path": "forms/f1040/nodes/intermediate/forms/deductions/business/form8990/carryforward.ts",
+    "pattern": "year-identifier",
+    "count": 4
+  },
+  {
+    "path": "forms/f1040/nodes/intermediate/forms/deductions/business/form8990/carryforward.ts",
+    "pattern": "year-value",
+    "count": 8
+  },
+  {
+    "path": "forms/f1040/nodes/intermediate/forms/deductions/business/form8990/carryforward.ts",
+    "pattern": "z-literal",
+    "count": 1
+  },
+  {
+    "path": "forms/f1040/nodes/intermediate/forms/deductions/business/form8990/index.ts",
+    "pattern": "year-comparison",
+    "count": 1
+  },
+  {
+    "path": "forms/f1040/nodes/intermediate/forms/deductions/business/form8990/index.ts",
+    "pattern": "year-identifier",
+    "count": 1
+  },
+  {
+    "path": "forms/f1040/nodes/intermediate/forms/deductions/business/form8990/interest-expense.ts",
+    "pattern": "date-pinned",
+    "count": 2
+  },
+  {
+    "path": "forms/f1040/nodes/intermediate/forms/deductions/business/form8990/nonexempt-receipts.ts",
+    "pattern": "config-index",
+    "count": 1
+  },
+  {
+    "path": "forms/f1040/nodes/intermediate/forms/deductions/business/form8990/nonexempt-receipts.ts",
+    "pattern": "z-literal",
+    "count": 1
+  },
+  {
+    "path": "forms/f1040/nodes/intermediate/forms/deductions/business/form8990/schedule-c-pass.ts",
+    "pattern": "year-value",
+    "count": 1
+  },
+  {
+    "path": "forms/f1040/nodes/intermediate/forms/deductions/business/form8995/owned-s-corp-loss.ts",
+    "pattern": "year-identifier",
+    "count": 4
+  },
+  {
+    "path": "forms/f1040/nodes/intermediate/forms/deductions/business/form8995a/farm-wotc.ts",
+    "pattern": "config-index",
+    "count": 3
+  },
+  {
+    "path": "forms/f1040/nodes/intermediate/forms/deductions/business/form8995a/index.ts",
+    "pattern": "config-index",
+    "count": 12
+  },
+  {
+    "path": "forms/f1040/nodes/intermediate/forms/deductions/business/form8995a/index.ts",
+    "pattern": "date-pinned",
+    "count": 8
+  },
+  {
+    "path": "forms/f1040/nodes/intermediate/forms/deductions/business/form8995a/index.ts",
+    "pattern": "year-comparison",
+    "count": 3
+  },
+  {
+    "path": "forms/f1040/nodes/intermediate/forms/deductions/business/form8995a/index.ts",
+    "pattern": "year-identifier",
+    "count": 5
+  },
+  {
+    "path": "forms/f1040/nodes/intermediate/forms/deductions/business/form8995a/loss-se.ts",
+    "pattern": "config-index",
+    "count": 1
+  },
+  {
+    "path": "forms/f1040/nodes/intermediate/forms/deductions/business/form8995a/mixed-fishing.ts",
+    "pattern": "config-index",
+    "count": 2
+  },
+  {
+    "path": "forms/f1040/nodes/intermediate/forms/deductions/business/form8995a/positive-limit-inventory.ts",
+    "pattern": "date-pinned",
+    "count": 13
+  },
+  {
+    "path": "forms/f1040/nodes/intermediate/forms/deductions/business/form8995a/positive-limit-inventory.ts",
+    "pattern": "year-identifier",
+    "count": 21
+  },
+  {
+    "path": "forms/f1040/nodes/intermediate/forms/deductions/business/form8995a/positive-limit-inventory.ts",
+    "pattern": "z-literal",
+    "count": 1
+  },
+  {
+    "path": "forms/f1040/nodes/intermediate/forms/deductions/business/form8995a/producing-mining.ts",
+    "pattern": "config-index",
+    "count": 2
+  },
+  {
+    "path": "forms/f1040/nodes/intermediate/forms/deductions/business/form8995a/producing-mining.ts",
+    "pattern": "year-comparison",
+    "count": 1
+  },
+  {
+    "path": "forms/f1040/nodes/intermediate/forms/deductions/business/form8995a/single-farm-source.ts",
+    "pattern": "config-index",
+    "count": 1
+  },
+  {
+    "path": "forms/f1040/nodes/intermediate/forms/deductions/business/form8995a/zero-limit-inventory.ts",
+    "pattern": "date-pinned",
+    "count": 3
+  },
+  {
+    "path": "forms/f1040/nodes/intermediate/forms/deductions/business/form8995a/zero-limit-inventory.ts",
+    "pattern": "z-literal",
+    "count": 1
+  },
+  {
+    "path": "forms/f1040/nodes/intermediate/forms/deductions/investments/form4952/debt_trace.ts",
+    "pattern": "date-pinned",
+    "count": 1
+  },
+  {
+    "path": "forms/f1040/nodes/intermediate/forms/deductions/investments/form4952/debt_trace.ts",
+    "pattern": "year-identifier",
+    "count": 7
+  },
+  {
+    "path": "forms/f1040/nodes/intermediate/forms/deductions/investments/form4952/debt_trace.ts",
+    "pattern": "z-literal",
+    "count": 1
+  },
+  {
+    "path": "forms/f1040/nodes/intermediate/forms/deductions/investments/form4952/index.ts",
+    "pattern": "year-identifier",
+    "count": 2
+  },
+  {
+    "path": "forms/f1040/nodes/intermediate/forms/deductions/investments/form4952/prior_carryforward.ts",
+    "pattern": "date-pinned",
+    "count": 1
+  },
+  {
+    "path": "forms/f1040/nodes/intermediate/forms/deductions/investments/form4952/prior_carryforward.ts",
+    "pattern": "year-identifier",
+    "count": 9
+  },
+  {
+    "path": "forms/f1040/nodes/intermediate/forms/deductions/investments/form4952/prior_carryforward.ts",
+    "pattern": "z-literal",
+    "count": 2
+  },
+  {
+    "path": "forms/f1040/nodes/intermediate/forms/deductions/investments/form4952/royalty_debt.ts",
+    "pattern": "year-identifier",
+    "count": 3
+  },
+  {
+    "path": "forms/f1040/nodes/intermediate/forms/income/business/farm_elections.ts",
+    "pattern": "date-pinned",
+    "count": 1
+  },
+  {
+    "path": "forms/f1040/nodes/intermediate/forms/income/business/form4797/index.ts",
+    "pattern": "date-pinned",
+    "count": 6
+  },
+  {
+    "path": "forms/f1040/nodes/intermediate/forms/income/business/form4797/index.ts",
+    "pattern": "year-comparison",
+    "count": 1
+  },
+  {
+    "path": "forms/f1040/nodes/intermediate/forms/income/business/form4797/index.ts",
+    "pattern": "year-identifier",
+    "count": 4
+  },
+  {
+    "path": "forms/f1040/nodes/intermediate/forms/income/business/form4797/investment_1245.ts",
+    "pattern": "date-pinned",
+    "count": 2
+  },
+  {
+    "path": "forms/f1040/nodes/intermediate/forms/income/business/form4797/prior_history.ts",
+    "pattern": "year-identifier",
+    "count": 7
+  },
+  {
+    "path": "forms/f1040/nodes/intermediate/forms/income/business/form4797/prior_history.ts",
+    "pattern": "z-literal",
+    "count": 1
+  },
+  {
+    "path": "forms/f1040/nodes/intermediate/forms/income/business/form7203/corporate-bank.ts",
+    "pattern": "date-pinned",
+    "count": 1
+  },
+  {
+    "path": "forms/f1040/nodes/intermediate/forms/income/business/form7203/debt-note.ts",
+    "pattern": "date-pinned",
+    "count": 1
+  },
+  {
+    "path": "forms/f1040/nodes/intermediate/forms/income/business/form7203/debt-note.ts",
+    "pattern": "year-identifier",
+    "count": 27
+  },
+  {
+    "path": "forms/f1040/nodes/intermediate/forms/income/business/form7203/index.ts",
+    "pattern": "year-identifier",
+    "count": 9
+  },
+  {
+    "path": "forms/f1040/nodes/intermediate/forms/income/business/form7203/open-account.ts",
+    "pattern": "date-pinned",
+    "count": 1
+  },
+  {
+    "path": "forms/f1040/nodes/intermediate/forms/income/business/form7203/owned-corporation.ts",
+    "pattern": "date-pinned",
+    "count": 2
+  },
+  {
+    "path": "forms/f1040/nodes/intermediate/forms/income/business/form7203/owned-corporation.ts",
+    "pattern": "z-literal",
+    "count": 1
+  },
+  {
+    "path": "forms/f1040/nodes/intermediate/forms/income/business/form7203/owned-current-source.ts",
+    "pattern": "year-comparison",
+    "count": 1
+  },
+  {
+    "path": "forms/f1040/nodes/intermediate/forms/income/business/form7203/owned-current-source.ts",
+    "pattern": "year-identifier",
+    "count": 2
+  },
+  {
+    "path": "forms/f1040/nodes/intermediate/forms/income/business/form7203/owned-current-source.ts",
+    "pattern": "z-literal",
+    "count": 3
+  },
+  {
+    "path": "forms/f1040/nodes/intermediate/forms/income/business/form7203/prior-filing-xml.ts",
+    "pattern": "date-pinned",
+    "count": 2
+  },
+  {
+    "path": "forms/f1040/nodes/intermediate/forms/income/business/form7203/prior-filing-xml.ts",
+    "pattern": "year-value",
+    "count": 1
+  },
+  {
+    "path": "forms/f1040/nodes/intermediate/forms/income/business/form7203/prior-reduced-note.ts",
+    "pattern": "date-pinned",
+    "count": 2
+  },
+  {
+    "path": "forms/f1040/nodes/intermediate/forms/income/business/form7203/prior-reduced-note.ts",
+    "pattern": "year-identifier",
+    "count": 4
+  },
+  {
+    "path": "forms/f1040/nodes/intermediate/forms/income/business/form7203/prior-reduced-note.ts",
+    "pattern": "year-value",
+    "count": 1
+  },
+  {
+    "path": "forms/f1040/nodes/intermediate/forms/income/business/form7203/stock-ledger.ts",
+    "pattern": "date-pinned",
+    "count": 1
+  },
+  {
+    "path": "forms/f1040/nodes/intermediate/forms/income/business/form7203/stock-ledger.ts",
+    "pattern": "year-identifier",
+    "count": 1
+  },
+  {
+    "path": "forms/f1040/nodes/intermediate/forms/income/business/form8582/index.ts",
+    "pattern": "z-literal",
+    "count": 1
+  },
+  {
+    "path": "forms/f1040/nodes/intermediate/forms/income/business/form8582/ledger.ts",
+    "pattern": "year-identifier",
+    "count": 2
+  },
+  {
+    "path": "forms/f1040/nodes/intermediate/forms/income/business/form8582/ledger.ts",
+    "pattern": "year-value",
+    "count": 4
+  },
+  {
+    "path": "forms/f1040/nodes/intermediate/forms/income/business/form8582/ledger.ts",
+    "pattern": "z-literal",
+    "count": 1
+  },
+  {
+    "path": "forms/f1040/nodes/intermediate/forms/income/business/form8582/next_year_import.ts",
+    "pattern": "year-identifier",
+    "count": 6
+  },
+  {
+    "path": "forms/f1040/nodes/intermediate/forms/income/business/form8582/next_year_import.ts",
+    "pattern": "z-literal",
+    "count": 1
+  },
+  {
+    "path": "forms/f1040/nodes/intermediate/forms/income/business/form8582/prior_year_import.ts",
+    "pattern": "year-identifier",
+    "count": 8
+  },
+  {
+    "path": "forms/f1040/nodes/intermediate/forms/income/business/form8582/prior_year_import.ts",
+    "pattern": "z-literal",
+    "count": 1
+  },
+  {
+    "path": "forms/f1040/nodes/intermediate/forms/income/business/schedule_f/index.ts",
+    "pattern": "year-comparison",
+    "count": 1
+  },
+  {
+    "path": "forms/f1040/nodes/intermediate/forms/income/foreign/form2555/calculation.ts",
+    "pattern": "config-index",
+    "count": 1
+  },
+  {
+    "path": "forms/f1040/nodes/intermediate/forms/income/foreign/form2555/calculation.ts",
+    "pattern": "year-comparison",
+    "count": 1
+  },
+  {
+    "path": "forms/f1040/nodes/intermediate/forms/income/foreign/form2555/calculation.ts",
+    "pattern": "year-identifier",
+    "count": 6
+  },
+  {
+    "path": "forms/f1040/nodes/intermediate/forms/income/foreign/form2555/housing_limits_2025.ts",
+    "pattern": "year-identifier",
+    "count": 6
+  },
+  {
+    "path": "forms/f1040/nodes/intermediate/forms/income/investments/form6252/index.ts",
+    "pattern": "date-pinned",
+    "count": 2
+  },
+  {
+    "path": "forms/f1040/nodes/intermediate/forms/income/investments/form8815/education_contributions.ts",
+    "pattern": "year-identifier",
+    "count": 7
+  },
+  {
+    "path": "forms/f1040/nodes/intermediate/forms/income/investments/form8815/index.ts",
+    "pattern": "year-comparison",
+    "count": 1
+  },
+  {
+    "path": "forms/f1040/nodes/intermediate/forms/income/investments/form8815/index.ts",
+    "pattern": "year-identifier",
+    "count": 5
+  },
+  {
+    "path": "forms/f1040/nodes/intermediate/forms/income/retirement/form8606/index.ts",
+    "pattern": "date-pinned",
+    "count": 8
+  },
+  {
+    "path": "forms/f1040/nodes/intermediate/forms/income/retirement/form8606/index.ts",
+    "pattern": "year-identifier",
+    "count": 5
+  },
+  {
+    "path": "forms/f1040/nodes/intermediate/forms/income/retirement/form8606/index.ts",
+    "pattern": "z-literal",
+    "count": 5
+  },
+  {
+    "path": "forms/f1040/nodes/intermediate/forms/income/retirement/form8606/recharacterization.ts",
+    "pattern": "date-pinned",
+    "count": 2
+  },
+  {
+    "path": "forms/f1040/nodes/intermediate/forms/income/retirement/form8606/recharacterization.ts",
+    "pattern": "z-literal",
+    "count": 4
+  },
+  {
+    "path": "forms/f1040/nodes/intermediate/forms/income/retirement/form8606/roth-current-conversion.ts",
+    "pattern": "date-pinned",
+    "count": 8
+  },
+  {
+    "path": "forms/f1040/nodes/intermediate/forms/income/retirement/form8606/roth-current-conversion.ts",
+    "pattern": "year-value",
+    "count": 1
+  },
+  {
+    "path": "forms/f1040/nodes/intermediate/forms/income/retirement/form8606/roth-current-conversion.ts",
+    "pattern": "z-literal",
+    "count": 7
+  },
+  {
+    "path": "forms/f1040/nodes/intermediate/forms/income/retirement/form8606/roth-inventory.ts",
+    "pattern": "year-comparison",
+    "count": 2
+  },
+  {
+    "path": "forms/f1040/nodes/intermediate/forms/income/retirement/form8606/roth-inventory.ts",
+    "pattern": "year-identifier",
+    "count": 1
+  },
+  {
+    "path": "forms/f1040/nodes/intermediate/forms/taxes/household-employment/schedule_h/index.ts",
+    "pattern": "date-pinned",
+    "count": 46
+  },
+  {
+    "path": "forms/f1040/nodes/intermediate/forms/taxes/household-employment/schedule_h/index.ts",
+    "pattern": "year-comparison",
+    "count": 4
+  },
+  {
+    "path": "forms/f1040/nodes/intermediate/forms/taxes/household-employment/schedule_h/index.ts",
+    "pattern": "year-identifier",
+    "count": 12
+  },
+  {
+    "path": "forms/f1040/nodes/intermediate/forms/taxes/income-averaging/schedule_j/calculation.ts",
+    "pattern": "year-identifier",
+    "count": 17
+  },
+  {
+    "path": "forms/f1040/nodes/intermediate/forms/taxes/income-averaging/schedule_j/index.ts",
+    "pattern": "year-identifier",
+    "count": 8
+  },
+  {
+    "path": "forms/f1040/nodes/intermediate/forms/taxes/income-averaging/schedule_j/preferential_line4.ts",
+    "pattern": "year-identifier",
+    "count": 8
+  },
+  {
+    "path": "forms/f1040/nodes/intermediate/forms/taxes/income-averaging/schedule_j/preferential_tax.ts",
+    "pattern": "year-comparison",
+    "count": 1
+  },
+  {
+    "path": "forms/f1040/nodes/intermediate/forms/taxes/income-averaging/schedule_j/tax-source.ts",
+    "pattern": "year-identifier",
+    "count": 4
+  },
+  {
+    "path": "forms/f1040/nodes/intermediate/forms/taxes/investments/form8615/calculation.ts",
+    "pattern": "year-identifier",
+    "count": 9
+  },
+  {
+    "path": "forms/f1040/nodes/intermediate/forms/taxes/retirement/form4972/participant-collection.ts",
+    "pattern": "date-pinned",
+    "count": 1
+  },
+  {
+    "path": "forms/f1040/nodes/intermediate/forms/taxes/retirement/form5329/index.ts",
+    "pattern": "z-literal",
+    "count": 1
+  },
+  {
+    "path": "forms/f1040/nodes/intermediate/forms/taxes/self-employment/schedule_se/calculation.ts",
+    "pattern": "year-identifier",
+    "count": 5
+  },
+  {
+    "path": "forms/f1040/nodes/intermediate/worksheets/deductions/standard/standard_deduction/index.ts",
+    "pattern": "config-index",
+    "count": 1
+  },
+  {
+    "path": "forms/f1040/nodes/intermediate/worksheets/deductions/standard/standard_deduction/index.ts",
+    "pattern": "year-identifier",
+    "count": 2
+  },
+  {
+    "path": "forms/f1040/nodes/intermediate/worksheets/taxes/calculation/income_tax_calculation/index.ts",
+    "pattern": "year-comparison",
+    "count": 1
+  },
+  {
+    "path": "forms/f1040/nodes/intermediate/worksheets/taxes/calculation/income_tax_calculation/preferential_tax.ts",
+    "pattern": "year-identifier",
+    "count": 1
+  },
+  {
+    "path": "forms/f1040/nodes/intermediate/worksheets/taxes/calculation/tax_table_2025.ts",
+    "pattern": "year-identifier",
+    "count": 19
+  },
+  {
+    "path": "forms/f1040/nodes/intermediate/worksheets/taxes/calculation/year_schedule.ts",
+    "pattern": "year-comparison",
+    "count": 2
+  },
+  {
+    "path": "forms/f1040/nodes/intermediate/worksheets/taxes/calculation/year_schedule.ts",
+    "pattern": "year-identifier",
+    "count": 5
+  },
+  {
+    "path": "forms/f1040/nodes/irs_country_code.ts",
+    "pattern": "year-identifier",
+    "count": 9
+  },
+  {
+    "path": "forms/f1040/nodes/outputs/general/return-assembly/f1040/index.ts",
+    "pattern": "year-identifier",
+    "count": 6
+  },
+  {
+    "path": "forms/f1040/nodes/outputs/general/return-assembly/schedule1/index.ts",
+    "pattern": "year-identifier",
+    "count": 1
+  },
+  {
+    "path": "forms/f1040/validation/business-rule-report.ts",
+    "pattern": "year-identifier",
+    "count": 1
+  },
+  {
+    "path": "forms/f1040/validation/rules/general/submission/return-assembly/ind.ts",
+    "pattern": "year-identifier",
+    "count": 1
+  },
+  {
+    "path": "forms/f1040/validation/rules/ty2026.ts",
+    "pattern": "year-identifier",
+    "count": 6
+  }
+]

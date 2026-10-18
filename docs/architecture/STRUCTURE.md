@@ -27,7 +27,7 @@ Public entrypoints are `mod.ts`, `catalog.ts`, `cli/main.ts`, and `forms/f1040/2
 │   │       ├── forms/             # Printed form projections by tax domain
 │   │       └── reviews/           # Retained review fixtures and contracts
 │   ├── 2026/
-│   │   └── index.ts / config.ts    # TY2026 entrypoint: 2025 graph and builders, 2026 context and schema version
+│   │   └── index.ts / config.ts    # TY2026 entrypoint: 2025 graph, inputs and builders, 2026 context and schema version
 │   ├── nodes/
 │   │   ├── config/                # Tax-year routing
 │   │   ├── inputs/<section>/<group>/<form>/         # Validated source nodes
@@ -88,6 +88,17 @@ Existing violations are listed in `scripts/testing/structure-baseline.json` with
 a reason, an expiry date and an approver; the check fails only on new ones, on
 expired entries, and on entries that no longer match anything.
 
+Every year runs the same nodes, so shared code (`forms/f1040/nodes/`, outside
+`config/2025.ts`, `2026.ts` and `index.ts`, and the MeF, PDF, domain,
+validation and return-processing code they feed) must read the year from
+`ctx.taxYear` and `CONFIG_BY_YEAR[ctx.taxYear]`. The check fails on a
+`CONFIG_BY_YEAR[2025]` index, a year comparison other than an onset gate
+(`ctx.taxYear >= 2026`), a `year: 2025` value, `z.literal(2025)`, a date pattern
+or string fixed to one year, and an identifier carrying a tax year
+(`made_in_2026_for_2025`). Today's occurrences are counted per file and pattern
+in `scripts/testing/year-pinned-baseline.json`; a count may only fall, and
+`--shrink-year-baseline` records a fix.
+
 ## Rules and what enforces them
 
 | Rule                                                        | Enforced by                                           |
@@ -99,6 +110,7 @@ expired entries, and on entries that no longer match anything.
 | Mirrors use the node's full name, never a shortened one     | `scripts/testing/structure.ts` (truncated-name)       |
 | MeF and PDF projections sit with their node                 | `scripts/testing/structure.ts` (projection-placement) |
 | A form-root module serves more than one tax section         | `scripts/testing/structure.ts` (root-module)          |
+| Shared code never pins a tax year                           | `scripts/testing/year-pinned.ts` (`check:structure`)  |
 | Benchmark cases are complete and expected values are finite | `benchmark/harness.ts`                                |
 | Case inputs fit the node schema the CLI applies             | `benchmark/harness.ts` (`check:cases`)                |
 | A cited source is a publication, never the engine           | `benchmark/harness.ts` (`check:cases`)                |
