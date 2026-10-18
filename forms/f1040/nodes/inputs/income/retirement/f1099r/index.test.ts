@@ -722,7 +722,9 @@ test("f1099r.compute: rollover_code C routes to form8606 with taxable amount", (
   assertEquals(f8606Fields.roth_conversion, 10000);
 });
 
-test("f1099r.compute: disability_flag + disability_as_wages routes to f1040 line1a with exact amount", () => {
+// Instructions for Form 1040 (2025), line 1h, page 25: disability pensions
+// shown on Form 1099-R before minimum retirement age are other earned income.
+test("f1099r.compute: disability_flag + disability_as_wages routes to f1040 line 1h with exact amount", () => {
   const result = compute([minimalPensionItem({
     box1_gross_distribution: 10000,
     box7_distribution_code: DistributionCode.Code3,
@@ -730,9 +732,56 @@ test("f1099r.compute: disability_flag + disability_as_wages routes to f1040 line
     disability_as_wages: true,
   })]);
   const input = f1040Input(result);
-  assertEquals(input.line1a_wages, 10000);
+  assertEquals(input.line1h_other_earned, 10000);
+  assertEquals(input.line1a_wages, undefined);
   // Disability-as-wages items must NOT appear on pension lines
   assertEquals(input.line5a_pension_gross, undefined);
+  const agi = result.outputs.find((o) => o.nodeType === "agi_aggregator");
+  assertEquals(agi?.fields, { line1h_other_earned: 10000 });
+});
+
+// Instructions for Form 1040 (2025), line 1h (page 25): IRA payments are
+// reported on lines 4a and 4b, so only a non-IRA code 3 pension is line 1h.
+test("f1099r.inputSchema: disability_as_wages needs a non-IRA code 3 disability pension", () => {
+  const disability = minimalPensionItem({
+    box1_gross_distribution: 10000,
+    box7_distribution_code: DistributionCode.Code3,
+    disability_flag: true,
+    disability_as_wages: true,
+  });
+  assertEquals(
+    f1099r.inputSchema.safeParse({ f1099rs: [disability] }).success,
+    true,
+  );
+  for (
+    const change of [
+      { box7_ira_simple_indicator: true },
+      { box7_distribution_code: DistributionCode.Code7 },
+      { box7_distribution_code: DistributionCode.Code8 },
+      { disability_flag: undefined },
+    ]
+  ) {
+    assertEquals(
+      f1099r.inputSchema.safeParse({ f1099rs: [{ ...disability, ...change }] })
+        .success,
+      false,
+    );
+  }
+});
+
+// 2025 Instructions for Schedule 8812, Earned Income Chart — Line 18a
+// (page 7) and Earned Income Worksheet line 1a (page 8): earned income starts
+// from Form 1040 line 1z, which includes line 1h.
+test("f1099r.compute: disability pension reaches Schedule 8812 earned income", () => {
+  const result = compute([minimalPensionItem({
+    box1_gross_distribution: 11_000,
+    box2a_taxable_amount: 11_000,
+    box7_distribution_code: DistributionCode.Code3,
+    disability_flag: true,
+    disability_as_wages: true,
+  })]);
+  const out = result.outputs.find((o) => o.nodeType === "f8812");
+  assertEquals(out?.fields, { auto_disability_pension_earned_income: 11_000 });
 });
 
 // Pub. 596 (2025) Rule 7, Disability Benefits: taxable benefits from an

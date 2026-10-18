@@ -32,6 +32,7 @@ const IRS_REFERENCE_NAME_BY_ROOT: Readonly<Record<string, string>> = {
   InlgblDeferredCompItemStmt: "IneligibleDeferredCompensationItemStatement",
   MultipleTransfereeStmt: "MultipleTransfereeStatement",
   NetAdjustmentTransferStmt: "NetAdjustmentTransferStatement",
+  NonW2DisabilityPaymentStmt: "NonW2DisabilityPaymentStatement",
   NongrantorTrBeneficialIntStmt: "NongrantorTrustsBeneficialInterestStatement",
   NontxUseFuelsCrCardUsersStmt: "NontaxableUseFuelsCreditCardUsersStatement",
   OtherAssetsNotIncludedStmt: "OtherAssetsNotIncludedStatement",
@@ -115,6 +116,12 @@ export function validateDocumentReferences(
       !referencedIds.includes(ids[index])
     ) {
       throw new Error("MeF IRA distribution statement is not referenced");
+    }
+    if (
+      fragment.tag === "NonW2DisabilityPaymentStmt" &&
+      !referencedIds.includes(ids[index])
+    ) {
+      throw new Error("MeF disability payment statement is not referenced");
     }
   }
 }

@@ -1,8 +1,11 @@
 import { nativeFecInputSchema } from "../../../../nodes/inputs/income/foreign/fec/index.ts";
 import {
   correctivePlanItems,
+  disabilityPensionEarnedIncome,
+  disabilityWagesItems,
   inputSchema as f1099rInputSchema,
 } from "../../../../nodes/inputs/income/retirement/f1099r/index.ts";
+import { CONFIG_BY_YEAR } from "../../../../nodes/config/index.ts";
 import {
   codeDExcessDeferral,
   inputSchema as w2InputSchema,
@@ -10,9 +13,31 @@ import {
 import { physicalPresenceFilingSchema } from "../../../../nodes/intermediate/forms/income/foreign/form2555/calculation.ts";
 import { type FilerIdentity, FilingStatus } from "../../../../mef/header.ts";
 
+/**
+ * Retained Form 1099-R disability pensions received before minimum retirement
+ * age, which the Instructions for Form 1040 (2025), line 1h (page 25), put on
+ * line 1h. Zero when no such copy is retained.
+ */
+export function retainedDisabilityPension(
+  pending: Readonly<Record<string, unknown>> | undefined,
+  taxYear: number,
+): number {
+  if (pending?.f1099r === undefined) return 0;
+  const items = f1099rInputSchema.parse(pending.f1099r).f1099rs;
+  if (disabilityWagesItems(items).length === 0) return 0;
+  const cfg = CONFIG_BY_YEAR[taxYear];
+  if (!cfg) throw new Error(`No f1040 config for year ${taxYear}`);
+  return disabilityPensionEarnedIncome(
+    items,
+    cfg.qcdAnnualLimit,
+    cfg.psoExclusionLimit,
+  );
+}
+
 /** Replay retained 2025 line 1h routes without counting FEC/2555 wages twice. */
 export function assertLine1hSupportedSource(
   fields: Readonly<Record<string, unknown>>,
+  taxYear: number,
   pending?: Readonly<Record<string, unknown>>,
   filer?: FilerIdentity,
 ): void {
@@ -73,6 +98,8 @@ export function assertLine1hSupportedSource(
       sources.push(correctiveAmount);
     }
   }
+  const disability = retainedDisabilityPension(pending, taxYear);
+  if (disability > 0) sources.push(disability);
   const filed = fields.line1h_other_earned;
   if (
     sources.length === 0 &&
@@ -101,7 +128,7 @@ export function assertLine1hSupportedSource(
   const supportedMix = sources.length === 1 ||
     (sources.length === 2 && pending?.fec !== undefined &&
       pending?.w2 !== undefined && filing === undefined &&
-      correctiveAmount === 0);
+      correctiveAmount === 0 && disability === 0);
   const total = sources.reduce((sum, amount) => sum + amount, 0);
   if (
     !supportedMix ||

@@ -144,6 +144,9 @@ export const inputSchema = z.object({
   auto_earned_income: z.number().nonnegative().optional(),
   // Net self-employment profit for ACTC earned income (from schedule_c node)
   auto_se_earned_income: z.number().nonnegative().optional(),
+  // Form 1040 line 1h disability pension before minimum retirement age (from
+  // f1099r); 2025 Schedule 8812 instructions, Earned Income Chart — Line 18a.
+  auto_disability_pension_earned_income: z.number().nonnegative().optional(),
   // Number of other qualifying dependents for ODC (from general node)
   auto_other_dependents: z.number().int().nonnegative().optional(),
 });
@@ -347,7 +350,8 @@ function buildAutoItem(input: F8812Input): F8812Item | null {
     agi: input.auto_agi,
     income_tax_liability: input.auto_income_tax_liability,
     earned_income:
-      (input.auto_earned_income ?? 0) + (input.auto_se_earned_income ?? 0) ||
+      (input.auto_earned_income ?? 0) + (input.auto_se_earned_income ?? 0) +
+        (input.auto_disability_pension_earned_income ?? 0) ||
       undefined,
   };
 }
