@@ -4,6 +4,7 @@ import { element, elements } from "../../../../../mef/xml.ts";
 import type { W2Item } from "../../../../../nodes/inputs/income/wages/w2/index.ts";
 import type { MefBuildContext, MefFormDescriptor } from "../../../form-descriptor.ts";
 import { FilingStatus } from "../../../types.ts";
+import { mefTaxYear } from "../../../support/year-config.ts";
 
 interface Fields {
   readonly w2s?: readonly W2Item[];
@@ -213,6 +214,10 @@ function buildW2(
           ])
           : "",
       ])])
+      : "",
+    // Box 14b first appears on the 2026 W-2 and in the 2026 schemas.
+    mefTaxYear(context) >= 2026
+      ? element("TreasuryTippedOccupationCd", item.box14b_tipped_code)
       : "",
     element(
       "StandardOrNonStandardCd",

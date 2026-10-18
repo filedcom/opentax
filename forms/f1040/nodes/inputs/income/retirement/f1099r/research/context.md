@@ -139,7 +139,7 @@ with secondary code 4, 7, or K per 2025 instructions.
 | rollover_code = G                     | Form 1040, rollover indicator                 | Direct rollover: $0 taxable; rollover indicator shown on Form 1040 line 4b or 5b                                                                                                                                                                                                                                                 | —                                                                                                 | —                                                               | Drake KB-10177                        | https://kb.drakesoftware.com/kb/Drake-Tax/10177.htm |
 | rollover_code = S                     | Form 1040, rollover indicator                 | Same-account rollover: shows rollover indicator                                                                                                                                                                                                                                                                                  | —                                                                                                 | —                                                               | Drake KB-10177                        | https://kb.drakesoftware.com/kb/Drake-Tax/10177.htm |
 | rollover_code = C                     | Form 8606, Line 16                            | IRA converted to Roth IRA; taxable conversion                                                                                                                                                                                                                                                                                    | Form 8606                                                                                         | —                                                               | Drake KB-11185                        | https://kb.drakesoftware.com/kb/Drake-Tax/11185.htm |
-| disability_flag + disability_as_wages | Form 1040, Line 1a (wages)                    | Disability income before minimum retirement age reported as wages; Schedule code 011                                                                                                                                                                                                                                             | —                                                                                                 | —                                                               | Drake KB-17107                        | https://kb.drakesoftware.com/kb/Drake-Tax/17107.htm |
+| disability_flag + disability_as_wages | Form 1040, Line 1h (other earned income)      | Disability pension before minimum retirement age (i1040 2025, line 1h); MeF NonW2DisabilityPaymentStmt                                                                                                                                                                                                                                     | —                                                                                                 | —                                                               | Drake KB-17107                        | https://kb.drakesoftware.com/kb/Drake-Tax/17107.htm |
 | carry_to_5329                         | Form 5329, Part I, Line 1                     | Early distribution amount subject to 10% penalty; taxpayer then selects exception code on 5329                                                                                                                                                                                                                                   | Form 5329                                                                                         | 10% of taxable amount (25% for SIMPLE IRA within 2-year period) | i5329; Pub 575                        | https://www.irs.gov/instructions/i5329              |
 | qcd_full / qcd_partial_amount         | Form 1040, Line 4b (excluded)                 | QCD amount excluded from taxable income on line 4b (reduces line 4b vs. line 4a, write "QCD" on Form 1040 per instructions); does not generate charitable deduction                                                                                                                                                              | —                                                                                                 | $108,000/person for TY2025                                      | Pub 590-B; Drake KB-11400             | https://kb.drakesoftware.com/kb/Drake-Tax/11400.htm |
 | pso_premium                           | Form 1040, Line 5b (excluded)                 | PSO insurance premium excluded from pension income; reduces line 5b                                                                                                                                                                                                                                                              | —                                                                                                 | $3,000/year per IRC § 402(l)                                    | IRC § 402(l)                          | https://www.irs.gov/instructions/i1099r             |
@@ -466,7 +466,8 @@ line_25b += box4_fed_tax_withheld  (across all 1099-R instances)
 
 When `disability_flag` = true AND `disability_as_wages` = true:
 
-- Report income on Form 1040 Line 1a (wages) instead of lines 4b/5b
+- Report income on Form 1040 line 1h (other earned income) instead of lines 4b/5b
+  (Instructions for Form 1040 (2025), line 1h)
 - Only valid before taxpayer reaches the plan's minimum retirement age
 - Drake requires completing Schedule screen code 011
 
@@ -564,7 +565,7 @@ flowchart LR
     L5A[Form 1040 Line 5a\nPension/annuity gross]
     L5B[Form 1040 Line 5b\nPension/annuity taxable]
     L25B[Form 1040 Line 25b\nFed tax withheld]
-    L1A[Form 1040 Line 1a\nWages — disability only]
+    L1A[Form 1040 Line 1h\nOther earned income — disability only]
     F5329[Form 5329\nPenalty computation]
     F8606[Form 8606\nIRA basis pro-rata]
     F4972[Form 4972\nLump-sum tax]
@@ -854,7 +855,7 @@ minimum retirement age:
 
 - Check `disability_flag` = true
 - If income should be treated as wages: check `disability_as_wages` = true →
-  routes to Line 1a
+  routes to line 1h (Instructions for Form 1040 (2025), line 1h)
 - Complete Drake Schedule screen with code 011
 - Once taxpayer reaches minimum retirement age: income switches to pension
   (lines 5a/5b)

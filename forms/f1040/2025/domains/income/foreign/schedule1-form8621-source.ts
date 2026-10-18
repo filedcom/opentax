@@ -1,6 +1,7 @@
 import { f8621, type Form8621Lines } from "../../../../nodes/inputs/income/foreign/f8621/index.ts";
 import { income_tax_calculation } from "../../../../nodes/intermediate/worksheets/taxes/calculation/income_tax_calculation/index.ts";
 import { assertForm8621QefRefigureSource } from "./form8621/form8621_1294_refigure.ts";
+import type { NodeContext } from "../../../../../../core/types/node-context.ts";
 
 const incomeKeys = [
   "line8z_form8621_qef",
@@ -25,6 +26,7 @@ function amount(value: unknown): number {
 /** Replay the retained PFIC holdings before either final return exporter runs. */
 export function assertSchedule1Form8621Source(
   pending: Readonly<Record<string, unknown>>,
+  context: NodeContext = { taxYear: 2025, formType: "f1040" },
 ): void {
   const schedule1 = record(pending.schedule1);
   const form = record(pending.form8621);
@@ -38,10 +40,7 @@ export function assertSchedule1Form8621Source(
     const input = f8621.inputSchema.parse({
       f8621s: (form.items as Form8621Lines[]).map((line) => line.item),
     });
-    const result = f8621.compute(
-      { taxYear: 2025, formType: "f1040" },
-      input,
-    );
+    const result = f8621.compute(context, input);
     expected8949 = result.outputs
       .filter((row) => row.nodeType === "form8949")
       .map((row) => record(record(row.fields)?.transaction))
@@ -121,7 +120,7 @@ export function assertSchedule1Form8621Source(
       );
     }
     const taxResult = income_tax_calculation.compute(
-      { taxYear: 2025, formType: "f1040" },
+      context,
       income_tax_calculation.inputSchema.parse(taxInput),
     );
     const calculated = record(
@@ -140,7 +139,7 @@ export function assertSchedule1Form8621Source(
         "Form 8621 section 1294 tax worksheet differs from source",
       );
     }
-    assertForm8621QefRefigureSource(pending);
+    assertForm8621QefRefigureSource(pending, context);
     const applied = line22 + line23 -
       amount(filed?.form8621_1294_counterfactual_total_tax);
     if (

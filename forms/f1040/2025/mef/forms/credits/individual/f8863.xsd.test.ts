@@ -100,7 +100,7 @@ const aocStudent = {
 };
 
 function finalizedContext(fields: F8863Input) {
-  const lines = calculateForm8863Lines(fields);
+  const lines = calculateForm8863Lines(fields, 2025);
   if (!lines || !fields.credit_limit_worksheet) {
     throw new Error("Form 8863 test needs calculated credit and worksheet");
   }

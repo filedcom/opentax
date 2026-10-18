@@ -420,6 +420,31 @@ test("Schedule 1-A receives each spouse's verified SSN eligibility", () => {
   assertEquals(fields?.spouse_has_valid_ssn, true);
 });
 
+// 2025 Schedule 1-A instructions, Part V, Valid SSN: valid for employment and
+// issued by SSA before the return's due date. That SSN is also a TIN issued
+// by the due date, so it needs no separate tin_issued_by_due_date answer.
+test("Schedule 1-A senior SSN needs only employment validity and issue before the due date", () => {
+  const result = compute({
+    filing_status: FilingStatus.MFJ,
+    spouse_dob: "1960-07-07",
+    spouse_tin_issued_by_due_date: undefined,
+  });
+  const fields = findOutput(result, "schedule1a")?.fields;
+  assertEquals(fields?.spouse_age_65_or_older, true);
+  assertEquals(fields?.spouse_has_valid_ssn, true);
+});
+
+test("an explicit late TIN still governs over the SSN issue date", () => {
+  const result = compute({
+    filing_status: FilingStatus.MFJ,
+    spouse_tin_issued_by_due_date: false,
+  });
+  assertEquals(
+    findOutput(result, "schedule1a")?.fields.spouse_has_valid_ssn,
+    false,
+  );
+});
+
 // ============================================================
 // 1. Input Schema Validation
 // ============================================================

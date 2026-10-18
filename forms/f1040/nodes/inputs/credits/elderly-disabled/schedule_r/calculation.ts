@@ -34,10 +34,15 @@ const disabilityEvidenceSchema = z.object({
   disability_income_source_reference: z.string().trim().min(1),
   disability_income_reported_on: z.enum(["wages", "pension"]),
   eligibility_source_reference: z.string().trim().min(1),
-  physician_statement: z.enum(["prior_year", "current_year", "va_21_0172"]),
+  physician_statement: z.enum(["prior_year", "current_year", "va_21_0172"])
+    .describe(
+      "prior_year: a statement filed for 1983 or earlier, or a later one the physician signed on line B, with no new statement needed (Part II, line 2 box); current_year: the physician's statement in the instructions, kept with your records; va_21_0172: VA Form 21-0172",
+    ),
   physician_statement_source_reference: z.string().trim().min(1),
   physician_or_va_statement_signed_verified: z.literal(true),
-  prior_year_line_b_or_1983_verified: z.literal(true).optional(),
+  prior_year_line_b_or_1983_verified: z.literal(true).optional().describe(
+    "Required for prior_year: the earlier statement was for 1983 or earlier or signed on line B, and the disability still prevented substantial gainful activity in the tax year",
+  ),
 });
 
 export const inputSchema = z.object({
@@ -47,11 +52,17 @@ export const inputSchema = z.object({
   // Spouse age 65 or older (MFJ only)
   spouse_age_65_or_older: z.boolean().optional(),
   // Taxpayer has total and permanent disability with disability income
-  taxpayer_disabled: z.boolean().optional(),
+  taxpayer_disabled: z.boolean().optional().describe(
+    "Under 65, retired on permanent and total disability, with taxable disability income (Schedule R Part I box 2, 4, 5, 6 or 9); also needs taxpayer_disability_income and taxpayer_disability_evidence",
+  ),
   // Spouse has total and permanent disability (MFJ only)
-  spouse_disabled: z.boolean().optional(),
+  spouse_disabled: z.boolean().optional().describe(
+    "As taxpayer_disabled, for the spouse on a joint return",
+  ),
   // Taxpayer's disability income (if under 65 and disabled)
-  taxpayer_disability_income: z.number().nonnegative().optional(),
+  taxpayer_disability_income: z.number().nonnegative().optional().describe(
+    "Taxable disability income reported on the return (Schedule R line 11), such as a code 3 Form 1099-R reported as wages",
+  ),
   // Spouse's disability income (if under 65 and disabled, MFJ)
   spouse_disability_income: z.number().nonnegative().optional(),
   // Schedule R line 14 is Form 1040 line 11. A typed AGI is only a cross-check

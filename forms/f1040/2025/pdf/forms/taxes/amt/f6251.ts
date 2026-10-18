@@ -1,3 +1,4 @@
+import { mefTaxYear } from "../../../../mef/support/year-config.ts";
 import { assertForm6251CharitableSource } from "../../../../domains/taxes/amt/form6251/form6251_charitable_source.ts";
 import type { PdfFieldEntry, PdfFormDescriptor } from "../../../review-support/form-descriptor.ts";
 import { assertForm6251Line8 } from "../../../../domains/taxes/amt/form6251/form6251_line8.ts";
@@ -129,7 +130,7 @@ export const form6251Pdf: PdfFormDescriptor = {
     assertForm6251DepreciationSource(fields);
     assertForm6251TrustSource(fields, allPending);
     assertForm6251PrivateActivityBondSource(fields, allPending);
-    assertForm6251RefundSource(fields, allPending);
+    assertForm6251RefundSource(fields, allPending, mefTaxYear());
     assertForm6251QualifiedDividendSource(fields, allPending);
     const form1040 = allPending.f1040;
     const line14 = form1040?.line14_deductions_qbi_total;

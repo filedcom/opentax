@@ -21,7 +21,10 @@ import { assertOtherFormsWithholding } from "../../../../domains/payments/withho
 import { assertPresidentialCampaignSource } from "../../../../domains/general/return-assembly/presidential-campaign-source.ts";
 import { retainedActcOptOut } from "../../../../domains/credits/earned-income/actc-opt-out-source.ts";
 import { retainedEicOptOut } from "../../../../domains/credits/earned-income/earned-income/eic-opt-out-source.ts";
-import { assertLine1hSupportedSource } from "../../../../domains/income/other/line1h-source.ts";
+import {
+  assertLine1hSupportedSource,
+  retainedDisabilityPension,
+} from "../../../../domains/income/other/line1h-source.ts";
 import { assertIdentified1099IntOwner } from "../../../../domains/income/investments/f1099int/f1099int-owner-reconciliation.ts";
 import { assertPositive1099OidOwner } from "../../../../domains/income/investments/f1099oid/f1099oid-owner-reconciliation.ts";
 import { assertPositive1099DivOwner } from "../../../../domains/income/investments/f1099div/f1099div-owner-reconciliation.ts";
@@ -703,12 +706,17 @@ function line1hType(
   | "FEC"
   | "EXCESS DEFERRALS"
   | "CORRECTIVE DISTRIBUTION"
+  | "DISABILITY PENSION"
   | "FEC + EXCESS DEFERRALS"
   | undefined {
   const fecSource = allPending.fec;
   const physicalSource = allPending.form2555?.filing_details;
   const sources: Array<{
-    type: "FEC" | "EXCESS DEFERRALS" | "CORRECTIVE DISTRIBUTION";
+    type:
+      | "FEC"
+      | "EXCESS DEFERRALS"
+      | "CORRECTIVE DISTRIBUTION"
+      | "DISABILITY PENSION";
     amount: number;
   }> = [];
   if (fecSource !== undefined) {
@@ -764,6 +772,10 @@ function line1hType(
         ),
       });
     }
+  }
+  const disability = retainedDisabilityPension(allPending, 2025);
+  if (disability > 0) {
+    sources.push({ type: "DISABILITY PENSION", amount: disability });
   }
   if (sources.length === 0) return undefined;
   const mixedFecExcess = sources.length === 2 &&
@@ -827,7 +839,7 @@ export const irs1040Pdf: PdfFormDescriptor = {
     assertPresidentialCampaignSource(fields, allPending);
     assertReturnWideArithmetic(fields);
     const printLine1hType = line1hType(fields, allPending);
-    assertLine1hSupportedSource(fields, allPending);
+    assertLine1hSupportedSource(fields, 2025, allPending);
     assertDirectCapitalGainDistributionSource(fields, allPending);
     const standard = fields.line12a_standard_deduction;
     const itemized = fields.line12e_itemized_deductions;

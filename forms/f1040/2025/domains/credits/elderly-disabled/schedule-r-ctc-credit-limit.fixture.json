@@ -9,6 +9,11 @@
       "status": "all_year_resident",
       "taxpayer_status_record_reference": "Synthetic 2025 review"
     },
+    "prior_eic_disallowance_review": {
+      "status": "none",
+      "irs_account_record_reference": "Synthetic 2025 review",
+      "no_nonclerical_disallowance_since_1996_verified": true
+    },
     "taxpayer_first_name": "Robin",
     "taxpayer_last_name": "Example",
     "taxpayer_ssn": "111-22-3333",

@@ -61,9 +61,10 @@ export function reconcileForm172ModifiedIncome(
     }
   }
   const modifiedRegistry = { ...registry, agi_aggregator: new ModifiedAgi() };
+  const modifiedContext = { taxYear: 2025, formType: "f1040" } as const;
   const graph = (
     source: Record<string, unknown>,
-    ctx: Parameters<typeof execute>[3] = { taxYear: 2025, formType: "f1040" },
+    ctx: Parameters<typeof execute>[3] = modifiedContext,
   ) =>
     execute(
       buildExecutionPlan(modifiedRegistry),
@@ -72,7 +73,12 @@ export function reconcileForm172ModifiedIncome(
       ctx,
     );
   const execution: ExecuteResult = inputs.form8990 === undefined
-    ? executePreQefSourceReturn(structuredClone(inputs), true, graph)
+    ? executePreQefSourceReturn(
+      structuredClone(inputs),
+      modifiedContext,
+      true,
+      graph,
+    )
     : executeForm172Form8990Return(structuredClone(inputs), graph).execution;
   if (execution.diagnostics.length) {
     throw new Error("Modified NOL income needs a successful source graph");

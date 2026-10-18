@@ -33,6 +33,7 @@ import { OutputNodes } from "../../../../../../../core/types/output-nodes.ts";
 import { f1040 } from "../../../../outputs/general/return-assembly/f1040/index.ts";
 import { agi_aggregator } from "../../../../intermediate/aggregation/general/return-assembly/agi_aggregator/index.ts";
 import { eitc } from "../../../../intermediate/forms/credits/earned-income/eitc/index.ts";
+import { f8812 } from "../../../credits/child/f8812/index.ts";
 import { form5329 } from "../../../../intermediate/forms/taxes/retirement/form5329/index.ts";
 import { form4972Elections } from "../../../../intermediate/forms/taxes/retirement/form4972/elections.ts";
 import {
@@ -499,6 +500,22 @@ export const itemSchema = z.object({
       path: ["nonstandard_document_review", "source_document_reference"],
       message:
         "Nonstandard 1099-R review must match the retained payer-copy reference",
+    });
+  }
+  // Instructions for Form 1040 (2025), line 1h (page 25): only a disability
+  // pension before minimum retirement age goes on line 1h; IRA payments stay
+  // on lines 4a and 4b.
+  if (
+    item.disability_as_wages === true &&
+    (item.disability_flag !== true ||
+      item.box7_distribution_code !== DistributionCode.Code3 ||
+      item.box7_ira_simple_indicator === true)
+  ) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ["disability_as_wages"],
+      message:
+        "Form 1040 line 1h disability pension needs a non-IRA Form 1099-R with disability_flag and box 7 code 3",
     });
   }
 });
@@ -1299,8 +1316,8 @@ export function correctivePlanItems(items: R1099Items): R1099Items {
   );
 }
 
-// Disability-as-wages items: disability routing to line1a
-function disabilityWagesItems(items: R1099Items): R1099Items {
+// Disability pensions before minimum retirement age: Form 1040 line 1h.
+export function disabilityWagesItems(items: R1099Items): R1099Items {
   return items.filter(
     (item) =>
       item.disability_flag === true && item.disability_as_wages === true,
@@ -1461,7 +1478,7 @@ function pensionF1040Fields(
   qcdAnnualLimit: number,
   psoExclusionLimit: number,
 ): Record<string, number> {
-  // Exclude disability-as-wages items from pension lines (they go to line1a)
+  // Exclude disability-as-wages items from pension lines (they go to line 1h)
   const disWagesSet = new Set(disabilityWagesItems(activeItems(items)));
   const active = pensionItems(activeItems(items)).filter((item) =>
     !disWagesSet.has(item)
@@ -1481,21 +1498,18 @@ function pensionF1040Fields(
   return fields;
 }
 
-// Build f1040 line1a output for disability-as-wages items
-function disabilityWagesF1040Fields(
+// Instructions for Form 1040 (2025), line 1h (page 25): disability pensions
+// shown on Form 1099-R before the employer's minimum retirement age.
+export function disabilityPensionEarnedIncome(
   items: R1099Items,
   qcdAnnualLimit: number,
   psoExclusionLimit: number,
-): Record<string, number> {
-  const disItems = disabilityWagesItems(activeItems(items));
-  if (disItems.length === 0) return {};
-  const total = disItems.reduce(
+): number {
+  return disabilityWagesItems(activeItems(items)).reduce(
     (sum, item) =>
       sum + effectiveTaxableAmount(item, qcdAnnualLimit, psoExclusionLimit),
     0,
   );
-  if (total <= 0) return {};
-  return { line1a_wages: total };
 }
 
 function correctivePlanF1040Fields(items: R1099Items): Record<string, number> {
@@ -2053,6 +2067,7 @@ class F1099rNode extends TaxNode<typeof inputSchema> {
     f1040,
     agi_aggregator,
     eitc,
+    f8812,
     form5329,
     form4972Elections,
     form8606,
@@ -2130,13 +2145,17 @@ class F1099rNode extends TaxNode<typeof inputSchema> {
       cfg.qcdAnnualLimit,
       cfg.psoExclusionLimit,
     );
-    // Disability-as-wages fields
-    const disWagesFields = disabilityWagesF1040Fields(
-      r1099s,
-      cfg.qcdAnnualLimit,
-      cfg.psoExclusionLimit,
+    const disabilityPension = Math.max(
+      0,
+      disabilityPensionEarnedIncome(
+        r1099s,
+        cfg.qcdAnnualLimit,
+        cfg.psoExclusionLimit,
+      ),
     );
     const correctiveFields = correctivePlanF1040Fields(r1099s);
+    const line1h = disabilityPension +
+      (correctiveFields.line1h_other_earned ?? 0);
     // Withholding fields
     const withholdingFields = withholdingF1040Fields(r1099s);
 
@@ -2144,8 +2163,7 @@ class F1099rNode extends TaxNode<typeof inputSchema> {
     const f1040Fields: Partial<z.infer<typeof f1040["inputSchema"]>> = {
       ...iraFields,
       ...pensionFields,
-      ...disWagesFields,
-      ...correctiveFields,
+      ...(line1h > 0 ? { line1h_other_earned: line1h } : {}),
       ...withholdingFields,
     };
     if (r1099s.some(isPensionDirectRollover)) {
@@ -2166,7 +2184,6 @@ class F1099rNode extends TaxNode<typeof inputSchema> {
     // Route IRA/pension taxable amounts to AGI aggregator.
     // Only emit line4b_ira_taxable when > 0 to avoid accumulation conflicts with form8606,
     // which emits its own line4b_ira_taxable to agi_aggregator for items with prior_ira_basis.
-    // Also route disability-as-wages (line1a_wages) so AGI is computed correctly.
     const agiFields: Partial<z.infer<typeof agi_aggregator["inputSchema"]>> =
       {};
     if ((iraFields.line4b_ira_taxable ?? 0) > 0) {
@@ -2175,17 +2192,17 @@ class F1099rNode extends TaxNode<typeof inputSchema> {
     if (pensionFields.line5b_pension_taxable !== undefined) {
       agiFields.line5b_pension_taxable = pensionFields.line5b_pension_taxable;
     }
-    if ((disWagesFields.line1a_wages ?? 0) > 0) {
-      agiFields.line1a_wages = disWagesFields.line1a_wages;
-    }
-    if ((correctiveFields.line1h_other_earned ?? 0) > 0) {
-      agiFields.line1h_other_earned = correctiveFields.line1h_other_earned;
-    }
+    if (line1h > 0) agiFields.line1h_other_earned = line1h;
     // Pub. 596 (2025) Rule 7, Disability Benefits: employer disability
     // retirement benefits are earned income until minimum retirement age.
-    if ((disWagesFields.line1a_wages ?? 0) > 0) {
+    // 2025 Schedule 8812 instructions, Earned Income Chart — Line 18a: earned
+    // income starts from Form 1040 line 1z, which includes line 1h.
+    if (disabilityPension > 0) {
       outputs.push(this.outputNodes.output(eitc, {
-        disability_pension_earned_income: disWagesFields.line1a_wages,
+        disability_pension_earned_income: disabilityPension,
+      }));
+      outputs.push(this.outputNodes.output(f8812, {
+        auto_disability_pension_earned_income: disabilityPension,
       }));
     }
     if (Object.keys(agiFields).length > 0) {

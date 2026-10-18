@@ -20,7 +20,7 @@ case in CI.
 | `4868/2026v1.0/` | TY2026 Form 4868 extension schemas (`Extensions/4868/Return4868.xsd`); the 2025v5.4 package has no 4868 schema | `IMF_Series_2026v1.0.zip` › `4868_2026v1.0.zip` › `4868_Schema_2026v1.0.zip` › `2026v1.0/` |
 | `4868/rules/4868_Business_Rules_2026v1.0.pdf` | TY2026 Form 4868 rules that `forms/f4868/validation/rules` implements | `IMF_Series_2026v1.0.zip` › `4868_2026v1.0.zip` › `4868_Business_Rules_2026v1.0.zip` |
 | `wsdl/10.9/` | MeF A2A WSDL 10.9: `MeFMSIServices` (Login, Logout, ETIN services), `MeFTransmitterServicesMTOM` (SendSubmissions, acks, status), `MeFHeader.xsd` and the release notes; `cli/mef` builds against them and its mock IRS server validates with them | `WSDLs_10.9/`, all files as released |
-| `corpus/ty2026/` | Public irs.gov TY2026 research snapshot cited by `docs/ty2026`: draft forms and instructions, prior-year comparators, authorities, ATS scenario packets and the MeF workbooks (250 files, 88 MB) | Not an e-Services package: `python3 docs/ty2026/corpus/download.py` refetches it; URLs and retrieval times are in `docs/ty2026/corpus/manifest.json` |
+| `corpus/ty2026/` | Public irs.gov TY2026 research snapshot cited by `docs/ty2026`: draft forms and instructions, prior-year comparators, authorities, ATS scenario packets and the MeF workbooks (252 files, 89 MB) | Not an e-Services package: `python3 docs/ty2026/corpus/download.py` refetches it; URLs and retrieval times are in `docs/ty2026/corpus/manifest.json` |
 
 Each `mef/<version>/` folder holds the schema package's version folder as
 released (`Common/`, `IndividualIncomeTax/`, `Shared/`, ...), so for example

@@ -1,6 +1,4 @@
 import type { FormDefinition } from "../../../core/types/form-definition.ts";
-import { execute } from "../../../core/runtime/executor.ts";
-import { buildExecutionPlan } from "../../../core/runtime/planner.ts";
 import type { FilerIdentity } from "../mef/header.ts";
 import { inputNodes as inputNodes2025 } from "../2025/inputs.ts";
 import { registry } from "../2025/registry.ts";
@@ -8,6 +6,7 @@ import { buildMefBundle, buildMefXml } from "../2025/mef/builder.ts";
 import { buildPending } from "../2025/mef/execution/pending.ts";
 import type { MefFormsPending } from "../2025/mef/types.ts";
 import { assertF1040FinalHeader } from "../2025/domains/general/return-assembly/filer-source-reconciliation.ts";
+import { executeF1040Return } from "../2025/return-processing/execute_return.ts";
 import { F1040_2026_CONFIG } from "./config.ts";
 
 const context = { taxYear: F1040_2026_CONFIG.taxYear, formType: "f1040" };
@@ -15,7 +14,7 @@ const context = { taxYear: F1040_2026_CONFIG.taxYear, formType: "f1040" };
 export const inputNodes = inputNodes2025;
 
 function executeReturn(inputs: Record<string, unknown>) {
-  return execute(buildExecutionPlan(registry), registry, inputs, context);
+  return executeF1040Return(inputs, context);
 }
 
 function noPdf(): never {

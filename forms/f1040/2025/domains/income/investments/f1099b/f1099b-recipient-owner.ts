@@ -12,6 +12,7 @@ function validIsoCalendarDate(value: string): boolean {
 export function assert1099BRecipientOwner(
   source: unknown,
   filer: FilerIdentity | undefined,
+  taxYear: number,
 ): void {
   if (source === undefined) return;
   const parsed = inputSchema.safeParse(source);
@@ -44,10 +45,12 @@ export function assert1099BRecipientOwner(
       throw new Error("1099-B sale needs a property description");
     }
     if (
-      !row.date_sold.startsWith("2025-") ||
+      !row.date_sold.startsWith(`${taxYear}-`) ||
       !validIsoCalendarDate(row.date_sold)
     ) {
-      throw new Error("TY2025 1099-B sale date must be a real 2025 date");
+      throw new Error(
+        "1099-B sale date must be a real date in the return's tax year",
+      );
     }
     if (
       row.date_acquired === "INHERITED" &&

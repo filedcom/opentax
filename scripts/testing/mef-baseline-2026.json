@@ -160,19 +160,13 @@
       "calculation form8995a"
     ],
     "single-form8863-missing-tuition-form-taxable-scholarship-phaseout": [
-      "xml Form 8863 filing needs source MAGI, Credit Limit Worksheet, and finalized Form 1040/Schedule 3 credit lines to reconcile"
-    ],
-    "single-source-qef-1294-election": [
-      "xml Form 8621 Election B needs full-return source replay"
+      "calculation f8863"
     ],
     "single-passive-partnership-new-markets": [
       "xml Form 8582-CR line 6 tax sides must use the finalized Form 1040 ordinary-tax method"
     ],
     "single-mixed-passive-new-markets": [
       "xml Form 8582-CR line 6 tax sides must use the finalized Form 1040 ordinary-tax method"
-    ],
-    "single-reviewed-adoption-credit": [
-      "calculation form8839"
     ],
     "single-divorced-agreed-joint-estimated-payment": [
       "calculation f1040es"
@@ -449,15 +443,6 @@
     "single-form8863-two-school-aoc": [
       "xml Form 8863 filing needs source MAGI, Credit Limit Worksheet, and finalized Form 1040/Schedule 3 credit lines to reconcile"
     ],
-    "qualified-tip-qbi-mfj-independent-owner-tips": [
-      "calculation schedule1a"
-    ],
-    "qualified-tip-qbi-mfj-cap-phaseout-owner-allocation": [
-      "calculation schedule1a"
-    ],
-    "qualified-tip-qbi-mfj-employee-business-tip-allocation": [
-      "calculation schedule1a"
-    ],
     "qualified-tip-qbi-advanced-event-wotc-tip-exclusion": [
       "xml Form 8995-A FilingStatusThresholdCd 201750 is not a value the MeF schema enumerates; export waits for a schema that carries the return year's amounts"
     ],
@@ -488,26 +473,8 @@
     "tip-health-single-w2-qbi-binding": [
       "xml Health plan needs its issued policy record and 12 issued monthly premium records"
     ],
-    "mixed-cf-tip-above-zero-wotc": [
-      "calculation schedule1a"
-    ],
-    "mixed-cf-tip-health-income-limited": [
-      "calculation schedule1a"
-    ],
-    "mixed-cf-tip-health-netincome-limited": [
-      "calculation schedule1a"
-    ],
-    "mixed-cf-tip-no-health": [
-      "calculation schedule1a"
-    ],
-    "mixed-cf-tip-ordinary-no-credit": [
-      "calculation schedule1a"
-    ],
-    "mixed-cf-tip-owned-health": [
-      "calculation schedule1a"
-    ],
     "mixed-cf-tip-phase-wotc": [
-      "calculation schedule1a"
+      "xml Form 8995-A FilingStatusThresholdCd 403500 is not a value the MeF schema enumerates; export waits for a schema that carries the return year's amounts"
     ],
     "same-proprietor-two-c-one-f-shop-full": [
       "calculation form8995"
@@ -517,6 +484,12 @@
     ],
     "same-proprietor-two-c-one-f-shop-zero": [
       "calculation form8995"
+    ],
+    "joint-spouse-c-qbi-investment-income": [
+      "xml 1099-B sale date must be a real date in the return's tax year"
+    ],
+    "single-c-qbi-investment-income": [
+      "xml 1099-B sale date must be a real date in the return's tax year"
     ]
   },
   "reasons": {
@@ -572,11 +545,9 @@
     "joint-spouse-owned-form8995a-patron-c-health": "Dated 2025 fact: the reviewed health plan carries its TY2025 Schedule 1 line 15 SE deduction; TY2026 computes it on the 2026 wage base",
     "joint-spouse-owned-form8995a-patron-income-cap": "MeF schema gap: 2026v1.0 IRS8995A/IRS8995AScheduleA enumerate only the TY2025 FilingStatusThresholdCd/FilingStatusPhaseInRangeCd values (F8995A-004-06, SA-F8995A-003-06); the draft 2026 Form 8995-A line 21/23 amounts ($201,750, $201,775 MFS, $403,500; $75,000/$150,000) wait for a schema that carries them",
     "single-form8995a-two-business-aggregation": "Open TY2026 work: QBI route replays TY2025 amounts from the sample's reviewed sources",
-    "single-form8863-missing-tuition-form-taxable-scholarship-phaseout": "Open TY2026 work: TY2026 executeReturn does not run the TY2025 staged source pipeline",
-    "single-source-qef-1294-election": "Open TY2026 work: TY2026 executeReturn does not run the TY2025 staged source pipeline",
+    "single-form8863-missing-tuition-form-taxable-scholarship-phaseout": "Sample fixture input: its missing-1098-T exception records a 2025 payment year and academic period, which a TY2026 return cannot claim",
     "single-passive-partnership-new-markets": "Open TY2026 work: Form 8582-CR line 6 replays the TY2025 ordinary-tax method",
     "single-mixed-passive-new-markets": "Open TY2026 work: Form 8582-CR line 6 replays the TY2025 ordinary-tax method",
-    "single-reviewed-adoption-credit": "Open TY2026 work: TY2026 executeReturn runs the bare graph, not the TY2025 staged source pipeline (Form 8839/8863 two-pass, Schedule J, Form 8990, QEF refigure), so public source inputs reach the node unparsed",
     "single-divorced-agreed-joint-estimated-payment": "Dated 2025 fact: a source document or date in the sample belongs to TY2025",
     "single-w2-three-eic-children-with-reviewed-birth": "Named TY2025-only route: the node refuses TY2026 until that year's law is implemented",
     "single-1098-purchase-points": "Dated 2025 fact: the retained Form 1098 Copy B is printed for 2025",
@@ -655,7 +626,7 @@
     "single-form2555-full-year-physical-presence": "Named TY2025-only route: the node refuses TY2026 until that year's law is implemented",
     "single-form4952-interest-and-dividends": "Dated 2025 fact: the retained Form 1098 Copy B is printed for 2025",
     "single-form4562-section179-w2-income-limit": "Dated 2025 fact: a source document or date in the sample belongs to TY2025",
-    "single-form8863-lifetime-learning-scholarship": "Open TY2026 work: TY2026 executeReturn does not run the TY2025 staged source pipeline",
+    "single-form8863-lifetime-learning-scholarship": "Sample fixture input: its Form 8863 filer MAGI and Credit Limit Worksheet operands are the TY2025 return's; the TY2026 return finalizes different amounts, so the reconciliation refuses",
     "single-form8606-post-year-contribution-and-distribution": "Open TY2026 work: Schedule 1-A Part I source review (owned by the Schedule 1-A and Form 8606 work)",
     "single-form8815-series-ee-bond-exclusion": "Named TY2025-only route: the node refuses TY2026 until that year's law is implemented",
     "single-form8915f-disaster-and-ordinary-plan-distributions": "Named TY2025-only route: the node refuses TY2026 until that year's law is implemented",
@@ -665,29 +636,22 @@
     "single-schedule-j-farm-income-averaging": "Named TY2025-only route: the node refuses TY2026 until that year's law is implemented",
     "mfj-form2210f-first-joint-filing": "Open TY2026 work: Form 2210-F replays TY2025 tax",
     "single-new-clean-vehicle-personal-credit": "Dated 2025 fact: a source document or date in the sample belongs to TY2025 (vehicle placed in service in 2025, rules SA-F8936-001/048)",
-    "single-form8863-two-school-llc": "Open TY2026 work: TY2026 executeReturn does not run the TY2025 staged source pipeline",
-    "single-form8863-two-school-aoc": "Open TY2026 work: TY2026 executeReturn does not run the TY2025 staged source pipeline",
-    "qualified-tip-qbi-mfj-independent-owner-tips": "Open TY2026 pin: Schedule 1-A business-tip SE attribution reads the TY2025 SS wage base (schedule1a/calculation.ts); left for the Schedule 1-A owner",
-    "qualified-tip-qbi-mfj-cap-phaseout-owner-allocation": "Open TY2026 pin: Schedule 1-A business-tip SE attribution reads the TY2025 SS wage base (schedule1a/calculation.ts); left for the Schedule 1-A owner",
-    "qualified-tip-qbi-mfj-employee-business-tip-allocation": "Open TY2026 pin: Schedule 1-A business-tip SE attribution reads the TY2025 SS wage base (schedule1a/calculation.ts); left for the Schedule 1-A owner",
+    "single-form8863-two-school-llc": "Sample fixture input: its Form 8863 filer MAGI and Credit Limit Worksheet operands are the TY2025 return's; the TY2026 return finalizes different amounts, so the reconciliation refuses",
+    "single-form8863-two-school-aoc": "Sample fixture input: its Form 8863 filer MAGI and Credit Limit Worksheet operands are the TY2025 return's; the TY2026 return finalizes different amounts, so the reconciliation refuses",
     "qualified-tip-qbi-advanced-event-wotc-tip-exclusion": "MeF schema gap: 2026v1.0 IRS8995A/IRS8995AScheduleA enumerate only the TY2025 FilingStatusThresholdCd/FilingStatusPhaseInRangeCd values (F8995A-004-06, SA-F8995A-003-06); the draft 2026 Form 8995-A line 21/23 amounts ($201,750, $201,775 MFS, $403,500; $75,000/$150,000) wait for a schema that carries them",
-    "tip-health-mfj-fully-phased-out": "Dated 2025 fact: the issued health premium records are paid in 2025 (policy-records.ts still pins the 2025 date pattern); Open TY2026 pin: Schedule 1-A business-tip SE attribution reads the TY2025 SS wage base (schedule1a/calculation.ts); left for the Schedule 1-A owner",
-    "tip-health-mfj-owned-cap-phaseout": "Dated 2025 fact: the issued health premium records are paid in 2025 (policy-records.ts still pins the 2025 date pattern); Open TY2026 pin: Schedule 1-A business-tip SE attribution reads the TY2025 SS wage base (schedule1a/calculation.ts); left for the Schedule 1-A owner",
-    "tip-health-mfj-primary-health-limited": "Dated 2025 fact: the issued health premium records are paid in 2025 (policy-records.ts still pins the 2025 date pattern); Open TY2026 pin: Schedule 1-A business-tip SE attribution reads the TY2025 SS wage base (schedule1a/calculation.ts); left for the Schedule 1-A owner",
+    "tip-health-mfj-fully-phased-out": "Dated 2025 fact: the issued health premium records are paid in 2025 (policy-records.ts still pins the 2025 date pattern), so Form 7206 and the Schedule 1-A tip review that needs its health plan both refuse",
+    "tip-health-mfj-owned-cap-phaseout": "Dated 2025 fact: the issued health premium records are paid in 2025 (policy-records.ts still pins the 2025 date pattern), so Form 7206 and the Schedule 1-A tip review that needs its health plan both refuse",
+    "tip-health-mfj-primary-health-limited": "Dated 2025 fact: the issued health premium records are paid in 2025 (policy-records.ts still pins the 2025 date pattern), so Form 7206 and the Schedule 1-A tip review that needs its health plan both refuse",
     "tip-health-single-fully-phased-out": "Dated 2025 fact: the issued health premium records are paid in 2025 (policy-records.ts still pins the 2025 date pattern)",
     "tip-health-single-health-income-limited": "Dated 2025 fact: the issued health premium records are paid in 2025 (policy-records.ts still pins the 2025 date pattern)",
     "tip-health-single-positive-health": "Dated 2025 fact: the issued health premium records are paid in 2025 (policy-records.ts still pins the 2025 date pattern)",
     "tip-health-single-tip-netincome-limited": "Dated 2025 fact: the issued health premium records are paid in 2025 (policy-records.ts still pins the 2025 date pattern)",
     "tip-health-single-w2-qbi-binding": "Dated 2025 fact: the issued health premium records are paid in 2025 (policy-records.ts still pins the 2025 date pattern)",
-    "mixed-cf-tip-above-zero-wotc": "Open TY2026 pin: Schedule 1-A business-tip SE attribution reads the TY2025 SS wage base (schedule1a/calculation.ts); left for the Schedule 1-A owner",
-    "mixed-cf-tip-health-income-limited": "Open TY2026 pin: Schedule 1-A business-tip SE attribution reads the TY2025 SS wage base (schedule1a/calculation.ts); left for the Schedule 1-A owner",
-    "mixed-cf-tip-health-netincome-limited": "Open TY2026 pin: Schedule 1-A business-tip SE attribution reads the TY2025 SS wage base (schedule1a/calculation.ts); left for the Schedule 1-A owner",
-    "mixed-cf-tip-no-health": "Open TY2026 pin: Schedule 1-A business-tip SE attribution reads the TY2025 SS wage base (schedule1a/calculation.ts); left for the Schedule 1-A owner",
-    "mixed-cf-tip-ordinary-no-credit": "Open TY2026 pin: Schedule 1-A business-tip SE attribution reads the TY2025 SS wage base (schedule1a/calculation.ts); left for the Schedule 1-A owner",
-    "mixed-cf-tip-owned-health": "Open TY2026 pin: Schedule 1-A business-tip SE attribution reads the TY2025 SS wage base (schedule1a/calculation.ts); left for the Schedule 1-A owner",
-    "mixed-cf-tip-phase-wotc": "Open TY2026 pin: Schedule 1-A business-tip SE attribution reads the TY2025 SS wage base (schedule1a/calculation.ts); left for the Schedule 1-A owner",
+    "mixed-cf-tip-phase-wotc": "MeF schema gap: 2026v1.0 IRS8995A enumerates only the TY2025 FilingStatusThresholdCd values (F8995A-004-06); the 2026 $403,500 joint threshold waits for a schema that carries it",
     "same-proprietor-two-c-one-f-shop-full": "Open TY2026 work: QBI route replays TY2025 amounts from the sample's reviewed sources",
     "same-proprietor-two-c-one-f-shop-partial": "Open TY2026 work: QBI route replays TY2025 amounts from the sample's reviewed sources",
-    "same-proprietor-two-c-one-f-shop-zero": "Open TY2026 work: the \u00a7199A(i) minimum needs material participation facts the sample does not record"
+    "same-proprietor-two-c-one-f-shop-zero": "Open TY2026 work: the \u00a7199A(i) minimum needs material participation facts the sample does not record",
+    "joint-spouse-c-qbi-investment-income": "Sample fixture input: its Form 1099-B sales are dated in 2025, which a TY2026 return cannot report (the sale-date check reads the return year)",
+    "single-c-qbi-investment-income": "Sample fixture input: its Form 1099-B sales are dated in 2025, which a TY2026 return cannot report (the sale-date check reads the return year)"
   }
 }

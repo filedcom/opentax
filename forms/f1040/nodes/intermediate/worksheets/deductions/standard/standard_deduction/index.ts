@@ -58,6 +58,11 @@ export const inputSchema = z.object({
   itemized_investment_interest: z.number().nonnegative().optional(),
   niit_allocable_state_local_tax: z.number().nonnegative().optional(),
 
+  // From Form 4684 line 15. A non-itemizer adds it to the standard deduction
+  // (2025 Instructions for Form 1040, Line 12e, Exception 5); an itemizer
+  // has it in itemized_deductions as Schedule A line 16.
+  net_qualified_disaster_loss: z.number().int().positive().optional(),
+
   // From form8995 / form8995a — qualified business income deduction (Form 1040 Line 13)
   qbi_deduction: z.number().nonnegative().optional(),
 
@@ -139,6 +144,7 @@ export function filedStandardAmount(input: StandardDeductionInput): number {
 type Resolved = {
   deduction: number;
   takingStandard: boolean;
+  // Before any net qualified disaster loss increase.
   standardAmount: number;
   // Form 1040 line 12f; zero when itemizing.
   nonitemizerCharitable: number;
@@ -153,6 +159,8 @@ function resolveDeduction(
   cfg: F1040Config,
 ): Resolved {
   const standardAmount = computeStandardAmount(input, cfg);
+  const increasedStandard = standardAmount +
+    (input.net_qualified_disaster_loss ?? 0);
   const grossItemized = input.itemized_deductions ?? 0;
   const overallLimitReduction = overallItemizedLimitReduction(
     cfg,
@@ -179,10 +187,10 @@ function resolveDeduction(
   // IRC §63(c)(6)(A): MFS taxpayer whose spouse itemizes must also itemize.
   if (input.mfs_spouse_itemizing === true) return itemizing;
   if (input.force_itemized === true) return itemizing;
-  if (itemized > standardAmount + nonitemizerCharitable) return itemizing;
+  if (itemized > increasedStandard + nonitemizerCharitable) return itemizing;
 
   return {
-    deduction: standardAmount,
+    deduction: increasedStandard,
     takingStandard: true,
     standardAmount,
     nonitemizerCharitable,
@@ -218,6 +226,7 @@ class StandardDeductionNode extends TaxNode<typeof inputSchema> {
         "qbi_deduction",
         "additional_deductions",
         "nonitemizer_charitable_cash",
+        "net_qualified_disaster_loss",
         "enhanced_senior_deduction",
         "qualified_vehicle_loan_interest_deduction",
         "nol_deduction",
@@ -275,9 +284,12 @@ class StandardDeductionNode extends TaxNode<typeof inputSchema> {
     const form6251Line1b = input.agi - deduction - nonitemizerCharitable -
       qbi - additionalDeductions + enhancedSeniorDeduction;
     // 2025 Form 6251 line 2a: Schedule A line 7 if itemizing, otherwise
-    // Form 1040 line 12e (the standard deduction).
+    // Form 1040 line 12e (the standard deduction). The AMT adds back only the
+    // standard deduction before a net qualified disaster loss increase
+    // (2025 Instructions for Form 4684, Taxpayers who also file the 2025
+    // Form 6251).
     const form6251Line2a = takingStandard
-      ? deduction
+      ? resolved.standardAmount
       : input.itemized_taxes ?? 0;
 
     const outputs: NodeOutput[] = [];

@@ -16,6 +16,11 @@ test("Schedule R and Form 2441 reduce the credit for other dependents limit", ()
   const result = f1040_2025.executeReturn(structuredClone(inputs));
   assertEquals(result.diagnostics, []);
   const pending = buildPending(result.pending), f = pending.f1040!;
+  // Instructions for Form 1040 (2025), line 1h (page 25): the code 3
+  // disability pension before minimum retirement age is on line 1h.
+  assertEquals(f.line1h_other_earned, 11_000);
+  assertEquals(f.line1z_total_wages, 12_000);
+  assertEquals(f.line27_eitc, 4_089);
   assertEquals(f.line11_agi, 16_000);
   assertEquals(f.line18_total_tax_before_credits, 758);
   assertEquals(pending.schedule3?.line2_childcare_credit, 272);

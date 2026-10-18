@@ -17,6 +17,7 @@ import { cropInsuranceDeferralStatement } from "./income/business/crop_insurance
 import { jointOccupancyStatement } from "./general/filing/joint_occupancy_statement.ts";
 import { irs1040 } from "./general/return-assembly/f1040.ts";
 import { iraDistributionStatement } from "./income/retirement/ira_distribution_statement.ts";
+import { nonW2DisabilityPaymentStatement } from "./income/retirement/non_w2_disability_payment_statement.ts";
 import { f1099r } from "./income/retirement/f1099r.ts";
 import { form1116 } from "./credits/foreign/f1116/f1116.ts";
 import { form2106 } from "./adjustments/employment/f2106.ts";
@@ -373,6 +374,8 @@ export const ALL_MEF_FORMS = [
   scheduleALine8bSellerStatement,
   // Form 1040 line 4c IRA statement precedes other income statements.
   iraDistributionStatement,
+  // Form 1040 line 1h disability statement follows the IRA statement.
+  nonW2DisabilityPaymentStatement,
   // Schedule 1 line 8z statement precedes the Schedule 2 line 17z statement.
   schedule1OtherIncomeStatement,
   // Schedule 2 line 17z statement precedes WagesNotShownSchedule in ReturnData.

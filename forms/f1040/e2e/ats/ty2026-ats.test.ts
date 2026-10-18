@@ -11,6 +11,18 @@ import {
   SCENARIO_1040_01_TY2026_ASSUMPTIONS,
   SCENARIO_1040_01_TY2026_FACTS,
 } from "./ty2026_scenario_1040_01_input.ts";
+import { SCENARIO_1040_02_TY2026_ASSUMPTIONS } from "./ty2026_scenario_1040_02_input.ts";
+import { SCENARIO_1040_03_TY2026_ASSUMPTIONS } from "./ty2026_scenario_1040_03_input.ts";
+import { SCENARIO_1040_04_TY2026_ASSUMPTIONS } from "./ty2026_scenario_1040_04_input.ts";
+import { SCENARIO_1040_06_TY2026_ASSUMPTIONS } from "./ty2026_scenario_1040_06_input.ts";
+import {
+  SCENARIO_1040_12_TY2026_ASSUMPTIONS,
+  SCENARIO_1040_12_TY2026_RECONCILIATION,
+} from "./ty2026_scenario_1040_12_input.ts";
+import {
+  SCENARIO_1040_13_TY2026_ASSUMPTIONS,
+  SCENARIO_1040_13_TY2026_RECONCILIATION,
+} from "./ty2026_scenario_1040_13_input.ts";
 import {
   SCENARIO_1040_14_TY2026_ASSUMPTIONS,
   SCENARIO_1040_14_TY2026_RECONCILIATION,
@@ -65,6 +77,80 @@ test("TY2026 ATS 1040 Scenario 5 matches every printed W-2 and Form 8888 value",
   assertEquals(built?.values.length, 16);
 });
 
+const results = <T extends { result: string }>(
+  values: readonly T[] | undefined,
+  result: string,
+) => values?.filter((v) => v.result === result) ?? [];
+
+test("TY2026 ATS 1040 Scenario 3 files and matches every printed value", async () => {
+  const built = await ty2026ScenarioValues("1040-03");
+  assertEquals(built?.findings, []);
+  if (schema) assertEquals(built?.schemaValid, true);
+  assertEquals(built?.values.every((v) => v.result === "match"), true);
+  assertEquals(built?.values.length, 36);
+});
+
+test("TY2026 ATS 1040 Scenario 2 matches every printed value; only 2026v1.0 rule SA-F1040-018 rejects Schedule A line 8d", async () => {
+  const built = await ty2026ScenarioValues("1040-02");
+  // P.L. 119-21 §70108 makes mortgage insurance premiums deductible for 2026.
+  assertEquals(built?.findings, ["rule SA-F1040-018"]);
+  if (schema) assertEquals(built?.schemaValid, true);
+  assertEquals(built?.values.every((v) => v.result === "match"), true);
+  assertStringIncludes(
+    built?.xml ?? "",
+    "<MortgageInsurancePremiumsAmt>2316</MortgageInsurancePremiumsAmt>",
+  );
+});
+
+test("TY2026 ATS 1040 Scenario 4 matches every representable value; 2026v1.0 has no 39% Form 2441 rate and no Schedule 3-A", async () => {
+  const built = await ty2026ScenarioValues("1040-04");
+  assertEquals(built?.findings, []);
+  // IRC §21(a)(2) as amended: 50% less 1 point per $2,000 over $15,000.
+  assertStringIncludes(
+    built?.xml ?? "",
+    "<CareExpensesDecimalAmt>.39</CareExpensesDecimalAmt>",
+  );
+  if (schema) assertEquals(built?.schemaValid, false);
+  assertEquals(results(built?.values, "unrepresentable").length, 3);
+  assertEquals(
+    built?.values.filter((v) => v.result !== "unrepresentable").every((v) =>
+      v.result === "match"
+    ),
+    true,
+  );
+});
+
+test("TY2026 ATS 1040 Scenario 6 files W-2 code TT and box 14b; only the Schedule E Part II loss column is not produced", async () => {
+  const built = await ty2026ScenarioValues("1040-06");
+  assertEquals(built?.findings, []);
+  if (schema) assertEquals(built?.schemaValid, true);
+  assertStringIncludes(
+    built?.xml ?? "",
+    "<TreasuryTippedOccupationCd>102</TreasuryTippedOccupationCd>",
+  );
+  assertEquals(
+    results(built?.values, "not-produced").map((v) => v.line),
+    ["Schedule E line 28A(i)"],
+  );
+});
+
+test("TY2026 ATS 1040 Scenarios 12 and 13 export; packet arithmetic errors are documented conflicts", async () => {
+  for (
+    const [id, reconciliation] of [
+      ["1040-12", SCENARIO_1040_12_TY2026_RECONCILIATION],
+      ["1040-13", SCENARIO_1040_13_TY2026_RECONCILIATION],
+    ] as const
+  ) {
+    const built = await ty2026ScenarioValues(id);
+    assertEquals(built?.findings, []);
+    if (schema) assertEquals(built?.schemaValid, true);
+    assertEquals(
+      results(built?.values, "conflict").map((v) => v.line).sort(),
+      reconciliation.conflicts.map((c) => c.line).sort(),
+    );
+  }
+});
+
 test("TY2026 ATS scenarios without a fixture report that, not a refused input", async () => {
   const fixtured = new Set(Object.keys(TY2026_ATS_FIXTURES));
   for (const c of TY2026_ATS_CASES.filter((c) => !fixtured.has(c.id))) {
@@ -83,4 +169,19 @@ test("TY2026 ATS fixture assumptions stay explicit", () => {
     "f5695.part_i_tax_limit",
   ]);
   assertEquals(SCENARIO_1040_14_TY2026_ASSUMPTIONS.length, 9);
+  for (
+    const assumptions of [
+      SCENARIO_1040_02_TY2026_ASSUMPTIONS,
+      SCENARIO_1040_03_TY2026_ASSUMPTIONS,
+      SCENARIO_1040_04_TY2026_ASSUMPTIONS,
+      SCENARIO_1040_06_TY2026_ASSUMPTIONS,
+      SCENARIO_1040_12_TY2026_ASSUMPTIONS,
+      SCENARIO_1040_13_TY2026_ASSUMPTIONS,
+    ]
+  ) {
+    assertEquals(
+      assumptions.every((a) => a.field.length > 0 && a.why.length > 0),
+      true,
+    );
+  }
 });

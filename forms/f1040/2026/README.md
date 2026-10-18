@@ -1,7 +1,8 @@
 # TY2026 Form 1040
 
 `f1040:2026` is the shared nodes in `forms/f1040/nodes/` run with
-`ctx.taxYear = 2026`, on the 2025 registry, MeF builder and pending
+`ctx.taxYear = 2026`, on the 2025 registry, staged return pipeline
+(`2025/return-processing/execute_return.ts`), MeF builder and pending
 normalization with the 2026v1.0 schema. It accepts every input TY2025 accepts;
 there is no allowlist. PDF output is refused.
 

@@ -90,7 +90,7 @@ for (
     const holding = (withoutInput.f8621 as Record<string, unknown>[])[0];
     holding.qef_ordinary_income = 0;
     delete holding.qef_1294_election;
-    const without = executePreQefSourceReturn(withoutInput, true);
+    const without = executePreQefSourceReturn(withoutInput, { taxYear: 2025, formType: "f1040" }, true);
     const shadow = buildPending(without.pending);
     assertEquals(shadow.schedule3?.line6c_adoption_credit, row.shadowCredit);
     assertEquals(without.pending.form8839_carryforward, undefined);

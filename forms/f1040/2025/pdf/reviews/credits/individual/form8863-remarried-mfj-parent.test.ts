@@ -26,7 +26,7 @@ for (const stepFirst of [false, true]) {
     const f = remarriedFamily(stepFirst),
       parent = f.parents[0],
       p = parent.pending,
-      lines = calculateForm8863Lines(p.f8863)!;
+      lines = calculateForm8863Lines(p.f8863, 2025)!;
     assertEquals([
       p.f1040.line1a_wages,
       p.f1040.line11_agi,

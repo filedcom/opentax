@@ -83,10 +83,13 @@ export const TY2026_ATS_CASES: readonly Ty2026AtsCase[] = [
       "f8283",
       "f1040es",
       "f8812_credit_limit_worksheet",
+      "f8812_earned_income_worksheet",
       "preparer",
     ],
     unsupportedFacts: [],
-    schemaGaps: [],
+    schemaGaps: [
+      "Business rule SA-F1040-018 (2026v1.0) requires Schedule A MortgageInsurancePremiumsAmt to be zero; page 8 line 8d prints $2,316, deductible for 2026 under IRC §163(h)(3)(E) as amended by P.L. 119-21 §70108",
+    ],
     capture: "partial-facts",
   },
   {
@@ -124,7 +127,7 @@ export const TY2026_ATS_CASES: readonly Ty2026AtsCase[] = [
     ],
     unsupportedFacts: [],
     schemaGaps: [],
-    capture: "inventory-only",
+    capture: "partial-facts",
   },
   {
     id: "1040-04",
@@ -156,13 +159,15 @@ export const TY2026_ATS_CASES: readonly Ty2026AtsCase[] = [
       "f2441",
       "f8862",
       "f8863",
-      "f3903",
       "f8812_credit_limit_worksheet",
       "f8812_earned_income_worksheet",
     ],
     unsupportedFacts: [],
-    schemaGaps: ["Schedule 3-A (1040 line 32b)"],
-    capture: "inventory-only",
+    schemaGaps: [
+      "Schedule 3-A (1040 line 32b)",
+      "Form 2441 CareExpensesDecimalAmt enumerates 0.20-0.35; the 2026 credit rate for $35,545 of AGI is 39% (IRC §21(a)(2) as amended by P.L. 119-21 §70405)",
+    ],
+    capture: "partial-facts",
   },
   {
     id: "1040-05",
@@ -196,12 +201,12 @@ export const TY2026_ATS_CASES: readonly Ty2026AtsCase[] = [
     forms: ["1040", "W-2", "W-2G", "Schedule 1", "Schedule E"],
     ty2025Comparison:
       "No TY2025 Form 1040 scenario 6 exists (TY2025 scenario 6 was a 1040-SS return). New: a dependent filer born 2008 with W-2 overtime (box 12 TT $200), W-2G slot winnings and a gambling partnership on Schedule E Part II.",
-    inputs: ["general", "w2", "w2g", "schedule_e", "k1_partnership"],
+    inputs: ["general", "w2", "w2g", "k1_partnership"],
     unsupportedFacts: [
-      "W-2 box 12 code TT and box 14b Treasury tipped occupation code (page 4): the W-2 input has neither",
+      "Schedule E Part II row A column (i) $1,000 nonpassive loss allowed (page 9): no input carries a K-1 loss to Part II without basis, at-risk and Form 8582 facts",
     ],
     schemaGaps: [],
-    capture: "inventory-only",
+    capture: "partial-facts",
   },
   {
     id: "1040-12",
@@ -236,12 +241,14 @@ export const TY2026_ATS_CASES: readonly Ty2026AtsCase[] = [
     ],
     ty2025Comparison:
       "TY2025 scenario 12 was Schedule C/SE with Forms 7206 and 7217. TY2026 keeps Schedule C/SE and the W-2 but replaces 7206/7217 with a credit-transfer return: Forms 3800 and 3800 Schedule A, 4562-B, 7205, 7207, 7220 and four binary attachments.",
-    inputs: ["general", "w2", "schedule_c", "f3800", "f7207"],
+    inputs: ["general", "w2", "schedule_c"],
     unsupportedFacts: [
       "Forms 4562-B, 7205 and 7220: no input exists for any tax year",
+      "Form 3800 Part III line 1b transferred Form 7207 credit and its Schedule A (pages 13-15, 35): Form 3800 carries section 6418 transfers only for Form 8835",
+      "The four cover-listed binary attachments are not in the packet",
     ],
     schemaGaps: ["Form 4562-B", "Form 7220"],
-    capture: "inventory-only",
+    capture: "partial-facts",
   },
   {
     id: "1040-13",
@@ -270,10 +277,16 @@ export const TY2026_ATS_CASES: readonly Ty2026AtsCase[] = [
     ],
     ty2025Comparison:
       "TY2025 scenario 13 was Schedule 3 with Forms 6251 and 8911. TY2026 is a farm return: Schedule F/SE, Schedule 1-A, Form 4136 with two Schedules A, and Form 1062 with its Schedule A.",
-    inputs: ["general", "w2", "schedule_f", "schedule1a", "f4136"],
-    unsupportedFacts: [],
-    schemaGaps: ["Form 1062 and its Schedule A (1040 line 24b)"],
-    capture: "inventory-only",
+    inputs: ["general", "w2", "f1099div", "schedule_f", "schedule1a", "f4136"],
+    unsupportedFacts: [
+      "Form 1062 and its Schedule A (pages 28-29): no input carries a section 1062 qualified farmland sale or its net tax liability installment (Schedule 3 line 13z '1062NL')",
+      "W-2 box 12 code TT qualified overtime (page 30) and Schedule 1-A Part III (page 7): the overtime deduction reads only the TY2025 box 14 statement route",
+    ],
+    schemaGaps: [
+      "Form 1062 and its Schedule A; 1040 lines 24b, 24c and 32c (pages 3, 28-29)",
+      "Schedule 1-A line 16a per-employer overtime rows (page 7)",
+    ],
+    capture: "partial-facts",
   },
   {
     id: "1040-14",
@@ -382,7 +395,7 @@ export const TY2026_SCHEMA_GAPS: readonly {
       "VehicleFinalAssemblyInUSInd",
     ],
     assumption:
-      "Schedule 1-A tips, overtime and car-loan interest are regrouped; TY2026 refuses those inputs until the schema is held.",
+      "Schedule 1-A tips, overtime and car-loan interest are regrouped; TY2026 files them in the 2025-layout elements 2026v1.0 holds and omits the per-employer rows.",
   },
   {
     stylesheet: "IRS1040.xsl",

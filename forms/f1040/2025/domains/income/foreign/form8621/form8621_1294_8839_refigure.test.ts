@@ -17,6 +17,7 @@ import { pdfReviewFixtures } from "../../../../pdf/review-fixtures.ts";
 import { PficRegime } from "../../../../../nodes/inputs/income/foreign/f8621/index.ts";
 import { createHash } from "node:crypto";
 import { buildPending } from "../../../../mef/execution/pending.ts";
+const TY2025 = { taxYear: 2025, formType: "f1040" } as const;
 const base = pdfReviewFixtures.find((x) =>
   x.id === "single-reviewed-adoption-credit"
 )!;
@@ -247,7 +248,7 @@ test("Form 8621 Election B keeps an actual fully used adoption credit when only 
     Error,
     "PDF source differs from the prepared MeF return",
   );
-  const without = executeForm8839TwoPass(withoutInputs, true);
+  const without = executeForm8839TwoPass(withoutInputs, TY2025, true);
   const shadow = buildPending(without.pending);
   assertEquals(shadow.schedule3?.line6c_adoption_credit, 5_645);
   assertEquals(shadow.f1040?.line24_total_tax, 0);
@@ -453,19 +454,19 @@ test("nonadditive simultaneous Election B differences stay guarded", () => {
     executeForm8839TwoPass({
       ...source,
       f8621: [holding, secondHolding],
-    }).pending,
+    }, TY2025).pending,
   ).f1040!;
   const withoutFirst = buildPending(
     executeForm8839TwoPass({
       ...source,
       f8621: [undistributedRemoved(holding), withoutElection(secondHolding)],
-    }).pending,
+    }, TY2025).pending,
   ).f1040!;
   const withoutSecond = buildPending(
     executeForm8839TwoPass({
       ...source,
       f8621: [withoutElection(holding), undistributedRemoved(secondHolding)],
-    }).pending,
+    }, TY2025).pending,
   ).f1040!;
   const withoutBoth = buildPending(
     executeForm8839TwoPass({
@@ -474,7 +475,7 @@ test("nonadditive simultaneous Election B differences stay guarded", () => {
         undistributedRemoved(holding),
         undistributedRemoved(secondHolding),
       ],
-    }, true).pending,
+    }, TY2025, true).pending,
   ).f1040!;
   assertEquals(full.line22_tax_after_credits, 525);
   assertEquals(withoutFirst.line24_total_tax, 85);

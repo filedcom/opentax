@@ -1,3 +1,4 @@
+import { mefTaxYear } from "../../../support/year-config.ts";
 import { assertForm6251CharitableSource } from "../../../../domains/taxes/amt/form6251/form6251_charitable_source.ts";
 import { element, elements } from "../../../../../mef/xml.ts";
 import { assertForm6251Line8 } from "../../../../domains/taxes/amt/form6251/form6251_line8.ts";
@@ -150,6 +151,29 @@ export const FIELD_MAP: ReadonlyArray<readonly [keyof Fields, string]> = [
   ["line40", "TaxOnAlternativeMinimumGainAmt"],
 ];
 
+/** With the increased standard deduction, Form 6251 line 2a is zero and the
+ * standard deduction before the increase is part of line 3 (2025
+ * Instructions for Form 4684, Taxpayers who also file the 2025 Form 6251).
+ * The engine adds it back on line 2a, which equals AMTI but not the filed
+ * lines. */
+function assertNoIncreasedStandardDeduction(
+  pending: MefBuildContext["pending"],
+): void {
+  const standard = pending?.standard_deduction as
+    | Record<string, unknown>
+    | undefined;
+  const filed = pending?.f1040 as Record<string, unknown> | undefined;
+  if (
+    typeof standard?.net_qualified_disaster_loss === "number" &&
+    standard.net_qualified_disaster_loss > 0 &&
+    filed?.line12e_itemized_deductions === undefined
+  ) {
+    throw new Error(
+      "Form 6251 with a standard deduction increased by a net qualified disaster loss needs line 2a zero and the standard deduction on line 3",
+    );
+  }
+}
+
 function buildIRS6251(fields: Input, context?: MefBuildContext): string {
   if (
     typeof fields.nol_adjustment === "number" &&
@@ -194,7 +218,7 @@ function buildIRS6251(fields: Input, context?: MefBuildContext): string {
   assertForm6251DepreciationSource(fields);
   assertForm6251TrustSource(fields, context?.pending);
   assertForm6251PrivateActivityBondSource(fields, context?.pending);
-  assertForm6251RefundSource(fields, context?.pending);
+  assertForm6251RefundSource(fields, context?.pending, mefTaxYear(context));
   assertForm6251QualifiedDividendSource(fields, context?.pending);
   if ((fields.iso_adjustment ?? 0) > 0) {
     const filer = context?.filer;
@@ -223,6 +247,7 @@ function buildIRS6251(fields: Input, context?: MefBuildContext): string {
   ) {
     return "";
   }
+  assertNoIncreasedStandardDeduction(context?.pending);
   const related = [
     fields.line3_form8864_income_exclusion,
     fields.line3_houseboat_interest_addback,

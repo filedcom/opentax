@@ -1,3 +1,4 @@
+import { mefTaxYear } from "../../../../mef/support/year-config.ts";
 import type {
   PdfFieldEntry,
   PdfFormDescriptor,
@@ -241,7 +242,7 @@ export const form8863Pdf: PdfFormDescriptor = {
     if (!nativeForm8863.build(source, { filer, pending: allPending })) {
       return [];
     }
-    const lines = calculateForm8863Lines(source);
+    const lines = calculateForm8863Lines(source, mefTaxYear());
     if (!lines) return [];
     if (!filer) throw new Error("Form 8863 PDF needs filer identity");
     const [taxpayerA, taxpayerB, taxpayerC] = ssnParts(filer.primarySSN);

@@ -8,7 +8,11 @@ import {
 } from "../../../../cli/commands/export.ts";
 import { normalizeAllPending } from "../../2025/return-processing/pending.ts";
 import { extractFilerIdentity } from "../../mef/filer.ts";
-import { validateAgainstXsd, xsdAvailable } from "./ats-export.ts";
+import {
+  type RetainedDocument,
+  validateAgainstXsd,
+  xsdAvailable,
+} from "./ats-export.ts";
 import { compareAtsW2Values, type W2Target } from "./ty2025-w2-value-coverage.ts";
 import {
   SCENARIO_1040_05_TY2026_FACTS,
@@ -21,6 +25,42 @@ import {
   SCENARIO_1040_01_TY2026_W2_TARGETS,
   ty2026Scenario104001Input,
 } from "./ty2026_scenario_1040_01_input.ts";
+import {
+  SCENARIO_1040_02_TY2026_RECONCILIATION,
+  SCENARIO_1040_02_TY2026_TARGETS,
+  SCENARIO_1040_02_TY2026_W2_TARGETS,
+  ty2026Scenario104002Input,
+} from "./ty2026_scenario_1040_02_input.ts";
+import {
+  SCENARIO_1040_03_TY2026_RECONCILIATION,
+  SCENARIO_1040_03_TY2026_TARGETS,
+  ty2026Scenario104003Input,
+} from "./ty2026_scenario_1040_03_input.ts";
+import {
+  SCENARIO_1040_04_TY2026_RECONCILIATION,
+  SCENARIO_1040_04_TY2026_TARGETS,
+  SCENARIO_1040_04_TY2026_W2_TARGETS,
+  ty2026Scenario104004Input,
+  ty2026Scenario104004RetainedSourceDocuments,
+} from "./ty2026_scenario_1040_04_input.ts";
+import {
+  SCENARIO_1040_06_TY2026_RECONCILIATION,
+  SCENARIO_1040_06_TY2026_TARGETS,
+  SCENARIO_1040_06_TY2026_W2_TARGETS,
+  ty2026Scenario104006Input,
+} from "./ty2026_scenario_1040_06_input.ts";
+import {
+  SCENARIO_1040_12_TY2026_RECONCILIATION,
+  SCENARIO_1040_12_TY2026_TARGETS,
+  SCENARIO_1040_12_TY2026_W2_TARGETS,
+  ty2026Scenario104012Input,
+} from "./ty2026_scenario_1040_12_input.ts";
+import {
+  SCENARIO_1040_13_TY2026_RECONCILIATION,
+  SCENARIO_1040_13_TY2026_TARGETS,
+  SCENARIO_1040_13_TY2026_W2_TARGETS,
+  ty2026Scenario104013Input,
+} from "./ty2026_scenario_1040_13_input.ts";
 import {
   SCENARIO_1040_14_TY2026_RECONCILIATION,
   SCENARIO_1040_14_TY2026_TARGETS,
@@ -47,10 +87,14 @@ type Conflict = {
 };
 
 type Ty2026Fixture = {
-  readonly input: () => Record<string, unknown>;
+  readonly input: () =>
+    | Record<string, unknown>
+    | Promise<Record<string, unknown>>;
   readonly targets: readonly Ty2026PacketTarget[];
   readonly w2Targets: readonly W2Target[];
   readonly conflicts: readonly Conflict[];
+  /** Untransmitted source copies the export verifies (Form 8862 notices). */
+  readonly retained?: () => readonly RetainedDocument[];
 };
 
 export const RETURN_1040_2026_XSD = new URL(
@@ -89,6 +133,25 @@ export const TY2026_ATS_FIXTURES: Readonly<Record<string, Ty2026Fixture>> = {
     w2Targets: SCENARIO_1040_01_TY2026_W2_TARGETS,
     conflicts: SCENARIO_1040_01_TY2026_RECONCILIATION.conflicts,
   },
+  "1040-02": {
+    input: ty2026Scenario104002Input,
+    targets: SCENARIO_1040_02_TY2026_TARGETS,
+    w2Targets: SCENARIO_1040_02_TY2026_W2_TARGETS,
+    conflicts: SCENARIO_1040_02_TY2026_RECONCILIATION.conflicts,
+  },
+  "1040-03": {
+    input: ty2026Scenario104003Input,
+    targets: SCENARIO_1040_03_TY2026_TARGETS,
+    w2Targets: [],
+    conflicts: SCENARIO_1040_03_TY2026_RECONCILIATION.conflicts,
+  },
+  "1040-04": {
+    input: ty2026Scenario104004Input,
+    targets: SCENARIO_1040_04_TY2026_TARGETS,
+    w2Targets: SCENARIO_1040_04_TY2026_W2_TARGETS,
+    conflicts: SCENARIO_1040_04_TY2026_RECONCILIATION.conflicts,
+    retained: ty2026Scenario104004RetainedSourceDocuments,
+  },
   "1040-05": {
     input: ty2026Scenario104005Input,
     targets: S5_TARGETS,
@@ -109,6 +172,24 @@ export const TY2026_ATS_FIXTURES: Readonly<Record<string, Ty2026Fixture>> = {
       },
     }],
     conflicts: [],
+  },
+  "1040-06": {
+    input: ty2026Scenario104006Input,
+    targets: SCENARIO_1040_06_TY2026_TARGETS,
+    w2Targets: SCENARIO_1040_06_TY2026_W2_TARGETS,
+    conflicts: SCENARIO_1040_06_TY2026_RECONCILIATION.conflicts,
+  },
+  "1040-12": {
+    input: ty2026Scenario104012Input,
+    targets: SCENARIO_1040_12_TY2026_TARGETS,
+    w2Targets: SCENARIO_1040_12_TY2026_W2_TARGETS,
+    conflicts: SCENARIO_1040_12_TY2026_RECONCILIATION.conflicts,
+  },
+  "1040-13": {
+    input: ty2026Scenario104013Input,
+    targets: SCENARIO_1040_13_TY2026_TARGETS,
+    w2Targets: SCENARIO_1040_13_TY2026_W2_TARGETS,
+    conflicts: SCENARIO_1040_13_TY2026_RECONCILIATION.conflicts,
   },
   "1040-14": {
     input: ty2026Scenario104014Input,
@@ -142,7 +223,10 @@ export type Ty2026ScenarioScore = {
 };
 
 /** Build the TY2026 return as `return export --type mef` does; reject-level rule ids. */
-export async function exportedTy2026Return(inputs: Record<string, unknown>) {
+export async function exportedTy2026Return(
+  inputs: Record<string, unknown>,
+  retained: readonly RetainedDocument[] = [],
+) {
   const def = catalog["f1040:2026"];
   const input = signed(inputs);
   const result = def.executeReturn({
@@ -160,7 +244,8 @@ export async function exportedTy2026Return(inputs: Record<string, unknown>) {
   const identity = extractFilerIdentity(pending.f1040 ?? {});
   const filer = identity &&
     { ...identity, timestamp: TY2026_ATS_PROCESSING_TIMESTAMP };
-  const xml = (await def.prepareReturn(pending, filer, [])).bundle.xml;
+  const xml = (await def.prepareReturn(pending, filer, [], retained)).bundle
+    .xml;
   const rejects = businessRuleReport(
     pending,
     filer,
@@ -209,7 +294,10 @@ function compareTarget(
 
 async function filing(fixture: Ty2026Fixture) {
   try {
-    const { xml, rejects } = await exportedTy2026Return(fixture.input());
+    const { xml, rejects } = await exportedTy2026Return(
+      await fixture.input(),
+      fixture.retained?.() ?? [],
+    );
     const schemaValid = await xsdAvailable(RETURN_1040_2026_XSD)
       ? await validateAgainstXsd(xml, RETURN_1040_2026_XSD).then(
         () => true,

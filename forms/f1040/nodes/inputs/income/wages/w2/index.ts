@@ -73,6 +73,7 @@ export enum Box12Code {
   R = "R", // Employer contributions to Archer MSA
   S = "S", // 408(p) SIMPLE salary reduction contributions
   T = "T", // Adoption benefits
+  TT = "TT", // Qualified overtime compensation (2026 W-2)
   V = "V", // Income from exercise of nonstatutory stock options
   W = "W", // Employer contributions to HSA
   Y = "Y", // 409A nonqualified deferred compensation deferrals

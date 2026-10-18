@@ -4,7 +4,10 @@ import { assertEducationIncomeSource } from "../../../../../nodes/inputs/income/
 import { element, elements } from "../../../../../mef/xml.ts";
 import { retainedActcOptOut } from "../../../../domains/credits/earned-income/actc-opt-out-source.ts";
 import { retainedEicOptOut } from "../../../../domains/credits/earned-income/earned-income/eic-opt-out-source.ts";
-import { assertLine1hSupportedSource } from "../../../../domains/income/other/line1h-source.ts";
+import {
+  assertLine1hSupportedSource,
+  retainedDisabilityPension,
+} from "../../../../domains/income/other/line1h-source.ts";
 import { assertIdentified1099IntOwner } from "../../../../domains/income/investments/f1099int/f1099int-owner-reconciliation.ts";
 import { assertPositive1099OidOwner } from "../../../../domains/income/investments/f1099oid/f1099oid-owner-reconciliation.ts";
 import { assertPositive1099DivOwner } from "../../../../domains/income/investments/f1099div/f1099div-owner-reconciliation.ts";
@@ -587,6 +590,7 @@ function buildIRS1040(fields: Input, context?: MefBuildContext): string {
         excess.owners.some((owner) => !allowedOwners.includes(owner)) ||
         context.pending.form2555 !== undefined ||
         hasCorrectiveDistribution ||
+        retainedDisabilityPension(context.pending, mefTaxYear(context)) > 0 ||
         fields.line1h_other_earned !== expected ||
         agiAmount !== expected
       ) {
@@ -596,7 +600,12 @@ function buildIRS1040(fields: Input, context?: MefBuildContext): string {
       }
     }
   }
-  assertLine1hSupportedSource(fields, context?.pending, context?.filer);
+  assertLine1hSupportedSource(
+    fields,
+    mefTaxYear(context),
+    context?.pending,
+    context?.filer,
+  );
   const iraRollover = fields.line4c_ira_rollover === true;
   const rollover = fields.line5c_pension_rollover === true;
   if (
@@ -868,7 +877,9 @@ function buildIRS1040(fields: Input, context?: MefBuildContext): string {
     }
     if (key === "line1h_other_earned") {
       const scheduleId = context?.documentIdsByPendingKey
-        ?.wages_not_shown_schedule?.[0];
+        ?.wages_not_shown_schedule?.[0] ??
+        context?.documentIdsByPendingKey
+          ?.non_w2_disability_payment_statement?.[0];
       return element(
         tag,
         value,

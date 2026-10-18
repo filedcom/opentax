@@ -412,6 +412,7 @@ export function qualifiedReitDividends(
 export function assertOneScheduleC8995(
   fields: Record<string, unknown>,
   rawPending: Readonly<Record<string, unknown>> | undefined,
+  taxYear?: number,
 ): Filed8995 {
   if (!rawPending) {
     throw new Error(
@@ -419,7 +420,7 @@ export function assertOneScheduleC8995(
     );
   }
   const pending = normalizeAllPending(rawPending as Record<string, unknown>);
-  const tipExclusions = assertQualifiedTipQbiSource(fields, pending);
+  const tipExclusions = assertQualifiedTipQbiSource(fields, pending, taxYear);
   const source = scheduleCInputSchema.safeParse(pending.schedule_c);
   const sourceInput = source.success ? source.data : undefined;
   const businesses = source.success ? projectScheduleCItems(source.data) : [];
@@ -1471,7 +1472,7 @@ export function assertPositive8995(
       Array.isArray(fields.schedule_c_qbi_businesses) &&
       fields.schedule_c_qbi_businesses.length === 2
     ) return assertTwoSmallScheduleC8995(fields, pending);
-    return assertOneScheduleC8995(fields, pending);
+    return assertOneScheduleC8995(fields, pending, taxYear);
   }
   return assertReitOnly8995(fields, pending);
 }

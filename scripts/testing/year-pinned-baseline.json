@@ -230,11 +230,6 @@
     "count": 1
   },
   {
-    "path": "forms/f1040/2025/domains/credits/individual/form8839/form8839_two_pass.ts",
-    "pattern": "year-value",
-    "count": 2
-  },
-  {
     "path": "forms/f1040/2025/domains/credits/individual/form8863/form8863_two_pass.ts",
     "pattern": "year-value",
     "count": 1
@@ -447,7 +442,7 @@
   {
     "path": "forms/f1040/2025/domains/income/business/form172/form172_projected_return.ts",
     "pattern": "year-value",
-    "count": 2
+    "count": 1
   },
   {
     "path": "forms/f1040/2025/domains/income/business/form172/form172_reviewed_return.ts",
@@ -492,16 +487,11 @@
   {
     "path": "forms/f1040/2025/domains/income/foreign/schedule1-form8621-source.ts",
     "pattern": "year-value",
-    "count": 2
+    "count": 1
   },
   {
     "path": "forms/f1040/2025/domains/income/investments/broker-sale-source-reconciliation.ts",
     "pattern": "year-value",
-    "count": 1
-  },
-  {
-    "path": "forms/f1040/2025/domains/income/investments/f1099b/f1099b-recipient-owner.ts",
-    "pattern": "year-identifier",
     "count": 1
   },
   {
@@ -588,11 +578,6 @@
     "path": "forms/f1040/2025/domains/taxes/amt/form6251/form6251_prior_iso_sale.ts",
     "pattern": "year-identifier",
     "count": 11
-  },
-  {
-    "path": "forms/f1040/2025/domains/taxes/amt/form6251/form6251_refund_source.ts",
-    "pattern": "year-comparison",
-    "count": 1
   },
   {
     "path": "forms/f1040/2025/domains/taxes/employment/form8959/form8959-source.ts",
@@ -1626,18 +1611,13 @@
   },
   {
     "path": "forms/f1040/nodes/inputs/credits/individual/f8863/index.ts",
-    "pattern": "date-pinned",
-    "count": 5
-  },
-  {
-    "path": "forms/f1040/nodes/inputs/credits/individual/f8863/index.ts",
     "pattern": "year-identifier",
     "count": 1
   },
   {
     "path": "forms/f1040/nodes/inputs/credits/individual/f8863/index.ts",
     "pattern": "z-literal",
-    "count": 3
+    "count": 2
   },
   {
     "path": "forms/f1040/nodes/inputs/credits/individual/f8912/allowance.ts",
@@ -2621,11 +2601,6 @@
   },
   {
     "path": "forms/f1040/nodes/intermediate/forms/deductions/additional/schedule1a/calculation.ts",
-    "pattern": "config-index",
-    "count": 2
-  },
-  {
-    "path": "forms/f1040/nodes/intermediate/forms/deductions/additional/schedule1a/calculation.ts",
     "pattern": "year-comparison",
     "count": 4
   },
@@ -2992,7 +2967,7 @@
   {
     "path": "forms/f1040/nodes/intermediate/forms/income/retirement/form8606/index.ts",
     "pattern": "z-literal",
-    "count": 5
+    "count": 4
   },
   {
     "path": "forms/f1040/nodes/intermediate/forms/income/retirement/form8606/recharacterization.ts",

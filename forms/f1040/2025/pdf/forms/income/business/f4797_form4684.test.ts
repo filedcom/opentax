@@ -23,7 +23,8 @@ test("Form 4684 PDF puts the documented business loss in Section B", () => {
   assertEquals(fields.negative_loss, -30_000);
   assertEquals(form4684Pdf.pageIndices!(fields), [0, 1]);
   assertEquals(
-    form4684Pdf.fields.every((field) => field.pdfField.includes("Page2[0]")),
+    form4684Pdf.fields.filter((field) => fields[field.domainKey] !== undefined)
+      .every((field) => field.pdfField.includes("Page2[0]")),
     true,
   );
 });

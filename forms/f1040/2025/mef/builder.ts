@@ -311,7 +311,7 @@ function buildReturnXml(
   assert1099RRecipientOwner(pending.f1099r, filer, year);
   assertPositiveW2GRecipient(pending.w2g, filer, year);
   assertNecWithholdingRecipient(pending.f1099nec, filer);
-  assert1099BRecipientOwner(pending.f1099b, filer);
+  assert1099BRecipientOwner(pending.f1099b, filer, year);
   assertNoRepeatedBrokerSaleSources(pending.f1099b, pending.f8949);
   assertCapitalSaleSourceRows(pending);
   assertPatrIssuedCopies(pending.f1099patr);
@@ -369,8 +369,12 @@ function buildReturnXml(
   assertSchedule1Box3SourceIdentity(pending, filer);
   assertSchedule1Box8SourceIdentity(pending, filer);
   assertSchedule1Form8814Source(pending);
-  assertSchedule1Form8621Source(pending);
-  assertScheduleJSourceReturn(pending, executeComposedSourceReturn);
+  assertSchedule1Form8621Source(pending, { taxYear: year, formType: "f1040" });
+  assertScheduleJSourceReturn(
+    pending,
+    (inputs) =>
+      executeComposedSourceReturn(inputs, { taxYear: year, formType: "f1040" }),
+  );
   assertSingleFarmQbiReturn(pending, year);
   assertSchedule1NecSourceIdentity(pending, filer);
   assertSchedule1KSourceIdentity(pending, filer);

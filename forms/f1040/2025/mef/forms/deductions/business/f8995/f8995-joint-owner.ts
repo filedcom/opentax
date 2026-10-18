@@ -115,7 +115,7 @@ export function assertJointOwner8995(
       "Joint Form8995 health adjustment must join the actual sourced Form7206 plan",
     );
   }
-  const tips = assertQualifiedTipQbiSource(fields, p);
+  const tips = assertQualifiedTipQbiSource(fields, p, taxYear);
   const additional = Number(f.line13b_additional_deductions ?? 0);
   // Ordinary interest, dividends and capital sales replay from their copies;
   // they enter AGI on lines 2b, 3b and 7 and Form 8995 line 12 (i8995).
