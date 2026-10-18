@@ -62,7 +62,7 @@ export function twoBusinessAggregationFixture(
       tax_year_end: "2025-12-31",
       tax_year_end_source_reference: "calendar-year-ledger",
       election_history: {
-        status: "new_2025",
+        status: "new_election",
         no_prior_election_confirmed: true,
       },
       annual_disclosure: {
@@ -111,7 +111,7 @@ export function twoBusinessAggregationFixture(
         ubia: 100_000,
         owner_share_pct: 100,
         ownership_start_date: "2020-01-01",
-        owned_on_2025_12_31: true,
+        owned_on_tax_year_end: true,
         ownership_source_reference: "north-ownership-ledger",
         qbi_adjustments: {
           deductible_se_tax: 1_339,
@@ -134,7 +134,7 @@ export function twoBusinessAggregationFixture(
         ubia: 100_000,
         owner_share_pct: 100,
         ownership_start_date: "2025-01-01",
-        owned_on_2025_12_31: true,
+        owned_on_tax_year_end: true,
         ownership_source_reference: "south-ownership-ledger",
         qbi_adjustments: {
           deductible_se_tax: 1_072,

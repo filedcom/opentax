@@ -1,11 +1,16 @@
 import { z } from "zod";
 import { createHash } from "node:crypto";
+import {
+  majorityOwnershipLatestStart,
+  taxYearEnd,
+  taxYearStart,
+} from "../../../utils.ts";
 
 const reference = z.string().trim().min(1);
 const date = z.string().regex(/^\d{4}-\d{2}-\d{2}$/);
 const ein = z.string().regex(/^\d{9}$/);
 export const rpeAggregationSourceSchema = z.object({
-  tax_year: z.literal(2025),
+  tax_year: z.number().int(),
   issuer_name: reference.max(75),
   issuer_ein: ein,
   recipient_tin: ein,
@@ -13,14 +18,14 @@ export const rpeAggregationSourceSchema = z.object({
   issued_section199a_statement_reference: reference,
   recipient_share_pct: z.literal(100),
   recipient_ownership_start_date: date,
-  recipient_owned_on_2025_12_31: z.literal(true),
+  recipient_owned_on_tax_year_end: z.literal(true),
   recipient_ownership_source_reference: reference,
   group_name: reference.max(75),
   group_description: reference.max(180),
-  tax_year_end: z.literal("2025-12-31"),
+  tax_year_end: date,
   tax_year_end_source_reference: reference,
   election_history: z.object({
-    status: z.literal("new_2025"),
+    status: z.literal("new_election"),
     no_prior_election_confirmed: z.literal(true),
   }).strict(),
   timely_original_return_election_confirmed: z.literal(true),
@@ -55,13 +60,13 @@ export const rpeAggregationSourceSchema = z.object({
       entity_name: reference.max(75),
       entity_ein: ein,
       rpe_ownership_start_date: date,
-      rpe_owned_on_2025_12_31: z.literal(true),
+      rpe_owned_on_tax_year_end: z.literal(true),
       rpe_owner_share_pct: z.literal(100),
       ownership_source_reference: reference,
       events: z.array(
         z.object({
           event: z.enum(["formed", "acquired"]),
-          date: z.string().regex(/^2025-\d{2}-\d{2}$/),
+          date,
           source_reference: reference,
         }).strict(),
       ),
@@ -123,12 +128,23 @@ export function issuedRpeStatementBytes(
   return bytes;
 }
 
-export function reviewedRpeAggregation(raw: RpeAggregationSource) {
+export function reviewedRpeAggregation(
+  raw: RpeAggregationSource,
+  taxYear: number,
+) {
   const source = rpeAggregationSourceSchema.parse(raw);
+  const yearStart = taxYearStart(taxYear);
+  const yearEnd = taxYearEnd(taxYear);
+  const majorityStart = majorityOwnershipLatestStart(taxYear);
+  if (source.tax_year !== taxYear || source.tax_year_end !== yearEnd) {
+    throw Error(
+      "RPE aggregation statement must be issued for the return's tax year",
+    );
+  }
   if (
-    !validDate(source.recipient_ownership_start_date, "2025-07-02") ||
+    !validDate(source.recipient_ownership_start_date, majorityStart) ||
     !validDate(source.review_date, "9999-12-31") ||
-    source.review_date < "2025-12-31" ||
+    source.review_date < yearEnd ||
     source.issued_statement_pdf.review_date !== source.review_date ||
     source.issued_statement_pdf.reviewed_by !== source.reviewed_by
   ) {
@@ -154,15 +170,17 @@ export function reviewedRpeAggregation(raw: RpeAggregationSource) {
     if (
       member.entity_name !== source.issuer_name ||
       member.entity_ein !== source.issuer_ein ||
-      !validDate(member.rpe_ownership_start_date, "2025-07-02") ||
+      !validDate(member.rpe_ownership_start_date, majorityStart) ||
       member.qbi !== member.qualified_box1_income ||
       !unique(member.events.map((e) => e.event)) ||
-      member.events.some((e) => !validDate(e.date, "2025-12-31")) ||
+      member.events.some((e) =>
+        !validDate(e.date, yearEnd) || e.date < yearStart
+      ) ||
       (ownershipEvent !== undefined &&
         ownershipEvent.date !== member.rpe_ownership_start_date) ||
       (formed !== undefined && acquired !== undefined &&
         formed.date > acquired.date) ||
-      (member.rpe_ownership_start_date >= "2025-01-01" &&
+      (member.rpe_ownership_start_date >= yearStart &&
         member.events.length === 0)
     ) {
       throw Error(
@@ -179,7 +197,7 @@ export function reviewedRpeAggregation(raw: RpeAggregationSource) {
   };
 }
 
-export function currentSCorpRpeAggregation(item: {
+export function currentSCorpRpeAggregation(taxYear: number, item: {
   corporation_name: string;
   corporation_ein?: string;
   recipient_tin?: string;
@@ -201,7 +219,7 @@ export function currentSCorpRpeAggregation(item: {
   };
 }) {
   if (!item.rpe_aggregation_source) return undefined;
-  const result = reviewedRpeAggregation(item.rpe_aggregation_source),
+  const result = reviewedRpeAggregation(item.rpe_aggregation_source, taxYear),
     s = result.source;
   if (
     item.corporation_name !== s.issuer_name ||

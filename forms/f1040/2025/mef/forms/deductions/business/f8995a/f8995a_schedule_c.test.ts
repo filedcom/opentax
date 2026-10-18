@@ -100,7 +100,7 @@ const context = { filer, pending };
 
 test("Form 8995-A Schedule C: current gain and loss net to the sourced parent and native companion", () => {
   const parsed = inputSchema.parse(input);
-  const calculated = calculateScheduleCLossLines(parsed);
+  const calculated = calculateScheduleCLossLines(parsed, 2025);
   assertEquals(calculated.schedule.line3, 800);
   assertEquals(calculated.schedule.line4, 1_000);
   assertEquals(calculated.schedule.line5, 800);

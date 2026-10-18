@@ -343,13 +343,11 @@ class ScheduleCNode extends TaxNode<typeof inputSchema> {
     const netProfits = atRisk.map((result, index) =>
       input.patron_filing_review
         ? patronFiledBusinessLines("schedule_c", items[index]).profit
-        : (ctx.taxYear === 2025
-          ? filedOwnedScheduleC(
-            items[index],
-            false,
-            reductions.get(items[index].business_reference ?? "") ?? 0,
-          )?.profit
-          : undefined) ?? result.atRiskNet
+        : filedOwnedScheduleC(
+          items[index],
+          false,
+          reductions.get(items[index].business_reference ?? "") ?? 0,
+        )?.profit ?? result.atRiskNet
     );
     const fishingEvidenceItems = items.filter((item) =>
       item.schedule_j_fishing_evidence !== undefined

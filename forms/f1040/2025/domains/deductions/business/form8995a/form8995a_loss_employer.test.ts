@@ -212,6 +212,7 @@ for (const c of cases) {
     );
     const lines = calculateScheduleCLossLines(
       inputSchema.parse(pending.form8995a),
+      2025,
     );
     const qbiRows = c.id === "joint-spouse"
       ? [1990, 3919, -1004, -2061]

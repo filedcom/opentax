@@ -24,7 +24,7 @@ test("public mixed C/F owners retain separate wage caps, net losses and combined
     const r = f1040_2025.executeReturn(inputs);
     assertEquals(r.diagnostics, [], row.id);
     const p = normalizeAllPending(r.pending);
-    const owned = assertOwnedScheduleSE(p, joint.filer)!;
+    const owned = assertOwnedScheduleSE(p, 2025, joint.filer)!;
     assertEquals(owned.tax, row.tax, row.id);
     const prepared = await f1040_2025.prepareReturn!(r.pending, joint.filer);
     const xml = prepared.bundle.xml;

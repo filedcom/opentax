@@ -18,9 +18,10 @@ const canonical = (value: unknown): unknown =>
 export function assertProducingMiningZeroQbiReturn(
   fields: Form8995AInput,
   pending: Readonly<Record<string, unknown>> | undefined,
+  taxYear: number,
 ) {
   if (!fields.producing_mining_zero_qbi_source) return false;
-  assertProducingMiningZeroQbi(fields);
+  assertProducingMiningZeroQbi(fields, taxYear);
   if (
     !pending?.form8995 || !pending?.f8283 || !pending?.schedule_c ||
     !pending?.schedule_se || !pending?.w2
@@ -31,7 +32,7 @@ export function assertProducingMiningZeroQbiReturn(
   }
   assertCharitableNaturalResourceReturn({ pending } as never);
   const replay = form8995.compute(
-    { taxYear: 2025, formType: "f1040" },
+    { taxYear, formType: "f1040" },
     form8995.inputSchema.parse(pending.form8995),
   );
   const actual = replay.outputs.find((row) => row.nodeType === "form8995a")

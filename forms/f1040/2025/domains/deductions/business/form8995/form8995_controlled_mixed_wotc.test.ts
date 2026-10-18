@@ -32,7 +32,7 @@ test("actual controlled mixed C/F employers file separate owner SE/QBI and joint
     const r = f1040_2025.executeReturn(f.inputs),
       p = normalizeAllPending(r.pending);
     assertEquals(r.diagnostics, []);
-    assertFarmWotcReturn(p.form8995a ?? p.form8995, p, f.filer);
+    assertFarmWotcReturn(p.form8995a ?? p.form8995, p, 2025, f.filer);
     assertEquals([
       Number(p.schedule1.line3_schedule_c) +
       Number(p.schedule1.line6_schedule_f),
@@ -66,7 +66,7 @@ test("actual controlled mixed C/F employers file separate owner SE/QBI and joint
       assertEquals(owners[1].line10, 6321);
     }
     if (i === 3) {
-      const a = calculateFarmWotcLines(parentSchema.parse(p.form8995a));
+      const a = calculateFarmWotcLines(parentSchema.parse(p.form8995a), 2025);
       assertEquals(a.lossSchedule?.rows.map((row) => row.line1a), [
         181669,
         -11201,
@@ -85,7 +85,7 @@ test("actual controlled mixed C/F employers file separate owner SE/QBI and joint
         use: p.f3800.allowed_credit,
         tax: p.f1040.line24_total_tax,
         phase: p.form8995a
-          ? calculateFarmWotcLines(parentSchema.parse(p.form8995a)).parent
+          ? calculateFarmWotcLines(parentSchema.parse(p.form8995a), 2025).parent
             .phaseIn
           : null,
       }),
@@ -237,7 +237,7 @@ test("mixed C/F actual ownership attribution payroll and issued-income conflicts
       change(p);
       await assertRejects(() => f1040_2025.prepareReturn(p, f.filer));
       assertThrows(() =>
-        assertFarmWotcReturn(p.form8995a ?? p.form8995, p, f.filer)
+        assertFarmWotcReturn(p.form8995a ?? p.form8995, p, 2025, f.filer)
       );
       assertThrows(() =>
         scheduleC.build(p.schedule_c as any, { pending: p, filer: f.filer })

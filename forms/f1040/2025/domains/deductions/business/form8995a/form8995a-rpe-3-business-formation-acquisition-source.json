@@ -32,14 +32,14 @@
         "issued_section199a_statement_reference": "harbor-199a-2025-formation-acquisition",
         "recipient_share_pct": 100,
         "recipient_ownership_start_date": "2010-01-01",
-        "recipient_owned_on_2025_12_31": true,
+        "recipient_owned_on_tax_year_end": true,
         "recipient_ownership_source_reference": "harbor-shareholder-register-2025",
         "group_name": "Harbor retail operations",
         "group_description": "RPE-owned retail stores selling the same goods with centralized purchasing and accounting",
         "tax_year_end": "2025-12-31",
         "tax_year_end_source_reference": "harbor-calendar-year-ledger",
         "election_history": {
-          "status": "new_2025",
+          "status": "new_election",
           "no_prior_election_confirmed": true
         },
         "timely_original_return_election_confirmed": true,
@@ -75,7 +75,7 @@
             "entity_name": "Harbor Retail Inc.",
             "entity_ein": "345678901",
             "rpe_ownership_start_date": "2010-01-01",
-            "rpe_owned_on_2025_12_31": true,
+            "rpe_owned_on_tax_year_end": true,
             "rpe_owner_share_pct": 100,
             "ownership_source_reference": "north-ownership-record",
             "events": [],
@@ -92,7 +92,7 @@
             "entity_name": "Harbor Retail Inc.",
             "entity_ein": "345678901",
             "rpe_ownership_start_date": "2025-02-01",
-            "rpe_owned_on_2025_12_31": true,
+            "rpe_owned_on_tax_year_end": true,
             "rpe_owner_share_pct": 100,
             "ownership_source_reference": "south-formation-and-purchase-2025",
             "events": [
@@ -120,7 +120,7 @@
             "entity_name": "Harbor Retail Inc.",
             "entity_ein": "345678901",
             "rpe_ownership_start_date": "2025-03-01",
-            "rpe_owned_on_2025_12_31": true,
+            "rpe_owned_on_tax_year_end": true,
             "rpe_owner_share_pct": 100,
             "ownership_source_reference": "east-ownership-record",
             "events": [

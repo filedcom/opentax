@@ -7,7 +7,8 @@ import {
   dependentScholarshipReviewSchema,
 } from "../../../income/other/education_income/dependent-scholarship-review.ts";
 import { FilingStatus } from "../../../../types.ts";
-import { CONFIG_BY_YEAR } from "../../../../config/index.ts";
+import { configForYear } from "../../../../config/index.ts";
+import { ordinaryTaxForYear } from "../../../../intermediate/worksheets/taxes/calculation/year_schedule.ts";
 import {
   assertDistinct1099DIVCopies,
   inputSchema as dividendSchema,
@@ -465,17 +466,23 @@ function expectedTax(
   source: ReturnType<typeof parentTaxSource>,
   facts: ReturnType<typeof childIncomeFacts>,
   earned: number,
+  taxYear: number,
 ) {
   return calculateForm8615(source, {
     childTaxableIncome: facts.taxable,
     childFilingStatus: FilingStatus.Single,
-    childRegularTax: ordinaryTax2025(facts.taxable, FilingStatus.Single),
+    childRegularTax: ordinaryTaxForYear(
+      facts.taxable,
+      FilingStatus.Single,
+      taxYear,
+    ),
     takingStandardDeduction: true,
     childHasPreferentialIncome: false,
     childForeignEarnedIncomeExclusion: 0,
     childAdjustedGrossIncome: earned,
     childDeduction: earned - facts.taxable,
-    brackets: CONFIG_BY_YEAR[2025],
+    taxYear,
+    brackets: configForYear(taxYear),
   });
 }
 export function dependentKiddieTaxFacts(
@@ -820,7 +827,12 @@ export function dependentKiddieTaxFacts(
       sibling.facts.unearned,
       others,
     );
-    const expected = expectedTax(siblingSource, sibling.facts, sibling.earned);
+    const expected = expectedTax(
+      siblingSource,
+      sibling.facts,
+      sibling.earned,
+      review.tax_year,
+    );
     const filed = object(sibling.slot.pending.f1040),
       taxInput = object(sibling.slot.pending.income_tax_calculation);
     if (
@@ -846,7 +858,11 @@ export function assertDependentKiddieTaxReturn(
   if (!review.kiddie_tax_review && facts.taxable === 0) return;
   const final = object(pending.f1040);
   const taxInput = object(pending.income_tax_calculation);
-  const regular = ordinaryTax2025(facts.taxable, FilingStatus.Single);
+  const regular = ordinaryTaxForYear(
+    facts.taxable,
+    FilingStatus.Single,
+    review.tax_year,
+  );
   if (!facts.required) {
     if (
       pending.form8615 !== undefined ||
@@ -868,7 +884,8 @@ export function assertDependentKiddieTaxReturn(
     childForeignEarnedIncomeExclusion: 0,
     childAdjustedGrossIncome: earned,
     childDeduction: earned - facts.taxable,
-    brackets: CONFIG_BY_YEAR[2025],
+    taxYear: review.tax_year,
+    brackets: configForYear(review.tax_year),
   });
   if (
     !same(taxInput.form8615_reviewed_source, facts.source) ||

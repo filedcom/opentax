@@ -159,10 +159,7 @@ class Form7206Node extends TaxNode<typeof inputSchema> {
     if (!cfg) throw new Error(`No f1040 config for year ${ctx.taxYear}`);
     const input = inputSchema.parse(rawInput);
     if (input.independent_schedule_c_plans) {
-      if (
-        ctx.taxYear !== 2025 || input.single_schedule_c_plan ||
-        input.pub974_single_business
-      ) {
+      if (input.single_schedule_c_plan || input.pub974_single_business) {
         throw new Error(
           "Independent health plans require only their actual ordinary owner source family",
         );
@@ -218,10 +215,7 @@ class Form7206Node extends TaxNode<typeof inputSchema> {
       };
     }
     if (input.owned_sep_plans) {
-      if (
-        ctx.taxYear !== 2025 || input.single_schedule_c_plan ||
-        input.pub974_single_business
-      ) {
+      if (input.single_schedule_c_plan || input.pub974_single_business) {
         throw new Error(
           "Owned SEP source must remain in its actual ordinary proprietor family",
         );

@@ -20,7 +20,7 @@ test("joint primary WOTC preserves spouse W2 and full wage reduction through pha
     assertEquals(r.diagnostics, []);
     const p = normalizeAllPending(r.pending),
       q = inputSchema.parse(p.form8995a),
-      lines = calculateOneBusiness8995ALines(q);
+      lines = calculateOneBusiness8995ALines(q, 2025);
     assertEquals(p.schedule_se.owner_instances instanceof Array, true);
     assertEquals((p.schedule_se.owner_instances as any[])[0].w2_ss_wages, 0);
     assertEquals(

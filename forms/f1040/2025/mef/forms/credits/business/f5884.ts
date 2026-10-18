@@ -14,6 +14,7 @@ import {
   wotcReductionsByFarm,
 } from "../../../../../nodes/intermediate/forms/income/business/schedule_f/index.ts";
 import type { MefFormDescriptor } from "../../../form-descriptor.ts";
+import { mefTaxYear } from "../../../support/year-config.ts";
 
 export const form5884: MefFormDescriptor<"f5884", unknown> = {
   pendingKey: "f5884",
@@ -24,6 +25,7 @@ export const form5884: MefFormDescriptor<"f5884", unknown> = {
     assertFarmWotcReturn(
       context?.pending?.form8995a ?? context?.pending?.form8995 ?? {},
       context?.pending,
+      mefTaxYear(context),
       context?.filer,
       { key: "f5884", value: raw },
     );

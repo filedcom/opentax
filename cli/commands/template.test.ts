@@ -167,10 +167,17 @@ test("node template --document: each source document's filled template parses", 
   assertEquals(failures, []);
 });
 
-test("node template: document map names TY2025 inputs", () => {
-  const listing = listDocumentsCommand(2025);
-  assertEquals(listing.filter((row) => !row.supported), []);
-  assertEquals(listing.length, SOURCE_DOCUMENTS.length);
+test("node template: document map names an input in every year", () => {
+  for (const year of [2025, 2026]) {
+    const inputs = new Set(
+      catalog[`f1040:${year}`]!.inputNodes.map((entry) =>
+        entry.inputKey ?? entry.node.nodeType
+      ),
+    );
+    const listing = listDocumentsCommand(year);
+    assertEquals(listing.filter((row) => !inputs.has(row.node_type)), []);
+    assertEquals(listing.length, SOURCE_DOCUMENTS.length);
+  }
 });
 
 test("node template: w2 lists required boxes and their descriptions", () => {
@@ -195,27 +202,17 @@ test("node template: enum placeholders list their codes", () => {
   assertEquals(data, { credit_type: "<aoc | llc>", student_name: "<string>" });
 });
 
-test("node template: TY2026 refuses inputs it does not support", () => {
+test("node template: TY2026 serves every TY2025 document", () => {
   assertEquals(
-    nodeTemplateCommand({ nodeType: "w2", year: 2026, full: false }).year,
+    nodeTemplateCommand({ document: "1098-t", year: 2026, full: false })
+      .node_type,
+    "f8863",
+  );
+  assertEquals(
+    nodeTemplateCommand({ nodeType: "schedule_j", year: 2026, full: false })
+      .year,
     2026,
   );
-  assertEquals(
-    nodeTemplateCommand({ document: "1099-int", year: 2026, full: false })
-      .node_type,
-    "f1099int",
-  );
-  assertThrows(
-    () =>
-      nodeTemplateCommand({ document: "1098-t", year: 2026, full: false }),
-    Error,
-    "TY2026 does not yet support input f8863",
-  );
-  const supported2026 = (document: string) =>
-    listDocumentsCommand(2026).find((row) => row.document === document)
-      ?.supported;
-  assertEquals(supported2026("1099-int"), true);
-  assertEquals(supported2026("1098-t"), false);
 });
 
 test("node template: unknown inputs and documents are named", () => {

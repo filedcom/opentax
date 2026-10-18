@@ -23,6 +23,7 @@ import {
   inputSchema as form5884InputSchema,
 } from "../../../../../nodes/inputs/credits/business/f5884/index.ts";
 import { reconcileForm8941DocumentSource } from "../../../../mef/forms/credits/health/f8941_source.ts";
+import { mefTaxYear } from "../../../../mef/support/year-config.ts";
 
 // Field names verified against the 2025 IRS Schedule F AcroForm.
 const p1 = "topmostSubform[0].Page1[0].";
@@ -194,6 +195,7 @@ export const scheduleFPdf: PdfFormDescriptor = {
     assertFarmWotcReturn(
       allPending?.form8995a ?? allPending?.form8995 ?? {},
       allPending,
+      mefTaxYear(),
       filer,
       { key: "schedule_f", value: raw },
     );

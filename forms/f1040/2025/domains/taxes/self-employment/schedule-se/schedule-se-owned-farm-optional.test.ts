@@ -24,7 +24,7 @@ test("optional farm sources retain actual profits and owner gross-income QBI all
     const r = f1040_2025.executeReturn(inputs);
     assertEquals(r.diagnostics, [], row.id);
     const p = normalizeAllPending(r.pending);
-    const owned = assertOwnedScheduleSE(p, joint.filer)!;
+    const owned = assertOwnedScheduleSE(p, 2025, joint.filer)!;
     assertEquals(owned.tax, row.tax, row.id);
     assertEquals(owned.deduction, row.half, row.id);
     assertEquals(p.f1040.line11_agi, row.agi, row.id);

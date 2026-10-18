@@ -119,6 +119,8 @@ export interface F1040Config {
   // ── QBI ───────────────────────────────────────────────────────────────────
   qbiThresholdSingle: number;
   qbiThresholdMfj: number;
+  /** Equal to the single amount through TY2025; $25 above it in TY2026. */
+  qbiThresholdMfs: number;
   /** Section 199A phase-in range for joint returns; other statuses use half. */
   qbiPhaseInRange: number;
 

@@ -138,7 +138,7 @@ test("actual mixed fishing and farm phase-in derives separate advanced QBI", asy
   delete noElection.schedule_j;
   const noJ = await packet("mixed-phasein-without-j", noElection);
   const result = await packet("mixed-phasein", input);
-  const q = calculateMixedFishingQbi(result.pending.form8995a);
+  const q = calculateMixedFishingQbi(result.pending.form8995a, 2025);
   assertEquals(q.profits, [30_000, 200_000]);
   assertEquals(q.allocations, [1_825.83, 12_172.17]);
   assertEquals(q.rows.map((row) => row.lines.line2), [28_174, 187_828]);

@@ -72,7 +72,7 @@ test("owned MFJ patron C/F sources and spouse wages phase in with actual SE/heal
   ) {
     const { fixture, pending } = prepared(kind);
     const input = inputSchema.parse(pending.form8995a);
-    const lines = calculateOneBusiness8995ALines(input);
+    const lines = calculateOneBusiness8995ALines(input, 2025);
     const amounts = patronSourceAmounts(input.patron_business_source!);
     assertEquals(amounts.filed_gross - amounts.filed_expenses, amounts.profit);
     assertEquals(lines.patronThreshold, 394600);
@@ -148,6 +148,7 @@ test("joint patron source wages cross both actual MFJ threshold boundaries", asy
     const pending = buildPending(result.pending) as any;
     const lines = calculateOneBusiness8995ALines(
       inputSchema.parse(pending.form8995a),
+      2025,
     );
     assertEquals(lines.line33, target);
     assertEquals(lines.phaseInRequired, target > 394600 && target <= 494600);

@@ -31,6 +31,7 @@ test("sourced aggregation reaches filed SE adjustments, wage limit and full nati
   assertEquals(pending.f1040.line24_total_tax, 133158);
   const lines = calculateTwoBusinessAggregationLines(
     inputSchema.parse(pending.form8995a),
+    2025,
   );
   assertEquals(lines.parent.line3, 35518);
   assertEquals(lines.parent.line36, 92368);

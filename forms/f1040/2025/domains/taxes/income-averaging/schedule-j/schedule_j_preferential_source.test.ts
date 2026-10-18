@@ -123,7 +123,7 @@ test("advanced farm QBI without averaging binds actual business and qualified in
   const actual = f1040_2025.executeReturn(input);
   assertEquals(actual.diagnostics, []);
   const p: any = normalizeAllPending(actual.pending);
-  assertSingleFarmQbiReturn(p);
+  assertSingleFarmQbiReturn(p, 2025);
   const filer = extractFilerIdentity(p.f1040)!;
   const prepared = await f1040_2025.prepareReturn!(actual.pending, filer);
   const origins: PdfPageOrigin[] = [];
@@ -162,12 +162,12 @@ test("advanced farm QBI without averaging binds actual business and qualified in
     bad.form8995a.single_schedule_f_source[field] = field === "owner_ssn"
       ? "987654321"
       : 13595;
-    assertThrows(() => assertSingleFarmQbiReturn(normalizeAllPending(bad)));
+    assertThrows(() => assertSingleFarmQbiReturn(normalizeAllPending(bad), 2025));
     await assertRejects(() => f1040_2025.prepareReturn!(bad, filer));
     await assertRejects(() => buildPdfBytes(bad, filer));
   }
   const joined: any = structuredClone(actual.pending);
   joined.form8995a.single_schedule_f_source.item.line2_sales_products_raised +=
     1;
-  assertThrows(() => assertSingleFarmQbiReturn(normalizeAllPending(joined)));
+  assertThrows(() => assertSingleFarmQbiReturn(normalizeAllPending(joined), 2025));
 });

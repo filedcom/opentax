@@ -26,7 +26,7 @@ test("actual joint common-control sources cap shared people once and reconcile f
       source = wotcSchema.parse(p.f5884),
       credit = calculateForm5884(source),
       q = qbiSchema.parse(p.form8995a),
-      calc = calculateOwnedWotcBusinesses(q);
+      calc = calculateOwnedWotcBusinesses(q, 2025);
     assertEquals(
       credit.groupCredit,
       fixture.id.endsWith("partial-above") ? 192000 : 2400,

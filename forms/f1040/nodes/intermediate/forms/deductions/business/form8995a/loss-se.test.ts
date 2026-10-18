@@ -24,7 +24,7 @@ const item = (reference: string, gross: number, share: number) =>
 test("Loss SE cent residual follows stable references across source order", () => {
   const rows = [item("b", 1, .33), item("a", 1, .34), item("c", 1, .33)];
   assertEquals(
-    reviewedLossSeAllocations(rows, FilingStatus.Single, { deduction: 1 }),
+    reviewedLossSeAllocations(rows, FilingStatus.Single, { deduction: 1 }, 2025),
     [.33, .34, .33],
   );
   assertEquals(
@@ -32,6 +32,7 @@ test("Loss SE cent residual follows stable references across source order", () =
       [rows[1], rows[2], rows[0]],
       FilingStatus.Single,
       { deduction: 1 },
+      2025,
     ),
     [.34, .33, .33],
   );
@@ -42,6 +43,7 @@ test("Loss SE zero gross gets no share and positive deduction requires gross inc
       [item("a", 0, 0), item("b", 10, 1)],
       FilingStatus.Single,
       { deduction: 1 },
+      2025,
     ),
     [0, 1],
   );
@@ -49,7 +51,7 @@ test("Loss SE zero gross gets no share and positive deduction requires gross inc
     () =>
       reviewedLossSeAllocations([item("a", 0, 0)], FilingStatus.Single, {
         deduction: 1,
-      }),
+      }, 2025),
     Error,
     "gross income basis",
   );
@@ -57,7 +59,7 @@ test("Loss SE zero gross gets no share and positive deduction requires gross inc
     () =>
       reviewedLossSeAllocations([item("a", 1.001, 1)], FilingStatus.Single, {
         deduction: 1,
-      }),
+      }, 2025),
     Error,
     "exact cents",
   );
@@ -68,7 +70,7 @@ test("Loss SE excludes exempt trades and unreconciled owner sources", () => {
     Reflect.set(row, field, true);
     assertThrows(
       () =>
-        reviewedLossSeAllocations([row], FilingStatus.Single, { deduction: 1 }),
+        reviewedLossSeAllocations([row], FilingStatus.Single, { deduction: 1 }, 2025),
       Error,
       "reviewed gross-income SE allocations",
     );
@@ -77,7 +79,7 @@ test("Loss SE excludes exempt trades and unreconciled owner sources", () => {
     () =>
       reviewedLossSeAllocations([item("a", 10, 1)], FilingStatus.MFJ, {
         deduction: 1,
-      }),
+      }, 2025),
     Error,
     "actual filing status",
   );

@@ -649,6 +649,7 @@ export const config2025: F1040Config = {
   iraPhaseoutMfsUpper: IRA_PHASEOUT_MFS_UPPER_2025,
   qbiThresholdSingle: QBI_THRESHOLD_SINGLE_2025,
   qbiThresholdMfj: QBI_THRESHOLD_MFJ_2025,
+  qbiThresholdMfs: QBI_THRESHOLD_SINGLE_2025,
   qbiPhaseInRange: QBI_PHASE_IN_RANGE_2025,
   eitcInvestmentIncomeLimit: EITC_INVESTMENT_INCOME_LIMIT_2025,
   ctcPerChild: CTC_PER_CHILD_2025,

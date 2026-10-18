@@ -223,7 +223,7 @@ test("Form 8995-A cooperative box 6 written notice joins Schedule D, line 38, an
     f1040: { line13_qbi_deduction: 17_500 },
   };
   const parsed = inputSchema.parse(withBox6);
-  const lines = calculateOneBusiness8995ALines(parsed);
+  const lines = calculateOneBusiness8995ALines(parsed, 2025);
   assertEquals(lines.line37, 15_500);
   assertEquals(lines.line38, 2_000);
   assertEquals(lines.line39, 17_500);
@@ -315,7 +315,7 @@ test("Form 8995-A cooperative box 6 written notice joins Schedule D, line 38, an
     },
   };
   assertThrows(
-    () => calculateOneBusiness8995ALines(inputSchema.parse(missingNotice)),
+    () => calculateOneBusiness8995ALines(inputSchema.parse(missingNotice), 2025),
     Error,
     "reviewed box 6 notice",
   );
@@ -331,7 +331,7 @@ test("Form 8995-A cooperative box 6 written notice joins Schedule D, line 38, an
   };
   assertThrows(
     () =>
-      calculateOneBusiness8995ALines(inputSchema.parse(changedNoticeAmount)),
+      calculateOneBusiness8995ALines(inputSchema.parse(changedNoticeAmount), 2025),
     Error,
     "reviewed box 6 notice",
   );
@@ -368,7 +368,7 @@ test("Form 8995-A cooperative box 6 written notice joins Schedule D, line 38, an
     f1040: { line13_qbi_deduction: 20_900 },
   };
   assertEquals(
-    calculateOneBusiness8995ALines(inputSchema.parse(cappedBox6)).line39,
+    calculateOneBusiness8995ALines(inputSchema.parse(cappedBox6), 2025).line39,
     20_900,
   );
   assertStringIncludes(
@@ -416,6 +416,7 @@ test("Form 8995-A cooperative box 6 written notice joins Schedule D, line 38, an
     () =>
       calculateOneBusiness8995ALines(
         inputSchema.parse(overQualifiedPaymentCap),
+        2025,
       ),
     Error,
     "9% of box 7",
@@ -449,7 +450,7 @@ test("Form 8995-A cooperative box 6 written notice joins Schedule D, line 38, an
     },
   };
   assertThrows(
-    () => calculateOneBusiness8995ALines(inputSchema.parse(excessBox6)),
+    () => calculateOneBusiness8995ALines(inputSchema.parse(excessBox6), 2025),
     Error,
     "9% of box 7",
   );

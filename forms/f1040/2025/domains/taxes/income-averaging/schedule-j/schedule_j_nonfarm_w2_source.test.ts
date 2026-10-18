@@ -69,7 +69,7 @@ test("issued nonfarm W-2 joins high-income farm Schedule J, SE, zero-limited QBI
   assertEquals(pending.f1040.line24_total_tax, 139_786);
   assertEquals(pending.f1040.line37_amount_owed, 119_786);
   assertScheduleJSourceReturn(actual.pending);
-  assertSingleFarmQbiReturn(pending);
+  assertSingleFarmQbiReturn(pending, 2025);
   const filer = extractFilerIdentity(pending.f1040)!;
   const prepared = await f1040_2025.prepareReturn(actual.pending, filer);
   const origins: PdfPageOrigin[] = [];

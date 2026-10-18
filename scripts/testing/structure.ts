@@ -10,6 +10,12 @@ import { z } from "zod";
 import { TaxNode } from "../../core/types/tax-node.ts";
 import type { FormDefinition } from "../../core/types/form-definition.ts";
 import { repositoryFiles } from "./repository.ts";
+import {
+  formatYearReport,
+  shrunkYearBaseline,
+  YEAR_BASELINE_PATH,
+  yearReport,
+} from "./year-pinned.ts";
 
 export const ROLES = ["inputs", "intermediate", "outputs"] as const;
 export const INTERMEDIATE_KINDS = [
@@ -539,12 +545,30 @@ export function formatReport(report: StructureReport): string {
 
 if (import.meta.main) {
   const root = dirname(dirname(dirname(fromFileUrl(import.meta.url))));
+  const args = process.argv.slice(2);
   const { catalog } = await import("../../catalog.ts");
   const report = await structureReport(root, Object.values(catalog));
+  const years = await yearReport(root);
+  if (args.includes("--shrink-year-baseline")) {
+    const shrunk = shrunkYearBaseline(years.hits, years.baseline);
+    await fs.writeFile(
+      join(root, YEAR_BASELINE_PATH),
+      `${JSON.stringify(shrunk, null, 2)}\n`,
+    );
+    console.log(
+      `${YEAR_BASELINE_PATH}: ${years.baseline.length} -> ${shrunk.length} entries`,
+    );
+    process.exit(0);
+  }
   console.log(
-    process.argv.slice(2).includes("--json")
-      ? JSON.stringify(report)
-      : formatReport(report),
+    args.includes("--json")
+      ? JSON.stringify({
+        ...report,
+        years: { baseline: years.baseline.length, problems: years.problems },
+      })
+      : `${formatReport(report)}\n${formatYearReport(years)}`,
   );
-  process.exit(report.problems.length === 0 ? 0 : 1);
+  process.exit(
+    report.problems.length === 0 && years.problems.length === 0 ? 0 : 1,
+  );
 }

@@ -77,8 +77,8 @@ const lineNumbers = [
 /** A zero deduction cannot discard a required loss carryforward workpaper. */
 export function assertNoUnfiled8995Loss(
   fields: Readonly<Record<string, unknown>>,
-  pending?: Readonly<Record<string, unknown>>,
-  taxYear?: number,
+  pending: Readonly<Record<string, unknown>> | undefined,
+  taxYear: number,
 ): void {
   const tipExclusions = assertQualifiedTipQbiSource(
     fields as Record<string, unknown>,
@@ -91,7 +91,7 @@ export function assertNoUnfiled8995Loss(
     pending?.form8995a_schedule_c !== undefined &&
     fields.qbi_deduction === undefined && fields.line15 === undefined
   ) {
-    assertFarmWotcReturn(parent, pending);
+    assertFarmWotcReturn(parent, pending, taxYear);
     const companion = pending?.form8995a_schedule_c;
     if (companion && isDeepStrictEqual(companion, parent)) return;
     throw new Error("Farm WOTC delegation needs its actual loss companion");
@@ -1445,7 +1445,7 @@ export function assertPositive8995(
     fields.owned_s_corp_loss_source !== undefined ||
     fields.owned_s_corp_loss_sources !== undefined
   ) return assertOwnedSCorpLoss8995(fields, pending);
-  assertFarmWotcReturn(fields, pending);
+  assertFarmWotcReturn(fields, pending, taxYear);
   if (
     fields.multi_business_filing_rows !== undefined &&
     fields.schedule_c_qbi_businesses !== undefined &&

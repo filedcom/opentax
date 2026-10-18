@@ -10,18 +10,19 @@ import { independentReviewsSchema } from "../../../../../nodes/inputs/deductions
 import { inputSchema as farmSchema } from "../../../../../nodes/intermediate/forms/income/business/schedule_f/model.ts";
 import { assertOwnedScheduleSE } from "../../../taxes/self-employment/schedule-se/schedule-se-owner-source.ts";
 import { normalizeAllPending } from "../../../../return-processing/pending.ts";
-import { ordinaryTax2025 } from "../../../../../nodes/intermediate/worksheets/taxes/calculation/tax_table_2025.ts";
+import { ordinaryTaxForYear } from "../../../../../nodes/intermediate/worksheets/taxes/calculation/year_schedule.ts";
 
 export function assertIndependentPatronReturn(
   input: Form8995AInput,
   raw: Readonly<Record<string, unknown>> | undefined,
+  taxYear: number,
 ) {
   if (!input.independent_patron_sources) return;
   if (!raw) {
     throw new Error("Independent patron needs full actual source return");
   }
   const pending = normalizeAllPending(raw as Record<string, unknown>);
-  const result = calculateIndependentPatronBusinesses(input),
+  const result = calculateIndependentPatronBusinesses(input, taxYear),
     source = result.family.source;
   const farm = farmSchema.parse(pending.schedule_f);
   if (
@@ -46,7 +47,7 @@ export function assertIndependentPatronReturn(
     );
   }
   assertPatron1099PATRSource(input, pending.f1099patr);
-  const se = assertOwnedScheduleSE(pending);
+  const se = assertOwnedScheduleSE(pending, taxYear);
   if (!se || !isDeepStrictEqual(se.source, source.owned_se_source)) {
     throw new Error(
       "Independent patron owner SE differs from public farm source",
@@ -138,7 +139,11 @@ export function assertIndependentPatronReturn(
     f?.line14_deductions_qbi_total !==
       Number(f?.line12c_deduction_total) + lines.line39 ||
     f?.line16_income_tax !==
-      ordinaryTax2025(Number(f?.line15_taxable_income), input.filing_status) ||
+      ordinaryTaxForYear(
+        Number(f?.line15_taxable_income),
+        input.filing_status,
+        taxYear,
+      ) ||
     pending.schedule2?.line4_se_tax !== se.tax ||
     (pending.form8959?.line18_total_tax ?? 0) !== medicare ||
     (pending.schedule2?.line11_additional_medicare ?? 0) !== medicare ||

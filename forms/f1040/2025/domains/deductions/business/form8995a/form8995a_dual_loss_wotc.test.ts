@@ -234,6 +234,7 @@ for (const c of cases) {
     const pending = normalizeAllPending(result.pending);
     const lines = calculateScheduleCLossLines(
       inputSchema.parse(pending.form8995a),
+      2025,
     );
     assertEquals(lines.schedule.rows.map((r) => r.line1a), c.raw);
     assertEquals(lines.schedule.rows.map((r) => r.line1b), c.offset);

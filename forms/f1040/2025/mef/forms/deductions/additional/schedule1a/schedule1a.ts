@@ -554,8 +554,11 @@ function buildSchedule(raw: Input, context?: MefBuildContext): string {
         ).line14;
       } else if (input.qualified_tips_health_plans_source) {
         healthDeduction =
-          assertIndependentOwnerHealthSource(actualPending, context?.filer)
-            .deduction;
+          assertIndependentOwnerHealthSource(
+            actualPending,
+            mefTaxYear(context),
+            context?.filer,
+          ).deduction;
       }
       const line15 = scheduleOne.line15_se_deduction ?? 0;
       const owned = input.qualified_tips_owner_se_source === undefined
@@ -563,6 +566,7 @@ function buildSchedule(raw: Input, context?: MefBuildContext): string {
         : context?.pending
         ? assertOwnedScheduleSE(
           normalizeAllPending(context.pending as Record<string, unknown>),
+          mefTaxYear(context),
         )
         : undefined;
       if (

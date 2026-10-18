@@ -17,7 +17,6 @@ export function assertSchedule2ScheduleSETax(
     | undefined;
   const owned = assertOwnedScheduleSE(
     pending as Record<string, Record<string, unknown>>,
-    undefined,
     taxYear,
   );
   const tax = owned ? owned.tax : source === undefined ? 0 : scheduleSELines(

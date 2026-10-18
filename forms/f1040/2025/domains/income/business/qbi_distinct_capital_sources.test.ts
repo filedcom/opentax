@@ -260,7 +260,7 @@ test("distinct equal dividend and capital contributions file through simplified 
       form8995.build(qbi, { filer: base.filer, pending });
     } else {
       assertEquals(qbi.net_capital_gain, 3600);
-      const lines = calculateScheduleCLossLines(qbi as never);
+      const lines = calculateScheduleCLossLines(qbi as never, 2025);
       assertEquals(lines.parent.line34, 3600);
       assertEquals(
         lines.parent.line35,

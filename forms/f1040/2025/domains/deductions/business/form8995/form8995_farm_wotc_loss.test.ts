@@ -31,9 +31,9 @@ test("actual loss farm full reduction owner SE QBI carryforward and current-use 
     const r = f1040_2025.executeReturn(f.inputs),
       p = normalizeAllPending(r.pending);
     assertEquals(r.diagnostics, []);
-    assertFarmWotcReturn(p.form8995a ?? p.form8995, p, f.filer);
+    assertFarmWotcReturn(p.form8995a ?? p.form8995, p, 2025, f.filer);
     const a = p.form8995a
-      ? calculateFarmWotcLines(inputSchema.parse(p.form8995a))
+      ? calculateFarmWotcLines(inputSchema.parse(p.form8995a), 2025)
       : undefined;
     assertEquals([
       p.schedule1.line6_schedule_f,
@@ -110,7 +110,7 @@ test("loss netting companion and zero-deduction loss rows reject native PDF tamp
       const p = structuredClone(original);
       change(p);
       assertThrows(() =>
-        assertFarmWotcReturn(p.form8995a ?? p.form8995, p, f.filer)
+        assertFarmWotcReturn(p.form8995a ?? p.form8995, p, 2025, f.filer)
       );
     }
     if (original.form8995a) {
@@ -125,7 +125,7 @@ test("loss netting companion and zero-deduction loss rows reject native PDF tamp
       ) {
         const p = structuredClone(original);
         change(p);
-        assertThrows(() => assertFarmWotcReturn(p.form8995a, p, f.filer));
+        assertThrows(() => assertFarmWotcReturn(p.form8995a, p, 2025, f.filer));
         assertThrows(() =>
           form8995aScheduleC.build((p.form8995a_schedule_c ?? {}) as any, {
             pending: p,

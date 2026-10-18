@@ -113,28 +113,19 @@ type IncomeTaxCalcInput = z.infer<typeof inputSchema>;
 
 // ─── Pure helpers ─────────────────────────────────────────────────────────────
 
-// The Qualified Dividends and Capital Gain and Schedule D Tax Worksheets read
-// the year's breakpoints. The foreign-exclusion, Form 8615, Form 8814,
-// section 1294 and Schedule J worksheets still apply TY2025 rules.
+// Form 8814 (its node fixes the TY2025 base amounts) and Schedule J (its
+// base-year tables end in TY2024) still apply TY2025 rules.
 function assertYearSupportsWorksheets(
   taxYear: number,
   input: IncomeTaxCalcInput,
 ): void {
   if (taxYear === 2025) return;
-  const worksheetSources = [
-    input.foreign_earned_income_exclusion ?? 0,
-    input.form8814_tax ?? 0,
-    input.form8621_1294_undistributed_ordinary ?? 0,
-    input.form8621_1294_undistributed_capital ?? 0,
-  ];
   if (
-    worksheetSources.some((amount) => amount > 0) ||
-    input.form8615_source !== undefined ||
-    input.form8615_reviewed_source !== undefined ||
+    (input.form8814_tax ?? 0) > 0 ||
     input.schedule_j_calculated_tax !== undefined
   ) {
     throw new Error(
-      `TY${taxYear} tax worksheets beyond the rate schedule are not supported yet`,
+      `TY${taxYear} Form 8814 and Schedule J tax worksheets are not supported yet`,
     );
   }
 }
@@ -342,6 +333,7 @@ class IncomeTaxCalculationNode extends TaxNode<typeof inputSchema> {
         childAdjustedGrossIncome: input.form8615_child_agi,
         childDeduction: input.form8615_child_deduction,
         childForeignEarnedIncomeExclusion: foreignExclusion,
+        taxYear: ctx.taxYear,
         brackets: cfg,
       });
     }
