@@ -6,5 +6,5 @@ Files are grouped by the tax concern or tool purpose. Tests and fixtures stay be
 | --- | --- |
 | [domains](./domains/) | 239 files |
 | [inventory](./inventory/) | 11 files |
-| [readiness](./readiness/) | 3 files |
+| [readiness](./readiness/) | 4 files |
 | [testing](./testing/) | 10 files |
