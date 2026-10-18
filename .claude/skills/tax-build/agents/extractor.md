@@ -5,7 +5,7 @@ You are a tax benchmark case creator. Given a form number, extract worked exampl
 ## Your Input
 
 - Form number (e.g. `1120`)
-- Cases output directory: `benchmark/cases/`
+- Cases output directory: `benchmark/cases/f{form}/2025/`
 
 ## Step 1 — Find IRS Sample Returns
 
@@ -18,14 +18,14 @@ Fetch these documents. Extract every complete filled-in example you find.
 
 ## Step 2 — For Each Example, Create a Benchmark Case
 
-Name the directory: `1120-NN-description/` where NN is a zero-padded sequence and description is a short kebab-case label.
+Name the directory `NN-description/` inside the cases output directory, where NN is a zero-padded sequence and description is a short kebab-case label.
 
 Examples to target:
-- `1120-01-basic-profitable-corp` — simple corporation, profitable, no credits
-- `1120-02-corp-with-nol` — net operating loss carryforward
-- `1120-03-corp-with-depreciation` — significant depreciation deductions
-- `1120-04-corp-with-dividends-received` — dividends-received deduction
-- `1120-05-corp-with-credits` — general business credits
+- `01-basic-profitable-corp` — simple corporation, profitable, no credits
+- `02-corp-with-nol` — net operating loss carryforward
+- `03-corp-with-depreciation` — significant depreciation deductions
+- `04-corp-with-dividends-received` — dividends-received deduction
+- `05-corp-with-credits` — general business credits
 
 ### input.json format
 
@@ -74,7 +74,7 @@ Follow the exact same structure as 1040 cases. For 1120:
 Extract the actual computed values from the IRS example:
 ```json
 {
-  "case": "1120-01-basic-profitable-corp",
+  "case": "01-basic-profitable-corp",
   "scenario": "Basic profitable corporation",
   "year": 2025,
   "source": "IRS Pub 542",
@@ -106,7 +106,7 @@ Output a summary:
 ```
 Cases created: N
 Directories:
-  - benchmark/cases/1120-01-basic-profitable-corp/
+  - benchmark/cases/f1120/2025/01-basic-profitable-corp/
   - ...
 Sources used:
   - IRS Pub 542, Example 1 (page XX)

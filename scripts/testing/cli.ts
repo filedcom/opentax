@@ -2,10 +2,14 @@
 import * as fs from "node:fs/promises";
 import { join } from "node:path";
 import * as sys from "../support/sys.ts";
-import { pdfReviewFixtures } from "../../forms/f1040/2025/pdf/review-fixtures.ts";
+import {
+  type PdfReviewFixture,
+  pdfReviewFixtures,
+} from "../../forms/f1040/2025/pdf/review-fixtures.ts";
 import { f1040_2025 } from "../../forms/f1040/2025/index.ts";
 import { normalizeAllPending } from "../../forms/f1040/2025/return-processing/pending.ts";
 import { signed } from "./mef.ts";
+import { detachInlineBytes } from "../../cli/commands/return-source-files.ts";
 
 /** Diverse sample returns that pass every implemented MeF business rule. */
 export const CLI_RETURNS = [
@@ -20,6 +24,13 @@ export const CLI_RETURNS = [
   "single-form8815-series-ee-bond-exclusion",
   "qualified-tip-qbi-wholly-excluded-qbi",
   "independent-primary-spouse-c-health-different-owner-eligible-months",
+  // These need files filed with the return or retained for it.
+  "single-form8994-direct-employer-full",
+  "single-form8978-multiple-reviewed-source",
+  "single-retained-4852-ordinary-roth",
+  "single-reviewed-adoption-credit",
+  "single-8862-ctc-reinstatement",
+  "single-1098-purchase-points",
 ] as const;
 
 const MAIN = new URL("../../cli/main.ts", import.meta.url).pathname;
@@ -62,11 +73,54 @@ async function cli(home: string, ...args: string[]): Promise<Run> {
   };
 }
 
+/** Add the fixture's attachments and retained copies with `return attach`. */
+async function attachFixtureFiles(
+  home: string,
+  returnId: string,
+  fixture: PdfReviewFixture,
+  inlineBytes: ReadonlyMap<string, Uint8Array>,
+  step: (name: string, run: Run) => boolean,
+): Promise<boolean> {
+  const sources = join(home, "sources");
+  await fs.mkdir(sources, { recursive: true });
+  const files = [
+    ...[...inlineBytes].map(([sha256, bytes]) => ({
+      bytes,
+      args: ["--reference", `inline-${sha256}`],
+    })),
+    ...(fixture.attachments ?? []).map((a) => ({
+      bytes: a.bytes,
+      args: ["--name", a.fileName, "--description", a.description],
+    })),
+    ...(fixture.retainedSourceDocuments ?? []).map((d) => ({
+      bytes: d.bytes,
+      args: ["--reference", d.document_reference],
+    })),
+  ];
+  for (const [index, file] of files.entries()) {
+    const path = join(sources, `source-${index}`);
+    await fs.writeFile(path, file.bytes);
+    const attached = await cli(
+      home,
+      "return",
+      "attach",
+      "--returnId",
+      returnId,
+      "--file",
+      path,
+      ...file.args,
+    );
+    if (!step(`return attach ${file.args[1]}`, attached)) return false;
+  }
+  return true;
+}
+
 /** Problems found running one sample return through every user-facing step. */
 export async function checkReturn(id: string, home: string): Promise<string[]> {
   const fixture = pdfReviewFixtures.find((f) => f.id === id);
   if (!fixture) return ["fixture not found"];
   const inputs = signed(fixture.inputs as Record<string, unknown>);
+  const detached = detachInlineBytes(inputs);
   const engine = normalizeAllPending(
     f1040_2025.executeReturn(structuredClone(inputs)).pending,
   )
@@ -92,6 +146,17 @@ export async function checkReturn(id: string, home: string): Promise<string[]> {
   if (!step("return create", created)) return problems;
   const { returnId } = JSON.parse(created.stdout);
   if (
+    !await attachFixtureFiles(
+      home,
+      returnId,
+      fixture,
+      detached.files,
+      step,
+    )
+  ) {
+    return problems;
+  }
+  if (
     !step(
       "form add",
       await cli(
@@ -102,7 +167,7 @@ export async function checkReturn(id: string, home: string): Promise<string[]> {
         returnId,
         "--node_type",
         "start",
-        JSON.stringify(inputs),
+        JSON.stringify(detached.value),
       ),
     )
   ) {

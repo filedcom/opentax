@@ -158,7 +158,13 @@ export const form8862Pdf: PdfFormDescriptor = {
       ...answer(`aotc_student_${i}_four_years`, p3, 4 + i),
     ]),
   ],
-  instances(raw, filer, allPending) {
+  instances(
+    raw,
+    filer,
+    allPending,
+    _form3800,
+    retainedSourceSha256ByReference,
+  ) {
     if (Object.keys(raw).length === 0) return [];
     const source = inputSchema.parse(raw);
     if (!filer || !allPending?.f1040) {
@@ -166,7 +172,13 @@ export const form8862Pdf: PdfFormDescriptor = {
         "Form 8862 PDF needs filer identity and finalized Form 1040 credit lines",
       );
     }
-    if (!nativeForm8862.build(source, { pending: allPending, filer })) {
+    if (
+      !nativeForm8862.build(source, {
+        pending: allPending,
+        filer,
+        retainedSourceSha256ByReference,
+      })
+    ) {
       return [];
     }
     const projected: Record<string, unknown> = {

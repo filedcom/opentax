@@ -42,6 +42,6 @@
     "compile": "bun build cli/main.ts --compile --outfile opentax",
     "fmt": "dprint fmt",
     "fmt:check": "dprint check",
-    "lint": "oxlint --ignore-pattern '.state/**' --ignore-pattern 'scripts/parity/golden/**'"
+    "lint": "oxlint --ignore-pattern '.state/**'"
   }
 }

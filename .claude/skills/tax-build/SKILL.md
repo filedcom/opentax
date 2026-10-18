@@ -28,7 +28,8 @@ Derive all paths from convention:
 Read `AGENTS.md` and (if it exists) `forms/f{ARGUMENTS}/FORM.md`.
 Pass both as context to all spawned agents throughout this skill.
 
-Read `.state/bench/state.json`. Navigate to `forms.f{ARGUMENTS}:2025.build`:
+Read `.state/bench/state.json`. `.state/` is untracked, so if the file is missing, create it as
+`{"version": 2, "forms": {}}` (and `.state/bench/node-specs/`). Navigate to `forms.f{ARGUMENTS}:2025.build`:
 - `null` or missing → start from Phase 1
 - `"research"` → skip to Phase 2
 - `"ground_truth"` → skip to Phase 3
@@ -41,7 +42,7 @@ Set `status` to `"running"` and write state.json.
 
 Spawn one researcher agent (see `agents/researcher.md`). Pass:
 - Form number: $ARGUMENTS
-- Output path: `.state/bench/node-specs/$ARGUMENTS-nodes.json`
+- Output path: `.state/bench/node-specs/$ARGUMENTS-2025-nodes.json`
 
 Wait for completion. Verify the file exists and is valid JSON with a `nodes` array.
 
@@ -60,7 +61,7 @@ Spawn one extractor agent (see `agents/extractor.md`). Pass:
 - Form number: $ARGUMENTS
 - Cases output dir: `benchmark/cases/f{ARGUMENTS}/2025/`
 
-Wait for completion. Count created case directories (`$ARGUMENTS-*`).
+Wait for completion. Count the case directories created in `benchmark/cases/f{ARGUMENTS}/2025/`.
 
 Update state.json: `phase → "ground_truth"`, `benchmark_cases_created` set.
 
@@ -73,7 +74,7 @@ Append to progress.md:
 
 ## Phase 3 — Build
 
-Read `.state/bench/node-specs/$ARGUMENTS-nodes.json`. Group nodes into sections (income, deductions, tax_computation, credits, payments, other).
+Read `.state/bench/node-specs/$ARGUMENTS-2025-nodes.json`. Group nodes into sections (income, deductions, tax_computation, credits, payments, other).
 
 For each section, spawn one node-builder agent in parallel (see `agents/node-builder.md`). Pass:
 - The node specs for that section (JSON subset)

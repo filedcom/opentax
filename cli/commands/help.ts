@@ -25,6 +25,10 @@ export type ParsedArgs = {
   readonly "software-id"?: string;
   readonly sequence?: string;
   readonly "residency-review"?: string;
+  readonly file?: string;
+  readonly name?: string;
+  readonly description?: string;
+  readonly reference?: string;
   readonly submissionId?: string;
   readonly "poll-seconds"?: string;
   readonly "max-polls"?: string;
