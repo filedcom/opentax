@@ -419,16 +419,6 @@
     "single-schedule-h-three-state-futa": [
       "calculation schedule_h"
     ],
-    "single-form8814-child-dividends-adjustments": [
-      "calculation form8960",
-      "calculation standard_deduction",
-      "calculation start"
-    ],
-    "single-form8814-child-gain-with-schedule-d": [
-      "calculation form8960",
-      "calculation standard_deduction",
-      "calculation start"
-    ],
     "single-partnership-code-k-and-w2g": [
       "xml Withheld W-2G needs the issued 2025 form, structured payer identity, standard code, winnings, and withholding"
     ],
@@ -728,8 +718,6 @@
     "single-withheld-w2g": "Named TY2025-only route: W-2G payer Copy B verification reads the 2025 Form W-2G template; the 2026 template (irs/corpus/ty2026/authorities/fw2g--2026.pdf) is not mapped yet",
     "single-schedule-h-fica-and-futa": "Named TY2025-only route: Schedule H FUTA credit-reduction states for 2026 are not yet published",
     "single-schedule-h-three-state-futa": "Named TY2025-only route: Schedule H FUTA credit-reduction states for 2026 are not yet published",
-    "single-form8814-child-dividends-adjustments": "Named TY2025-only route: TY2026 Form 8814 and Schedule J tax worksheets are not supported yet",
-    "single-form8814-child-gain-with-schedule-d": "Named TY2025-only route: TY2026 Form 8814 and Schedule J tax worksheets are not supported yet",
     "single-partnership-code-k-and-w2g": "Named TY2025-only route: W-2G payer Copy B verification reads the 2025 Form W-2G template; the 2026 template (irs/corpus/ty2026/authorities/fw2g--2026.pdf) is not mapped yet",
     "single-two-w2-flsa-overtime-schedule1a": "TY2026 law: the sample reports overtime on a box 14 or employer statement, the TY2025 reporting route; 2026 W-2s report it in box 12 code TT (2026 W-2 instructions, irs/corpus/ty2026/authorities/iw2w3--2026.pdf)",
     "single-employer-statement-flsa-overtime-schedule1a": "TY2026 law: the sample reports overtime on a box 14 or employer statement, the TY2025 reporting route; 2026 W-2s report it in box 12 code TT (2026 W-2 instructions, irs/corpus/ty2026/authorities/iw2w3--2026.pdf)",
@@ -757,7 +745,7 @@
     "single-form982-qpri-exclusion": "TY2026 law: shifted a year, the QPRI discharge falls in 2026; IRC \u00a7108(a)(1)(E) excludes qualified principal residence indebtedness discharged before January 1, 2026 unless under an arrangement entered into and evidenced in writing before then (Instructions for Form 982, line 1e), and the sample has no such arrangement",
     "single-form5695-door-and-air-conditioner": "TY2026 law: P.L. 119-21 \u00a7\u00a770505-70506 end the \u00a725C and \u00a725D credits for property placed in service after 2025",
     "single-form461-schedule-c-excess-business-loss": "Same finding in the TY2025 baseline: not a TY2026 difference",
-    "single-schedule-j-farm-income-averaging": "Named TY2025-only route: TY2026 Form 8814 and Schedule J tax worksheets are not supported yet",
+    "single-schedule-j-farm-income-averaging": "Named TY2025-only route: TY2026 Schedule J tax worksheets are not supported yet; its base-year rate tables end in TY2024 and its source replays run as TY2025",
     "mfj-form2210f-first-joint-filing": "Sample amount: the Form 2210-F box B source carries the TY2025 Form 1040 line 22 tax, which the 2026 return refigures with Rev. Proc. 2025-32 rates; with matching amounts, an underpayment still needs the line 16 rate the draft 2026 Form 2210-F prints as x.xx (not yet published)",
     "single-certified-work-opportunity-credit": "TY2026 law: shifted a year, the sample hires its WOTC employee in 2026; IRC \u00a751(c)(4) ends the work opportunity credit for individuals who begin work after December 31, 2025, so the 2026 return correctly cannot claim it",
     "single-reported-tax-credit-bond": "Dated fact outside TY2026: shifting the sample moves its 2017 QECB issue date past the December 31, 2017 cutoff (P.L. 115-97 \u00a713404 repealed tax credit bonds issued after 2017); a 2026 version of this bond cannot exist",

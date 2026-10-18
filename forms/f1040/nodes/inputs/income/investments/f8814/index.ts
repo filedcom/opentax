@@ -18,7 +18,8 @@ import { form8960 } from "../../../../intermediate/forms/taxes/investments/form8
 import { form4952 } from "../../../../intermediate/forms/deductions/investments/form4952/index.ts";
 import { form6251 } from "../../../../intermediate/forms/taxes/amt/form6251/index.ts";
 
-// 2025 Form 8814, Parts I and II.
+// Form 8814 Parts I and II: unchanged for 2026 (draft 2026 Form 8814 lines
+// 4, 5 and 13; Rev. Proc. 2025-32 §3.02: more than $1,350, less than $13,500).
 const UNTAXED_AMOUNT = 1_350;
 const BASE_AMOUNT = 2_700;
 const MAX_CHILD_GROSS_INCOME = 13_500;
@@ -42,7 +43,7 @@ const sourceIncomeSchema = z.object(
 ).strict();
 const sourceReviewSchema = z.object({
   source_document_reference: z.string().trim().min(1),
-  tax_year: z.literal(2025),
+  tax_year: z.number().int(),
   child_ssn: z.string().regex(/^\d{3}-?\d{2}-?\d{4}$/),
   electing_parent_ssn: z.string().regex(/^\d{3}-?\d{2}-?\d{4}$/),
   eligibility_reviewed: z.literal(true),
@@ -105,7 +106,7 @@ export const itemSchema = z.object({
   alaska_pfd: z.number().nonnegative().optional(),
   nontaxable_social_security: z.number().nonnegative().optional(),
   child_had_foreign_account: z.boolean().optional(),
-  // Distribution, grantor status, or transfer to a foreign trust in 2025.
+  // Distribution, grantor status, or transfer to a foreign trust in the year.
   child_foreign_trust_part_iii_event: z.boolean().optional(),
 }).superRefine((item, ctx) => {
   if ((item.qualified_dividends ?? 0) > (item.dividend_income ?? 0)) {
@@ -128,6 +129,20 @@ export const itemSchema = z.object({
 export const inputSchema = z.object({ f8814s: z.array(itemSchema).max(10) });
 export type F8814Item = z.infer<typeof itemSchema>;
 type F8814Input = z.infer<typeof inputSchema>;
+
+/** Each reviewed child-income packet is for the return year. */
+export function assertForm8814SourceYear(
+  items: readonly F8814Item[],
+  taxYear: number,
+): void {
+  if (
+    items.some((item) =>
+      item.source_review !== undefined && item.source_review.tax_year !== taxYear
+    )
+  ) {
+    throw new Error(`Form 8814 reviewed child income must be for ${taxYear}`);
+  }
+}
 
 export function assertForm8814SourceReview(
   item: F8814Item,
@@ -300,9 +315,10 @@ class F8814Node extends TaxNode<typeof inputSchema> {
     form8995,
   ]);
 
-  compute(_ctx: NodeContext, rawInput: F8814Input): NodeResult {
+  compute(ctx: NodeContext, rawInput: F8814Input): NodeResult {
     const input = inputSchema.parse(rawInput);
     if (input.f8814s.length === 0) return { outputs: [] };
+    assertForm8814SourceYear(input.f8814s, ctx.taxYear);
     const ssns = input.f8814s.map((item) => item.child_ssn.replaceAll("-", ""));
     if (new Set(ssns).size !== ssns.length) {
       throw new Error("Form 8814 cannot elect twice for the same child");

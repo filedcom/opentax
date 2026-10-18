@@ -1,6 +1,8 @@
+import { mefTaxYear } from "../../../support/year-config.ts";
 import { element, elements } from "../../../../../mef/xml.ts";
 import {
   assertForm8814CalculatedLines,
+  assertForm8814SourceYear,
   type Form8814Lines,
 } from "../../../../../nodes/inputs/income/investments/f8814/index.ts";
 import type { MefBuildContext, MefFormDescriptor } from "../../../form-descriptor.ts";
@@ -91,6 +93,10 @@ export const form8814: MefFormDescriptor<"form8814", Input, readonly string[]> =
         throw new Error("Form 8814 needs finalized electing-parent identity");
       }
       assertForm8814CalculatedLines(items, context?.filer?.primarySSN ?? "");
+      assertForm8814SourceYear(
+        items.map((line) => line.item),
+        mefTaxYear(context),
+      );
       const statementIds = context?.documentIdsByPendingKey
         ?.child_taxable_interest_statement ?? [];
       let statementIndex = 0;

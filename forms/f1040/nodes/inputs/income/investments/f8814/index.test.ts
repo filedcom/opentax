@@ -1,6 +1,7 @@
 import { test } from "bun:test";
 import { assertEquals, assertThrows } from "@std/assert";
 import {
+  assertForm8814SourceYear,
   calculateForm8814,
   f8814,
   form8814EicLine4,
@@ -244,4 +245,35 @@ test("f8814: child's foreign account and trust trigger Schedule B", () => {
   }]);
   assertEquals(field(result, "schedule_b", "form8814_foreign_account"), true);
   assertEquals(field(result, "schedule_b", "form8814_foreign_trust"), true);
+});
+
+// Rev. Proc. 2025-32 §3.02: for 2026 the election still needs child income
+// over $1,350 and under $13,500, so the 2025 lines carry over; the reviewed
+// child-income packet must be for the return year.
+test("f8814: reviewed child income is for the return year", () => {
+  const reviewed: F8814Item = {
+    ...child,
+    interest_income: 3_000,
+    source_review: {
+      source_document_reference: "child 1099-INT packet",
+      tax_year: 2026,
+      child_ssn: "123456789",
+      electing_parent_ssn: "111223333",
+      eligibility_reviewed: true,
+      income: { interest_income: 3_000 },
+    },
+  };
+  assertForm8814SourceYear([reviewed], 2026);
+  assertThrows(
+    () => assertForm8814SourceYear([reviewed], 2025),
+    Error,
+    "must be for 2025",
+  );
+  const result = f8814.compute(
+    { taxYear: 2026, formType: "f1040" },
+    { f8814s: [reviewed] },
+  );
+  // Line 4 $3,000: line 6 $300 to the parent; line 15 tax $135.
+  assertEquals(calculateForm8814(reviewed).line15, 135);
+  assertEquals(result.outputs.length > 0, true);
 });
