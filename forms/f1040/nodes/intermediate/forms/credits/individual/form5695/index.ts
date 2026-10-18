@@ -16,6 +16,7 @@ import {
   jointOccupancyStatementNode,
 } from "../../../general/filing/joint_occupancy_statement/index.ts";
 import type { NodeContext } from "../../../../../../../../core/types/node-context.ts";
+import { assertCarryforwardOnly } from "./terminated-2026.ts";
 
 // ─── TY2025 Constants (IRC §25C, §25D) ───────────────────────────────────────
 
@@ -972,8 +973,9 @@ class Form5695Node extends TaxNode<typeof inputSchema> {
     jointOccupancyStatementNode,
   ]);
 
-  compute(_ctx: NodeContext, rawInput: Form5695Input): NodeResult {
+  compute(ctx: NodeContext, rawInput: Form5695Input): NodeResult {
     const input = inputSchema.parse(rawInput);
+    assertCarryforwardOnly(input, ctx.taxYear);
     const partI = computeForm5695PartIAmounts(input).allowed;
     const partIIAmounts = computeForm5695PartIIAmounts(input);
     const partII = partIIAmounts.allowed;

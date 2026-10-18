@@ -912,3 +912,30 @@ test("output routes clean-energy credit to Schedule 3 line 5a", () => {
   assertEquals(s3?.nodeType, "schedule3");
   assertEquals(energyCredit(s3?.fields), 3_000);
 });
+
+// Draft 2026 Form 5695 lines 1-4 and its instructions, "Termination of
+// credits": only the 2025 residential clean energy carryforward remains
+// (P.L. 119-21 §§70505-70506).
+test("form5695 TY2026: claims only the 2025 carryforward, limited by tax", () => {
+  const result = form5695.compute({ taxYear: 2026, formType: "f1040" }, {
+    prior_year_carryforward: 1_200,
+    part_i_tax_limit: 900,
+  });
+  const schedule3 = result.outputs.find((o) => o.nodeType === "schedule3");
+  assertEquals(schedule3?.fields, { line5a_residential_clean_energy: 900 });
+});
+
+test("form5695 TY2026: refuses new §25C and §25D expenditures", () => {
+  for (const input of [{ solar_electric_cost: 10_000 }, { windows_cost: 500 }]) {
+    assertThrows(
+      () =>
+        form5695.compute({ taxYear: 2026, formType: "f1040" }, {
+          ...input,
+          part_i_tax_limit: 5_000,
+          part_ii_tax_limit: 5_000,
+        }),
+      Error,
+      "ended after 2025",
+    );
+  }
+});
