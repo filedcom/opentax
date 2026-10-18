@@ -440,11 +440,6 @@
     "count": 2
   },
   {
-    "path": "forms/f1040/2025/domains/income/retirement/form8606/form8606_distribution_reconciliation.ts",
-    "pattern": "date-pinned",
-    "count": 2
-  },
-  {
     "path": "forms/f1040/2025/domains/income/retirement/form8606/form8606_recharacterization_source.ts",
     "pattern": "date-pinned",
     "count": 1
@@ -1665,11 +1660,6 @@
     "count": 2
   },
   {
-    "path": "forms/f1040/nodes/inputs/income/investments/f8814/index.ts",
-    "pattern": "z-literal",
-    "count": 1
-  },
-  {
     "path": "forms/f1040/nodes/inputs/income/investments/f8814/issuer_byte_binding.ts",
     "pattern": "z-literal",
     "count": 1
@@ -1752,7 +1742,7 @@
   {
     "path": "forms/f1040/nodes/inputs/income/retirement/f1099r/index.ts",
     "pattern": "year-identifier",
-    "count": 4
+    "count": 3
   },
   {
     "path": "forms/f1040/nodes/inputs/income/retirement/f8915d/index.ts",
@@ -2392,17 +2382,17 @@
   {
     "path": "forms/f1040/nodes/intermediate/forms/income/retirement/form8606/index.ts",
     "pattern": "date-pinned",
-    "count": 8
+    "count": 1
   },
   {
     "path": "forms/f1040/nodes/intermediate/forms/income/retirement/form8606/index.ts",
     "pattern": "year-identifier",
-    "count": 5
+    "count": 4
   },
   {
     "path": "forms/f1040/nodes/intermediate/forms/income/retirement/form8606/index.ts",
     "pattern": "z-literal",
-    "count": 4
+    "count": 1
   },
   {
     "path": "forms/f1040/nodes/intermediate/forms/income/retirement/form8606/recharacterization.ts",
