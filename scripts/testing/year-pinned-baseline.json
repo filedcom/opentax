@@ -730,11 +730,6 @@
     "count": 11
   },
   {
-    "path": "forms/f1040/2025/mef/forms/credits/individual/f8396.ts",
-    "pattern": "year-identifier",
-    "count": 1
-  },
-  {
     "path": "forms/f1040/2025/mef/forms/credits/individual/f8862.ts",
     "pattern": "year-identifier",
     "count": 1
@@ -2178,21 +2173,6 @@
     "path": "forms/f1040/nodes/intermediate/forms/credits/individual/form5695/terminated-2026.ts",
     "pattern": "year-comparison",
     "count": 1
-  },
-  {
-    "path": "forms/f1040/nodes/intermediate/forms/credits/individual/form8396/calculation.ts",
-    "pattern": "date-pinned",
-    "count": 2
-  },
-  {
-    "path": "forms/f1040/nodes/intermediate/forms/credits/individual/form8396/calculation.ts",
-    "pattern": "year-identifier",
-    "count": 13
-  },
-  {
-    "path": "forms/f1040/nodes/intermediate/forms/credits/individual/form8396/index.ts",
-    "pattern": "year-identifier",
-    "count": 2
   },
   {
     "path": "forms/f1040/nodes/intermediate/forms/credits/individual/form8839/current_year_carryforward.ts",

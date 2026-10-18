@@ -59,6 +59,6 @@ export const reissuedMccSource = form8396SourceSchema.parse({
     replacement_certified_indebtedness_amount: 160_000,
     original_certificate_credit_rate: 0.20,
     replacement_certificate_credit_rate: 0.18,
-    scheduled_original_loan_interest_2025: 4_000,
+    scheduled_original_loan_year_interest: 4_000,
   },
 });
