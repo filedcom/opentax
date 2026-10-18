@@ -75,24 +75,6 @@ function w2(wages: number, withheld: number): Record<string, unknown> {
   };
 }
 
-function f1098(interest: number): Record<string, unknown> {
-  return {
-    lender_name: "Example Home Lender",
-    recipient_tin: TAXPAYER_SSN,
-    source_document_reference: "2026 lender copy",
-    box1_mortgage_interest: interest,
-    box1_current_year_deductible_interest: interest,
-    box1_deduction_workpaper_reference: "2026 Pub. 936 workpaper",
-    box3_origination_date: "06/15/2019",
-    box2_outstanding_principal: 300_000,
-    issuer_copy: {
-      file_name: "Lender1098.pdf",
-      pdf_sha256: "0".repeat(64),
-      bytes: new Uint8Array(),
-    },
-  };
-}
-
 function run(inputs: Record<string, unknown>) {
   const def = catalog["f1040:2026"];
   const input = signed(inputs);
