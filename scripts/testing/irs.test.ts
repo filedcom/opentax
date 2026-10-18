@@ -45,9 +45,11 @@ test("code may name only irs/ locations the manifest declares", () => {
   const sources = new Map([
     ["a.ts", `"irs/mef/2099v1.0/Ind1040/Return1040.xsd"`],
     ["b.ts", `"../../irs/mef/2098v1.0/Common/efileTypes.xsd"`],
+    ["c.ts", `join(ROOT, "irs/wsdl/9.9")`],
   ]);
   assertEquals(undeclaredIrsReferences(sources, manifest), [
     "b.ts: irs/mef/2098v1.0 is not in irs/manifest.json",
+    "c.ts: irs/wsdl/9.9 is not in irs/manifest.json",
   ]);
 });
 
