@@ -42,7 +42,7 @@ Set `status` to `"running"` and write state.json.
 
 Spawn one researcher agent (see `agents/researcher.md`). Pass:
 - Form number: $ARGUMENTS
-- Output path: `.state/bench/node-specs/$ARGUMENTS-nodes.json`
+- Output path: `.state/bench/node-specs/$ARGUMENTS-2025-nodes.json`
 
 Wait for completion. Verify the file exists and is valid JSON with a `nodes` array.
 
@@ -61,7 +61,7 @@ Spawn one extractor agent (see `agents/extractor.md`). Pass:
 - Form number: $ARGUMENTS
 - Cases output dir: `benchmark/cases/f{ARGUMENTS}/2025/`
 
-Wait for completion. Count created case directories (`$ARGUMENTS-*`).
+Wait for completion. Count the case directories created in `benchmark/cases/f{ARGUMENTS}/2025/`.
 
 Update state.json: `phase → "ground_truth"`, `benchmark_cases_created` set.
 
@@ -74,7 +74,7 @@ Append to progress.md:
 
 ## Phase 3 — Build
 
-Read `.state/bench/node-specs/$ARGUMENTS-nodes.json`. Group nodes into sections (income, deductions, tax_computation, credits, payments, other).
+Read `.state/bench/node-specs/$ARGUMENTS-2025-nodes.json`. Group nodes into sections (income, deductions, tax_computation, credits, payments, other).
 
 For each section, spawn one node-builder agent in parallel (see `agents/node-builder.md`). Pass:
 - The node specs for that section (JSON subset)
