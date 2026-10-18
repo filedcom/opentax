@@ -352,4 +352,6 @@ export interface F1040Config {
   retirementContributionCreditWageLimit: number;
   /** IRC §48E: construction begun after this ISO date needs a material assistance cost ratio; null when none. */
   cleanElectricityMaterialAssistanceAfter: string | null;
+  /** Form 2210-F line 16 annual rate; null until the IRS publishes it. */
+  form2210fPenaltyRate: number | null;
 }

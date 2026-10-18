@@ -833,7 +833,7 @@ function reconciledForm2210FBoxB(
     line32 !== 0 ||
     source.current_line4_refundable_credits_excluding_schedule3_line11 !== 0 ||
     (input.line26_estimated_tax ?? 0) !== 0 ||
-    source.estimated_payments_by_2026_01_15 !== 0 ||
+    source.estimated_payments_by_january_15 !== 0 ||
     source.current_excess_social_security_or_rrta_withholding !== 0
   ) {
     throw new Error(

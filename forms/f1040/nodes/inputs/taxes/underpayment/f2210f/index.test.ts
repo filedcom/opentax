@@ -51,13 +51,13 @@ function source() {
     current_line4_refundable_credits_excluding_schedule3_line11: 0,
     current_withholding: 1_000,
     current_excess_social_security_or_rrta_withholding: 0,
-    estimated_payments_by_2026_01_15: 0,
+    estimated_payments_by_january_15: 0,
     full_underpayment_paid_on: null,
   });
 }
 
 test("Form 2210-F box B public source reaches finalized Form 1040 line 38", () => {
-  const routed = f2210f.compute({} as never, { source: source() });
+  const routed = f2210f.compute({ taxYear: 2025, formType: "f1040" }, { source: source() });
   const routedSource =
     (routed.outputs[0].fields as { f2210f_box_b_source: unknown })
       .f2210f_box_b_source;
@@ -82,7 +82,7 @@ test("Form 2210-F box B includes sourced Schedule 2 tax in Form 1040 and both do
     ...source(),
     current_included_schedule2_taxes: 1_500,
   });
-  const routed = f2210f.compute({} as never, { source: facts });
+  const routed = f2210f.compute({ taxYear: 2025, formType: "f1040" }, { source: facts });
   const routedSource = (routed.outputs[0].fields as {
     f2210f_box_b_source: unknown;
   }).f2210f_box_b_source;
@@ -157,5 +157,31 @@ test("Form 2210-F rejects mismatched final tax, unsupported payments, and compet
   );
   assertThrows(() =>
     f1040.compute({} as never, { ...base, line38_underpayment_penalty: 1 })
+  );
+});
+
+// Draft 2026 Form 2210-F (created 4/1/26): lines 12-15 run to January 15 and
+// April 15, 2027, and line 16 prints its rate as "x.xx" (not yet published).
+test("Form 2210-F box B follows the return year and needs its published rate", () => {
+  const shifted = {
+    ...source(),
+    gross_income_years: source().gross_income_years.map((year) => ({
+      ...year,
+      tax_year: year.tax_year + 1,
+    })),
+  };
+  assertThrows(
+    () =>
+      f2210f.compute({ taxYear: 2026, formType: "f1040" }, {
+        source: source(),
+      }),
+    Error,
+    "must be for tax year 2026",
+  );
+  f2210f.compute({ taxYear: 2026, formType: "f1040" }, { source: shifted });
+  assertThrows(
+    () => calculateForm2210FBoxB(shifted),
+    Error,
+    "needs the 2026 penalty rate",
   );
 });

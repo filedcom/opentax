@@ -47,7 +47,7 @@ function sourcedBoxB() {
     current_line4_refundable_credits_excluding_schedule3_line11: 1_000,
     current_withholding: 1_000,
     current_excess_social_security_or_rrta_withholding: 0,
-    estimated_payments_by_2026_01_15: 1_000,
+    estimated_payments_by_january_15: 1_000,
     full_underpayment_paid_on: null,
   };
 }
@@ -173,7 +173,7 @@ test("Form 2210-F box B rejects unproven farmer status and duplicate prior retur
       ...source,
       current_return_reference:
         source.prior_separate_returns[0].filed_return_reference,
-    }), Error, "distinct filed 2024 taxpayer, spouse, and 2025 joint returns"
+    }), Error, "distinct filed prior-year taxpayer and spouse returns"
   );
 });
 

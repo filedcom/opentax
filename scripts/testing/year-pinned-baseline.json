@@ -655,26 +655,6 @@
     "count": 5
   },
   {
-    "path": "forms/f1040/2025/domains/taxes/underpayment/form2210f/form2210f_box_b.ts",
-    "pattern": "date-pinned",
-    "count": 5
-  },
-  {
-    "path": "forms/f1040/2025/domains/taxes/underpayment/form2210f/form2210f_box_b.ts",
-    "pattern": "year-comparison",
-    "count": 2
-  },
-  {
-    "path": "forms/f1040/2025/domains/taxes/underpayment/form2210f/form2210f_box_b.ts",
-    "pattern": "year-identifier",
-    "count": 2
-  },
-  {
-    "path": "forms/f1040/2025/domains/taxes/underpayment/form2210f/form2210f_box_b.ts",
-    "pattern": "z-literal",
-    "count": 2
-  },
-  {
     "path": "forms/f1040/2025/domains/taxes/underpayment/form2210f/form2210f_settlement.ts",
     "pattern": "date-pinned",
     "count": 1
@@ -2772,7 +2752,7 @@
   {
     "path": "forms/f1040/nodes/outputs/general/return-assembly/f1040/index.ts",
     "pattern": "year-identifier",
-    "count": 6
+    "count": 5
   },
   {
     "path": "forms/f1040/nodes/outputs/general/return-assembly/schedule1/index.ts",

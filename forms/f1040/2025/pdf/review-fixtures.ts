@@ -8543,7 +8543,7 @@ const sourcePdfReviewFixtures: readonly PdfReviewFixture[] = [
           current_line4_refundable_credits_excluding_schedule3_line11: 0,
           current_withholding: 1_000,
           current_excess_social_security_or_rrta_withholding: 0,
-          estimated_payments_by_2026_01_15: 0,
+          estimated_payments_by_january_15: 0,
           full_underpayment_paid_on: "2026-03-01",
         },
       },

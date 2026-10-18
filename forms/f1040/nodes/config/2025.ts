@@ -863,4 +863,6 @@ export const config2025: F1040Config = {
   // IRC §48E material-assistance rules apply to construction begun after
   // 2025 (P.L. 119-21); none for TY2025.
   cleanElectricityMaterialAssistanceAfter: null,
+  // 2025 Form 2210-F line 16: underpayment x days / 365 x 0.07.
+  form2210fPenaltyRate: 0.07,
 };

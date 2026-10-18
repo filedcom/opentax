@@ -397,4 +397,7 @@ export const config2026: F1040Config = {
   // begun after 2025 includes material assistance from a prohibited foreign
   // entity (P.L. 119-21; Notice 2026-15).
   cleanElectricityMaterialAssistanceAfter: "2025-12-31",
+  // Draft 2026 Form 2210-F (created 4/1/26) prints line 16's rate as "x.xx";
+  // the January 15-April 15, 2027 rate is not yet published.
+  form2210fPenaltyRate: null,
 };

@@ -49,7 +49,7 @@ function source() {
     current_line4_refundable_credits_excluding_schedule3_line11: 1_000,
     current_withholding: 1_000,
     current_excess_social_security_or_rrta_withholding: 0,
-    estimated_payments_by_2026_01_15: 1_000,
+    estimated_payments_by_january_15: 1_000,
     full_underpayment_paid_on: null,
   });
 }
@@ -95,7 +95,7 @@ test("Form 2210-F box B local XML rejects unsourced eligibility", () => {
       ...input,
       current_return_reference:
         input.prior_separate_returns[1].filed_return_reference,
-    }), Error, "distinct filed 2024 taxpayer, spouse, and 2025 joint returns"
+    }), Error, "distinct filed prior-year taxpayer and spouse returns"
   );
 });
 
@@ -104,7 +104,7 @@ test("registered Form 2210-F checks finalized 1040 and filed worksheet", () => {
     ...source(),
     current_included_schedule2_taxes: 0,
     current_line4_refundable_credits_excluding_schedule3_line11: 0,
-    estimated_payments_by_2026_01_15: 0,
+    estimated_payments_by_january_15: 0,
   };
   const lines = calculateForm2210FBoxB(zeroTaxSource);
   const fields = { source: zeroTaxSource, filed_lines: lines };

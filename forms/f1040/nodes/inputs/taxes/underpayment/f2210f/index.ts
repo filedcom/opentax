@@ -5,6 +5,7 @@ import type { NodeContext } from "../../../../../../../core/types/node-context.t
 import { z } from "zod";
 import {
   form2210FBoxBInputSchema,
+  form2210FTaxYear,
 } from "../../../../../2025/domains/taxes/underpayment/form2210f/form2210f_box_b.ts";
 import { f1040 } from "../../../../outputs/general/return-assembly/f1040/index.ts";
 
@@ -15,8 +16,13 @@ class F2210FNode extends TaxNode<typeof inputSchema> {
   readonly inputSchema = inputSchema;
   readonly outputNodes = new OutputNodes([f1040]);
 
-  compute(_ctx: NodeContext, rawInput: unknown): NodeResult {
+  compute(ctx: NodeContext, rawInput: unknown): NodeResult {
     const { source } = inputSchema.parse(rawInput);
+    if (form2210FTaxYear(source) !== ctx.taxYear) {
+      throw new Error(
+        `Form 2210-F box B source must be for tax year ${ctx.taxYear}`,
+      );
+    }
     return {
       outputs: [this.outputNodes.output(f1040, {
         f2210f_box_b_source: source,

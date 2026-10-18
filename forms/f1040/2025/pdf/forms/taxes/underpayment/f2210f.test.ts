@@ -46,7 +46,7 @@ function source() {
     current_line4_refundable_credits_excluding_schedule3_line11: 1_000,
     current_withholding: 1_000,
     current_excess_social_security_or_rrta_withholding: 0,
-    estimated_payments_by_2026_01_15: 1_000,
+    estimated_payments_by_january_15: 1_000,
     full_underpayment_paid_on: "2026-03-01",
   };
 }
@@ -151,6 +151,6 @@ test("Form 2210-F PDF rejects changed 1040 tax and unsourced filed lines", () =>
         filed_lines: lines,
       },
       pending,
-    ), Error, "distinct filed 2024 taxpayer, spouse, and 2025 joint returns"
+    ), Error, "distinct filed prior-year taxpayer and spouse returns"
   );
 });

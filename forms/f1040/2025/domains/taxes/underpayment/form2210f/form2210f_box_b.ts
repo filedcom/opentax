@@ -1,10 +1,11 @@
 import { z } from "zod";
+import { configForYear } from "../../../../../nodes/config/index.ts";
 
 const amount = z.number().int().nonnegative();
 const sourceReference = z.string().trim().min(1);
 
 const grossIncomeYearSchema = z.object({
-  tax_year: z.union([z.literal(2024), z.literal(2025)]),
+  tax_year: z.number().int(),
   total_gross_income: amount,
   farming_fishing_gross_income: amount,
   reviewed_source_reference: sourceReference,
@@ -40,8 +41,9 @@ export const form2210FBoxBInputSchema = z.object({
   current_line4_refundable_credits_excluding_schedule3_line11: amount,
   current_withholding: amount,
   current_excess_social_security_or_rrta_withholding: amount,
-  estimated_payments_by_2026_01_15: amount,
-  full_underpayment_paid_on: z.string().regex(/^2026-\d{2}-\d{2}$/).nullable(),
+  estimated_payments_by_january_15: amount,
+  full_underpayment_paid_on: z.string().regex(/^\d{4}-\d{2}-\d{2}$/)
+    .nullable(),
 }).strict();
 
 export type Form2210FBoxBInput = z.infer<typeof form2210FBoxBInputSchema>;
@@ -60,12 +62,17 @@ export const form2210FBoxBLinesSchema = z.object({
   line11: amount,
   line12: amount,
   line13: amount,
-  line14: z.string().regex(/^2026-\d{2}-\d{2}$/).nullable(),
+  line14: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).nullable(),
   line15: amount,
   line16: amount,
 }).strict();
 
 export type Form2210FBoxBLines = z.infer<typeof form2210FBoxBLinesSchema>;
+
+/** The return year: the later of the two reviewed gross-income years. */
+export function form2210FTaxYear(input: Form2210FBoxBInput): number {
+  return input.gross_income_years[1].tax_year;
+}
 
 function qualifiesAsFarmerOrFisher(input: Form2210FBoxBInput): boolean {
   return input.gross_income_years.some((year) =>
@@ -90,19 +97,24 @@ function utcDate(iso: string): Date {
     !Number.isFinite(parsed.getTime()) ||
     parsed.toISOString().slice(0, 10) !== iso
   ) {
-    throw new Error("Form 2210-F needs a valid 2026 payment date");
+    throw new Error("Form 2210-F needs a valid payment date");
   }
   return parsed;
 }
 
-function penaltyDays(paidOn: string | null): { date: string; days: number } {
-  const start = utcDate("2026-01-15");
-  const end = utcDate("2026-04-15");
-  const date = paidOn ?? "2026-04-15";
+/** Lines 14-15: from January 15 to payment, at latest April 15, of the next year. */
+function penaltyDays(
+  paidOn: string | null,
+  taxYear: number,
+): { date: string; days: number } {
+  const next = taxYear + 1;
+  const start = utcDate(`${next}-01-15`);
+  const end = utcDate(`${next}-04-15`);
+  const date = paidOn ?? `${next}-04-15`;
   const paid = utcDate(date);
   if (paid <= start || paid > end) {
     throw new Error(
-      "Form 2210-F box B route needs one full underpayment settlement after January 15 and by April 15, 2026",
+      `Form 2210-F box B route needs one full underpayment settlement after January 15 and by April 15, ${next}`,
     );
   }
   return { date, days: Math.round((paid.getTime() - start.getTime()) / 86_400_000) };
@@ -113,12 +125,14 @@ function penaltyDays(paidOn: string | null): { date: string; days: number } {
  * and prior amounts to both filed 2024 returns before treating this as filing data. */
 export function calculateForm2210FBoxB(raw: unknown): Form2210FBoxBLines {
   const input = form2210FBoxBInputSchema.parse(raw);
+  const taxYear = form2210FTaxYear(input);
   if (
-    input.gross_income_years[0].tax_year !== 2024 ||
-    input.gross_income_years[1].tax_year !== 2025 ||
+    input.gross_income_years[0].tax_year !== taxYear - 1 ||
     !qualifiesAsFarmerOrFisher(input)
   ) {
-    throw new Error("Form 2210-F needs reviewed 2024/2025 gross income proving the two-thirds farming or fishing test");
+    throw new Error(
+      `Form 2210-F needs reviewed ${taxYear - 1}/${taxYear} gross income proving the two-thirds farming or fishing test`,
+    );
   }
   if (
     input.prior_separate_returns[0].owner !== "taxpayer" ||
@@ -129,7 +143,9 @@ export function calculateForm2210FBoxB(raw: unknown): Form2210FBoxBLines {
       prior.filed_return_reference === input.current_return_reference
     )
   ) {
-    throw new Error("Form 2210-F box B needs distinct filed 2024 taxpayer, spouse, and 2025 joint returns");
+    throw new Error(
+      "Form 2210-F box B needs distinct filed prior-year taxpayer and spouse returns and a current joint return",
+    );
   }
   const line1 = input.current_line22_tax_after_credits;
   const line2 = input.current_included_schedule2_taxes;
@@ -148,11 +164,17 @@ export function calculateForm2210FBoxB(raw: unknown): Form2210FBoxBLines {
     throw new Error("Form 2210-F box B attachment conditions are not met");
   }
   const line11 = Math.min(line7, line10);
-  const line12 = line8 + input.estimated_payments_by_2026_01_15;
+  const line12 = line8 + input.estimated_payments_by_january_15;
   const line13 = Math.max(0, line11 - line12);
   const penaltyPeriod = line13 > 0
-    ? penaltyDays(input.full_underpayment_paid_on)
+    ? penaltyDays(input.full_underpayment_paid_on, taxYear)
     : undefined;
+  const rate = configForYear(taxYear).form2210fPenaltyRate;
+  if (line13 > 0 && rate === null) {
+    throw new Error(
+      `Form 2210-F line 16 needs the ${taxYear} penalty rate, which the IRS has not published`,
+    );
+  }
   return form2210FBoxBLinesSchema.parse({
     box_b: true,
     line1,
@@ -170,7 +192,7 @@ export function calculateForm2210FBoxB(raw: unknown): Form2210FBoxBLines {
     line14: penaltyPeriod?.date ?? null,
     line15: penaltyPeriod?.days ?? 0,
     line16: line13 > 0
-      ? Math.round(line13 * (penaltyPeriod?.days ?? 0) / 365 * 0.07)
+      ? Math.round(line13 * (penaltyPeriod?.days ?? 0) / 365 * (rate ?? 0))
       : 0,
   });
 }
