@@ -1,85 +1,60 @@
 ---
 name: tax-fix
-description: Autonomous bug-fix loop for any form:year. Reads failing benchmark cases, spawns parallel bug-fixer agents per root cause cluster, validates with the harness, commits engine fixes only, and loops until all pass or stalled.
+description: Bug-fix loop for a form:year benchmark (e.g. f1040:2025) or for MeF readiness (`mef`). Clusters failures by root cause, spawns parallel bug-fixer agents, gates each round with the harness, commits engine fixes only, and loops until clean or stalled.
 ---
 
-# Tax Fix — Autonomous Bug Fix Loop
+# Tax Fix
 
-**Form:Year:** $ARGUMENTS  (e.g. `f1040:2025`)
+**Target:** $ARGUMENTS — `{form}:{year}` (default `f1040:2025`) or `mef`.
 
-## Step 0 — Derive Paths
+Read `AGENTS.md` and, if present, `forms/{form}/FORM.md`; pass both to every
+agent. Nothing is persisted between runs: each round re-reads the scoreboards.
 
-Parse `$ARGUMENTS` as `{form}:{year}`. Derive:
-- Policy doc: `forms/{form}/FORM.md`
-- Cases dir: `benchmark/cases/{form}/{year}/`
-- State key: `{form}:{year}` in `.state/bench/state.json` under `forms`
-- Progress log: `.state/bench/progress.md`
+## 1. Read the failures
 
-Read `AGENTS.md` and `forms/{form}/FORM.md`; pass both to every spawned agent.
+- `{form}:{year}`: `bun run bench --form {form} --year {year} --json`. The last
+  line is `{ total, pass, fail, failing, failures }`; each failure has
+  `lineFailures`, `unsupportedChecks` and `errors`.
+- `mef`: `bun run check:mef --json` (`returns`: sample return id → findings;
+  `scripts/testing/mef-baseline.json` gives the reason each known one blocks)
+  and `bun run check:ats --json` (per ATS scenario: `findings`, `schemaValid`,
+  values matched against the packet). A baseline reason that calls a block a
+  correct product boundary is not a bug; skip it.
 
-## Step 1 — Load State
+Group failures that share a failing line or finding into one root cause, with
+the node or export path that produces it. Causes in the same file go to one
+agent.
 
-Read `.state/bench/state.json`. `.state/` is untracked, so it may be missing:
-- No file → create it as `{"version": 2, "forms": {}}`.
-- No `forms.{form}:{year}.fix` entry → run `bun run bench --form {form} --year {year} --json`, set
-  `benchmark_baseline` to its `pass`/`fail`/`total`, and add one `"pending"` root cause per group of
-  `failures` that share a failing line, with its `cases` and the `node_path` that produces that line.
+## 2. Fix
 
-Navigate to `forms.{form}:{year}.fix`:
-- If `"done"` → print "All cases passing. Nothing to do." and stop.
-- If `"stalled"` → print stall message and stop.
-- Otherwise → set `status` to `"running"` and write state.json back.
+Spawn one agent per group in a single message, using
+`.claude/skills/tax-fix/agents/bug-fixer.md`. Fixers change engine code only
+(`forms/`, `core/`, `cli/`); a case or packet value that is itself wrong comes
+back as a report with its citation.
 
-## Step 2 — Identify Pending Root Causes
+## 3. Gate
 
-From `forms.{form}:{year}.fix.root_causes`, collect all entries where `status === "pending"`.
+1. `git status --porcelain benchmark/cases` must be empty; otherwise
+   `git checkout -- benchmark/cases` and treat those clusters as unfixed.
+2. `bun run verify:changed` (structure, oracle, the tests the change reaches,
+   and MeF, CLI and bench against the merge base when the CLI loads it).
+3. Re-run step 1's scoreboard.
 
-## Step 3 — Spawn Parallel Bug-Fixer Agents
+A round is kept when the gates pass, the failure count fell and nothing new
+fails. For `mef`, `check:mef` then reports each cleared finding as `FIXED`;
+delete it (and an emptied return's entry and reason) from `mef-baseline.json`
+by hand, not with `--update`, which resets `approvedBy`.
 
-Group pending root causes by `node_path`. Root causes that touch the **same node file** go to a **single agent**; different node files run in parallel.
+Keep: stage the changed engine files by name and commit
+`fix({form} {year}): <cause> — X→Y passing` (or `fix(mef): <finding>`).
+Otherwise: restore those files. Two rounds in a row without a kept change →
+stop as stalled.
 
-For each group, spawn one agent using `.claude/skills/tax-fix/agents/bug-fixer.md`, passing the root cause object(s), FORM.md and the cases dir. Spawn all groups in a single message.
+Loop to step 1 until nothing fails.
 
-Bug fixers change engine code only. They never edit anything under `benchmark/cases/`; a case that is itself wrong comes back as a report with the IRS citation it needs, and its cluster stays `"pending"`.
+## Finish
 
-## Step 4 — Validate
-
-Run, in this order, and stop at the first failure (it is the round's result):
-
-1. `bun run check:structure`
-2. `bun run check:cases`
-3. `bun run check:oracle` — expected values unchanged unless `ledger.json` cites a publication
-4. `bun run test:unit`
-
-Then spawn the validator agent (`.claude/skills/tax-fix/agents/validator.md`) with form, year and the cases dir, and parse `VALIDATOR_RESULT: { total, pass, fail, failing }`.
-
-## Step 5 — Evaluate Results
-
-First, `git status --porcelain benchmark/cases` must print nothing. If it does: `git checkout -- benchmark/cases`, mark the affected clusters `"pending"` with the note "case edit refused; needs a ledger citation", and do not count them.
-
-Compare the pass count to `forms.{form}:{year}.fix.benchmark_baseline`:
-- **Net positive** (more passes, zero new failures) and Step 4 green → commit engine paths only, update the baseline, mark fixed root causes `"done"`, reset `no_improvement_count`:
-  ```bash
-  git add forms core cli
-  git commit -m "fix: {form} {year} benchmark — X→Y passing cases"
-  ```
-- **Otherwise** → `git checkout -- forms core cli`, increment `no_improvement_count`; if ≥ 2 → set `status: "stalled"` and stop.
-
-## Step 6 — Log and Loop
-
-Append to `.state/bench/progress.md`:
-```
-## [{form}:{year}] Round N — [timestamp]
-- Baseline: X pass / Y fail
-- After fix: A pass / B fail
-- Fixed clusters: [list]
-- Cases needing ledger review: [case: line, citation] or none
-```
-
-If `fail === 0` → set `status: "done"`, stop. Otherwise loop to Step 2.
-
-## Key Constraints
-
-- Commit only net-positive rounds, and only engine code.
-- Never commit or hand-edit `benchmark/cases/`. An expected value changes only through `benchmark/cases/{form}/{year}/ledger.json` with a publication citation, recorded by a human.
-- If a bug-fixer reports it cannot safely fix, leave the cluster `"pending"`.
+Report fixed causes, causes left and why, and every case or packet value that
+needs a ledger citation (case, line, publication value, citation). Before a
+pull request, run the full list in `AGENTS.md`; an expected value changes only
+through `benchmark/cases/{form}/{year}/ledger.json`, recorded by a human.
