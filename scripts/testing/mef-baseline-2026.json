@@ -557,9 +557,6 @@
     "single-hsa-code2-excess": [
       "calculation form8889"
     ],
-    "joint-two-hsa-owners": [
-      "xml Form 8889 paired printed lines differ from owner source calculation"
-    ],
     "joint-other-coverage-hsa-current-excess": [
       "calculation form8889"
     ],
@@ -874,9 +871,8 @@
     "single-k-mixed-error-duplicate-personal": "MeF schema gap: 2026v1.0 has no element for the IRC \u00a7199A(i) minimum deduction (P.L. 119-21 \u00a770105; draft 2026 Form 8995 line 16)",
     "single-schedule-c-simplified-home-office": "MeF schema gap: 2026v1.0 has no element for the IRC \u00a7199A(i) minimum deduction (P.L. 119-21 \u00a770105; draft 2026 Form 8995 line 16)",
     "single-two-at-risk-business-losses": "MeF schema gap: 2026v1.0 has no element for the IRC \u00a7199A(i) minimum deduction (P.L. 119-21 \u00a770105; draft 2026 Form 8995 line 16)",
-    "single-hsa-code2-excess": "Open TY2026 work: Form 8889 owner source calculation replays TY2025 HSA rules",
-    "joint-two-hsa-owners": "Open TY2026 work: Form 8889 owner source calculation replays TY2025 HSA rules",
-    "joint-other-coverage-hsa-current-excess": "Open TY2026 work: Form 8889 owner source calculation replays TY2025 HSA rules",
+    "single-hsa-code2-excess": "Sample amount: the sample returns a $900 excess over the TY2025 $4,300 self-only limit; Rev. Proc. 2025-19 sets $4,400 for 2026, so the 2026 excess is $800 and amounts are not shifted",
+    "joint-other-coverage-hsa-current-excess": "Sample amount: the spouses' signed allocations ($2,000 + $2,275) divide six months of the TY2025 $8,550 family limit; Rev. Proc. 2025-19 sets $8,750 for 2026 ($4,375 for six months), and amounts are not shifted",
     "single-alternating-policies-all-covered-slcsp-corrections": "TY2026 law: the shifted household is above 400% FPL, which IRC \u00a736B(c)(1)(A) again excludes after 2025 (Rev. Proc. 2025-25); the MeF reconciliation has no APTC-only above-limit route yet (open TY2026 work)",
     "single-alternating-policies-both-slcsp-corrected": "TY2026 law: the shifted household is above 400% FPL, which IRC \u00a736B(c)(1)(A) again excludes after 2025 (Rev. Proc. 2025-25); the MeF reconciliation has no APTC-only above-limit route yet (open TY2026 work)",
     "single-five-sequential-corrected-slcsp-policies": "TY2026 law: the shifted household is above 400% FPL, which IRC \u00a736B(c)(1)(A) again excludes after 2025 (Rev. Proc. 2025-25); the MeF reconciliation has no APTC-only above-limit route yet (open TY2026 work)",

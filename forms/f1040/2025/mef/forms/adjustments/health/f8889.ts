@@ -1,3 +1,4 @@
+import { mefTaxYear } from "../../../support/year-config.ts";
 import { z } from "zod";
 import { element, elements } from "../../../../../mef/xml.ts";
 import type { MefBuildContext, MefFormDescriptor } from "../../../form-descriptor.ts";
@@ -175,28 +176,43 @@ function buildIRS8889(
     fields.forms,
     context?.pending,
     context?.filer,
+    mefTaxYear(context),
   );
   reconcileDatedExceptionForm8889(
     fields.forms,
     context?.pending,
     context?.filer,
+    mefTaxYear(context),
   );
-  reconcileCode2Form8889(fields.forms, context?.pending, context?.filer);
+  reconcileCode2Form8889(
+    fields.forms,
+    context?.pending,
+    context?.filer,
+    mefTaxYear(context),
+  );
   reconcilePrimaryLastMonthRuleForm8889(
     fields.forms,
     context?.pending,
     context?.filer,
+    mefTaxYear(context),
   );
-  reconcileRolloverForm8889(fields.forms, context?.pending, context?.filer);
+  reconcileRolloverForm8889(
+    fields.forms,
+    context?.pending,
+    context?.filer,
+    mefTaxYear(context),
+  );
   reconcilePairedForm8889(
     fields.forms,
     context?.pending,
     context?.filer,
+    mefTaxYear(context),
   );
   reconcilePrimaryMixedMedicalForm8889(
     fields.forms,
     context?.pending,
     context?.filer,
+    mefTaxYear(context),
   );
   if (fields.forms.length === 2) {
     const sum = (key: string) =>

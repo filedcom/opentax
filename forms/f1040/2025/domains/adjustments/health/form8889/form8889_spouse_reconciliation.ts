@@ -27,6 +27,7 @@ export function reconcilePrimaryLastMonthRuleForm8889(
   forms: readonly Readonly<Record<string, unknown>>[],
   allPending: Readonly<Record<string, unknown>> | undefined,
   filer: FilerIdentity | undefined,
+  taxYear: number,
 ): void {
   if (forms.length !== 1 || !forms[0]) return;
   const filed = forms[0];
@@ -65,7 +66,7 @@ export function reconcilePrimaryLastMonthRuleForm8889(
     );
   }
   const outputs = form8889.compute(
-    { taxYear: 2025, formType: "f1040" },
+    { taxYear, formType: "f1040" },
     source,
   ).outputs;
   const expected = (outputs.find((row) => row.nodeType === "form8889")
@@ -136,6 +137,7 @@ export function reconcileDatedExceptionForm8889(
   forms: readonly Readonly<Record<string, unknown>>[],
   allPending: Readonly<Record<string, unknown>> | undefined,
   filer: FilerIdentity | undefined,
+  taxYear: number,
 ): void {
   // The spouse-only and paired reconcilers independently recompute those forms.
   if (forms.length !== 1 || forms[0]?.owner !== "primary") return;
@@ -168,7 +170,7 @@ export function reconcileDatedExceptionForm8889(
     );
   }
   const outputs = form8889.compute(
-    { taxYear: 2025, formType: "f1040" },
+    { taxYear, formType: "f1040" },
     source,
   ).outputs;
   const expected = (outputs.find((row) => row.nodeType === "form8889")
@@ -244,6 +246,7 @@ export function reconcileRolloverForm8889(
   forms: readonly Readonly<Record<string, unknown>>[],
   allPending: Readonly<Record<string, unknown>> | undefined,
   filer: FilerIdentity | undefined,
+  taxYear: number,
 ): void {
   // The paired-owner reconciliation below independently recomputes each
   // owner's rollover and combined return totals.
@@ -302,7 +305,7 @@ export function reconcileRolloverForm8889(
     throw new Error("Form 8889 rollover source differs from filer owner");
   }
   const outputs = form8889.compute(
-    { taxYear: 2025, formType: "f1040" },
+    { taxYear, formType: "f1040" },
     source,
   ).outputs;
   const expected = (outputs.find((row) => row.nodeType === "form8889")
@@ -349,6 +352,7 @@ export function reconcileCode2Form8889(
   forms: readonly Readonly<Record<string, unknown>>[],
   allPending: Readonly<Record<string, unknown>> | undefined,
   filer: FilerIdentity | undefined,
+  taxYear: number,
 ): void {
   if (forms.length === 2) return;
   const pending8889 = allPending?.form8889;
@@ -377,7 +381,7 @@ export function reconcileCode2Form8889(
   const code2 = source.form1099_sa_distributions?.some((row) =>
     row.box3_distribution_code === "2"
   );
-  if (!timely && !code2 && employerTimely?.withdrawal_tax_year !== 2025) {
+  if (!timely && !code2 && employerTimely?.withdrawal_tax_year !== taxYear) {
     return;
   }
   const filed = forms[0];
@@ -396,7 +400,7 @@ export function reconcileCode2Form8889(
     );
   }
   const outputs = form8889.compute(
-    { taxYear: 2025, formType: "f1040" },
+    { taxYear, formType: "f1040" },
     source,
   ).outputs;
   const computed = outputs.find((row) => row.nodeType === "form8889")
@@ -414,7 +418,7 @@ export function reconcileCode2Form8889(
   }
   let employerReturnedPrincipal = 0;
   let employerW2Wages: number | undefined;
-  if (employerTimely?.withdrawal_tax_year === 2025) {
+  if (employerTimely?.withdrawal_tax_year === taxYear) {
     const w2 = w2InputSchema.safeParse(allPending?.w2);
     if (!w2.success) {
       throw new Error(
@@ -530,6 +534,7 @@ export function reconcileSpouseOnlyForm8889(
   forms: readonly Readonly<Record<string, unknown>>[],
   allPending: Readonly<Record<string, unknown>> | undefined,
   filer: FilerIdentity | undefined,
+  taxYear: number,
 ): void {
   if (forms.length !== 1 || forms[0]?.owner !== "spouse") return;
   const spouse = filer?.spouse;
@@ -565,7 +570,7 @@ export function reconcileSpouseOnlyForm8889(
     throw new Error("Form 8889 spouse-only source owner or identity differs");
   }
   const outputs = form8889.compute(
-    { taxYear: 2025, formType: "f1040" },
+    { taxYear, formType: "f1040" },
     source,
   ).outputs;
   const computed = outputs.find((row) => row.nodeType === "form8889")
@@ -643,6 +648,7 @@ export function reconcilePairedForm8889(
   forms: readonly Readonly<Record<string, unknown>>[],
   allPending: Readonly<Record<string, unknown>> | undefined,
   filer: FilerIdentity | undefined,
+  taxYear: number,
 ): void {
   if (forms.length !== 2) {
     const source = allPending?.form8889 &&
@@ -656,9 +662,9 @@ export function reconcilePairedForm8889(
       employer.timely_withdrawal &&
       typeof employer.timely_withdrawal === "object" &&
       "withdrawal_tax_year" in employer.timely_withdrawal &&
-      employer.timely_withdrawal.withdrawal_tax_year === 2026;
+      employer.timely_withdrawal.withdrawal_tax_year === taxYear + 1;
     if (postyearClaim || source?.retained_employer_postyear_evidence !== undefined) {
-      reconcileSolePostyearForm8889(forms, allPending, filer);
+      reconcileSolePostyearForm8889(forms, allPending, filer, taxYear);
       return;
     }
     if (source?.retained_employer_return_evidence !== undefined) {
@@ -1025,11 +1031,11 @@ export function reconcilePairedForm8889(
     (code2NormalOwner.exception_qualified_taxable_amount ?? 0) === 0;
   const pairedEmployerCode2Owners = owners.filter((owner) =>
     owner.employer_excess_treatment?.timely_withdrawal
-      ?.withdrawal_tax_year === 2025
+      ?.withdrawal_tax_year === taxYear
   );
   const pairedPostyearEmployerOwners = owners.filter((owner) =>
     owner.employer_excess_treatment?.timely_withdrawal
-      ?.withdrawal_tax_year === 2026
+      ?.withdrawal_tax_year === taxYear + 1
   );
   const pairedPriorExcessOwners = owners.filter((owner) =>
     owner.prior_year_hsa_excess !== undefined
@@ -1439,7 +1445,7 @@ export function reconcilePairedForm8889(
     );
   }
   const outputs = form8889.compute(
-    { taxYear: 2025, formType: "f1040" },
+    { taxYear, formType: "f1040" },
     source,
   ).outputs;
   const computed = outputs.find((row) => row.nodeType === "form8889")
@@ -1545,7 +1551,7 @@ export function reconcilePairedForm8889(
       (owner.hsa_excluded_distributions?.timely_excess_withdrawal
         ?.included_earnings ??
         (owner.employer_excess_treatment?.timely_withdrawal
-            ?.withdrawal_tax_year === 2025
+            ?.withdrawal_tax_year === taxYear
           ? owner.employer_excess_treatment.timely_withdrawal.earnings
           : 0)),
     0,

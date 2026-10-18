@@ -1,3 +1,4 @@
+import { mefTaxYear } from "../../../../mef/support/year-config.ts";
 import { z } from "zod";
 import type { PdfFieldEntry, PdfFormDescriptor } from "../../../review-support/form-descriptor.ts";
 import {
@@ -212,13 +213,13 @@ export const form8889Pdf: PdfFormDescriptor = {
         );
       }
     }
-    reconcileSpouseOnlyForm8889(forms, allPending, filer);
-    reconcileDatedExceptionForm8889(forms, allPending, filer);
-    reconcileCode2Form8889(forms, allPending, filer);
-    reconcilePrimaryLastMonthRuleForm8889(forms, allPending, filer);
-    reconcileRolloverForm8889(forms, allPending, filer);
-    reconcilePairedForm8889(forms, allPending, filer);
-    reconcilePrimaryMixedMedicalForm8889(forms, allPending, filer);
+    reconcileSpouseOnlyForm8889(forms, allPending, filer, mefTaxYear());
+    reconcileDatedExceptionForm8889(forms, allPending, filer, mefTaxYear());
+    reconcileCode2Form8889(forms, allPending, filer, mefTaxYear());
+    reconcilePrimaryLastMonthRuleForm8889(forms, allPending, filer, mefTaxYear());
+    reconcileRolloverForm8889(forms, allPending, filer, mefTaxYear());
+    reconcilePairedForm8889(forms, allPending, filer, mefTaxYear());
+    reconcilePrimaryMixedMedicalForm8889(forms, allPending, filer, mefTaxYear());
     const numericKeys = new Set(fields.filter((entry) =>
       entry.domainKey.startsWith("print_line") &&
       entry.domainKey !== "print_line1_coverage" &&

@@ -11,6 +11,7 @@ export function reconcilePrimaryMixedMedicalForm8889(
   forms: readonly Readonly<Record<string, unknown>>[],
   allPending: Readonly<Record<string, unknown>> | undefined,
   filer: FilerIdentity | undefined,
+  taxYear: number,
 ): void {
   if (filer && filer.filingStatus !== FilingStatus.Single) return;
   const filed = forms[0];
@@ -132,7 +133,7 @@ export function reconcilePrimaryMixedMedicalForm8889(
     );
   }
   const outputs = form8889.compute(
-    { taxYear: 2025, formType: "f1040" },
+    { taxYear, formType: "f1040" },
     item,
   ).outputs;
   const expected = (outputs.find((row) => row.nodeType === "form8889")

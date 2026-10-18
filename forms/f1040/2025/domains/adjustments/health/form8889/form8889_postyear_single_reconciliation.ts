@@ -26,11 +26,12 @@ export function assertHsaExcessRequiredCopy(
   }
 }
 
-/** Source replay for a sole HSA beneficiary's timely 2026 excess payment. */
+/** Source replay for a sole HSA beneficiary's timely excess payment after year end. */
 export function reconcileSolePostyearForm8889(
   forms: readonly Readonly<Record<string, unknown>>[],
   pending: Readonly<Record<string, unknown>> | undefined,
   filer: FilerIdentity | undefined,
+  taxYear: number,
 ): void {
   const { forms: _printed, ...sourceFields } =
     (pending?.form8889 ?? {}) as Record<string, unknown>;
@@ -81,14 +82,14 @@ export function reconcileSolePostyearForm8889(
     source.retained_employer_return_evidence !== undefined ||
     source.retained_employer_code2_evidence !== undefined ||
     source.employer_excess_treatment?.amount_included_in_w2_box1 !== 0 ||
-    !withdrawal || withdrawal.withdrawal_tax_year !== 2026
+    !withdrawal || withdrawal.withdrawal_tax_year !== taxYear + 1
   ) {
     throw new Error(
       "Sole postyear HSA payment requires one actual identified owner and sourced full-year self-only coverage",
     );
   }
   const outputs =
-    form8889.compute({ taxYear: 2025, formType: "f1040" }, source).outputs;
+    form8889.compute({ taxYear, formType: "f1040" }, source).outputs;
   const expected = outputs.find((r) => r.nodeType === "form8889")?.fields.forms;
   if (
     !isDeepStrictEqual(expected, forms) ||

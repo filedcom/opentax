@@ -50,39 +50,14 @@
     "count": 1
   },
   {
-    "path": "forms/f1040/2025/domains/adjustments/health/form8889/form8889_mixed_medical_reconciliation.ts",
-    "pattern": "year-value",
-    "count": 1
-  },
-  {
-    "path": "forms/f1040/2025/domains/adjustments/health/form8889/form8889_postyear_single_reconciliation.ts",
-    "pattern": "year-comparison",
-    "count": 1
-  },
-  {
     "path": "forms/f1040/2025/domains/adjustments/health/form8889/form8889_postyear_single_reconciliation.ts",
     "pattern": "year-identifier",
     "count": 2
   },
   {
-    "path": "forms/f1040/2025/domains/adjustments/health/form8889/form8889_postyear_single_reconciliation.ts",
-    "pattern": "year-value",
-    "count": 1
-  },
-  {
-    "path": "forms/f1040/2025/domains/adjustments/health/form8889/form8889_spouse_reconciliation.ts",
-    "pattern": "year-comparison",
-    "count": 6
-  },
-  {
     "path": "forms/f1040/2025/domains/adjustments/health/form8889/form8889_spouse_reconciliation.ts",
     "pattern": "year-identifier",
     "count": 14
-  },
-  {
-    "path": "forms/f1040/2025/domains/adjustments/health/form8889/form8889_spouse_reconciliation.ts",
-    "pattern": "year-value",
-    "count": 6
   },
   {
     "path": "forms/f1040/2025/domains/credits/amt/form8801/form8801_calculation.ts",

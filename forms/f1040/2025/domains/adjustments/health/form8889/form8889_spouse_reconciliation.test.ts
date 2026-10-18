@@ -24,7 +24,7 @@ const filer: FilerIdentity = {
   },
 };
 
-function selfOnlyPair() {
+function selfOnlyPair(taxYear = 2025) {
   const primary = {
     beneficiary_identity: {
       owner: "T" as const,
@@ -52,7 +52,7 @@ function selfOnlyPair() {
     },
   });
   const outputs = form8889Node.compute(
-    { taxYear: 2025, formType: "f1040" },
+    { taxYear, formType: "f1040" },
     source,
   ).outputs;
   const forms = outputs.find((row) => row.nodeType === "form8889")
@@ -133,6 +133,24 @@ test("paired self-only Form 8889 MeF/PDF reconcile each source and owner", () =>
       ),
     Error,
     "needs both owner sources",
+  );
+});
+
+// Rev. Proc. 2025-19 §.01: the 2026 self-only HDHP limit is $4,400;
+// IRC §223(b)(3)(B) adds $1,000 at age 55.
+test("paired self-only Forms 8889 replay the return year's HSA limits", () => {
+  const { forms, pending } = selfOnlyPair(2026);
+  assertEquals(forms.map((form) => form.print_line3_limit), [4_400, 5_400]);
+  const build = (taxYear: number) =>
+    form8889Mef.build(
+      { forms } as Parameters<typeof form8889Mef.build>[0],
+      { filer, pending, taxYear },
+    );
+  assertEquals(build(2026).length, 2);
+  assertThrows(
+    () => build(2025),
+    Error,
+    "paired printed lines differ from owner source calculation",
   );
 });
 
