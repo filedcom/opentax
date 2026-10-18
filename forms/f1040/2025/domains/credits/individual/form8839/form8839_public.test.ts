@@ -364,7 +364,7 @@ for (
 ) {
   test(`Form 8839 saver-credit boundary at wages ${wages}`, async () => {
     if (retirement > 0) {
-      // Deferred product-board item 95: retain the observed public-route block.
+      // Deferred: retain the observed public-route block.
       // A rejection is not successful credit ordering or an export pass.
       await assertRejects(
         () => reviewedSource(wages, withheld, 11_000, 2_000),

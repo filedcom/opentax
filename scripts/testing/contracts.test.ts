@@ -133,7 +133,7 @@ test("verification includes source and oracle JSON and detects changed fixture b
       ".state/bench/state.json",
       "scripts/testing/skip-policy.json",
       "docs/notes.md",
-      "product_board.md",
+      "README.md",
     ]),
     [
       "forms/source.json",

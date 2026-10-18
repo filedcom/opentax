@@ -74,7 +74,7 @@ Build-stage disposition queue updated 2026-10-03. This is the decision layer
 over the [registered-descriptor audit](./ty2025-form1040-form-audit.md) and the
 [211-root schema census](../../../../inventory/ty2025-xsd-document-root-census.md); it does not
 certify any filing route. The current descriptor and source-literal counts are
-recorded in those inventories and the [archived product board](../../../../readiness/product-board-archive-2026-10-18.md).
+recorded in those inventories.
 They measure different things: some descriptors are statements, and a literal
 is neither registration nor valid, complete output. The ordered
 [unregistered-root reviews](../../../../inventory/ty2025-unregistered-root-applicability.md) cover

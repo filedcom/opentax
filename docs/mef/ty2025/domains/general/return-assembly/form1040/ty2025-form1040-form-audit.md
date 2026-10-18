@@ -55,7 +55,7 @@ filing-readiness claim. The authoritative registration order is
 [`forms/f1040/2025/mef/forms/index.ts`](../../../../../../../forms/f1040/2025/mef/forms/index.ts);
 PDF registration is
 [`forms/f1040/2025/pdf/forms/index.ts`](../../../../../../../forms/f1040/2025/pdf/forms/index.ts).
-The [archived product board](../../../../readiness/product-board-archive-2026-10-18.md) lists the known gaps. The
+The
 [coverage disposition queue](./ty2025-form1040-coverage-decisions.md) identifies
 which proposed workflow boundaries still need the user's approval. The
 [TY2025 schema-root census](../../../../inventory/ty2025-xsd-document-root-census.md) lists all 211
