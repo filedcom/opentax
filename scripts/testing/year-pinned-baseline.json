@@ -1800,26 +1800,6 @@
     "count": 1
   },
   {
-    "path": "forms/f1040/nodes/inputs/taxes/income-averaging/schedule_j/base_years.ts",
-    "pattern": "year-comparison",
-    "count": 1
-  },
-  {
-    "path": "forms/f1040/nodes/inputs/taxes/income-averaging/schedule_j/base_years.ts",
-    "pattern": "year-identifier",
-    "count": 9
-  },
-  {
-    "path": "forms/f1040/nodes/inputs/taxes/income-averaging/schedule_j/base_years.ts",
-    "pattern": "z-literal",
-    "count": 1
-  },
-  {
-    "path": "forms/f1040/nodes/inputs/taxes/income-averaging/schedule_j/index.ts",
-    "pattern": "year-identifier",
-    "count": 2
-  },
-  {
     "path": "forms/f1040/nodes/inputs/taxes/interest/f453a_interest/index.ts",
     "pattern": "date-pinned",
     "count": 1
@@ -2390,29 +2370,9 @@
     "count": 7
   },
   {
-    "path": "forms/f1040/nodes/intermediate/forms/taxes/income-averaging/schedule_j/calculation.ts",
-    "pattern": "year-identifier",
-    "count": 17
-  },
-  {
-    "path": "forms/f1040/nodes/intermediate/forms/taxes/income-averaging/schedule_j/index.ts",
-    "pattern": "year-identifier",
-    "count": 8
-  },
-  {
     "path": "forms/f1040/nodes/intermediate/forms/taxes/income-averaging/schedule_j/preferential_line4.ts",
     "pattern": "year-identifier",
-    "count": 8
-  },
-  {
-    "path": "forms/f1040/nodes/intermediate/forms/taxes/income-averaging/schedule_j/preferential_tax.ts",
-    "pattern": "year-comparison",
     "count": 1
-  },
-  {
-    "path": "forms/f1040/nodes/intermediate/forms/taxes/income-averaging/schedule_j/tax-source.ts",
-    "pattern": "year-identifier",
-    "count": 4
   },
   {
     "path": "forms/f1040/nodes/intermediate/forms/taxes/investments/form8615/calculation.ts",
@@ -2437,16 +2397,6 @@
   {
     "path": "forms/f1040/nodes/intermediate/worksheets/deductions/standard/standard_deduction/index.ts",
     "pattern": "config-index",
-    "count": 1
-  },
-  {
-    "path": "forms/f1040/nodes/intermediate/worksheets/deductions/standard/standard_deduction/index.ts",
-    "pattern": "year-identifier",
-    "count": 2
-  },
-  {
-    "path": "forms/f1040/nodes/intermediate/worksheets/taxes/calculation/income_tax_calculation/index.ts",
-    "pattern": "year-comparison",
     "count": 1
   },
   {

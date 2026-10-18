@@ -24,8 +24,8 @@ function input(): ScheduleJOrdinaryIncomeInput {
     section1_tax_workpaper_reference: `${year} section 1 tax`,
   });
   return {
-    taxable_income_2025: 50_000,
-    filing_status_2025: FilingStatus.Single,
+    current_year_taxable_income: 50_000,
+    current_year_filing_status: FilingStatus.Single,
     elected_farm_income: 15_000,
     elected_farm_income_net_capital_gain: 0,
     base_year_source: {
@@ -46,7 +46,7 @@ function input(): ScheduleJOrdinaryIncomeInput {
 }
 
 test("Schedule J ordinary path fills all 2025 form lines and uses each year's rates", () => {
-  assertEquals(calculateScheduleJOrdinaryIncome(input()), {
+  assertEquals(calculateScheduleJOrdinaryIncome(input(), 2025), {
     line1: 50_000,
     line2a: 15_000,
     line2b: 0,
@@ -90,7 +90,7 @@ test("Schedule J uses the last filed averaging schedule and floors only line 7",
       filed_schedule_j_reference: "Filed 2024 Schedule J",
     },
   };
-  const lines = calculateScheduleJOrdinaryIncome(source);
+  const lines = calculateScheduleJOrdinaryIncome(source, 2025);
   assertEquals(
     [lines.line5, lines.line7, lines.line8, lines.line9, lines.line11, lines.line12,
       lines.line13, lines.line15, lines.line16, lines.line19, lines.line20,
@@ -102,7 +102,7 @@ test("Schedule J uses the last filed averaging schedule and floors only line 7",
 test("Schedule J rounds one-third once for every base year", () => {
   const source = input();
   source.elected_farm_income = 1_001;
-  const lines = calculateScheduleJOrdinaryIncome(source);
+  const lines = calculateScheduleJOrdinaryIncome(source, 2025);
   assertEquals([lines.line6, lines.line10, lines.line14], [334, 334, 334]);
   assertEquals([lines.line7, lines.line11, lines.line15], [10_334, 10_334, 10_334]);
 });
@@ -110,17 +110,17 @@ test("Schedule J rounds one-third once for every base year", () => {
 test("Schedule J ordinary branch rejects unsupported tax methods and election excess", () => {
   const excess = input();
   excess.elected_farm_income = 50_001;
-  assertThrows(() => calculateScheduleJOrdinaryIncome(excess));
+  assertThrows(() => calculateScheduleJOrdinaryIncome(excess, 2025));
 
   const electedGain = input();
   electedGain.elected_farm_income_net_capital_gain = 1;
-  assertThrows(() => calculateScheduleJOrdinaryIncome(electedGain));
+  assertThrows(() => calculateScheduleJOrdinaryIncome(electedGain, 2025));
 
   for (const year of ["year2025", "year2022", "year2023", "year2024"] as const) {
     for (const flag of Object.keys(ordinary) as (keyof typeof ordinary)[]) {
       const unsupported = input();
       unsupported.tax_treatment[year][flag] = true;
-      assertThrows(() => calculateScheduleJOrdinaryIncome(unsupported));
+      assertThrows(() => calculateScheduleJOrdinaryIncome(unsupported, 2025));
     }
   }
 });
@@ -129,5 +129,40 @@ test("Schedule J rejects negative or non-whole-dollar line 23 sources", () => {
   const source = input();
   source.base_year_source.base_returns.year2022.section1_tax_from_line16 = 9_000;
   source.base_year_source.base_returns.year2022.filed_line16_tax = 9_000;
-  assertThrows(() => calculateScheduleJOrdinaryIncome(source));
+  assertThrows(() => calculateScheduleJOrdinaryIncome(source, 2025));
+});
+
+// Draft 2026 Schedule J (Created 4/30/26): line 4 uses the 2026 rates and
+// lines 8, 12 and 16 use the 2023, 2024 and 2025 rates. Line 4 is the Tax
+// Table cell for $35,000-$35,050 from the Rev. Proc. 2025-32 §4.01 single
+// schedule: $1,240 + 12% of $22,625 = $3,955. Line 16 is the Rev. Proc.
+// 2024-40 §3.01 2025 single schedule on $15,000: $1,192.50 + 12% of $3,075 =
+// $1,561.50, entered as $1,562.
+test("TY2026 Schedule J averages over 2023-2025 with each year's rates", () => {
+  const source = input();
+  const { year2022: _, ...laterReturns } = source.base_year_source.base_returns;
+  const { year2022: __, year2025: current, ...laterTreatment } =
+    source.tax_treatment;
+  const baseReturn = laterReturns.year2024;
+  const lines = calculateScheduleJOrdinaryIncome({
+    ...source,
+    base_year_source: {
+      latest_averaging_year: "none",
+      base_returns: {
+        ...laterReturns,
+        year2025: { ...baseReturn, filed_return_reference: "Filed 2025 Form 1040" },
+      },
+    },
+    tax_treatment: {
+      ...laterTreatment,
+      year2025: { ...ordinary },
+      year2026: { ...current },
+    },
+  }, 2026);
+  assertEquals(
+    [lines.line4, lines.line8, lines.line12, lines.line16, lines.line17,
+      lines.line22, lines.line23],
+    [3_955, 1_580, 1_568, 1_562, 8_665, 3_000, 5_665],
+  );
+  assertThrows(() => calculateScheduleJOrdinaryIncome(input(), 2026));
 });

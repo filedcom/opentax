@@ -1,9 +1,7 @@
 import { FilingStatus } from "../../../../../types.ts";
-import {
-  QDCGT_TWENTY_FLOOR_2025,
-  QDCGT_ZERO_CEILING_2025,
-} from "../../../../../config/2025.ts";
-import { qualifiedDividendTax2025 } from "../../../../worksheets/taxes/calculation/tax_table_2025.ts";
+import { configForYear } from "../../../../../config/index.ts";
+import { qualifiedDividendTax } from "../../../../worksheets/taxes/calculation/tax_table_2025.ts";
+import { preferentialRateSchedule } from "../../../../worksheets/taxes/calculation/year_schedule.ts";
 import { scheduleDTax } from "../../../../worksheets/taxes/calculation/income_tax_calculation/preferential_tax.ts";
 
 type CommonLine4Facts = {
@@ -41,9 +39,9 @@ function wholeDollar(value: number, name: string): void {
 }
 
 /**
- * Figure 2025 Schedule J line 4 when line 3 contains qualified dividends or
- * capital gain. The caller selects the worksheet required by the filed 2025
- * return and passes its sourced amounts. Form 2555 requires the separate
+ * Figure Schedule J line 4 when line 3 contains qualified dividends or
+ * capital gain, with the return year's worksheet. The caller selects the
+ * worksheet required by the filed return and passes its sourced amounts. Form 2555 requires the separate
  * Foreign Earned Income Tax Worksheet and is outside this function.
  *
  * This handles current-year preferential income only when Schedule J lines
@@ -56,8 +54,10 @@ function wholeDollar(value: number, name: string): void {
  */
 export function calculateScheduleJPreferentialLine4(
   facts: ScheduleJPreferentialLine4Facts,
+  taxYear: number,
 ): number {
-  if (!QDCGT_ZERO_CEILING_2025[facts.filingStatus]) {
+  const cfg = configForYear(taxYear);
+  if (!cfg.qdcgtZeroCeiling[facts.filingStatus]) {
     throw new Error("Schedule J line 4 filing status is unavailable");
   }
   for (const [name, value] of Object.entries(facts)) {
@@ -78,11 +78,12 @@ export function calculateScheduleJPreferentialLine4(
         "Schedule J line 4 qualified-dividend worksheet cannot omit Form 4952 or special-rate gain calculations",
       );
     }
-    return qualifiedDividendTax2025(
+    return qualifiedDividendTax(
       facts.scheduleJLine3,
       facts.qualifiedDividends,
       facts.netCapitalGain,
       facts.filingStatus,
+      preferentialRateSchedule(taxYear),
     );
   }
   if (facts.worksheet !== "schedule_d") {
@@ -105,7 +106,8 @@ export function calculateScheduleJPreferentialLine4(
     rate28Gain: facts.scheduleDLine18,
     form4952Election: facts.form4952Line4g,
     electedCapitalGain: facts.form4952Line4e,
-    zeroCeiling: QDCGT_ZERO_CEILING_2025,
-    twentyFloor: QDCGT_TWENTY_FLOOR_2025,
+    zeroCeiling: cfg.qdcgtZeroCeiling,
+    twentyFloor: cfg.qdcgtTwentyFloor,
+    taxYear,
   });
 }

@@ -350,8 +350,8 @@ class StandardDeductionNode extends TaxNode<typeof inputSchema> {
           : {}),
       }),
       this.outputNodes.output(schedule_j_calculation, {
-        taxable_income_2025: taxableIncome,
-        filing_status_2025: input.filing_status,
+        current_year_taxable_income: taxableIncome,
+        current_year_filing_status: input.filing_status,
         taking_standard_deduction: takingStandard,
         qbi_deduction: qbi,
         additional_deductions: additionalDeductions,

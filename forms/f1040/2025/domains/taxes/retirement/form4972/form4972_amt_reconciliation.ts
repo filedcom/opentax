@@ -107,6 +107,8 @@ export function assertForm4972AmtJoin(
         taxableIncome,
         status,
         scheduleJTaxSourceSchema.parse(source),
+        // This join checks TY2025 lines, like its AMT constants above.
+        2025,
       );
     baseTax += childTax;
   }
