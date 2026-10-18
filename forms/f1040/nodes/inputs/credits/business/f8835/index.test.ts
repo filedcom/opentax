@@ -26,6 +26,7 @@ function item(overrides: Record<string, unknown> = {}) {
 function lines(overrides: Record<string, unknown> = {}) {
   return calculateForm8835(
     f8835.inputSchema.parse({ f8835s: [item(overrides)] }).f8835s[0],
+    2025,
   );
 }
 
@@ -86,7 +87,7 @@ test("f8835: sourced solar production reaches Form 3800 line 4e", () => {
     solar_production_source: solarSource,
   });
   const parsed = f8835.inputSchema.parse({ f8835s: [solar] });
-  const row = calculateForm8835(parsed.f8835s[0]);
+  const row = calculateForm8835(parsed.f8835s[0], 2025);
   assertEquals(row.line1, 6_000);
   assertEquals(row.line15, 6_000);
   assertEquals(row.form3800Line, "4e");
@@ -419,5 +420,45 @@ test("f8835: forwards each facility and transfer election to Form 3800", () => {
   assertEquals(
     result.outputs.some((output) => output.nodeType === "schedule3"),
     false,
+  );
+});
+
+// FR Doc. 2026-10906 (June 1, 2026): for calendar year 2026, 3.1 cents per kWh
+// for wind, closed-loop biomass and geothermal facilities placed in service
+// before 2022, and 0.6 cents for those placed in service after 2021.
+test("f8835: 2026 sales use the 2026 section 45 credit rates", () => {
+  const preIra = (taxYear: number) =>
+    calculateForm8835(
+      f8835.inputSchema.parse({
+        f8835s: [item({
+          energy_type: EnergyType.Geothermal,
+          facility_placed_in_service_date: "2018-01-01",
+          facility_construction_start_date: "2017-06-01",
+          production_period_start_date: `${taxYear}-01-01`,
+          production_period_end_date: `${taxYear}-12-31`,
+        })],
+      }).f8835s[0],
+      taxYear,
+    );
+  assertEquals(preIra(2025).line1, 30_000);
+  assertEquals(preIra(2026).line1, 31_000);
+  const postIra = calculateForm8835(
+    f8835.inputSchema.parse({
+      f8835s: [item({
+        production_period_start_date: "2026-01-01",
+        production_period_end_date: "2026-12-31",
+      })],
+    }).f8835s[0],
+    2026,
+  );
+  assertEquals(postIra.line1, 6_000);
+  assertThrows(
+    () =>
+      calculateForm8835(
+        f8835.inputSchema.parse({ f8835s: [item()] }).f8835s[0],
+        2026,
+      ),
+    Error,
+    "valid 2026 period",
   );
 });

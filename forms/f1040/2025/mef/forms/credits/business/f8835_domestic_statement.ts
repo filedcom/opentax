@@ -50,6 +50,7 @@ export async function assertForm8835DomesticStatements(
   raw: unknown,
   filer: FilerIdentity | undefined,
   attachments: readonly MefPdfAttachment[],
+  taxYear: number,
 ) {
   if (!raw) return;
   const names = new Set<string>();
@@ -68,8 +69,9 @@ export async function assertForm8835DomesticStatements(
       attachment.description !==
         form8835DomesticDescription(item.facility_description!) ||
       await sha256Hex(attachment.bytes) !== source.statement_sha256 ||
-      (source.certification_year === 2025 &&
-        source.first_year_bonus_credit !== calculateForm8835(item).line10)
+      (source.certification_year === taxYear &&
+        source.first_year_bonus_credit !==
+          calculateForm8835(item, taxYear).line10)
     ) {
       throw new Error(
         "Form 8835 domestic certification differs from final filer, first-year bonus or distinct retained bytes",

@@ -31,6 +31,17 @@ export type DepCareSecondPhaseout = {
   readonly floorRate: number;
 };
 
+/**
+ * Form 8835 line 1 rates in dollars per kWh for electricity sold in the
+ * calendar year (IRC §45(a)(1), adjusted under §45(b)(2)). `full` is wind,
+ * closed-loop biomass, geothermal and solar; `half` is the §45(b)(4)(A)
+ * one-half rate.
+ */
+export type RenewableProductionRates = {
+  readonly placedBefore2022: { readonly full: number; readonly half: number };
+  readonly placedAfter2021: { readonly full: number; readonly half: number };
+};
+
 /** IRC §36B(b)(3)(A) applicable percentage band, in hundredths of a percent. */
 export type PtcApplicablePercentageBand = {
   /** Household income as a percentage of the FPL: at least this. */
@@ -321,4 +332,7 @@ export interface F1040Config {
   ptcRepaymentCaps: ReadonlyArray<PtcRepaymentCap>;
   /** IRC §36B(c)(1)(B): lawfully present individuals below 100% FPL. */
   ptcLawfullyPresentBelow100Fpl: boolean;
+
+  // ── Business credits ─────────────────────────────────────────────────────
+  renewableProductionRates: RenewableProductionRates;
 }

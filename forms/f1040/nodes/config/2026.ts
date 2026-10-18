@@ -372,4 +372,10 @@ export const config2026: F1040Config = {
   ptcRepaymentCaps: [],
   // P.L. 119-21 §71302 ends the IRC §36B(c)(1)(B) exception after 2025.
   ptcLawfullyPresentBelow100Fpl: false,
+  // FR Doc. 2026-10906 (published June 1, 2026): inflation adjustment
+  // factor 2.0570; 3.1 and 1.5 cents before 2022, 0.6 and 0.3 cents after.
+  renewableProductionRates: {
+    placedBefore2022: { full: 0.031, half: 0.015 },
+    placedAfter2021: { full: 0.006, half: 0.003 },
+  },
 };

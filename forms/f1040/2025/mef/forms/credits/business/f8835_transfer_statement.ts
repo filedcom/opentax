@@ -32,7 +32,11 @@ const addressText = (
   [a.line1, a.line2, `${a.city}, ${a.state} ${a.zip}`].filter(Boolean).join(
     ", ",
   );
-export function transferStatementFields(item: F8835Item, index: number) {
+export function transferStatementFields(
+  item: F8835Item,
+  index: number,
+  taxYear: number,
+) {
   const s = item.transfer_source!, t = s.transfers[index];
   return {
     TransferorName: s.transferor.name,
@@ -48,14 +52,14 @@ export function transferStatementFields(item: F8835Item, index: number) {
       "The eligible taxpayer has provided the transferee taxpayer the required minimum documentation under section 1.6418-2(b)(5)(iv).",
     TransfereeConsent:
       "The transferee taxpayer consents to the transfer described in this statement.",
-    Form3800Line: calculateForm8835(item).form3800Line,
+    Form3800Line: calculateForm8835(item, taxYear).form3800Line,
     FacilityDescription: s.facility_description,
     FacilityAddress: addressText(s.facility_address),
     FacilityCoordinates: `${s.facility_latitude}, ${s.facility_longitude}`,
     TotalFacilityCredit: String(s.total_facility_credit),
     TransferredCredit: String(t.credit_amount),
-    TransferorTaxYear: "2025",
-    TransfereeTaxYear: "2025",
+    TransferorTaxYear: String(taxYear),
+    TransfereeTaxYear: String(taxYear),
     RegistrationNumber: s.registration_number,
     CashConsideration: (t.cash_consideration_cents / 100).toFixed(2),
     CashPayments: t.cash_payments.map((p) =>
@@ -78,12 +82,17 @@ export async function assertForm8835TransferStatements(
   raw: unknown,
   filer: FilerIdentity | undefined,
   attachments: readonly MefPdfAttachment[],
+  taxYear: number,
 ) {
   if (!raw) return;
   const names = new Set<string>();
   const registrations = new Set<string>();
   for (const item of inputSchema.parse(raw).f8835s) {
-    assertForm8835TransferSource(item, calculateForm8835(item).line15, true);
+    assertForm8835TransferSource(
+      item,
+      calculateForm8835(item, taxYear).line15,
+      true,
+    );
     const s = item.transfer_source;
     if (!s) continue;
     if (registrations.has(s.registration_number)) {
@@ -122,7 +131,7 @@ export async function assertForm8835TransferStatements(
       }
       for (
         const [key, expected] of Object.entries(
-          transferStatementFields(item, index),
+          transferStatementFields(item, index, taxYear),
         )
       ) {
         if (

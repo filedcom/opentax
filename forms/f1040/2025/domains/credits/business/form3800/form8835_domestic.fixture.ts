@@ -159,7 +159,8 @@ export async function domesticFixture(c: typeof domesticCases[number]) {
     f.domestic_content_source = source;
     if (year === 2025) {
       source.first_year_bonus_credit =
-        calculateForm8835(inputSchema.parse({ f8835s: [f] }).f8835s[0]).line10;
+        calculateForm8835(inputSchema.parse({ f8835s: [f] }).f8835s[0], 2025)
+          .line10;
     }
     const pdf = await PDFDocument.create();
     const font = await pdf.embedFont(StandardFonts.Helvetica);

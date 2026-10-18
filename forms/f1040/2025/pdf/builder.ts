@@ -713,8 +713,18 @@ async function buildPdfBytesInternal(
     throw new Error("PDF source differs from the prepared MeF return");
   }
   if (!preparedBundle) {
-    await assertForm8835TransferStatements(normalized.f8835, filer, []);
-    await assertForm8835DomesticStatements(normalized.f8835, filer, []);
+    await assertForm8835TransferStatements(
+      normalized.f8835,
+      filer,
+      [],
+      mefTaxYear(),
+    );
+    await assertForm8835DomesticStatements(
+      normalized.f8835,
+      filer,
+      [],
+      mefTaxYear(),
+    );
     await assertForm8835IncreaseStatements(normalized.f8835, filer, []);
   }
   if (preparedBundle) {
@@ -731,11 +741,13 @@ async function buildPdfBytesInternal(
       normalized.f8835,
       filer,
       preparedBundle.attachments,
+      mefTaxYear(),
     );
     await assertForm8835DomesticStatements(
       normalized.f8835,
       filer,
       preparedBundle.attachments,
+      mefTaxYear(),
     );
     await assertForm8835IncreaseStatements(
       normalized.f8835,

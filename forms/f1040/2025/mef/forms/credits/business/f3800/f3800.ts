@@ -1,3 +1,4 @@
+import { mefTaxYear } from "../../../../support/year-config.ts";
 import {
   assertCurrentProductionAllocationSource,
   reconcileCurrentProductionAllocation,
@@ -477,7 +478,7 @@ function sourceForm8835(
   }
   const source = f8835InputSchema.parse(raw);
   const expected: Form8835CreditEntry[] = source.f8835s.map((item) => {
-    const lines = calculateForm8835(item);
+    const lines = calculateForm8835(item, mefTaxYear(context));
     const purchase = item.purchase_source;
     if (purchase) {
       return {

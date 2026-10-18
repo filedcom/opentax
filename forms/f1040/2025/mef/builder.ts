@@ -1,3 +1,4 @@
+import { mefTaxYear } from "./support/year-config.ts";
 import { assertForm8835TransferStatements } from "./forms/credits/business/f8835_transfer_statement.ts";
 import { assertForm8835DomesticStatements } from "./forms/credits/business/f8835_domestic_statement.ts";
 import { assertForm8835IncreaseStatements } from "./forms/credits/business/f8835_increase_statement.ts";
@@ -690,11 +691,13 @@ export async function buildMefBundle(
     pending.f8835,
     options.filer,
     attachments,
+    mefTaxYear({ taxYear: options.year }),
   );
   await assertForm8835DomesticStatements(
     pending.f8835,
     options.filer,
     attachments,
+    mefTaxYear({ taxYear: options.year }),
   );
   await assertForm8835IncreaseStatements(
     pending.f8835,

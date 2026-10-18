@@ -48,7 +48,7 @@ function purchased(overrides: Record<string, unknown> = {}) {
 }
 
 test("Form 8835 purchased credit figures no Part II credit and keeps the statement's Form 3800 line", () => {
-  const lines = calculateForm8835(purchased().f8835s[0]);
+  const lines = calculateForm8835(purchased().f8835s[0], 2025);
   assertEquals(lines.line15, 0);
   assertEquals(lines.line1, 0);
   assertEquals(lines.form3800Line, "1f");
@@ -82,7 +82,7 @@ test("Form 8835 purchased credit rejects a transferor that is not the facility o
     ]
   ) {
     assertThrows(
-      () => calculateForm8835(purchased(overrides).f8835s[0]),
+      () => calculateForm8835(purchased(overrides).f8835s[0], 2025),
       Error,
       "Form 8835 purchased credit needs",
     );

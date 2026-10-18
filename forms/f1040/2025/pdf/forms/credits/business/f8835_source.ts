@@ -1,3 +1,4 @@
+import { mefTaxYear } from "../../../../mef/support/year-config.ts";
 import { assertForm8835TransferSource } from "../../../../../nodes/inputs/credits/business/f8835/transfer-source.ts";
 import { assertForm8835PwaSource } from "../../../../../nodes/inputs/credits/business/f8835/pwa-source.ts";
 import { assertForm8835EnergyCommunitySource } from "../../../../../nodes/inputs/credits/business/f8835/energy-community-source.ts";
@@ -77,7 +78,7 @@ export function form8835PdfSources(
     ) throw new Error("Form 8835 PWA source differs from PDF filer");
     assertForm8835SmallFacilitySource(item, true);
     assertForm8835EarlyConstructionSource(item, true);
-    const lines = calculateForm8835(item);
+    const lines = calculateForm8835(item, mefTaxYear());
     assertForm8835TransferSource(item, lines.line15, true);
     const nonownerLessee = item.energy_type === EnergyType.BiomassOpen &&
       (item.open_loop_cellulosic_source !== undefined ||

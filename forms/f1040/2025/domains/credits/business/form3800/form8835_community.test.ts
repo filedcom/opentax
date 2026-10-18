@@ -207,23 +207,23 @@ test("Form 8835 community: exact half, published date/vintage, and brownfield sa
   });
   coal.energy_community_source!.generating_units[0].nameplate_kw_ac--;
   coal.energy_community_source!.generating_units[1].nameplate_kw_ac++;
-  assertThrows(() => calculateForm8835(coal), Error, "50-percent");
+  assertThrows(() => calculateForm8835(coal, 2025), Error, "50-percent");
   const earlyYear = await item(2);
-  assertEquals(calculateForm8835(earlyYear).line11, 60); // no proration at June 22
+  assertEquals(calculateForm8835(earlyYear, 2025).line11, 60); // no proration at June 22
   earlyYear.energy_community_source!.qualification_date = "2025-06-23";
-  assertThrows(() => calculateForm8835(earlyYear), Error, "does not qualify");
+  assertThrows(() => calculateForm8835(earlyYear, 2025), Error, "does not qualify");
   const newYear = await item(3);
   const q = newYear.energy_community_source!.generating_units[0].qualification;
   if (q.category !== "statistical_area") throw new Error("fixture category");
   q.vintage = "vintage1";
-  assertThrows(() => calculateForm8835(newYear), Error, "does not qualify");
+  assertThrows(() => calculateForm8835(newYear, 2025), Error, "does not qualify");
   q.vintage = "vintage2";
   newYear.energy_community_source!.qualification_date = "2025-06-22";
-  assertThrows(() => calculateForm8835(newYear), Error, "does not qualify");
+  assertThrows(() => calculateForm8835(newYear, 2025), Error, "does not qualify");
   const phase1 = await item(4);
-  assertEquals(calculateForm8835(phase1).line11, 60);
+  assertEquals(calculateForm8835(phase1, 2025).line11, 60);
   phase1.energy_community_source!.generating_units[1].nameplate_kw_ac++;
-  assertThrows(() => calculateForm8835(phase1), Error, "does not qualify");
+  assertThrows(() => calculateForm8835(phase1, 2025), Error, "does not qualify");
   phase1.energy_community_source!.generating_units[1].nameplate_kw_ac--;
   const brown =
     phase1.energy_community_source!.generating_units[0].qualification;
@@ -234,15 +234,15 @@ test("Form 8835 community: exact half, published date/vintage, and brownfield sa
   (brown.method as any)
     .presence_or_potential_contamination_identified_verified = true;
   brown.report_completed_on = "2025-06-24";
-  assertThrows(() => calculateForm8835(phase1), Error, "does not qualify");
+  assertThrows(() => calculateForm8835(phase1, 2025), Error, "does not qualify");
   const newCoal = await item(1);
   newCoal.energy_community_source!.qualification_date = "2025-06-22";
-  assertThrows(() => calculateForm8835(newCoal), Error, "does not qualify");
+  assertThrows(() => calculateForm8835(newCoal, 2025), Error, "does not qualify");
   const government = await item(7);
   const governmentReview = government.energy_community_source!
     .generating_units[0].qualification as any;
   governmentReview.method.government_level = "municipal";
   assertThrows(() => inputSchema.parse({ f8835s: [government] }));
   const phase2 = await item(5);
-  assertEquals(calculateForm8835(phase2).line11, 60); // Phase II has no 5MW limit
+  assertEquals(calculateForm8835(phase2, 2025).line11, 60); // Phase II has no 5MW limit
 });

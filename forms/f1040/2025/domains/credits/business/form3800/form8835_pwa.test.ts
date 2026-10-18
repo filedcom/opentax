@@ -285,7 +285,7 @@ test("Form 8835 PWA excludes overtime premiums and separately checks employer pa
   s.payroll[3].cash_wages_paid_cents = 7200;
   s.payroll[3].bona_fide_fringe_paid_cents = 4800;
   assertThrows(
-    () => calculateForm8835(parsed.f8835s[0]),
+    () => calculateForm8835(parsed.f8835s[0], 2025),
     Error,
     "participation",
   );

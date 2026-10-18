@@ -55,7 +55,7 @@ export async function attachReviewedTransfers(
 ) {
   const credits = [], transfers = [];
   for (const [index, f] of input.f8835.entries()) {
-    const credit = calculateForm8835(f).line15;
+    const credit = calculateForm8835(f, 2025).line15;
     const address = {
       line1: "1 Example Way",
       city: "Austin",
@@ -178,7 +178,7 @@ export async function attachReviewedTransfers(
       };
       header();
       for (
-        const [key, value] of Object.entries(transferStatementFields(f, j))
+        const [key, value] of Object.entries(transferStatementFields(f, j, 2025))
       ) {
         const height = value.length > 100 ? 65 : 25;
         if (y - height < 40) {

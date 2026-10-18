@@ -250,7 +250,7 @@ test("open-loop cellulosic Form 8835 line 1f reconciles source, Form 3800, retur
           ...source.open_loop_cellulosic_source!,
           feedstock_record_reference: "2025 cellulosic generation meter",
         },
-      }),
+      }, 2025),
     Error,
     "distinct owner, construction, meter, and unrelated-sale sources",
   );
@@ -449,7 +449,7 @@ function preparedParts(
   allPending: Record<string, Record<string, unknown>>,
 ): Form3800DocumentParts {
   const items = allPending.f8835?.f8835s as F8835Item[];
-  const credits = items.map((item) => calculateForm8835(item).line15);
+  const credits = items.map((item) => calculateForm8835(item, 2025).line15);
   const total = credits.reduce((sum, credit) => sum + credit, 0);
   const ids = credits.map((_, index) => `F8835-${index + 1}`);
   return {
@@ -831,7 +831,7 @@ test("non-owner livestock-waste lessee joins Form 8835, Form 3800, native, PDF, 
       },
     ]
   ) {
-    assertThrows(() => calculateForm8835(altered));
+    assertThrows(() => calculateForm8835(altered, 2025));
     assertThrows(() =>
       form8835Pdf.instances!({}, base.filer, changed(altered), parts)
     );

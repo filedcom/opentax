@@ -1,3 +1,4 @@
+import { mefTaxYear } from "../../../support/year-config.ts";
 import {
   assertForm8835TransferSource,
   form8835TransferDescription,
@@ -101,7 +102,7 @@ function purchasedFacilityXml(
   item: F8835Item,
   context: MefBuildContext,
 ): string {
-  calculateForm8835(item);
+  calculateForm8835(item, mefTaxYear(context));
   const source = item.purchase_source!;
   const address = item.facility_us_address;
   if (
@@ -289,8 +290,9 @@ function facilityXml(item: F8835Item, context: MefBuildContext): string {
         source.statement_sha256 ||
       context.attachmentDescriptionsByFileName?.[source.statement_file_name] !==
         form8835DomesticDescription(item.facility_description!) ||
-      (source.certification_year === 2025 &&
-        source.first_year_bonus_credit !== calculateForm8835(item).line10)
+      (source.certification_year === mefTaxYear(context) &&
+        source.first_year_bonus_credit !==
+          calculateForm8835(item, mefTaxYear(context)).line10)
     ) {
       throw new Error(
         "Form 8835 domestic certification differs from filer, bonus or retained attachment bytes",
@@ -334,7 +336,7 @@ function facilityXml(item: F8835Item, context: MefBuildContext): string {
       );
     }
   }
-  const lines = calculateForm8835(item);
+  const lines = calculateForm8835(item, mefTaxYear(context));
   assertForm8835TransferSource(item, lines.line15, true);
   if (item.transfer_source) {
     if (

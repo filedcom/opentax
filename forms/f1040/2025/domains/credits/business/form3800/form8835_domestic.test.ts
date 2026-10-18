@@ -275,7 +275,7 @@ test("Form 8835 actual costs: IRS example, product labor and exact 40-percent bo
     item.domestic_content_source!.manufactured_products[0].components;
   components[0].manufacturer_direct_cost_cents--;
   components[1].manufacturer_direct_cost_cents++;
-  assertThrows(() => calculateForm8835(item), Error, "40-percent");
+  assertThrows(() => calculateForm8835(item, 2025), Error, "40-percent");
   const example = await domesticFixture(domesticCases[1]);
   const other = inputSchema.parse({ f8835s: example.input.f8835 }).f8835s[0];
   assertEquals(domesticManufacturedCosts(other.domestic_content_source!), {

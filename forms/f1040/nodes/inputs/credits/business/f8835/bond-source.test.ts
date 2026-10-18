@@ -44,7 +44,7 @@ test("f8835 bond review: cumulative financing, filed ratio and reduction cap", (
   ) {
     const f = fixture(proceeds);
     assertForm8835BondSource(f, true);
-    const l = calculateForm8835(f);
+    const l = calculateForm8835(f, 2025);
     assertEquals([l.line5a, l.line5d, l.line15], [
       ratio,
       reduction,
@@ -112,7 +112,7 @@ test("f8835 bond review rejects incomplete, conflicting or misdated inventories"
   for (const change of mutations) {
     const f = fixture();
     change(f);
-    assertThrows(() => calculateForm8835(itemSchema.parse(f)));
+    assertThrows(() => calculateForm8835(itemSchema.parse(f), 2025));
   }
   const unsourced = fixture();
   delete unsourced.tax_exempt_bond_source;

@@ -840,4 +840,9 @@ export const config2025: F1040Config = {
     { maxFplPct: 400, singleCap: 1_625, otherCap: 3_250 },
   ],
   ptcLawfullyPresentBelow100Fpl: true,
+  // 2025 Form 8835 instructions, Credit rates (FR Doc. 2025-09366).
+  renewableProductionRates: {
+    placedBefore2022: { full: 0.03, half: 0.015 },
+    placedAfter2021: { full: 0.006, half: 0.003 },
+  },
 };
