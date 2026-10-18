@@ -35,7 +35,8 @@ export const extensionPaymentEvidenceSchema = z.object({
 });
 
 export const inputSchema = z.object({
-  // Master switch — "X" = generate Form 4868; any other value or absent = do not generate
+  // Drake print flag: "X" = generate Form 4868. It has no tax effect; a
+  // line 7 payment reaches Schedule 3 line 10 either way.
   produce_4868: z.string().optional(),
   // Line 4: estimate of total tax liability (must be ≥ 0)
   line_4_total_tax: z.number().nonnegative().optional(),
@@ -71,12 +72,6 @@ class EXTNode extends TaxNode<typeof inputSchema> {
 
   compute(ctx: NodeContext, input: EXTInput): NodeResult {
     const parsed = inputSchema.parse(input);
-
-    // Master switch: without produce_4868 = "X", nothing is generated
-    if (parsed.produce_4868 !== "X") {
-      return { outputs: [] };
-    }
-
     const line7 = parsed.line_7_amount_paying ?? 0;
 
     if (
@@ -94,7 +89,8 @@ class EXTNode extends TaxNode<typeof inputSchema> {
     }
 
     // Only routing output: line_7 amount flows to Schedule 3 Line 10
-    // when the final return is filed (line_8, line_9, and Drake flags are informational)
+    // when the final return is filed (line_8, line_9, and Drake flags,
+    // produce_4868 among them, are informational)
     const outputs = extensionPaymentOutput(line7);
 
     return { outputs };

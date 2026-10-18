@@ -46,7 +46,7 @@ export function assertExtensionPaymentSource(
     );
   }
   if (
-    extension.produce_4868 !== "X" || amount <= 0 || !evidence ||
+    amount <= 0 || !evidence ||
     evidence.amount !== amount || line10 !== amount ||
     ssn(evidence.primary_ssn) !== ssn(filer.primarySSN) ||
     (filer.filingStatus === FilingStatus.MarriedFilingJointly

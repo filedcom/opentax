@@ -64,24 +64,25 @@ test("ext.compute: positive payment requires matching reviewed evidence", () => 
 });
 
 // ---------------------------------------------------------------------------
-// Master Switch: produce_4868 must be "X" to emit any output
+// produce_4868 is a print flag: a payment made with an extension is a
+// payment either way (2025 Schedule 3, line 10; Form 4868 line 7).
 // ---------------------------------------------------------------------------
 
-test("ext.compute: produce_4868 absent — no outputs even with payment", () => {
-  assertEquals(
-    compute({
-      line_4_total_tax: 10000,
-      line_5_total_payments: 7000,
-      line_7_amount_paying: 1500,
-    }).outputs,
-    [],
-  );
+test("ext.compute: produce_4868 absent — payment still reaches schedule3", () => {
+  const result = compute({
+    line_4_total_tax: 10000,
+    line_5_total_payments: 7000,
+    line_7_amount_paying: 1500,
+    payment_evidence: paymentEvidence(1500),
+  });
+  assertEquals(schedule3Fields(result)?.line10_amount_paid_extension, 1500);
 });
 
-test("ext.compute: produce_4868 not 'X' — no outputs", () => {
-  assertEquals(
-    compute({ produce_4868: "", line_7_amount_paying: 1500 }).outputs,
-    [],
+test("ext.compute: produce_4868 not 'X' — payment still needs its evidence", () => {
+  assertThrows(
+    () => compute({ produce_4868: "", line_7_amount_paying: 1500 }),
+    Error,
+    "matching reviewed 2025 payment evidence",
   );
 });
 

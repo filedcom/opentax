@@ -57,9 +57,7 @@ export function assertSchedule3PaymentSources(
     }
   } else {
     const source = extInputSchema.parse(pending.ext);
-    const expected = source.produce_4868 === "X"
-      ? cents(source.line_7_amount_paying, "extension payment")
-      : 0;
+    const expected = cents(source.line_7_amount_paying, "extension payment");
     if (
       extension !== expected ||
       (expected > 0 && source.payment_evidence?.amount !== expected / 100)
