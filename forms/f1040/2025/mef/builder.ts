@@ -306,7 +306,7 @@ function buildReturnXml(
   assertDigitalAssetDispositionAnswer(pending);
   assertGeneral1040DependentSource(pending, year);
   assertGeneral1040DepositSource(pending, filer);
-  assert1098EInterestSource(pending, filer);
+  assert1098EInterestSource(pending, filer, year);
   assert1099RRecipientOwner(pending.f1099r, filer, year);
   assertPositiveW2GRecipient(pending.w2g, filer, year);
   assertNecWithholdingRecipient(pending.f1099nec, filer);
@@ -617,7 +617,7 @@ export async function buildMefBundle(
       );
     }
   }
-  await assertForm1098IssuerCopies(pending);
+  await assertForm1098IssuerCopies(pending, options.year ?? 2025);
   const retainedSourceDocuments = (options.retainedSourceDocuments ?? []).map((
     d,
   ) => ({

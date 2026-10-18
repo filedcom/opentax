@@ -177,7 +177,8 @@ export const itemSchema = z.object({
   box4_prior_year_refund: z.boolean().optional(),
   box4_taxable_recovery_verified_amount: z.number().nonnegative().optional(),
   box4_recovery_workpaper_reference: z.string().trim().min(1).optional(),
-  // box5: MIP — NOT deductible for TY2025. Collected for informational purposes only.
+  // box5: MIP — informational. TY2025 cannot deduct it; for TY2026 the
+  // qualified amount is entered on Schedule A line 8d.
   box5_mip: z.number().nonnegative().optional(),
   box6_points_paid: z.number().finite().nonnegative().optional(),
   // Box 6 is a source amount, not necessarily the current-year deduction.
@@ -821,13 +822,16 @@ export function assertForm1098MortgageLimitSources(
   filedMortgageUseReview?: unknown,
   cashoutPointsJoined = false,
   filedSpouseTin?: string,
+  taxYear = 2025,
 ): void {
   if (source === undefined) return;
   const parsed = inputSchema.parse(source);
+  const currentYearOrigination = (item: F1098Item) =>
+    item.box3_origination_date?.endsWith(String(taxYear)) ?? false;
   if (
     filedLine8a > 0 &&
     parsed.f1098s.some((item) =>
-      /^([0-9]{2})\/([0-9]{2})\/2025$/.test(
+      new RegExp(`^([0-9]{2})/([0-9]{2})/${taxYear}$`).test(
         item.box3_origination_date ?? "",
       ) &&
       (item.for_routing ?? ForRouting.A) === ForRouting.A &&
@@ -837,7 +841,7 @@ export function assertForm1098MortgageLimitSources(
     )
   ) {
     throw new Error(
-      "Schedule A 2025-originated Form 1098 needs its issued box 2 principal before a positive interest or points claim",
+      `Schedule A ${taxYear}-originated Form 1098 needs its issued box 2 principal before a positive interest or points claim`,
     );
   }
   const post2017MortgageSnapshots = parsed.f1098s.filter((item) => {
@@ -852,28 +856,28 @@ export function assertForm1098MortgageLimitSources(
       originated.getUTCMonth() + 1 === Number(date[1]) &&
       originated.getUTCDate() === Number(date[2]) &&
       originated >= new Date("2017-12-16T00:00:00Z") &&
-      originated < new Date("2026-01-01T00:00:00Z") &&
+      originated < new Date(Date.UTC(taxYear + 1, 0, 1)) &&
       (item.for_routing ?? ForRouting.A) === ForRouting.A &&
       item.refinance !== true &&
       item.binding_contract_exception !== true &&
       item.box1_mortgage_interest > 0;
   });
-  const has2025Purchase = post2017MortgageSnapshots.some((item) =>
-    item.box3_origination_date?.endsWith("2025") &&
+  const hasCurrentYearPurchase = post2017MortgageSnapshots.some((item) =>
+    currentYearOrigination(item) &&
     ((item.box1_current_year_deductible_interest ?? 0) > 0 ||
       deductibleBox6Points(item) > 0)
   );
-  const hasPre2025Mortgage = post2017MortgageSnapshots.some((item) =>
-    !item.box3_origination_date?.endsWith("2025")
+  const hasEarlierMortgage = post2017MortgageSnapshots.some((item) =>
+    !currentYearOrigination(item)
   );
   if (
-    filedLine8a > 0 && has2025Purchase && hasPre2025Mortgage &&
+    filedLine8a > 0 && hasCurrentYearPurchase && hasEarlierMortgage &&
     !parsed.mortgage_limit_review &&
     !parsed.purchase_points_cross_loan_review &&
     !parsed.cashout_refinance_review
   ) {
     throw new Error(
-      "Schedule A 2025 purchase plus existing mortgage needs one qualified-home Pub. 936 review",
+      `Schedule A ${taxYear} purchase plus existing mortgage needs one qualified-home Pub. 936 review`,
     );
   }
   const debtLimit = filingStatus === FilingStatus.MarriedFilingSeparately

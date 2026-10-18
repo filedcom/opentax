@@ -234,3 +234,26 @@ test("educator_expenses.compute: smoke test — MFJ both educators at cap", () =
   // exactly two outputs total: schedule1 + agi_aggregator
   assertEquals(result.outputs.length, 2);
 });
+
+// =============================================================================
+// 9. TY2026
+// =============================================================================
+
+test("educator_expenses.compute: TY2026 MFJ with two $400 educators deducts $700 (Rev. Proc. 2025-32 §4.12)", () => {
+  const result = educator_expenses.compute({ taxYear: 2026, formType: "f1040" }, {
+    educator1_expenses: 400,
+    educator2_expenses: 400,
+    filing_status: FilingStatus.MFJ,
+  });
+  assertEquals(fieldsOf(result.outputs, schedule1)!.line11_educator_expenses, 700);
+  assertEquals(fieldsOf(result.outputs, agi_aggregator)!.line11_educator_expenses, 700);
+});
+
+test("educator_expenses.compute: TY2025 MFJ with two $400 educators still deducts $600 (Rev. Proc. 2024-40 §3.12)", () => {
+  const result = compute({
+    educator1_expenses: 400,
+    educator2_expenses: 400,
+    filing_status: FilingStatus.MFJ,
+  });
+  assertEquals(fieldsOf(result.outputs, schedule1)!.line11_educator_expenses, 600);
+});

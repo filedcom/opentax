@@ -191,7 +191,8 @@ export function assertReturnWideArithmetic(
     line12 !== undefined && line14 !== undefined &&
     !matches(
       line14,
-      line12 + (amount("line13_qbi_deduction") ?? 0) +
+      line12 + (amount("line12f_nonitemizer_charitable") ?? 0) +
+        (amount("line13_qbi_deduction") ?? 0) +
         (amount("line13b_additional_deductions") ?? 0),
     )
   ) {

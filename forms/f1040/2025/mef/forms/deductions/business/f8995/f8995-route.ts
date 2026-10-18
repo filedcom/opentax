@@ -78,10 +78,12 @@ const lineNumbers = [
 export function assertNoUnfiled8995Loss(
   fields: Readonly<Record<string, unknown>>,
   pending?: Readonly<Record<string, unknown>>,
+  taxYear?: number,
 ): void {
   const tipExclusions = assertQualifiedTipQbiSource(
     fields as Record<string, unknown>,
     pending,
+    taxYear,
   );
   const parent = pending?.form8995a as Record<string, unknown> | undefined;
   if (

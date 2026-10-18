@@ -392,3 +392,27 @@ test("routes the deduction to form8995 as retirement_plan_deduction", () => {
   const qbi = result.outputs.find((o) => o.nodeType === "form8995");
   assertEquals(qbi?.fields.retirement_plan_deduction, 10_000);
 });
+
+test("TY2026 SIMPLE deferral for age 60-63 is capped at $22,250 (Notice 2025-67)", () => {
+  const result = sep_retirement.compute({ taxYear: 2026, formType: "f1040" }, {
+    sep_retirements: [{
+      plan_type: PlanType.SIMPLE,
+      simple_employee_contribution: 25_000,
+      simple_employer_contribution: 1_000,
+      age_60_to_63: true,
+    }],
+  });
+  const schedule1 = result.outputs.find((o) => o.nodeType === "schedule1");
+  assertEquals(schedule1?.fields.line16_sep_simple, 23_250);
+});
+
+test("TY2026 solo 401(k) deferral is capped at $24,500 (Notice 2025-67)", () => {
+  const result = sep_retirement.compute({ taxYear: 2026, formType: "f1040" }, {
+    sep_retirements: [{
+      plan_type: PlanType.SOLO_401K,
+      solo401k_employee_deferral: 30_000,
+    }],
+  });
+  const schedule1 = result.outputs.find((o) => o.nodeType === "schedule1");
+  assertEquals(schedule1?.fields.line16_sep_simple, 24_500);
+});

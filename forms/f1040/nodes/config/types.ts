@@ -258,6 +258,8 @@ export interface F1040Config {
   charitableAgiFloorRate: number;
   /** IRC §68(a) reduction fraction; zero when §68 does not apply. */
   itemizedDeductionReductionRate: number;
+  /** IRC §163(h)(3)(E): mortgage insurance premiums as residence interest. */
+  mortgageInsurancePremiumsDeductible: boolean;
 
   // ── QBI minimum deduction (IRC §199A(i)) ─────────────────────────────────
   qbiMinimumDeduction: number;

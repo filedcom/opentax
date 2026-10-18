@@ -33,6 +33,7 @@ export function assertSchedule1ASeniorGeneralSource(
   },
   taxpayerClaim: number,
   spouseClaim: number,
+  taxYear = 2025,
 ): void {
   // Descriptor-only callers have no public general packet. Actual independent health requires it in its core binder.
   if (raw === undefined) return;
@@ -50,7 +51,7 @@ export function assertSchedule1ASeniorGeneralSource(
     ], ["spouse", spouseClaim, ssn.spouseValidSsn]] as const
   ) {
     if (claim === 0) continue;
-    const dobAge = isAge65ByEndOfTaxYear(source[`${owner}_dob`], 2025, owner);
+    const dobAge = isAge65ByEndOfTaxYear(source[`${owner}_dob`], taxYear, owner);
     const flag = source[`${owner}_age_65_or_older`];
     if (dobAge !== undefined && flag !== undefined && dobAge !== flag) {
       throw new Error(

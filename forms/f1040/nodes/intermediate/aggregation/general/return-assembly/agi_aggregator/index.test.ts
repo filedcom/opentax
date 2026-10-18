@@ -1,6 +1,6 @@
 import { test } from "bun:test";
 import { assertEquals, assertThrows } from "@std/assert";
-import { agi_aggregator, expectedTy2025StudentLoanDeduction } from "./index.ts";
+import { agi_aggregator, expectedStudentLoanDeduction } from "./index.ts";
 import type { NodeContext } from "../../../../../../../../core/types/node-context.ts";
 
 const ctx: NodeContext = { taxYear: 2025, formType: "f1040" };
@@ -83,7 +83,7 @@ test("student-loan MAGI adds back foreign earned income exclusion before phaseou
     line8d_foreign_earned_income_exclusion: 5_000,
     line21_student_loan_interest: 2_500,
   };
-  assertEquals(expectedTy2025StudentLoanDeduction(input), 1_667);
+  assertEquals(expectedStudentLoanDeduction(input), 1_667);
   const result = compute(input);
   const schedule1 = result.outputs.find((item) =>
     item.nodeType === "schedule1"
@@ -91,7 +91,7 @@ test("student-loan MAGI adds back foreign earned income exclusion before phaseou
   assertEquals(schedule1?.fields.line21_student_loan_interest, 1_667);
   assertEquals(agi(result), 83_333);
   assertEquals(
-    expectedTy2025StudentLoanDeduction({
+    expectedStudentLoanDeduction({
       ...input,
       line1a_wages: 101_000,
       line8d_foreign_earned_income_exclusion: 10_000,
@@ -743,4 +743,25 @@ test("agi_aggregator: large schedule_c loss can produce negative AGI", () => {
   // Large business loss exceeds wages → negative AGI allowed
   const result = compute({ line1a_wages: 50_000, line3_schedule_c: -150_000 });
   assertEquals(agi(result), -100_000);
+});
+
+test("TY2026 joint student-loan interest phases out from $175,000 to $205,000 (Rev. Proc. 2025-32 §4.29)", () => {
+  const input = {
+    filing_status: "mfj" as const,
+    line1a_wages: 190_000,
+    line21_student_loan_interest: 2_500,
+  };
+  const result = agi_aggregator.compute(
+    { taxYear: 2026, formType: "f1040" },
+    input,
+  );
+  // $2,500 x (1 - $15,000 / $30,000).
+  assertEquals(
+    result.outputs.find((item) => item.nodeType === "schedule1")?.fields
+      .line21_student_loan_interest,
+    1_250,
+  );
+  assertEquals(expectedStudentLoanDeduction(input, 2026), 1_250);
+  // TY2025's $170,000-$200,000 range (Rev. Proc. 2024-40) leaves $833.
+  assertEquals(expectedStudentLoanDeduction(input), 833);
 });

@@ -16,12 +16,14 @@ import {
 import { allocateSharedSeDeduction } from "../../../../../inputs/income/business/schedule_c/qbi-multiple.ts";
 import { CONFIG_BY_YEAR } from "../../../../../config/index.ts";
 
-const vehiclePurchaseDateSchema = z.string().regex(/^2025-\d{2}-\d{2}$/)
+// IRC §163(h)(4)(A)(ii)(I): debt incurred after December 31, 2024, for
+// 2025-2028; `assertVehicleLoanDatesInYear` bounds a date to the return year.
+const vehiclePurchaseDateSchema = z.string().regex(/^202[5-8]-\d{2}-\d{2}$/)
   .refine((value) => {
     const date = new Date(`${value}T00:00:00Z`);
     return !Number.isNaN(date.valueOf()) &&
       date.toISOString().slice(0, 10) === value;
-  }, "Must be a valid 2025 calendar date");
+  }, "Must be a valid calendar date from 2025 through 2028");
 
 const vehicleLoanSchema = z.object({
   vin: z.string().trim().regex(
@@ -318,9 +320,6 @@ const OVERTIME_CAP = 12_500;
 const OVERTIME_CAP_MFJ = 25_000;
 const TIPS_OVERTIME_PHASEOUT_THRESHOLD = 150_000;
 const TIPS_OVERTIME_PHASEOUT_THRESHOLD_MFJ = 300_000;
-const VEHICLE_INTEREST_CAP = 10_000;
-const VEHICLE_PHASEOUT_THRESHOLD = 100_000;
-const VEHICLE_PHASEOUT_THRESHOLD_MFJ = 200_000;
 
 function schedule1APart1Magi(input: Schedule1AInput): number | undefined {
   if (input.magi === undefined) return undefined;
@@ -860,8 +859,34 @@ export function qualifiedOvertimeDeduction(input: Schedule1AInput): number {
   );
 }
 
-export function vehicleLoanInterestDeduction(input: Schedule1AInput): number {
+/** Vehicle loan, purchase and refinance dates fall on or before the year end. */
+export function assertVehicleLoanDatesInYear(
+  ctx: NodeContext,
+  input: Schedule1AInput,
+): void {
+  const yearEnd = `${ctx.taxYear}-12-31`;
+  for (const loan of input.vehicle_loans ?? []) {
+    if (
+      [
+        loan.loan_originated_date,
+        loan.vehicle_purchased_date,
+        loan.refinance?.refinanced_date,
+      ].some((date) => date !== undefined && date > yearEnd)
+    ) {
+      throw new Error(
+        `Schedule 1-A vehicle loan dates must be on or before ${yearEnd}`,
+      );
+    }
+  }
+}
+
+export function vehicleLoanInterestDeduction(
+  ctx: NodeContext,
+  input: Schedule1AInput,
+): number {
   if (input.filing_status === undefined || input.magi === undefined) return 0;
+  const cfg = CONFIG_BY_YEAR[ctx.taxYear];
+  if (!cfg) throw new Error(`No f1040 config for year ${ctx.taxYear}`);
   const qualifiedInterest = (input.vehicle_loans ?? []).reduce(
     (sum, loan) => {
       const borrower = loan.borrower_ssn.replaceAll("-", "");
@@ -875,14 +900,14 @@ export function vehicleLoanInterestDeduction(input: Schedule1AInput): number {
   if (qualifiedInterest <= 0) return 0;
 
   const threshold = input.filing_status === FilingStatus.MFJ
-    ? VEHICLE_PHASEOUT_THRESHOLD_MFJ
-    : VEHICLE_PHASEOUT_THRESHOLD;
+    ? cfg.vehicleLoanInterestPhaseoutThresholdMfj
+    : cfg.vehicleLoanInterestPhaseoutThreshold;
   const phaseout = Math.ceil(
     Math.max(0, schedule1APart1Magi(input)! - threshold) / 1_000,
-  ) * 200;
+  ) * cfg.vehicleLoanInterestPhaseoutPerThousand;
   return Math.max(
     0,
-    Math.min(qualifiedInterest, VEHICLE_INTEREST_CAP) - phaseout,
+    Math.min(qualifiedInterest, cfg.vehicleLoanInterestCap) - phaseout,
   );
 }
 
@@ -923,13 +948,16 @@ export function seniorDeduction(
   return eligiblePeople * perPerson;
 }
 
-/** The strictly zero-exclusion TY2025 senior deduction lines. */
+/** The strictly zero-exclusion senior deduction lines (IRC §151(d)(5)(C)). */
 export function calculateSeniorOnlySchedule1A(
   ctx: NodeContext,
   rawInput: Schedule1AInput,
 ): SeniorOnlyLines {
-  if (ctx.taxYear !== 2025) {
-    throw new Error("Schedule 1-A senior-only filing needs tax year 2025");
+  const cfg = CONFIG_BY_YEAR[ctx.taxYear];
+  if (ctx.taxYear < 2025 || !cfg) {
+    throw new Error(
+      "Schedule 1-A senior-only filing needs tax year 2025 or later",
+    );
   }
   const input = inputSchema.parse(rawInput);
   if (
@@ -948,7 +976,6 @@ export function calculateSeniorOnlySchedule1A(
       "Schedule 1-A senior filing needs whole-dollar Form 1040 AGI and filing status",
     );
   }
-  const cfg = CONFIG_BY_YEAR[2025];
   const threshold = input.filing_status === FilingStatus.MFJ
     ? cfg.seniorDeductionPhaseoutMfj
     : cfg.seniorDeductionPhaseoutSingle;
@@ -1194,15 +1221,19 @@ export function calculateW2OvertimeSchedule1A(
   });
 }
 
-/** Reviewed 2025 purchase loans and bounded same-vehicle refinances. */
+/** Reviewed post-2024 purchase loans and bounded same-vehicle refinances. */
 export function calculateVehicleInterestSchedule1A(
   ctx: NodeContext,
   rawInput: Schedule1AInput,
 ): VehicleInterestLines {
-  if (ctx.taxYear !== 2025) {
-    throw new Error("Schedule 1-A vehicle interest filing needs tax year 2025");
+  const cfg = CONFIG_BY_YEAR[ctx.taxYear];
+  if (ctx.taxYear < 2025 || !cfg) {
+    throw new Error(
+      "Schedule 1-A vehicle interest filing needs tax year 2025 or later",
+    );
   }
   const input = inputSchema.parse(rawInput);
+  assertVehicleLoanDatesInYear(ctx, input);
   if (
     !input.senior_zero_exclusions_review &&
     !input.form2555_exclusion_review
@@ -1243,15 +1274,17 @@ export function calculateVehicleInterestSchedule1A(
     total += loan.qualified_interest_paid;
   }
   const threshold = input.filing_status === FilingStatus.MFJ
-    ? VEHICLE_PHASEOUT_THRESHOLD_MFJ
-    : VEHICLE_PHASEOUT_THRESHOLD;
+    ? cfg.vehicleLoanInterestPhaseoutThresholdMfj
+    : cfg.vehicleLoanInterestPhaseoutThreshold;
   const part1Magi = schedule1APart1Magi(input)!;
   const excess = Math.max(0, part1Magi - threshold);
   const thousands = Math.ceil(excess / 1_000);
-  const reduction = thousands * 200;
-  const capped = Math.min(total, VEHICLE_INTEREST_CAP);
+  const reduction = thousands * cfg.vehicleLoanInterestPhaseoutPerThousand;
+  const capped = Math.min(total, cfg.vehicleLoanInterestCap);
   const deduction = Math.max(0, capped - reduction);
-  if (deduction <= 0 || deduction !== vehicleLoanInterestDeduction(input)) {
+  if (
+    deduction <= 0 || deduction !== vehicleLoanInterestDeduction(ctx, input)
+  ) {
     throw new Error(
       "Schedule 1-A vehicle interest deduction does not reconcile to the source graph",
     );

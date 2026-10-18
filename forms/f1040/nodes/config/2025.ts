@@ -784,6 +784,8 @@ export const config2025: F1040Config = {
   nonitemizerCharitableLimitMfj: 0,
   charitableAgiFloorRate: 0,
   itemizedDeductionReductionRate: 0,
+  // IRC §163(h)(3)(E)(iv): no premiums paid after December 31, 2021.
+  mortgageInsurancePremiumsDeductible: false,
   // IRC §199A(i) (P.L. 119-21 §70105) applies after 2025.
   qbiMinimumDeduction: 0,
   qbiMinimumDeductionQbiFloor: 0,

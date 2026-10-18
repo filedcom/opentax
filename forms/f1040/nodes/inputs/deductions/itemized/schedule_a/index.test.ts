@@ -944,3 +944,134 @@ test("scheduleA.inputSchema: line 11 qualified contributions stay within sourced
     false,
   );
 });
+
+// =============================================================================
+// TY2026 (P.L. 119-21)
+// =============================================================================
+
+function compute2026(input: ScheduleAInput) {
+  return scheduleA.compute({ taxYear: 2026, formType: "f1040" }, input);
+}
+
+test("TY2026 SALT cap is $40,400 less 30% of MAGI over $505,000 (IRC §164(b)(7))", () => {
+  const result = compute2026({
+    filing_status: FilingStatus.Single,
+    agi: 600_000,
+    line_5a_state_income_tax: 30_000,
+    line_5b_real_estate_tax: 20_000,
+  });
+  // $40,400 - 0.30 x $95,000 = $11,900.
+  assertEquals(deductionInput(result).itemized_taxes, 11_900);
+});
+
+test("TY2026 MFS SALT cap is $20,200 and never below $5,000 (IRC §164(b)(7))", () => {
+  const under = compute2026({
+    filing_status: FilingStatus.MFS,
+    agi: 100_000,
+    line_5a_state_income_tax: 30_000,
+  });
+  assertEquals(deductionInput(under).itemized_taxes, 20_200);
+  const floored = compute2026({
+    filing_status: FilingStatus.MFS,
+    agi: 400_000,
+    line_5a_state_income_tax: 30_000,
+  });
+  assertEquals(deductionInput(floored).itemized_taxes, 5_000);
+});
+
+test("TY2026 line 8d phases out 10% per $1,000 of AGI over $100,000 (IRC §163(h)(3)(E)(ii))", () => {
+  const base = {
+    filing_status: FilingStatus.Single,
+    line_8d_mortgage_insurance_premiums: 1_200,
+    mortgage_insurance_premiums_qualified_confirmed: true as const,
+  };
+  // $4,400 over is five steps or fractions: half of $1,200.
+  const partial = compute2026({ ...base, agi: 104_400 });
+  assertEquals(deductionInput(partial).itemized_deductions, 600);
+  assertEquals(
+    partial.finalizations?.[0].fields.line_8d_mortgage_insurance_allowed,
+    600,
+  );
+  const full = compute2026({ ...base, agi: 100_000 });
+  assertEquals(deductionInput(full).itemized_deductions, 1_200);
+  // SA-F1040-011-03: nothing remains above $109,000.
+  const none = compute2026({ ...base, agi: 109_001 });
+  assertEquals(deductionInput(none).itemized_deductions, 0);
+});
+
+test("TY2025 refuses mortgage insurance premiums (IRC §163(h)(3)(E)(iv))", () => {
+  assertThrows(
+    () =>
+      compute({
+        agi: 50_000,
+        line_8d_mortgage_insurance_premiums: 500,
+        mortgage_insurance_premiums_qualified_confirmed: true,
+      }),
+    Error,
+    "not deductible",
+  );
+});
+
+test("TY2026 charity above 0.5% of AGI is deductible (IRC §170(b)(1)(I))", () => {
+  const result = compute2026({
+    filing_status: FilingStatus.Single,
+    agi: 104_400,
+    cash_contributions_to_50_percent_organizations: 3_000,
+    cash_contributions_to_daf_or_supporting_organizations: 500,
+  });
+  // $3,000 - 0.005 x $104,400.
+  assertEquals(deductionInput(result).itemized_deductions, 2_478);
+  assertEquals(result.finalizations?.[0].fields.charitable_agi_floor, 522);
+  assertEquals(deductionInput(result).nonitemizer_charitable_cash, 2_500);
+});
+
+test("TY2026 refuses the charity floor when AGI limits or carryovers apply", () => {
+  assertThrows(
+    () =>
+      compute2026({
+        filing_status: FilingStatus.Single,
+        agi: 10_000,
+        cash_contributions_to_50_percent_organizations: 8_000,
+      }),
+    Error,
+    "limitation worksheet",
+  );
+});
+
+test("TY2026 marks 50%-organization cash without a donor-advised fund split", () => {
+  const result = compute2026({
+    filing_status: FilingStatus.Single,
+    agi: 50_000,
+    cash_contributions_to_50_percent_organizations: 300,
+  });
+  assertEquals(
+    findOutput(result, "standard_deduction")?.fields
+      .nonitemizer_charitable_cash_unclassified,
+    true,
+  );
+});
+
+test("TY2026 refuses an uncategorized line 17 amount", () => {
+  assertThrows(
+    () =>
+      compute2026({
+        filing_status: FilingStatus.Single,
+        agi: 50_000,
+        line_16_other_deductions: 1_000,
+      }),
+    Error,
+    "gambling",
+  );
+});
+
+test("TY2025 Schedule A does not send the non-itemizer charity source", () => {
+  const result = compute({
+    filing_status: FilingStatus.Single,
+    agi: 50_000,
+    cash_contributions_to_50_percent_organizations: 300,
+  });
+  const fields = findOutput(result, "standard_deduction")!.fields;
+  assertEquals("nonitemizer_charitable_cash" in fields, false);
+  assertEquals("nonitemizer_charitable_cash_unclassified" in fields, false);
+  assertEquals(deductionInput(result).itemized_deductions, 300);
+});

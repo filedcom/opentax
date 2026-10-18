@@ -36,7 +36,8 @@ function amount(value: string): number | undefined {
 }
 
 /**
- * Read the official 2025 Form 1098 Copy B AcroForm from exact reviewed bytes.
+ * Read the official Form 1098 (Rev. April 2025) Copy B AcroForm from exact
+ * reviewed bytes; its calendar-year field must name the return's tax year.
  * Scans and flattened copies have no readable fields and intentionally reject.
  */
 export async function verifyForm1098IssuerCopy(
@@ -44,6 +45,7 @@ export async function verifyForm1098IssuerCopy(
   rawReview: unknown,
   bytes: Uint8Array,
   fileName: string,
+  taxYear = 2025,
 ): Promise<void> {
   const item = itemSchema.parse(rawItem);
   const review = form1098IssuerCopyReviewSchema.parse(rawReview);
@@ -96,7 +98,7 @@ export async function verifyForm1098IssuerCopy(
   const lender = field(`${left}.f2_2[0]`).split(/\r?\n/)[0]?.trim() ?? "";
   const borrowerTin = digits(field(`${left}.f2_4[0]`));
   if (
-    (year !== "25" && year !== "2025") ||
+    (year !== String(taxYear).slice(2) && year !== String(taxYear)) ||
     !item.lender_name ||
     lender.toUpperCase() !== item.lender_name.trim().toUpperCase() ||
     !item.recipient_tin ||
@@ -147,6 +149,7 @@ export async function verifyForm1098IssuerCopy(
 /** Bind positive Schedule A interest, taxable recovery, box 6, and reviewed loans. */
 export async function assertForm1098IssuerCopies(
   pending: Record<string, unknown>,
+  taxYear = 2025,
 ): Promise<void> {
   const raw = pending.f1098;
   if (raw === undefined) return;
@@ -208,6 +211,7 @@ export async function assertForm1098IssuerCopies(
       },
       item.issuer_copy.bytes,
       item.issuer_copy.file_name,
+      taxYear,
     );
   }
 }
