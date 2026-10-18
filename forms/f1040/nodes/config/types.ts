@@ -335,4 +335,6 @@ export interface F1040Config {
 
   // ── Business credits ─────────────────────────────────────────────────────
   renewableProductionRates: RenewableProductionRates;
+  /** IRC §45S(d)(2): a qualifying employee's prior-year compensation limit. */
+  paidLeaveCompensationLimit: number;
 }

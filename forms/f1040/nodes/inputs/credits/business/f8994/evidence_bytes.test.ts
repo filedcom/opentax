@@ -82,8 +82,8 @@ test("Form 8994 evidence rejects policy, employee, wage and source tampering", a
         ...evidence,
         employee_records: [{
           ...first,
-          prior_2024_compensation: {
-            ...first.prior_2024_compensation,
+          prior_year_compensation: {
+            ...first.prior_year_compensation,
             compensation_amount: 90_000,
           },
         }, evidence.employee_records[1]],

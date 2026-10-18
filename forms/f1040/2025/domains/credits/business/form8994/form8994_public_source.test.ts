@@ -148,7 +148,7 @@ test("Form8994 actual native/PDF source packet rejects detached employer, wage, 
     (p) => {
       const rows = (p.f8994.reviewed_evidence as Record<string, unknown>)
         .employee_records as Record<string, unknown>[];
-      (rows[0].prior_2024_compensation as Record<string, unknown>)
+      (rows[0].prior_year_compensation as Record<string, unknown>)
         .compensation_amount = 79999;
     },
   ];

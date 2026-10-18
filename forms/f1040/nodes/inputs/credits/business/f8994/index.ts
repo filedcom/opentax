@@ -7,9 +7,12 @@ import { f1040 } from "../../../../outputs/general/return-assembly/f1040/index.t
 import { scheduleC } from "../../../income/business/schedule_c/index.ts";
 import { f3800 } from "../f3800/index.ts";
 import { form8994EvidenceSchema } from "./evidence_schema.ts";
+import { configForYear } from "../../../../config/index.ts";
 
-// January 2021 Form 8994 and December 2024 instructions apply to TY2025.
-// This source covers one direct Schedule C employer, not a K-1 credit.
+// January 2021 Form 8994 and its December 2024 instructions; P.L. 119-21
+// §70304 amends IRC §45S for tax years beginning after 2025. This source
+// covers one direct Schedule C employer using the wage method, not a K-1
+// credit or the premium method.
 const reference = z.string().trim().min(1);
 const dollars = z.number().finite().nonnegative().refine((amount) =>
   Number.isSafeInteger(Math.round(amount * 100)) &&
@@ -21,14 +24,13 @@ const date = z.string().regex(/^\d{4}-\d{2}-\d{2}$/).refine((value) => {
   return !Number.isNaN(parsed.getTime()) &&
     parsed.toISOString().slice(0, 10) === value;
 });
-const ty2025Date = date.refine((value) => value.startsWith("2025-"));
 
 const employeeSchema = z.object({
   employee_name: reference,
   employee_ssn: z.string().regex(/^\d{9}$/),
   payroll_ledger_reference: reference,
-  prior_2024_compensation_record_reference: reference,
-  prior_2024_compensation: dollars.refine((amount) => amount <= 93_000),
+  prior_year_compensation_record_reference: reference,
+  prior_year_compensation: dollars,
   at_least_one_year_employed_on_leave_start_confirmed: z.literal(true),
   qualifying_leave_purpose: z.enum([
     "birth_or_child_care",
@@ -38,8 +40,8 @@ const employeeSchema = z.object({
     "military_qualifying_exigency",
     "military_caregiver",
   ]),
-  leave_start_date: ty2025Date,
-  leave_end_date: ty2025Date,
+  leave_start_date: date,
+  leave_end_date: date,
   normal_hourly_wage: positiveDollars,
   usual_weekly_hours: z.number().finite().positive().max(168),
   policy_annual_leave_weeks_for_employee: z.number().finite().positive(),
@@ -130,6 +132,33 @@ export const inputSchema = z.object({
 
 export type F8994Input = z.infer<typeof inputSchema>;
 
+/** IRC §45S(d) for the return year: leave in the year, prior-year pay under the limit. */
+export function assertForm8994ReturnYear(
+  source: F8994Input,
+  taxYear: number,
+): void {
+  const limit = configForYear(taxYear).paidLeaveCompensationLimit;
+  for (const employee of source.employees) {
+    if (
+      !employee.leave_start_date.startsWith(`${taxYear}-`) ||
+      !employee.leave_end_date.startsWith(`${taxYear}-`)
+    ) {
+      throw new Error(`Form 8994 credits only leave taken in ${taxYear}`);
+    }
+    if (employee.prior_year_compensation > limit) {
+      throw new Error(
+        `Form 8994 qualifying employee's prior-year compensation exceeds $${limit}`,
+      );
+    }
+    // IRC §45S(d)(1) as amended by P.L. 119-21 §70304(a)(4).
+    if (taxYear >= 2026 && employee.usual_weekly_hours < 20) {
+      throw new Error(
+        "Form 8994 qualifying employee must customarily work at least 20 hours a week",
+      );
+    }
+  }
+}
+
 export function calculateForm8994(raw: F8994Input) {
   const source = inputSchema.parse(raw);
   const employeeCredits = source.employees.map((employee) => {
@@ -155,8 +184,9 @@ class F8994Node extends TaxNode<typeof inputSchema> {
   readonly inputSchema = inputSchema;
   readonly outputNodes = new OutputNodes([f3800, scheduleC, f1040]);
 
-  compute(_ctx: NodeContext, rawInput: F8994Input): NodeResult {
+  compute(ctx: NodeContext, rawInput: F8994Input): NodeResult {
     const source = inputSchema.parse(rawInput);
+    assertForm8994ReturnYear(source, ctx.taxYear);
     const lines = calculateForm8994(source);
     return {
       outputs: [

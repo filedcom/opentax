@@ -85,14 +85,14 @@ export async function reconcileForm8994EvidenceBytes(
     );
     const records = evidence.employee_records.filter((row) =>
       row.leave_payroll.employee_ssn === employee.employee_ssn &&
-      row.prior_2024_compensation.employee_ssn === employee.employee_ssn
+      row.prior_year_compensation.employee_ssn === employee.employee_ssn
     );
     if (terms.length !== 1 || records.length !== 1) {
       throw new Error("Form 8994 employee SSN lacks one policy/payroll record");
     }
     const term = terms[0];
     const payroll = records[0].leave_payroll;
-    const prior = records[0].prior_2024_compensation;
+    const prior = records[0].prior_year_compensation;
     if (
       term.policy_annual_leave_weeks_for_employee !==
         employee.policy_annual_leave_weeks_for_employee ||
@@ -100,7 +100,7 @@ export async function reconcileForm8994EvidenceBytes(
         employee.policy_wage_replacement_rate ||
       payroll.document_reference !== employee.payroll_ledger_reference ||
       prior.document_reference !==
-        employee.prior_2024_compensation_record_reference ||
+        employee.prior_year_compensation_record_reference ||
       payroll.employer_ein !== source.employer_ein ||
       prior.employer_ein !== source.employer_ein ||
       payroll.employee_name !== employee.employee_name ||
@@ -115,7 +115,7 @@ export async function reconcileForm8994EvidenceBytes(
       Math.round(payroll.employer_paid_qualifying_leave_wages * 100) !==
         Math.round(employee.employer_paid_qualifying_leave_wages * 100) ||
       Math.round(prior.compensation_amount * 100) !==
-        Math.round(employee.prior_2024_compensation * 100)
+        Math.round(employee.prior_year_compensation * 100)
     ) {
       throw new Error(
         "Form 8994 employee policy, leave payroll or prior compensation differs from source",
@@ -127,7 +127,7 @@ export async function reconcileForm8994EvidenceBytes(
     ledger,
     ...evidence.employee_records.flatMap((
       row,
-    ) => [row.leave_payroll, row.prior_2024_compensation]),
+    ) => [row.leave_payroll, row.prior_year_compensation]),
   ];
   const references = reviewedDocuments.map((row) => row.document_reference);
   const fileNames = reviewedDocuments.map((row) => row.attachment_file_name);

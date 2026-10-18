@@ -14,7 +14,7 @@ const documents = [
   evidence.written_policy,
   evidence.schedule_c_wage_ledger,
   ...evidence.employee_records.flatMap(
-    (row) => [row.leave_payroll, row.prior_2024_compensation],
+    (row) => [row.leave_payroll, row.prior_year_compensation],
   ),
 ];
 /** Deterministic, explicitly synthetic copies of all reviewed source facts. */

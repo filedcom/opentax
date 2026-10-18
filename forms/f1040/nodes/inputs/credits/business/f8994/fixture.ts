@@ -21,8 +21,8 @@ const sourceWithoutEvidence = {
     employee_name: "A Example",
     employee_ssn: "123450001",
     payroll_ledger_reference: "2025-leave-pay-a",
-    prior_2024_compensation_record_reference: "2024-compensation-a",
-    prior_2024_compensation: 80_000,
+    prior_year_compensation_record_reference: "2024-compensation-a",
+    prior_year_compensation: 80_000,
     at_least_one_year_employed_on_leave_start_confirmed: true,
     qualifying_leave_purpose: "birth_or_child_care",
     leave_start_date: "2025-04-01",
@@ -41,8 +41,8 @@ const sourceWithoutEvidence = {
     employee_name: "B Example",
     employee_ssn: "123450002",
     payroll_ledger_reference: "2025-leave-pay-b",
-    prior_2024_compensation_record_reference: "2024-compensation-b",
-    prior_2024_compensation: 72_000,
+    prior_year_compensation_record_reference: "2024-compensation-b",
+    prior_year_compensation: 72_000,
     at_least_one_year_employed_on_leave_start_confirmed: true,
     qualifying_leave_purpose: "own_serious_health_condition",
     leave_start_date: "2025-06-01",
@@ -83,7 +83,7 @@ export const form8994EvidenceFixtureDocuments = [
   sourceWithoutEvidence.schedule_c_wage_ledger_reference,
   ...sourceWithoutEvidence.employees.flatMap((employee) => [
     employee.payroll_ledger_reference,
-    employee.prior_2024_compensation_record_reference,
+    employee.prior_year_compensation_record_reference,
   ]),
 ].map((reference) => ({
   fileName: `${reference}.pdf`,
@@ -142,11 +142,11 @@ export const form8994DirectEmployer = inputSchema.parse({
           employer_paid_qualifying_leave_wages:
             employee.employer_paid_qualifying_leave_wages,
         },
-        prior_2024_compensation: {
-          ...await document(employee.prior_2024_compensation_record_reference),
+        prior_year_compensation: {
+          ...await document(employee.prior_year_compensation_record_reference),
           employer_ein: sourceWithoutEvidence.employer_ein,
           employee_ssn: employee.employee_ssn,
-          compensation_amount: employee.prior_2024_compensation,
+          compensation_amount: employee.prior_year_compensation,
         },
       })),
     ),

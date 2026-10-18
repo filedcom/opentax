@@ -282,20 +282,8 @@
       "calculation standard_deduction",
       "calculation start"
     ],
-    "single-form8994-direct-employer-full": [
-      "calculation form8960",
-      "calculation standard_deduction",
-      "calculation start"
-    ],
-    "single-form8994-direct-employer-partial": [
-      "calculation form8960",
-      "calculation standard_deduction",
-      "calculation start"
-    ],
     "single-form8994-direct-employer-zero": [
-      "calculation form8960",
-      "calculation standard_deduction",
-      "calculation start"
+      "xml Form 8995 line 16 minimum deduction has no 2026v1.0 MeF element; export waits for a schema that carries it"
     ],
     "single-shop-health-premium-credit": [
       "calculation form8960",
@@ -800,9 +788,7 @@
     "joint-primary-wotc-upper-edge": "TY2026 law: shifted a year, the sample hires its WOTC employee in 2026; IRC \u00a751(c)(4) ends the work opportunity credit for individuals who begin work after December 31, 2025, so the 2026 return correctly cannot claim it",
     "joint-primary-wotc-upper-plus-one": "TY2026 law: shifted a year, the sample hires its WOTC employee in 2026; IRC \u00a751(c)(4) ends the work opportunity credit for individuals who begin work after December 31, 2025, so the 2026 return correctly cannot claim it",
     "joint-primary-wotc-partial-above": "TY2026 law: shifted a year, the sample hires its WOTC employee in 2026; IRC \u00a751(c)(4) ends the work opportunity credit for individuals who begin work after December 31, 2025, so the 2026 return correctly cannot claim it",
-    "single-form8994-direct-employer-full": "Open TY2026 work: Form 8994 names the 2024 compensation year and its $93,000 limit in its schema; Notice 2026-28 changes the 2026 credit",
-    "single-form8994-direct-employer-partial": "Open TY2026 work: Form 8994 names the 2024 compensation year and its $93,000 limit in its schema; Notice 2026-28 changes the 2026 credit",
-    "single-form8994-direct-employer-zero": "Open TY2026 work: Form 8994 names the 2024 compensation year and its $93,000 limit in its schema; Notice 2026-28 changes the 2026 credit",
+    "single-form8994-direct-employer-zero": "MeF schema gap: 2026v1.0 has no element for the IRC \u00a7199A(i) minimum deduction (P.L. 119-21 \u00a770105; draft 2026 Form 8995 line 16)",
     "single-shop-health-premium-credit": "Open TY2026 work: Form 8941 checks each employee against the 2025 IRS rating-area average premium table and 2025 payroll year; the 2026 Form 8941 instructions table is not in irs/corpus/ty2026",
     "single-shop-part-year-enrollment": "Open TY2026 work: Form 8941 checks each employee against the 2025 IRS rating-area average premium table and 2025 payroll year; the 2026 Form 8941 instructions table is not in irs/corpus/ty2026",
     "single-shop-mixed-family-tiers": "Open TY2026 work: Form 8941 checks each employee against the 2025 IRS rating-area average premium table and 2025 payroll year; the 2026 Form 8941 instructions table is not in irs/corpus/ty2026",

@@ -13,7 +13,7 @@ the line 1 credit, even if the credit is limited or carried.
 The direct Schedule C source requires the written policy, adoption/effective
 dates, two-week full-time leave entitlement and proportional part-time
 entitlement, 50%-or-greater employer-funded replacement rate, noninterference
-compliance, FMLA-designated purpose, employee service and 2024 compensation
+compliance, FMLA-designated purpose, employee service and prior-year compensation
 evidence, payroll and normal wage facts, and exclusions of state-required/paid
 wages and wages used for another business credit. It checks the filed proprietor
 SSN, employer EIN, payroll wages and Schedule C line 26 credit reduction. The

@@ -53,7 +53,7 @@ export const form8994EvidenceSchema = z.object({
         policy_wage_replacement_rate: z.number().finite().min(0.5).max(1),
         employer_paid_qualifying_leave_wages: money,
       }).strict(),
-      prior_2024_compensation: document.extend({
+      prior_year_compensation: document.extend({
         employer_ein: z.string().regex(/^\d{9}$/),
         employee_ssn: z.string().regex(/^\d{9}$/),
         compensation_amount: money,

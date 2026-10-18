@@ -845,4 +845,7 @@ export const config2025: F1040Config = {
     placedBefore2022: { full: 0.03, half: 0.015 },
     placedAfter2021: { full: 0.006, half: 0.003 },
   },
+  // Instructions for Form 8994 (Rev. December 2024), Compensation Limit
+  // Per Year: 60% of the 2024 IRC §414(q)(1)(B) amount of $155,000.
+  paidLeaveCompensationLimit: 93_000,
 };
