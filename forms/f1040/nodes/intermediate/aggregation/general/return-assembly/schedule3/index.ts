@@ -10,6 +10,7 @@ import {
 } from "../../../../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../../../../core/types/output-nodes.ts";
 import { f1040 } from "../../../../../outputs/general/return-assembly/f1040/index.ts";
+import { f8812 } from "../../../../../inputs/credits/child/f8812/index.ts";
 import type { NodeContext } from "../../../../../../../../core/types/node-context.ts";
 import { inputSchema as form8880SourceSchema } from "../../../../forms/credits/individual/form8880/calculation.ts";
 
@@ -192,12 +193,49 @@ function partIITotal(input: Schedule3Input): number {
   );
 }
 
+/** Schedule 8812 Credit Limit Worksheet A line 2 (2025 Instructions for
+ * Schedule 8812): Schedule 3 lines 1, 2, 3, 4, 5b, 6d, 6f, 6l and 6m. Left to
+ * the preparer when a Worksheet B credit (Forms 5695 Part I, 8396, 8839,
+ * 8859) or a credit Form 1040 still limits (lines 6f, 6i, 6m) is present. */
+function creditLimitWorksheetA(input: Schedule3Input) {
+  if (
+    (input.line5a_residential_clean_energy ?? 0) > 0 ||
+    (input.line6c_adoption_credit ?? 0) > 0 ||
+    (input.line6g_mortgage_interest_credit ?? 0) > 0 ||
+    (input.line6h_dc_homebuyer_credit ?? 0) > 0 ||
+    (input.line6i_qualified_electric_vehicle_credit ?? 0) > 0 ||
+    sumAccumulable(input.line6f_clean_vehicle_credit) > 0 ||
+    sumAccumulable(input.line6m_prev_owned_clean_vehicle_credit) > 0 ||
+    input.form3800_source_credit_pending === true ||
+    input.form8912_source_credit_pending === true ||
+    input.form8859_source_credit_pending === true ||
+    input.form8834_source_credit_pending === true ||
+    input.form8396_source_credit_pending === true ||
+    input.form8839_source_credit_pending === true
+  ) return undefined;
+  return {
+    schedule3_line1: line1(input),
+    schedule3_line2: input.line2_childcare_credit ?? 0,
+    schedule3_line3: input.line3_education_credit ?? 0,
+    schedule3_line4: input.line4_retirement_savings_credit ?? 0,
+    schedule3_line5b: input.line5b_energy_efficient_home ?? 0,
+    // Schedule R's own limit (Form 1040 line 18 less Schedule 3 lines 1, 2
+    // and 6l) is within this sum, so the tentative amount gives the same
+    // worksheet line 3.
+    schedule3_line6d: input.line6d_elderly_disabled_credit ?? 0,
+    schedule3_line6f: 0,
+    schedule3_line6l: input.line6l_form8978_credit ?? 0,
+    schedule3_line6m: 0,
+    worksheet_b_applies: false,
+  };
+}
+
 // ─── Node class ───────────────────────────────────────────────────────────────
 
 class Schedule3Node extends TaxNode<typeof inputSchema> {
   readonly nodeType = "schedule3";
   readonly inputSchema = inputSchema;
-  readonly outputNodes = new OutputNodes([f1040]);
+  readonly outputNodes = new OutputNodes([f1040, f8812]);
 
   compute(_ctx: NodeContext, rawInput: Schedule3Input): NodeResult {
     const input = inputSchema.parse(rawInput);
@@ -267,11 +305,17 @@ class Schedule3Node extends TaxNode<typeof inputSchema> {
         (input.line6i_qualified_electric_vehicle_credit ?? 0);
     }
 
+    const worksheetA = credits > 0 ? creditLimitWorksheetA(input) : undefined;
     const outputs: NodeOutput[] = [
       this.outputNodes.output(
         f1040,
         f1040Input as AtLeastOne<z.infer<typeof f1040["inputSchema"]>>,
       ),
+      ...(worksheetA
+        ? [this.outputNodes.output(f8812, {
+          schedule3_credit_limit_worksheet: worksheetA,
+        })]
+        : []),
     ];
     // Self-emit computed line values into this node's own pending dict so the
     // PDF/MeF builders can print the schedule (same pattern as the f1040 node).

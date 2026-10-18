@@ -34,7 +34,10 @@ import type {
   OriginatorInfo,
 } from "../../forms/f1040/mef/header.ts";
 import { OriginatorType } from "../../forms/f1040/nodes/inputs/general/filing/preparer/index.ts";
-import { buildMefSubmissionArchive } from "../../forms/f1040/2025/mef/submissions/submission-archive.ts";
+import {
+  buildMefSubmissionArchive,
+  type MefSubmissionArchive,
+} from "../../forms/f1040/2025/mef/submissions/submission-archive.ts";
 import { filingResidencyReviewSchema } from "../../forms/f1040/2025/mef/submissions/residency-review.ts";
 import {
   isOnlineFilerEfin,
@@ -515,10 +518,10 @@ export function withSubmissionOriginator(
   };
 }
 
-/** Pub 4164 submission ZIP: manifest/manifest.xml, xml/submission.xml, attachment/*.pdf. */
-export async function exportMefSubmissionCommand(
-  args: ExportMefSubmissionArgs,
-): Promise<MefSubmissionExport> {
+/** Build, without writing, the submission ZIP that export and transmission share. */
+export async function prepareMefSubmissionArchive(
+  args: Omit<ExportMefSubmissionArgs, "outputDir">,
+): Promise<MefSubmissionArchive> {
   if (args.force || args.draft) {
     throw new Error(
       "MeF submission export cannot bypass filing checks or export a draft",
@@ -559,7 +562,7 @@ export async function exportMefSubmissionCommand(
       "utf8",
     ),
   ));
-  const archive = await buildMefSubmissionArchive(prepared.bundle, {
+  return await buildMefSubmissionArchive(prepared.bundle, {
     filer,
     submissionId: mefSubmissionId(
       filer.originator.efin,
@@ -569,7 +572,14 @@ export async function exportMefSubmissionCommand(
     processingDate,
     residencyReview,
   });
-  const outputDir = args.outputDir ?? join(returnPath, "submissions");
+}
+
+/** The archive's ZIP written under returns/<id>/submissions (or `outputDir`), never overwritten. */
+export async function writeMefSubmissionArchive(
+  archive: MefSubmissionArchive,
+  returnPath: string,
+  outputDir = join(returnPath, "submissions"),
+): Promise<MefSubmissionExport> {
   await mkdir(outputDir, { recursive: true });
   const path = join(outputDir, archive.fileName);
   await writeFile(path, archive.bytes, { flag: "wx" });
@@ -584,4 +594,15 @@ export async function exportMefSubmissionCommand(
       ...archive.bundle.attachments.map((a) => `attachment/${a.fileName}`),
     ],
   };
+}
+
+/** Pub 4164 submission ZIP: manifest/manifest.xml, xml/submission.xml, attachment/*.pdf. */
+export async function exportMefSubmissionCommand(
+  args: ExportMefSubmissionArgs,
+): Promise<MefSubmissionExport> {
+  return await writeMefSubmissionArchive(
+    await prepareMefSubmissionArchive(args),
+    join(args.baseDir, args.returnId),
+    args.outputDir,
+  );
 }

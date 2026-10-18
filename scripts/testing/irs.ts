@@ -76,7 +76,7 @@ export function undeclaredIrsReferences(
   for (const [path, text] of sources) {
     for (
       const match of text.matchAll(
-        /\birs\/((?:mef\/[^/"'`\s]+)|(?:rules\/[^"'`\s]+))/g,
+        /\birs\/((?:(?:mef|wsdl)\/[^/"'`\s]+)|(?:rules\/[^"'`\s]+))/g,
       )
     ) {
       if (

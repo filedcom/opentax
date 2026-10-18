@@ -18,6 +18,7 @@ case in CI.
 | `rules/1040_Business_Rules_2026v1.0.csv` | TY2026 rules | `IMF_Series_2026v1.0.zip` › `1040x_2026v1.0.zip` › `1040x_Business_Rules_2026v1.0.zip` |
 | `4868/2026v1.0/` | TY2026 Form 4868 extension schemas (`Extensions/4868/Return4868.xsd`); the 2025v5.4 package has no 4868 schema | `IMF_Series_2026v1.0.zip` › `4868_2026v1.0.zip` › `4868_Schema_2026v1.0.zip` › `2026v1.0/` |
 | `4868/rules/4868_Business_Rules_2026v1.0.pdf` | TY2026 Form 4868 rules that `forms/f4868/validation/rules` implements | `IMF_Series_2026v1.0.zip` › `4868_2026v1.0.zip` › `4868_Business_Rules_2026v1.0.zip` |
+| `wsdl/10.9/` | MeF A2A WSDL 10.9: `MeFMSIServices` (Login, Logout, ETIN services), `MeFTransmitterServicesMTOM` (SendSubmissions, acks, status), `MeFHeader.xsd` and the release notes; `cli/mef` builds against them and its mock IRS server validates with them | `WSDLs_10.9/`, all files as released |
 
 Each `mef/<version>/` folder holds the schema package's version folder as
 released (`Common/`, `IndividualIncomeTax/`, `Shared/`, ...), so for example
@@ -37,6 +38,7 @@ mkdir -p rules && unzip -q -j 1040x_Business_Rules_2026v1.0.zip '1040_Business_R
 unzip -q 4868_2026v1.0.zip && mkdir -p 4868/rules
 unzip -q -d 4868 4868_Schema_2026v1.0.zip '2026v1.0/*'
 unzip -q -j 4868_Business_Rules_2026v1.0.zip '4868_Business_Rules_2026v1.0.pdf' -d 4868/rules
+mkdir -p wsdl/10.9 && cp WSDLs_10.9/* wsdl/10.9/
 cd .. && bun run check:irs
 ```
 
