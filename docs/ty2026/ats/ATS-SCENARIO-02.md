@@ -1,13 +1,13 @@
 # TY2026 ATS Form 1040 scenario 2 fixture contract
 
-Source: pinned [13-page IRS draft scenario 2 packet](../corpus/ats/1040-scenario-02.pdf),
+Source: pinned [13-page IRS draft scenario 2 packet](../../../irs/corpus/ty2026/ats/1040-scenario-02.pdf),
 SHA-256 `b2d58c490b489294cb80137c5755e28f2bba806aa9329248311b81e58d932915`.
-The statutory-employee route is supported by final [2026 Publication 15-A](../corpus/authorities/p15a--2026.pdf)
+The statutory-employee route is supported by final [2026 Publication 15-A](../../../irs/corpus/ty2026/authorities/p15a--2026.pdf)
 (`3486cf0ad83401494aa57c688ffb411346ef399bd8202317c1eb3e6d41575c2e`)
-and the pinned [draft 2026 Schedule SE instructions](../corpus/draft/i1040sse.pdf).
-The packet's December 2025 revision of [Form 8283](../corpus/authorities/f8283--2025.pdf)
+and the pinned [draft 2026 Schedule SE instructions](../../../irs/corpus/ty2026/draft/i1040sse.pdf).
+The packet's December 2025 revision of [Form 8283](../../../irs/corpus/ty2026/authorities/f8283--2025.pdf)
 (`389ab1b7c01b542724092f82a55dd43ab00792770b5254a87c4cd4082d8d4c69`)
-and [instructions](../corpus/authorities/i8283--2025.pdf)
+and [instructions](../../../irs/corpus/ty2026/authorities/i8283--2025.pdf)
 (`2de015f75bcf2fa9222f8ce6f5ab394d1845ec64ec6cb53ce4e60a4c88150073`)
 are also pinned. OCR was used to read the packet's encoded cover text, and
 checked boxes were verified against rendered pages. Keep printed facts,

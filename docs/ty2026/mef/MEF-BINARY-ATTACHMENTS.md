@@ -14,7 +14,7 @@ The four generators below are the complete `buildBinaryAttachments` set in
 [`forms/f1040/2025/mef/forms`](../../../forms/f1040/2025/mef/forms). The current
 restricted TY2026 1040 XSD and business rules are the authority for final
 binary document names, reference attributes and allowed content. The
-[public workbook](../corpus/mef/forms-attachments.xlsx) is an inventory, not a
+[public workbook](../../../irs/corpus/ty2026/mef/forms-attachments.xlsx) is an inventory, not a
 binary specification. No TY2025 attachment rule should be copied on that
 evidence alone.
 

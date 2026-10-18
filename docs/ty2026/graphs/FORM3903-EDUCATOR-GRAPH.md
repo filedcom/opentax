@@ -1,11 +1,11 @@
 # TY2026 moving expenses and educator deduction graph
 
-Snapshot: September 27, 2026. The [2026 draft Form 3903](../corpus/draft/f3903.pdf)
-and [draft instructions](../corpus/draft/i3903.pdf) are pinned at SHA-256
+Snapshot: September 27, 2026. The [2026 draft Form 3903](../../../irs/corpus/ty2026/draft/f3903.pdf)
+and [draft instructions](../../../irs/corpus/ty2026/draft/i3903.pdf) are pinned at SHA-256
 `589d204b50c9962bf6c69acdf9b95981bb75a83fb9c4bca19e01d0e984b31a8d`
 and `65bf15d80c9125c8a99ff651bd373623f4cbd239c606b7f2979d65c56086f29c`.
-The [draft Schedule 1](../corpus/draft/f1040s1.pdf), [draft Schedule A](../corpus/draft/f1040sa.pdf),
-and [2026 Publication 505](../corpus/authorities/p505--2026.pdf) establish the
+The [draft Schedule 1](../../../irs/corpus/ty2026/draft/f1040s1.pdf), [draft Schedule A](../../../irs/corpus/ty2026/draft/f1040sa.pdf),
+and [2026 Publication 505](../../../irs/corpus/ty2026/authorities/p505--2026.pdf) establish the
 receiving lines and the new educator itemized route. Drafts are planning
 sources; recheck their final revisions and the selected MeF release.
 
@@ -33,7 +33,7 @@ aggregates Schedule 1/AGI. It cannot represent intelligence-community
 eligibility, the certification, separate printable moves, W-2 code P, taxable
 excess, the storage-only route, Form 2555 allocation, or dated mileage.
 Form 3903 has no TY2025 PDF descriptor or MeF serializer in the current
-inventories. The [2026 PDF inventory](../inventories/pdf-fields/pdf-fields-f3903.csv) records ten
+inventories. The 2026 PDF inventory records ten
 widgets, all in the field tree: name, SSN, certification `c1_1`, lines 1–4,
 the two line-5 choice buttons `c1_2[0/1]`, and line 5 amount. They are on
 PDF page 2 because page 1 is the draft cover sheet. Multi-move attachment

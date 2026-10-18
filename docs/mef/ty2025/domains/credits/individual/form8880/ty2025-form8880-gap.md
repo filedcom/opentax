@@ -19,7 +19,7 @@ now omits the second IRS Form 8880 source page because it contains instructions
 only. The filed page reconciles a $2,000 W-2 code D deferral and a $428 credit
 to Schedule 3 line 4 and Form 1040 line 20. The selected review manifest
 passed source replay, page-origin, PDF/XML hash, and XSD checks; its digest is
-in the [validation batch](../../../../testing/ty2025-form1040-validation-batch.md). This is one
+in the validation batch. This is one
 synthetic route; source authenticity, other branches, IRS business rules, and
 ATS acceptance remain open.
 

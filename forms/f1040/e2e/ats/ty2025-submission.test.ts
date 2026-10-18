@@ -20,11 +20,6 @@ import { MefTestCd } from "../../2025/mef/submissions/submission-manifest.ts";
 const schemas = await xsdAvailable() &&
   await xsdAvailable(SUBMISSION_MANIFEST_XSD);
 const decoder = new TextDecoder("utf-8", { fatal: true });
-// CLI inputs are JSON, so a source copy's raw bytes (Scenario 2's Form 1098
-// issuer copy) cannot reach the stored return yet. When the CLI can attach
-// those files, this case fails and must move to the full check below.
-const CLI_BINARY_INPUT_GAP = new Set(["1040-02"]);
-
 for (
   const [index, [id, factory]] of Object.entries(ATS_SCENARIO_INPUTS).entries()
 ) {
@@ -42,10 +37,6 @@ for (
         );
       const sequence = `ats${String(index).padStart(4, "0")}`;
       const submission = cliSubmission(inputs, attachments, retained, sequence);
-      if (CLI_BINARY_INPUT_GAP.has(id)) {
-        await expect(submission).rejects.toThrow();
-        return;
-      }
       // Every TY2025 ATS scenario exports, so every one must also package.
       if ("error" in returnOnly) throw returnOnly.error;
       const { summary, bytes } = await submission;

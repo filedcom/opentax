@@ -432,7 +432,7 @@ against $15,000 qualified expenses and $12,000 proceeds, leaving $70,000
 Form 1040 wages/AGI. The selected-scope checker passed exact source replay,
 PDF/XML hashes, page origins, and local TY2025v5.4 XSD. The packet location
 and manifest digest are in the
-[validation batch](../../../../testing/ty2025-form1040-validation-batch.md). Issued bond/tuition
+validation batch. Issued bond/tuition
 records, other phaseout and ownership cases, IRS rules, and ATS remain open.
 
 ## Evidence and current behavior

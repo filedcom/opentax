@@ -1,12 +1,12 @@
 # TY2026 Form 4136 and Schedule A filing contract
 
-The pinned [2026 draft Form 4136](../corpus/draft/f4136.pdf) is the current
+The pinned [2026 draft Form 4136](../../../irs/corpus/ty2026/draft/f4136.pdf) is the current
 printed-year source (SHA-256
 `8b9d80bba8973a8f274b5238c428878d2e5672604913de50f8a400ad521706ba`).
 The expected [2026 draft Schedule A URL](https://www.irs.gov/pub/irs-dft/f4136sa--dft.pdf)
-still serves a 2025 form. The pinned [2025 Schedule A](../corpus/authorities/f4136sa--2025.pdf)
+still serves a 2025 form. The pinned [2025 Schedule A](../../../irs/corpus/ty2026/authorities/f4136sa--2025.pdf)
 (SHA-256 `86ce549a7f1e44ef9dd7a800ee12063bb2755a262a4c5cb5b2a8b322c93eb411`)
-and [combined Form 4136 instructions](../corpus/authorities/i4136--2025.pdf)
+and [combined Form 4136 instructions](../../../irs/corpus/ty2026/authorities/i4136--2025.pdf)
 (SHA-256 `d3d63fc3e5af24a8d4c8466b415c3d9269233af67f24d29640a5b4581e10c9f1`)
 are **prior-year comparators**, not authority to file a TY2026 Schedule A.
 The current main form already requires one Schedule A for each qualifying

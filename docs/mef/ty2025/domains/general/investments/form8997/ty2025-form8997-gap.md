@@ -146,7 +146,7 @@ Actual full MeF export rejects QOF codeZ/Y without the registered annual
 attachment. Actual full PDF export rejects the fixture's unadjusted PartA
 eligible-sale row as also being a ScheduleD direct sale, **before** the QOF
 attachment guard. This newly exposed fixture issue is recorded in
-`product_board.md`'s separate future_todo and remains unworked; neither source
+the [archived product board](../../../../readiness/product-board-archive-2026-10-18.md)'s separate future_todo and remains unworked; neither source
 rows nor production guards were changed to make the replay pass. A standalone
 staged projection does not substitute for the missing complete filing route.
 

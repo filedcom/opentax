@@ -1,9 +1,9 @@
 # TY2026 Form 6198 at-risk activity contract
 
 Source snapshot: the IRS currently posts [Form 6198, Rev. November
-2025](../corpus/authorities/f6198--2025.pdf), SHA-256
+2025](../../../irs/corpus/ty2026/authorities/f6198--2025.pdf), SHA-256
 `8ae169186ad9f62910e73205ebaeb02a73bc74bb1a47954074ec14e4645a6389`,
-and [instructions](../corpus/authorities/i6198--2025.pdf), SHA-256
+and [instructions](../../../irs/corpus/ty2026/authorities/i6198--2025.pdf), SHA-256
 `444d8002c734359b0f75235bd5461c9019cf4e871742243de1021ec14ceb0e1d`.
 The instructions explicitly say they are for the November 2025 **or later
 revision**. The draft `f6198--dft.pdf` and `i6198--dft.pdf` URLs still serve
@@ -44,7 +44,7 @@ facts. An `amount_at_risk` entered by the caller does not prove any of them.
 | III, 11–19b | Detailed method: investment and changes from the effective date or the prior Part III line 19b, with the printed 15/16/18 elections/checkboxes and signed line 19a. It may produce a larger at-risk amount than Part II. Preserve prior-year Part III history, debt and contributed-property components; **prior Part II line 10b is not line 15b**. |
 | IV, 20–21 | Line 20 is the larger of 10b or 19b. If line 5 is a loss, line 21 is the deductible portion up to line 20, subject to later passive and other limits. If Part I contains multiple loss items, allocate the allowed and suspended portions across their Schedule C/D/E/F, Form 4797/4684/4835/K-1 and tax-character destinations by the instruction fraction. Save disallowed amounts with source and origin year for 2027. |
 
-The [continuous-use PDF inventory](../inventories/pdf-fields/pdf-fields-f6198.csv) has **34 terminal
+The continuous-use PDF inventory has **34 terminal
 widgets** on one page, all in the field tree. The widgets have **no tooltip
 text**; mapping must be checked against their rectangles and a rendered
 form. On the pinned revision, `f1_1` and `f1_2` are name/ID, `f1_3` is the

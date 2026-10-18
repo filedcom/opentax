@@ -1,17 +1,16 @@
 # TY2026 credit recertification, education, and EIC graph contract
 
-Sources: the pinned [December 2025 continuous-use Form 8862](../corpus/authorities/f8862--2025.pdf)
-and [instructions](../corpus/authorities/i8862--2025.pdf), the
-[2026 draft Form 8863](../corpus/draft/f8863.pdf) and
-[instructions](../corpus/draft/i8863.pdf), the
-[2026 Form 1098-T tuition statement](../corpus/authorities/f1098t--2026.pdf)
-and its [combined 1098-E/T instructions](../corpus/authorities/i1098et--2026.pdf), the
-[2026 draft Schedule EIC](../corpus/draft/f1040sei.pdf), and the
-[ATS scenario 4 packet](../corpus/ats/1040-scenario-04.pdf), pages 11–16.
-Hashes are in `corpus/manifest.json`. Refresh final forms/instructions and
+Sources: the pinned [December 2025 continuous-use Form 8862](../../../irs/corpus/ty2026/authorities/f8862--2025.pdf)
+and [instructions](../../../irs/corpus/ty2026/authorities/i8862--2025.pdf), the
+[2026 draft Form 8863](../../../irs/corpus/ty2026/draft/f8863.pdf) and
+[instructions](../../../irs/corpus/ty2026/draft/i8863.pdf), the
+[2026 Form 1098-T tuition statement](../../../irs/corpus/ty2026/authorities/f1098t--2026.pdf)
+and its [combined 1098-E/T instructions](../../../irs/corpus/ty2026/authorities/i1098et--2026.pdf), the
+[2026 draft Schedule EIC](../../../irs/corpus/ty2026/draft/f1040sei.pdf), and the
+[ATS scenario 4 packet](../../../irs/corpus/ty2026/ats/1040-scenario-04.pdf), pages 11–16.
+Hashes are in `docs/ty2026/corpus/manifest.json`. Refresh final forms/instructions and
 current MeF rules before filing. Form 8862 has 109 AcroForm widgets, Form
-8863 has 77, and Schedule EIC has 38; see `pdf-fields-f8862.csv`,
-`pdf-fields-f8863.csv`, and `pdf-fields-f1040sei.csv`.
+8863 has 77, and Schedule EIC has 38.
 
 ## Source-to-output order
 
@@ -25,10 +24,10 @@ current MeF rules before filing. Form 8862 has 109 AcroForm widgets, Form
 | Form 2441 provider/person/expense and deemed-income facts | Form 2441 credit after AGI and tax-liability limit | Line 11 → Schedule 3 line 2 **before** Form 8863's Credit Limit Worksheet and Schedule 8812 Worksheet A. See [Form 2441 contract](./FORM2441-GRAPH.md). |
 | EIC + ACTC + refundable AOTC and 1040 tax/payments | 1040 line 32a and Schedule 3-A Part I/II | Schedule 3-A → 1040 line 32b; 32c = 32a − 32b. Reconcile Schedule 3-A line 8 eligibility and the 1040 citizenship/work-authorization answer. |
 
-The [2026 Form 8863 instructions](../corpus/draft/i8863.pdf) specify the
+The [2026 Form 8863 instructions](../../../irs/corpus/ty2026/draft/i8863.pdf) specify the
 education Credit Limit Worksheet: line 4 takes 1040 line 18; line 5 sums
 Schedule 3 lines 1, 2, 6d, and 6l; line 7 limits nonrefundable education
-credits. The [2026 Schedule 8812 instructions](../corpus/draft/i1040s8.pdf)
+credits. The [2026 Schedule 8812 instructions](../../../irs/corpus/ty2026/draft/i1040s8.pdf)
 then supply their own Worksheet A/B order. Resolve both from calculated tax
 and credit producers in one dependency graph; do not let a user-entered
 worksheet total bypass them.

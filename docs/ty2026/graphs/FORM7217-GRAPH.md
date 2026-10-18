@@ -1,8 +1,8 @@
 # TY2026 Form 7217 partnership-property distribution contract
 
-The current [Form 7217 (December 2024)](../corpus/authorities/f7217--2024.pdf),
+The current [Form 7217 (December 2024)](../../../irs/corpus/ty2026/authorities/f7217--2024.pdf),
 SHA-256 `9b16ed91da1ea50b4ea1ba59363726bee7b7b4576d77307cd507c3bd19dba02d`,
-and [instructions](../corpus/authorities/i7217--2024.pdf), SHA-256
+and [instructions](../../../irs/corpus/ty2026/authorities/i7217--2024.pdf), SHA-256
 `a00432e6260a82bc58b90356c5e1abfa528e668694a45e5e88b3322da596925d`,
 are pinned. The instructions explicitly apply this revision to tax years
 beginning in 2024 **or later** until revised. Also apply the [IRS April 2026
@@ -45,7 +45,7 @@ source fixture; do not make the 2026 engine silently accept the mismatch.
 - TY2025 [MeF `IRS7217`](https://github.com/filedcom/opentax/blob/b7c07b616564167a91bc588dba05caab2a28e054/forms/f1040/2025/mef/forms/f7217.ts)
   emits one document per input item and has no TY2026 XSD/rule check. There
   is no Form 7217 PDF descriptor in the TY2025 PDF inventory and no 2026
-  PDF/MeF route. The [306-widget inventory](../inventories/pdf-fields/pdf-fields-f7217.csv) is the
+  PDF/MeF route. The 306-widget inventory is the
   current two-page map; it includes the 30 property rows and totals.
 - K-1 box 19 intake must be updated for the April 2026 correction and must
   preserve dated distributions. A single annual K-1 aggregate cannot prove

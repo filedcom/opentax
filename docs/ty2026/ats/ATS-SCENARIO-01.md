@@ -1,6 +1,6 @@
 # TY2026 ATS Form 1040 scenario 1 fixture plan
 
-Source: pinned [11-page scenario 1 PDF](../corpus/ats/1040-scenario-01.pdf),
+Source: pinned [11-page scenario 1 PDF](../../../irs/corpus/ty2026/ats/1040-scenario-01.pdf),
 listed in the [IRS ATS index](https://www.irs.gov/e-file-providers/tax-year-2026-form-1040-series-and-extensions-modernized-e-file-mef-assurance-testing-system-ats-information).
 The scenario packet is a **draft**. Its printed 1040 has mostly empty
 calculation lines, so derive expected amounts from the attached source forms;

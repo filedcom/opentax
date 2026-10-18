@@ -1,14 +1,14 @@
 # TY2026 Form 8990 business-interest limitation contract
 
 Source snapshot: [draft Form 8990, Rev. December
-2026](../corpus/draft/f8990.pdf), SHA-256
+2026](../../../irs/corpus/ty2026/draft/f8990.pdf), SHA-256
 `c9faa031d14b89c8e3d32ea2bff2c0485bcdb3e5df8bb338c11bd88a7bb11429`.
 The current [Instructions for Form 8990, Rev. December
-2025](../corpus/authorities/i8990--2025.pdf), SHA-256
+2025](../../../irs/corpus/ty2026/authorities/i8990--2025.pdf), SHA-256
 `001d2a9c1f4ca0d74226bc763d73049f5088ab2d5c3f2553b2dfa107de19a2f3`,
 are a **prior-revision comparator**, not authority for the draft's new line
 numbers. The `i8990--dft.pdf` URL still serves 2025. [Rev. Proc.
-2025-32](../corpus/authorities/rp-25-32.pdf) §4.30 and [IRS §163(j)
+2025-32](../../../irs/corpus/ty2026/authorities/rp-25-32.pdf) §4.30 and [IRS §163(j)
 FAQ](https://www.irs.gov/newsroom/questions-and-answers-about-the-limitation-on-the-deduction-for-business-interest-expense)
 set the **2026 three-year average gross-receipts threshold at $32 million**.
 Verify the final form/instructions, any 2026 guidance, current MeF XSD and
@@ -80,8 +80,8 @@ recompute source activity profit and downstream totals.
   Form 8990 may still be required for BIE, EBIE/ETI/EBII or CFC facts.
   TY2025 MeF serializes seven raw aggregate tags and the PDF descriptor
   maps seven old positions; neither constructs Part I, Schedule A/B,
-  instances or 2026 cross-form reconciliation. The [draft PDF
-  inventory](../inventories/pdf-fields/pdf-fields-f8990.csv) has **138 terminal widgets**, all in
+  instances or 2026 cross-form reconciliation. The draft PDF
+  inventory has **138 terminal widgets**, all in
   the field tree, on three printed pages plus the draft cover.
 - `form8990` is absent from the TY2026 registry/PDF builder, with no TY2026
   MeF or current business-rule validation. The 2025 serializer's tag list

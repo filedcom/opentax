@@ -1,12 +1,12 @@
 # TY2026 Form 1099-K intake and income reconciliation
 
-Snapshot: September 27, 2026. The IRS [December 2026 Form 1099-K](../corpus/authorities/f1099k--2026.pdf)
-and [instructions](../corpus/authorities/i1099k--2026.pdf) are pinned at SHA-256
+Snapshot: September 27, 2026. The IRS [December 2026 Form 1099-K](../../../irs/corpus/ty2026/authorities/f1099k--2026.pdf)
+and [instructions](../../../irs/corpus/ty2026/authorities/i1099k--2026.pdf) are pinned at SHA-256
 `fa3a2b659f7ee13d59ea6c66ad992a5ab55afa0060db275ad1ee122478189b89`
 and `d7f48a804e26d83b5419aa51bb76fee7b129a388960c01d82e83e255337ea699`.
 They are the calendar-2026 recipient source. The pinned [2026 Schedule 1
-draft](../corpus/draft/f1040s1.pdf) has a header for 1099-K amounts received
-in error or for personal items sold at a loss. The [Schedule 1-A draft](../corpus/draft/f1040s1a.pdf)
+draft](../../../irs/corpus/ty2026/draft/f1040s1.pdf) has a header for 1099-K amounts received
+in error or for personal items sold at a loss. The [Schedule 1-A draft](../../../irs/corpus/ty2026/draft/f1040s1a.pdf)
 uses Form 1099-K boxes **1c** and **1d** in its qualified-tip table.
 
 ## Distinguish reporting from tax

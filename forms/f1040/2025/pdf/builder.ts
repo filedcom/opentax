@@ -899,6 +899,7 @@ async function buildPdfBytesInternal(
       filer,
       normalized,
       preparedBundle?.form3800Parts,
+      preparedBundle?.retainedSourceSha256ByReference,
     ) ??
       [projectedFields];
     for (const instance of instances) {
