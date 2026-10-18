@@ -1,5 +1,7 @@
 import { writeFile } from "node:fs/promises";
+import { homedir } from "node:os";
 import process from "node:process";
+import { createInterface } from "node:readline/promises";
 import {
   exportForm8886OtsaCommand,
   recordForm8886OtsaDeliveryCommand,
@@ -24,6 +26,14 @@ import {
   exportPdfCommand,
 } from "./commands/export.ts";
 import { validateReturnCommand } from "./commands/validate.ts";
+import {
+  mefAcksCommand,
+  mefAtsRunCommand,
+  type MefCommandDeps,
+  mefLoginCheckCommand,
+  mefSendCommand,
+  mefStatusCommand,
+} from "./commands/mef.ts";
 import {
   checkForUpdate,
   updateCommand,
@@ -58,6 +68,68 @@ function requireArg(
   }
   return value;
 }
+
+async function promptLine(question: string): Promise<string> {
+  const terminal = createInterface({
+    input: process.stdin,
+    output: process.stderr,
+  });
+  try {
+    return await terminal.question(question);
+  } finally {
+    terminal.close();
+  }
+}
+
+function mefDeps(): MefCommandDeps {
+  return {
+    baseDir: RETURNS_DIR,
+    env: process.env,
+    home: homedir(),
+    fetch: globalThis.fetch,
+    confirm: promptLine,
+    progress: (line) => console.error(line),
+  };
+}
+
+function flag(value: boolean | string | undefined): boolean {
+  return value === true || value === "true";
+}
+
+/** --production, or ATS (the default; --ats says so explicitly). */
+function mefTarget(args: ParsedArgs): { production: boolean } {
+  if (flag(args.production) && flag(args.ats)) {
+    console.error("Error: pass --ats or --production, not both");
+    process.exit(1);
+  }
+  return { production: flag(args.production) };
+}
+
+function positiveInteger(
+  name: string,
+  value: string | undefined,
+  fallback: number,
+) {
+  if (value === undefined) return fallback;
+  const parsed = Number(value);
+  if (!Number.isInteger(parsed) || parsed < 0) {
+    console.error(`Error: --${name} must be a non-negative integer`);
+    process.exit(1);
+  }
+  return parsed;
+}
+
+const MEF_TARGET_OPTIONS = [
+  {
+    flag: "--ats",
+    description: "Use the IRS ATS test environment (the default)",
+  },
+  {
+    flag: "--production",
+    description:
+      'Use IRS production; needs "productionEnabled": true in ~/.opentax/mef.json and the ETIN typed to confirm',
+  },
+] as const;
 
 const COMMANDS: readonly CommandDef[] = [
   {
@@ -484,6 +556,136 @@ const COMMANDS: readonly CommandDef[] = [
       );
     },
   },
+  {
+    cmd: "mef",
+    sub: "login-check",
+    description:
+      "Log in to IRS MeF A2A with the strong-authentication certificate, then log out",
+    usage: "opentax mef login-check [--ats|--production]",
+    options: [...MEF_TARGET_OPTIONS],
+    handler: async (args) => {
+      await run(() => mefLoginCheckCommand(mefTarget(args), mefDeps()));
+    },
+  },
+  {
+    cmd: "mef",
+    sub: "send",
+    description:
+      "Build the return's submission ZIP and transmit it with SendSubmissions",
+    usage:
+      "opentax mef send --returnId <id> [--ats|--production] [--sequence <7 chars>]",
+    options: [
+      { flag: "--returnId", description: "Return identifier", required: true },
+      ...MEF_TARGET_OPTIONS,
+      {
+        flag: "--sequence",
+        description: "Seven-character Submission ID sequence (default: random)",
+      },
+    ],
+    handler: async (args) => {
+      const returnId = requireArg("returnId", args.returnId);
+      await run(() =>
+        mefSendCommand(
+          { ...mefTarget(args), returnId, sequence: args.sequence },
+          mefDeps(),
+        )
+      );
+    },
+  },
+  {
+    cmd: "mef",
+    sub: "status",
+    description: "Get a transmitted submission's IRS status record",
+    usage: "opentax mef status --submissionId <id> [--ats|--production]",
+    options: [
+      {
+        flag: "--submissionId",
+        description: "20-character Submission ID",
+        required: true,
+      },
+      ...MEF_TARGET_OPTIONS,
+    ],
+    handler: async (args) => {
+      const submissionId = requireArg("submissionId", args.submissionId);
+      await run(() =>
+        mefStatusCommand({ ...mefTarget(args), submissionId }, mefDeps())
+      );
+    },
+  },
+  {
+    cmd: "mef",
+    sub: "acks",
+    description:
+      "Retrieve acknowledgements and store each under its return (returns/<id>/mef/acks)",
+    usage: "opentax mef acks --submissionId <id> | --new [--ats|--production]",
+    options: [
+      {
+        flag: "--submissionId",
+        description: "Get the acknowledgement for one submission",
+      },
+      {
+        flag: "--new",
+        description: "Get every acknowledgement not yet retrieved",
+      },
+      ...MEF_TARGET_OPTIONS,
+    ],
+    handler: async (args) => {
+      await run(() =>
+        mefAcksCommand(
+          {
+            ...mefTarget(args),
+            submissionId: args.submissionId,
+            new: flag(args.new),
+          },
+          mefDeps(),
+        )
+      );
+    },
+  },
+  {
+    cmd: "mef",
+    sub: "ats-run",
+    description:
+      "Send every ATS test return in the store in one transmission and poll ATS for their acks",
+    usage:
+      "opentax mef ats-run [--returnId <id>,<id>...] [--poll-seconds <n>] [--max-polls <n>]",
+    options: [
+      {
+        flag: "--returnId",
+        description:
+          "Comma-separated returns to send (default: every return with general.ats_test_submission and no accepted ack)",
+      },
+      {
+        flag: "--poll-seconds",
+        description: "Seconds between GetAcks polls (default: 60)",
+      },
+      {
+        flag: "--max-polls",
+        description: "GetAcks polls before giving up (default: 30)",
+      },
+    ],
+    handler: async (args) => {
+      if (flag(args.production)) {
+        console.error("Error: ats-run transmits only to ATS");
+        process.exit(1);
+      }
+      await run(() =>
+        mefAtsRunCommand(
+          {
+            returnIds: args.returnId?.split(",").map((id) => id.trim())
+              .filter((id) => id !== ""),
+            pollSeconds: positiveInteger(
+              "poll-seconds",
+              args["poll-seconds"],
+              60,
+            ),
+            maxPolls: positiveInteger("max-polls", args["max-polls"], 30),
+          },
+          mefDeps(),
+        )
+      );
+    },
+  },
 ];
 
 /** Top-level commands that don't use the cmd/sub pattern */
@@ -520,8 +722,11 @@ async function main(): Promise<void> {
       "software-id",
       "sequence",
       "residency-review",
+      "submissionId",
+      "poll-seconds",
+      "max-polls",
     ],
-    boolean: ["json", "help", "draft"],
+    boolean: ["json", "help", "draft", "ats", "production", "new"],
     alias: { h: "help" },
   }) as unknown as ParsedArgs;
 

@@ -329,11 +329,25 @@ test("graphViewCommand: json=true returns GraphNode object", () => {
 });
 
 test("nodeListCommand: every label stays separated, however long", () => {
-  const out = captureLog(() => nodeListCommand());
-  const labels = out.split("\n").slice(1).join(" ").trim().split(/\s+/)
+  const [nodes, keyed] = captureLog(() => nodeListCommand()).split(
+    "Keyed Inputs",
+  );
+  const labels = nodes.split("\n").slice(1).join(" ").trim().split(/\s+/)
     .filter(Boolean);
   assertEquals(labels.length, Object.keys(registry).length);
+  assertEquals(keyed.includes("form8960_additional_modifications"), true);
   assertEquals(nodeListLines(["a".repeat(40), "b"]), [
     `${"a".repeat(40)}  b`,
   ]);
+});
+
+test("nodeInspectCommand resolves a keyed public input", () => {
+  const out = captureLog(() =>
+    nodeInspectCommand({
+      nodeType: "form8960_additional_modifications",
+      json: false,
+    })
+  );
+  assertEquals(out.includes("feeds form8960"), true);
+  assertEquals(out.includes("line10_additional_modification_rows"), true);
 });

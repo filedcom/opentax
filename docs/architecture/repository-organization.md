@@ -18,7 +18,7 @@ These sections reflect familiar tax-software navigation rather than a universal 
 
 | Boundary | Where to read next |
 | --- | --- |
-| Engine and CLI | `core/runtime`, `core/types`, `core/validation`; `cli/commands`, `cli/store`, `cli/utils` |
+| Engine and CLI | `core/runtime`, `core/types`, `core/validation`; `cli/commands`, `cli/store`, `cli/utils`, `cli/mef` ([A2A transmission](../mef/transmission.md)) |
 | Source and calculation nodes | `forms/f1040/nodes/inputs/<section>/<group>/<family>` and `intermediate/{forms,worksheets,aggregation}/<section>/<group>/<family>` |
 | Final assembly nodes | `forms/f1040/nodes/outputs/general/return-assembly` |
 | Year-specific source contracts | [TY2025 domains](../../forms/f1040/2025/domains/README.md) |

@@ -584,6 +584,17 @@ function validateItem(item: EItem): void {
       "Schedule E K-1 royalty row must match box 7 and code I sources",
     );
   }
+  if (
+    isRecharacterizedSelfRental(item) &&
+    ((item.prior_unallowed_passive_operating ?? 0) > 0 ||
+      (item.prior_unallowed_passive_4797_part1 ?? 0) > 0 ||
+      (item.prior_unallowed_passive_4797_part2 ?? 0) > 0 ||
+      (item.passive_property_sales?.length ?? 0) > 0)
+  ) {
+    throw new Error(
+      "Schedule E self-rental net income with prior passive losses or a property sale needs Regulations section 1.469-2(f)(6) review",
+    );
+  }
   if (item.property_type === 8 && !item.property_type_other_desc) {
     throw new Error(
       "Schedule E validation: property_type_other_desc is required when property_type = 8",
@@ -745,8 +756,20 @@ export function computePropertyNet(item: EItem): number {
   return grossIncome - expenses;
 }
 
-function isPassive(item: EItem): boolean {
-  return item.activity_type === "A" || item.activity_type === "B";
+/** Self-rental (Schedule E line 1b code 7) net income is nonpassive and is
+ * kept off Form 8582; a net loss stays passive. Pub. 925 (2025),
+ * Recharacterization of Passive Income and Rental of Property to a
+ * Nonpassive Activity; Regulations section 1.469-2(f)(6). */
+export function isRecharacterizedSelfRental(item: EItem): boolean {
+  return item.property_type === 7 &&
+    (item.activity_type === "A" || item.activity_type === "B") &&
+    item.current_property_source === undefined &&
+    computePropertyNet(item) > 0;
+}
+
+export function isPassiveProperty(item: EItem): boolean {
+  return (item.activity_type === "A" || item.activity_type === "B") &&
+    !isRecharacterizedSelfRental(item);
 }
 
 // ─── Routing helpers ─────────────────────────────────────────────────────────
@@ -809,7 +832,7 @@ function currentLossForms(items: EItems, farms: readonly FarmActivity[]) {
 }
 
 function passiveItems(items: EItems): EItems {
-  return items.filter(isPassive);
+  return items.filter(isPassiveProperty);
 }
 
 // Current-year net loss from passive activities (positive amount).
@@ -854,7 +877,7 @@ function activeRentalCurrentLoss(items: EItems): number {
 }
 
 function activeRentalCurrentIncome(items: EItems): number {
-  return items
+  return passiveItems(items)
     .filter((item) => item.activity_type === "A")
     .map((item) =>
       item.current_property_source
@@ -905,7 +928,7 @@ function farmCurrentIncome(farms: readonly FarmActivity[]): number {
  * Royalty rows are handled on lines 8–10, so their net is excluded here. */
 export function scheduleEPassiveEicIncome(rawInput: unknown): number {
   const input = inputSchema.parse(rawInput);
-  const rentalIncome = input.schedule_es.filter(isPassive).reduce(
+  const rentalIncome = input.schedule_es.filter(isPassiveProperty).reduce(
     (sum, item) => {
       const net = item.current_property_source
         ? currentPropertyPassiveAmounts(item.current_property_source)
@@ -1002,6 +1025,12 @@ function form8582Outputs(
         item.prior_passive_losses_active_when_incurred,
       prior_unallowed_4797_part1: item.prior_unallowed_passive_4797_part1 ?? 0,
       prior_unallowed_4797_part2: item.prior_unallowed_passive_4797_part2 ?? 0,
+      ...(item.qbi_trade_or_business === "Y" &&
+          item.qbi_specified_service !== true &&
+          item.qbi_override === undefined &&
+          item.current_property_source === undefined
+        ? { qbi_trade_or_business: true }
+        : {}),
     })),
     ...reportedFarms.map((farm) => ({
       activity_id: farm.activity_id!,

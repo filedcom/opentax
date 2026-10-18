@@ -18,6 +18,8 @@ const fake = Object.assign(
 test("binary fetch reaches only the allowed HTTPS hosts", async () => {
   const guarded = restrictedFetch(ALLOWED_HOSTS, fake);
   await guarded("https://www.irs.gov/pub/irs-pdf/f1040.pdf");
+  await guarded("https://la.alt.www4.irs.gov/a2a/mef/Login");
+  await guarded("https://la.www4.irs.gov/a2a/mef/mtom/SendSubmissions");
   await guarded(new URL("https://api.github.com/repos/x/y/releases/latest"));
   await guarded(
     new Request("https://github.com/x/y/releases/latest/download/a"),
@@ -29,12 +31,17 @@ test("binary fetch reaches only the allowed HTTPS hosts", async () => {
       "https://www.irs.gov.evil.test/",
       "https://example.com/",
       "https://127.0.0.1/",
+      "http://la.alt.www4.irs.gov/a2a/mef/Login",
+      "https://la1.www4.irs.gov/a2a/mef/Login",
+      "https://la.alt.www4.irs.gov.evil.test/a2a/mef/Login",
     ]
   ) {
     await assertRejects(() => guarded(url), NetworkPolicyError, "not allowed");
   }
   assertEquals(reached, [
     "https://www.irs.gov/pub/irs-pdf/f1040.pdf",
+    "https://la.alt.www4.irs.gov/a2a/mef/Login",
+    "https://la.www4.irs.gov/a2a/mef/mtom/SendSubmissions",
     "https://api.github.com/repos/x/y/releases/latest",
     "https://github.com/x/y/releases/latest/download/a",
   ]);

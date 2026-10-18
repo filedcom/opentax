@@ -10,6 +10,7 @@ Public entrypoints are `mod.ts`, `catalog.ts`, `cli/main.ts`, and `forms/f1040/2
 ├── cli/
 │   ├── commands/                  # Return, form, node and export operations
 │   ├── store/                     # Return persistence and guarded carry archives
+│   ├── mef/                       # IRS MeF A2A client: SOAP, WS-Security, MTOM; test-only mock IRS
 │   └── utils/
 ├── core/
 │   ├── runtime/                   # Execution, graph and source-document contracts

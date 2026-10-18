@@ -17,6 +17,15 @@ const NIIT_RATE = 0.038;
 
 // ─── Schema ───────────────────────────────────────────────────────────────────
 
+// 2025 Instructions for Form 8960, Line 10—Additional Modifications: properly
+// allocable deductions or modifications to NII not reflected on lines 1–9
+// (Regulations sections 1.1411-4(f) and 1.1411-4(g)).
+export const line10ModificationSchema = z.object({
+  description: z.string().trim().min(1),
+  amount: z.number().int().positive(),
+  source_document_reference: z.string().trim().min(1),
+}).strict();
+
 export const inputSchema = z.object({
   // Part III: Filing status — determines MAGI threshold
   // Form 8960 line 14
@@ -80,6 +89,8 @@ export const inputSchema = z.object({
   // Line 10 — Additional deductions/modifications allocable to NII
   // IRC §1411(c)(1)(B); Form 8960 line 10
   line10_additional_modifications: z.number().nonnegative().optional(),
+  line10_additional_modification_rows: z.array(line10ModificationSchema)
+    .min(1).optional(),
 });
 
 const printFieldsSchema = z.object({
@@ -146,13 +157,21 @@ function niiGross(input: Form8960Input): number {
   );
 }
 
+function line10(input: Form8960Input): number {
+  return (input.line10_additional_modifications ?? 0) +
+    (input.line10_additional_modification_rows ?? []).reduce(
+      (sum, row) => sum + row.amount,
+      0,
+    );
+}
+
 // Part II, Line 11: Total investment expenses allocable to NII
 // Form 8960 line 11
 function totalDeductions(input: Form8960Input): number {
   return (
     (input.line9a_investment_interest_expense ?? 0) +
     (input.line9b_state_local_tax ?? 0) +
-    (input.line10_additional_modifications ?? 0)
+    line10(input)
   );
 }
 
@@ -231,7 +250,6 @@ class Form8960Node extends TaxNode<typeof inputSchema> {
     const line5b = input.line5b_net_gain_adjustment ?? 0;
     const line9a = input.line9a_investment_interest_expense ?? 0;
     const line9b = input.line9b_state_local_tax ?? 0;
-    const line10 = input.line10_additional_modifications ?? 0;
 
     return {
       outputs: [
@@ -252,7 +270,7 @@ class Form8960Node extends TaxNode<typeof inputSchema> {
           line9a_investment_interest_expense: line9a,
           line9b_state_local_tax: line9b,
           line9d_total_expenses: line9a + line9b,
-          line10_additional_modifications: line10,
+          line10_additional_modifications: line10(input),
           line11_total_deductions: deductions,
           line12_net_investment_income: nii,
           line13_magi: input.magi,

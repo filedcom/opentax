@@ -21,6 +21,10 @@ import {
   inputSchema as form8853InputSchema,
 } from "../nodes/intermediate/forms/adjustments/health/form8853/index.ts";
 import { form6251 } from "../nodes/intermediate/forms/taxes/amt/form6251/index.ts";
+import {
+  form8960,
+  line10ModificationSchema as form8960Line10ModificationSchema,
+} from "../nodes/intermediate/forms/taxes/investments/form8960/index.ts";
 import { priorIsoSaleReviewSchema } from "./domains/taxes/amt/form6251/form6251_prior_iso_sale.ts";
 import { form4797 } from "../nodes/intermediate/forms/income/business/form4797/index.ts";
 import { investment1245DispositionSchema } from "../nodes/intermediate/forms/income/business/form4797/investment_1245.ts";
@@ -793,6 +797,16 @@ export const inputNodes: readonly InputNodeEntry[] = [
       earned_income_worksheet: true,
       part_iib: true,
     }).required({ earned_income_worksheet: true }),
+    isArray: false,
+  },
+  {
+    node: form8960,
+    inputKey: "form8960_additional_modifications",
+    inputSchema: z.object({
+      line10_additional_modification_rows: z.array(
+        form8960Line10ModificationSchema,
+      ).min(1),
+    }),
     isArray: false,
   },
   {

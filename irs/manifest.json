@@ -61,6 +61,21 @@
       "files": {
         "4868_Business_Rules_2026v1.0.pdf": "9cf94127d91771adf594340d21d432ffa8aacde0e06dfd365c5f5e8c6ef82b05"
       }
+    },
+    {
+      "id": "mef-wsdl-10.9",
+      "use": "MeF A2A WSDL 10.9 contract that cli/mef builds requests against and the mock IRS server validates them with",
+      "source": "IRS e-Services Secure Object Repository: MeF A2A WSDLs Release 10.9 (WSDLs_10.9/)",
+      "path": "wsdl/10.9",
+      "files": {
+        "MeFHeader.xsd": "a10c93dd7d058c5d49fa84825f190226912a7397cc1c6efa582234709169d72e",
+        "MeFMSIServices.wsdl": "d348f523f4fac9cdbe5788e5f01c2bb056cdd9720e57e8cf41717da053ebe8d9",
+        "MeFMSIServices.xsd": "027bf969e867528383376d124272e5498c9c0e75ff90d9a0e50415be7908b13d",
+        "MeFTransmitterServicesMTOM.wsdl": "d06267876be0a9818f618f7a9820cde84ec7802dfbf995d37d1e54343b39cffe",
+        "MeFTransmitterServiceMTOM.xsd": "6673c581ac702153a36b69029cdd540235181fedb7e4eaaebb48bb7f32d2df3d",
+        "xmime.xsd": "9524bb98b18c5da5aa2c904c0d247e0f929618647444b9c30b8f9d6f79645b2b",
+        "MeF 10.9 Release Notes.doc": "2283807fba36f05a65e004e7627325109bb0c9c43b25953d0f1df390155bc5fc"
+      }
     }
   ]
 }
