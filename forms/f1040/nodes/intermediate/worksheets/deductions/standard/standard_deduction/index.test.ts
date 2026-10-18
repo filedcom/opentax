@@ -604,3 +604,45 @@ test("TY2025 has no §68 reduction or line 12f", () => {
   assertEquals("line12f_nonitemizer_charitable" in f, false);
   assertEquals(result.finalizations, []);
 });
+
+// ─── Net qualified disaster loss (Form 4684 line 15) ─────────────────────────
+
+// 2025 Instructions for Form 1040, Line 12e, Exception 5: a non-itemizer adds
+// the net qualified disaster loss to the standard deduction (HOH $23,625).
+test("a net qualified disaster loss increases the standard deduction", () => {
+  const result = compute({
+    filing_status: FilingStatus.HOH,
+    agi: 33_650,
+    itemized_deductions: 24_761,
+    itemized_taxes: 0,
+    net_qualified_disaster_loss: 2_500,
+  });
+  assertEquals(
+    findOutput(result, "f1040")?.fields.line12a_standard_deduction,
+    26_125,
+  );
+  assertEquals(
+    findOutput(result, "income_tax_calculation")?.fields.taxable_income,
+    7_525,
+  );
+  // 2025 Instructions for Form 4684, Taxpayers who also file Form 6251: the
+  // AMT adds back the standard deduction before the increase.
+  assertEquals(
+    findOutput(result, "income_tax_calculation")?.fields.form6251_line2a,
+    23_625,
+  );
+});
+
+test("itemizing wins only over the increased standard deduction", () => {
+  const result = compute({
+    filing_status: FilingStatus.HOH,
+    agi: 60_000,
+    itemized_deductions: 26_126,
+    itemized_taxes: 5_000,
+    net_qualified_disaster_loss: 2_500,
+  });
+  assertEquals(
+    findOutput(result, "f1040")?.fields.line12e_itemized_deductions,
+    26_126,
+  );
+});

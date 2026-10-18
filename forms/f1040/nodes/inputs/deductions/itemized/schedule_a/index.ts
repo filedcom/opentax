@@ -13,6 +13,7 @@ import { TaxNode } from "../../../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../../../core/types/output-nodes.ts";
 import { standard_deduction } from "../../../../intermediate/worksheets/deductions/standard/standard_deduction/index.ts";
 import type { NodeContext } from "../../../../../../../core/types/node-context.ts";
+import { personalLine18 } from "../../../../intermediate/forms/deductions/casualty/form4684/line18.ts";
 import { FilingStatus } from "../../../../types.ts";
 import { CONFIG_BY_YEAR } from "../../../../config/index.ts";
 import type { F1040Config } from "../../../../config/index.ts";
@@ -231,8 +232,16 @@ export const inputSchema = z.object({
   line_11_cash_contributions: z.number().nonnegative().optional(),
   line_12_noncash_contributions: z.number().nonnegative().optional(),
   line_13_contribution_carryover: z.number().nonnegative().optional(),
-  line_15_casualty_theft_loss: z.number().nonnegative().optional(),
-  line_16_other_deductions: z.number().nonnegative().optional(),
+  line_15_casualty_theft_loss: z.number().nonnegative().optional().describe(
+    "Computed from form4684 personal_casualties (Form 4684 line 18)",
+  ),
+  line_16_other_deductions: z.number().nonnegative().optional().describe(
+    "Other itemized deductions; a net qualified disaster loss comes from form4684 personal_casualties",
+  ),
+  // From Form 4684: line 16 (before the line 17 AGI limit) and line 15, the
+  // net qualified disaster loss that goes on line 16 when itemizing.
+  form4684_line16_loss: z.number().int().positive().optional(),
+  net_qualified_disaster_loss: z.number().int().positive().optional(),
 }).superRefine((data, ctx) => {
   if (
     data.line_8b_seller_financed &&
@@ -488,6 +497,14 @@ export const inputSchema = z.object({
       path: ["qualified_conservation_contributions"],
       message:
         "Qualified conservation contributions need the separate 50% or 100% Worksheet 2 limits and substantiation route",
+    });
+  }
+  if ((data.line_15_casualty_theft_loss ?? 0) > 0) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ["line_15_casualty_theft_loss"],
+      message:
+        "Schedule A line 15 is Form 4684 line 18; enter each casualty in form4684 personal_casualties (see 'opentax node template form4684 --full')",
     });
   }
   for (
@@ -852,6 +869,16 @@ function computePriorCarryovers(
   return carryoverTotal(carryovers, () => true);
 }
 
+/** Line 15 is Form 4684 line 18: line 16 less 10% of AGI (2025 Form 4684,
+ * lines 17 and 18). */
+function casualtyLine15(input: ScheduleAInput): number | undefined {
+  if (input.form4684_line16_loss === undefined) return undefined;
+  if (input.agi === undefined) {
+    throw new Error("Form 4684 line 17 needs computed AGI");
+  }
+  return personalLine18(input.form4684_line16_loss, input.agi).line18;
+}
+
 function computeElectedCapitalGainCarryovers(
   input: ScheduleAInput,
   agi: number,
@@ -1018,12 +1045,14 @@ class ScheduleANode extends TaxNode<typeof inputSchema> {
         "TY2026 Schedule A line 17 needs its categories; gambling losses are limited to 90% (IRC §165(d) as amended by P.L. 119-21 §70114)",
       );
     }
+    const casualtyLoss = casualtyLine15(input);
     const totalItemized = computeMedicalDeduction(input, agi) +
       taxesTotal +
       computeInterestTotal(input, mortgageInsurance) +
       charitableBeforeFloor - charitableFloor +
-      Math.round(input.line_15_casualty_theft_loss ?? 0) +
-      Math.round(input.line_16_other_deductions ?? 0);
+      (casualtyLoss ?? 0) +
+      Math.round(input.line_16_other_deductions ?? 0) +
+      (input.net_qualified_disaster_loss ?? 0);
     const nonitemizerCash = cfg.nonitemizerCharitableLimit > 0
       ? nonitemizerCashSource(input)
       : {};
@@ -1066,6 +1095,9 @@ class ScheduleANode extends TaxNode<typeof inputSchema> {
             : {}),
           charitable_limits_finalized: true,
           capital_gain_election_finalized: election,
+          ...(casualtyLoss !== undefined
+            ? { line_15_casualty_theft_loss: casualtyLoss }
+            : {}),
           ...(mortgageInsurance > 0
             ? { line_8d_mortgage_insurance_allowed: mortgageInsurance }
             : {}),

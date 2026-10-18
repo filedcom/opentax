@@ -30,7 +30,10 @@ import {
   scheduleAOtherTaxRows,
 } from "../../../../domains/deductions/itemized/schedule-a/schedule_a_other_tax_source.ts";
 import { sellerFinancedLine8b } from "../../../../domains/deductions/itemized/schedule-a/schedule_a_line8b_source.ts";
-import { scheduleALine16Rows } from "../../../../domains/deductions/itemized/schedule-a/schedule_a_line16_estate_source.ts";
+import {
+  scheduleADisasterLine16,
+  scheduleALine16AllRows,
+} from "../../../../domains/deductions/itemized/schedule-a/schedule_a_line16_disaster_source.ts";
 
 // IRS Schedule A (2025) AcroForm field names.
 // Verified layout from https://www.irs.gov/pub/irs-prior/f1040sa--2025.pdf
@@ -210,6 +213,14 @@ const fields: ReadonlyArray<PdfFieldEntry> = [
   },
 ];
 
+function line16Description(
+  rows: readonly { printedDescription: string; amount: number }[],
+): string | undefined {
+  return rows.length > 0
+    ? rows.map((row) => `${row.printedDescription}: ${row.amount}`).join("; ")
+    : undefined;
+}
+
 export const scheduleAPdf: PdfFormDescriptor = {
   pendingKey: "schedule_a",
   pdfUrl: "https://www.irs.gov/pub/irs-prior/f1040sa--2025.pdf",
@@ -232,7 +243,18 @@ export const scheduleAPdf: PdfFormDescriptor = {
       !(input.force_itemized === true &&
         all?.f1040?.line12e_itemized_deductions === 0)
     ) {
-      return [];
+      // Filed only for the increased standard deduction: line 16 and 17
+      // (2025 Instructions for Form 4684, Increased standard deduction
+      // reporting).
+      const disaster = scheduleADisasterLine16(all);
+      if (!disaster?.increasedStandard) return [];
+      const total = disaster.rows.reduce((sum, row) => sum + row.amount, 0);
+      return [{
+        print_increased_standard: true,
+        print_line_16_description: line16Description(disaster.rows),
+        line_16_other_deductions: total,
+        line_17_itemized: total,
+      }];
     }
     assertForm1098Line8aSourcePresence(
       all?.f1098,
@@ -316,6 +338,7 @@ export const scheduleAPdf: PdfFormDescriptor = {
       line_11_cash_contributions: _cash,
       line_12_noncash_contributions: _noncash,
       line_13_contribution_carryover: _carryover,
+      line_15_casualty_theft_loss: _casualty,
       charitable_limits_finalized: _limits,
       capital_gain_election_finalized: _election,
       ...source
@@ -377,10 +400,15 @@ export const scheduleAPdf: PdfFormDescriptor = {
     );
     const otherTaxRows = scheduleAOtherTaxRows(input);
     const line8bSeller = sellerFinancedLine8b(input);
-    const line16Rows = scheduleALine16Rows(
+    const line16Rows = scheduleALine16AllRows(
       all,
       input.line_16_other_deductions,
     );
+    const line16 = input.line_16_other_deductions === undefined &&
+        input.net_qualified_disaster_loss === undefined
+      ? undefined
+      : amount("line_16_other_deductions") +
+        amount("net_qualified_disaster_loss");
     return [{
       ...input,
       line_5a_state_income_tax: amount("line_5a_state_income_tax") +
@@ -408,10 +436,8 @@ export const scheduleAPdf: PdfFormDescriptor = {
       ),
       line_10_interest: interest,
       line_14_charity: charity,
-      print_line_16_description: line16Rows.length > 0
-        ? line16Rows.map((row) => `${row.printedDescription}: ${row.amount}`)
-          .join("; ")
-        : undefined,
+      print_line_16_description: line16Description(line16Rows),
+      line_16_other_deductions: line16,
       line_17_itemized: standard.itemized_deductions,
       print_line_18_itemize_election: itemizeBelowStandard,
     }];
@@ -419,6 +445,7 @@ export const scheduleAPdf: PdfFormDescriptor = {
   // Schedule A is filed only when the return actually itemizes (1040 line 12
   // carries an itemized amount) — not merely because AGI was deposited here.
   includeWhen: (input, all) => {
+    if (input.print_increased_standard === true) return true;
     const filed = (all?.["f1040"]?.["line12e_itemized_deductions"]) as
       | number
       | undefined;

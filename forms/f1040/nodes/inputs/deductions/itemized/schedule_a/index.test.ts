@@ -759,7 +759,7 @@ test("scheduleA.compute: total itemized = medical + taxes + interest + contribut
   // SALT: 4000 + 4000 = 8000 (under $40,000 cap); line6: 2000 → taxesTotal = 10000
   // interest: 15000
   // contributions: 3000 (under 60% of 80000=48000)
-  // casualty: 2000; other: 500
+  // casualty: Form 4684 line 16 10000 less 10% of AGI 8000 = 2000; other: 500
   // total = 4000 + 10000 + 15000 + 3000 + 2000 + 500 = 34500
   const result = compute({
     line_1_medical: 10_000,
@@ -769,16 +769,45 @@ test("scheduleA.compute: total itemized = medical + taxes + interest + contribut
     line_6_other_taxes: 2_000,
     line_8a_mortgage_interest_1098: 15_000,
     cash_contributions_to_50_percent_organizations: 3_000,
-    line_15_casualty_theft_loss: 2_000,
+    form4684_line16_loss: 10_000,
     line_16_other_deductions: 500,
   });
   assertEquals(deductionInput(result).itemized_deductions, 34_500);
 });
 
-test("scheduleA.compute: casualty loss enters total directly without re-applying floors", () => {
-  // Form 4684 already applied $100/event and 10% AGI reductions
-  const result = compute({ line_15_casualty_theft_loss: 4_200 });
+// 2025 Form 4684 lines 17 and 18: line 16 less 10% of Form 1040 line 11b is
+// Schedule A line 15.
+test("scheduleA.compute: line 15 is Form 4684 line 16 less 10% of AGI", () => {
+  const result = compute({ agi: 50_000, form4684_line16_loss: 9_200 });
   assertEquals(deductionInput(result).itemized_deductions, 4_200);
+  assertEquals(
+    result.finalizations?.[0]?.fields.line_15_casualty_theft_loss,
+    4_200,
+  );
+  assertEquals(
+    compute({ agi: 50_000, form4684_line16_loss: 4_000 }).finalizations?.[0]
+      ?.fields.line_15_casualty_theft_loss,
+    0,
+  );
+});
+
+test("scheduleA.compute: line 15 is not entered directly", () => {
+  assertThrows(
+    () => compute({ line_15_casualty_theft_loss: 4_200 }),
+    Error,
+    "Form 4684 line 18",
+  );
+});
+
+// A net qualified disaster loss (Form 4684 line 15) is Schedule A line 16
+// when itemizing (2025 Instructions for Form 4684, Line 15).
+test("scheduleA.compute: a net qualified disaster loss joins the itemized total", () => {
+  const result = compute({
+    agi: 50_000,
+    line_16_other_deductions: 500,
+    net_qualified_disaster_loss: 2_500,
+  });
+  assertEquals(deductionInput(result).itemized_deductions, 3_000);
 });
 
 test("scheduleA.compute: other deductions enter total directly", () => {
@@ -842,7 +871,7 @@ test("scheduleA.compute: smoke — all major boxes populate total and AMT tax so
   // line_6: 2500 → taxesTotal = 9000 + 2500 = 11500
   // Interest: 18000 + 1000 + 3000 = 22000
   // Contributions: 10000 cash + 5000 ordinary noncash + 2000 capital gain = 17000
-  // Casualty: 4000; Other: 750
+  // Casualty: Form 4684 line 16 16000 less 10% of AGI 12000 = 4000; Other: 750
   // Total = 6000 + 11500 + 22000 + 17000 + 4000 + 750 = 61250
   const result = compute({
     line_1_medical: 15_000,
@@ -863,7 +892,7 @@ test("scheduleA.compute: smoke — all major boxes populate total and AMT tax so
         category: "capital_gain_30",
       },
     ],
-    line_15_casualty_theft_loss: 4_000,
+    form4684_line16_loss: 16_000,
     line_16_other_deductions: 750,
   });
 
