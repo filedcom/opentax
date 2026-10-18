@@ -1,12 +1,16 @@
 /**
  * The binary's network policy. Bun has no permission sandbox, so the CLI
  * replaces global fetch with one that reaches only these HTTPS hosts:
- * IRS form templates, and GitHub for `opentax update` and its daily check.
+ * IRS form templates, the IRS MeF A2A services (`opentax mef`; ATS at
+ * la.alt, production at la, per Pub 4164 §4.1.6), and GitHub for
+ * `opentax update` and its daily check.
  * `scripts/testing/sandbox.ts` proves fetch is the only network path the
  * shipped module graph has.
  */
 export const ALLOWED_HOSTS: readonly string[] = [
   "www.irs.gov",
+  "la.alt.www4.irs.gov",
+  "la.www4.irs.gov",
   "api.github.com",
   "github.com",
 ];
