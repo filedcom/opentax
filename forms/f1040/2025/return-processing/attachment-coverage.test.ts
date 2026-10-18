@@ -75,7 +75,7 @@ test("native attachment preflight blocks unfiled public inputs", () => {
       { f8828: { f8828s: [{}] } },
       { f8844: { f8844s: [{}] } },
       { f8881: { startup: { startup_costs: 100 } } },
-      { f8881: { auto_enrollment: { maintained_in_2025_confirmed: true } } },
+      { f8881: { auto_enrollment: { maintained_in_tax_year_confirmed: true } } },
       { f3800: { f8881_credit: { part_i_credit: 750 } } },
       { f8874: { investments: [{}] } },
       { f8882: { facility_contract: {} } },

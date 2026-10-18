@@ -391,4 +391,6 @@ export const config2026: F1040Config = {
     creditLimit: 500_000,
     smallBusinessCreditLimit: 600_000,
   },
+  // Draft Instructions for Form 8881 (Rev. December 2026), line 6b: $110,000.
+  retirementContributionCreditWageLimit: 110_000,
 };

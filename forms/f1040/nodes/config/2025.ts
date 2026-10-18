@@ -857,4 +857,7 @@ export const config2025: F1040Config = {
     creditLimit: 150_000,
     smallBusinessCreditLimit: 150_000,
   },
+  // Form 8881 (Rev. December 2025) line 6b: wages over $105,000 exclude an
+  // employee from the IRC §45E(f) contribution credit.
+  retirementContributionCreditWageLimit: 105_000,
 };

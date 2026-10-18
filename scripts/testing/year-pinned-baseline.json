@@ -1325,16 +1325,6 @@
     "count": 6
   },
   {
-    "path": "forms/f1040/nodes/inputs/credits/business/f8881/index.ts",
-    "pattern": "year-comparison",
-    "count": 1
-  },
-  {
-    "path": "forms/f1040/nodes/inputs/credits/business/f8881/index.ts",
-    "pattern": "year-identifier",
-    "count": 6
-  },
-  {
     "path": "forms/f1040/nodes/inputs/credits/health/f8941/arrangements.ts",
     "pattern": "date-pinned",
     "count": 1

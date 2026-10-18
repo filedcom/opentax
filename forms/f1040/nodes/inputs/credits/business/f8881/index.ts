@@ -4,9 +4,11 @@ import { output, TaxNode } from "../../../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../../../core/types/output-nodes.ts";
 import { f3800 } from "../f3800/index.ts";
 import type { NodeContext } from "../../../../../../../core/types/node-context.ts";
+import { configForYear } from "../../../../config/index.ts";
 
-// TY2025 Form 8881, revision December 2025. The three parts must remain
-// separate because Form 3800 places them on lines 1j, 1dd, and 1ee.
+// Form 8881, revisions December 2025 and (draft) December 2026. The three
+// parts must remain separate because Form 3800 places them on lines 1j, 1dd,
+// and 1ee.
 const dollars = z.number().int().nonnegative();
 const reference = z.string().trim().min(1);
 const eligibleEmployerCount = z.number().int().min(1).max(100);
@@ -21,15 +23,12 @@ export enum PlanType {
 
 const startupSchema = z.object({
   plan_effective_on: z.string().date(),
-  first_credit_year: z.number().int().min(2023).max(2025),
+  first_credit_year: z.number().int(),
   preceding_first_credit_year_qualified_employee_count: eligibleEmployerCount,
   eligible_non_hce_count: eligibleEmployerCount,
   startup_costs: dollars.positive(),
   cost_record_reference: reference,
-  costs_paid_or_incurred_on: z.string().date().refine(
-    (date) => date.startsWith("2025-"),
-    { message: "Startup costs must be paid or incurred in 2025" },
-  ),
+  costs_paid_or_incurred_on: z.string().date(),
   eligible_plan_confirmed: z.literal(true),
   no_substantially_same_employee_plan_in_prior_three_years_confirmed: z.literal(
     true,
@@ -53,7 +52,7 @@ const startupSchema = z.object({
 const contributionSchema = z.object({
   plan_effective_on: z.string().date(),
   preceding_first_plan_year_qualified_employee_count: eligibleEmployerCount,
-  preceding_2025_employee_count: eligibleEmployerCount,
+  preceding_year_employee_count: eligibleEmployerCount,
   eligible_defined_contribution_plan_confirmed: z.literal(true),
   no_substantially_same_employee_plan_in_prior_three_years_confirmed: z.literal(
     true,
@@ -63,24 +62,13 @@ const contributionSchema = z.object({
     z.object({
       employee_reference: reference,
       contribution_record_reference: reference,
-      contributed_on: z.string().date().refine(
-        (date) => date.startsWith("2025-"),
-        { message: "Employer contribution must be made in 2025" },
-      ),
-      wages_2025: dollars.max(105_000),
+      contributed_on: z.string().date(),
+      wages_for_year: dollars,
       qualified_employer_contribution: dollars.positive(),
       elective_deferrals_excluded_confirmed: z.literal(true),
     }).strict(),
   ).min(1),
 }).strict().superRefine((source, ctx) => {
-  const planYear = Number(source.plan_effective_on.slice(0, 4));
-  if (planYear < 2021 || planYear > 2025) {
-    ctx.addIssue({
-      code: "custom",
-      path: ["plan_effective_on"],
-      message: "2025 is outside the five-year contribution credit window",
-    });
-  }
   const employees = new Set<string>();
   const records = new Set<string>();
   source.employees.forEach((employee, index) => {
@@ -100,13 +88,13 @@ const contributionSchema = z.object({
 });
 
 const autoEnrollmentSchema = z.object({
-  first_credit_year: z.number().int().min(2023).max(2025),
+  first_credit_year: z.number().int(),
   preceding_first_credit_year_qualified_employee_count: eligibleEmployerCount,
   arrangement_record_reference: reference,
   arrangement_first_included_on: z.string().date(),
   eligible_automatic_contribution_arrangement_confirmed: z.literal(true),
   qualified_employer_plan_confirmed: z.literal(true),
-  maintained_in_2025_confirmed: z.literal(true),
+  maintained_in_tax_year_confirmed: z.literal(true),
 }).strict().superRefine((source, ctx) => {
   if (
     Number(source.arrangement_first_included_on.slice(0, 4)) !==
@@ -122,7 +110,7 @@ const autoEnrollmentSchema = z.object({
 });
 
 const militarySpouseSchema = z.object({
-  preceding_2025_qualified_employee_count: eligibleEmployerCount,
+  preceding_year_qualified_employee_count: eligibleEmployerCount,
   eligible_defined_contribution_plan_confirmed: z.literal(true),
   participation_within_two_months_confirmed: z.literal(true),
   immediate_equal_contribution_and_vesting_confirmed: z.literal(true),
@@ -131,14 +119,11 @@ const militarySpouseSchema = z.object({
       employee_reference: reference,
       spouse_active_duty_certification_reference: reference,
       contribution_record_reference: reference,
-      contributed_on: z.string().date().refine(
-        (date) => date.startsWith("2025-"),
-        { message: "Military-spouse contribution must be made in 2025" },
-      ),
-      first_eligible_participation_year: z.number().int().min(2023).max(2025),
+      contributed_on: z.string().date(),
+      first_eligible_participation_year: z.number().int(),
       non_hce_confirmed: z.literal(true),
       active_duty_spouse_at_hire_confirmed: z.literal(true),
-      participated_in_2025_confirmed: z.literal(true),
+      participated_in_tax_year_confirmed: z.literal(true),
       qualified_employer_contribution: dollars,
       elective_deferrals_excluded_confirmed: z.literal(true),
     }).strict(),
@@ -197,6 +182,80 @@ export type Form8881Lines = {
   readonly line15: number;
 };
 
+type Contributions = NonNullable<Form8881Input["contributions"]>;
+
+/** The tax year of the employer contributions, which all fall in it. */
+function contributionTaxYear(contributions: Contributions): number {
+  const years = new Set(
+    contributions.employees.map((e) => Number(e.contributed_on.slice(0, 4))),
+  );
+  if (years.size !== 1) {
+    throw new Error("Form 8881 employer contributions must fall in one year");
+  }
+  return [...years][0];
+}
+
+/** IRC §45E(f): the plan's first five years carry the contribution credit. */
+function contributionPlanYear(contributions: Contributions): number {
+  const taxYear = contributionTaxYear(contributions);
+  const planYear = taxYear -
+    Number(contributions.plan_effective_on.slice(0, 4)) + 1;
+  if (planYear < 1 || planYear > 5) {
+    throw new Error(
+      `${taxYear} is outside the five-year contribution credit window`,
+    );
+  }
+  const limit = configForYear(taxYear).retirementContributionCreditWageLimit;
+  if (contributions.employees.some((e) => e.wages_for_year > limit)) {
+    throw new Error(
+      `Form 8881 contribution credit excludes employees paid more than $${limit}`,
+    );
+  }
+  return planYear;
+}
+
+/** Each part's dated facts against the return year (IRC §45E(d)(2), §45T(b), §45AA). */
+export function assertForm8881ReturnYear(
+  input: Form8881Input,
+  taxYear: number,
+): void {
+  const withinCreditYears = (first: number) =>
+    taxYear >= first && taxYear <= first + 2;
+  const startup = input.startup;
+  if (
+    startup && (!startup.costs_paid_or_incurred_on.startsWith(`${taxYear}-`) ||
+      !withinCreditYears(startup.first_credit_year))
+  ) {
+    throw new Error(
+      `Form 8881 startup costs must be paid or incurred in ${taxYear}, within the three-year credit period`,
+    );
+  }
+  if (
+    input.contributions &&
+    contributionTaxYear(input.contributions) !== taxYear
+  ) {
+    throw new Error(`Form 8881 employer contributions must be made in ${taxYear}`);
+  }
+  if (
+    input.auto_enrollment &&
+    !withinCreditYears(input.auto_enrollment.first_credit_year)
+  ) {
+    throw new Error(
+      `Form 8881 auto-enrollment credit years do not include ${taxYear}`,
+    );
+  }
+  if (
+    input.military_spouses?.employees.some((employee) =>
+      !employee.contributed_on.startsWith(`${taxYear}-`) ||
+      !withinCreditYears(employee.first_eligible_participation_year)
+    )
+  ) {
+    throw new Error(
+      `Form 8881 military-spouse contributions must be made in ${taxYear}, within the employee's first three participation years`,
+    );
+  }
+}
+
 export function calculateForm8881(input: Form8881Input): Form8881Lines {
   const source = inputSchema.parse(input);
   if (
@@ -223,11 +282,11 @@ export function calculateForm8881(input: Form8881Input): Form8881Lines {
 
   const contributions = source.contributions;
   const contributionYear = contributions
-    ? 2025 - Number(contributions.plan_effective_on.slice(0, 4)) + 1
+    ? contributionPlanYear(contributions)
     : 0;
   const perEmployeeCap =
     [0, 1_000, 1_000, 1_334, 2_000, 4_000][contributionYear] ?? 0;
-  const line6a = contributions?.preceding_2025_employee_count ?? 0;
+  const line6a = contributions?.preceding_year_employee_count ?? 0;
   const line6b =
     contributions?.employees.filter((employee) =>
       employee.qualified_employer_contribution <= 1_000
@@ -297,7 +356,8 @@ class F8881Node extends TaxNode<typeof inputSchema> {
   readonly inputSchema = inputSchema;
   readonly outputNodes = new OutputNodes([f3800]);
 
-  compute(_ctx: NodeContext, rawInput: Form8881Input): NodeResult {
+  compute(ctx: NodeContext, rawInput: Form8881Input): NodeResult {
+    assertForm8881ReturnYear(inputSchema.parse(rawInput), ctx.taxYear);
     const lines = calculateForm8881(rawInput);
     return {
       outputs: [output(f3800, {

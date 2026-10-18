@@ -590,11 +590,6 @@
     "single-schedule-j-farm-income-averaging": [
       "calculation income_tax_calculation"
     ],
-    "single-form8881-startup-and-auto-enrollment": [
-      "calculation form8960",
-      "calculation standard_deduction",
-      "calculation start"
-    ],
     "mfj-form2210f-first-joint-filing": [
       "calculation form8960",
       "calculation standard_deduction",
@@ -851,7 +846,6 @@
     "single-form461-schedule-c-excess-business-loss": "Same finding in the TY2025 baseline: not a TY2026 difference",
     "single-form8396-certified-loan-interest-credit": "Open TY2026 work: Form 8396 names its 2024 carryforward and 2025 interest in field names",
     "single-schedule-j-farm-income-averaging": "Named TY2025-only route: TY2026 Form 8814 and Schedule J tax worksheets are not supported yet",
-    "single-form8881-startup-and-auto-enrollment": "Open TY2026 work: Form 8881 pins the 2025 first credit year and cost dates",
     "mfj-form2210f-first-joint-filing": "Open TY2026 work: Form 2210-F box B source names 2024/2025 gross income years and 2026 payment dates",
     "single-certified-work-opportunity-credit": "TY2026 law: shifted a year, the sample hires its WOTC employee in 2026; IRC \u00a751(c)(4) ends the work opportunity credit for individuals who begin work after December 31, 2025, so the 2026 return correctly cannot claim it",
     "single-reported-tax-credit-bond": "Dated fact outside TY2026: shifting the sample moves its 2017 QECB issue date past the December 31, 2017 cutoff (P.L. 115-97 \u00a713404 repealed tax credit bonds issued after 2017); a 2026 version of this bond cannot exist",

@@ -18,7 +18,7 @@ const startup = {
 const contributions = {
   plan_effective_on: "2023-01-01",
   preceding_first_plan_year_qualified_employee_count: 20,
-  preceding_2025_employee_count: 60,
+  preceding_year_employee_count: 60,
   eligible_defined_contribution_plan_confirmed: true,
   no_substantially_same_employee_plan_in_prior_three_years_confirmed: true,
   contribution_deduction_reduced_by_credit_confirmed: true,
@@ -26,7 +26,7 @@ const contributions = {
     employee_reference: "worker-1",
     contribution_record_reference: "payroll-1",
     contributed_on: "2025-12-15",
-    wages_2025: 50_000,
+    wages_for_year: 50_000,
     qualified_employer_contribution: 1_500,
     elective_deferrals_excluded_confirmed: true,
   }],
@@ -39,11 +39,11 @@ const autoEnrollment = {
   arrangement_first_included_on: "2024-01-01",
   eligible_automatic_contribution_arrangement_confirmed: true,
   qualified_employer_plan_confirmed: true,
-  maintained_in_2025_confirmed: true,
+  maintained_in_tax_year_confirmed: true,
 } as const;
 
 const militarySpouses = {
-  preceding_2025_qualified_employee_count: 20,
+  preceding_year_qualified_employee_count: 20,
   eligible_defined_contribution_plan_confirmed: true,
   participation_within_two_months_confirmed: true,
   immediate_equal_contribution_and_vesting_confirmed: true,
@@ -55,7 +55,7 @@ const militarySpouses = {
     first_eligible_participation_year: 2024,
     non_hce_confirmed: true,
     active_duty_spouse_at_hire_confirmed: true,
-    participated_in_2025_confirmed: true,
+    participated_in_tax_year_confirmed: true,
     qualified_employer_contribution: 400,
     elective_deferrals_excluded_confirmed: true,
   }],
@@ -200,5 +200,52 @@ test("Form 8881 rejects unsupported or unproven source facts", () => {
         employees: [...contributions.employees],
       },
     })
+  );
+});
+
+// Form 8881 line 6b excludes employees paid more than $105,000 (Rev. December
+// 2025) and $110,000 (draft instructions, Rev. December 2026).
+test("Form 8881 reads the contribution year's wage limit and credit years", () => {
+  const in2026 = {
+    ...contributions,
+    employees: [{
+      ...contributions.employees[0],
+      contributed_on: "2026-12-15",
+      wages_for_year: 110_000,
+    }],
+  };
+  const lines = calculateForm8881({
+    schedule_c_business_reference: "biz-1",
+    plan_type: PlanType.Plan401k,
+    contributions: in2026,
+  });
+  // Fourth plan year: $1,500 under the $2,000 cap, less 20% for 60
+  // employees (line 6e), then 50%.
+  assertEquals(lines.line6g, 600);
+  assertThrows(
+    () =>
+      calculateForm8881({
+        schedule_c_business_reference: "biz-1",
+        plan_type: PlanType.Plan401k,
+        contributions: {
+          ...contributions,
+          employees: [{
+            ...contributions.employees[0],
+            wages_for_year: 110_000,
+          }],
+        },
+      }),
+    Error,
+    "paid more than $105000",
+  );
+  assertThrows(
+    () =>
+      f8881.compute({ taxYear: 2026, formType: "f1040" }, {
+        schedule_c_business_reference: "biz-1",
+        plan_type: PlanType.Plan401k,
+        startup,
+      }),
+    Error,
+    "paid or incurred in 2026",
   );
 });

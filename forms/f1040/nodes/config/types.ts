@@ -348,4 +348,6 @@ export interface F1040Config {
   /** IRC §45S(d)(2): a qualifying employee's prior-year compensation limit. */
   paidLeaveCompensationLimit: number;
   employerProvidedChildcare: EmployerProvidedChildcareTerms;
+  /** Form 8881 line 6b: employees paid more than this get no contribution credit. */
+  retirementContributionCreditWageLimit: number;
 }

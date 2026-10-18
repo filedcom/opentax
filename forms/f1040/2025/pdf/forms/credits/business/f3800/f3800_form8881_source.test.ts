@@ -36,7 +36,7 @@ const source = {
     arrangement_first_included_on: "2025-01-01",
     eligible_automatic_contribution_arrangement_confirmed: true,
     qualified_employer_plan_confirmed: true,
-    maintained_in_2025_confirmed: true,
+    maintained_in_tax_year_confirmed: true,
   },
 };
 const f3800 = {
@@ -180,7 +180,7 @@ test("Form 8881 military-spouse Part III binds Form 3800 line 1ee", () => {
   const military = {
     ...source,
     military_spouses: {
-      preceding_2025_qualified_employee_count: 20,
+      preceding_year_qualified_employee_count: 20,
       eligible_defined_contribution_plan_confirmed: true,
       participation_within_two_months_confirmed: true,
       immediate_equal_contribution_and_vesting_confirmed: true,
@@ -192,7 +192,7 @@ test("Form 8881 military-spouse Part III binds Form 3800 line 1ee", () => {
         first_eligible_participation_year: 2025,
         non_hce_confirmed: true,
         active_duty_spouse_at_hire_confirmed: true,
-        participated_in_2025_confirmed: true,
+        participated_in_tax_year_confirmed: true,
         qualified_employer_contribution: 300,
         elective_deferrals_excluded_confirmed: true,
       }],
@@ -291,7 +291,7 @@ test("Form 8881 contribution phaseout retains its zero-credit source projection"
     contributions: {
       plan_effective_on: "2025-01-01",
       preceding_first_plan_year_qualified_employee_count: 100,
-      preceding_2025_employee_count: 100,
+      preceding_year_employee_count: 100,
       eligible_defined_contribution_plan_confirmed: true,
       no_substantially_same_employee_plan_in_prior_three_years_confirmed: true,
       contribution_deduction_reduced_by_credit_confirmed: true,
@@ -299,7 +299,7 @@ test("Form 8881 contribution phaseout retains its zero-credit source projection"
         employee_reference: "PLAN-EMP-1",
         contribution_record_reference: "PLAN-PAY-1",
         contributed_on: "2025-09-15",
-        wages_2025: 50_000,
+        wages_for_year: 50_000,
         qualified_employer_contribution: 1_000,
         elective_deferrals_excluded_confirmed: true,
       }],

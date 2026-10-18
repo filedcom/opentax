@@ -25,7 +25,7 @@ const source = {
     arrangement_first_included_on: "2025-01-01",
     eligible_automatic_contribution_arrangement_confirmed: true,
     qualified_employer_plan_confirmed: true,
-    maintained_in_2025_confirmed: true,
+    maintained_in_tax_year_confirmed: true,
   },
 };
 
