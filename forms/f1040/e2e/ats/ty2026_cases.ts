@@ -8,7 +8,7 @@
  * same number in `ty2025_cases.ts`. `engineGaps` lists what keeps the case
  * from a TY2026 export today: the IRS 2026v1.0 schema the engine targets has
  * no Schedule 3-A, Form 1062, Form 4562-B or Form 7220, and the f1040:2026
- * product accepts only `general`, `w2` and `f8888` inputs.
+ * product accepts only the inputs listed in `forms/f1040/2026/supported/`.
  */
 
 import type { AtsCase } from "./ty2025_cases.ts";
@@ -101,8 +101,7 @@ export const TY2026_ATS_CASES: readonly Ty2026AtsCase[] = [
     ty2025Comparison:
       "Same form list as TY2025 scenario 3. New facts: IP PIN 876534, taxable state refund $4,089, the Schedule SE farm optional method, specified-cooperative patron status, no income averaging and no QOF investment; the 2026 Schedule F, E and Form 4835 add vehicle-loan interest lines.",
     engineGaps: [
-      "1099-R, Schedule D/E/F/SE and Form 4835 inputs are not accepted for TY2026",
-      "The capital-gain tax worksheet still uses TY2025 thresholds",
+      "Schedule F and Form 4835 inputs are not accepted for TY2026",
     ],
     capture: "inventory-only",
   },
@@ -167,7 +166,7 @@ export const TY2026_ATS_CASES: readonly Ty2026AtsCase[] = [
     ty2025Comparison:
       "No TY2025 Form 1040 scenario 6 exists (TY2025 scenario 6 was a 1040-SS return). New: a dependent filer born 2008 with W-2 overtime (box 12 TT $200), W-2G slot winnings and a gambling partnership on Schedule E Part II.",
     engineGaps: [
-      "W-2G and Schedule E inputs are not accepted for TY2026",
+      "Schedule E Part II partnership (K-1) inputs are not accepted for TY2026",
       "W-2 box 12 code TT and the Schedule 1-A overtime route are TY2025-only",
     ],
     capture: "inventory-only",
@@ -207,7 +206,7 @@ export const TY2026_ATS_CASES: readonly Ty2026AtsCase[] = [
       "TY2025 scenario 12 was Schedule C/SE with Forms 7206 and 7217. TY2026 keeps Schedule C/SE and the W-2 but replaces 7206/7217 with a credit-transfer return: Forms 3800 and 3800 Schedule A, 4562-B, 7205, 7207, 7220 and four binary attachments.",
     engineGaps: [
       "Forms 4562-B and 7220 have no 2026v1.0 schema element",
-      "Schedule C and business-credit inputs are not accepted for TY2026",
+      "Business-credit inputs are not accepted for TY2026",
     ],
     capture: "inventory-only",
   },
