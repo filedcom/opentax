@@ -37,6 +37,7 @@ type Source = {
   readonly rows: string;
   readonly fields: readonly string[];
   readonly schema: { parse(input: unknown): unknown };
+  readonly payer?: string;
   readonly recipient?: string;
   readonly recipientOnJointOnly?: boolean;
   readonly include?: (row: Record<string, unknown>) => boolean;
@@ -50,6 +51,7 @@ const sources: readonly Source[] = [
     rows: "f1099bs",
     fields: ["federal_withheld"],
     schema: bSchema,
+    payer: "payer_tin",
   },
   { key: "f1099div", rows: "f1099divs", fields: ["box4"], schema: divSchema },
   {
@@ -57,20 +59,29 @@ const sources: readonly Source[] = [
     rows: "f1099gs",
     fields: ["box_4_federal_withheld"],
     schema: gSchema,
+    payer: "payer_tin",
     recipient: "recipient_tin",
   },
-  { key: "f1099int", rows: "f1099ints", fields: ["box4"], schema: intSchema },
+  {
+    key: "f1099int",
+    rows: "f1099ints",
+    fields: ["box4"],
+    schema: intSchema,
+    payer: "payer_tin",
+  },
   {
     key: "f1099k",
     rows: "f1099ks",
     fields: ["box4_federal_withheld"],
     schema: kSchema,
+    payer: "pse_tin",
   },
   {
     key: "f1099m",
     rows: "f1099ms",
     fields: ["box4_federal_withheld"],
     schema: mSchema,
+    payer: "payer_tin",
     recipient: "recipient_tin",
   },
   {
@@ -78,18 +89,21 @@ const sources: readonly Source[] = [
     rows: "f1099necs",
     fields: ["box4_federal_withheld"],
     schema: necSchema,
+    payer: "payer_tin",
   },
   {
     key: "f1099oid",
     rows: "f1099oids",
     fields: ["box4_federal_withheld"],
     schema: oidSchema,
+    payer: "payer_tin",
   },
   {
     key: "f1099patr",
     rows: "f1099patrs",
     fields: ["box4_federal_withheld"],
     schema: patrSchema,
+    payer: "payer_tin",
   },
   {
     key: "f1099r",
@@ -120,6 +134,48 @@ const sources: readonly Source[] = [
     schema: socialSecuritySchema,
   },
 ];
+
+function rowWithholding(source: Source, row: Record<string, unknown>): number {
+  if (source.include && !source.include(row)) return 0;
+  return source.fields.reduce(
+    (sum, field) => sum + ((row[field] as number | undefined) ?? 0),
+    0,
+  );
+}
+
+function payerEin(value: unknown): string | undefined {
+  if (typeof value !== "string" || /^\d{3}-\d{2}-\d{4}$/.test(value.trim())) {
+    return undefined;
+  }
+  const digits = value.replace(/\D/g, "");
+  return digits.length === 9 ? digits : undefined;
+}
+
+export interface OtherWithholdingRow {
+  readonly ein?: string;
+  readonly amount: number;
+}
+
+// Form 1099-R withholding, including Form 4852 substitutes, is filed on
+// IRS1099R documents; every other line 25b copy needs a statement row.
+const filedOnForm1099R = new Set(["f1099r", "f4852"]);
+
+/** Line 25b withholding for the OtherWithholdingStatement, one row per copy. */
+export function otherWithholdingStatementRows(
+  pending: Readonly<Record<string, unknown>>,
+): readonly OtherWithholdingRow[] {
+  return sources.flatMap((source) => {
+    const raw = pending[source.key];
+    if (filedOnForm1099R.has(source.key) || raw === undefined) return [];
+    const parsed = source.schema.parse(raw) as Record<string, unknown>;
+    return (parsed[source.rows] as Record<string, unknown>[]).flatMap((row) => {
+      const amount = rowWithholding(source, row);
+      if (amount <= 0) return [];
+      const ein = source.payer ? payerEin(row[source.payer]) : undefined;
+      return [ein ? { ein, amount } : { amount }];
+    });
+  });
+}
 
 /** Replay all retained 1099-family withholding into Form 1040 line 25b. */
 export function assert1099WithholdingSource(
@@ -159,11 +215,7 @@ export function assert1099WithholdingSource(
       assertDistinct1099MCopies(mSchema.parse(raw).f1099ms);
     }
     for (const [index, row] of rows.entries()) {
-      if (source.include && !source.include(row)) continue;
-      const amount = source.fields.reduce(
-        (sum, field) => sum + ((row[field] as number | undefined) ?? 0),
-        0,
-      );
+      const amount = rowWithholding(source, row);
       if (amount <= 0) continue;
       if (source.key === "f1099b" && typeof row.transaction_id === "string") {
         brokerTransactionIds.add(row.transaction_id);

@@ -221,6 +221,7 @@ try {
     taxpayer_last_name: "Example",
     taxpayer_ssn: "111-22-3333",
     taxpayer_dob: "1985-06-15",
+    taxpayer_prior_year_agi: 0,
     address_line1: "1 Example Way",
     address_city: "Austin",
     address_state: "TX",
