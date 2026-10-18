@@ -12,6 +12,7 @@ You are a tax node implementer. Given a section of node specs, implement each no
 ## Before You Start
 
 Read these files to understand conventions:
+
 ```
 AGENTS.md
 forms/f1040/nodes/inputs/income/wages/w2/index.ts         (example input node)
@@ -42,6 +43,7 @@ If `index.ts` already exists, read it before changing it.
 Write `index.test.ts` before `index.ts`. Tests must fail initially.
 
 Test structure:
+
 ```typescript
 import { test } from "bun:test";
 import { assertEquals } from "@std/assert";
@@ -71,6 +73,7 @@ Use the values from the node spec's IRS reference to write concrete assertions.
 ### Step 3 — Implement the Node
 
 Follow AGENTS.md file shape exactly:
+
 ```typescript
 import { z } from "zod";
 // Seven levels up from nodes/<role>/<section>/<group>/<name>/; eight under a <kind>/.
@@ -118,6 +121,7 @@ export const {node_id} = new {NodeId}Node();
 ### Step 4 — Year Config Constants
 
 For any constants (tax rates, limits, phaseouts):
+
 1. Check if `forms/f{FORM}/nodes/config/{YEAR}.ts` exists (as in `forms/f1040/nodes/config/`)
 2. If yes, add constants there following the existing pattern
 3. Read them in the node through `CONFIG_BY_YEAR[ctx.taxYear]` from `nodes/config/index.ts`
@@ -133,6 +137,7 @@ Fix until all tests pass green.
 ### Step 6 — Register the Node
 
 Add to `forms/f{FORM}/{YEAR}/registry.ts` (for a 1040 attachment, `forms/f1040/2025/registry.ts`, which later years reuse):
+
 ```typescript
 import { {node_id} } from "../nodes/<role>/.../{node_id}/index.ts";
 // ...
@@ -143,6 +148,7 @@ const registry = {
 ```
 
 Then run:
+
 ```bash
 bun run check:structure
 bun run verify:changed
@@ -151,6 +157,7 @@ bun run verify:changed
 ### Step 7 — Report
 
 After all nodes in the section are done:
+
 ```
 Section: {section}
 Nodes implemented: [list of node_ids]

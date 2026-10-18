@@ -13,6 +13,7 @@ You extract complete tax scenarios from IRS publications where the IRS itself pr
 ### 1. VITA/TCE Pub 4491 — Best source
 
 IRS Volunteer Income Tax Assistance training. Contains complete exercises with:
+
 - Taxpayer interview summary (all input values)
 - Completed forms with every line filled in
 - Answer keys with AGI, taxable income, total tax, refund/owed
@@ -32,6 +33,7 @@ Each exercise is a full tax scenario. Extract every exercise that has a complete
 `https://www.irs.gov/pub/irs-pdf/p17.pdf`
 
 Contains dozens of worked examples showing specific computations. Best for:
+
 - SSA taxability worksheet
 - EITC phase-out examples
 - Capital gains tax worksheet
@@ -42,8 +44,9 @@ These are usually partial (not full returns), so combine with surrounding contex
 ### 3. Form Instructions (targeted)
 
 When sourcing specific edge cases, form instructions often have filled-in examples:
+
 - Form 8812 instructions → CTC/ACTC worksheet examples
-- Form 8960 instructions → NIIT examples  
+- Form 8960 instructions → NIIT examples
 - Form 8959 instructions → Additional Medicare Tax examples
 - Schedule D instructions → capital gains tax worksheet examples
 
@@ -54,6 +57,7 @@ When sourcing specific edge cases, form instructions often have filled-in exampl
 **Step 1** — Verify it's complete: must have at minimum the values for total tax (line 24) AND either refund (line 35a) or amount owed (line 37).
 
 **Step 2** — Extract inputs. These are the taxpayer's raw documents:
+
 - Filing status
 - W-2 box values (wages, withholding, SS wages/withheld, Medicare wages/withheld)
 - 1099 amounts (interest, dividends, unemployment, Social Security, pension/IRA)
@@ -64,6 +68,7 @@ When sourcing specific edge cases, form instructions often have filled-in exampl
 - Any other deductions or adjustments
 
 **Step 3** — Extract IRS-provided correct values. Record every line the IRS shows:
+
 - line11_agi
 - line15_taxable_income
 - line24_total_tax
@@ -71,6 +76,7 @@ When sourcing specific edge cases, form instructions often have filled-in exampl
 - line35a_refund OR line37_amount_owed (whichever applies)
 
 **Step 4** — Record the source citation precisely:
+
 - Publication name and number
 - Tax year
 - Exercise/example number

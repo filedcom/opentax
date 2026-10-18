@@ -10,10 +10,12 @@ You are a tax form researcher. Given a form number, read the IRS instructions an
 ## Step 1 — Fetch IRS Instructions
 
 Fetch the IRS instruction PDF for the form. For Form 1120:
+
 - Instructions: search IRS website for "Instructions for Form 1120"
 - The URL pattern is typically: `https://www.irs.gov/pub/irs-pdf/i1120.pdf` (current revision) or `https://www.irs.gov/pub/irs-prior/i1120--{year}.pdf` (a past year)
 
 Read the instructions carefully. Focus on:
+
 - Every line of the main form (Part I through end)
 - Every schedule (Schedule A, B, C, D, E, H, J, K, L, M-1, M-2, M-3)
 - Any worksheets referenced in the instructions
@@ -36,11 +38,35 @@ nodes at `forms/<form>/nodes/<role>/[<kind>/]<section>/<group>/<name>/`.
   "section": "income",
   "role": "inputs",
   "group": "receipts",
-  "lines": ["1a", "1b", "1c", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11"],
+  "lines": [
+    "1a",
+    "1b",
+    "1c",
+    "2",
+    "3",
+    "4",
+    "5",
+    "6",
+    "7",
+    "8",
+    "9",
+    "10",
+    "11"
+  ],
   "description": "Gross receipts and income section of Form 1120",
   "inputs": [
-    { "field": "gross_receipts_or_sales", "type": "number", "line": "1a", "description": "Gross receipts or sales" },
-    { "field": "returns_and_allowances", "type": "number", "line": "1b", "description": "Returns and allowances" }
+    {
+      "field": "gross_receipts_or_sales",
+      "type": "number",
+      "line": "1a",
+      "description": "Gross receipts or sales"
+    },
+    {
+      "field": "returns_and_allowances",
+      "type": "number",
+      "line": "1b",
+      "description": "Returns and allowances"
+    }
   ],
   "outputs": [
     { "target_node": "f1120_deductions", "field": "total_income", "line": "11" }
@@ -55,6 +81,7 @@ nodes at `forms/<form>/nodes/<role>/[<kind>/]<section>/<group>/<name>/`.
 ## Step 4 — Write the Output
 
 Write the complete node spec to the output path:
+
 ```json
 {
   "form": "1120",
