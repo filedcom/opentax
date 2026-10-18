@@ -590,7 +590,7 @@ async function buildPdfBytesInternal(
   assertSingleFarmQbiReturn(normalized);
   if (normalized.f1040) {
     assertF1040FinalHeader(normalized.f1040, filer);
-    assertLine1hSupportedSource(normalized.f1040, normalized, filer);
+    assertLine1hSupportedSource(normalized.f1040, 2025, normalized, filer);
   }
   assertGeneral1040HeaderSource(normalized);
   assertGeneral1040DependentSource(normalized, 2025);
