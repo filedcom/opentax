@@ -58,14 +58,14 @@ const futaEmployeeSchema = z.object({
     birth_date: calendarDate,
     birth_date_source_reference: z.string().trim().min(1),
     student_enrollment_source_reference: z.string().trim().min(1),
-    student_during_2025_verified: z.literal(true),
+    student_during_tax_year_verified: z.literal(true),
   }).strict().optional(),
   nonstudent_minor_fica_inclusion: z.object({
     birth_date: calendarDate,
     birth_date_source_reference: z.string().trim().min(1),
     education_status_source_reference: z.string().trim().min(1),
     principal_occupation_source_reference: z.string().trim().min(1),
-    not_a_student_during_2025_verified: z.literal(true),
+    not_a_student_during_tax_year_verified: z.literal(true),
     household_services_principal_occupation_verified: z.literal(true),
   }).strict().optional(),
   ordinary_cash_only: z.literal(true),
@@ -122,7 +122,7 @@ const familyWithholdingEmployeeSchema = z.discriminatedUnion("relationship", [
     marriage_date: calendarDate,
     marriage_source_reference: z.string().trim().min(1),
     marriage_continuity_source_reference: z.string().trim().min(1),
-    married_through_2025_verified: z.literal(true),
+    married_through_tax_year_verified: z.literal(true),
   }).strict(),
 ]);
 
@@ -235,7 +235,7 @@ const parentFicaReviewSchema = z.union([
   z.object({
     classification: z.literal("excluded"),
     source_reference: sourceReference,
-    no_child_of_employer_living_in_home_during_2025_verified: z.literal(true),
+    no_child_of_employer_living_in_home_during_tax_year_verified: z.literal(true),
   }).strict(),
   z.object({
     classification: z.literal("quarterly_circumstances"),
@@ -1084,7 +1084,7 @@ const payrollEmployeeSchema = z.union([
     marriage_date: calendarDate,
     marriage_source_reference: z.string().trim().min(1),
     marriage_continuity_source_reference: z.string().trim().min(1),
-    married_through_2025_verified: z.literal(true),
+    married_through_tax_year_verified: z.literal(true),
   }).strict(),
 ]);
 
@@ -1965,13 +1965,16 @@ export function computeScheduleHAmounts(
       employee.w4_source_reference,
       employee.w2.source_reference,
     ];
+    // A spouse, or a child under 21 all year, is excluded from FICA and FUTA
+    // wages (2025 and draft 2026 Instructions for Schedule H).
+    const priorYearEnd = `${taxYear - 1}-12-31`;
     if (
-      taxYear !== 2025 || unemployment || ficaOnly ||
+      unemployment || ficaOnly ||
       (employee.relationship === "child" &&
-        (employee.birth_date < "2005-01-01" ||
-          employee.birth_date > "2024-12-31")) ||
+        (employee.birth_date < `${taxYear - 20}-01-01` ||
+          employee.birth_date > priorYearEnd)) ||
       (employee.relationship === "spouse" &&
-        employee.marriage_date > "2024-12-31") ||
+        employee.marriage_date > priorYearEnd) ||
       employee.employee_ssn === family.employer_ssn ||
       new Set(references).size !== references.length ||
       quarterlyCashCents(employee.quarterly_cash_wages) !==

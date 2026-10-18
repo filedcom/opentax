@@ -439,9 +439,6 @@
     "single-withheld-w2g": [
       "xml Withheld W-2G needs the issued 2025 form, structured payer identity, standard code, winnings, and withholding"
     ],
-    "joint-schedule-h-spouse-withholding-only": [
-      "calculation schedule_h"
-    ],
     "single-schedule-h-fica-and-futa": [
       "calculation schedule_h"
     ],
@@ -770,7 +767,6 @@
     "single-8862-ctc-reinstatement": "Sample amount: the reviewed Schedule 8812 carries the TY2025 Form 1040 line 18 tax ($9,055 on $80,000 single AGI); the 2026 return figures line 18 with the Rev. Proc. 2025-32 standard deduction and rates, and amounts are not shifted",
     "single-five-dependent-continuation": "Sample amount: the reviewed Schedule 8812 carries the TY2025 Form 1040 line 18 tax ($9,055 on $80,000 single AGI); the 2026 return figures line 18 with the Rev. Proc. 2025-32 standard deduction and rates, and amounts are not shifted",
     "single-withheld-w2g": "Named TY2025-only route: W-2G payer Copy B verification reads the 2025 Form W-2G template; the 2026 template (irs/corpus/ty2026/authorities/fw2g--2026.pdf) is not mapped yet",
-    "joint-schedule-h-spouse-withholding-only": "Open TY2026 work: Schedule H family withholding source replays TY2025 payroll rules",
     "single-schedule-h-fica-and-futa": "Named TY2025-only route: Schedule H FUTA credit-reduction states for 2026 are not yet published",
     "single-schedule-h-three-state-futa": "Named TY2025-only route: Schedule H FUTA credit-reduction states for 2026 are not yet published",
     "single-form8814-child-dividends-adjustments": "Named TY2025-only route: TY2026 Form 8814 and Schedule J tax worksheets are not supported yet",
