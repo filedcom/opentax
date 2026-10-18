@@ -874,6 +874,23 @@ test("disabled adult child qualifies for ODC, not CTC", () => {
   assertEquals(input?.other_dependent_count, 1);
 });
 
+// Pub. 596 (2025) Rule 8, Age Test: a child of any age who is permanently and
+// totally disabled meets the age test, with no younger-than-you requirement.
+test("permanently and totally disabled son of 37 is an EIC qualifying child", () => {
+  const result = compute({
+    filing_status: FilingStatus.QSS,
+    taxpayer_dob: "1975-10-06",
+    dependents: [qualifyingChildDep({ dob: "1988-09-14", disabled: true })],
+  });
+  assertEquals(findOutput(result, "eitc")?.fields.qualifying_children, 1);
+  const notDisabled = compute({
+    filing_status: FilingStatus.QSS,
+    taxpayer_dob: "1975-10-06",
+    dependents: [qualifyingChildDep({ dob: "1988-09-14", disabled: false })],
+  });
+  assertEquals(findOutput(notDisabled, "eitc")?.fields.qualifying_children, 0);
+});
+
 test("dependent without qualifying U.S. status receives neither CTC nor ODC", () => {
   const result = compute({
     filing_status: FilingStatus.Single,

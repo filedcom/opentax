@@ -735,6 +735,28 @@ test("f1099r.compute: disability_flag + disability_as_wages routes to f1040 line
   assertEquals(input.line5a_pension_gross, undefined);
 });
 
+// Pub. 596 (2025) Rule 7, Disability Benefits: taxable benefits from an
+// employer's disability retirement plan are earned income for the EIC until
+// minimum retirement age.
+test("f1099r.compute: disability-as-wages taxable amount is EIC earned income", () => {
+  const result = compute([minimalPensionItem({
+    box1_gross_distribution: 11_000,
+    box2a_taxable_amount: 11_000,
+    box7_distribution_code: DistributionCode.Code3,
+    disability_flag: true,
+    disability_as_wages: true,
+  })]);
+  const eicOut = result.outputs.find((o) => o.nodeType === "eitc");
+  assertEquals(eicOut?.fields, { disability_pension_earned_income: 11_000 });
+  const pension = compute([minimalPensionItem({
+    box1_gross_distribution: 11_000,
+    box2a_taxable_amount: 11_000,
+    box7_distribution_code: DistributionCode.Code3,
+    disability_flag: true,
+  })]);
+  assertEquals(pension.outputs.some((o) => o.nodeType === "eitc"), false);
+});
+
 test("f1099r.compute: no_distribution_received suppresses all income outputs", () => {
   const result = compute([minimalIraItem({
     box1_gross_distribution: 50000,

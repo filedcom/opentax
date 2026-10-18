@@ -125,6 +125,9 @@ export const inputSchema = z.object({
   se_net_profit: z.number().nonnegative().optional(),
   // Worksheet B Part 1 line 1d: Schedule SE line 13 reduces SE earned income.
   se_tax_deduction: z.number().nonnegative().optional(),
+  // Pub. 596 (2025) Rule 7, Disability Benefits: taxable employer disability
+  // retirement benefits before minimum retirement age, fed by f1099r.
+  disability_pension_earned_income: z.number().nonnegative().optional(),
 
   // Adjusted Gross Income — used for EITC phaseout when AGI > earned income
   agi: z.number().optional(),
@@ -294,13 +297,40 @@ function eicLookupForYear(taxYear: number): EicLookup {
   throw new Error(`No EIC table for tax year ${taxYear}`);
 }
 
+// Pub. 596 (2025) ch. 5: EIC denied or reduced for any year after 1996, other
+// than for a math or clerical error, requires Form 8862, so a claim cannot
+// proceed without that answer.
+function requirePriorDisallowanceAnswer(
+  input: EitcInput,
+  credit: number,
+): number {
+  if (credit > 0 && input.prior_eic_disallowance_review === undefined) {
+    throw new Error(
+      "EIC needs general.prior_eic_disallowance_review: whether EIC was disallowed or reduced for a year after 1996 decides if Form 8862 is required",
+    );
+  }
+  return credit;
+}
+
 function computeEitc(
   input: EitcInput,
   investmentIncomeLimit: number,
   lookupEic: EicLookup = lookupEic2025,
 ): number {
+  return requirePriorDisallowanceAnswer(
+    input,
+    tentativeEitc(input, investmentIncomeLimit, lookupEic),
+  );
+}
+
+function tentativeEitc(
+  input: EitcInput,
+  investmentIncomeLimit: number,
+  lookupEic: EicLookup,
+): number {
   if (input.do_not_claim_eic === true) return 0;
   const earnedIncome = (input.earned_income ?? 0) +
+    (input.disability_pension_earned_income ?? 0) +
     (input.se_net_profit ?? 0) - (input.se_tax_deduction ?? 0);
   const agi = input.agi ?? earnedIncome;
   const children = clampChildren(input.qualifying_children ?? 0);
@@ -309,7 +339,10 @@ function computeEitc(
   if (input.filer_has_valid_ssns !== true) return 0;
   if (!eicTaxResidencyEligible(input)) return 0;
   if (input.form2555_filed === true) return 0;
-  if (!priorEicDisallowanceEligible(input, children)) return 0;
+  if (
+    input.prior_eic_disallowance_review !== undefined &&
+    !priorEicDisallowanceEligible(input, children)
+  ) return 0;
 
   // A separate return can use the 2025 separated-spouse rule only with a
   // qualifying child and reviewed residence/separation facts.
