@@ -14,7 +14,8 @@ function amount(fields: Record<string, unknown>, key: string): number {
 /** Keep the bounded MFJ dependent worksheet and refund-only claim tied to source. */
 export function assertJointDependentRefundSource(
   fields: Record<string, unknown>,
-  pending?: Readonly<Record<string, unknown>>,
+  pending: Readonly<Record<string, unknown>> | undefined,
+  taxYear: number,
 ): void {
   const rawGeneral = pending?.general as Record<string, unknown> | undefined;
   if (
@@ -88,12 +89,12 @@ export function assertJointDependentRefundSource(
   }
   const taxpayerAgeFromDob = isAge65ByEndOfTaxYear(
     general.taxpayer_dob,
-    2025,
+    taxYear,
     "taxpayer",
   );
   const spouseAgeFromDob = isAge65ByEndOfTaxYear(
     general.spouse_dob,
-    2025,
+    taxYear,
     "spouse",
   );
   if (

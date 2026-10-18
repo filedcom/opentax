@@ -44,9 +44,9 @@ function filed(gross: number, taxable = gross) {
 }
 
 test("RRB-1099-R pension source replays filed lines 5a and 5b", () => {
-  assertRrb1099rPensionSource({ rrb1099r, f1040: filed(5_500) }, filer);
+  assertRrb1099rPensionSource({ rrb1099r, f1040: filed(5_500) }, filer, 2025);
   assertThrows(
-    () => assertRrb1099rPensionSource({ rrb1099r, f1040: filed(6_000) }, filer),
+    () => assertRrb1099rPensionSource({ rrb1099r, f1040: filed(6_000) }, filer, 2025),
     Error,
     "lines 5a and 5b or AGI differ from retained pension sources",
   );
@@ -81,7 +81,7 @@ test("issued and substitute pensions replay without a railroad statement", () =>
     f4852: substitutePension,
     f1040: { ...filed(5_000, 3_500), line25b_withheld_1099: 0 },
     agi_aggregator: { line5b_pension_taxable: 3_500 },
-  }, filer);
+  }, filer, 2025);
   assertRrb1099rPensionSource({
     f1099r: {
       f1099rs: [{
@@ -90,13 +90,13 @@ test("issued and substitute pensions replay without a railroad statement", () =>
       }],
     },
     f1040: { ...filed(0, 3_000), line25b_withheld_1099: 0 },
-  }, filer);
+  }, filer, 2025);
   assertThrows(
     () =>
       assertRrb1099rPensionSource({
         f1099r: issuedPension,
         f1040: { ...filed(3_001, 2_000), line25b_withheld_1099: 0 },
-      }, filer),
+      }, filer, 2025),
     Error,
     "lines 5a and 5b or AGI differ",
   );
@@ -106,7 +106,7 @@ test("issued and substitute pensions replay without a railroad statement", () =>
         f1099r: issuedPension,
         f1040: { ...filed(3_000, 2_000), line25b_withheld_1099: 0 },
         agi_aggregator: { line5b_pension_taxable: 2_001 },
-      }, filer),
+      }, filer, 2025),
     Error,
     "lines 5a and 5b or AGI differ",
   );
@@ -136,7 +136,7 @@ test("existing Form 4972 Part II pension deposit keeps its separate AGI review",
     { taxYear: 2025, formType: "f1040" },
   );
   assertEquals(result.diagnostics, []);
-  assertRrb1099rPensionSource(result.pending, fixture.filer);
+  assertRrb1099rPensionSource(result.pending, fixture.filer, 2025);
 });
 
 test("RRB with issued and substitute pensions replays both filed amounts exactly", async () => {
@@ -146,7 +146,7 @@ test("RRB with issued and substitute pensions replays both filed amounts exactly
     f4852: substitutePension,
     f1040: { ...filed(10_500, 9_000), line25b_withheld_1099: 550 },
   };
-  assertRrb1099rPensionSource(pending, filer);
+  assertRrb1099rPensionSource(pending, filer, 2025);
   for (
     const wrong of [
       { ...pending, f1040: { ...pending.f1040, line5a_pension_gross: 10_501 } },
@@ -157,7 +157,7 @@ test("RRB with issued and substitute pensions replays both filed amounts exactly
     ]
   ) {
     assertThrows(
-      () => assertRrb1099rPensionSource(wrong, filer),
+      () => assertRrb1099rPensionSource(wrong, filer, 2025),
       Error,
       "lines 5a and 5b or AGI differ",
     );
@@ -181,7 +181,7 @@ test("a substitute W-2 cannot justify inflated RRB pension lines", () => {
     f1040: filed(7_500),
   };
   assertThrows(
-    () => assertRrb1099rPensionSource(pending, filer),
+    () => assertRrb1099rPensionSource(pending, filer, 2025),
     Error,
     "lines 5a and 5b or AGI differ",
   );
@@ -199,7 +199,7 @@ test("an issued IRA cannot justify inflated RRB pension lines", () => {
     f1040: filed(8_500),
   };
   assertThrows(
-    () => assertRrb1099rPensionSource(pending, filer),
+    () => assertRrb1099rPensionSource(pending, filer, 2025),
     Error,
     "lines 5a and 5b or AGI differ",
   );
@@ -215,7 +215,7 @@ test("same-payer issued and substitute 1099-R needs source overlap review", () =
     f1040: filed(10_500, 9_000),
   };
   assertThrows(
-    () => assertRrb1099rPensionSource(pending, filer),
+    () => assertRrb1099rPensionSource(pending, filer, 2025),
     Error,
     "source overlap needs review",
   );
@@ -230,7 +230,7 @@ test("Form 4972 ordinary cannot inflate pension without its source", () => {
           ...filed(6_000),
           line5b_form4972_ordinary: 500,
         },
-      }, filer),
+      }, filer, 2025),
     Error,
     "needs its source",
   );
@@ -256,7 +256,7 @@ test("mixed RRB and issued pensions reach full-graph pension and AGI totals", ()
   assertEquals(result.pending.f1040?.line5a_pension_gross, 8_500);
   assertEquals(result.pending.f1040?.line5b_pension_taxable, 7_500);
   assertEquals(result.pending.f1040?.line11_agi, 7_500);
-  assertRrb1099rPensionSource(result.pending, filer);
+  assertRrb1099rPensionSource(result.pending, filer, 2025);
 });
 
 test("mixed RRB and substitute pensions reach full-graph pension and AGI totals", () => {
@@ -279,7 +279,7 @@ test("mixed RRB and substitute pensions reach full-graph pension and AGI totals"
   assertEquals(result.pending.f1040?.line5a_pension_gross, 7_500);
   assertEquals(result.pending.f1040?.line5b_pension_taxable, 7_000);
   assertEquals(result.pending.f1040?.line11_agi, 7_000);
-  assertRrb1099rPensionSource(result.pending, filer);
+  assertRrb1099rPensionSource(result.pending, filer, 2025);
 });
 
 test("native and PDF exports reject an inflated RRB-1099-R pension", async () => {
@@ -334,7 +334,7 @@ test("RRB-1099-R pension reaches full-graph gross, taxable, and AGI", () => {
   assertEquals(result.pending.f1040?.line5a_pension_gross, 5_500);
   assertEquals(result.pending.f1040?.line5b_pension_taxable, 5_500);
   assertEquals(result.pending.f1040?.line11_agi, 5_500);
-  assertRrb1099rPensionSource(result.pending, filer);
+  assertRrb1099rPensionSource(result.pending, filer, 2025);
 });
 
 test("RRB-1099-R pension recipient must belong to this return", async () => {
@@ -343,7 +343,7 @@ test("RRB-1099-R pension recipient must belong to this return", async () => {
   };
   const pending = { rrb1099r: wrong, f1040: filed(5_500) };
   assertThrows(
-    () => assertRrb1099rPensionSource(pending, filer),
+    () => assertRrb1099rPensionSource(pending, filer, 2025),
     Error,
     "recipient must match taxpayer or joint spouse",
   );

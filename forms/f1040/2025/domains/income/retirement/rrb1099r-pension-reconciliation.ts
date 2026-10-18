@@ -8,6 +8,7 @@ import { type FilerIdentity, FilingStatus } from "../../../../mef/header.ts";
 export function assertRrb1099rPensionSource(
   pending: Record<string, unknown>,
   filer: FilerIdentity | undefined,
+  taxYear: number,
 ): void {
   const rows = pending.rrb1099r === undefined
     ? []
@@ -39,7 +40,7 @@ export function assertRrb1099rPensionSource(
   const filed = pending.f1040 as Record<string, unknown> | undefined;
   const line5a = filed?.line5a_pension_gross ?? 0;
   const line5b = filed?.line5b_pension_taxable ?? 0;
-  const context = { taxYear: 2025, formType: "f1040" } as const;
+  const context = { taxYear, formType: "f1040" } as const;
   if (
     pending.f1099r !== undefined && pending.f4852 !== undefined &&
     (pending.f4852 as Record<string, unknown>).reviewed_source === undefined

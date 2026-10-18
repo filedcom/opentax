@@ -1,4 +1,6 @@
 import { z } from "zod";
+import { mefTaxYear, mefYearConfig } from "../../../../support/year-config.ts";
+import type { F1040Config } from "../../../../../../nodes/config/index.ts";
 import { element, elements } from "../../../../../../mef/xml.ts";
 import { FilingStatus } from "../../../../../../mef/header.ts";
 import { FilingStatus as SourceFilingStatus } from "../../../../../../nodes/types.ts";
@@ -347,17 +349,44 @@ function reconcilePovertyTable(
       "Form 8962 poverty table needs a positive integer family size",
     );
   }
+  const cfg = mefYearConfig(context);
   return expectedRegion === "alaska"
-    ? 18_810 + (familySize - 1) * 6_730
+    ? cfg.fplBaseAlaska + (familySize - 1) * cfg.fplIncrementAlaska
     : expectedRegion === "hawaii"
-    ? 17_310 + (familySize - 1) * 6_190
-    : 15_060 + (familySize - 1) * 5_380;
+    ? cfg.fplBaseHawaii + (familySize - 1) * cfg.fplIncrementHawaii
+    : cfg.fplBase + (familySize - 1) * cfg.fplIncrement;
 }
 
 // Independently check Form 8962 Table 2 and Table 5 at the filing boundary.
 // Below 100% remains one verified policy; 100%-399% also admits separately
 // reconciled one-person sequential and verified-family monthly policies.
+/** Form 8962 Table 2: the year's applicable figure, interpolated within its band. */
+function applicableFigure(actualPct: number, cfg: F1040Config): number {
+  const bands = cfg.ptcApplicablePercentages;
+  const band = bands.find((row, index) =>
+    actualPct >= row.fromFplPct &&
+    (actualPct < row.toFplPct || index === bands.length - 1)
+  );
+  if (!band) throw new Error(`Form 8962 Table 2 has no row for ${actualPct}%`);
+  if (band.initial === band.final) return band.initial / 10_000;
+  const width = band.toFplPct - band.fromFplPct;
+  const offset = Math.min(actualPct, band.toFplPct) - band.fromFplPct;
+  return Math.round(
+    (band.initial * width + (band.final - band.initial) * offset) / width,
+  ) / 10_000;
+}
+
+/** Form 8962 Table 5 single-filer cap; none above its rows or in a year without one. */
+function singleRepaymentCap(
+  actualPct: number,
+  cfg: F1040Config,
+): number | undefined {
+  return cfg.ptcRepaymentCaps.find((tier) => actualPct < tier.maxFplPct)
+    ?.singleCap;
+}
+
 function simplePolicyIncomeAmounts(
+  cfg: F1040Config,
   householdIncome: number,
   povertyLine: number,
   householdSize: number | null | undefined,
@@ -383,20 +412,8 @@ function simplePolicyIncomeAmounts(
     );
   }
   const povertyPct = householdIncome > 4 * povertyLine ? 401 : actualPct;
-  const figure = actualPct <= 150
-    ? 0
-    : actualPct <= 300
-    ? (actualPct - 150) * 4 / 10_000
-    : actualPct < 400
-    ? Math.round(600 + (actualPct - 300) * 2.5) / 10_000
-    : 0.085;
-  const repaymentCap = actualPct < 200
-    ? 375
-    : actualPct < 300
-    ? 975
-    : actualPct < 400
-    ? 1_625
-    : undefined;
+  const figure = applicableFigure(actualPct, cfg);
+  const repaymentCap = singleRepaymentCap(actualPct, cfg);
   return { povertyPct, figure, repaymentCap };
 }
 
@@ -651,6 +668,7 @@ function reconcileSimpleAnnualPolicy(
   const householdIncome = form1040.data.line11_agi + dependentMagi;
   const povertyLine = reconcilePovertyTable(fields, context);
   const incomeAmounts = simplePolicyIncomeAmounts(
+    mefYearConfig(context),
     householdIncome,
     povertyLine,
     fields.household_size,
@@ -927,7 +945,14 @@ const CONTIGUOUS_STATES = new Set([
   "WY",
 ]);
 
-const TY2025_UNEXTENDED_DUE_DATE = "2026-04-15";
+/** The return's unextended due date: April 15 of the following year. */
+function unextendedDueDate(taxYear: number): string {
+  return `${taxYear + 1}-04-15`;
+}
+
+function monthStartOf(taxYear: number, month: number): string {
+  return `${taxYear}-${String(month).padStart(2, "0")}-01`;
+}
 
 function validIsoDate(value: string): boolean {
   const date = new Date(`${value}T00:00:00.000Z`);
@@ -940,6 +965,7 @@ type NoAptcPayment = NonNullable<
 >[number]["premium_payment"];
 
 function paidNoAptcPremium(
+  taxYear: number,
   payment: NoAptcPayment,
   reportedPremium: number,
   allowProtectedPartial = false,
@@ -948,7 +974,7 @@ function paidNoAptcPremium(
 ): number | null {
   if (
     !validIsoDate(payment.paid_on) ||
-    payment.paid_on > TY2025_UNEXTENDED_DUE_DATE
+    payment.paid_on > unextendedDueDate(taxYear)
   ) return null;
   if (payment.status === "paid_in_full") {
     return payment.amount >= reportedPremium ? reportedPremium : null;
@@ -960,8 +986,8 @@ function paidNoAptcPremium(
       : null;
   }
   if (month === undefined || coverageState === undefined) return null;
-  const monthStart = `2025-${String(month).padStart(2, "0")}-01`;
-  const monthEnd = new Date(Date.UTC(2025, month, 0))
+  const monthStart = monthStartOf(taxYear, month);
+  const monthEnd = new Date(Date.UTC(taxYear, month, 0))
     .toISOString().slice(0, 10);
   if (
     payment.order_state !== coverageState ||
@@ -1105,6 +1131,7 @@ function reconcileNoAptcPolicyMonths(
     );
   }
   const incomeAmounts = simplePolicyIncomeAmounts(
+    mefYearConfig(context),
     income,
     povertyLine,
     fields.household_size,
@@ -1195,6 +1222,7 @@ function reconcileNoAptcPolicyMonths(
     }
     const paidPremium = proof
       ? paidNoAptcPremium(
+        mefTaxYear(context),
         proof.premium_payment,
         reportedPremium,
         true,
@@ -1351,6 +1379,7 @@ function reconcileMultiNoAptcPolicyMonths(
     form1040.data.line2a_tax_exempt ?? 0,
   );
   const incomeAmounts = simplePolicyIncomeAmounts(
+    mefYearConfig(context),
     income,
     povertyLine,
     1,
@@ -1452,6 +1481,7 @@ function reconcileMultiNoAptcPolicyMonths(
       const proof = evidence[policyIndex].payments.get(month);
       const paidPremium = proof
         ? paidNoAptcPremium(
+          mefTaxYear(context),
           proof.premium_payment,
           policies[policyIndex].monthly_premiums![index],
           true,
@@ -1586,6 +1616,7 @@ function reconcileNoAptcAnnualPolicy(
   );
   const income = taxpayerIncome + dependentMagi;
   const incomeAmounts = simplePolicyIncomeAmounts(
+    mefYearConfig(context),
     income,
     povertyLine,
     fields.household_size,
@@ -1662,6 +1693,7 @@ function reconcileNoAptcAnnualPolicy(
       proof.marketplace_method !== correction.determination_source ||
       !validIsoDate(proof.marketplace_determined_on) ||
       paidNoAptcPremium(
+          mefTaxYear(context),
           proof.premium_payment,
           policy.monthly_premiums[month - 1],
         ) === null
@@ -1774,7 +1806,13 @@ function reconcileTwoNoAptcAnnualPolicies(
     pending,
     form1040.data.line2a_tax_exempt ?? 0,
   );
-  const incomeAmounts = simplePolicyIncomeAmounts(income, povertyLine, 1, 1);
+  const incomeAmounts = simplePolicyIncomeAmounts(
+    mefYearConfig(context),
+    income,
+    povertyLine,
+    1,
+    1,
+  );
   const contribution = Math.round(income * incomeAmounts.figure);
   const monthlyContribution = Math.round(contribution / 12);
   const slcsp = policies[0].slcsp_corrections![0]?.corrected_slcsp;
@@ -1807,6 +1845,7 @@ function reconcileTwoNoAptcAnnualPolicies(
         proof.marketplace_method !== correction.determination_source ||
         !validIsoDate(proof.marketplace_determined_on) ||
         paidNoAptcPremium(
+            mefTaxYear(context),
             proof.premium_payment,
             policy.monthly_premiums![month - 1],
           ) === null
@@ -1928,6 +1967,7 @@ function reconcileJointAptcPolicyMonths(
   const income = taxpayerIncome + dependentMagi;
   const poverty = reconcilePovertyTable(fields, context);
   const amounts = simplePolicyIncomeAmounts(
+    mefYearConfig(context),
     income,
     poverty,
     fields.household_size,
@@ -2093,6 +2133,7 @@ function reconcileSimplePolicyMonths(
     );
   }
   const incomeAmounts = simplePolicyIncomeAmounts(
+    mefYearConfig(context),
     householdIncome,
     povertyLine,
     fields.household_size,
@@ -2340,8 +2381,8 @@ function reconcileSimplePolicyMonths(
             !item.determination_record_sha256 ||
             !item.determined_on || !validIsoDate(item.determined_on) ||
             item.determined_on <
-              `2025-${String(item.month).padStart(2, "0")}-01` ||
-            item.determined_on > "2026-04-15"
+              monthStartOf(mefTaxYear(context), item.month) ||
+            item.determined_on > unextendedDueDate(mefTaxYear(context))
           )
         ) {
           throw new Error(
@@ -2389,8 +2430,9 @@ function reconcileSimplePolicyMonths(
                 !correction.determined_on ||
                 !validIsoDate(correction.determined_on) ||
                 correction.determined_on <
-                  `2025-${String(correction.month).padStart(2, "0")}-01` ||
-                correction.determined_on > "2026-04-15" ||
+                  monthStartOf(mefTaxYear(context), correction.month) ||
+                correction.determined_on >
+                  unextendedDueDate(mefTaxYear(context)) ||
                 (policy.monthly_premiums?.[index] ?? 0) <= 0 ||
                 (policy.monthly_aptcs?.[index] ?? 0) <= 0 ||
                 (policy.monthly_slcsps?.[index] ?? 0) <= 0 ||
@@ -2728,7 +2770,7 @@ function reconcileMfsSharedPolicy(
   }
   const povertyLine = reconcilePovertyTable(fields, context);
   const derivedSource = f1095a.compute(
-    { taxYear: 2025, formType: "f1040" },
+    { taxYear: mefTaxYear(context), formType: "f1040" },
     source.data,
   ).outputs.find((item) => item.nodeType === "form8962")?.fields;
   if (!derivedSource) {
@@ -2747,7 +2789,7 @@ function reconcileMfsSharedPolicy(
     dependent_income_complete: true,
   });
   const expected = form8962Calculation.compute(
-    { taxYear: 2025, formType: "f1040" },
+    { taxYear: mefTaxYear(context), formType: "f1040" },
     derivedInput,
   ).outputs.find((item) => item.nodeType === "form8962")?.fields;
   if (
@@ -3021,7 +3063,7 @@ function reconcileAgreedSharedPolicy(
   }
   const povertyLine = reconcilePovertyTable(fields, context);
   const derivedSource = f1095a.compute(
-    { taxYear: 2025, formType: "f1040" },
+    { taxYear: mefTaxYear(context), formType: "f1040" },
     source.data,
   ).outputs.find((item) => item.nodeType === "form8962")?.fields;
   if (!derivedSource) {
@@ -3037,7 +3079,7 @@ function reconcileAgreedSharedPolicy(
     dependent_income_complete: true,
   });
   const expected = form8962Calculation.compute(
-    { taxYear: 2025, formType: "f1040" },
+    { taxYear: mefTaxYear(context), formType: "f1040" },
     derivedInput,
   ).outputs.find((item) => item.nodeType === "form8962")?.fields;
   if (
@@ -3200,7 +3242,7 @@ function reconcileSequentialAgreedSharedPolicies(
     );
   }
   const derivedSource = f1095a.compute(
-    { taxYear: 2025, formType: "f1040" },
+    { taxYear: mefTaxYear(context), formType: "f1040" },
     source,
   ).outputs.find((item) => item.nodeType === "form8962")?.fields;
   if (!derivedSource) {
@@ -3216,7 +3258,7 @@ function reconcileSequentialAgreedSharedPolicies(
     dependent_income_complete: true,
   });
   const expected = form8962Calculation.compute(
-    { taxYear: 2025, formType: "f1040" },
+    { taxYear: mefTaxYear(context), formType: "f1040" },
     derivedInput,
   ).outputs.find((item) => item.nodeType === "form8962")?.fields;
   if (
@@ -3355,6 +3397,7 @@ function reconcileNoAptcSharedPolicy(
       proof.marketplace_method !== correction.determination_source ||
       !validIsoDate(proof.marketplace_determined_on) ||
       paidNoAptcPremium(
+          mefTaxYear(context),
           proof.premium_payment,
           policy.monthly_premiums[month - 1],
         ) === null
@@ -3380,7 +3423,7 @@ function reconcileNoAptcSharedPolicy(
     );
   }
   const derivedSource = f1095a.compute(
-    { taxYear: 2025, formType: "f1040" },
+    { taxYear: mefTaxYear(context), formType: "f1040" },
     source.data,
   ).outputs.find((item) => item.nodeType === "form8962")?.fields;
   if (!derivedSource) {
@@ -3398,7 +3441,7 @@ function reconcileNoAptcSharedPolicy(
     dependent_income_complete: true,
   });
   const expected = form8962Calculation.compute(
-    { taxYear: 2025, formType: "f1040" },
+    { taxYear: mefTaxYear(context), formType: "f1040" },
     derivedInput,
   ).outputs.find((item) => item.nodeType === "form8962")?.fields;
   if (
@@ -3695,8 +3738,20 @@ function buildIRS8962(fields: Input, context?: MefBuildContext): string {
       fields.net_premium_tax_credit,
     ),
     numberElement("ExcessAdvncPaymentAmt", fields.excess_advance_payment),
-    numberElement("AdditionalTaxLimitationAmt", fields.repayment_limitation),
-    numberElement("PremiumTaxCreditTaxLiabAmt", fields.excess_advance_premium),
+    // Lines 28-29 are reserved in a year without a repayment limitation
+    // (draft 2026 Form 8962; rules F8962-345/346).
+    ...(mefYearConfig(context).ptcRepaymentCaps.length > 0
+      ? [
+        numberElement(
+          "AdditionalTaxLimitationAmt",
+          fields.repayment_limitation,
+        ),
+        numberElement(
+          "PremiumTaxCreditTaxLiabAmt",
+          fields.excess_advance_premium,
+        ),
+      ]
+      : []),
     ...allocations.map((row) =>
       elements("SharedPolicyAllocationGrp", [
         element("PolicyNum", row.policy_number),

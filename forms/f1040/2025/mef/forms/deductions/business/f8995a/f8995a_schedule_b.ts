@@ -65,6 +65,7 @@ function assertAggregationInvestments(
   const totals = assertMultiBusinessInvestmentSources(
     { ...input, taxpayer_ssn: context.filer.primarySSN },
     pending,
+    mefTaxYear(context),
     true,
     input.filing_status === "mfj" ? context.filer.spouse?.ssn : undefined,
   );
@@ -100,7 +101,12 @@ function assertAggregationInvestments(
       "Aggregation income limit must reconcile owned wages, business and investment records",
     );
   }
-  assertMultiBusinessInvestmentTax(pending, totals, 2025, input.filing_status);
+  assertMultiBusinessInvestmentTax(
+    pending,
+    totals,
+    mefTaxYear(context),
+    input.filing_status,
+  );
 }
 
 function assertRpeScheduleBJoin(

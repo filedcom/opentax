@@ -36,6 +36,7 @@ export function assertMultiBusinessInvestmentSources(
     | "net_capital_gain"
   >,
   pending: Record<string, Record<string, unknown>>,
+  taxYear: number,
   enteredTotal = false,
   jointSpouseSsn?: string,
   requireIssuedIdentity = true,
@@ -221,7 +222,7 @@ export function assertMultiBusinessInvestmentSources(
       );
     }
     const broker = f1099b.compute(
-      { taxYear: 2025, formType: "f1040" },
+      { taxYear, formType: "f1040" },
       brokerInput,
     );
     const expectedSales = broker.outputs.filter((row) =>
@@ -242,7 +243,7 @@ export function assertMultiBusinessInvestmentSources(
       throw new Error("QBI actual Schedule D sales need retained broker copies");
     }
     // Direct Form 8949 and 1099-K sales replay through their own source nodes.
-    assertCapitalSaleSourceRows(pending);
+    assertCapitalSaleSourceRows(pending, taxYear);
   }
   if (d !== undefined) {
     const parsedD = scheduleDSchema.parse(d);
@@ -273,7 +274,7 @@ export function assertMultiBusinessInvestmentSources(
       );
     }
     const replay = schedule_d.compute(
-      { taxYear: 2025, formType: "f1040" },
+      { taxYear, formType: "f1040" },
       parsedD,
     );
     const output = replay.outputs.find((row) => row.nodeType === "form8995");

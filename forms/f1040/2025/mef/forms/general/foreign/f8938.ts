@@ -1,3 +1,4 @@
+import { mefTaxYear } from "../../../support/year-config.ts";
 import { FilingStatus } from "../../../../../mef/header.ts";
 import { element, elements } from "../../../../../mef/xml.ts";
 import { ForeignAssetType } from "../../../../../nodes/inputs/general/foreign/f8938/index.ts";
@@ -203,7 +204,7 @@ export const form8938: MefFormDescriptor<"f8938", unknown> = {
     }
     const { summary } = projected;
     return elements("IRS8938", [
-      element("CalendarYr", 2025),
+      element("CalendarYr", mefTaxYear(context)),
       element("SpcfdIndividualInd", "true"),
       element("ForeignDepositAcctCnt", summary.partI.depositAccountCount),
       element(

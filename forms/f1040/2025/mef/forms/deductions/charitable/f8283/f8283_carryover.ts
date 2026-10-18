@@ -1,3 +1,4 @@
+import { mefTaxYear } from "../../../../support/year-config.ts";
 import {
   type F8283Input,
   inputSchema as form8283InputSchema,
@@ -164,7 +165,7 @@ export function reconcileForm8283Carryover(
     );
   }
   const result = scheduleA.compute(
-    { taxYear: 2025, formType: "f1040" },
+    { taxYear: mefTaxYear(context), formType: "f1040" },
     parsedScheduleA,
   );
   const computed = result.finalizations?.find((entry) =>

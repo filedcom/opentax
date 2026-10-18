@@ -160,6 +160,7 @@ export function assertSstbScheduleCSource(
     const totals = assertMultiBusinessInvestmentSources(
       { ...input, taxpayer_ssn: String(g.taxpayer_ssn) },
       retainedPending,
+      taxYear,
       true,
       joint ? String(g.spouse_ssn) : undefined,
     );
@@ -180,7 +181,7 @@ export function assertSstbScheduleCSource(
     assertMultiBusinessInvestmentTax(
       retainedPending,
       totals,
-      2025,
+      taxYear,
       input.filing_status,
     );
   } else if (

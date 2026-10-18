@@ -1027,8 +1027,9 @@ export function calculateQualifiedTipsSchedule1A(
   ctx: NodeContext,
   rawInput: Schedule1AInput,
 ): QualifiedTipsLines {
-  if (ctx.taxYear !== 2025) {
-    throw new Error("Schedule 1-A tips filing needs tax year 2025");
+  // IRC §224 applies to tax years 2025 through 2028 (P.L. 119-21 §70201).
+  if (!(ctx.taxYear >= 2025)) {
+    throw new Error("Schedule 1-A tips filing needs tax year 2025 or later");
   }
   const input = inputSchema.parse(rawInput);
   if (!input.senior_zero_exclusions_review) {

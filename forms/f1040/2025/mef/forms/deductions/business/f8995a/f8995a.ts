@@ -409,6 +409,7 @@ export function assertScheduleCLossSources(
         taxpayer_ssn: String(retained.general.taxpayer_ssn).replace(/\D/g, ""),
       },
       retained,
+      taxYear,
       true,
     );
     if (fields.net_capital_gain !== investment.filedQbiCapitalLimit) {
@@ -453,7 +454,7 @@ export function assertScheduleCLossSources(
     assertMultiBusinessInvestmentTax(
       retained,
       investment,
-      2025,
+      taxYear,
       fields.filing_status,
     );
   }

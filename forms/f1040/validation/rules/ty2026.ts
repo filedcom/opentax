@@ -766,14 +766,14 @@ export const TY2026_NEW_RULES: readonly RuleDef[] = [
     "F8962-345",
     "reject",
     "incorrect_data",
-    noValue("AdditionalTaxLimitationAmt"),
+    noValue("8962/AdditionalTaxLimitationAmt"),
     "Form 8962, 'AdditionalTaxLimitationAmt' must not have a value.",
   ),
   rule(
     "F8962-346",
     "reject",
     "incorrect_data",
-    noValue("PremiumTaxCreditTaxLiabAmt"),
+    noValue("8962/PremiumTaxCreditTaxLiabAmt"),
     "Form 8962, 'PremiumTaxCreditTaxLiabAmt' must not have a value.",
   ),
 ];

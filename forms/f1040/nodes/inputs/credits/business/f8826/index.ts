@@ -39,9 +39,7 @@ const selfSourceEvidenceSchema = z.object({
     expense_record_reference: sourceReference,
     invoice_reference: sourceReference,
     payment_reference: sourceReference,
-    paid_or_incurred_on: z.string().date().refine((date) =>
-      date >= "2025-01-01" && date <= "2025-12-31"
-    ),
+    paid_or_incurred_on: z.string().date(),
     amount: money.refine((amount) => amount > 0),
     hearing_impaired_service_confirmed: z.literal(true),
     ada_compliance_confirmed: z.literal(true),
@@ -188,6 +186,18 @@ function allocateCappedCredits(amounts: readonly number[]): number[] {
   return shares.map((share) => share.cents / 100);
 }
 
+/** Interpreter expenditures are claimed for the year they are paid or incurred. */
+function assertExpendituresInYear(input: F8826Input, taxYear: number): void {
+  const outside = input.self_source_evidence?.interpreter_expenditures.some(
+    (row) => !row.paid_or_incurred_on.startsWith(`${taxYear}-`),
+  );
+  if (outside) {
+    throw new Error(
+      `Form 8826 expenditures must be paid or incurred in ${taxYear}`,
+    );
+  }
+}
+
 export function isEligible(input: F8826Input): boolean {
   if (
     input.prior_year_gross_receipts === undefined ||
@@ -237,8 +247,9 @@ class F8826Node extends TaxNode<typeof inputSchema> {
   readonly inputSchema = inputSchema;
   readonly outputNodes = new OutputNodes([disabledAccessLimit]);
 
-  compute(_ctx: NodeContext, rawInput: F8826Input): NodeResult {
+  compute(ctx: NodeContext, rawInput: F8826Input): NodeResult {
     const input = inputSchema.parse(rawInput);
+    assertExpendituresInYear(input, ctx.taxYear);
     const lines = calculateForm8826(input);
     if (
       lines.line7 > 0 && input.eligible_expenditures > 0 &&

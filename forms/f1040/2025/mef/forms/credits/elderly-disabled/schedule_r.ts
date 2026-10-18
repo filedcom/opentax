@@ -1,3 +1,4 @@
+import { mefTaxYear } from "../../../support/year-config.ts";
 import { element, elements } from "../../../../../mef/xml.ts";
 import { FilingStatus } from "../../../../../nodes/types.ts";
 import {
@@ -298,7 +299,7 @@ export const scheduleR: MefFormDescriptor<"schedule_r", unknown> = {
     if (context.pending?.schedule_r === undefined) return "";
     const source = inputSchema.parse(context.pending.schedule_r);
     const sourceClaimsCredit = schedule_r.compute(
-      { taxYear: 2025, formType: "f1040" },
+      { taxYear: mefTaxYear(context), formType: "f1040" },
       source,
     ).outputs.length > 0;
     const filedSchedule3 = context.pending.schedule3;

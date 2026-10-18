@@ -1,4 +1,7 @@
-import { reconcileHealthPolicyRecords } from "../../../../../nodes/intermediate/forms/adjustments/health/form7206/policy-records.ts";
+import {
+  assertPremiumRecordsInYear,
+  reconcileHealthPolicyRecords,
+} from "../../../../../nodes/intermediate/forms/adjustments/health/form7206/policy-records.ts";
 import {
   assertIndependentOwnerHealth,
   assertOwnedSepContext,
@@ -133,6 +136,7 @@ function buildIRS7206(
       ? source.spouse_identity!.ssn
       : source.taxpayer_identity.ssn,
   );
+  assertPremiumRecordsInYear([source], mefTaxYear(context));
   const lines = form7206LinesSchema.parse(fields);
   const expected = calculateSingleScheduleCForm7206(source);
   if (
@@ -209,7 +213,7 @@ function buildIRS7206(
   const scheduleSE = scheduleSEInputSchema.parse(pending?.schedule_se);
   const computedSELine13 = z.number().parse(
     schedule_se.compute(
-      { taxYear: 2025, formType: "f1040" },
+      { taxYear: mefTaxYear(context), formType: "f1040" },
       scheduleSE,
     ).outputs.find((row) => row.nodeType === "schedule1")?.fields
       .line15_se_deduction ?? 0,

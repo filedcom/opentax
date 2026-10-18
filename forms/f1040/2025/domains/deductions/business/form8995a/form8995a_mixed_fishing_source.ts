@@ -73,6 +73,7 @@ export function assertMixedFishingQbiReturn(
       taxpayer_ssn: joint ? String(general?.taxpayer_ssn) : source.owner_ssn,
     },
     pending as Record<string, Record<string, unknown>>,
+    taxYear,
     true,
     joint ? String(general?.spouse_ssn) : undefined,
   );

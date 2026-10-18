@@ -124,6 +124,7 @@ export function assertJointOwner8995(
     ? assertMultiBusinessInvestmentSources(
       form8995InputSchema.parse(fields),
       p,
+      taxYear,
       false,
       String(g.spouse_ssn ?? ""),
       false,

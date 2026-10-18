@@ -1,3 +1,4 @@
+import { mefTaxYear } from "../../../support/year-config.ts";
 import type { MefBuildContext } from "../../../form-descriptor.ts";
 import { disabledAccessLimit } from "../../../../../nodes/intermediate/forms/credits/business/disabled_access_limit/index.ts";
 import {
@@ -61,7 +62,7 @@ export function readDisabledAccessCapLedger(context: MefBuildContext) {
     );
   }
   const result = disabledAccessLimit.compute(
-    { taxYear: 2025, formType: "f1040" },
+    { taxYear: mefTaxYear(context), formType: "f1040" },
     raw,
   );
   const calculatedPassive = result.outputs.find((item) =>

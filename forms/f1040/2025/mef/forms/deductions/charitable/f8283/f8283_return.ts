@@ -1,3 +1,4 @@
+import { mefTaxYear } from "../../../../support/year-config.ts";
 import { assertCharitableNaturalResourceReturn } from "./f8283_natural_resource_return.ts";
 import { assertCharitableDepreciationReturn } from "./f8283_depreciation_return.ts";
 import { qdcgtw } from "../../../../../../nodes/intermediate/worksheets/taxes/calculation/qdcgtw/index.ts";
@@ -36,7 +37,7 @@ export function assertReviewedForm8283Return(
       "Reviewed owned Form8283 needs retained income and tax calculation sources",
     );
   }
-  const ctx = { taxYear: 2025, formType: "f1040" };
+  const ctx = { taxYear: mefTaxYear(context), formType: "f1040" };
   const income = pending.agi_final
     ? agi_final.compute(ctx, agi_final.inputSchema.parse(pending.agi_final))
     : agi_aggregator.compute(ctx, agi_aggregator.inputSchema.parse(aggregate));

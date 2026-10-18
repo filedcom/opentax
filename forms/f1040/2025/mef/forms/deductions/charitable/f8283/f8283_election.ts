@@ -1,3 +1,4 @@
+import { mefTaxYear } from "../../../../support/year-config.ts";
 import {
   f8283,
   type F8283Input,
@@ -194,7 +195,7 @@ export function assertOrdinarySectionAReconciled(
   } = scheduleFields;
   const parsedScheduleA = scheduleAInputSchema.parse(source);
   const expectedItems = f8283.compute(
-    { taxYear: 2025, formType: "f1040" },
+    { taxYear: mefTaxYear(context), formType: "f1040" },
     form,
   ).outputs.flatMap((output) =>
     output.nodeType === "schedule_a"
@@ -212,7 +213,7 @@ export function assertOrdinarySectionAReconciled(
     );
   }
   const recomputed = scheduleA.compute(
-    { taxYear: 2025, formType: "f1040" },
+    { taxYear: mefTaxYear(context), formType: "f1040" },
     parsedScheduleA,
   );
   const computed = recomputed.finalizations?.find((output) =>
@@ -329,7 +330,7 @@ export function assertElectedSectionAReconciled(
   } = scheduleFields;
   const parsedScheduleA = scheduleAInputSchema.parse(source);
   const expectedItems = f8283.compute(
-    { taxYear: 2025, formType: "f1040" },
+    { taxYear: mefTaxYear(context), formType: "f1040" },
     form,
   ).outputs.flatMap((output) =>
     output.nodeType === "schedule_a"
@@ -347,7 +348,7 @@ export function assertElectedSectionAReconciled(
     throw new Error("Schedule A election AGI differs from Form 1040 line 11");
   }
   const recomputed = scheduleA.compute(
-    { taxYear: 2025, formType: "f1040" },
+    { taxYear: mefTaxYear(context), formType: "f1040" },
     parsedScheduleA,
   );
   const computed = recomputed.finalizations?.find((output) =>
@@ -754,7 +755,7 @@ function assertSectionBReconciled(
   } = scheduleFields;
   const parsedScheduleA = scheduleAInputSchema.parse(source);
   const expectedItems = f8283.compute(
-    { taxYear: 2025, formType: "f1040" },
+    { taxYear: mefTaxYear(context), formType: "f1040" },
     form,
   ).outputs.flatMap((output) =>
     output.nodeType === "schedule_a"
@@ -772,7 +773,7 @@ function assertSectionBReconciled(
     throw new Error("Schedule A AGI differs from Form 1040 line 11");
   }
   const recomputed = scheduleA.compute(
-    { taxYear: 2025, formType: "f1040" },
+    { taxYear: mefTaxYear(context), formType: "f1040" },
     parsedScheduleA,
   );
   const computed = recomputed.finalizations?.find((output) =>

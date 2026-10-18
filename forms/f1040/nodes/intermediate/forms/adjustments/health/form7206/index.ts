@@ -31,6 +31,7 @@ import type { NodeContext } from "../../../../../../../../core/types/node-contex
 import { CONFIG_BY_YEAR } from "../../../../../config/index.ts";
 import { form8962 } from "../../../credits/health/form8962/index.ts";
 import { TS } from "../../../../../types.ts";
+import { assertPremiumRecordsInYear } from "./policy-records.ts";
 import {
   calculatePub974SingleBusinessIterative,
   pub974SingleBusinessSourceSchema,
@@ -158,6 +159,13 @@ class Form7206Node extends TaxNode<typeof inputSchema> {
     const cfg = CONFIG_BY_YEAR[ctx.taxYear];
     if (!cfg) throw new Error(`No f1040 config for year ${ctx.taxYear}`);
     const input = inputSchema.parse(rawInput);
+    assertPremiumRecordsInYear(
+      [
+        ...(input.single_schedule_c_plan ? [input.single_schedule_c_plan] : []),
+        ...(input.independent_schedule_c_plans?.plans ?? []),
+      ],
+      ctx.taxYear,
+    );
     if (input.independent_schedule_c_plans) {
       if (input.single_schedule_c_plan || input.pub974_single_business) {
         throw new Error(

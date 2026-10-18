@@ -252,6 +252,7 @@ export function assertKWithholdingSourceIdentity(
 export function assertKPersonalSaleSources(
   pending: Record<string, unknown>,
   filer: FilerIdentity,
+  taxYear: number,
 ): void {
   const k =
     (pending.f1099k as { f1099ks?: Array<Record<string, unknown>> } | undefined)
@@ -299,7 +300,7 @@ export function assertKPersonalSaleSources(
         typeof sale.date_sold !== "string" ||
         Number.isNaN(sold.getTime()) ||
         sold.toISOString().slice(0, 10) !== sale.date_sold ||
-        !sale.date_sold.startsWith("2025-") || acquired >= sold ||
+        !sale.date_sold.startsWith(`${taxYear}-`) || acquired >= sold ||
         typeof sale.proceeds !== "number" ||
         !Number.isSafeInteger(sale.proceeds) ||
         sale.proceeds <= 0 || typeof sale.cost_basis !== "number" ||

@@ -1,3 +1,4 @@
+import { mefTaxYear } from "../../../../support/year-config.ts";
 import { calculateCharitableDepreciation } from "../../../../../../nodes/inputs/deductions/charitable/f8283/depreciation-source.ts";
 import { inputSchema as giftSchema } from "../../../../../../nodes/inputs/deductions/charitable/f8283/index.ts";
 import { scheduleC } from "../../../../../../nodes/inputs/income/business/schedule_c/index.ts";
@@ -53,7 +54,7 @@ export function assertCharitableDepreciationReturn(
   }
   if (sources.length === 0) return;
   const seen = new Set<string>();
-  const ctx = { taxYear: 2025, formType: "f1040" };
+  const ctx = { taxYear: mefTaxYear(context), formType: "f1040" };
   const active = sources.filter((source) => {
     if (seen.has(source.property_reference)) {
       throw new Error(

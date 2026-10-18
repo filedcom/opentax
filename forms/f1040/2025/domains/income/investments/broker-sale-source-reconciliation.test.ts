@@ -357,7 +357,7 @@ test("broker transaction IDs survive into Schedule D and both final exporters", 
   });
   assertEquals(result.diagnostics, []);
   const pending = buildPending(result.pending);
-  assertCapitalSaleSourceRows(pending);
+  assertCapitalSaleSourceRows(pending, 2025);
   const changed = structuredClone(pending);
   const schedule = changed.schedule_d as unknown as {
     transaction:
@@ -382,7 +382,7 @@ test("1099-K personal sales keep zero-gain source rows in Schedule D", async () 
   const result = f1040_2025.executeReturn(fixture.inputs);
   assertEquals(result.diagnostics, []);
   const pending = buildPending(result.pending);
-  assertCapitalSaleSourceRows(pending);
+  assertCapitalSaleSourceRows(pending, 2025);
   const changed = structuredClone(pending);
   const schedule = changed.schedule_d as unknown as {
     transaction: { source_transaction_id?: string }[];
@@ -408,7 +408,7 @@ test("1099-K nonbusiness receipts do not require Schedule D", () => {
   )!;
   const result = f1040_2025.executeReturn(fixture.inputs);
   assertEquals(result.diagnostics, []);
-  assertCapitalSaleSourceRows(buildPending(result.pending));
+  assertCapitalSaleSourceRows(buildPending(result.pending), 2025);
 });
 
 test("final exports reject a second zero-gain copy of one broker sale", async () => {
@@ -472,7 +472,7 @@ test("prepared Form 8949 cannot discard broker collectible character", async () 
   });
   assertEquals(result.diagnostics, []);
   const pending = buildPending(result.pending);
-  assertCapitalSaleSourceRows(pending);
+  assertCapitalSaleSourceRows(pending, 2025);
   assertStringIncludes(
     buildMefXml(pending, filer),
     "<CapitalGainLossAmt>1000</CapitalGainLossAmt>",
@@ -535,13 +535,13 @@ test("direct sale replay retains the qualified small business stock fields", () 
     f8949: source,
     schedule_d: { transaction },
   };
-  assertCapitalSaleSourceRows(pending);
+  assertCapitalSaleSourceRows(pending, 2025);
   for (const changedField of ["qsbs_code", "qsbs_amount"] as const) {
     const changed = structuredClone(pending);
     (changed.schedule_d.transaction as Record<string, unknown>)[changedField] =
       changedField === "qsbs_code" ? "Q1" : 7_999;
     assertThrows(
-      () => assertCapitalSaleSourceRows(changed),
+      () => assertCapitalSaleSourceRows(changed, 2025),
       Error,
       "Schedule D sale differs from retained 1099-B or direct Form 8949 source",
     );

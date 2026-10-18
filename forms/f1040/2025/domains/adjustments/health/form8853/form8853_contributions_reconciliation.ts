@@ -1,3 +1,4 @@
+import { mefTaxYear } from "../../../../mef/support/year-config.ts";
 import {
   archerDistributionLedgerSchema,
   calculateArcherLedger,
@@ -198,7 +199,7 @@ export function reconcileArcherContributions(
     );
   }
   const computed = schedule1Node.compute(
-    { taxYear: 2025, formType: "f1040" },
+    { taxYear: mefTaxYear(context), formType: "f1040" },
     pending.schedule1 ?? {},
   ).outputs[0].fields;
   const claimed = pending.schedule1 as Record<string, unknown> | undefined;

@@ -210,13 +210,14 @@ export function assertForm8995APatronReturn(
   const investment = assertMultiBusinessInvestmentSources(
     { ...input, taxpayer_ssn: primary },
     pending,
+    taxYear,
     true,
     joint ? spouse : undefined,
   );
   assertMultiBusinessInvestmentTax(
     pending,
     investment,
-    2025,
+    taxYear,
     input.filing_status,
   );
   const investmentIncome = investment.interest + investment.ordinary +

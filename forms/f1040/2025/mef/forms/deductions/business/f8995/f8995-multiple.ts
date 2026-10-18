@@ -31,7 +31,7 @@ export function assertMultipleScheduleC8995(
   }
   const pending = normalizeAllPending(rawPending as Record<string, unknown>);
   const parsed = qbiSchema.parse(fields);
-  const investment = assertMultiBusinessInvestmentSources(parsed, pending);
+  const investment = assertMultiBusinessInvestmentSources(parsed, pending, taxYear);
   const c = cSchema.parse(pending.schedule_c);
   const items = projectScheduleCItems(c);
   const rows = parsed.multi_business_filing_rows;

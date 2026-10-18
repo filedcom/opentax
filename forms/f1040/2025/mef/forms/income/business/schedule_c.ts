@@ -383,7 +383,7 @@ export const scheduleC: MefFormDescriptor<
       assertCurrentYearSection481aMatches(
         context.pending.f3115,
         input.section481a_adjustments ?? [],
-        2025,
+        mefTaxYear(context),
       );
     }
     const claim = input.form8829_line30;

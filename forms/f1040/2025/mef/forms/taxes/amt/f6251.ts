@@ -196,7 +196,11 @@ function buildIRS6251(fields: Input, context?: MefBuildContext): string {
   assertForm6251TrustSource(fields, context?.pending);
   assertForm6251PrivateActivityBondSource(fields, context?.pending);
   assertForm6251RefundSource(fields, context?.pending, mefTaxYear(context));
-  assertForm6251QualifiedDividendSource(fields, context?.pending);
+  assertForm6251QualifiedDividendSource(
+    fields,
+    context?.pending,
+    mefTaxYear(context),
+  );
   if ((fields.iso_adjustment ?? 0) > 0) {
     const filer = context?.filer;
     if (!filer) {

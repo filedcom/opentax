@@ -9,10 +9,11 @@ type IraAmounts = { gross: number; taxable: number };
 function sourcedIraAmounts(
   source: unknown,
   node: typeof f1099r | typeof f4852,
+  taxYear: number,
 ): IraAmounts {
   if (source === undefined) return { gross: 0, taxable: 0 };
   const parsed = node.inputSchema.parse(source);
-  const context = { taxYear: 2025, formType: "f1040" } as const;
+  const context = { taxYear, formType: "f1040" } as const;
   const result = node === f1099r
     ? f1099r.compute(context, parsed as Parameters<typeof f1099r.compute>[1])
     : f4852.compute(context, parsed as Parameters<typeof f4852.compute>[1]);
@@ -44,9 +45,10 @@ function retainedAgiIraTaxable(
 /** Replay IRA distributions into Form 1040 and its retained AGI input. */
 export function assertIra1099rIncomeSource(
   pending: Record<string, unknown>,
+  taxYear: number,
 ): void {
-  const issued = sourcedIraAmounts(pending.f1099r, f1099r);
-  const substitute = sourcedIraAmounts(pending.f4852, f4852);
+  const issued = sourcedIraAmounts(pending.f1099r, f1099r, taxYear);
+  const substitute = sourcedIraAmounts(pending.f4852, f4852, taxYear);
   const issuedRows = pending.f1099r === undefined ? [] : f1099r.inputSchema
     .parse(pending.f1099r).f1099rs;
   const inventories = reconcileRothOwnerInventoryCopies(issuedRows);

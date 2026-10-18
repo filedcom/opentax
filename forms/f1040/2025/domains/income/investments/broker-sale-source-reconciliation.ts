@@ -52,12 +52,13 @@ export function assertNoRepeatedBrokerSaleSources(
 /** Replay retained sale sources into the Schedule D transaction multiset. */
 export function assertCapitalSaleSourceRows(
   pending: Readonly<Record<string, unknown>>,
+  taxYear: number,
 ): void {
   if (
     pending.f1099b === undefined && pending.f8949 === undefined &&
     pending.f1099k === undefined
   ) return;
-  const context = { taxYear: 2025, formType: "f1040" };
+  const context = { taxYear, formType: "f1040" };
   const expected = [
     ...(pending.f1099b === undefined ? [] : f1099b.compute(
       context,

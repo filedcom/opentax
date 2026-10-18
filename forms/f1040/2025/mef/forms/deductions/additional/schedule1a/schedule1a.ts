@@ -113,7 +113,7 @@ function buildSchedule(raw: Input, context?: MefBuildContext): string {
       .passthrough().parse(context?.pending?.form2555);
     const lines = calculatePhysicalPresence2555(
       pending2555.filing_details,
-      2025,
+      mefTaxYear(context),
     );
     if (
       lines.qualifyingDays !== 365 || lines.line45 <= 0 ||
@@ -148,7 +148,7 @@ function buildSchedule(raw: Input, context?: MefBuildContext): string {
     (input.qualified_trade_business_tips?.length ?? 0) > 0
   ) {
     const lines = calculateQualifiedTipsSchedule1A(
-      { taxYear: 2025, formType: "f1040" },
+      { taxYear: mefTaxYear(context), formType: "f1040" },
       input,
     );
     const entries = input.qualified_employee_tips ?? [];
@@ -500,7 +500,7 @@ function buildSchedule(raw: Input, context?: MefBuildContext): string {
         );
       }
       const businessOutput = scheduleC.compute(
-        { taxYear: 2025, formType: "f1040" },
+        { taxYear: mefTaxYear(context), formType: "f1040" },
         context?.pending?.schedule_c as Parameters<typeof scheduleC.compute>[1],
       ).outputs.find((item) => item.nodeType === "schedule1a");
       const businessRows = businessOutput?.fields
@@ -508,7 +508,7 @@ function buildSchedule(raw: Input, context?: MefBuildContext): string {
       const farmOutput = context?.pending?.schedule_f === undefined
         ? undefined
         : scheduleF.compute(
-          { taxYear: 2025, formType: "f1040" },
+          { taxYear: mefTaxYear(context), formType: "f1040" },
           context.pending.schedule_f as Parameters<typeof scheduleF.compute>[1],
         ).outputs.find((item) => item.nodeType === "schedule1a");
       if (
@@ -548,6 +548,7 @@ function buildSchedule(raw: Input, context?: MefBuildContext): string {
         form7206.build(actualHealth!, {
           pending: actualPending,
           filer: context?.filer ?? extractFilerIdentity(actualPending.f1040),
+          taxYear: mefTaxYear(context),
         });
         healthDeduction = calculateSingleScheduleCForm7206(
           input.qualified_tips_health_plan_source,
@@ -641,7 +642,7 @@ function buildSchedule(raw: Input, context?: MefBuildContext): string {
   }
   if ((input.qualified_w2_overtime?.length ?? 0) > 0) {
     const lines = calculateW2OvertimeSchedule1A(
-      { taxYear: 2025, formType: "f1040" },
+      { taxYear: mefTaxYear(context), formType: "f1040" },
       input,
     );
     const statementEntries = input.qualified_w2_overtime!.filter((entry) =>

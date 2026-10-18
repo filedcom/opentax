@@ -830,7 +830,7 @@ export const irs1040Pdf: PdfFormDescriptor = {
     assertPositive1099MOwner(fields, allPending);
     assertPositive1099NecOwner(fields, allPending);
     assertPositive1099PatrOwner(fields, allPending);
-    assertJointDependentRefundSource(fields, allPending);
+    assertJointDependentRefundSource(fields, allPending, 2025);
     assertNoUnsupportedDeceasedReturn(
       fields,
       allPending?.general as Record<string, unknown> | undefined,

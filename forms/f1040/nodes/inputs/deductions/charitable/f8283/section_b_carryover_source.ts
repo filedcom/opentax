@@ -1,3 +1,4 @@
+import { mefTaxYear } from "../../../../../2025/mef/support/year-config.ts";
 import { z } from "zod";
 import { XMLParser, XMLValidator } from "fast-xml-parser";
 import { sha256Hex } from "../../../../../2025/return-processing/prepared-source.ts";
@@ -511,7 +512,7 @@ export function reviewForm8283SectionBCarryoverReturn(
   } = scheduleFields;
   const parsedScheduleA = scheduleAInputSchema.parse(sourceScheduleA);
   const result = scheduleA.compute(
-    { taxYear: 2025, formType: "f1040" },
+    { taxYear: mefTaxYear(context), formType: "f1040" },
     parsedScheduleA,
   );
   const computed = result.finalizations?.find((entry) =>

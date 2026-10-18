@@ -1,3 +1,4 @@
+import { mefTaxYear } from "../../../support/year-config.ts";
 import { z } from "zod";
 import { element, elements } from "../../../../../mef/xml.ts";
 import { FilingStatus } from "../../../../../mef/header.ts";
@@ -40,7 +41,7 @@ export function buildAttachedForm9465(
   const minimumMonthly = Math.ceil(amount / 72);
   return elements("IRS9465", [
     element("F9465TaxReturnTypeCd", "FORM 1040"),
-    element("IATaxYrDt", 2025),
+    element("IATaxYrDt", mefTaxYear(context)),
     elements("PersonFullName", [
       element("PersonFirstNm", filer.firstName),
       element("PersonLastNm", filer.lastName),

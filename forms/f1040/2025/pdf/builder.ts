@@ -610,7 +610,7 @@ async function buildPdfBytesInternal(
   assertNecWithholdingRecipient(normalized.f1099nec, filer);
   assert1099BRecipientOwner(normalized.f1099b, filer, mefTaxYear());
   assertNoRepeatedBrokerSaleSources(normalized.f1099b, normalized.f8949);
-  assertCapitalSaleSourceRows(normalized);
+  assertCapitalSaleSourceRows(normalized, 2025);
   assertPatrIssuedCopies(normalized.f1099patr);
   assertPatrWithholdingRecipient(normalized.f1099patr, filer);
   assertLine1bHouseholdWageSource(normalized);
@@ -661,8 +661,8 @@ async function buildPdfBytesInternal(
   assertF8288WithholdingOwner(normalized.f8288, filer);
   assertSocialSecurityBenefitSource(normalized);
   assertBenefitStatementOwner(normalized, filer);
-  assertRrb1099rPensionSource(normalized, filer);
-  assertIra1099rIncomeSource(normalized);
+  assertRrb1099rPensionSource(normalized, filer, 2025);
+  assertIra1099rIncomeSource(normalized, 2025);
   assertForm8915FSourceLinks(normalized);
   assertKIncomeClassification(normalized);
   if (filer) {
@@ -671,7 +671,7 @@ async function buildPdfBytesInternal(
     assertScheduleCReceiptSourceIdentity(normalized, filer);
     assertScheduleCStatutoryW2Sources(normalized, filer);
     assertKWithholdingSourceIdentity(normalized, filer);
-    assertKPersonalSaleSources(pending, filer);
+    assertKPersonalSaleSources(pending, filer, 2025);
     assertSchedule1Box3SourceIdentity(normalized, filer);
     assertSchedule1Box8SourceIdentity(normalized, filer);
     assertSchedule1Form8814Source(normalized);

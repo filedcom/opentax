@@ -522,7 +522,11 @@ function buildIRS1040(fields: Input, context?: MefBuildContext): string {
     fields as Record<string, unknown>,
     context?.pending,
   );
-  assertJointDependentRefundSource(fields, context?.pending);
+  assertJointDependentRefundSource(
+    fields,
+    context?.pending,
+    mefTaxYear(context),
+  );
   assertNoUnsupportedDeceasedReturn(
     fields,
     context?.pending?.general as Record<string, unknown> | undefined,

@@ -554,7 +554,7 @@ export const form8862: MefFormDescriptor<"f8862", F8862Input> = {
     assertRetainedNoticeCopies(fields, context);
 
     return elements("IRS8862", [
-      element("TaxYr", 2025),
+      element("TaxYr", mefTaxYear(context)),
       fields.claim_eitc ? element("EICClaimedInd", "X") : "",
       fields.claim_ctc ? element("CTCACTCODCClaimedInd", "X") : "",
       fields.claim_aotc ? element("AOTCClaimedInd", "X") : "",
