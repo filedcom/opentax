@@ -277,9 +277,6 @@
     "single-k-business-refund-and-fee": [
       "calculation f1099k"
     ],
-    "single-k-reported-error": [
-      "rule F1040-065-05"
-    ],
     "single-k-mixed-business-personal": [
       "calculation f1099k"
     ],
@@ -583,7 +580,6 @@
     "single-k-personal-selling-fees": "Dated 2025 fact: a source document or date in the sample belongs to TY2025 (1099-K personal item sale dates)",
     "single-k-business-refund": "Named TY2025-only route: the node refuses TY2026 until that year's law is implemented",
     "single-k-business-refund-and-fee": "Named TY2025-only route: the node refuses TY2026 until that year's law is implemented",
-    "single-k-reported-error": "Same finding in the TY2025 baseline: not a TY2026 difference",
     "single-k-mixed-business-personal": "Dated 2025 fact: a source document or date in the sample belongs to TY2025 (1099-K personal item sale dates)",
     "single-k-mixed-duplicate-personal": "Dated 2025 fact: a source document or date in the sample belongs to TY2025 (1099-K personal item sale dates)",
     "single-k-mixed-error-duplicate-personal": "Dated 2025 fact: a source document or date in the sample belongs to TY2025 (1099-K personal item sale dates)",
