@@ -65,7 +65,16 @@ export function reconcilePreAdoptionForm8839Credit(
   const prepared = prepareForm8839Credit(rawForm8839Input);
   const input = f1040.inputSchema.parse(rawSinkInput);
   const review = form8839MagiReviewSchema.parse(rawMagiReview);
-  const foreign = reconciledForeignExclusion(input, review, rawForm2555Source);
+  const taxYear = prepared.taxYear;
+  if (taxYear === undefined) {
+    throw new Error("Form 8839 pre-adoption reconciliation needs one child");
+  }
+  const foreign = reconciledForeignExclusion(
+    input,
+    review,
+    rawForm2555Source,
+    taxYear,
+  );
   const schedule3 = input.credit_limit_schedule3_lines;
   if (
     input.filing_status !== FilingStatus.Single ||
@@ -108,7 +117,7 @@ export function reconcilePreAdoptionForm8839Credit(
   }
 
   const preAdoption = f1040.compute(
-    { taxYear: 2025, formType: "f1040" },
+    { taxYear, formType: "f1040" },
     input,
   );
   if (
@@ -170,6 +179,7 @@ function reconciledForeignExclusion(
   input: F1040SinkInput,
   review: z.infer<typeof form8839MagiReviewSchema>,
   rawSource: unknown,
+  taxYear: number,
 ) {
   if (review.form2555.no_form2555_filing_or_exclusion_confirmed) {
     if (
@@ -184,7 +194,7 @@ function reconciledForeignExclusion(
   }
   const source = z.object({ filing_details: physicalPresenceFilingSchema })
     .strict().parse(rawSource);
-  const lines = calculatePhysicalPresence2555(source.filing_details, 2025);
+  const lines = calculatePhysicalPresence2555(source.filing_details, taxYear);
   if (
     input.form8839_form2555_line45 !== lines.line45 ||
     input.form8839_form2555_line50 !== lines.line50 ||

@@ -2,6 +2,7 @@ import { currentYearForm8839Carryforward } from "../../../../../nodes/intermedia
 import { extractFilerIdentity } from "../../../../../mef/filer.ts";
 import type { ExecuteResult } from "../../../../../../../core/runtime/executor.ts";
 import type { NodeContext } from "../../../../../../../core/types/node-context.ts";
+import { assertForm8839TaxYear } from "../../../../../nodes/intermediate/forms/credits/individual/form8839/index.ts";
 import { parsePublicForm8839Source } from "../../../../../nodes/intermediate/forms/credits/individual/form8839/public_source.ts";
 import { finalizeStagedForm8839Sink } from "../../../../../nodes/intermediate/forms/credits/individual/form8839/staged_sink_finalizer.ts";
 import { schedule3 } from "../../../../../nodes/intermediate/aggregation/general/return-assembly/schedule3/index.ts";
@@ -21,6 +22,7 @@ export function executeForm8839TwoPass(
   executeGraph: Form8839GraphExecutor = f1040Graph(context),
 ): ExecuteResult {
   const { source, publicSource } = parsePublicForm8839Source(inputs.form8839);
+  assertForm8839TaxYear(source, context.taxYear);
   const firstInputs = Object.fromEntries(
     Object.entries(inputs).filter(([key]) => key !== "form8839"),
   );
@@ -83,7 +85,10 @@ export function executeForm8839TwoPass(
     carryforwards: {
       ...pre.carryforwards,
       ...(carryforward
-        ? { adoption_credit_2025: carryforward.carryforward_amount }
+        ? {
+          [`adoption_credit_${context.taxYear}`]:
+            carryforward.carryforward_amount,
+        }
         : {}),
     },
     replayInputs: { ...pre.replayInputs, f1040: settled.finalInput },

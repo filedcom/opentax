@@ -52,7 +52,7 @@ const childReview = {
   },
   reviewed_facts: {
     child_us_citizen_or_resident_when_effort_began_confirmed: true,
-    child_under_18_on_2025_12_31_confirmed: true,
+    child_under_18_at_end_of_tax_year_confirmed: true,
     child_not_taxpayers_spouses_child_confirmed: true,
     no_other_nonspouse_taxpayer_claim_confirmed: true,
     no_prior_form8839_claim_for_child_confirmed: true,

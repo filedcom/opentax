@@ -1,4 +1,8 @@
-import { inputSchema } from "../../../../../nodes/intermediate/forms/credits/individual/form8839/index.ts";
+import {
+  assertForm8839TaxYear,
+  inputSchema,
+} from "../../../../../nodes/intermediate/forms/credits/individual/form8839/index.ts";
+import { mefTaxYear } from "../../../support/year-config.ts";
 import { projectStagedForm8839Documents } from "../../../../../nodes/intermediate/forms/credits/individual/form8839/staged_documents.ts";
 import { parsePublicForm8839Source } from "../../../../../nodes/intermediate/forms/credits/individual/form8839/public_source.ts";
 import { f1040 } from "../../../../../nodes/outputs/general/return-assembly/f1040/index.ts";
@@ -25,6 +29,7 @@ export const form8839: MefFormDescriptor<"form8839", Input> = {
       );
     }
     if ((source.children?.length ?? 0) === 0) return "";
+    assertForm8839TaxYear(source, mefTaxYear(context));
     const route = context?.pending?.form8839_route as
       | { public_source?: unknown; pre_adoption_sink_input?: unknown }
       | undefined;

@@ -1,6 +1,7 @@
 import { test } from "bun:test";
 import { assertEquals, assertThrows } from "@std/assert";
 import {
+  assertForm8839TaxYear,
   finalizedReturnCreditContextSchema,
   form8839,
   inputSchema,
@@ -322,4 +323,61 @@ test("Form 8839: settlement does not infer absent territory MAGI additions as ze
       })
     );
   }
+});
+
+function child2026(amount: number, birthYear = 2021) {
+  const child = domesticChild(amount);
+  return {
+    ...child,
+    birth_year: birthYear,
+    final_decree: { ...child.final_decree, finalization_date: "2026-07-15" },
+    expenses: child.expenses.map((expense) => ({
+      ...expense,
+      paid_date: "2025-11-12",
+    })),
+  };
+}
+
+// Draft 2026 Form 8839 (Created 5/14/26): line 2 $17,670, line 8 $265,080,
+// line 9 $40,000 and line 11b $5,120, as Rev. Proc. 2025-32 sec. 4.04 sets.
+test("TY2026 Form 8839 uses the 2026 maximum, phase-out and refundable cap", () => {
+  const prepared = prepareForm8839Credit({ children: [child2026(15_000)] });
+  assertEquals(prepared.taxYear, 2026);
+  assertEquals(prepared.perChild[0]?.line2, 17_670);
+  assertEquals(prepared.perChild[0]?.line6, 15_000);
+  const credit = settleForm8839Credit(
+    prepared,
+    finalizedContext({ form1040_line11b_agi: 270_080 }),
+  );
+  assertEquals(credit.fraction, 0.125);
+  assertEquals(credit.perChild[0]?.line10, 1_875);
+  assertEquals(credit.perChild[0]?.line11a, 13_125);
+  assertEquals(credit.perChild[0]?.line11b, 5_120);
+  assertEquals(credit.line14, 8_005);
+  assertEquals(credit.phaseoutEnd, 305_080);
+});
+
+test("TY2026 Form 8839 reads 2025-2026 expenses and a child born 2009 or later", () => {
+  assertThrows(
+    () =>
+      prepareForm8839Credit({
+        children: [{
+          ...child2026(15_000),
+          expenses: [{ ...child2026(15_000).expenses[0]!, paid_date: "2024-12-31" }],
+        }],
+      }),
+    Error,
+    "2025/2026 payment dates",
+  );
+  assertThrows(
+    () => prepareForm8839Credit({ children: [child2026(15_000, 2008)] }),
+    Error,
+    "born from 2009 through 2026",
+  );
+  assertThrows(
+    () => assertForm8839TaxYear({ children: [domesticChild(15_000)] }, 2026),
+    Error,
+    "must become final in 2026",
+  );
+  assertForm8839TaxYear({ children: [child2026(15_000)] }, 2026);
 });

@@ -6,9 +6,9 @@ const dollars = z.number().int().nonnegative().safe();
 export const form8839CurrentCarryforwardSchema = z.object({
   version: z.literal(1),
   status: z.literal("computed_unfiled"),
-  origin_tax_year: z.literal(2025),
-  first_carry_year: z.literal(2026),
-  last_carry_year: z.literal(2030),
+  origin_tax_year: z.number().int(),
+  first_carry_year: z.number().int(),
+  last_carry_year: z.number().int(),
   taxpayer_ssn: z.string().regex(/^\d{9}$/),
   child_ssn: z.string().regex(/^\d{9}$/),
   decree_document_id: z.string().min(1),
@@ -16,7 +16,13 @@ export const form8839CurrentCarryforwardSchema = z.object({
   nonrefundable_credit: dollars,
   used_in_origin_year: dollars,
   carryforward_amount: dollars.positive(),
-}).strict();
+}).strict().refine(
+  // IRC 23(c)(2): an unused credit carries to at most the five years after it arose.
+  (record) =>
+    record.first_carry_year === record.origin_tax_year + 1 &&
+    record.last_carry_year === record.origin_tax_year + 5,
+  { message: "Form 8839 carryforward covers the five years after its origin" },
+);
 
 export function currentYearForm8839Carryforward(
   source: Form8839Input,
@@ -32,9 +38,9 @@ export function currentYearForm8839Carryforward(
   return form8839CurrentCarryforwardSchema.parse({
     version: 1,
     status: "computed_unfiled",
-    origin_tax_year: 2025,
-    first_carry_year: 2026,
-    last_carry_year: 2030,
+    origin_tax_year: credit.taxYear,
+    first_carry_year: credit.taxYear! + 1,
+    last_carry_year: credit.taxYear! + 5,
     taxpayer_ssn: taxpayerSsn.replaceAll("-", ""),
     child_ssn: child.ssn?.replaceAll("-", ""),
     decree_document_id: child.final_decree.source_document_id,
