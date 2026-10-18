@@ -443,32 +443,8 @@
     "qualified-tip-qbi-advanced-event-wotc-tip-exclusion": [
       "xml Form 8995-A FilingStatusThresholdCd 201750 is not a value the MeF schema enumerates; export waits for a schema that carries the return year's amounts"
     ],
-    "tip-health-mfj-fully-phased-out": [
-      "calculation form7206",
-      "calculation schedule1a"
-    ],
-    "tip-health-mfj-owned-cap-phaseout": [
-      "calculation form7206",
-      "calculation schedule1a"
-    ],
     "tip-health-mfj-primary-health-limited": [
-      "calculation form7206",
-      "calculation schedule1a"
-    ],
-    "tip-health-single-fully-phased-out": [
-      "xml Health plan needs its issued policy record and 12 issued monthly premium records"
-    ],
-    "tip-health-single-health-income-limited": [
-      "xml Health plan needs its issued policy record and 12 issued monthly premium records"
-    ],
-    "tip-health-single-positive-health": [
-      "xml Health plan needs its issued policy record and 12 issued monthly premium records"
-    ],
-    "tip-health-single-tip-netincome-limited": [
-      "xml Health plan needs its issued policy record and 12 issued monthly premium records"
-    ],
-    "tip-health-single-w2-qbi-binding": [
-      "xml Health plan needs its issued policy record and 12 issued monthly premium records"
+      "xml Form 8995 line 16 minimum deduction has no 2026v1.0 MeF element; export waits for a schema that carries it"
     ],
     "mixed-cf-tip-phase-wotc": [
       "xml Form 8995-A FilingStatusThresholdCd 403500 is not a value the MeF schema enumerates; export waits for a schema that carries the return year's amounts"
@@ -635,14 +611,7 @@
     "single-form8863-two-school-llc": "Sample fixture input: its Form 8863 filer MAGI and Credit Limit Worksheet operands are the TY2025 return's; the TY2026 return finalizes different amounts, so the reconciliation refuses",
     "single-form8863-two-school-aoc": "Sample fixture input: its Form 8863 filer MAGI and Credit Limit Worksheet operands are the TY2025 return's; the TY2026 return finalizes different amounts, so the reconciliation refuses",
     "qualified-tip-qbi-advanced-event-wotc-tip-exclusion": "MeF schema gap: 2026v1.0 IRS8995A/IRS8995AScheduleA enumerate only the TY2025 FilingStatusThresholdCd/FilingStatusPhaseInRangeCd values (F8995A-004-06, SA-F8995A-003-06); the draft 2026 Form 8995-A line 21/23 amounts ($201,750, $201,775 MFS, $403,500; $75,000/$150,000) wait for a schema that carries them",
-    "tip-health-mfj-fully-phased-out": "Dated 2025 fact: the issued health premium records are paid in 2025 (policy-records.ts still pins the 2025 date pattern), so Form 7206 and the Schedule 1-A tip review that needs its health plan both refuse",
-    "tip-health-mfj-owned-cap-phaseout": "Dated 2025 fact: the issued health premium records are paid in 2025 (policy-records.ts still pins the 2025 date pattern), so Form 7206 and the Schedule 1-A tip review that needs its health plan both refuse",
-    "tip-health-mfj-primary-health-limited": "Dated 2025 fact: the issued health premium records are paid in 2025 (policy-records.ts still pins the 2025 date pattern), so Form 7206 and the Schedule 1-A tip review that needs its health plan both refuse",
-    "tip-health-single-fully-phased-out": "Dated 2025 fact: the issued health premium records are paid in 2025 (policy-records.ts still pins the 2025 date pattern)",
-    "tip-health-single-health-income-limited": "Dated 2025 fact: the issued health premium records are paid in 2025 (policy-records.ts still pins the 2025 date pattern)",
-    "tip-health-single-positive-health": "Dated 2025 fact: the issued health premium records are paid in 2025 (policy-records.ts still pins the 2025 date pattern)",
-    "tip-health-single-tip-netincome-limited": "Dated 2025 fact: the issued health premium records are paid in 2025 (policy-records.ts still pins the 2025 date pattern)",
-    "tip-health-single-w2-qbi-binding": "Dated 2025 fact: the issued health premium records are paid in 2025 (policy-records.ts still pins the 2025 date pattern)",
+    "tip-health-mfj-primary-health-limited": "Schema gap: TY2026 applies the IRC 199A(i) $400 minimum deduction (draft 2026 Form 8995 line 16), but the 2026v1.0 IRS8995 schema has no element for it, so export refuses with a named error until a later 2026 schema carries it.",
     "mixed-cf-tip-phase-wotc": "MeF schema gap: 2026v1.0 IRS8995A enumerates only the TY2025 FilingStatusThresholdCd values (F8995A-004-06); the 2026 $403,500 joint threshold waits for a schema that carries it",
     "same-proprietor-two-c-one-f-shop-full": "Open TY2026 work: QBI route replays TY2025 amounts from the sample's reviewed sources",
     "same-proprietor-two-c-one-f-shop-partial": "Open TY2026 work: QBI route replays TY2025 amounts from the sample's reviewed sources",

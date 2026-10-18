@@ -5,44 +5,9 @@
   "returns": {
     "single-two-at-risk-business-losses": [
       "rule S1-F1040-195"
-    ],
-    "tip-health-mfj-fully-phased-out": [
-      "calculation form7206",
-      "calculation schedule1a"
-    ],
-    "tip-health-mfj-owned-cap-phaseout": [
-      "calculation form7206",
-      "calculation schedule1a"
-    ],
-    "tip-health-mfj-primary-health-limited": [
-      "calculation form7206",
-      "calculation schedule1a"
-    ],
-    "tip-health-single-fully-phased-out": [
-      "xml Health plan needs its issued policy record and 12 issued monthly premium records"
-    ],
-    "tip-health-single-health-income-limited": [
-      "xml Health plan needs its issued policy record and 12 issued monthly premium records"
-    ],
-    "tip-health-single-positive-health": [
-      "xml Health plan needs its issued policy record and 12 issued monthly premium records"
-    ],
-    "tip-health-single-tip-netincome-limited": [
-      "xml Health plan needs its issued policy record and 12 issued monthly premium records"
-    ],
-    "tip-health-single-w2-qbi-binding": [
-      "xml Health plan needs its issued policy record and 12 issued monthly premium records"
     ]
   },
   "reasons": {
-    "single-two-at-risk-business-losses": "Schedule 1 line 3 and Schedule SE line 2 take the Form 6198 line 21 deductible losses (-500, -900; 1,600 net with the 3,000 profit). 2025 Schedule C instructions, line 31: apply the at-risk rules before entering a loss, and 'the amount on line 31 will be your loss, and it may be smaller than the amount you figured by subtracting line 30 from line 29'; Form 6198 instructions (Rev. 11-2025), line 21: report the deductible loss on the return. S1-F1040-195 ('BusinessIncomeLossAmt must be equal to the sum of all Schedule C NetProfitOrLossAmt unless Form 8958 is present') then needs NetProfitOrLossAmt to be the limited loss, while SC-F1040-023-01 ('Each NetProfitOrLossAmt must be equal to TentativeProfitOrLossAmt minus HomeBusinessExpenseAmt') needs it to be -2,000 and -3,000. No value satisfies both when the limit binds: the engine files line 29 minus line 30 and S1-F1040-195 rejects; filing the limited loss would move the reject to SC-F1040-023-01. The IRS1040ScheduleC NetProfitOrLossAmt otherLossAmt and passiveActivityLossAmt attributes are undocumented in 2025v5.4 and IRS1040Schedule1 BusinessIncomeLossAmt has no separate at-risk element, so whether MeF reads either attribute is unverified.",
-    "tip-health-mfj-fully-phased-out": "Frozen tip-health inputs lack the issued policy record and 12 issued monthly premium records that reconcileHealthPolicyRecords reads from the Form 7206 plan input; retainedSourceDocuments carry only Form 4852 documents and never reach that guard, so the records must be added to the hashed inputs.",
-    "tip-health-mfj-owned-cap-phaseout": "Frozen tip-health inputs lack the issued policy record and 12 issued monthly premium records that reconcileHealthPolicyRecords reads from the Form 7206 plan input; retainedSourceDocuments carry only Form 4852 documents and never reach that guard, so the records must be added to the hashed inputs.",
-    "tip-health-mfj-primary-health-limited": "Frozen tip-health inputs lack the issued policy record and 12 issued monthly premium records that reconcileHealthPolicyRecords reads from the Form 7206 plan input; retainedSourceDocuments carry only Form 4852 documents and never reach that guard, so the records must be added to the hashed inputs.",
-    "tip-health-single-fully-phased-out": "Frozen tip-health inputs lack the issued policy record and 12 issued monthly premium records that reconcileHealthPolicyRecords reads from the Form 7206 plan input; retainedSourceDocuments carry only Form 4852 documents and never reach that guard, so the records must be added to the hashed inputs.",
-    "tip-health-single-health-income-limited": "Frozen tip-health inputs lack the issued policy record and 12 issued monthly premium records that reconcileHealthPolicyRecords reads from the Form 7206 plan input; retainedSourceDocuments carry only Form 4852 documents and never reach that guard, so the records must be added to the hashed inputs.",
-    "tip-health-single-positive-health": "Frozen tip-health inputs lack the issued policy record and 12 issued monthly premium records that reconcileHealthPolicyRecords reads from the Form 7206 plan input; retainedSourceDocuments carry only Form 4852 documents and never reach that guard, so the records must be added to the hashed inputs.",
-    "tip-health-single-tip-netincome-limited": "Frozen tip-health inputs lack the issued policy record and 12 issued monthly premium records that reconcileHealthPolicyRecords reads from the Form 7206 plan input; retainedSourceDocuments carry only Form 4852 documents and never reach that guard, so the records must be added to the hashed inputs.",
-    "tip-health-single-w2-qbi-binding": "Frozen tip-health inputs lack the issued policy record and 12 issued monthly premium records that reconcileHealthPolicyRecords reads from the Form 7206 plan input; retainedSourceDocuments carry only Form 4852 documents and never reach that guard, so the records must be added to the hashed inputs."
+    "single-two-at-risk-business-losses": "Schedule 1 line 3 and Schedule SE line 2 take the Form 6198 line 21 deductible losses (-500, -900; 1,600 net with the 3,000 profit). 2025 Schedule C instructions, line 31: apply the at-risk rules before entering a loss, and 'the amount on line 31 will be your loss, and it may be smaller than the amount you figured by subtracting line 30 from line 29'; Form 6198 instructions (Rev. 11-2025), line 21: report the deductible loss on the return. S1-F1040-195 ('BusinessIncomeLossAmt must be equal to the sum of all Schedule C NetProfitOrLossAmt unless Form 8958 is present') then needs NetProfitOrLossAmt to be the limited loss, while SC-F1040-023-01 ('Each NetProfitOrLossAmt must be equal to TentativeProfitOrLossAmt minus HomeBusinessExpenseAmt') needs it to be -2,000 and -3,000. No value satisfies both when the limit binds: the engine files line 29 minus line 30 and S1-F1040-195 rejects; filing the limited loss would move the reject to SC-F1040-023-01. The IRS1040ScheduleC NetProfitOrLossAmt otherLossAmt and passiveActivityLossAmt attributes are undocumented in 2025v5.4 and IRS1040Schedule1 BusinessIncomeLossAmt has no separate at-risk element, so whether MeF reads either attribute is unverified."
   }
 }
