@@ -5,14 +5,14 @@
  */
 
 import type { RuleDef } from "../../../../../../../core/validation/types.ts";
-import { rule, alwaysPass, } from "../../../../../../../core/validation/mod.ts";
+import { rule, referencedByExactlyOne, } from "../../../../../../../core/validation/mod.ts";
 
 export const SG_RULES: readonly RuleDef[] = [
   rule(
     "SG-F8865-001",
     "reject",
     "incorrect_data",
-    alwaysPass, // requires cross-instance reference count: Schedule G (Form 8865) must be referenced from exactly one Form 8865
+    referencedByExactlyOne("IRS8865ScheduleG", "IRS8865"),
     "If Schedule G (Form 8865) is present in the return, then it must be referenced from one and only one Form 8865.",
   ),
 ];

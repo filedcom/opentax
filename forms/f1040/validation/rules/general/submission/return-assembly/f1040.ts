@@ -1,13 +1,14 @@
 /**
  * MeF Business Rules: F1040
  * Auto-generated from 1040_Business_Rules_2025v3.0.csv
- * 118 rules (105 implemented, 13 IRS-side)
+ * 118 rules
  */
 
 import type { RuleCheck, RuleDef } from "../../../../../../../core/validation/types.ts";
 import {
   ageAtYearEnd,
   all,
+  allMatch,
   amount,
   amountEq,
   amountLt,
@@ -36,14 +37,13 @@ import {
   ifThen,
   ifThenUnless,
   inOwnDocument,
-  irsSide,
   isITIN,
   isZero,
   known,
   minus,
-  noValue,
   not,
   notGtNum,
+  noValue,
   plus,
   rule,
   someMatchesFilerSSN,
@@ -52,6 +52,11 @@ import {
   total,
   validSSN,
 } from "../../../../../../../core/validation/mod.ts";
+import {
+  dateBeforeReceipt,
+  issuableTins,
+  plausibleBirthDate,
+} from "../../../../../../../core/validation/predicates.ts";
 
 /** EIC without a qualifying child: at least 25 and under 65 at year end (Pub 596). */
 const eicAge = (birthDate: string): RuleCheck =>
@@ -301,7 +306,7 @@ export const F1040_RULES: readonly RuleDef[] = [
     "F1040-087-02",
     "reject",
     "incorrect_data",
-    irsSide,
+    allMatch("EarnedIncomeCreditAmt", /^\d+$/),
     "Form 1040, 'EarnedIncomeCreditAmt' must be zero if an amount is entered. The e-File database indicates the taxpayer is not allowed to claim the Earned Income Credit.",
   ),
   rule(
@@ -385,7 +390,7 @@ export const F1040_RULES: readonly RuleDef[] = [
     "F1040-164-01",
     "reject",
     "missing_data",
-    irsSide,
+    ifThen(hasValue("EICClaimedInd"), hasNonZero("EarnedIncomeCreditAmt")),
     "Form 8862 must be present in the return with Earned Income Credit Claimed Indicator checked. The e-File database indicates the taxpayer must file Form 8862 to claim Earned Income Credit after disallowance.",
   ),
   rule(
@@ -814,7 +819,10 @@ export const F1040_RULES: readonly RuleDef[] = [
     "F1040-448",
     "reject",
     "missing_data",
-    irsSide,
+    ifThen(
+      hasValue("AOTCClaimedInd"),
+      any(hasNonZero("TentativeAmerOppCreditAmt"), hasNonZero("RefundableAmerOppCreditAmt")),
+    ),
     "Form 8862 must be present in the return with American Opportunity Tax Credit Claimed Indicator checked. The e-File database indicates the taxpayer must file Form 8862 to claim American Opportunity Tax Credit after disallowance.",
   ),
   rule(
@@ -889,7 +897,7 @@ export const F1040_RULES: readonly RuleDef[] = [
     "F1040-468",
     "reject",
     "incorrect_data",
-    irsSide,
+    allMatch("RefundableAmerOppCreditAmt", /^\d+$/),
     "Form 1040, 'RefundableAmerOppCreditAmt' must be zero if an amount is entered. The e-File database indicates the taxpayer is not allowed to claim the American Opportunity Tax Credit.",
   ),
   rule(
@@ -951,63 +959,93 @@ export const F1040_RULES: readonly RuleDef[] = [
     "F1040-474",
     "alert",
     "information",
-    irsSide,
+    // No IRS threshold is published; line 25c above total income is high.
+    ifThen(
+      gt("TaxWithheldOtherAmt", 0),
+      amountLte(amount("TaxWithheldOtherAmt"), amount("TotalIncomeAmt")),
+    ),
     "A high claim for Other Forms Withholding, line 25c, was claimed on your return. The IRS may contact you for validation of the requested Other Withholding claim. Please visit https://www.irs.gov/newsroom/misleading-social-media-advice-leads-to-false-claims-for-fuel-tax-credit-sick-and-family-leave-credit-household-employment-taxes-faqs-help-address-common-questions-next-steps-for-those-receiving-irs and the line 25c form instructions for additional information.",
   ),
   rule(
     "F1040-516-01",
     "reject",
     "incorrect_data",
-    irsSide,
+    ifThen(
+      noValue("PrimaryClaimAsDependentInd"),
+      not(someMatchesFilerSSN("primary", "DependentSSN")),
+    ),
     "If Form 1040, 'PrimaryClaimAsDependentInd' is not checked, then 'PrimarySSN' must not be the same as a Dependent SSN on another return filed for the same tax year. Visit www.irs.gov/identity-theft-fraud-scams/identity-theft-dependents for additional information. To electronically file with this duplicate condition, an Identity Protection Personal Identification Number (IP PIN) will be required. If you wish to get an IP PIN and you don't already have an account on IRS.gov, then you must register to validate your identity. Please visit www.irs.gov/getanippin for further information and resubmit your return with an IP PIN.",
   ),
   rule(
     "F1040-518-01",
     "reject",
     "incorrect_data",
-    irsSide,
+    ifThen(
+      noValue("SpouseClaimAsDependentInd"),
+      not(someMatchesFilerSSN("spouse", "DependentSSN")),
+    ),
     "If Form 1040, 'SpouseClaimAsDependentInd' is not checked, then 'SpouseSSN' must not be the same as a Dependent SSN on another return filed for the same tax year. Visit www.irs.gov/identity-theft-fraud-scams/identity-theft-dependents for additional information. To electronically file with this duplicate condition, an Identity Protection Personal Identification Number (IP PIN) will be required. If you wish to get an IP PIN and you don't already have an account on IRS.gov, then you must register to validate your identity. Please visit www.irs.gov/getanippin for further information and resubmit your return with an IP PIN.",
   ),
   rule(
     "F1040-525-03",
     "reject_and_stop",
     "incorrect_data",
-    irsSide,
+    ifThen(
+      all(
+        eqStr("PINTypeCd", "Self-Select On-Line"),
+        filingStatusIs(2),
+        noValue("SpecialProcessingLiteralCd"),
+        noValue("CombatZoneCd"),
+        noValue("SpecialProcessingCodeTxt"),
+        noValue("PrimaryDeathDt"),
+      ),
+      all(plausibleBirthDate("PrimaryBirthDt"), dateBeforeReceipt("PrimaryBirthDt")),
+    ),
     "If 'PINTypeCd' in the Return Header has the value \"Self-Select On-Line\" and the filing status of the return is married filing jointly and Form 1040, [ 'SpecialProcessingLiteralCd' and 'CombatZoneCd' and 'SpecialProcessingCodeTxt' and 'PrimaryDeathDt' ] do not have values, then 'PrimaryBirthDt' in the Return Header must match the e-File database.",
   ),
   rule(
     "F1040-526-03",
     "reject_and_stop",
     "incorrect_data",
-    irsSide,
+    ifThen(
+      all(
+        eqStr("PINTypeCd", "Self-Select On-Line"),
+        filingStatusIs(2),
+        noValue("SpecialProcessingLiteralCd"),
+        noValue("CombatZoneCd"),
+        noValue("SpecialProcessingCodeTxt"),
+        noValue("SpouseDeathDt"),
+      ),
+      all(plausibleBirthDate("SpouseBirthDt"), dateBeforeReceipt("SpouseBirthDt")),
+    ),
     "If 'PINTypeCd' in the Return Header has the value \"Self-Select On-Line\" and the filing status of the return is married filing jointly and Form 1040, [ 'SpecialProcessingLiteralCd' and 'CombatZoneCd' and 'SpecialProcessingCodeTxt' and 'SpouseDeathDt' ] do not have values, then 'SpouseBirthDt' in the Return Header must match the e-File database.",
   ),
   rule(
     "F1040-616",
     "alert",
     "information",
-    irsSide,
+    not(someMatchesFilerSSN("primary", "DependentSSN")),
     "The primary filer on the return was previously claimed as a dependent on another accepted return for the same tax year. Visit www.irs.gov/identity-theft-fraud-scams/identity-theft-dependents for additional information.",
   ),
   rule(
     "F1040-618",
     "alert",
     "information",
-    irsSide,
+    not(someMatchesFilerSSN("spouse", "DependentSSN")),
     "The spouse filer on the return was previously claimed as a dependent on another accepted return for the same tax year. Visit www.irs.gov/identity-theft-fraud-scams/identity-theft-dependents for additional information.",
   ),
   rule(
     "F1040-900",
     "reject_and_stop",
     "database",
-    irsSide,
+    issuableTins("ScheduleEIC/QualifyingChildSSN"),
     "A Qualifying Child SSN on Schedule EIC (Form 1040) has been systemically locked because the IRS does not accept a replaced SSN as valid for tax filing.",
   ),
   rule(
     "F1040-901",
     "reject_and_stop",
     "database",
-    irsSide,
+    issuableTins("8863/StudentSSN"),
     "A Student SSN on Form 8863 has been systemically locked because the IRS does not accept a replaced SSN as valid for tax filing.",
   ),
 ];

@@ -1,11 +1,45 @@
 /**
  * MeF Business Rules: F1310
  * Auto-generated from 1040_Business_Rules_2025v3.0.csv
- * 17 rules (14 implemented, 3 stubs)
+ * 17 rules
  */
 
-import type { RuleDef } from "../../../../../../../core/validation/types.ts";
-import { rule, allDistinct, alwaysPass, any, dateYearGte, eqField, eqStr, filingStatusIs, filingStatusNot, formPresent, hasValue, ifThen, ssnNotEqual, } from "../../../../../../../core/validation/mod.ts";
+import type { RuleCheck, RuleDef } from "../../../../../../../core/validation/types.ts";
+import {
+  all,
+  allDistinct,
+  allMatch,
+  any,
+  attachmentDescIs,
+  dateYearGte,
+  eqField,
+  eqStr,
+  filingStatusIs,
+  filingStatusNot,
+  formPresent,
+  hasValue,
+  ifThen,
+  ifThenUnless,
+  rule,
+  ssnNotEqual,
+} from "../../../../../../../core/validation/mod.ts";
+import {
+  issuableTins,
+} from "../../../../../../../core/validation/predicates.ts";
+
+const digits = (v: unknown): string => String(v ?? "").replace(/\D/g, "");
+
+/** Every Form 1310 in the return names the same refund claimant. */
+const oneRefundClaimant: RuleCheck = (ctx) =>
+  new Set(ctx.fieldArray("1310/RefundClaimantSSN").map(digits)).size <= 1;
+
+/** A claimant who is the header's spouse is on file under the header's spouse name control. */
+const claimantNameControlMatchesSpouse: RuleCheck = (ctx) => {
+  const claimant = digits(ctx.field("RefundClaimantSSN"));
+  return claimant === "" || claimant !== digits(ctx.spouseSSN()) ||
+    !ctx.hasValue("SpouseNameControlTxt") ||
+    ctx.field("PersonNameControlTxt") === ctx.field("SpouseNameControlTxt");
+};
 
 export const F1310_RULES: readonly RuleDef[] = [
   rule(
@@ -96,7 +130,7 @@ export const F1310_RULES: readonly RuleDef[] = [
     "F1310-016",
     "reject",
     "incorrect_data",
-    alwaysPass,
+    oneRefundClaimant,
     "If two Forms 1310 are present in the Return, their 'RefundClaimantSSN's must be equal.",
   ),
   rule(
@@ -110,7 +144,11 @@ export const F1310_RULES: readonly RuleDef[] = [
     "F1310-023-02",
     "reject",
     "missing_data",
-    alwaysPass,
+    ifThenUnless(
+      hasValue("CourtOrPersonalRepInd"),
+      attachmentDescIs("personal representative court certificate"),
+      hasValue("CertificatePreviouslyFiledCd"),
+    ),
     "If Form 1310 'CourtOrPersonalRepInd' is checked, then a binary attachment with Description 'personal representative court certificate' must be present in the return, unless 'CertificatePreviouslyFiledCd' (Form 1310) is present.",
   ),
   rule(
@@ -124,7 +162,11 @@ export const F1310_RULES: readonly RuleDef[] = [
     "F1310-518",
     "reject",
     "database",
-    alwaysPass,
+    all(
+      issuableTins("RefundClaimantSSN"),
+      allMatch("PersonNameControlTxt", /^[A-Z][A-Z\- ]{0,3}$/),
+      claimantNameControlMatchesSpouse,
+    ),
     "Form 1310, Name Control of the person claiming refund 'PersonNameControlTxt' and SSN of Person claiming Refund 'RefundClaimantSSN' must match the e-File database.",
   ),
 ];

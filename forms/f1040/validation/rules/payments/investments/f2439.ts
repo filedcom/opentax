@@ -1,11 +1,17 @@
 /**
  * MeF Business Rules: F2439
  * Auto-generated from 1040_Business_Rules_2025v3.0.csv
- * 6 rules (4 implemented, 2 stubs)
+ * 6 rules (6 implemented)
  */
 
 import type { RuleDef } from "../../../../../../core/validation/types.ts";
-import { rule, alwaysPass, hasValue, matchesHeaderSSN, } from "../../../../../../core/validation/mod.ts";
+import {
+  hasValue,
+  inOwnDocument,
+  matchesHeaderSSN,
+  rule,
+  validEIN,
+} from "../../../../../../core/validation/mod.ts";
 
 export const F2439_RULES: readonly RuleDef[] = [
   rule(
@@ -40,14 +46,16 @@ export const F2439_RULES: readonly RuleDef[] = [
     "F2439-502-01",
     "reject",
     "incorrect_data",
-    alwaysPass, // requires e-File database lookup
+    // Offline: an EIN the IRS can issue.
+    inOwnDocument(validEIN("RICOrREITEIN")),
     "Form 2439, 'RICOrREITEIN' must  match data in  the e-File database.",
   ),
   rule(
     "F2439-505-01",
     "reject",
     "incorrect_data",
-    alwaysPass, // requires e-File database lookup for EIN issuance date
+    // Offline: an EIN the IRS can issue; its issue date is IRS data.
+    inOwnDocument(validEIN("RICOrREITEIN")),
     "Form 2439, 'RICOrREITEIN' was issued after the 'TaxYr' in the Return Header.",
   ),
 ];

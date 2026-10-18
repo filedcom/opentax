@@ -5,14 +5,14 @@
  */
 
 import type { RuleDef } from "../../../../../../../core/validation/types.ts";
-import { rule, alwaysPass, any, hasValue, } from "../../../../../../../core/validation/mod.ts";
+import { rule, any, referencedByExactlyOne, hasValue, } from "../../../../../../../core/validation/mod.ts";
 
 export const SO_RULES: readonly RuleDef[] = [
   rule(
     "SO-F5471-001",
     "reject",
     "incorrect_data",
-    alwaysPass,
+    referencedByExactlyOne("IRS5471ScheduleO", "IRS5471"),
     "If Schedule O (Form 5471) is present in the return, then it must be referenced from one and only one Form 5471.",
   ),
   rule(
@@ -26,7 +26,7 @@ export const SO_RULES: readonly RuleDef[] = [
     "SO-F8865-001",
     "reject",
     "incorrect_data",
-    alwaysPass,
+    referencedByExactlyOne("IRS8865ScheduleO", "IRS8865"),
     "If Schedule O (Form 8865) is present in the return, then it must be referenced from one and only one Form 8865.",
   ),
   rule(

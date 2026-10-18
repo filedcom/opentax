@@ -167,7 +167,8 @@ class ScheduleSENode extends TaxNode<typeof inputSchema> {
       // Route net earnings (line 6) to Form 8959 Part II for Additional Medicare Tax.
       // i8959 line 8: "Enter your self-employment income from Schedule SE (Form 1040),
       // Part I, line 6." That is after the 92.35% multiplier. IRC §3101(b)(2).
-      this.outputNodes.output(form8959, { se_income: line6 }),
+      // Each spouse's Schedule SE is filed in whole dollars before they add.
+      this.outputNodes.output(form8959, { se_income: Math.round(line6) }),
       // Line 13 is a deduction attributable to the trade or business, so it reduces QBI.
       // i8995, Determining Your Qualified Business Income: the items to consider include
       // the "deductible part of self-employment tax".

@@ -1,13 +1,16 @@
 /**
  * MeF Business Rules: SEIC
  * Auto-generated from 1040_Business_Rules_2025v3.0.csv
- * 24 rules (12 implemented, 12 IRS-side)
+ * 24 rules (24 implemented)
  */
 
 import type { RuleCheck, RuleDef } from "../../../../../../core/validation/types.ts";
 import {
   all,
   allDistinct,
+  allMatch,
+  amount,
+  amountEq,
   amountLte,
   any,
   attachmentCountStartingWith,
@@ -19,13 +22,18 @@ import {
   hasValue,
   ifThen,
   inOwnDocument,
-  irsSide,
+  noneMatchHeaderSSN,
   notGtNum,
   rule,
   ssnNotEqual,
   validSSN,
   yearOf,
 } from "../../../../../../core/validation/mod.ts";
+import {
+  everyIssuableTin,
+  personNameControlAgrees,
+  wellFormedIpPins,
+} from "../../../../../../core/validation/predicates.ts";
 
 /** No qualifying child was born before the filer; a birth in the same year cannot be ordered. */
 const childrenBornAfter = (birthDate: string): RuleCheck =>
@@ -134,35 +142,49 @@ export const SEIC_RULES: readonly RuleDef[] = [
     "SEIC-F1040-009",
     "alert",
     "information",
-    irsSide,
+    // Offline: no child twice on this return, nor a filer.
+    inOwnDocument(all(allDistinct("QualifyingChildSSN"), noneMatchHeaderSSN("QualifyingChildSSN"))),
     "A qualifying child claimed on Schedule EIC (Form 1040) for the Earned Income Credit was previously claimed as a qualifying child on another accepted return for the same tax year. Visit www.irs.gov/identity-theft-fraud-scams/identity-theft-dependents for additional information.",
   ),
   rule(
     "SEIC-F1040-010",
     "alert",
     "information",
-    irsSide,
+    // Offline: no child twice on this return, nor a filer.
+    inOwnDocument(all(allDistinct("QualifyingChildSSN"), noneMatchHeaderSSN("QualifyingChildSSN"))),
     "A qualifying child claimed on Schedule EIC (Form 1040) for the Earned Income Credit was previously claimed as a qualifying child on another accepted return for the same tax year. Visit www.irs.gov/identity-theft-fraud-scams/identity-theft-dependents for additional information.",
   ),
   rule(
     "SEIC-F1040-501-02",
     "reject",
     "incorrect_data",
-    irsSide,
+    // Offline: an issuable SSN whose name control agrees with the rest of the return.
+    inOwnDocument(
+      eachGroup(
+        "QualifyingChildInformation",
+        all(
+          everyIssuableTin("QualifyingChildSSN"),
+          personNameControlAgrees("QualifyingChildNameControlTxt", "QualifyingChildSSN"),
+        ),
+        "QualifyingChildSSN", "QualifyingChildNameControlTxt",
+      ),
+    ),
     "In each 'QualifyingChildInformation' on Schedule EIC (Form 1040), [ 'QualifyingChildSSN' and 'QualifyingChildNameControlTxt' ] must match the e-File database.",
   ),
   rule(
     "SEIC-F1040-506-04",
     "reject",
     "incorrect_data",
-    irsSide,
+    // Offline: no child twice on this return, nor a filer.
+    inOwnDocument(all(allDistinct("QualifyingChildSSN"), noneMatchHeaderSSN("QualifyingChildSSN"))),
     "In each 'QualifyingChildInformation' on Schedule EIC (Form 1040), 'QualifyingChildSSN' must not be the same as a qualifying child SSN on another return filed for the same tax year. Visit www.irs.gov/identity-theft-fraud-scams/identity-theft-dependents for additional information. To electronically file with this duplicate condition, an Identity Protection Personal Identification Number (IP PIN) will be required. If you wish to get an IP PIN and you don't already have an account on IRS.gov, then you must register to validate your identity. Please visit www.irs.gov/getanippin for further information and resubmit your return with an IP PIN.",
   ),
   rule(
     "SEIC-F1040-509-04",
     "reject",
     "incorrect_data",
-    irsSide,
+    // Offline: no child is a filer of this return.
+    inOwnDocument(noneMatchHeaderSSN("QualifyingChildSSN")),
     "In each 'QualifyingChildInformation' on Schedule EIC (Form 1040), 'QualifyingChildSSN' must not be the same as the spouse SSN on another return filed for the same tax year. Visit www.irs.gov/identity-theft-fraud-scams/identity-theft-dependents for additional information. To electronically file with this duplicate condition, an Identity Protection Personal Identification Number (IP PIN) will be required. If you wish to get an IP PIN and you don't already have an account on IRS.gov, then you must register to validate your identity. Please visit www.irs.gov/getanippin for further information and resubmit your return with an IP PIN.",
   ),
   rule(
@@ -176,14 +198,32 @@ export const SEIC_RULES: readonly RuleDef[] = [
     "SEIC-F1040-534-03",
     "reject",
     "incorrect_data",
-    irsSide,
+    // Offline: no child born after the tax year; "DIED" only for a child born that year.
+    inOwnDocument(
+      eachGroup(
+        "QualifyingChildInformation",
+        all(
+          amountLte(amount("ChildBirthYr"), amount("TaxYr")),
+          ifThen(hasValue("DiedLiteralCd"), amountEq(amount("ChildBirthYr"), amount("TaxYr"))),
+        ),
+        "ChildBirthYr",
+        "DiedLiteralCd",
+      ),
+    ),
     "A qualifying child that is deceased must not be listed on Schedule EIC (Form 1040) if their date of death was prior to the tax year for which the return is being filed.",
   ),
   rule(
     "SEIC-F1040-535-04",
     "reject",
     "incorrect_data",
-    irsSide,
+    // Offline: a four-digit birth year no later than the tax year.
+    inOwnDocument(
+      eachGroup(
+        "QualifyingChildInformation",
+        all(allMatch("ChildBirthYr", /^\d{4}$/), amountLte(amount("ChildBirthYr"), amount("TaxYr"))),
+        "ChildBirthYr",
+      ),
+    ),
     "In each 'QualifyingChildInformation' on Schedule EIC (Form 1040), 'ChildBirthYr' must match the e-File database.",
   ),
   rule(
@@ -221,35 +261,38 @@ export const SEIC_RULES: readonly RuleDef[] = [
     "SEIC-F1040-911-01",
     "reject_and_stop",
     "database",
-    irsSide,
+    // Offline: an SSN the SSA can issue; its lock is IRS data.
+    inOwnDocument(everyIssuableTin("QualifyingChildSSN")),
     "The Qualifying Child SSN that has a value on Schedule EIC (Form 1040), has been locked because Social Security Administration records indicate the number belongs to a deceased individual.",
   ),
   rule(
     "SEIC-F1040-912-01",
     "reject_and_stop",
     "database",
-    irsSide,
+    // Offline: an SSN the SSA can issue; its lock is IRS data.
+    inOwnDocument(everyIssuableTin("QualifyingChildSSN")),
     "The Qualifying Child SSN that has a value on Schedule EIC (Form 1040), has been locked. The account was locked per the taxpayer's request.",
   ),
   rule(
     "SEIC-F1040-914-01",
     "reject_and_stop",
     "database",
-    irsSide,
+    // Offline: an SSN the SSA can issue; its lock is IRS data.
+    inOwnDocument(everyIssuableTin("QualifyingChildSSN")),
     "The Qualifying Child SSN that has a value on Schedule EIC (Form 1040), has been locked. The account was locked per the request of the qualifying child's parent or guardian.",
   ),
   rule(
     "SEIC-F1040-995-01",
     "reject_and_stop",
     "incorrect_data",
-    irsSide,
+    inOwnDocument(wellFormedIpPins("QualifyingChildInformation/IdentityProtectionPIN")),
     "The Dependent/Qualifying Child Identity Protection Personal Identification Number (IP PIN) on Schedule EIC (Form 1040) must match the e-File database. Please double check your entry and resubmit your return with the correct number.",
   ),
   rule(
     "SEIC-F1040-996-01",
     "reject_and_stop",
     "incorrect_data",
-    irsSide,
+    inOwnDocument(wellFormedIpPins("QualifyingChildInformation/IdentityProtectionPIN")),
     "The Primary Taxpayer did not enter a valid Identity Protection Personal Identification Number (IP PIN) for Dependent/Qualifying Child on Schedule EIC (Form 1040). Please visit www.irs.gov/getanippin for further information and resubmit your return with the correct number.",
   ),
 ];

@@ -1,18 +1,39 @@
 /**
  * MeF Business Rules: F7218
  * Auto-generated from 1040_Business_Rules_2025v3.0.csv
- * 3 rules (1 implemented, 2 stubs)
+ * 3 rules
  */
 
 import type { RuleDef } from "../../../../../../../core/validation/types.ts";
-import { rule, alwaysPass, dateYearGte, hasNonZero, hasValue, ifThen, sumOfAll, } from "../../../../../../../core/validation/mod.ts";
+import {
+  amount,
+  amountEq,
+  dateYearGte,
+  eachGroup,
+  gt,
+  hasNonZero,
+  hasValue,
+  ifThen,
+  rule,
+  sumOfAll,
+} from "../../../../../../../core/validation/mod.ts";
 
 export const F7218_RULES: readonly RuleDef[] = [
   rule(
     "F7218-001",
     "reject",
     "math_error",
-    alwaysPass,
+    eachGroup(
+      "ClnAvnNonAvnFuelPrdcdSoldGrp",
+      ifThen(
+        gt("ClnAvnNonAvnFuelProdCrAmt", 0),
+        amountEq(
+          amount("ClnAvnNonAvnFuelProdCrAmt"),
+          (g) => g.num("CalcFacilityEmissionsValueOrRt") * g.num("GallonsOrGallonsEquivalentQty") * g.num("InflationAdjFuelSoldAmt"),
+          0.5,
+        ),
+      ),
+    ),
     "In each 'ClnAvnNonAvnFuelPrdcdSoldGrp' on Form 7218, if 'ClnAvnNonAvnFuelProdCrAmt' has a value greater than zero, then it must be equal to the product of [ 'CalcFacilityEmissionsValueOrRt' and 'GallonsOrGallonsEquivalentQty' and 'InflationAdjFuelSoldAmt' ].",
   ),
   rule(

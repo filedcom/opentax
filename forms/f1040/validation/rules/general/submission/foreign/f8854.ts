@@ -5,7 +5,7 @@
  */
 
 import type { RuleDef } from "../../../../../../../core/validation/types.ts";
-import { rule, all, alwaysPass, eqField, eqStr, gt, hasNonZero, hasValue, ifThen, isZero, noValue, } from "../../../../../../../core/validation/mod.ts";
+import { rule, all, amount, amountLt, attachedAt, constant, eachGroup, eqField, lt, plus, eqStr, gt, hasNonZero, hasValue, ifThen, isZero, noValue, } from "../../../../../../../core/validation/mod.ts";
 
 export const F8854_RULES: readonly RuleDef[] = [
   rule(
@@ -19,7 +19,7 @@ export const F8854_RULES: readonly RuleDef[] = [
     "F8854-017-09",
     "reject",
     "incorrect_data",
-    alwaysPass,
+    ifThen(all(amountLt(plus(amount("USIncomeTax1stYearBfrExptrtAmt"), amount("USIncomeTax2ndYearBfrExptrtAmt"), amount("USIncomeTax3rdYearBfrExptrtAmt"), amount("USIncomeTax4thYearBfrExptrtAmt"), amount("USIncomeTax5thYearBfrExptrtAmt")), constant(206001 * 5)), lt("NetWorthOnExptrtDateAmt", 2000000), eqStr("InCompliance5PrecTaxYearInd", "Yes")), noValue("PropertyOwnedDtExpatriationGrp")),
     "On Form 8854, if the average of ['USIncomeTax1stYearBfrExptrtAmt' and 'USIncomeTax2ndYearBfrExptrtAmt' and 'USIncomeTax3rdYearBfrExptrtAmt' and 'USIncomeTax4thYearBfrExptrtAmt' and 'USIncomeTax5thYearBfrExptrtAmt'] is less than 206,001 and 'NetWorthOnExptrtDateAmt' is less than 2,000,000 and 'InCompliance5PrecTaxYearInd' has a choice of \"Yes\" indicated, then 'PropertyOwnedDtExpatriationGrp' must not have a value.",
   ),
   rule(
@@ -47,7 +47,7 @@ export const F8854_RULES: readonly RuleDef[] = [
     "F8854-021",
     "reject",
     "missing_document",
-    alwaysPass,
+    eachGroup("MarkToMarketPropertySaleGrp", ifThen(hasNonZero("GainAfterAllocationExclAmt"), attachedAt("GainAfterAllocationExclAmt", "Form8854ComputationStatement")), "GainAfterAllocationExclAmt@referenceDocumentId"),
     "For each 'GainAfterAllocationExclAmt' in 'MarkToMarketPropertySaleGrp' that has a non-zero value, there must be a [Form8854ComputationStatement] attached to 'GainAfterAllocationExclAmt'.",
   ),
   rule(
@@ -61,7 +61,7 @@ export const F8854_RULES: readonly RuleDef[] = [
     "F8854-023",
     "reject",
     "missing_document",
-    alwaysPass,
+    eachGroup("MarkToMarketPropertySaleGrp", ifThen(hasNonZero("DeferredTaxAmt"), attachedAt("DeferredTaxAmt", "DeferredPropertyTaxElectStmt")), "DeferredTaxAmt@referenceDocumentId"),
     "For each 'DeferredTaxAmt' in 'MarkToMarketPropertySaleGrp' that has a non-zero value, there must be a [DeferredPropertyTaxElectionStatement] attached to 'DeferredTaxAmt'.",
   ),
   rule(

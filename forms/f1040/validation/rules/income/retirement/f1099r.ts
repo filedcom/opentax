@@ -1,7 +1,7 @@
 /**
  * MeF Business Rules: F1099R
  * Auto-generated from 1040_Business_Rules_2025v3.0.csv
- * 7 rules (5 implemented, 2 IRS-side)
+ * 7 rules (7 implemented)
  */
 
 import type { RuleDef } from "../../../../../../core/validation/types.ts";
@@ -9,7 +9,6 @@ import {
   hasValue,
   ifThen,
   inOwnDocument,
-  irsSide,
   rule,
   validEIN,
   zipValidForState,
@@ -55,14 +54,16 @@ export const F1099R_RULES: readonly RuleDef[] = [
     "F1099R-502-02",
     "reject",
     "incorrect_data",
-    irsSide,
+    // Offline: a payer EIN the IRS can issue.
+    inOwnDocument(validEIN("PayerEIN")),
     "Form 1099-R, 'PayerEIN' must match data in the e-File database.",
   ),
   rule(
     "F1099R-505-02",
     "reject",
     "incorrect_data",
-    irsSide,
+    // Offline: a payer EIN the IRS can issue; its issue date is IRS data.
+    inOwnDocument(validEIN("PayerEIN")),
     "Form 1099-R, 'PayerEIN' was issued after the Tax Year in the Return Header.",
   ),
 ];

@@ -87,8 +87,18 @@ export interface ReturnContext {
    */
   ownDocumentOnly?(): ReturnContext;
 
+  /** Each emitted ReturnData document's prefix, documentId and the documentIds it references. */
+  documentReferences?(): readonly DocumentReferences[];
+
   /** Emitted ReturnData documents: those counted and the declared 'documentCnt'. */
   emittedDocumentCount?(): { readonly actual: number; readonly declared?: number };
+}
+
+/** How one emitted ReturnData document links to others. */
+export interface DocumentReferences {
+  readonly prefix: string;
+  readonly documentId?: string;
+  readonly references: readonly string[];
 }
 
 /** A rule check function. Returns true if the rule PASSES (no violation). */

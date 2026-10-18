@@ -1,11 +1,25 @@
 /**
  * MeF Business Rules: F4136
  * Auto-generated from 1040_Business_Rules_2025v3.0.csv
- * 89 rules (89 implemented, 0 stubs)
+ * 89 rules (89 implemented)
  */
 
 import type { RuleDef } from "../../../../../../core/validation/types.ts";
-import { rule, alwaysPass, hasNonZero, hasValue, ifThen, any, isZero, } from "../../../../../../core/validation/mod.ts";
+import {
+  amount,
+  amountEq,
+  any,
+  hasNonZero,
+  hasValue,
+  ifThen,
+  inOwnDocument,
+  isZero,
+  rule,
+  total,
+} from "../../../../../../core/validation/mod.ts";
+import {
+  statementAttached,
+} from "../../../../../../core/validation/predicates.ts";
 
 export const F4136_RULES: readonly RuleDef[] = [
   rule(
@@ -278,28 +292,28 @@ export const F4136_RULES: readonly RuleDef[] = [
     "F4136-052-01",
     "reject",
     "missing_data",
-    alwaysPass, // requires checking for attached explanation statement
+    inOwnDocument(ifThen(hasValue("UndyedDieselUseExceptionInd"), statementAttached("UndyedDieselUseExceptionInd", "EvidenceOfDyedDieselFuelStatement"))),
     "If Form 4136, Line 3 'UndyedDieselUseExceptionInd' checkbox is checked, then \"Evidence of Dyed Diesel Fuel Explanation Statement\" [EvidenceOfDyedDieselFuelStatement], must be attached to Line 3.",
   ),
   rule(
     "F4136-053-01",
     "reject",
     "missing_data",
-    alwaysPass, // requires checking for attached explanation statement
+    inOwnDocument(ifThen(hasValue("UndyedKeroseneUseExceptionInd"), statementAttached("UndyedKeroseneUseExceptionInd", "EvidenceOfDyedKeroseneStatement"))),
     "If Form 4136, Line 4 'UndyedKeroseneUseExceptionInd' checkbox is checked, then \"Evidence of Dyed Kerosene Explanation Statement\" [EvidenceOfDyedKeroseneStatement], must be attached.",
   ),
   rule(
     "F4136-054-01",
     "reject",
     "missing_data",
-    alwaysPass, // requires checking for attached explanation statement
+    inOwnDocument(ifThen(hasValue("SalesUndyedDieselExceptionInd"), statementAttached("SalesUndyedDieselExceptionInd", "EvidenceOfDyedDieselFuelSoldStatement", "ToWhomDieselFuelSoldStatement"))),
     "If Form 4136, Line 6 'SalesUndyedDieselExceptionInd' checkbox is checked, then \"Evidence of Dyed Diesel Fuel Sold Explanation Statement\" [EvidenceOfDyedDieselFuelSoldStatement] or \"To Whom Diesel Fuel Sold Statement\" [ToWhomDieselFuelSoldStatement] must be attached to Line 6.",
   ),
   rule(
     "F4136-055-01",
     "reject",
     "missing_data",
-    alwaysPass, // requires checking for attached explanation statement
+    inOwnDocument(ifThen(hasValue("SlsUndyedKeroseneExceptionInd"), statementAttached("SlsUndyedKeroseneExceptionInd", "EvidenceOfDyedKeroseneSoldStmt"))),
     "If Form 4136, Line 7 'SlsUndyedKeroseneExceptionInd' checkbox is checked, then \"Evidence of Dyed Kerosene Sold Explanation Statement\" [EvidenceOfDyedKeroseneSoldStmt] must be attached to Line 7.",
   ),
   rule(
@@ -537,7 +551,15 @@ export const F4136_RULES: readonly RuleDef[] = [
     "F4136-091-03",
     "reject",
     "missing_data",
-    alwaysPass, // requires summing all Lines 1c(d) through 16b(d) — too many addends for static enumeration
+    // Lines 1 through 16 credit amounts; the XSD numbers the credit column (e).
+    inOwnDocument(
+      amountEq(
+        amount("TotalFuelTaxCreditAmt"),
+        total(
+          "NontaxableUseOfGasolineCrAmt", "ExportedNontxUseOfGasCrAmt", "AviationGasolineCreditAmt", "AviationNontxGasCrAmt", "ExpNontxAviationGasCrAmt", "LUSTTxAvnFuelFrgnTradeCrAmt", "FarmPrpsUndyedDslFuelCrAmt", "TrainUseOfUndyedDieselCrAmt", "BusUseOfUndyedDieselCreditAmt", "ExpUndyedDieselFuelCreditAmt", "FarmPrpsUndyedKeroseneCrAmt", "BusUseOfUndyedKeroseneCrAmt", "ExportedUndyedKeroseneCrAmt", "NontxUseUndyedKrsnTxd044CrAmt", "NontxUseUndyedKrsnTxd219CrAmt", "KeroseneUsedInAvnTxd244CrAmt", "KeroseneUsedInAvnTxd219CrAmt", "NonTxKrsnUsedInAvnTxd244CrAmt", "NonTxKrsnUsedInAvnTxd219CrAmt", "LUSTTxKrsnAvnFrgnTrdCrAmt", "SlsUndyedDslUseStLclGovtCrAmt", "SlsUndyedDieselUseBusCrAmt", "SlsUndyedKrsnBlockPumpCrAmt", "SlsUndyedKrsnUseBusCrAmt", "SlsKrsnUsedInAvnTxd219CrAmt", "SlsKrsnUsedInAvnTxd244CrAmt", "SlsKrsnNnxmptUseInAvnCrAmt", "SlsKrsnOthNontxTxd244CrAmt", "SlsKrsnOthNontxTxd219CrAmt", "LUSTTxSlsKrsnAvnFrgnTrdCrAmt", "BiodieselMixtureCreditAmt", "AgriBiodieselMixtureCreditAmt", "RenewableDieselMixtureCrAmt", "SustainableAviationFuelCrAmt", "NontxLiquefiedPtrlmGasCrAmt", "NontxPSeriesFuelsCreditAmt", "NontxCompressedNaturalGasCrAmt", "NontxLiquefiedHydrogenCrAmt", "NontxLiqfdFuelDerFromCoalCrAmt", "NontxLiqFuelDerBiomassCrAmt", "NontxLiquefiedNaturalGasCrAmt", "NontxLiquefiedGasBiomassCrAmt", "LiquefiedPetroleumGasCrAmt", "PSeriesFuelsCreditAmt", "CompressedNaturalGasCreditAmt", "LiquefiedHydrogenCreditAmt", "LiquidFuelDerFromCoalCreditAmt", "LiquidFuelDerBiomassCrAmt", "LiquefiedNaturalGasCreditAmt", "LiquefiedGasDerBiomassCrAmt", "CompressedGasBiomassCreditAmt", "DslFuelSoldStLocalGovtCrAmt", "KrsnFuelSoldStLocalGovtCrAmt", "KrsnAvnSoldStLocalGovtCrAmt", "NontxUseDieselWtrEmulsionCrAmt", "ExpNontxUseDslWtrEmulsionCrAmt", "BlndrCrUseDslWtrEmulsionCrAmt", "ExportedDyedDieselFuelCrAmt", "ExportedDyedKeroseneCreditAmt",
+        ),
+      ),
+    ),
     "Form 4136, Line 17 'TotalFuelTaxCreditAmt' must equal the sum of Lines 1c(d) through Lines 16b(d).",
   ),
   rule(

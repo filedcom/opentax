@@ -1,11 +1,26 @@
 /**
  * MeF Business Rules: F8839
  * Auto-generated from 1040_Business_Rules_2025v3.0.csv
- * 6 rules (5 implemented, 1 stub)
+ * 6 rules (6 implemented)
  */
 
 import type { RuleDef } from "../../../../../../core/validation/types.ts";
-import { rule, allDistinct, alwaysPass, hasValue, ifThen, notGtField, ssnNotEqual, validSSN, } from "../../../../../../core/validation/mod.ts";
+import {
+  allDistinct,
+  amount,
+  amountLt,
+  constant,
+  eachGroup,
+  hasValue,
+  ifThen,
+  inOwnDocument,
+  minus,
+  not,
+  notGtField,
+  rule,
+  ssnNotEqual,
+  validSSN,
+} from "../../../../../../core/validation/mod.ts";
 
 export const F8839_RULES: readonly RuleDef[] = [
   rule(
@@ -33,7 +48,17 @@ export const F8839_RULES: readonly RuleDef[] = [
     "F8839-005-07",
     "reject",
     "incorrect_data",
-    alwaysPass, // requires age calculation: child must be under 18 unless DisabledChildOver18Ind is checked
+    inOwnDocument(
+      eachGroup(
+        "AdoptedChild",
+        ifThen(
+          not(hasValue("DisabledChildOver18Ind")),
+          amountLt(minus(amount("TaxYr"), amount("ChildBirthYr")), constant(18)),
+        ),
+        "DisabledChildOver18Ind",
+        "ChildBirthYr",
+      ),
+    ),
     "Each 'AdoptedChild' on Form 8839, must be an eligible child under the age of 18, unless the corresponding 'DisabledChildOver18Ind' is checked. Refer to the Form 8839 instructions for the definition of an eligible child.",
   ),
   rule(

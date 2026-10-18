@@ -1,13 +1,12 @@
 /**
  * MeF Business Rules: F1040X
  * Auto-generated from 1040_Business_Rules_2025v3.0.csv
- * 34 rules (34 implemented, 0 stubs)
+ * 34 rules
  */
 
-import type { RuleDef } from "../../../../../../../core/validation/types.ts";
+import type { RuleCheck, RuleDef } from "../../../../../../../core/validation/types.ts";
 import {
   all,
-  alwaysPass,
   any,
   eqField,
   eqSum,
@@ -18,12 +17,36 @@ import {
   ifThen,
   isZero,
   lt,
-  noValue,
   not,
   notGtField,
   notGtNum,
+  noValue,
   rule,
 } from "../../../../../../../core/validation/mod.ts";
+
+const DEPENDENT_FIELDS = [
+  "DependentFirstNm",
+  "DependentLastNm",
+  "DependentNameControlTxt",
+  "IdentityProtectionPIN",
+  "DependentSSN",
+  "DiedLiteralCd",
+  "DependentRelationshipCd",
+  "EligibleForChildTaxCreditInd",
+  "EligibleForODCInd",
+];
+
+/** Each Form 1040-X dependent is the amended Form 1040's dependent in the same position. */
+const dependentsMatchAmendedReturn: RuleCheck = (ctx) => {
+  const amended = ctx.groupInstances?.("1040/DependentDetail", DEPENDENT_FIELDS) ?? [];
+  return (ctx.groupInstances?.("1040X/DependentDetail", DEPENDENT_FIELDS) ?? [])
+    .every((dependent, i) =>
+      amended[i] !== undefined &&
+      DEPENDENT_FIELDS.every((f) =>
+        String(dependent.field(f) ?? "") === String(amended[i].field(f) ?? "")
+      )
+    );
+};
 
 export const F1040X_RULES: readonly RuleDef[] = [
   rule(
@@ -121,14 +144,17 @@ export const F1040X_RULES: readonly RuleDef[] = [
     "F1040X-016-01",
     "reject",
     "data_mismatch",
-    alwaysPass,
+    dependentsMatchAmendedReturn,
     "For each dependent in 'DependentDetail' on Form 1040-X, there must be a corresponding dependent [ with the same 'DependentFirstNm' and 'DependentLastNm' and 'DependentNameControlTxt' and 'IdentityProtectionPIN' and ( 'DependentSSN' or 'DiedLiteralCd' ) and 'DependentRelationshipCd' and ( 'EligibleForChildTaxCreditInd' or 'EligibleForODCInd' ) ] in the same position in 'DependentDetail' on the amended or superseded return.",
   ),
   rule(
     "F1040X-017-01",
     "reject",
     "data_mismatch",
-    alwaysPass,
+    ifThen(
+      hasValue("1040X/IndividualReturnFilingStatusCd"),
+      eqField("1040X/IndividualReturnFilingStatusCd", "1040/IndividualReturnFilingStatusCd"),
+    ),
     "The filing status indicated on Form 1040-X must match the filing status indicated on the amended or superseded return.",
   ),
   rule(
@@ -226,7 +252,14 @@ export const F1040X_RULES: readonly RuleDef[] = [
     "F1040X-040",
     "reject_and_stop",
     "incorrect_data",
-    alwaysPass,
+    ifThen(
+      formPresent("form1040x"),
+      all(
+        noValue("1040/RoutingTransitNum"),
+        noValue("1040/BankAccountTypeCd"),
+        noValue("1040/DepositorAccountNum"),
+      ),
+    ),
     "Direct deposit information must be provided on Form 1040-X, when applicable. Direct deposit information should not be provided on the amended or superseded return.",
   ),
   rule(

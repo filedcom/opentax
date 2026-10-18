@@ -29,3 +29,35 @@ test("SEIC-F1040-536-04 rejects a child born before the primary taxpayer", () =>
   assertEquals(passes("SEIC-F1040-536-04", child("<ChildBirthYr>1990</ChildBirthYr>"), born), true);
   assertEquals(passes("SEIC-F1040-536-04", child("<ChildBirthYr>1989</ChildBirthYr>"), born), false);
 });
+
+test("SEIC-F1040-501-02 needs an issuable SSN whose name control matches the dependent's", () => {
+  const dependent = '<IRS1040 documentId="a"><DependentDetail><DependentNameControlTxt>BARK</DependentNameControlTxt>' +
+    "<DependentSSN>123451057</DependentSSN></DependentDetail></IRS1040>";
+  const eic = (nc: string, ssn: string) =>
+    emittedRulePasses(SEIC_RULES, "SEIC-F1040-501-02", {
+      documents: dependent + `<IRS1040ScheduleEIC documentId="e">` +
+        child(`<QualifyingChildNameControlTxt>${nc}</QualifyingChildNameControlTxt><QualifyingChildSSN>${ssn}</QualifyingChildSSN>`) +
+        "</IRS1040ScheduleEIC>",
+    });
+  assertEquals(eic("BARK", "123451057"), true);
+  assertEquals(eic("BARR", "123451057"), false);
+  assertEquals(eic("BARK", "666451057"), false);
+});
+
+test("SEIC-F1040-534-03 lists a child marked DIED only for the tax year of birth", () => {
+  assertEquals(passes("SEIC-F1040-534-03", child("<DiedLiteralCd>DIED</DiedLiteralCd><ChildBirthYr>2025</ChildBirthYr>")), true);
+  assertEquals(passes("SEIC-F1040-534-03", child("<DiedLiteralCd>DIED</DiedLiteralCd><ChildBirthYr>2024</ChildBirthYr>")), false);
+  assertEquals(passes("SEIC-F1040-534-03", child("<ChildBirthYr>2026</ChildBirthYr>")), false);
+});
+
+test("SEIC-F1040-506-04 rejects a child listed twice or who is a filer", () => {
+  const ssn = (v: string) => child(`<QualifyingChildSSN>${v}</QualifyingChildSSN>`);
+  assertEquals(passes("SEIC-F1040-506-04", ssn("123451057") + ssn("123451058")), true);
+  assertEquals(passes("SEIC-F1040-506-04", ssn("123451057") + ssn("123451057")), false);
+  assertEquals(passes("SEIC-F1040-506-04", ssn("400001001")), false);
+});
+
+test("SEIC-F1040-996-01 needs a six-digit IP PIN when one is entered", () => {
+  assertEquals(passes("SEIC-F1040-996-01", child("<IdentityProtectionPIN>123456</IdentityProtectionPIN>")), true);
+  assertEquals(passes("SEIC-F1040-996-01", child("<IdentityProtectionPIN>000000</IdentityProtectionPIN>")), false);
+});

@@ -1,11 +1,31 @@
 /**
  * MeF Business Rules: F8960
  * Auto-generated from 1040_Business_Rules_2025v3.0.csv
- * 18 rules (18 implemented, 0 stubs)
+ * 18 rules (18 implemented)
  */
 
 import type { RuleDef } from "../../../../../../core/validation/types.ts";
-import { rule, all, alwaysPass, any, eqDiff, eqDiffFloorZero, eqMin, eqNum, eqProduct, eqSum, filingStatusIs, hasNonZero, ifThen, not, } from "../../../../../../core/validation/mod.ts";
+import {
+  all,
+  amount,
+  amountEq,
+  any,
+  eqDiff,
+  eqDiffFloorZero,
+  eqMin,
+  eqNum,
+  eqProduct,
+  eqSum,
+  filingStatusIs,
+  hasNonZero,
+  ifThen,
+  ifThenUnless,
+  inOwnDocument,
+  noValue,
+  not,
+  plus,
+  rule,
+} from "../../../../../../core/validation/mod.ts";
 
 export const F8960_RULES: readonly RuleDef[] = [
   rule(
@@ -54,28 +74,72 @@ export const F8960_RULES: readonly RuleDef[] = [
     "F8960-018-01",
     "reject",
     "incorrect_data",
-    alwaysPass,
+    inOwnDocument(
+      ifThenUnless(
+        hasNonZero("OrdinaryDividendsAmt"),
+        amountEq(amount("OrdinaryDividendsAmt"), amount("1040/OrdinaryDividendsAmt")),
+        all(
+        filingStatusIs(2, 5),
+        noValue("Section6013gInd"),
+        noValue("Section6013hInd"),
+        eqNum("FilingThresholdAmt", 125000),
+      ),
+      ),
+    ),
     "If Form 8960, 'OrdinaryDividendsAmt' has a non-zero value, then it must be equal to Form 1040, 'OrdinaryDividendsAmt' unless all of the following conditions are true: 1) Filing status of the return is Married filing jointly or Qualifying surviving spouse and 2) Form 8960, checkboxes 'Section6013gInd' and 'Section6013hInd' are not checked and 3) Form 8960, 'FilingThresholdAmt' equals 125000.",
   ),
   rule(
     "F8960-019-05",
     "reject",
     "incorrect_data",
-    alwaysPass,
+    inOwnDocument(
+      ifThenUnless(
+        hasNonZero("NetRentalIncomeOrLossAmt"),
+        amountEq(amount("NetRentalIncomeOrLossAmt"), plus(amount("Schedule1/BusinessIncomeLossAmt"), amount("Schedule1/RentalRealEstateIncomeLossAmt"))),
+        all(
+        filingStatusIs(2, 5),
+        noValue("Section6013gInd"),
+        noValue("Section6013hInd"),
+        eqNum("FilingThresholdAmt", 125000),
+      ),
+      ),
+    ),
     "If Form 8960, 'NetRentalIncomeOrLossAmt' has a non-zero value, then it must be equal to sum of Schedule 1 (Form 1040), 'BusinessIncomeLossAmt' and 'RentalRealEstateIncomeLossAmt' unless all of the following conditions are true: 1) Filing status of the return is Married filing jointly or Qualifying surviving spouse and 2) Form 8960, checkboxes 'Section6013gInd' and 'Section6013hInd' are not checked and 3) Form 8960, 'FilingThresholdAmt' equals 125000.",
   ),
   rule(
     "F8960-020-03",
     "reject",
     "math_error",
-    alwaysPass,
+    inOwnDocument(
+      ifThenUnless(
+        hasNonZero("PropertyDisposGainOrLossAmt"),
+        amountEq(amount("PropertyDisposGainOrLossAmt"), plus(amount("1040/CapitalGainLossAmt"), amount("Schedule1/OtherGainLossAmt"))),
+        all(
+        filingStatusIs(2, 5),
+        noValue("Section6013gInd"),
+        noValue("Section6013hInd"),
+        eqNum("FilingThresholdAmt", 125000),
+      ),
+      ),
+    ),
     "If Form 8960, 'PropertyDisposGainOrLossAmt' has a non-zero value, then it must be equal to sum of [ Form 1040, 'CapitalGainLossAmt' and Schedule 1 (Form 1040), 'OtherGainLossAmt' ] unless all of the following conditions are true: 1) Filing status of the return is Married filing jointly or Qualifying surviving spouse and 2) Form 8960, checkboxes 'Section6013gInd' and 'Section6013hInd' are not checked and 3) Form 8960, 'FilingThresholdAmt' equals 125000.",
   ),
   rule(
     "F8960-021-01",
     "reject",
     "incorrect_data",
-    alwaysPass,
+    inOwnDocument(
+      ifThenUnless(
+        hasNonZero("InvestmentInterestAmt"),
+        amountEq(amount("InvestmentInterestAmt"), amount("ScheduleA/InvestmentInterestAmt")),
+        all(
+        filingStatusIs(2, 5),
+        noValue("Section6013gInd"),
+        noValue("Section6013hInd"),
+        eqNum("FilingThresholdAmt", 125000),
+      ),
+      ),
+    ),
     "If Form 8960, 'InvestmentInterestAmt' has a non-zero value, then it must be equal to Form 1040 Schedule A, 'InvestmentInterestAmt' unless all of the following conditions are true: 1) Filing status of the return is Married filing jointly or Qualifying surviving spouse and 2) Form 8960, checkboxes 'Section6013gInd' and 'Section6013hInd' are not checked and 3) Form 8960, 'FilingThresholdAmt' equals 125000.",
   ),
   rule(
@@ -117,7 +181,18 @@ export const F8960_RULES: readonly RuleDef[] = [
     "F8960-027-01",
     "reject",
     "incorrect_data",
-    alwaysPass,
+    inOwnDocument(
+      ifThenUnless(
+        hasNonZero("TaxableInterestAmt"),
+        amountEq(amount("TaxableInterestAmt"), amount("1040/TaxableInterestAmt")),
+        all(
+        filingStatusIs(2, 5),
+        noValue("Section6013gInd"),
+        noValue("Section6013hInd"),
+        eqNum("FilingThresholdAmt", 125000),
+      ),
+      ),
+    ),
     "If Form 8960, 'TaxableInterestAmt' has a non-zero value, then it must be equal to Form 1040, 'TaxableInterestAmt' unless all of the following conditions are true: 1) Filing status of the return is Married filing jointly or Qualifying surviving spouse and 2) Form 8960, checkboxes 'Section6013gInd' and 'Section6013hInd' are not checked and 3) Form 8960, 'FilingThresholdAmt' equals 125000.",
   ),
   rule(

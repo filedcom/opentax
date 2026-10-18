@@ -1,14 +1,18 @@
 /**
  * MeF Business Rules: F8962
  * Auto-generated from 1040_Business_Rules_2025v3.0.csv
- * 85 rules (73 implemented, 12 stubs)
+ * 85 rules (85 implemented)
  */
 
-import type { RuleDef } from "../../../../../../core/validation/types.ts";
+import type { ReturnContext, RuleCheck, RuleDef } from "../../../../../../core/validation/types.ts";
 import {
   all,
-  alwaysPass,
+  amount,
+  amountEq,
   any,
+  attachmentDescStartsWith,
+  documentPresent,
+  documentTotal,
   eqDiff,
   eqDiffFloorZero,
   eqField,
@@ -18,17 +22,80 @@ import {
   eqRoundedProduct,
   eqStr,
   eqSum,
+  eqSumOfAll,
   filingStatusIs,
   hasNonZero,
   hasValue,
   ifThen,
+  inOwnDocument,
   isZero,
+  minus,
   noValue,
   not,
   notGtField,
   notGtNum,
+  plus,
   rule,
 } from "../../../../../../core/validation/mod.ts";
+
+// TY2025 tables from the 2025 Instructions for Form 8962. Another tax year's
+// tables are not encoded here, so a table rule for it checks nothing.
+
+/** Table 5 (2024 poverty guidelines): one person, then each additional person. */
+const POVERTY_LINES: Readonly<Record<number, Readonly<Record<string, readonly [number, number]>>>> = {
+  2025: { A: [18_810, 6_730], B: [17_310, 6_190], C: [15_060, 5_380] },
+};
+
+/** Table 2 applicable figure for a line 5 percentage, in ten-thousandths. */
+const APPLICABLE_FIGURES: Readonly<Record<number, (pct: number) => number>> = {
+  2025: (pct) =>
+    pct <= 150 ? 0 : pct <= 300 ? (pct - 150) * 4 : pct < 400 ? Math.round(600 + (pct - 300) * 2.5) : 850,
+};
+
+/** Table 5 repayment limitation: [single, any other filing status] by line 5 band. */
+const REPAYMENT_LIMITS: Readonly<Record<number, readonly (readonly [number, number, number])[]>> = {
+  2025: [[200, 375, 750], [300, 975, 1_950], [400, 1_625, 3_250]],
+};
+
+const MONTHS = [
+  "JANUARY", "FEBRUARY", "MARCH", "APRIL", "MAY", "JUNE",
+  "JULY", "AUGUST", "SEPTEMBER", "OCTOBER", "NOVEMBER", "DECEMBER",
+];
+
+const povertyLine = (ctx: ReturnContext, familySize: number): number | undefined => {
+  const table = POVERTY_LINES[ctx.num("TaxYr")]?.[String(ctx.field("FederalPovertyTableLocCd") ?? "")];
+  return table && familySize >= 1 ? table[0] + (familySize - 1) * table[1] : undefined;
+};
+
+const applicableFigure = (ctx: ReturnContext, pct: number): number | undefined => {
+  const figure = APPLICABLE_FIGURES[ctx.num("TaxYr")];
+  return figure ? figure(pct) / 10_000 : undefined;
+};
+
+/** Line 1 family size on Form 1040 when it has one, else on Form 8962. */
+const returnFamilySize = (ctx: ReturnContext): number =>
+  ctx.hasValue("1040/TotalExemptionsCnt") ? ctx.num("1040/TotalExemptionsCnt") : ctx.num("TotalExemptionsCnt");
+
+/**
+ * Part IV line 35b or 36b: one-half of household income at the alternative
+ * family size, through lines 4 to 8b (Alternative Calculation for Year of
+ * Marriage worksheet). Undefined when the tax year has no tables here.
+ */
+const alternativeMonthlyContribution = (ctx: ReturnContext, group: string): number | undefined => {
+  const income = Math.round(ctx.num("HouseholdIncomeAmt") / 2);
+  const line = povertyLine(ctx, ctx.num(`${group}/FamilySizeCnt`));
+  if (line === undefined) return undefined;
+  const pct = income > 4 * line ? 401 : Math.floor(income / line * 100);
+  const figure = applicableFigure(ctx, pct);
+  return figure === undefined ? undefined : Math.round(Math.round(income * figure) / 12);
+};
+
+const alternativeContributionMatches = (group: string): RuleCheck =>
+  (ctx) => {
+    if (!ctx.hasValue(`${group}/MonthlyContributionAmt`)) return true;
+    const expected = alternativeMonthlyContribution(ctx, group);
+    return expected === undefined || Math.abs(ctx.num(`${group}/MonthlyContributionAmt`) - expected) <= 1;
+  };
 
 export const F8962_RULES: readonly RuleDef[] = [
   rule(
@@ -42,7 +109,23 @@ export const F8962_RULES: readonly RuleDef[] = [
     "F8962-002-03",
     "reject",
     "math_error",
-    alwaysPass,
+    inOwnDocument(
+      ifThen(
+        hasNonZero("TotalExemptionsCnt"),
+        amountEq(
+          amount("ModifiedAGIAmt"),
+          minus(
+            plus(
+              amount("1040/AdjustedGrossIncomeAmt"),
+              amount("1040/TaxExemptInterestAmt"),
+              amount("1040/SocSecBnftAmt"),
+              documentTotal("F2555", plus(amount("TotalIncomeExclusionAmt"), amount("HousingDeductionAmt"))),
+            ),
+            amount("1040/TaxableSocSecAmt"),
+          ),
+        ),
+      ),
+    ),
     "If Form 8962, Line 1 'TotalExemptionsCnt' has a non-zero value, then Line 2a 'ModifiedAGIAmt' must be equal to the (sum of Form 1040, 'AdjustedGrossIncomeAmt' and 'TaxExemptInterestAmt' and 'SocSecBnftAmt' and Form 2555, Line 45 'TotalIncomeExclusionAmt' and Line 50 'HousingDeductionAmt' minus Form 1040, 'TaxableSocSecAmt'.",
   ),
   rule(
@@ -56,7 +139,14 @@ export const F8962_RULES: readonly RuleDef[] = [
     "F8962-005-02",
     "reject",
     "incorrect_data",
-    alwaysPass,
+    inOwnDocument(
+      ifThen(hasNonZero("TotalExemptionsCnt"), (ctx) => {
+        const line = povertyLine(ctx, ctx.num("TotalExemptionsCnt"));
+        return line === undefined
+          ? !POVERTY_LINES[ctx.num("TaxYr")]
+          : ctx.num("PovertyLevelAmt") === line;
+      }),
+    ),
     "If Form 8962, Line 1 'TotalExemptionsCnt' has a non-zero value, then Line 4 'PovertyLevelAmt' must be equal to the amount from the selected Federal Poverty Level Table (see Form 8962 instructions) based on the family size indicated on Line 1 'TotalExemptionsCnt'.",
   ),
   rule(
@@ -70,7 +160,12 @@ export const F8962_RULES: readonly RuleDef[] = [
     "F8962-007-02",
     "reject",
     "incorrect_data",
-    null,
+    inOwnDocument(
+      ifThen(hasValue("ApplicableFigureRt"), (ctx) => {
+        const figure = applicableFigure(ctx, ctx.num("FederalPovertyLevelPct"));
+        return figure === undefined || Math.abs(ctx.num("ApplicableFigureRt") - figure) < 0.00005;
+      }),
+    ),
     "Form 8962, Line 7 'ApplicableFigureRt' must be equal to the figure from the Applicable Figure table (see Form 8962 instructions) based on Line 5 'FederalPovertyLevelPct'.",
   ),
   rule(
@@ -91,14 +186,14 @@ export const F8962_RULES: readonly RuleDef[] = [
     "F8962-010",
     "reject",
     "incorrect_data",
-    alwaysPass,
+    inOwnDocument(alternativeContributionMatches("AltCalcForMarriagePrimaryGrp")),
     "Form 8962, Line 35b 'MonthlyContributionAmt' for the Primary must be equal to the amount computed using the Form 8962 instructions.",
   ),
   rule(
     "F8962-011",
     "reject",
     "incorrect_data",
-    alwaysPass,
+    inOwnDocument(alternativeContributionMatches("AltCalcForMarriageSpouseGrp")),
     "Form 8962, Line 36b 'MonthlyContributionAmt' for the Spouse must be equal to the amount computed using the Form 8962 instructions.",
   ),
   rule(
@@ -287,7 +382,12 @@ export const F8962_RULES: readonly RuleDef[] = [
     "F8962-038",
     "reject",
     "incorrect_data",
-    alwaysPass,
+    inOwnDocument(
+      any(
+        all(hasValue("AnnualPremiumTaxCreditAllwAmt"), eqField("TotalPremiumTaxCreditAmt", "AnnualPremiumTaxCreditAllwAmt")),
+        eqSumOfAll("TotalPremiumTaxCreditAmt", "MonthlyPTCCalculationGrp/MonthlyPremiumTaxCreditAllwAmt"),
+      ),
+    ),
     "Form 8962, Line 24 'TotalPremiumTaxCreditAmt' must be equal to Line 11E 'AnnualPremiumTaxCreditAllwAmt' or (the sum of Lines 12E through 23E 'MonthlyPremiumTaxCreditAllwAmt').",
   ),
   rule(
@@ -301,7 +401,12 @@ export const F8962_RULES: readonly RuleDef[] = [
     "F8962-040",
     "reject",
     "incorrect_data",
-    alwaysPass,
+    inOwnDocument(
+      any(
+        all(hasValue("AnnualAdvancedPTCAmt"), eqField("TotalAdvancedPTCAmt", "AnnualAdvancedPTCAmt")),
+        eqSumOfAll("TotalAdvancedPTCAmt", "MonthlyPTCCalculationGrp/MonthlyAdvancedPTCAmt"),
+      ),
+    ),
     "Form 8962, Line 25 'TotalAdvancedPTCAmt' must be equal to Line 11F 'AnnualAdvancedPTCAmt' or (the sum of Lines 12F through 23F 'MonthlyAdvancedPTCAmt').",
   ),
   rule(
@@ -315,7 +420,15 @@ export const F8962_RULES: readonly RuleDef[] = [
     "F8962-043-02",
     "reject",
     "incorrect_data",
-    alwaysPass,
+    inOwnDocument(
+      ifThen(all(hasNonZero("TotalExemptionsCnt"), hasValue("AdditionalTaxLimitationAmt")), (ctx) => {
+        const bands = REPAYMENT_LIMITS[ctx.num("TaxYr")];
+        if (!bands) return true;
+        const band = bands.find(([below]) => ctx.num("FederalPovertyLevelPct") < below);
+        const limit = band && (ctx.filingStatus() === 1 ? band[1] : band[2]);
+        return limit !== undefined && ctx.num("AdditionalTaxLimitationAmt") === limit;
+      }),
+    ),
     "If Form 8962, 'TotalExemptionsCnt' has a non-zero value, then 'AdditionalTaxLimitationAmt' must be equal to the tax limitation amount from the Repayment Limitation table (see Form 8962 instructions) based on 'FederalPovertyLevelPct' and the filing status on the return.",
   ),
   rule(
@@ -350,14 +463,21 @@ export const F8962_RULES: readonly RuleDef[] = [
     "F8962-050-01",
     "reject",
     "incorrect_data",
-    alwaysPass,
+    inOwnDocument((ctx) =>
+      ["AltCalcForMarriagePrimaryGrp/FamilySizeCnt", "AltCalcForMarriageSpouseGrp/FamilySizeCnt"]
+        .every((size) => !ctx.hasNonZero(size) || ctx.num(size) < returnFamilySize(ctx))
+    ),
     "If Form 8962, Line 35a or Line 36a 'FamilySizeCnt' has a non-zero value, then it must be less than Form 1040, 'TotalExemptionsCnt'.",
   ),
   rule(
     "F8962-051-01",
     "reject",
     "math_error",
-    alwaysPass,
+    inOwnDocument((ctx) => {
+      const primary = ctx.num("AltCalcForMarriagePrimaryGrp/FamilySizeCnt");
+      const spouse = ctx.num("AltCalcForMarriageSpouseGrp/FamilySizeCnt");
+      return primary === 0 || spouse === 0 || primary + spouse === returnFamilySize(ctx);
+    }),
     "If Form 8962, Line 35a 'FamilySizeCnt' and Line 36a 'FamilySizeCnt' both have non-zero values, then their sum must be equal to Form 1040, 'TotalExemptionsCnt'.",
   ),
   rule(
@@ -386,7 +506,16 @@ export const F8962_RULES: readonly RuleDef[] = [
     "F8962-060",
     "reject",
     "incorrect_data",
-    alwaysPass,
+    inOwnDocument((ctx) => {
+      const starts = [
+        ...ctx.fieldArray("AltCalcForMarriagePrimaryGrp/StartMonthNumberCd"),
+        ...ctx.fieldArray("AltCalcForMarriageSpouseGrp/StartMonthNumberCd"),
+      ].map(Number);
+      if (starts.length === 0) return true;
+      const earliest = Math.min(...starts);
+      return ctx.fieldArray("MonthlyPTCCalculationGrp/MonthCd")
+        .every((month) => MONTHS.indexOf(String(month)) + 1 >= earliest);
+    }),
     "If Form 8962, 'StartMonthNumberCd' has a value in 'AltCalcForMarriagePrimaryGrp' or 'AltCalcForMarriageSpouseGrp', then 'MonthCd' in 'MonthlyPTCCalculationGrp' must not be prior to earliest 'StartMonthNumberCd'.",
   ),
   rule(
@@ -449,7 +578,11 @@ export const F8962_RULES: readonly RuleDef[] = [
     "F8962-070",
     "reject",
     "missing_document",
-    alwaysPass,
+    // Offline: Marketplace advance payments the return knows of need Form 8962 or an "ACA Explanation".
+    ifThen(
+      (ctx) => Number(ctx.pendingField("form8962", "total_advance_ptc") ?? 0) > 0,
+      any(documentPresent("F8962"), attachmentDescStartsWith("ACA Explanation")),
+    ),
     "The e-File database indicates Form 8962 must be submitted with the return. The taxpayer, the taxpayer's spouse if filing jointly, or a dependent claimed on the tax return was enrolled in health insurance coverage through a Health Insurance Marketplace and advance payments of the premium tax credit were made for the coverage. Please resubmit the return with the Form 8962 included using the information from your Form 1095-A. If you did not receive or have lost your 1095-A, you can get a copy from the Marketplace through which you obtained coverage. Alternatively, you can access your Form 1095-A through your individual taxpayer online account on https://www.irs.gov/your-account. If you think Form 8962 is not required, please resubmit the return with a binary attachment (PDF) containing the Description \"ACA Explanation\" and explaining why the Form 8962 is not required. Please visit: https://www.irs.gov/newsroom/how-to-correct-an-electronically-filed-return-rejected-for-a-missing-form-8962 for more information.",
   ),
   rule(
@@ -589,7 +722,10 @@ export const F8962_RULES: readonly RuleDef[] = [
     "F8962-320",
     "reject",
     "incorrect_data",
-    alwaysPass,
+    inOwnDocument((ctx) => {
+      const months = ctx.fieldArray("MonthlyPTCCalculationGrp/MonthCd").map(String);
+      return new Set(months).size === months.length;
+    }),
     "'MonthCd' on Form 8962, Lines 12 through Line 23 must be unique.",
   ),
   rule(
@@ -603,7 +739,21 @@ export const F8962_RULES: readonly RuleDef[] = [
     "F8962-322",
     "reject",
     "incorrect_data",
-    alwaysPass,
+    // Line 8b, or under the year-of-marriage alternative its Part IV amounts.
+    inOwnDocument((ctx) => {
+      const alternative = [
+        ctx.num("AltCalcForMarriagePrimaryGrp/MonthlyContributionAmt"),
+        ctx.num("AltCalcForMarriageSpouseGrp/MonthlyContributionAmt"),
+      ];
+      const allowed = [
+        ctx.num("MonthlyContriHealthCareCvrAmt"),
+        ...(ctx.hasValue("AltCalcForMarriagePrimaryGrp") || ctx.hasValue("AltCalcForMarriageSpouseGrp")
+          ? [...alternative, alternative[0] + alternative[1]]
+          : []),
+      ];
+      return ctx.fieldArray("MonthlyPTCCalculationGrp/MonthlyContributionAmt").map(Number)
+        .every((amount) => amount === 0 || allowed.includes(amount));
+    }),
     "Each 'MonthlyContributionAmt' on Form 8962, Lines 12C through 23C that has a non-zero value must be equal to the amount computed using the Form 8962 instructions.",
   ),
   rule(

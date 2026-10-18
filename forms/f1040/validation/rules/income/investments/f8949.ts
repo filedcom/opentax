@@ -1,25 +1,39 @@
 /**
  * MeF Business Rules: F8949
  * Auto-generated from 1040_Business_Rules_2025v3.0.csv
- * 10 rules (10 implemented, 0 stubs)
+ * 10 rules (10 implemented)
  */
 
 import type { RuleDef } from "../../../../../../core/validation/types.ts";
-import { rule, alwaysPass, formCountAtMost, formPresent, hasValue, ifThen, } from "../../../../../../core/validation/mod.ts";
+import {
+  allMatch,
+  forEach,
+  formCountAtMost,
+  formPresent,
+  hasValue,
+  ifThen,
+  inOwnDocument,
+  rule,
+} from "../../../../../../core/validation/mod.ts";
 
 export const F8949_RULES: readonly RuleDef[] = [
   rule(
     "F8949-002",
     "reject",
     "incorrect_data",
-    alwaysPass, // requires per-item iteration to check code ordering within repeating groups
+    inOwnDocument(
+      forEach("AdjustmentsToGainOrLossCd", (v) => {
+        const codes = String(v).split("");
+        return codes.every((c, i) => i === 0 || codes[i - 1] < c);
+      }),
+    ),
     "For each property on Form 8949, Part I and II, if Line 1(f) 'AdjustmentsToGainOrLossCd' has a value, then the codes in 'AdjustmentsToGainOrLossCd' must not be repeated and must be in alphabetical order.",
   ),
   rule(
     "F8949-003-04",
     "reject",
     "incorrect_data",
-    alwaysPass, // requires per-item validation of code values within repeating groups
+    inOwnDocument(allMatch("AdjustmentsToGainOrLossCd", /^[BCDEHLMNOPQRSTWXYZ]+$/)),
     "In each 'CapitalGainAndLossAssetGrp' on Form 8949, Part I or Part II, if 'AdjustmentsToGainOrLossCd' has a value, then it must not contain a code other than one of the following: \"B\", \"C\", \"D\", \"E\", \"H\", \"L\", \"M\", \"N\", \"O\", \"P\", \"Q\", \"R\", \"S\", \"T\", \"W\", \"X\", \"Y\" or \"Z\".",
   ),
   rule(

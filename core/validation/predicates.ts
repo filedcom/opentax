@@ -7,6 +7,7 @@
 
 import type { ReturnContext, RuleCheck } from "./types.ts";
 import { zipMatchesState } from "./zip-codes.ts";
+import { rulePrefixForDocumentTag } from "./emitted-documents.ts";
 
 // ─── Field Value Checks ─────────────────────────────────
 
@@ -789,7 +790,373 @@ export const isItinOrAtin = (v: unknown): boolean => {
   return d.length === 9 && d.startsWith("9");
 };
 
+// ─── Forms and schedules: offline checks of e-File database rules ───
+
+/**
+ * A number the SSA or IRS can issue: an SSN outside area 000, 666 and 9XX,
+ * group 00 and serial 0000, or a 9XX ITIN or ATIN whose 4th and 5th digits are
+ * 50-65, 70-88 or 90-99. Pub 1436 ATS packets use group 00.
+ */
+export const issuableTin = (v: unknown, ats = false): boolean => {
+  const d = digits(v);
+  if (d.length !== 9) return false;
+  const group = Number(d.slice(3, 5));
+  if (d.startsWith("9")) {
+    return (group >= 50 && group <= 65) || (group >= 70 && group <= 88) ||
+      group >= 90;
+  }
+  if (d.startsWith("000") || d.startsWith("666")) return false;
+  if (d.endsWith("0000")) return false;
+  return group !== 0 || ats;
+};
+
+/** Every value of the fields is an issuable SSN, ITIN or ATIN. */
+export const everyIssuableTin = (...xml: string[]): RuleCheck =>
+  (ctx) =>
+    xml.flatMap((f) => ctx.fieldArray(f))
+      .every((v) => issuableTin(v, isAtsTest(ctx)));
+
+const PERSON_NAME_CONTROL = /^[A-Z][A-Z\- ]{0,3}$/;
+
+/**
+ * The name control has the IRS person format and, when the return names the
+ * same TIN as a filer or a Form 1040 dependent, equals the name control given
+ * there: the e-File database holds one name control per TIN.
+ */
+export const personNameControlAgrees = (
+  nameControlXml: string,
+  tinXml: string,
+): RuleCheck =>
+  (ctx) => {
+    const nc = String(ctx.field(nameControlXml) ?? "");
+    if (!nc) return true;
+    if (!PERSON_NAME_CONTROL.test(nc)) return false;
+    const tin = digits(ctx.field(tinXml));
+    if (!tin) return true;
+    const header = (leaf: string) => ctx.field(`ReturnHeader/${leaf}`);
+    const known: (readonly [string, unknown])[] = [
+      [digits(header("PrimarySSN")), header("PrimaryNameControlTxt")],
+      [digits(header("SpouseSSN")), header("SpouseNameControlTxt")],
+      ...(ctx.groupInstances?.("1040/DependentDetail") ?? []).map((d) =>
+        [digits(d.field("DependentSSN")), d.field("DependentNameControlTxt")] as const
+      ),
+    ];
+    return known.every(([ssn, other]) =>
+      ssn !== tin || !other || String(other).trim() === nc.trim()
+    );
+  };
+
+/** Every value is a six-digit IP PIN other than 000000. */
+export const wellFormedIpPins = (xml: string): RuleCheck =>
+  (ctx) =>
+    ctx.fieldArray(xml).every((v) => /^\d{6}$/.test(String(v)) && v !== "000000");
+
+/** Every emitted document with the prefix satisfies `check`, read from that document only. */
+export const everyDocument = (prefix: string, check: RuleCheck): RuleCheck =>
+  (ctx) =>
+    (ctx.emittedDocuments?.(prefix) ?? [])
+      .every((d) => check(d.ownDocumentOnly?.() ?? d));
+
+/** How many emitted documents with the prefix satisfy `check`, read from that document only. */
+export const documentCountWhere = (
+  prefix: string,
+  check: RuleCheck = () => true,
+): Amount =>
+  (ctx) =>
+    (ctx.emittedDocuments?.(prefix) ?? [])
+      .filter((d) => check(d.ownDocumentOnly?.() ?? d)).length;
+
+/**
+ * A schedule of another form is referenced from one and only one copy of
+ * that form: each copy references at most one such schedule.
+ */
+export const scheduleReferencedOnce = (
+  schedulePrefix: string,
+  formPrefix: string,
+): RuleCheck =>
+  (ctx) => {
+    const schedules = documentCountWhere(schedulePrefix)(ctx);
+    return schedules === 0 ||
+      schedules <= documentCountWhere(formPrefix)(ctx);
+  };
+
+/** The element references a document and one of the named statements is emitted. */
+export const statementAttached = (
+  element: string,
+  ...statements: string[]
+): RuleCheck =>
+  all(
+    hasValue(`${element}@referenceDocumentId`),
+    any(...statements.map(documentPresent)),
+  );
+
+const VIN_VALUE: Readonly<Record<string, number>> = Object.fromEntries([
+  ..."0123456789".split("").map((c, i) => [c, i]),
+  ..."ABCDEFGH".split("").map((c, i) => [c, i + 1]),
+  ..."JKLMN".split("").map((c, i) => [c, i + 1]),
+  ["P", 7],
+  ["R", 9],
+  ..."STUVWXYZ".split("").map((c, i) => [c, i + 2]),
+]);
+const VIN_WEIGHTS = [8, 7, 6, 5, 4, 3, 2, 10, 0, 9, 8, 7, 6, 5, 4, 3, 2];
+const VIN_YEAR_CODES = "ABCDEFGHJKLMNPRSTVWXY123456789";
+
+/**
+ * A 17-character VIN for a vehicle made for sale in the US (49 CFR 565): no
+ * I, O or Q, a valid position-9 check digit, and, when the model year field
+ * has a value, the position-10 code for that model year. Pub 1436 ATS
+ * packets use VINs that only need the 17-character format.
+ */
+export const validVin = (vinXml: string, modelYearXml?: string): RuleCheck =>
+  (ctx) => {
+    const vin = String(ctx.field(vinXml) ?? "");
+    if (!vin) return true;
+    if (isAtsTest(ctx)) return /^[A-Z0-9]{17}$/.test(vin);
+    if (!/^[A-HJ-NPR-Z0-9]{17}$/.test(vin)) return false;
+    const sum = vin.split("").reduce(
+      (s, c, i) => s + VIN_VALUE[c] * VIN_WEIGHTS[i],
+      0,
+    );
+    const check = sum % 11 === 10 ? "X" : String(sum % 11);
+    if (vin[8] !== check) return false;
+    const year = modelYearXml ? Number(ctx.field(modelYearXml)) : NaN;
+    if (!Number.isInteger(year) || year < 1980) return true;
+    return vin[9] === VIN_YEAR_CODES[(year - 1980) % 30];
+  };
+
 // ─── Rule Builder Helper ────────────────────────────────
 
 /** Convenience: build a RuleDef with less boilerplate. */
 export { rule } from "./rule-builder.ts";
+
+// ─── Identifiers, PINs and receipt (return assembly) ────
+// Checks on what the return itself carries for rules the IRS settles against
+// its e-File database: the database answer is not known offline, but a value
+// that cannot be in it is.
+
+const ITIN_GROUP = /^(5\d|6[0-5]|7\d|8[0-8]|9[0-2]|9[4-9])$/;
+// SSA-voided numbers that were printed in advertising.
+const VOIDED_SSNS = new Set(["078051120", "219099999"]);
+
+/**
+ * A TIN the SSA or IRS can issue. SSNs never have area 000, 666 or 9xx, group
+ * 00 or serial 0000 (SSA POMS RM 10201.035); 9xx is an ITIN (group 50-65,
+ * 70-88, 90-92, 94-99) or an ATIN (group 93). Pub 1436 ATS SSNs use group 00.
+ */
+export const isIssuableTin = (v: unknown, ats = false): boolean => {
+  const d = digits(v);
+  if (!/^\d{9}$/.test(d)) return false;
+  const area = d.slice(0, 3), group = d.slice(3, 5), serial = d.slice(5);
+  if (area.startsWith("9")) return ITIN_GROUP.test(group) || group === "93";
+  if (area === "000" || area === "666" || serial === "0000") return false;
+  if (VOIDED_SSNS.has(d)) return false;
+  return group !== "00" || ats;
+};
+
+/** Every value of the fields is an issuable SSN, ITIN or ATIN. */
+export const issuableTins = (...xml: string[]): RuleCheck =>
+  (ctx) =>
+    xml.flatMap((f) => ctx.fieldArray(f))
+      .every((v) => isIssuableTin(v, isAtsTest(ctx)));
+
+/** Every value is an IRS-issued six-digit Identity Protection PIN. */
+export const validIpPins = (...xml: string[]): RuleCheck =>
+  (ctx) =>
+    xml.flatMap((f) => ctx.fieldArray(f))
+      .every((v) => /^\d{6}$/.test(String(v)) && String(v) !== "000000");
+
+/** Every value is a five-digit PIN (PINType) that is not all zeros. */
+export const validFiveDigitPins = (...xml: string[]): RuleCheck =>
+  (ctx) =>
+    xml.flatMap((f) => ctx.fieldArray(f))
+      .every((v) => /^\d{5}$/.test(String(v)) && String(v) !== "00000");
+
+/** The return's creation date from 'ReturnTs'; it is never after receipt. */
+const returnTsMs = (ctx: ReturnContext): number | null => {
+  const ts = String(ctx.field("ReturnHeader/ReturnTs") ?? "");
+  return parseDateMs(ts.slice(0, 10));
+};
+
+/** Year the return is processed: the year of 'ReturnTs'. NaN when absent. */
+export const processingYear: Amount = yearOf("ReturnHeader/ReturnTs");
+
+/** 'TaxYr' is before the year before processing: a prior-year return. */
+export const priorYearReturn: RuleCheck = (ctx) =>
+  ctx.num("TaxYr") < processingYear(ctx) - 1;
+
+/** An amended or superseded return (Form 1040 checkbox or Form 1040-X). */
+export const postOriginalReturn: RuleCheck = (ctx) =>
+  ctx.hasValue("AmendedReturnInd") || ctx.hasValue("SupersededReturnInd") ||
+  ctx.hasForm("form1040x");
+
+/**
+ * The date is before (`strict`) or on the day the return was created, so it is
+ * before or on the IRS received date. Passes when either date is absent.
+ */
+export const dateBeforeReceipt = (xml: string, strict = false): RuleCheck =>
+  (ctx) => {
+    const d = String(ctx.field(xml) ?? "");
+    const received = returnTsMs(ctx);
+    if (!d || received === null) return true;
+    const ms = parseDateMs(d);
+    if (ms === null) return false;
+    return strict ? ms < received : ms <= received;
+  };
+
+/**
+ * A real calendar birth date no later than the end of 'TaxYr' and no more
+ * than 125 years before it. Passes when absent.
+ */
+export const plausibleBirthDate = (xml: string): RuleCheck =>
+  (ctx) => {
+    const d = String(ctx.field(xml) ?? "");
+    if (!d) return true;
+    const m = d.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+    if (!m) return false;
+    const [y, mo, day] = [Number(m[1]), Number(m[2]), Number(m[3])];
+    const dt = new Date(Date.UTC(y, mo - 1, day));
+    const real = dt.getUTCFullYear() === y && dt.getUTCMonth() === mo - 1 &&
+      dt.getUTCDate() === day;
+    const taxYr = ctx.num("TaxYr");
+    return real && y <= taxYr && y >= taxYr - 125;
+  };
+
+// ─── Document References, Document Counts and Dates ────
+
+const prefixOfTag = (tag: string): string =>
+  rulePrefixForDocumentTag(tag) ?? tag;
+
+/**
+ * Every emitted document tagged `childTag` is named, by its documentId, in the
+ * 'referenceDocumentId' of exactly one emitted document tagged one of
+ * `parentTags`. Passes when no such child is emitted.
+ */
+export const referencedByExactlyOne = (
+  childTag: string,
+  ...parentTags: string[]
+): RuleCheck =>
+  (ctx) => {
+    const documents = ctx.documentReferences?.() ?? [];
+    const parents = new Set(parentTags.map(prefixOfTag));
+    const child = prefixOfTag(childTag);
+    return documents.filter((d) => d.prefix === child).every(({ documentId }) =>
+      documentId !== undefined &&
+      documents.filter((p) =>
+          parents.has(p.prefix) && p.references.includes(documentId)
+        ).length === 1
+    );
+  };
+
+/** Element `xml`'s 'referenceDocumentId' names an emitted document tagged one of `tags`. */
+export const attachedAt = (xml: string, ...tags: string[]): RuleCheck =>
+  (ctx) => {
+    const prefixes = new Set(tags.map(prefixOfTag));
+    const ids = new Set(
+      (ctx.documentReferences?.() ?? [])
+        .filter((d) => prefixes.has(d.prefix))
+        .map((d) => d.documentId),
+    );
+    return ctx.fieldArray(`${xml}@referenceDocumentId`)
+      .flatMap((v) => String(v).split(/\s+/))
+      .some((id) => id !== "" && ids.has(id));
+  };
+
+/** Number of emitted documents with the rule prefix that satisfy `check`. */
+export const documentCount = (
+  prefix: string,
+  check: RuleCheck = () => true,
+): Amount =>
+  (ctx) => (ctx.emittedDocuments?.(prefix) ?? []).filter(check).length;
+
+/**
+ * A date, or the date of a timestamp, as ms since epoch with its year moved
+ * by `years`; NaN when absent or unparseable.
+ */
+export const dateOf = (xml: string, years = 0): Amount =>
+  (ctx) => {
+    const m = String(ctx.field(xml) ?? "").match(/^(\d{4})-(\d{2})-(\d{2})/);
+    return m
+      ? Date.UTC(Number(m[1]) + years, Number(m[2]) - 1, Number(m[3]))
+      : NaN;
+  };
+
+/** Days from the `begin` date to the `end` date; NaN when either is absent. */
+export const daysBetween = (end: string, begin: string): Amount =>
+  (ctx) => (dateOf(end)(ctx) - dateOf(begin)(ctx)) / 86_400_000;
+
+/**
+ * The date is not after the date the IRS receives the submission. A return is
+ * received no earlier than its Return Header 'ReturnTs', so the date must not
+ * be after that day; with no 'ReturnTs' the receipt date cannot be bounded.
+ */
+export const dateNotAfterReceipt = (xml: string): RuleCheck =>
+  (ctx) =>
+    !ctx.hasValue(xml) ||
+    dateOf(xml)(ctx) <= dateOf("ReturnHeader/ReturnTs")(ctx);
+
+// ─── Submission Envelope (submission and transmission rules) ───
+
+/**
+ * Lower-case engine facts a transmission-time context carries beside the
+ * return. A return-only context has none of them, so envelope rules then
+ * check only what the return itself controls.
+ */
+export enum EnvelopeFact {
+  /** The submission ZIP: manifest/manifest.xml, xml/submission.xml, attachment/*. */
+  SubmissionZip = "submission_zip",
+  /** The SendSubmissions attachment ZIP: one <SubmissionId>.zip per submission. */
+  TransmissionZip = "transmission_zip",
+  /** The Submission IDs listed in the SendSubmissions request. */
+  TransmissionSubmissionIds = "transmission_submission_ids",
+  /** UTC date (YYYY-MM-DD) the submission is transmitted: the earliest MeF can receive it. */
+  ProcessingDate = "processing_date",
+  MessageId = "message_id",
+  TransmitterEtin = "transmitter_etin",
+  /** StateSubmissionManifest XML of each state submission sent with this return. */
+  StateManifests = "state_submission_manifests",
+}
+
+/** A byte-valued envelope fact, or undefined in a return-only context. */
+export const factBytes = (
+  ctx: ReturnContext,
+  fact: EnvelopeFact,
+): Uint8Array | undefined => {
+  const v = ctx.field(fact);
+  return v instanceof Uint8Array ? v : undefined;
+};
+
+/** A text-valued envelope fact, or undefined when absent or empty. */
+export const factText = (
+  ctx: ReturnContext,
+  fact: EnvelopeFact,
+): string | undefined => {
+  const v = ctx.field(fact);
+  return typeof v === "string" && v !== "" ? v : undefined;
+};
+
+/** Every text value of a list-valued envelope fact. */
+export const factTexts = (
+  ctx: ReturnContext,
+  fact: EnvelopeFact,
+): readonly string[] =>
+  ctx.fieldArray(fact).filter((v): v is string => typeof v === "string");
+
+/** Text of every `<tag>` element in an XML string, in document order. */
+export const xmlTexts = (xml: string, tag: string): readonly string[] =>
+  [...xml.matchAll(new RegExp(`<${tag}(?:\\s[^>]*)?>([^<]*)</${tag}>`, "g"))]
+    .map((m) => m[1].trim());
+
+/** Days since 1970-01-01 of a YYYY-MM-DD date, or undefined. */
+export const isoDay = (v: unknown): number | undefined => {
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(v ?? ""));
+  return m
+    ? Date.UTC(Number(m[1]), Number(m[2]) - 1, Number(m[3])) / 86_400_000
+    : undefined;
+};
+
+/** efileTypes PersonNameControlType: a letter, then up to three letters, hyphens or spaces. */
+export const isPersonNameControl = (v: unknown): boolean =>
+  /^[A-Z][A-Z\- ]{0,3}$/.test(String(v ?? ""));
+
+/** A five-digit Electronic Transmitter Identification Number. */
+export const isEtin = (v: unknown): boolean => /^\d{5}$/.test(String(v ?? ""));

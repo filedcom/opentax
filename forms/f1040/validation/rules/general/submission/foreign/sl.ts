@@ -5,14 +5,14 @@
  */
 
 import type { RuleDef } from "../../../../../../../core/validation/types.ts";
-import { rule, alwaysPass, ifThen, hasValue, } from "../../../../../../../core/validation/mod.ts";
+import { rule, ifThen, referencedByExactlyOne, hasValue, } from "../../../../../../../core/validation/mod.ts";
 
 export const SL_RULES: readonly RuleDef[] = [
   rule(
     "SL-F1118-001",
     "reject",
     "incorrect_data",
-    alwaysPass, // requires cross-instance reference count: Schedule L (Form 1118) must be referenced from exactly one Form 1118
+    referencedByExactlyOne("IRS1118ScheduleL", "IRS1118"),
     "If Schedule L (Form 1118) is present in the return, then it must be referenced from one and only one Form 1118.",
   ),
   rule(

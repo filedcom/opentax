@@ -5,7 +5,7 @@
  */
 
 import type { RuleDef } from "../../../../../../core/validation/types.ts";
-import { rule, allDistinct, alwaysPass, any, dateLteField, eqStr, eqSum, hasNonZero, hasValue, ifThen, matchesHeaderSSN, not, notGtField, noValue, } from "../../../../../../core/validation/mod.ts";
+import { rule, all, allDistinct, amountEq, amountLt, amountLte, any, constant, dateNotAfterReceipt, dateOf, daysBetween, documentPresent, dateLteField, eqStr, eqSum, hasNonZero, hasValue, ifThen, matchesHeaderSSN, not, notGtField, noValue, } from "../../../../../../core/validation/mod.ts";
 
 export const F2555_RULES: readonly RuleDef[] = [
   rule(
@@ -33,7 +33,7 @@ export const F2555_RULES: readonly RuleDef[] = [
     "F2555-004-01",
     "reject",
     "incorrect_data",
-    alwaysPass, // requires date equality check: BonaFideResidenceEndDt == TaxPeriodEndDt (eqField is numeric only)
+    ifThen(amountEq(dateOf("BonaFideResidenceEndDt"), dateOf("ReturnHeader/TaxPeriodEndDt"), 0), amountLte(dateOf("BonaFideResidenceBeginDt"), dateOf("ReturnHeader/TaxPeriodBeginDt"))),
     "If Form 2555, Line 10 'BonaFideResidenceEndDt' is equal to 'TaxPeriodEndDt' in the Return Header, then Line 10 'BonaFideResidenceBeginDt' must not be after the 'TaxPeriodBeginDt' in the Return Header.",
   ),
   rule(
@@ -47,7 +47,7 @@ export const F2555_RULES: readonly RuleDef[] = [
     "F2555-006-01",
     "reject",
     "incorrect_data",
-    alwaysPass, // requires date inequality check and first-day-of-previous-year calculation (no date-before predicate or prior-year constant)
+    ifThen(amountLt(dateOf("BonaFideResidenceEndDt"), dateOf("ReturnHeader/TaxPeriodEndDt")), amountLte(dateOf("BonaFideResidenceBeginDt"), dateOf("ReturnHeader/TaxPeriodBeginDt", -1))),
     "If Form 2555, Line 10 'BonaFideResidenceEndDt' is before 'TaxPeriodEndDt' in the Return Header then Line 10 'BonaFideResidenceBeginDt' must not be after the first day of the previous tax year.",
   ),
   rule(
@@ -110,14 +110,14 @@ export const F2555_RULES: readonly RuleDef[] = [
     "F2555-016",
     "reject",
     "incorrect_data",
-    alwaysPass, // requires external date lookup: IRS submission received date is not available at validation time
+    dateNotAfterReceipt("BonaFideResidenceEndDt"),
     "Form 2555, Line 10 'BonaFideResidenceEndDt' must not be greater than the date submission was received at the IRS.",
   ),
   rule(
     "F2555-017",
     "reject",
     "incorrect_data",
-    alwaysPass, // requires external date lookup: IRS submission received date is not available at validation time
+    dateNotAfterReceipt("PhysicalPresenceEndDt"),
     "Form 2555, Line 16 'PhysicalPresenceEndDt' must not be greater than the date submission was received at the IRS.",
   ),
   rule(
@@ -131,7 +131,7 @@ export const F2555_RULES: readonly RuleDef[] = [
     "F2555-019",
     "reject",
     "incorrect_data",
-    alwaysPass, // requires date difference calculation: EndDt minus BeginDt > 329 days (no day-count-diff predicate available)
+    ifThen(all(noValue("claimFrgnEarnIncWaiverCd"), not(documentPresent("FrgnErndIncWaiverofTimeReqStmt")), hasValue("PhysicalPresenceEndDt")), amountLt(constant(329), daysBetween("PhysicalPresenceEndDt", "PhysicalPresenceBeginDt"))),
     "If Form 2555, 'claimFrgnEarnIncWaiverCd' does not have a value, and [ForeignEarnedIncomeWaiverOfTimeRequirementsStatement] is not present in the Return and Line 16 'PhysicalPresenceEndDt' has a value, then Line 16 'PhysicalPresenceEndDt' minus (-) 'PhysicalPresenceBeginDt' must be greater than 329 days.",
   ),
   rule(
@@ -145,7 +145,7 @@ export const F2555_RULES: readonly RuleDef[] = [
     "F2555-022",
     "reject",
     "incorrect_data",
-    alwaysPass, // requires date inequality (before) and first-day-of-current-year constant (no prior-year date or date-before predicate)
+    ifThen(amountLt(dateOf("BonaFideResidenceBeginDt"), dateOf("ReturnHeader/TaxPeriodBeginDt")), not(amountLt(dateOf("BonaFideResidenceEndDt"), dateOf("ReturnHeader/TaxPeriodBeginDt")))),
     "If Form 2555, 'BonaFideResidenceBeginDt' is before 'TaxPeriodBeginDt' in the Return Header, then 'BonaFideResidenceEndDt' must not be before the first date of the current tax year.",
   ),
 ];

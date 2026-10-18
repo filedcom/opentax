@@ -42,3 +42,32 @@ test("F1040-455 matches combat pay to W-2 box 12 code Q only", () => {
   assertEquals(passes("F1040-455", ret(900)), true);
   assertEquals(passes("F1040-455", ret(1_400)), false);
 });
+
+const checked = F1040_RULES.map((r) => ({ ...r, category: "incorrect_data" as const }));
+
+test("F1040-516-01 refuses the primary SSN as a dependent unless claimed as one", () => {
+  const dep = "<DependentDetail><DependentSSN>400001001</DependentSSN></DependentDetail>";
+  assertEquals(passes("F1040-516-01", `<IRS1040 documentId="a">${dep}</IRS1040>`), false);
+  assertEquals(
+    passes("F1040-516-01", `<IRS1040 documentId="a"><PrimaryClaimAsDependentInd>X</PrimaryClaimAsDependentInd>${dep}</IRS1040>`),
+    true,
+  );
+});
+
+test("F1040-900 rejects a Schedule EIC child TIN that cannot be issued", () => {
+  const eic = (ssn: string) =>
+    `<IRS1040ScheduleEIC documentId="e"><QualifyingChildInformation><QualifyingChildSSN>${ssn}</QualifyingChildSSN></QualifyingChildInformation></IRS1040ScheduleEIC>`;
+  const run = (ssn: string) => emittedRulePasses(checked, "F1040-900", { documents: eic(ssn) });
+  assertEquals(run("400021111"), true);
+  assertEquals(run("400020000"), false);
+});
+
+test("F1040-525-03 checks a joint Self-Select signer's birth date", () => {
+  const header = (born: string) =>
+    `<ReturnTs>2026-02-01T10:00:00-05:00</ReturnTs><SelfSelectPINGrp><PrimaryBirthDt>${born}</PrimaryBirthDt></SelfSelectPINGrp>` +
+    "<PINTypeCd>Self-Select On-Line</PINTypeCd>";
+  const f1040 = '<IRS1040 documentId="a"></IRS1040>';
+  assertEquals(passes("F1040-525-03", f1040, header("1980-01-01"), 2), true);
+  assertEquals(passes("F1040-525-03", f1040, header("1980-02-30"), 2), false);
+  assertEquals(passes("F1040-525-03", f1040, header("1980-02-30"), 1), true);
+});

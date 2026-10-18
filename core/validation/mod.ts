@@ -134,3 +134,12 @@ export {
   documentPresent,
 } from "./predicates.ts";
 export type { Amount } from "./predicates.ts";
+export type { DocumentReferences } from "./types.ts";
+export {
+  attachedAt,
+  dateNotAfterReceipt,
+  dateOf,
+  daysBetween,
+  documentCount,
+  referencedByExactlyOne,
+} from "./predicates.ts";

@@ -1,11 +1,26 @@
 /**
  * MeF Business Rules: F8853
  * Auto-generated from 1040_Business_Rules_2025v3.0.csv
- * 8 rules (7 implemented, 1 stubs)
+ * 8 rules (8 implemented)
  */
 
 import type { RuleDef } from "../../../../../../core/validation/types.ts";
-import { rule, alwaysPass, any, hasNonZero, hasValue, ifThen, matchesHeaderSSN, validSSN, } from "../../../../../../core/validation/mod.ts";
+import {
+  all,
+  any,
+  eachGroup,
+  hasNonZero,
+  hasValue,
+  ifThen,
+  inOwnDocument,
+  matchesHeaderSSN,
+  rule,
+  validSSN,
+} from "../../../../../../core/validation/mod.ts";
+import {
+  everyIssuableTin,
+  personNameControlAgrees,
+} from "../../../../../../core/validation/predicates.ts";
 
 export const F8853_RULES: readonly RuleDef[] = [
   rule(
@@ -61,7 +76,17 @@ export const F8853_RULES: readonly RuleDef[] = [
     "F8853-514-01",
     "reject",
     "database",
-    alwaysPass,
+    inOwnDocument(
+      eachGroup(
+        "SectCLTCInsuranceCntrctGrp",
+        all(
+          everyIssuableTin("LTCInsuredSSN"),
+          personNameControlAgrees("LTCInsuredNameControlTxt", "LTCInsuredSSN"),
+        ),
+        "LTCInsuredSSN",
+        "LTCInsuredNameControlTxt",
+      ),
+    ),
     "Form 8853, 'LTCInsuredSSN' and 'LTCInsuredNameControlTxt' must match data in the e-File database.",
   ),
 ];

@@ -4,6 +4,10 @@ export interface EmittedDocument {
   readonly values: ReadonlyMap<string, readonly string[]>;
   /** Each instance of every group element inside the document, by group tag. */
   readonly groups: ReadonlyMap<string, readonly EmittedDocument[]>;
+  /** A ReturnData document's own 'documentId'. */
+  readonly documentId?: string;
+  /** Every 'referenceDocumentId' the document names, on its root or any element. */
+  readonly references?: readonly string[];
 }
 
 /** The return header and each ReturnData document of an emitted MeF return. */
@@ -39,6 +43,7 @@ type Values = Map<string, string[]>;
 type Scope = {
   readonly values: Values;
   readonly groups: Map<string, EmittedDocument[]>;
+  readonly references: string[];
   depth: number;
 };
 
@@ -54,7 +59,12 @@ function record(target: Values, key: string, value: string) {
 
 /** Index leaf element values per emitted document, in document order. */
 export function parseEmittedReturn(xml: string): EmittedReturn {
-  const header: Scope = { values: new Map(), groups: new Map(), depth: -1 };
+  const header: Scope = {
+    values: new Map(),
+    groups: new Map(),
+    references: [],
+    depth: -1,
+  };
   const documents: EmittedDocument[] = [];
   let declaredDocumentCnt: number | undefined;
   let current: Scope | undefined;
@@ -111,20 +121,35 @@ export function parseEmittedReturn(xml: string): EmittedReturn {
     const isDocument = current === undefined &&
       stack.at(-1) === "ReturnData" && /\bdocumentId="/.test(attributes);
     const outer = scope();
+    const recordAttributes = (
+      maps: readonly Values[],
+      groups: readonly string[] = [],
+    ) => {
+      // "Element@attribute" names any attribute, also as "Grp/Element@attribute";
+      // a few rule amounts, such as Form8814Ind's
+      // childInterestAndDividendTaxAmt, are named bare.
+      for (const [, attribute, value] of attributes.matchAll(ATTRIBUTE)) {
+        const keys = [`${name}@${attribute}`];
+        for (const group of new Set(groups)) {
+          keys.push(`${group}/${name}@${attribute}`);
+        }
+        if (!BOOKKEEPING_ATTRIBUTE.test(attribute)) keys.push(attribute);
+        for (const map of maps) {
+          for (const key of keys) record(map, key, decode(value));
+        }
+        if (attribute === "referenceDocumentId") {
+          (current ?? outer)?.references.push(
+            ...decode(value).split(/\s+/).filter(Boolean),
+          );
+        }
+      }
+    };
     if (outer) {
       const maps = [
         outer.values,
         ...instances.slice(outer.depth + 1).filter((m) => m !== undefined),
       ];
-      // "Element@attribute" names any attribute; a few rule amounts, such as
-      // Form8814Ind's childInterestAndDividendTaxAmt, are named bare.
-      for (const [, attribute, value] of attributes.matchAll(ATTRIBUTE)) {
-        const keys = [`${name}@${attribute}`];
-        if (!BOOKKEEPING_ATTRIBUTE.test(attribute)) keys.push(attribute);
-        for (const map of maps) {
-          for (const key of keys) record(map, key, decode(value));
-        }
-      }
+      recordAttributes(maps, stack.slice(outer.depth));
     }
     if (selfClosing) continue;
     stack.push(name);
@@ -136,19 +161,33 @@ export function parseEmittedReturn(xml: string): EmittedReturn {
     if (isDocument) {
       // Supporting statements keep their own tag as their prefix.
       const prefix = rulePrefixForDocumentTag(name) ?? name;
-      current = { values: new Map(), groups: new Map(), depth: stack.length - 1 };
+      current = {
+        values: new Map(),
+        groups: new Map(),
+        references: [],
+        depth: stack.length - 1,
+      };
       instances[instances.length - 1] = undefined;
+      // The root's own attributes, such as IRS2555 claimFrgnEarnIncWaiverCd.
+      recordAttributes([current.values]);
       documents.push({
         prefix,
         values: current.values,
         groups: current.groups,
+        documentId: /\bdocumentId="([^"]*)"/.exec(attributes)?.[1],
+        references: current.references,
       });
     }
     lastOpen = name;
     textStart = index + raw.length;
   }
   return {
-    header: { prefix: "ReturnHeader", values: header.values, groups: header.groups },
+    header: {
+      prefix: "ReturnHeader",
+      values: header.values,
+      groups: header.groups,
+      references: header.references,
+    },
     documents,
     declaredDocumentCnt,
   };
