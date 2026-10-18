@@ -56,7 +56,7 @@ export function assertForm8995AWotcReturn(
   assertQualifiedTipQbiSource({
     qualified_tip_qbi_source: input.single_schedule_c_source
       ?.qualified_tip_qbi_source,
-  }, pending);
+  }, pending, taxYear);
   const additional = Number(pending.f1040?.line13b_additional_deductions ?? 0);
   const parent = form8995aInputSchema.strict().safeParse(pending.form8995a);
   if (

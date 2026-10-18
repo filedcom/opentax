@@ -1,13 +1,16 @@
 import type { ExecuteResult } from "../../../../core/runtime/executor.ts";
+import type { NodeContext } from "../../../../core/types/node-context.ts";
 import { executeForm8839TwoPass } from "../domains/credits/individual/form8839/form8839_two_pass.ts";
 import { executeForm8863TwoPass } from "../domains/credits/individual/form8863/form8863_two_pass.ts";
 import { executeScheduleJSourceReturn } from "../domains/taxes/income-averaging/schedule-j/schedule_j_source_return.ts";
+import { f1040Graph, type F1040GraphExecutor } from "./graph.ts";
 
 /** Compose source-dependent stages before the QEF tax counterfactual. */
 export function executePreQefSourceReturn(
   inputs: Record<string, unknown>,
+  context: NodeContext,
   counterfactual = false,
-  executeGraph?: (inputs: Record<string, unknown>) => ExecuteResult,
+  executeGraph: F1040GraphExecutor = f1040Graph(context),
 ): ExecuteResult {
   const scheduleJGraph = (source: Record<string, unknown>) =>
     executeScheduleJSourceReturn(source, executeGraph);
@@ -23,7 +26,12 @@ export function executePreQefSourceReturn(
       source.f8863 !== undefined && (elected || counterfactual)
         ? executeForm8863TwoPass(source, counterfactual, scheduleJGraph)
         : scheduleJGraph(source);
-    return executeForm8839TwoPass(inputs, counterfactual, preAdoptionGraph);
+    return executeForm8839TwoPass(
+      inputs,
+      context,
+      counterfactual,
+      preAdoptionGraph,
+    );
   }
   if (
     inputs.f8863 !== undefined &&

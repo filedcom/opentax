@@ -587,7 +587,14 @@ async function buildPdfBytesInternal(
   await assertForm1098IssuerCopies(pending);
   const normalized = normalizeAllPending(pending);
   assertEmployeeContributionReturn(normalized);
-  assertScheduleJSourceReturn(pending, executeComposedSourceReturn);
+  assertScheduleJSourceReturn(
+    pending,
+    (inputs) =>
+      executeComposedSourceReturn(inputs, {
+        taxYear: mefTaxYear(),
+        formType: "f1040",
+      }),
+  );
   assertSingleFarmQbiReturn(normalized, mefTaxYear());
   if (normalized.f1040) {
     assertF1040FinalHeader(normalized.f1040, filer);

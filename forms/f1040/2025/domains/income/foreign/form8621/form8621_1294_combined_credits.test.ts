@@ -89,7 +89,7 @@ for (
     withoutHolding.qef_ordinary_income = 0;
     delete withoutHolding.qef_1294_election;
     const shadow = buildPending(
-      executePreQefSourceReturn(withoutInput, true).pending,
+      executePreQefSourceReturn(withoutInput, { taxYear: 2025, formType: "f1040" }, true).pending,
     );
     assertEquals(shadow.f1040?.line11_agi, testCase.magi - 2000);
     assertEquals(

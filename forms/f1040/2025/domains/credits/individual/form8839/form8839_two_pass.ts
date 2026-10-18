@@ -1,16 +1,13 @@
 import { currentYearForm8839Carryforward } from "../../../../../nodes/intermediate/forms/credits/individual/form8839/current_year_carryforward.ts";
 import { extractFilerIdentity } from "../../../../../mef/filer.ts";
-import {
-  execute,
-  type ExecuteResult,
-} from "../../../../../../../core/runtime/executor.ts";
-import { buildExecutionPlan } from "../../../../../../../core/runtime/planner.ts";
+import type { ExecuteResult } from "../../../../../../../core/runtime/executor.ts";
+import type { NodeContext } from "../../../../../../../core/types/node-context.ts";
 import { parsePublicForm8839Source } from "../../../../../nodes/intermediate/forms/credits/individual/form8839/public_source.ts";
 import { finalizeStagedForm8839Sink } from "../../../../../nodes/intermediate/forms/credits/individual/form8839/staged_sink_finalizer.ts";
 import { schedule3 } from "../../../../../nodes/intermediate/aggregation/general/return-assembly/schedule3/index.ts";
 import { f1040 } from "../../../../../nodes/outputs/general/return-assembly/f1040/index.ts";
 import { normalizePendingDict } from "../../../../return-processing/pending.ts";
-import { registry } from "../../../../registry.ts";
+import { f1040Graph } from "../../../../return-processing/graph.ts";
 
 export type Form8839GraphExecutor = (
   inputs: Record<string, unknown>,
@@ -19,12 +16,9 @@ export type Form8839GraphExecutor = (
 /** Recalculate the adoption credit after the ordinary graph settles. */
 export function executeForm8839TwoPass(
   inputs: Record<string, unknown>,
+  context: NodeContext,
   counterfactual = false,
-  executeGraph: Form8839GraphExecutor = (source) =>
-    execute(buildExecutionPlan(registry), registry, source, {
-      taxYear: 2025,
-      formType: "f1040",
-    }),
+  executeGraph: Form8839GraphExecutor = f1040Graph(context),
 ): ExecuteResult {
   const { source, publicSource } = parsePublicForm8839Source(inputs.form8839);
   const firstInputs = Object.fromEntries(
@@ -51,10 +45,7 @@ export function executeForm8839TwoPass(
   }
   const marker = { form8839_source_credit_pending: true } as const;
   const emptySchedule3 = graphSchedule3 === undefined
-    ? schedule3.compute(
-      { taxYear: 2025, formType: "f1040" },
-      schedule3.inputSchema.parse(marker),
-    )
+    ? schedule3.compute(context, schedule3.inputSchema.parse(marker))
     : undefined;
   const schedule3To1040 = emptySchedule3?.outputs.find((output) =>
     output.nodeType === "f1040"

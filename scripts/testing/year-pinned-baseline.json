@@ -230,11 +230,6 @@
     "count": 1
   },
   {
-    "path": "forms/f1040/2025/domains/credits/individual/form8839/form8839_two_pass.ts",
-    "pattern": "year-value",
-    "count": 2
-  },
-  {
     "path": "forms/f1040/2025/domains/credits/individual/form8863/form8863_two_pass.ts",
     "pattern": "year-value",
     "count": 1
@@ -447,7 +442,7 @@
   {
     "path": "forms/f1040/2025/domains/income/business/form172/form172_projected_return.ts",
     "pattern": "year-value",
-    "count": 2
+    "count": 1
   },
   {
     "path": "forms/f1040/2025/domains/income/business/form172/form172_reviewed_return.ts",
@@ -492,7 +487,7 @@
   {
     "path": "forms/f1040/2025/domains/income/foreign/schedule1-form8621-source.ts",
     "pattern": "year-value",
-    "count": 2
+    "count": 1
   },
   {
     "path": "forms/f1040/2025/domains/income/investments/broker-sale-source-reconciliation.ts",
@@ -2618,11 +2613,6 @@
     "path": "forms/f1040/nodes/intermediate/forms/credits/individual/form8880/nonjoint_distribution_review.ts",
     "pattern": "date-pinned",
     "count": 3
-  },
-  {
-    "path": "forms/f1040/nodes/intermediate/forms/deductions/additional/schedule1a/calculation.ts",
-    "pattern": "config-index",
-    "count": 2
   },
   {
     "path": "forms/f1040/nodes/intermediate/forms/deductions/additional/schedule1a/calculation.ts",

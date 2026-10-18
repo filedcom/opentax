@@ -8,7 +8,9 @@ Read tax files in the same seven return sections across source nodes, calculatio
 | [attachment-coverage.ts](attachment-coverage.ts) | 1 files |
 | [calculated_return_replay.test.ts](calculated_return_replay.test.ts) | 1 files |
 | [composed_source_return.ts](composed_source_return.ts) | 1 files |
+| [execute_return.ts](execute_return.ts) | 1 files |
 | [final-balance-projection.test.ts](final-balance-projection.test.ts) | 1 files |
+| [graph.ts](graph.ts) | 1 files |
 | [pending.test.ts](pending.test.ts) | 1 files |
 | [pending.ts](pending.ts) | 1 files |
 | [prepared-return.test.ts](prepared-return.test.ts) | 1 files |

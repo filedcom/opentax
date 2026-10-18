@@ -802,6 +802,7 @@ function buildIRS8995A(rawFields: unknown, context?: MefBuildContext): string {
     assertQualifiedTipQbiSource(
       fields as unknown as Record<string, unknown>,
       context?.pending,
+      mefTaxYear(context),
     );
   }
   assertFarmWotcReturn(

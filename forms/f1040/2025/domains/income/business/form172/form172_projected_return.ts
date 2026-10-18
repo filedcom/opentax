@@ -76,12 +76,10 @@ export async function stageForm172ProjectedReturn(
     }
   }
   const projectedRegistry = { ...registry, start: new RetainedNolStart() };
+  const nolContext = { taxYear: 2025, formType: "f1040" } as const;
   const executeNolGraph = (
     source: Record<string, unknown>,
-    context: Parameters<typeof execute>[3] = {
-      taxYear: 2025,
-      formType: "f1040",
-    },
+    context: Parameters<typeof execute>[3] = nolContext,
   ) =>
     execute(
       buildExecutionPlan(projectedRegistry),
@@ -94,7 +92,7 @@ export async function stageForm172ProjectedReturn(
     ? undefined
     : executeForm172Form8990Return(inputs, executeNolGraph, deduction);
   const execution = interestComposition?.execution ??
-    executePreQefSourceReturn(inputs, true, executeNolGraph);
+    executePreQefSourceReturn(inputs, nolContext, true, executeNolGraph);
   if (execution.diagnostics.length > 0) {
     throw new Error("NOL projection needs successful graph rerun");
   }
@@ -121,10 +119,7 @@ export async function stageForm172ProjectedReturn(
     throw new Error("NOL projection needs the actual retained finalizer");
   }
   const replayInput = f1040.inputSchema.parse(finalizer);
-  const replay = f1040.compute(
-    { taxYear: 2025, formType: "f1040" },
-    replayInput,
-  )
+  const replay = f1040.compute(nolContext, replayInput)
     .outputs.find((o) => o.nodeType === "f1040")?.fields;
   if (!replay) throw new Error("NOL projected finalizer replay is missing");
   for (const key of Object.keys(replay).filter((k) => /^line\d/.test(k))) {

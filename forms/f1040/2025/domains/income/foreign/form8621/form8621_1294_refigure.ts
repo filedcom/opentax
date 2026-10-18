@@ -1,10 +1,11 @@
 import { isDeepStrictEqual } from "node:util";
 import type { ExecuteResult } from "../../../../../../../core/runtime/executor.ts";
+import type { NodeContext } from "../../../../../../../core/types/node-context.ts";
 import { f1040 } from "../../../../../nodes/outputs/general/return-assembly/f1040/index.ts";
 import { buildPending } from "../../../../mef/execution/pending.ts";
 import { executePreQefSourceReturn } from "../../../../return-processing/staged_source_return.ts";
 
-const context = { taxYear: 2025, formType: "f1040" } as const;
+const sourceReplayContext = { taxYear: 2025, formType: "f1040" } as const;
 
 function record(value: unknown): Record<string, unknown> | undefined {
   return value !== null && typeof value === "object" && !Array.isArray(value)
@@ -25,6 +26,7 @@ function deferredHoldings(inputs: Record<string, unknown>) {
 export function applyForm8621QefRefigure(
   inputs: Record<string, unknown>,
   full: ExecuteResult,
+  context: NodeContext,
 ): ExecuteResult {
   const elected = deferredHoldings(inputs);
   if (elected.length === 0) return full;
@@ -98,7 +100,7 @@ export function applyForm8621QefRefigure(
         child_unearned_income: childUnearned - removedUnearned,
       };
     }
-    const without = executePreQefSourceReturn(withoutInputs, true);
+    const without = executePreQefSourceReturn(withoutInputs, context, true);
     if (without.diagnostics.length > 0) {
       throw new Error(
         "Form 8621 Election B needs a settled without-QEF return: " +
@@ -220,6 +222,7 @@ export function applyForm8621QefRefigure(
 /** Both exporters independently rerun the retained full and counterfactual returns. */
 export function assertForm8621QefRefigureSource(
   pending: Readonly<Record<string, unknown>>,
+  context: NodeContext = sourceReplayContext,
 ): void {
   const marker = record(pending.form8621_1294_refigure);
   if (!marker) {
@@ -229,13 +232,13 @@ export function assertForm8621QefRefigureSource(
   if (!inputs) {
     throw new Error("Form 8621 Election B needs actual source inputs");
   }
-  const full = executePreQefSourceReturn(inputs);
+  const full = executePreQefSourceReturn(inputs, context);
   if (full.diagnostics.length > 0) {
     throw new Error(
       "Form 8621 section 1294 source return has graph diagnostics",
     );
   }
-  const expected = applyForm8621QefRefigure(inputs, full);
+  const expected = applyForm8621QefRefigure(inputs, full, context);
   if (
     !isDeepStrictEqual(
       buildPending(expected.pending),

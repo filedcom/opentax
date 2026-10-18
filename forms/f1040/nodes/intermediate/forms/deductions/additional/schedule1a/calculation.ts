@@ -222,6 +222,8 @@ export const inputSchema = claimInputSchema.extend({
   ).optional(),
   qualified_tips_se_deduction: z.number().nonnegative().optional(),
   qualified_tips_owner_se_source: ownerSourcesSchema.optional(),
+  /** The Schedule SE line 7 base the owner source was figured with. */
+  qualified_tips_ss_wage_base: z.number().int().positive().optional(),
   qualified_tips_health_plan_source: singleScheduleCPlanSchema.optional(),
   qualified_tips_health_plans_source: independentOwnerHealthSourceSchema
     .optional(),
@@ -518,6 +520,15 @@ function tipsOvertimePhaseout(input: Schedule1AInput): number | undefined {
   ) * 100;
 }
 
+function ownerSsWageBase(input: Schedule1AInput): number {
+  if (input.qualified_tips_ss_wage_base === undefined) {
+    throw new Error(
+      "Schedule1A owned SE tips need the Schedule SE social security wage base",
+    );
+  }
+  return input.qualified_tips_ss_wage_base;
+}
+
 /** Eligible tips after each establishing business's allocable deductions. */
 export function qualifiedTradeBusinessTipRows(input: Schedule1AInput) {
   const reports = input.qualified_trade_business_tips ?? [];
@@ -536,7 +547,7 @@ export function qualifiedTradeBusinessTipRows(input: Schedule1AInput) {
     ? undefined
     : ownedScheduleSE(
       input.qualified_tips_owner_se_source,
-      CONFIG_BY_YEAR[2025].ssWageBase,
+      ownerSsWageBase(input),
     );
   if (!owned && businesses.length !== 1) {
     throw new Error("Multiple ScheduleC tips need actual owned SE attribution");
@@ -650,7 +661,7 @@ export function qualifiedTradeBusinessTipRows(input: Schedule1AInput) {
     const family = calculateIndependentOwnerHealth(
       input.qualified_tips_health_plans_source,
       owned.source,
-      CONFIG_BY_YEAR[2025].ssWageBase,
+      ownerSsWageBase(input),
     );
     for (const row of family.rows) {
       const index = businesses.findIndex((b) =>
@@ -1074,10 +1085,10 @@ export function calculateQualifiedTipsSchedule1A(
     if (
       w2 && w2.source_type === "w2_box7" && !hasAlternativeReport &&
       (w2.box5_medicare_wages === undefined ||
-        w2.box5_medicare_wages > 176_100)
+        w2.box5_medicare_wages > CONFIG_BY_YEAR[ctx.taxYear].ssWageBase)
     ) {
       throw new Error(
-        "Schedule 1-A W-2 box 7 filing needs a qualifying occupation code and Medicare wages at or below the 2025 social security wage base",
+        "Schedule 1-A W-2 box 7 filing needs a qualifying occupation code and Medicare wages at or below the return year's social security wage base",
       );
     }
     const taxpayerEligible = employeeSsn ===
