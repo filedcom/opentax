@@ -45,6 +45,10 @@ jobs:
         run: bun run check:cli
       - name: Code names only declared IRS files
         run: bun run check:irs
+      - name: The compiled binary passes the release smoke
+        run: |
+          bun build cli/main.ts --compile --target=bun-linux-x64-baseline --outfile opentax-smoke
+          bun scripts/release/smoke-release-binary.ts ./opentax-smoke dev smoke-opentax.json
       - name: Preserve verification report
         if: always()
         uses: actions/upload-artifact@v4
