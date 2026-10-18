@@ -31,6 +31,7 @@ export const f1040_2026: FormDefinition = {
     pendingInput,
     filerInput,
     attachmentsInput = [],
+    retainedSourceDocumentsInput = [],
   ) => {
     const pending = structuredClone(pendingInput);
     const filer = filerInput ? structuredClone(filerInput) : undefined;
@@ -39,6 +40,10 @@ export const f1040_2026: FormDefinition = {
     const bundle = await buildMefBundle(normalized, {
       filer,
       attachments: attachmentsInput.map((row) => ({
+        ...row,
+        bytes: new Uint8Array(row.bytes),
+      })),
+      retainedSourceDocuments: retainedSourceDocumentsInput.map((row) => ({
         ...row,
         bytes: new Uint8Array(row.bytes),
       })),

@@ -1324,8 +1324,8 @@ test("custodial Form 8332 release keeps child in EIC but off Form 1040 dependent
   const release = {
     form8332_source_reference: "signed 2025 Form 8332",
     custody_record_reference: "2025 nights ledger",
-    custodial_parent_for_2025: true,
-    valid_2025_release_to_noncustodial_parent: true,
+    custodial_parent_for_tax_year: true,
+    valid_tax_year_release_to_noncustodial_parent: true,
     no_competing_eitc_claim_verified: true,
   };
   const result = compute({

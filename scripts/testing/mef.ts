@@ -2,6 +2,8 @@
 import * as fs from "node:fs/promises";
 import { z } from "zod";
 import { f1040_2025 } from "../../forms/f1040/2025/index.ts";
+import { f1040_2026 } from "../../forms/f1040/2026/index.ts";
+import type { FormDefinition } from "../../core/types/form-definition.ts";
 import {
   type PdfReviewFixture,
   pdfReviewFixtures,
@@ -14,6 +16,18 @@ import {
 } from "../../cli/commands/export.ts";
 
 export const BASELINE_FILE = "scripts/testing/mef-baseline.json";
+
+/** Each tax year the samples run as, with its own baseline. TY2026 runs the TY2025 samples with 2027 signatures. */
+export const SAMPLE_YEARS: Readonly<
+  Record<number, { form: FormDefinition; baseline: string; reasons: boolean }>
+> = {
+  2025: { form: f1040_2025, baseline: BASELINE_FILE, reasons: false },
+  2026: {
+    form: f1040_2026,
+    baseline: "scripts/testing/mef-baseline-2026.json",
+    reasons: true,
+  },
+};
 
 const baselineSchema = z.object({
   reason: z.string().min(1),
@@ -37,11 +51,12 @@ function priorYearAuthentication(
   filer: "taxpayer" | "spouse",
   dob: string,
   priorYearPin: string,
+  taxYear: number,
 ): Record<string, unknown> {
   const agi = general[`${filer}_prior_year_agi`];
   const pin = general[`${filer}_prior_year_pin`];
   if (agi !== undefined || pin !== undefined) return {};
-  const under16 = Number(dob.slice(0, 4)) > 2025 - 16;
+  const under16 = Number(dob.slice(0, 4)) > taxYear - 16;
   return under16
     ? { [`${filer}_prior_year_pin`]: priorYearPin }
     : { [`${filer}_prior_year_agi`]: 0 };
@@ -51,23 +66,48 @@ function priorYearAuthentication(
 export function signed(
   inputs: Record<string, unknown>,
 ): Record<string, unknown> {
+  return signedForYear(inputs, 2025);
+}
+
+/**
+ * Signed for one tax year. A sample's own signature dates belong to its
+ * TY2025 filing, so another year signs on February 1 of the following year.
+ */
+export function signedForYear(
+  inputs: Record<string, unknown>,
+  taxYear: number,
+): Record<string, unknown> {
   const general = (inputs.general ?? {}) as Record<string, unknown>;
   const taxpayerDob = String(general.taxpayer_dob ?? "1980-01-01");
   const spouseDob = String(general.spouse_dob ?? "1980-01-01");
+  const filingDate = `${taxYear + 1}-02-01`;
+  const date = (own: unknown) => taxYear === 2025 ? own ?? filingDate : filingDate;
   return {
     ...structuredClone(inputs),
     general: {
       ...general,
       taxpayer_signature_pin: general.taxpayer_signature_pin ?? "12345",
-      taxpayer_signature_date: general.taxpayer_signature_date ?? "2026-02-01",
+      taxpayer_signature_date: date(general.taxpayer_signature_date),
       taxpayer_dob: taxpayerDob,
-      ...priorYearAuthentication(general, "taxpayer", taxpayerDob, "24680"),
+      ...priorYearAuthentication(
+        general,
+        "taxpayer",
+        taxpayerDob,
+        "24680",
+        taxYear,
+      ),
       ...(general.filing_status === "mfj"
         ? {
           spouse_signature_pin: general.spouse_signature_pin ?? "54321",
-          spouse_signature_date: general.spouse_signature_date ?? "2026-02-01",
+          spouse_signature_date: date(general.spouse_signature_date),
           spouse_dob: spouseDob,
-          ...priorYearAuthentication(general, "spouse", spouseDob, "13579"),
+          ...priorYearAuthentication(
+            general,
+            "spouse",
+            spouseDob,
+            "13579",
+            taxYear,
+          ),
         }
         : {}),
     },
@@ -81,8 +121,11 @@ export async function returnFindings(
     PdfReviewFixture,
     "attachments" | "retainedSourceDocuments"
   > = {},
+  taxYear = 2025,
 ): Promise<string[]> {
-  const result = f1040_2025.executeReturn(signed(inputs));
+  const form = SAMPLE_YEARS[taxYear]?.form;
+  if (!form) throw new Error(`No sample returns for tax year ${taxYear}`);
+  const result = form.executeReturn(signedForYear(inputs, taxYear));
   if (result.diagnostics.length > 0) {
     return [
       ...new Set(result.diagnostics.map((d) => `calculation ${d.nodeType}`)),
@@ -90,10 +133,14 @@ export async function returnFindings(
       .sort();
   }
   const pending = normalizeAllPending(result.pending);
-  const filer = extractFilerIdentity(pending.f1040 ?? {});
+  const identity = extractFilerIdentity(pending.f1040 ?? {});
+  // A later year's samples are received when they are signed.
+  const filer = identity && taxYear !== 2025
+    ? { ...identity, timestamp: `${taxYear + 1}-02-01T12:00:00Z` }
+    : identity;
   let xml: string;
   try {
-    xml = (await f1040_2025.prepareReturn(
+    xml = (await form.prepareReturn(
       pending,
       filer,
       documents.attachments ?? [],
@@ -157,6 +204,14 @@ export function keptReasons(
   );
 }
 
+/** A blocked TY2026 return must say why its block is correct. */
+export function unexplained(
+  baseline: Baseline["returns"],
+  reasons: Baseline["reasons"],
+): string[] {
+  return Object.keys(baseline).filter((id) => !reasons[id]).sort();
+}
+
 export function summarize(actual: Findings): string {
   const ids = Object.keys(actual);
   const clean = ids.filter((id) => actual[id].length === 0).length;
@@ -174,19 +229,34 @@ export function summarize(actual: Findings): string {
   ].join("\n");
 }
 
+function yearArg(args: readonly string[]): number {
+  const index = args.indexOf("--year");
+  return index === -1 ? 2025 : Number(args[index + 1]);
+}
+
 async function main(args: readonly string[]): Promise<number> {
+  const taxYear = yearArg(args);
+  const year = SAMPLE_YEARS[taxYear];
+  if (!year) {
+    console.error(
+      `--year must be one of ${Object.keys(SAMPLE_YEARS).join(", ")}`,
+    );
+    return 1;
+  }
+  const baselineFile = year.baseline;
   const actual: Record<string, string[]> = {};
   for (const fixture of pdfReviewFixtures) {
     actual[fixture.id] = await returnFindings(
       fixture.inputs as Record<string, unknown>,
       fixture,
+      taxYear,
     );
   }
   const json = args.includes("--json");
   if (!json) console.log(summarize(actual));
   if (args.includes("--update")) {
     const previous = baselineSchema.safeParse(
-      JSON.parse(await fs.readFile(BASELINE_FILE, "utf8").catch(() => "{}")),
+      JSON.parse(await fs.readFile(baselineFile, "utf8").catch(() => "{}")),
     );
     const baseline: Baseline = {
       reason:
@@ -201,32 +271,38 @@ async function main(args: readonly string[]): Promise<number> {
         previous.success ? previous.data.reasons : {},
       ),
     };
-    await fs.writeFile(BASELINE_FILE, `${JSON.stringify(baseline, null, 2)}\n`);
-    console.log(`Wrote ${BASELINE_FILE}`);
+    await fs.writeFile(baselineFile, `${JSON.stringify(baseline, null, 2)}\n`);
+    console.log(`Wrote ${baselineFile}`);
     return 0;
   }
   const baseline = baselineSchema.parse(
-    JSON.parse(await fs.readFile(BASELINE_FILE, "utf8")),
+    JSON.parse(await fs.readFile(baselineFile, "utf8")),
   );
   const problems = compareFindings(actual, baseline.returns);
+  const missingReasons = year.reasons
+    ? unexplained(baseline.returns, baseline.reasons)
+    : [];
   const today = new Date().toISOString().slice(0, 10);
   if (baseline.expires < today) {
-    console.error(`${BASELINE_FILE} expired on ${baseline.expires}`);
+    console.error(`${baselineFile} expired on ${baseline.expires}`);
     return 1;
   }
   if (json) {
     console.log(JSON.stringify({ returns: actual, problems }, null, 2));
-    return problems.length > 0 ? 1 : 0;
+    return problems.length + missingReasons.length > 0 ? 1 : 0;
+  }
+  for (const id of missingReasons) {
+    console.error(`REASON ${id}: give its block a reason in ${baselineFile}`);
   }
   for (const p of problems) {
     console.error(
       p.kind === "new"
         ? `NEW   ${p.id}: ${p.finding}`
-        : `FIXED ${p.id}: ${p.finding} (remove it from ${BASELINE_FILE})`,
+        : `FIXED ${p.id}: ${p.finding} (remove it from ${baselineFile})`,
     );
   }
-  console.log(`${problems.length} problems`);
-  return problems.length > 0 ? 1 : 0;
+  console.log(`${problems.length + missingReasons.length} problems`);
+  return problems.length + missingReasons.length > 0 ? 1 : 0;
 }
 
 if (import.meta.main) process.exit(await main(process.argv.slice(2)));

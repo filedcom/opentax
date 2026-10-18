@@ -120,6 +120,7 @@ in `scripts/testing/year-pinned-baseline.json`; a count may only fall, and
 | Every module resolves and type-checks strictly              | `scripts/testing/repository.ts` (`tsc`)               |
 | The binary cannot spawn, load native code or open sockets   | `scripts/testing/sandbox.ts` (`check:sandbox`)        |
 | Sample returns gain no new MeF blockers                     | `scripts/testing/mef.ts` (`check:mef`)                |
+| The same samples run as TY2026 gain no new blockers         | `scripts/testing/mef.ts` (`check:ty2026`)             |
 | Complete returns work end to end through the product CLI    | `scripts/testing/cli.ts` (`check:cli`)                |
 | The binary reaches only the IRS and GitHub over HTTPS       | `cli/network.ts`                                      |
 | The checks above run on every pull request                  | `.github/workflows/test.yml`                          |

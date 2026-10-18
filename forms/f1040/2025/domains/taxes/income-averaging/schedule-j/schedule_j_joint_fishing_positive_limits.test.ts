@@ -67,7 +67,7 @@ test("joint C/F wages and UBIA derive three distinct full phase-out limits", asy
     const noJ = await packet(`${kind}-${owner}-without-j`, noJInput);
     const elected = await packet(`${kind}-${owner}`, input);
     const p = elected.pending;
-    const q = calculateMixedFishingQbi(p.form8995a);
+    const q = calculateMixedFishingQbi(p.form8995a, 2025);
     assertScheduleJSourceReturn(elected.result.pending);
     assertEquals(q.profits[0], 200_000);
     assertEquals(q.profits[1], wages ? 478_185 : 500_000);
@@ -165,7 +165,7 @@ test("cash farm deducts unemployment only when actually paid in 2025", () => {
   const result = f1040_2025.executeReturn(input);
   assertEquals(result.diagnostics, []);
   const pending: any = normalizeAllPending(result.pending);
-  assertEquals(calculateMixedFishingQbi(pending.form8995a).profits[1], 478_470);
+  assertEquals(calculateMixedFishingQbi(pending.form8995a, 2025).profits[1], 478_470);
   assertEquals(pending.f1040.line16_income_tax, 146_902);
   assertEquals(pending.f1040.line13_qbi_deduction, 10_000);
 });
@@ -197,7 +197,7 @@ test("farm unemployment wage bases apply separately to each employee", () => {
     retained_i9_reference: "second-worker-i9",
     ssa_filing_reference: "second-worker-ssa",
   });
-  book.current_2025_agricultural_service_weeks[0].employee_count = 2;
+  book.current_year_agricultural_service_weeks[0].employee_count = 2;
   const bind = () => {
     const bytes = new TextEncoder().encode(JSON.stringify(book));
     proof.bytes_base64 = btoa(String.fromCharCode(...bytes));
@@ -212,5 +212,5 @@ test("farm unemployment wage bases apply separately to each employee", () => {
   const result = f1040_2025.executeReturn(input);
   assertEquals(result.diagnostics, []);
   const pending: any = normalizeAllPending(result.pending);
-  assertEquals(calculateMixedFishingQbi(pending.form8995a).profits[1], 477_900);
+  assertEquals(calculateMixedFishingQbi(pending.form8995a, 2025).profits[1], 477_900);
 });

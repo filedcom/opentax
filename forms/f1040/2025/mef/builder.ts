@@ -370,7 +370,7 @@ function buildReturnXml(
   assertSchedule1Form8814Source(pending);
   assertSchedule1Form8621Source(pending);
   assertScheduleJSourceReturn(pending, executeComposedSourceReturn);
-  assertSingleFarmQbiReturn(pending);
+  assertSingleFarmQbiReturn(pending, year);
   assertSchedule1NecSourceIdentity(pending, filer);
   assertSchedule1KSourceIdentity(pending, filer);
   assertScheduleFFarmSourceIdentity(pending, filer);

@@ -34,13 +34,13 @@ for (const c of jointAggregationCases) {
       calculateTwoBusinessAggregationLines({
         ...fields,
         taxable_income: 394600,
-      })
+      }, 2025)
     );
     assertEquals(
       calculateTwoBusinessAggregationLines({
         ...fields,
         taxable_income: 494601,
-      }).parent.line39,
+      }, 2025).parent.line39,
       c.qbi,
     );
     const mixed = structuredClone(input);

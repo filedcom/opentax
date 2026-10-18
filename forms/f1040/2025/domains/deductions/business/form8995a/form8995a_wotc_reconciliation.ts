@@ -20,13 +20,14 @@ import {
 } from "../../../../../nodes/inputs/credits/business/f5884/index.ts";
 import { inputSchema as seInputSchema } from "../../../../../nodes/intermediate/forms/taxes/self-employment/schedule_se/index.ts";
 import { scheduleSELines } from "../../../../../nodes/intermediate/forms/taxes/self-employment/schedule_se/calculation.ts";
-import { CONFIG_BY_YEAR } from "../../../../../nodes/config/index.ts";
+import { qbiYearConfig } from "../../../../../nodes/intermediate/forms/deductions/business/form8995a/thresholds.ts";
 import { normalizeAllPending } from "../../../../return-processing/pending.ts";
 
 /** Replay the retained employer credit, wage deduction, SE tax and QBI source. */
 export function assertForm8995AWotcReturn(
   input: Form8995AInput,
   rawPending: Readonly<Record<string, unknown>> | undefined,
+  taxYear: number,
 ): void {
   if (input.schedule_c_qbi_businesses?.some((b) => b.qbi < 0)) {
     assertLossWotcSources(input, rawPending);
@@ -48,8 +49,9 @@ export function assertForm8995AWotcReturn(
       "Form 8995-A with WOTC needs its retained Schedule C and full return source",
     );
   }
-  if (input.wotc_business_sources) calculateOwnedWotcBusinesses(input);
-  else assertSingleScheduleCWotcAmounts(input);
+  if (input.wotc_business_sources) {
+    calculateOwnedWotcBusinesses(input, taxYear);
+  } else assertSingleScheduleCWotcAmounts(input, taxYear);
   const pending = normalizeAllPending(rawPending as Record<string, unknown>);
   assertQualifiedTipQbiSource({
     qualified_tip_qbi_source: input.single_schedule_c_source
@@ -208,10 +210,10 @@ export function assertForm8995AWotcReturn(
   }
   const se = seInputSchema.parse(pending.schedule_se);
   const joint = source.joint_se_source;
-  const owned = joint ? assertOwnedScheduleSE(pending) : undefined;
+  const owned = joint ? assertOwnedScheduleSE(pending, taxYear) : undefined;
   const seLines = owned
     ? { line12: owned.tax, line13: owned.deduction }
-    : scheduleSELines(se, CONFIG_BY_YEAR[2025].ssWageBase);
+    : scheduleSELines(se, qbiYearConfig(taxYear).ssWageBase);
   const wageRows = pending.w2 ? w2Schema.parse(pending.w2).w2s : [];
   if (
     wageRows.some((row) =>

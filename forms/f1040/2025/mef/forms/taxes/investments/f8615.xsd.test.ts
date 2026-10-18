@@ -187,6 +187,7 @@ test.skipIf(!xsdAvailable)("XSD: Form 8615 stops at line 3 and leaves later fiel
     takingStandardDeduction: true,
     childHasPreferentialIncome: false,
     childForeignEarnedIncomeExclusion: 0,
+    taxYear: 2025,
     brackets: CONFIG_BY_YEAR[2025]!,
   });
   const xml = buildMefXml({

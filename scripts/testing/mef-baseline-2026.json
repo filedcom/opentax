@@ -1,0 +1,697 @@
+{
+  "reason": "TY2025 sample returns run as TY2026: known blockers per return, each with why; a finding leaves when its fix lands",
+  "approvedBy": "pending-review",
+  "expires": "2027-01-31",
+  "returns": {
+    "owned-two-farm-wotc-phase": [
+      "xml Form 8995-A FilingStatusThresholdCd 403500 is not a value the MeF schema enumerates; export waits for a schema that carries the return year's amounts"
+    ],
+    "owned-two-farm-wotc-phase-loss": [
+      "xml Form 8995-A FilingStatusThresholdCd 403500 is not a value the MeF schema enumerates; export waits for a schema that carries the return year's amounts"
+    ],
+    "owned-two-farm-health-phase": [
+      "xml Form 8995-A FilingStatusThresholdCd 403500 is not a value the MeF schema enumerates; export waits for a schema that carries the return year's amounts"
+    ],
+    "owned-two-farm-health-loss-owner": [
+      "xml Form 8995-A FilingStatusThresholdCd 403500 is not a value the MeF schema enumerates; export waits for a schema that carries the return year's amounts"
+    ],
+    "single-issued-k1-lihtc-recapture": [
+      "calculation f8611"
+    ],
+    "joint-spouse-issued-k1-lihtc-recapture": [
+      "calculation f8611"
+    ],
+    "owned-controlled-farm-wotc-phase": [
+      "xml Form 8995-A FilingStatusThresholdCd 403500 is not a value the MeF schema enumerates; export waits for a schema that carries the return year's amounts"
+    ],
+    "owned-controlled-farm-wotc-phase-loss": [
+      "xml Form 8995-A FilingStatusThresholdCd 403500 is not a value the MeF schema enumerates; export waits for a schema that carries the return year's amounts"
+    ],
+    "owned-controlled-mixed-cf-wotc-phase": [
+      "xml Form 8995-A FilingStatusThresholdCd 403500 is not a value the MeF schema enumerates; export waits for a schema that carries the return year's amounts"
+    ],
+    "owned-controlled-mixed-cf-wotc-phase-loss": [
+      "xml Form 8995-A FilingStatusThresholdCd 403500 is not a value the MeF schema enumerates; export waits for a schema that carries the return year's amounts"
+    ],
+    "owned-mixed-cf-health-phase": [
+      "xml Form 8995-A FilingStatusThresholdCd 403500 is not a value the MeF schema enumerates; export waits for a schema that carries the return year's amounts"
+    ],
+    "owned-farm-wotc-loss-phase-primary-f-offset": [
+      "xml Form 8995-A FilingStatusThresholdCd 403500 is not a value the MeF schema enumerates; export waits for a schema that carries the return year's amounts"
+    ],
+    "owned-farm-wotc-loss-below-primary-limited-credit": [
+      "calculation form8995"
+    ],
+    "single-disabled-access-interpreter-partial": [
+      "xml Form 8995 line 16 minimum deduction has no 2026v1.0 MeF element; export waits for a schema that carries it"
+    ],
+    "single-disabled-access-interpreter-zero": [
+      "xml Form 8995 line 16 minimum deduction has no 2026v1.0 MeF element; export waits for a schema that carries it"
+    ],
+    "optional-same-owner": [
+      "calculation form8995"
+    ],
+    "owned-farm-wotc-spouse-phase": [
+      "xml Form 8995-A FilingStatusThresholdCd 403500 is not a value the MeF schema enumerates; export waits for a schema that carries the return year's amounts"
+    ],
+    "owned-farm-wotc-ordinary-spouse-phase": [
+      "xml Form 8995-A FilingStatusThresholdCd 403500 is not a value the MeF schema enumerates; export waits for a schema that carries the return year's amounts"
+    ],
+    "owned-farm-wotc-three-farms-phase": [
+      "xml Form 8995-A FilingStatusThresholdCd 403500 is not a value the MeF schema enumerates; export waits for a schema that carries the return year's amounts"
+    ],
+    "joint-controlled-wotc-phasein": [
+      "xml Form 8995-A FilingStatusThresholdCd 403500 is not a value the MeF schema enumerates; export waits for a schema that carries the return year's amounts"
+    ],
+    "joint-controlled-wotc-fractional-phasein": [
+      "xml Form 8995-A FilingStatusThresholdCd 403500 is not a value the MeF schema enumerates; export waits for a schema that carries the return year's amounts"
+    ],
+    "joint-both-owner-wotc-phasein": [
+      "xml Form 8995-A FilingStatusThresholdCd 403500 is not a value the MeF schema enumerates; export waits for a schema that carries the return year's amounts"
+    ],
+    "joint-both-owner-wotc-one-phasein": [
+      "xml Form 8995-A FilingStatusThresholdCd 403500 is not a value the MeF schema enumerates; export waits for a schema that carries the return year's amounts"
+    ],
+    "joint-spouse-wotc-phasein": [
+      "xml Form 8995-A FilingStatusThresholdCd 403500 is not a value the MeF schema enumerates; export waits for a schema that carries the return year's amounts"
+    ],
+    "joint-spouse-wotc-upper-edge": [
+      "xml Form 8995-A FilingStatusThresholdCd 403500 is not a value the MeF schema enumerates; export waits for a schema that carries the return year's amounts"
+    ],
+    "joint-spouse-wotc-upper-plus-one": [
+      "xml Form 8995-A FilingStatusThresholdCd 403500 is not a value the MeF schema enumerates; export waits for a schema that carries the return year's amounts"
+    ],
+    "joint-primary-wotc-phasein": [
+      "xml Form 8995-A FilingStatusThresholdCd 403500 is not a value the MeF schema enumerates; export waits for a schema that carries the return year's amounts"
+    ],
+    "joint-primary-wotc-upper-edge": [
+      "xml Form 8995-A FilingStatusThresholdCd 403500 is not a value the MeF schema enumerates; export waits for a schema that carries the return year's amounts"
+    ],
+    "joint-primary-wotc-upper-plus-one": [
+      "xml Form 8995-A FilingStatusThresholdCd 403500 is not a value the MeF schema enumerates; export waits for a schema that carries the return year's amounts"
+    ],
+    "single-form8994-direct-employer-zero": [
+      "xml Form 8995 line 16 minimum deduction has no 2026v1.0 MeF element; export waits for a schema that carries it"
+    ],
+    "single-medicare-msa-partial-disability-prior-account": [
+      "calculation form8853"
+    ],
+    "mfs-ny-primary-form8995a-accounting-sstb-phasein": [
+      "xml Form 8995-A FilingStatusThresholdCd 201775 is not a value the MeF schema enumerates; export waits for a schema that carries the return year's amounts"
+    ],
+    "mfs-ak-primary-form8995a-accounting-sstb-phasein": [
+      "xml Form 8995-A FilingStatusThresholdCd 201775 is not a value the MeF schema enumerates; export waits for a schema that carries the return year's amounts"
+    ],
+    "mfs-tn-primary-form8995a-accounting-sstb-phasein": [
+      "xml Form 8995-A FilingStatusThresholdCd 201775 is not a value the MeF schema enumerates; export waits for a schema that carries the return year's amounts"
+    ],
+    "mfs-sd-primary-form8995a-accounting-sstb-phasein": [
+      "xml Form 8995-A FilingStatusThresholdCd 201775 is not a value the MeF schema enumerates; export waits for a schema that carries the return year's amounts"
+    ],
+    "mfs-primary-form8995a-accounting-sstb-phasein": [
+      "xml Form 8995-A FilingStatusThresholdCd 201775 is not a value the MeF schema enumerates; export waits for a schema that carries the return year's amounts"
+    ],
+    "joint-primary-form8995a-accounting-sstb-phasein": [
+      "xml Form 8995-A FilingStatusThresholdCd 403500 is not a value the MeF schema enumerates; export waits for a schema that carries the return year's amounts"
+    ],
+    "single-form8995a-accounting-sstb-no-payroll": [
+      "xml Form 8995-A FilingStatusThresholdCd 201750 is not a value the MeF schema enumerates; export waits for a schema that carries the return year's amounts"
+    ],
+    "single-form8995a-accounting-sstb-phasein": [
+      "xml Form 8995-A FilingStatusThresholdCd 201750 is not a value the MeF schema enumerates; export waits for a schema that carries the return year's amounts"
+    ],
+    "single-form8995a-patron-farm": [
+      "xml Multi-business QBI preferential tax worksheet differs from owned investment income and final taxable income"
+    ],
+    "single-form8995a-patron-c-health": [
+      "calculation form7206"
+    ],
+    "single-form8995a-patron-phase-farm": [
+      "xml Multi-business QBI preferential tax worksheet differs from owned investment income and final taxable income"
+    ],
+    "single-form8995a-patron-phase-c-health": [
+      "calculation form7206"
+    ],
+    "single-form8995a-patron-phase-income-cap": [
+      "xml Form 8995-A FilingStatusThresholdCd 201750 is not a value the MeF schema enumerates; export waits for a schema that carries the return year's amounts"
+    ],
+    "single-form8995a-patron-phase-unbound": [
+      "xml Multi-business QBI preferential tax worksheet differs from owned investment income and final taxable income"
+    ],
+    "joint-form8995a-patron-farm": [
+      "xml Multi-business QBI preferential tax worksheet differs from owned investment income and final taxable income"
+    ],
+    "joint-form8995a-patron-c-health": [
+      "calculation form7206"
+    ],
+    "joint-form8995a-patron-income-cap": [
+      "xml Form 8995-A FilingStatusThresholdCd 403500 is not a value the MeF schema enumerates; export waits for a schema that carries the return year's amounts"
+    ],
+    "joint-spouse-owned-form8995a-patron-farm": [
+      "xml Multi-business QBI preferential tax worksheet differs from owned investment income and final taxable income"
+    ],
+    "joint-spouse-owned-form8995a-patron-c-health": [
+      "calculation form7206"
+    ],
+    "joint-spouse-owned-form8995a-patron-income-cap": [
+      "xml Form 8995-A FilingStatusThresholdCd 403500 is not a value the MeF schema enumerates; export waits for a schema that carries the return year's amounts"
+    ],
+    "single-form8995a-two-business-aggregation": [
+      "calculation form8995a"
+    ],
+    "single-form8863-missing-tuition-form-taxable-scholarship-phaseout": [
+      "xml Form 8863 filing needs source MAGI, Credit Limit Worksheet, and finalized Form 1040/Schedule 3 credit lines to reconcile"
+    ],
+    "single-source-qef-1294-election": [
+      "xml Form 8621 Election B needs full-return source replay"
+    ],
+    "single-passive-partnership-new-markets": [
+      "xml Form 8582-CR line 6 tax sides must use the finalized Form 1040 ordinary-tax method"
+    ],
+    "single-mixed-passive-new-markets": [
+      "xml Form 8582-CR line 6 tax sides must use the finalized Form 1040 ordinary-tax method"
+    ],
+    "single-reviewed-adoption-credit": [
+      "calculation form8839"
+    ],
+    "single-divorced-agreed-joint-estimated-payment": [
+      "calculation f1040es"
+    ],
+    "single-w2-three-eic-children-with-reviewed-birth": [
+      "calculation form8959",
+      "calculation form8960",
+      "calculation general",
+      "calculation standard_deduction"
+    ],
+    "single-1098-purchase-points": [
+      "xml Form 1098 issuer Copy B year, lender, or borrower TIN differs from source"
+    ],
+    "mfs-two-loan-mortgage-limit": [
+      "xml Form 1098 issuer Copy B year, lender, or borrower TIN differs from source"
+    ],
+    "single-1098-construction-refinance-points": [
+      "xml Form 1098 issuer Copy B year, lender, or borrower TIN differs from source"
+    ],
+    "single-unreported-refinance-points": [
+      "xml Form 1098 issuer Copy B year, lender, or borrower TIN differs from source"
+    ],
+    "single-2023-refinance-points-ledger": [
+      "xml Form 1098 issuer Copy B year, lender, or borrower TIN differs from source"
+    ],
+    "single-1098-prior-year-recovery": [
+      "xml Form 1098 issuer Copy B year, lender, or borrower TIN differs from source"
+    ],
+    "single-8862-ctc-reinstatement": [
+      "calculation f8812"
+    ],
+    "single-five-dependent-continuation": [
+      "calculation f8812"
+    ],
+    "single-withheld-w2g": [
+      "calculation w2g"
+    ],
+    "joint-schedule-h-spouse-withholding-only": [
+      "calculation schedule_h"
+    ],
+    "single-schedule-h-fica-and-futa": [
+      "calculation schedule_h"
+    ],
+    "single-schedule-h-three-state-futa": [
+      "calculation schedule_h"
+    ],
+    "single-form8814-child-dividends-adjustments": [
+      "calculation income_tax_calculation"
+    ],
+    "single-form8814-child-gain-with-schedule-d": [
+      "calculation form6251",
+      "calculation income_tax_calculation"
+    ],
+    "single-ordinary-noncash-gift": [
+      "rule F8283-006-02"
+    ],
+    "single-section-a-capital-gain-reduction-gift": [
+      "xml Form 8283 election differs from recomputed Schedule A lines 11\u201313 or Form 1040 itemized total"
+    ],
+    "single-section-a-donor-prepared-manuscript-reduction": [
+      "rule F8283-006-02"
+    ],
+    "single-two-short-term-reduced-gifts": [
+      "xml Form 8283 ordinary Section A differs from recomputed Schedule A or Form 1040 itemized deductions"
+    ],
+    "single-new-markets-business-credit": [
+      "xml [MEF] Form 8874 direct QEI needs authenticated CDE status and recapture history; export blocked"
+    ],
+    "single-long-name-new-markets-investment": [
+      "xml [MEF] Form 8874 direct QEI needs authenticated CDE status and recapture history; export blocked"
+    ],
+    "single-two-new-markets-investments": [
+      "xml [MEF] Form 8874 direct QEI needs authenticated CDE status and recapture history; export blocked"
+    ],
+    "single-six-new-markets-investments": [
+      "xml [MEF] Form 8874 direct QEI needs authenticated CDE status and recapture history; export blocked"
+    ],
+    "single-seven-new-markets-investments": [
+      "xml [MEF] Form 8874 direct QEI needs authenticated CDE status and recapture history; export blocked"
+    ],
+    "single-twenty-four-new-markets-investments": [
+      "xml [MEF] Form 8874 direct QEI needs authenticated CDE status and recapture history; export blocked"
+    ],
+    "single-geothermal-and-new-markets-credits": [
+      "xml [MEF] Form 8874 direct QEI needs authenticated CDE status and recapture history; export blocked"
+    ],
+    "single-partnership-code-k-and-w2g": [
+      "calculation w2g"
+    ],
+    "single-employer-statement-qualified-tips-schedule1a": [
+      "calculation schedule1a"
+    ],
+    "single-form4070-high-wage-qualified-tips-schedule1a": [
+      "calculation schedule1a"
+    ],
+    "single-form4070-form4137-no-w2-code-schedule1a": [
+      "calculation schedule1a"
+    ],
+    "single-k-personal-gain-loss": [
+      "calculation f1099k"
+    ],
+    "single-k-personal-selling-fees": [
+      "calculation f1099k"
+    ],
+    "single-k-business-refund": [
+      "calculation f1099k"
+    ],
+    "single-k-business-refund-and-fee": [
+      "calculation f1099k"
+    ],
+    "single-k-reported-error": [
+      "rule F1040-065-05"
+    ],
+    "single-k-mixed-business-personal": [
+      "calculation f1099k"
+    ],
+    "single-k-mixed-duplicate-personal": [
+      "calculation f1099k"
+    ],
+    "single-k-mixed-error-duplicate-personal": [
+      "calculation f1099k"
+    ],
+    "single-schedule-c-simplified-home-office": [
+      "xml Form 8995 line 16 minimum deduction has no 2026v1.0 MeF element; export waits for a schema that carries it"
+    ],
+    "single-two-at-risk-business-losses": [
+      "xml Form 8995 line 16 minimum deduction has no 2026v1.0 MeF element; export waits for a schema that carries it"
+    ],
+    "single-ira-rollover": [
+      "calculation f1099r"
+    ],
+    "single-ira-qualified-plan-rollover": [
+      "calculation f1099r"
+    ],
+    "single-ira-2026-rollover": [
+      "calculation f1099r"
+    ],
+    "single-ira-late-automatic-waiver": [
+      "calculation f1099r"
+    ],
+    "single-ira-late-self-certification": [
+      "calculation f1099r"
+    ],
+    "single-ira-late-irs-ruling": [
+      "calculation f1099r"
+    ],
+    "single-ira-late-frozen-deposit": [
+      "calculation f1099r"
+    ],
+    "single-hsa-code2-excess": [
+      "calculation form8889"
+    ],
+    "joint-two-hsa-owners": [
+      "xml Form 8889 paired printed lines differ from owner source calculation"
+    ],
+    "joint-other-coverage-hsa-current-excess": [
+      "calculation form8889"
+    ],
+    "single-sequential-no-aptc-policies-200-fpl": [
+      "xml Form 8962 two-policy monthly income differs from finalized return"
+    ],
+    "single-sequential-three-no-aptc-policies-200-fpl": [
+      "xml Form 8962 three-policy monthly income differs from finalized return"
+    ],
+    "single-alternating-three-no-aptc-policies-200-fpl": [
+      "xml Form 8962 three-policy monthly income differs from finalized return"
+    ],
+    "single-two-no-aptc-policies-july-uncovered": [
+      "xml Form 8962 two-policy monthly income differs from finalized return"
+    ],
+    "single-three-no-aptc-policies-september-uncovered": [
+      "xml Form 8962 three-policy monthly income differs from finalized return"
+    ],
+    "single-three-no-aptc-policies-three-uncovered-months": [
+      "xml Form 8962 three-policy monthly income differs from finalized return"
+    ],
+    "single-three-no-aptc-policies-four-uncovered-months": [
+      "xml Form 8962 three-policy monthly income differs from finalized return"
+    ],
+    "single-two-no-aptc-policies-ten-uncovered-months": [
+      "xml Form 8962 two-policy monthly income differs from finalized return"
+    ],
+    "single-three-no-aptc-policies-nine-uncovered-months": [
+      "xml Form 8962 three-policy monthly income differs from finalized return"
+    ],
+    "single-four-sequential-no-aptc-policies-full-year": [
+      "xml Form 8962 four-policy monthly income differs from finalized return"
+    ],
+    "single-four-sequential-no-aptc-policies-four-gaps": [
+      "xml Form 8962 four-policy monthly income differs from finalized return"
+    ],
+    "single-five-sequential-no-aptc-policies-full-year": [
+      "xml Form 8962 5-policy monthly income differs from finalized return"
+    ],
+    "single-two-sequential-no-aptc-policies-protected-partial": [
+      "xml Form 8962 two-policy monthly income differs from finalized return"
+    ],
+    "single-twelve-sequential-no-aptc-policies-full-year": [
+      "xml Form 8962 12-policy monthly income differs from finalized return"
+    ],
+    "single-marketplace-aptc-repayment": [
+      "xml Form 8962 annual line 11 household income must reconcile to finalized Form 1040"
+    ],
+    "single-alternating-policies-all-covered-slcsp-corrections": [
+      "xml Form 8962 household income and above-400%-FPL contribution must reconcile to finalized Form 1040"
+    ],
+    "single-alternating-policies-both-slcsp-corrected": [
+      "xml Form 8962 household income and above-400%-FPL contribution must reconcile to finalized Form 1040"
+    ],
+    "single-five-sequential-corrected-slcsp-policies": [
+      "xml Form 8962 household income and above-400%-FPL contribution must reconcile to finalized Form 1040"
+    ],
+    "single-situation4-nonenrolled-other-taxpayer": [
+      "xml Form 8962 shared policy amounts differ from source allocation and calculated credit"
+    ],
+    "single-situation4-two-agreed-percentages": [
+      "xml Form 8962 shared policy amounts differ from source allocation and calculated credit"
+    ],
+    "mfs-shared-policy-repayment": [
+      "xml Form 8962 shared MFS amounts differ from source allocation and calculated credit"
+    ],
+    "mfs-shared-policy-exception": [
+      "xml Form 8962 shared MFS amounts differ from source allocation and calculated credit"
+    ],
+    "single-w2-code-d-excess-line1h": [
+      "calculation w2"
+    ],
+    "single-1099r-code8-corrective-line1h": [
+      "calculation f1099r"
+    ],
+    "single-form2555-full-year-physical-presence": [
+      "calculation form2555"
+    ],
+    "single-form4952-interest-and-dividends": [
+      "xml Form 1098 issuer Copy B year, lender, or borrower TIN differs from source"
+    ],
+    "single-form4562-section179-w2-income-limit": [
+      "calculation form4562"
+    ],
+    "single-form8863-lifetime-learning-scholarship": [
+      "xml Form 8863 filing needs source MAGI, Credit Limit Worksheet, and finalized Form 1040/Schedule 3 credit lines to reconcile"
+    ],
+    "single-form8606-post-year-contribution-and-distribution": [
+      "xml Schedule 1-A positive source needs sourced Part I zero-exclusion review or a Form 2555 exclusion review"
+    ],
+    "single-form8815-series-ee-bond-exclusion": [
+      "calculation form8815"
+    ],
+    "single-form8915f-disaster-and-ordinary-plan-distributions": [
+      "calculation f1099r"
+    ],
+    "single-form8829-rented-home-office": [
+      "calculation form_8829"
+    ],
+    "single-form5695-door-and-air-conditioner": [
+      "calculation form5695"
+    ],
+    "single-form461-schedule-c-excess-business-loss": [
+      "calculation form8995"
+    ],
+    "single-schedule-j-farm-income-averaging": [
+      "calculation income_tax_calculation"
+    ],
+    "mfj-form2210f-first-joint-filing": [
+      "calculation f1040"
+    ],
+    "single-new-clean-vehicle-personal-credit": [
+      "rule SA-F8936-001",
+      "rule SA-F8936-048"
+    ],
+    "single-form8863-two-school-llc": [
+      "xml Form 8863 filing needs source MAGI, Credit Limit Worksheet, and finalized Form 1040/Schedule 3 credit lines to reconcile"
+    ],
+    "single-form8863-two-school-aoc": [
+      "xml Form 8863 filing needs source MAGI, Credit Limit Worksheet, and finalized Form 1040/Schedule 3 credit lines to reconcile"
+    ],
+    "single-multiple-schedule-c-net-loss": [
+      "rule S1-F1040-195"
+    ],
+    "qualified-tip-qbi-mfj-independent-owner-tips": [
+      "calculation schedule1a"
+    ],
+    "qualified-tip-qbi-mfj-cap-phaseout-owner-allocation": [
+      "calculation schedule1a"
+    ],
+    "qualified-tip-qbi-mfj-employee-business-tip-allocation": [
+      "calculation schedule1a"
+    ],
+    "qualified-tip-qbi-advanced-event-wotc-tip-exclusion": [
+      "xml Form 8995-A FilingStatusThresholdCd 201750 is not a value the MeF schema enumerates; export waits for a schema that carries the return year's amounts"
+    ],
+    "tip-health-mfj-fully-phased-out": [
+      "calculation form7206",
+      "calculation schedule1a"
+    ],
+    "tip-health-mfj-owned-cap-phaseout": [
+      "calculation form7206",
+      "calculation schedule1a"
+    ],
+    "tip-health-mfj-primary-health-limited": [
+      "calculation form7206",
+      "calculation schedule1a"
+    ],
+    "tip-health-single-fully-phased-out": [
+      "xml Health plan needs its issued policy record and 12 issued monthly premium records"
+    ],
+    "tip-health-single-health-income-limited": [
+      "xml Health plan needs its issued policy record and 12 issued monthly premium records"
+    ],
+    "tip-health-single-positive-health": [
+      "xml Health plan needs its issued policy record and 12 issued monthly premium records"
+    ],
+    "tip-health-single-tip-netincome-limited": [
+      "xml Health plan needs its issued policy record and 12 issued monthly premium records"
+    ],
+    "tip-health-single-w2-qbi-binding": [
+      "xml Health plan needs its issued policy record and 12 issued monthly premium records"
+    ],
+    "mixed-cf-tip-above-zero-wotc": [
+      "calculation schedule1a"
+    ],
+    "mixed-cf-tip-health-income-limited": [
+      "calculation schedule1a"
+    ],
+    "mixed-cf-tip-health-netincome-limited": [
+      "calculation schedule1a"
+    ],
+    "mixed-cf-tip-no-health": [
+      "calculation schedule1a"
+    ],
+    "mixed-cf-tip-ordinary-no-credit": [
+      "calculation schedule1a"
+    ],
+    "mixed-cf-tip-owned-health": [
+      "calculation schedule1a"
+    ],
+    "mixed-cf-tip-phase-wotc": [
+      "calculation schedule1a"
+    ],
+    "same-proprietor-two-c-one-f-shop-full": [
+      "calculation form8995"
+    ],
+    "same-proprietor-two-c-one-f-shop-partial": [
+      "calculation form8995"
+    ],
+    "same-proprietor-two-c-one-f-shop-zero": [
+      "calculation form8995"
+    ]
+  },
+  "reasons": {
+    "owned-two-farm-wotc-phase": "MeF schema gap: 2026v1.0 IRS8995A/IRS8995AScheduleA enumerate only the TY2025 FilingStatusThresholdCd/FilingStatusPhaseInRangeCd values (F8995A-004-06, SA-F8995A-003-06); the draft 2026 Form 8995-A line 21/23 amounts ($201,750, $201,775 MFS, $403,500; $75,000/$150,000) wait for a schema that carries them",
+    "owned-two-farm-wotc-phase-loss": "MeF schema gap: 2026v1.0 IRS8995A/IRS8995AScheduleA enumerate only the TY2025 FilingStatusThresholdCd/FilingStatusPhaseInRangeCd values (F8995A-004-06, SA-F8995A-003-06); the draft 2026 Form 8995-A line 21/23 amounts ($201,750, $201,775 MFS, $403,500; $75,000/$150,000) wait for a schema that carries them",
+    "owned-two-farm-health-phase": "MeF schema gap: 2026v1.0 IRS8995A/IRS8995AScheduleA enumerate only the TY2025 FilingStatusThresholdCd/FilingStatusPhaseInRangeCd values (F8995A-004-06, SA-F8995A-003-06); the draft 2026 Form 8995-A line 21/23 amounts ($201,750, $201,775 MFS, $403,500; $75,000/$150,000) wait for a schema that carries them",
+    "owned-two-farm-health-loss-owner": "MeF schema gap: 2026v1.0 IRS8995A/IRS8995AScheduleA enumerate only the TY2025 FilingStatusThresholdCd/FilingStatusPhaseInRangeCd values (F8995A-004-06, SA-F8995A-003-06); the draft 2026 Form 8995-A line 21/23 amounts ($201,750, $201,775 MFS, $403,500; $75,000/$150,000) wait for a schema that carries them",
+    "single-issued-k1-lihtc-recapture": "Dated 2025 fact: a source document or date in the sample belongs to TY2025",
+    "joint-spouse-issued-k1-lihtc-recapture": "Dated 2025 fact: a source document or date in the sample belongs to TY2025",
+    "owned-controlled-farm-wotc-phase": "MeF schema gap: 2026v1.0 IRS8995A/IRS8995AScheduleA enumerate only the TY2025 FilingStatusThresholdCd/FilingStatusPhaseInRangeCd values (F8995A-004-06, SA-F8995A-003-06); the draft 2026 Form 8995-A line 21/23 amounts ($201,750, $201,775 MFS, $403,500; $75,000/$150,000) wait for a schema that carries them",
+    "owned-controlled-farm-wotc-phase-loss": "MeF schema gap: 2026v1.0 IRS8995A/IRS8995AScheduleA enumerate only the TY2025 FilingStatusThresholdCd/FilingStatusPhaseInRangeCd values (F8995A-004-06, SA-F8995A-003-06); the draft 2026 Form 8995-A line 21/23 amounts ($201,750, $201,775 MFS, $403,500; $75,000/$150,000) wait for a schema that carries them",
+    "owned-controlled-mixed-cf-wotc-phase": "MeF schema gap: 2026v1.0 IRS8995A/IRS8995AScheduleA enumerate only the TY2025 FilingStatusThresholdCd/FilingStatusPhaseInRangeCd values (F8995A-004-06, SA-F8995A-003-06); the draft 2026 Form 8995-A line 21/23 amounts ($201,750, $201,775 MFS, $403,500; $75,000/$150,000) wait for a schema that carries them",
+    "owned-controlled-mixed-cf-wotc-phase-loss": "MeF schema gap: 2026v1.0 IRS8995A/IRS8995AScheduleA enumerate only the TY2025 FilingStatusThresholdCd/FilingStatusPhaseInRangeCd values (F8995A-004-06, SA-F8995A-003-06); the draft 2026 Form 8995-A line 21/23 amounts ($201,750, $201,775 MFS, $403,500; $75,000/$150,000) wait for a schema that carries them",
+    "owned-mixed-cf-health-phase": "MeF schema gap: 2026v1.0 IRS8995A/IRS8995AScheduleA enumerate only the TY2025 FilingStatusThresholdCd/FilingStatusPhaseInRangeCd values (F8995A-004-06, SA-F8995A-003-06); the draft 2026 Form 8995-A line 21/23 amounts ($201,750, $201,775 MFS, $403,500; $75,000/$150,000) wait for a schema that carries them",
+    "owned-farm-wotc-loss-phase-primary-f-offset": "MeF schema gap: 2026v1.0 IRS8995A/IRS8995AScheduleA enumerate only the TY2025 FilingStatusThresholdCd/FilingStatusPhaseInRangeCd values (F8995A-004-06, SA-F8995A-003-06); the draft 2026 Form 8995-A line 21/23 amounts ($201,750, $201,775 MFS, $403,500; $75,000/$150,000) wait for a schema that carries them",
+    "owned-farm-wotc-loss-below-primary-limited-credit": "Open TY2026 work: the \u00a7199A(i) minimum needs material participation facts the sample does not record",
+    "single-disabled-access-interpreter-partial": "MeF schema gap: 2026v1.0 has no element for the IRC \u00a7199A(i) minimum deduction (2026 Form 8995 line 16 / Form 8995-A line 40)",
+    "single-disabled-access-interpreter-zero": "MeF schema gap: 2026v1.0 has no element for the IRC \u00a7199A(i) minimum deduction (2026 Form 8995 line 16 / Form 8995-A line 40)",
+    "optional-same-owner": "Open TY2026 work: the \u00a7199A(i) minimum needs material participation facts the sample does not record",
+    "owned-farm-wotc-spouse-phase": "MeF schema gap: 2026v1.0 IRS8995A/IRS8995AScheduleA enumerate only the TY2025 FilingStatusThresholdCd/FilingStatusPhaseInRangeCd values (F8995A-004-06, SA-F8995A-003-06); the draft 2026 Form 8995-A line 21/23 amounts ($201,750, $201,775 MFS, $403,500; $75,000/$150,000) wait for a schema that carries them",
+    "owned-farm-wotc-ordinary-spouse-phase": "MeF schema gap: 2026v1.0 IRS8995A/IRS8995AScheduleA enumerate only the TY2025 FilingStatusThresholdCd/FilingStatusPhaseInRangeCd values (F8995A-004-06, SA-F8995A-003-06); the draft 2026 Form 8995-A line 21/23 amounts ($201,750, $201,775 MFS, $403,500; $75,000/$150,000) wait for a schema that carries them",
+    "owned-farm-wotc-three-farms-phase": "MeF schema gap: 2026v1.0 IRS8995A/IRS8995AScheduleA enumerate only the TY2025 FilingStatusThresholdCd/FilingStatusPhaseInRangeCd values (F8995A-004-06, SA-F8995A-003-06); the draft 2026 Form 8995-A line 21/23 amounts ($201,750, $201,775 MFS, $403,500; $75,000/$150,000) wait for a schema that carries them",
+    "joint-controlled-wotc-phasein": "MeF schema gap: 2026v1.0 IRS8995A/IRS8995AScheduleA enumerate only the TY2025 FilingStatusThresholdCd/FilingStatusPhaseInRangeCd values (F8995A-004-06, SA-F8995A-003-06); the draft 2026 Form 8995-A line 21/23 amounts ($201,750, $201,775 MFS, $403,500; $75,000/$150,000) wait for a schema that carries them",
+    "joint-controlled-wotc-fractional-phasein": "MeF schema gap: 2026v1.0 IRS8995A/IRS8995AScheduleA enumerate only the TY2025 FilingStatusThresholdCd/FilingStatusPhaseInRangeCd values (F8995A-004-06, SA-F8995A-003-06); the draft 2026 Form 8995-A line 21/23 amounts ($201,750, $201,775 MFS, $403,500; $75,000/$150,000) wait for a schema that carries them",
+    "joint-both-owner-wotc-phasein": "MeF schema gap: 2026v1.0 IRS8995A/IRS8995AScheduleA enumerate only the TY2025 FilingStatusThresholdCd/FilingStatusPhaseInRangeCd values (F8995A-004-06, SA-F8995A-003-06); the draft 2026 Form 8995-A line 21/23 amounts ($201,750, $201,775 MFS, $403,500; $75,000/$150,000) wait for a schema that carries them",
+    "joint-both-owner-wotc-one-phasein": "MeF schema gap: 2026v1.0 IRS8995A/IRS8995AScheduleA enumerate only the TY2025 FilingStatusThresholdCd/FilingStatusPhaseInRangeCd values (F8995A-004-06, SA-F8995A-003-06); the draft 2026 Form 8995-A line 21/23 amounts ($201,750, $201,775 MFS, $403,500; $75,000/$150,000) wait for a schema that carries them",
+    "joint-spouse-wotc-phasein": "MeF schema gap: 2026v1.0 IRS8995A/IRS8995AScheduleA enumerate only the TY2025 FilingStatusThresholdCd/FilingStatusPhaseInRangeCd values (F8995A-004-06, SA-F8995A-003-06); the draft 2026 Form 8995-A line 21/23 amounts ($201,750, $201,775 MFS, $403,500; $75,000/$150,000) wait for a schema that carries them",
+    "joint-spouse-wotc-upper-edge": "MeF schema gap: 2026v1.0 IRS8995A/IRS8995AScheduleA enumerate only the TY2025 FilingStatusThresholdCd/FilingStatusPhaseInRangeCd values (F8995A-004-06, SA-F8995A-003-06); the draft 2026 Form 8995-A line 21/23 amounts ($201,750, $201,775 MFS, $403,500; $75,000/$150,000) wait for a schema that carries them",
+    "joint-spouse-wotc-upper-plus-one": "MeF schema gap: 2026v1.0 IRS8995A/IRS8995AScheduleA enumerate only the TY2025 FilingStatusThresholdCd/FilingStatusPhaseInRangeCd values (F8995A-004-06, SA-F8995A-003-06); the draft 2026 Form 8995-A line 21/23 amounts ($201,750, $201,775 MFS, $403,500; $75,000/$150,000) wait for a schema that carries them",
+    "joint-primary-wotc-phasein": "MeF schema gap: 2026v1.0 IRS8995A/IRS8995AScheduleA enumerate only the TY2025 FilingStatusThresholdCd/FilingStatusPhaseInRangeCd values (F8995A-004-06, SA-F8995A-003-06); the draft 2026 Form 8995-A line 21/23 amounts ($201,750, $201,775 MFS, $403,500; $75,000/$150,000) wait for a schema that carries them",
+    "joint-primary-wotc-upper-edge": "MeF schema gap: 2026v1.0 IRS8995A/IRS8995AScheduleA enumerate only the TY2025 FilingStatusThresholdCd/FilingStatusPhaseInRangeCd values (F8995A-004-06, SA-F8995A-003-06); the draft 2026 Form 8995-A line 21/23 amounts ($201,750, $201,775 MFS, $403,500; $75,000/$150,000) wait for a schema that carries them",
+    "joint-primary-wotc-upper-plus-one": "MeF schema gap: 2026v1.0 IRS8995A/IRS8995AScheduleA enumerate only the TY2025 FilingStatusThresholdCd/FilingStatusPhaseInRangeCd values (F8995A-004-06, SA-F8995A-003-06); the draft 2026 Form 8995-A line 21/23 amounts ($201,750, $201,775 MFS, $403,500; $75,000/$150,000) wait for a schema that carries them",
+    "single-form8994-direct-employer-zero": "MeF schema gap: 2026v1.0 has no element for the IRC \u00a7199A(i) minimum deduction (2026 Form 8995 line 16 / Form 8995-A line 40)",
+    "single-medicare-msa-partial-disability-prior-account": "Dated 2025 fact: a source document or date in the sample belongs to TY2025",
+    "mfs-ny-primary-form8995a-accounting-sstb-phasein": "MeF schema gap: 2026v1.0 IRS8995A/IRS8995AScheduleA enumerate only the TY2025 FilingStatusThresholdCd/FilingStatusPhaseInRangeCd values (F8995A-004-06, SA-F8995A-003-06); the draft 2026 Form 8995-A line 21/23 amounts ($201,750, $201,775 MFS, $403,500; $75,000/$150,000) wait for a schema that carries them",
+    "mfs-ak-primary-form8995a-accounting-sstb-phasein": "MeF schema gap: 2026v1.0 IRS8995A/IRS8995AScheduleA enumerate only the TY2025 FilingStatusThresholdCd/FilingStatusPhaseInRangeCd values (F8995A-004-06, SA-F8995A-003-06); the draft 2026 Form 8995-A line 21/23 amounts ($201,750, $201,775 MFS, $403,500; $75,000/$150,000) wait for a schema that carries them",
+    "mfs-tn-primary-form8995a-accounting-sstb-phasein": "MeF schema gap: 2026v1.0 IRS8995A/IRS8995AScheduleA enumerate only the TY2025 FilingStatusThresholdCd/FilingStatusPhaseInRangeCd values (F8995A-004-06, SA-F8995A-003-06); the draft 2026 Form 8995-A line 21/23 amounts ($201,750, $201,775 MFS, $403,500; $75,000/$150,000) wait for a schema that carries them",
+    "mfs-sd-primary-form8995a-accounting-sstb-phasein": "MeF schema gap: 2026v1.0 IRS8995A/IRS8995AScheduleA enumerate only the TY2025 FilingStatusThresholdCd/FilingStatusPhaseInRangeCd values (F8995A-004-06, SA-F8995A-003-06); the draft 2026 Form 8995-A line 21/23 amounts ($201,750, $201,775 MFS, $403,500; $75,000/$150,000) wait for a schema that carries them",
+    "mfs-primary-form8995a-accounting-sstb-phasein": "MeF schema gap: 2026v1.0 IRS8995A/IRS8995AScheduleA enumerate only the TY2025 FilingStatusThresholdCd/FilingStatusPhaseInRangeCd values (F8995A-004-06, SA-F8995A-003-06); the draft 2026 Form 8995-A line 21/23 amounts ($201,750, $201,775 MFS, $403,500; $75,000/$150,000) wait for a schema that carries them",
+    "joint-primary-form8995a-accounting-sstb-phasein": "MeF schema gap: 2026v1.0 IRS8995A/IRS8995AScheduleA enumerate only the TY2025 FilingStatusThresholdCd/FilingStatusPhaseInRangeCd values (F8995A-004-06, SA-F8995A-003-06); the draft 2026 Form 8995-A line 21/23 amounts ($201,750, $201,775 MFS, $403,500; $75,000/$150,000) wait for a schema that carries them",
+    "single-form8995a-accounting-sstb-no-payroll": "MeF schema gap: 2026v1.0 IRS8995A/IRS8995AScheduleA enumerate only the TY2025 FilingStatusThresholdCd/FilingStatusPhaseInRangeCd values (F8995A-004-06, SA-F8995A-003-06); the draft 2026 Form 8995-A line 21/23 amounts ($201,750, $201,775 MFS, $403,500; $75,000/$150,000) wait for a schema that carries them",
+    "single-form8995a-accounting-sstb-phasein": "MeF schema gap: 2026v1.0 IRS8995A/IRS8995AScheduleA enumerate only the TY2025 FilingStatusThresholdCd/FilingStatusPhaseInRangeCd values (F8995A-004-06, SA-F8995A-003-06); the draft 2026 Form 8995-A line 21/23 amounts ($201,750, $201,775 MFS, $403,500; $75,000/$150,000) wait for a schema that carries them",
+    "single-form8995a-patron-farm": "Open TY2026 work: QBI route replays TY2025 amounts from the sample's reviewed sources",
+    "single-form8995a-patron-c-health": "Dated 2025 fact: the reviewed health plan carries its TY2025 Schedule 1 line 15 SE deduction; TY2026 computes it on the 2026 wage base",
+    "single-form8995a-patron-phase-farm": "Open TY2026 work: QBI route replays TY2025 amounts from the sample's reviewed sources",
+    "single-form8995a-patron-phase-c-health": "Dated 2025 fact: the reviewed health plan carries its TY2025 Schedule 1 line 15 SE deduction; TY2026 computes it on the 2026 wage base",
+    "single-form8995a-patron-phase-income-cap": "MeF schema gap: 2026v1.0 IRS8995A/IRS8995AScheduleA enumerate only the TY2025 FilingStatusThresholdCd/FilingStatusPhaseInRangeCd values (F8995A-004-06, SA-F8995A-003-06); the draft 2026 Form 8995-A line 21/23 amounts ($201,750, $201,775 MFS, $403,500; $75,000/$150,000) wait for a schema that carries them",
+    "single-form8995a-patron-phase-unbound": "Open TY2026 work: QBI route replays TY2025 amounts from the sample's reviewed sources",
+    "joint-form8995a-patron-farm": "Open TY2026 work: QBI route replays TY2025 amounts from the sample's reviewed sources",
+    "joint-form8995a-patron-c-health": "Dated 2025 fact: the reviewed health plan carries its TY2025 Schedule 1 line 15 SE deduction; TY2026 computes it on the 2026 wage base",
+    "joint-form8995a-patron-income-cap": "MeF schema gap: 2026v1.0 IRS8995A/IRS8995AScheduleA enumerate only the TY2025 FilingStatusThresholdCd/FilingStatusPhaseInRangeCd values (F8995A-004-06, SA-F8995A-003-06); the draft 2026 Form 8995-A line 21/23 amounts ($201,750, $201,775 MFS, $403,500; $75,000/$150,000) wait for a schema that carries them",
+    "joint-spouse-owned-form8995a-patron-farm": "Open TY2026 work: QBI route replays TY2025 amounts from the sample's reviewed sources",
+    "joint-spouse-owned-form8995a-patron-c-health": "Dated 2025 fact: the reviewed health plan carries its TY2025 Schedule 1 line 15 SE deduction; TY2026 computes it on the 2026 wage base",
+    "joint-spouse-owned-form8995a-patron-income-cap": "MeF schema gap: 2026v1.0 IRS8995A/IRS8995AScheduleA enumerate only the TY2025 FilingStatusThresholdCd/FilingStatusPhaseInRangeCd values (F8995A-004-06, SA-F8995A-003-06); the draft 2026 Form 8995-A line 21/23 amounts ($201,750, $201,775 MFS, $403,500; $75,000/$150,000) wait for a schema that carries them",
+    "single-form8995a-two-business-aggregation": "Open TY2026 work: QBI route replays TY2025 amounts from the sample's reviewed sources",
+    "single-form8863-missing-tuition-form-taxable-scholarship-phaseout": "Open TY2026 work: TY2026 executeReturn does not run the TY2025 staged source pipeline",
+    "single-source-qef-1294-election": "Open TY2026 work: TY2026 executeReturn does not run the TY2025 staged source pipeline",
+    "single-passive-partnership-new-markets": "Open TY2026 work: Form 8582-CR line 6 replays the TY2025 ordinary-tax method",
+    "single-mixed-passive-new-markets": "Open TY2026 work: Form 8582-CR line 6 replays the TY2025 ordinary-tax method",
+    "single-reviewed-adoption-credit": "Open TY2026 work: TY2026 executeReturn runs the bare graph, not the TY2025 staged source pipeline (Form 8839/8863 two-pass, Schedule J, Form 8990, QEF refigure), so public source inputs reach the node unparsed",
+    "single-divorced-agreed-joint-estimated-payment": "Dated 2025 fact: a source document or date in the sample belongs to TY2025",
+    "single-w2-three-eic-children-with-reviewed-birth": "Named TY2025-only route: the node refuses TY2026 until that year's law is implemented",
+    "single-1098-purchase-points": "Dated 2025 fact: the retained Form 1098 Copy B is printed for 2025",
+    "mfs-two-loan-mortgage-limit": "Dated 2025 fact: the retained Form 1098 Copy B is printed for 2025",
+    "single-1098-construction-refinance-points": "Dated 2025 fact: the retained Form 1098 Copy B is printed for 2025",
+    "single-unreported-refinance-points": "Dated 2025 fact: the retained Form 1098 Copy B is printed for 2025",
+    "single-2023-refinance-points-ledger": "Dated 2025 fact: the retained Form 1098 Copy B is printed for 2025",
+    "single-1098-prior-year-recovery": "Dated 2025 fact: the retained Form 1098 Copy B is printed for 2025",
+    "single-8862-ctc-reinstatement": "Open TY2026 work in Schedule 8812 (owned by the Schedule 8812 earned-income work)",
+    "single-five-dependent-continuation": "Open TY2026 work in Schedule 8812 (owned by the Schedule 8812 earned-income work)",
+    "single-withheld-w2g": "Dated 2025 fact: a source document or date in the sample belongs to TY2025",
+    "joint-schedule-h-spouse-withholding-only": "Open TY2026 work: Schedule H family withholding source replays TY2025 payroll rules",
+    "single-schedule-h-fica-and-futa": "Named TY2025-only route: the node refuses TY2026 until that year's law is implemented",
+    "single-schedule-h-three-state-futa": "Named TY2025-only route: the node refuses TY2026 until that year's law is implemented",
+    "single-form8814-child-dividends-adjustments": "Named TY2025-only route: the node refuses TY2026 until that year's law is implemented",
+    "single-form8814-child-gain-with-schedule-d": "Named TY2025-only route: the node refuses TY2026 until that year's law is implemented",
+    "single-ordinary-noncash-gift": "Dated 2025 fact: a source document or date in the sample belongs to TY2025 (Form 8283 contribution dated 2025, rule F8283-006-02)",
+    "single-section-a-capital-gain-reduction-gift": "Open TY2026 work: Form 8283/Schedule A reconciliation replays TY2025 itemized rules (charitable work owned elsewhere)",
+    "single-section-a-donor-prepared-manuscript-reduction": "Dated 2025 fact: a source document or date in the sample belongs to TY2025 (Form 8283 contribution dated 2025, rule F8283-006-02)",
+    "single-two-short-term-reduced-gifts": "Open TY2026 work: Form 8283/Schedule A reconciliation replays TY2025 itemized rules (charitable work owned elsewhere)",
+    "single-new-markets-business-credit": "Correct block in every year: Form 8874 direct QEI needs authenticated CDE status (also baselined for TY2025)",
+    "single-long-name-new-markets-investment": "Correct block in every year: Form 8874 direct QEI needs authenticated CDE status (also baselined for TY2025)",
+    "single-two-new-markets-investments": "Correct block in every year: Form 8874 direct QEI needs authenticated CDE status (also baselined for TY2025)",
+    "single-six-new-markets-investments": "Correct block in every year: Form 8874 direct QEI needs authenticated CDE status (also baselined for TY2025)",
+    "single-seven-new-markets-investments": "Correct block in every year: Form 8874 direct QEI needs authenticated CDE status (also baselined for TY2025)",
+    "single-twenty-four-new-markets-investments": "Correct block in every year: Form 8874 direct QEI needs authenticated CDE status (also baselined for TY2025)",
+    "single-geothermal-and-new-markets-credits": "Correct block in every year: Form 8874 direct QEI needs authenticated CDE status (also baselined for TY2025)",
+    "single-partnership-code-k-and-w2g": "Dated 2025 fact: a source document or date in the sample belongs to TY2025",
+    "single-employer-statement-qualified-tips-schedule1a": "Named TY2025-only route: the node refuses TY2026 until that year's law is implemented",
+    "single-form4070-high-wage-qualified-tips-schedule1a": "Named TY2025-only route: the node refuses TY2026 until that year's law is implemented",
+    "single-form4070-form4137-no-w2-code-schedule1a": "Named TY2025-only route: the node refuses TY2026 until that year's law is implemented",
+    "single-k-personal-gain-loss": "Dated 2025 fact: a source document or date in the sample belongs to TY2025 (1099-K personal item sale dates)",
+    "single-k-personal-selling-fees": "Dated 2025 fact: a source document or date in the sample belongs to TY2025 (1099-K personal item sale dates)",
+    "single-k-business-refund": "Named TY2025-only route: the node refuses TY2026 until that year's law is implemented",
+    "single-k-business-refund-and-fee": "Named TY2025-only route: the node refuses TY2026 until that year's law is implemented",
+    "single-k-reported-error": "Same finding in the TY2025 baseline: not a TY2026 difference",
+    "single-k-mixed-business-personal": "Dated 2025 fact: a source document or date in the sample belongs to TY2025 (1099-K personal item sale dates)",
+    "single-k-mixed-duplicate-personal": "Dated 2025 fact: a source document or date in the sample belongs to TY2025 (1099-K personal item sale dates)",
+    "single-k-mixed-error-duplicate-personal": "Dated 2025 fact: a source document or date in the sample belongs to TY2025 (1099-K personal item sale dates)",
+    "single-schedule-c-simplified-home-office": "MeF schema gap: 2026v1.0 has no element for the IRC \u00a7199A(i) minimum deduction (2026 Form 8995 line 16 / Form 8995-A line 40)",
+    "single-two-at-risk-business-losses": "MeF schema gap: 2026v1.0 has no element for the IRC \u00a7199A(i) minimum deduction (2026 Form 8995 line 16 / Form 8995-A line 40)",
+    "single-ira-rollover": "Dated 2025 fact: a source document or date in the sample belongs to TY2025",
+    "single-ira-qualified-plan-rollover": "Dated 2025 fact: a source document or date in the sample belongs to TY2025",
+    "single-ira-2026-rollover": "Dated 2025 fact: a source document or date in the sample belongs to TY2025",
+    "single-ira-late-automatic-waiver": "Dated 2025 fact: a source document or date in the sample belongs to TY2025",
+    "single-ira-late-self-certification": "Dated 2025 fact: a source document or date in the sample belongs to TY2025",
+    "single-ira-late-irs-ruling": "Dated 2025 fact: a source document or date in the sample belongs to TY2025",
+    "single-ira-late-frozen-deposit": "Dated 2025 fact: a source document or date in the sample belongs to TY2025",
+    "single-hsa-code2-excess": "Dated 2025 fact: a source document or date in the sample belongs to TY2025",
+    "joint-two-hsa-owners": "Open TY2026 work: Form 8889 owner source calculation replays TY2025 HSA limits",
+    "joint-other-coverage-hsa-current-excess": "Open TY2026 work: Form 8889 coverage source review is dated to TY2025",
+    "single-sequential-no-aptc-policies-200-fpl": "Open TY2026 work: Form 8962 MeF reconciliation replays TY2025 premium tax credit tables",
+    "single-sequential-three-no-aptc-policies-200-fpl": "Open TY2026 work: Form 8962 MeF reconciliation replays TY2025 premium tax credit tables",
+    "single-alternating-three-no-aptc-policies-200-fpl": "Open TY2026 work: Form 8962 MeF reconciliation replays TY2025 premium tax credit tables",
+    "single-two-no-aptc-policies-july-uncovered": "Open TY2026 work: Form 8962 MeF reconciliation replays TY2025 premium tax credit tables",
+    "single-three-no-aptc-policies-september-uncovered": "Open TY2026 work: Form 8962 MeF reconciliation replays TY2025 premium tax credit tables",
+    "single-three-no-aptc-policies-three-uncovered-months": "Open TY2026 work: Form 8962 MeF reconciliation replays TY2025 premium tax credit tables",
+    "single-three-no-aptc-policies-four-uncovered-months": "Open TY2026 work: Form 8962 MeF reconciliation replays TY2025 premium tax credit tables",
+    "single-two-no-aptc-policies-ten-uncovered-months": "Open TY2026 work: Form 8962 MeF reconciliation replays TY2025 premium tax credit tables",
+    "single-three-no-aptc-policies-nine-uncovered-months": "Open TY2026 work: Form 8962 MeF reconciliation replays TY2025 premium tax credit tables",
+    "single-four-sequential-no-aptc-policies-full-year": "Open TY2026 work: Form 8962 MeF reconciliation replays TY2025 premium tax credit tables",
+    "single-four-sequential-no-aptc-policies-four-gaps": "Open TY2026 work: Form 8962 MeF reconciliation replays TY2025 premium tax credit tables",
+    "single-five-sequential-no-aptc-policies-full-year": "Open TY2026 work: Form 8962 MeF reconciliation replays TY2025 premium tax credit tables",
+    "single-two-sequential-no-aptc-policies-protected-partial": "Open TY2026 work: Form 8962 MeF reconciliation replays TY2025 premium tax credit tables",
+    "single-twelve-sequential-no-aptc-policies-full-year": "Open TY2026 work: Form 8962 MeF reconciliation replays TY2025 premium tax credit tables",
+    "single-marketplace-aptc-repayment": "Open TY2026 work: Form 8962 MeF reconciliation replays TY2025 premium tax credit tables",
+    "single-alternating-policies-all-covered-slcsp-corrections": "Open TY2026 work: Form 8962 MeF reconciliation replays TY2025 premium tax credit tables",
+    "single-alternating-policies-both-slcsp-corrected": "Open TY2026 work: Form 8962 MeF reconciliation replays TY2025 premium tax credit tables",
+    "single-five-sequential-corrected-slcsp-policies": "Open TY2026 work: Form 8962 MeF reconciliation replays TY2025 premium tax credit tables",
+    "single-situation4-nonenrolled-other-taxpayer": "Open TY2026 work: Form 8962 MeF reconciliation replays TY2025 premium tax credit tables",
+    "single-situation4-two-agreed-percentages": "Open TY2026 work: Form 8962 MeF reconciliation replays TY2025 premium tax credit tables",
+    "mfs-shared-policy-repayment": "Open TY2026 work: Form 8962 MeF reconciliation replays TY2025 premium tax credit tables",
+    "mfs-shared-policy-exception": "Open TY2026 work: Form 8962 MeF reconciliation replays TY2025 premium tax credit tables",
+    "single-w2-code-d-excess-line1h": "Named TY2025-only route: the node refuses TY2026 until that year's law is implemented",
+    "single-1099r-code8-corrective-line1h": "Named TY2025-only route: the node refuses TY2026 until that year's law is implemented",
+    "single-form2555-full-year-physical-presence": "Named TY2025-only route: the node refuses TY2026 until that year's law is implemented",
+    "single-form4952-interest-and-dividends": "Dated 2025 fact: the retained Form 1098 Copy B is printed for 2025",
+    "single-form4562-section179-w2-income-limit": "Dated 2025 fact: a source document or date in the sample belongs to TY2025",
+    "single-form8863-lifetime-learning-scholarship": "Open TY2026 work: TY2026 executeReturn does not run the TY2025 staged source pipeline",
+    "single-form8606-post-year-contribution-and-distribution": "Open TY2026 work: Schedule 1-A Part I source review (owned by the Schedule 1-A and Form 8606 work)",
+    "single-form8815-series-ee-bond-exclusion": "Named TY2025-only route: the node refuses TY2026 until that year's law is implemented",
+    "single-form8915f-disaster-and-ordinary-plan-distributions": "Named TY2025-only route: the node refuses TY2026 until that year's law is implemented",
+    "single-form8829-rented-home-office": "Named TY2025-only route: the node refuses TY2026 until that year's law is implemented",
+    "single-form5695-door-and-air-conditioner": "Named TY2025-only route: the node refuses TY2026 until that year's law is implemented",
+    "single-form461-schedule-c-excess-business-loss": "Open TY2026 work: QBI route replays TY2025 amounts from the sample's reviewed sources",
+    "single-schedule-j-farm-income-averaging": "Named TY2025-only route: the node refuses TY2026 until that year's law is implemented",
+    "mfj-form2210f-first-joint-filing": "Open TY2026 work: Form 2210-F replays TY2025 tax",
+    "single-new-clean-vehicle-personal-credit": "Dated 2025 fact: a source document or date in the sample belongs to TY2025 (vehicle placed in service in 2025, rules SA-F8936-001/048)",
+    "single-form8863-two-school-llc": "Open TY2026 work: TY2026 executeReturn does not run the TY2025 staged source pipeline",
+    "single-form8863-two-school-aoc": "Open TY2026 work: TY2026 executeReturn does not run the TY2025 staged source pipeline",
+    "single-multiple-schedule-c-net-loss": "Same finding in the TY2025 baseline: not a TY2026 difference",
+    "qualified-tip-qbi-mfj-independent-owner-tips": "Open TY2026 pin: Schedule 1-A business-tip SE attribution reads the TY2025 SS wage base (schedule1a/calculation.ts); left for the Schedule 1-A owner",
+    "qualified-tip-qbi-mfj-cap-phaseout-owner-allocation": "Open TY2026 pin: Schedule 1-A business-tip SE attribution reads the TY2025 SS wage base (schedule1a/calculation.ts); left for the Schedule 1-A owner",
+    "qualified-tip-qbi-mfj-employee-business-tip-allocation": "Open TY2026 pin: Schedule 1-A business-tip SE attribution reads the TY2025 SS wage base (schedule1a/calculation.ts); left for the Schedule 1-A owner",
+    "qualified-tip-qbi-advanced-event-wotc-tip-exclusion": "MeF schema gap: 2026v1.0 IRS8995A/IRS8995AScheduleA enumerate only the TY2025 FilingStatusThresholdCd/FilingStatusPhaseInRangeCd values (F8995A-004-06, SA-F8995A-003-06); the draft 2026 Form 8995-A line 21/23 amounts ($201,750, $201,775 MFS, $403,500; $75,000/$150,000) wait for a schema that carries them",
+    "tip-health-mfj-fully-phased-out": "Dated 2025 fact: the issued health premium records are paid in 2025 (policy-records.ts still pins the 2025 date pattern); Open TY2026 pin: Schedule 1-A business-tip SE attribution reads the TY2025 SS wage base (schedule1a/calculation.ts); left for the Schedule 1-A owner",
+    "tip-health-mfj-owned-cap-phaseout": "Dated 2025 fact: the issued health premium records are paid in 2025 (policy-records.ts still pins the 2025 date pattern); Open TY2026 pin: Schedule 1-A business-tip SE attribution reads the TY2025 SS wage base (schedule1a/calculation.ts); left for the Schedule 1-A owner",
+    "tip-health-mfj-primary-health-limited": "Dated 2025 fact: the issued health premium records are paid in 2025 (policy-records.ts still pins the 2025 date pattern); Open TY2026 pin: Schedule 1-A business-tip SE attribution reads the TY2025 SS wage base (schedule1a/calculation.ts); left for the Schedule 1-A owner",
+    "tip-health-single-fully-phased-out": "Dated 2025 fact: the issued health premium records are paid in 2025 (policy-records.ts still pins the 2025 date pattern)",
+    "tip-health-single-health-income-limited": "Dated 2025 fact: the issued health premium records are paid in 2025 (policy-records.ts still pins the 2025 date pattern)",
+    "tip-health-single-positive-health": "Dated 2025 fact: the issued health premium records are paid in 2025 (policy-records.ts still pins the 2025 date pattern)",
+    "tip-health-single-tip-netincome-limited": "Dated 2025 fact: the issued health premium records are paid in 2025 (policy-records.ts still pins the 2025 date pattern)",
+    "tip-health-single-w2-qbi-binding": "Dated 2025 fact: the issued health premium records are paid in 2025 (policy-records.ts still pins the 2025 date pattern)",
+    "mixed-cf-tip-above-zero-wotc": "Open TY2026 pin: Schedule 1-A business-tip SE attribution reads the TY2025 SS wage base (schedule1a/calculation.ts); left for the Schedule 1-A owner",
+    "mixed-cf-tip-health-income-limited": "Open TY2026 pin: Schedule 1-A business-tip SE attribution reads the TY2025 SS wage base (schedule1a/calculation.ts); left for the Schedule 1-A owner",
+    "mixed-cf-tip-health-netincome-limited": "Open TY2026 pin: Schedule 1-A business-tip SE attribution reads the TY2025 SS wage base (schedule1a/calculation.ts); left for the Schedule 1-A owner",
+    "mixed-cf-tip-no-health": "Open TY2026 pin: Schedule 1-A business-tip SE attribution reads the TY2025 SS wage base (schedule1a/calculation.ts); left for the Schedule 1-A owner",
+    "mixed-cf-tip-ordinary-no-credit": "Open TY2026 pin: Schedule 1-A business-tip SE attribution reads the TY2025 SS wage base (schedule1a/calculation.ts); left for the Schedule 1-A owner",
+    "mixed-cf-tip-owned-health": "Open TY2026 pin: Schedule 1-A business-tip SE attribution reads the TY2025 SS wage base (schedule1a/calculation.ts); left for the Schedule 1-A owner",
+    "mixed-cf-tip-phase-wotc": "Open TY2026 pin: Schedule 1-A business-tip SE attribution reads the TY2025 SS wage base (schedule1a/calculation.ts); left for the Schedule 1-A owner",
+    "same-proprietor-two-c-one-f-shop-full": "Open TY2026 work: QBI route replays TY2025 amounts from the sample's reviewed sources",
+    "same-proprietor-two-c-one-f-shop-partial": "Open TY2026 work: QBI route replays TY2025 amounts from the sample's reviewed sources",
+    "same-proprietor-two-c-one-f-shop-zero": "Open TY2026 work: the \u00a7199A(i) minimum needs material participation facts the sample does not record"
+  }
+}

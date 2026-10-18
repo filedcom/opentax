@@ -8,6 +8,7 @@ import {
   filedControlledGroupEins,
   inputSchema,
 } from "../../../../../nodes/inputs/credits/business/f5884/index.ts";
+import { mefTaxYear } from "../../../../mef/support/year-config.ts";
 
 // Form 5884 (Rev. March 2021), the IRS continuous-use form for TY2025.
 // The field paths were inspected on the official fillable one-page PDF.
@@ -49,6 +50,7 @@ export const form5884Pdf: PdfFormDescriptor = {
     assertFarmWotcReturn(
       allPending.form8995a ?? allPending.form8995 ?? {},
       allPending,
+      mefTaxYear(),
       undefined,
       { key: "f5884", value: fields },
     );

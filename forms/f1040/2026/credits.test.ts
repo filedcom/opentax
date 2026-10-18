@@ -191,26 +191,32 @@ test("the qualifying-relative gross income limit reads the tax year", () => {
   assertEquals(ty2026.other_dependent_count, 1);
 });
 
-test("a TY2026 return refuses dependent reviews dated to TY2025", () => {
+test("a TY2026 custodial EIC release routes filing status to every threshold node", () => {
   const released = {
     ...child,
+    first_name: "Rose",
+    ssn: "222-33-4401",
     dependent_on_another_return: true,
     custodial_eitc_release_review: {
       form8332_source_reference: "Synthetic Form 8332",
       custody_record_reference: "Synthetic custody order",
-      custodial_parent_for_2025: true,
-      valid_2025_release_to_noncustodial_parent: true,
+      custodial_parent_for_tax_year: true,
+      valid_tax_year_release_to_noncustodial_parent: true,
       no_competing_eitc_claim_verified: true,
     },
   };
-  const diagnostics = f1040_2026.executeReturn(hohReturn([child, released]))
-    .diagnostics.map((item) => item.message).join("\n");
+  const result = f1040_2026.executeReturn(hohReturn([child, released]));
   assertEquals(
-    diagnostics.includes(
-      "TY2026 does not yet support these dependent facts: custodial_eitc_release_review",
-    ),
-    true,
+    result.diagnostics.filter((item) => item.severity === "error")
+      .map((item) => item.message),
+    [],
   );
+  for (const node of ["form8959", "standard_deduction", "form8960"]) {
+    assertEquals(
+      (result.pending[node] as Record<string, unknown>).filing_status,
+      "hoh",
+    );
+  }
 });
 
 const singleW2Return = {

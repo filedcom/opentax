@@ -25,6 +25,7 @@ import {
   inputSchema as form5884InputSchema,
 } from "../../../../../nodes/inputs/credits/business/f5884/index.ts";
 import { reconcileForm8941DocumentSource } from "../../credits/health/f8941_source.ts";
+import { mefTaxYear } from "../../../support/year-config.ts";
 
 type Fields = Partial<ReturnType<typeof inputSchema.parse>>;
 
@@ -287,6 +288,7 @@ export const scheduleF: MefFormDescriptor<
     assertFarmWotcReturn(
       context.pending?.form8995a ?? context.pending?.form8995 ?? {},
       context.pending,
+      mefTaxYear(context),
       context.filer,
       { key: "schedule_f", value: fields },
     );

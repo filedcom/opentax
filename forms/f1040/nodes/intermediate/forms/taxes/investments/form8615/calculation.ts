@@ -1,10 +1,11 @@
 import { FilingStatus } from "../../../../../types.ts";
 import type { Bracket } from "../../../../../config/2025.ts";
 import type { F8615Input } from "../../../../../inputs/taxes/investments/f8615/schema.ts";
+import { qualifiedDividendTax } from "../../../../worksheets/taxes/calculation/tax_table_2025.ts";
 import {
-  ordinaryTax2025,
-  qualifiedDividendTax2025,
-} from "../../../../worksheets/taxes/calculation/tax_table_2025.ts";
+  ordinaryTaxForYear,
+  preferentialRateSchedule,
+} from "../../../../worksheets/taxes/calculation/year_schedule.ts";
 
 export interface Form8615CalculationContext {
   childTaxableIncome: number;
@@ -18,6 +19,7 @@ export interface Form8615CalculationContext {
   childAdjustedGrossIncome?: number;
   childDeduction?: number;
   childForeignEarnedIncomeExclusion: number;
+  taxYear: number;
   brackets: {
     bracketsMfj: ReadonlyArray<Bracket>;
     bracketsSingle: ReadonlyArray<Bracket>;
@@ -33,6 +35,11 @@ export interface Line5PreferentialIncome {
   netCapitalGain: number;
 }
 
+// Form 8615 line 2: $1,350 and $2,700 for both TY2025 (2025 Form 8615) and
+// TY2026 (2 x $1,350 in the 2026 config). The TY2025 config's
+// kiddieUnearnedIncomeThreshold still holds 2,600, so it is not read here.
+const KIDDIE = { base: 1_350, double: 2_700 } as const;
+
 function roundedRatio(numerator: number, denominator: number): number {
   return Math.min(1, Math.round(numerator / denominator * 1_000) / 1_000);
 }
@@ -47,6 +54,7 @@ export function line5PreferentialIncome(
   line3: number,
   line5: number,
 ): Line5PreferentialIncome {
+  const kiddie = KIDDIE;
   const qualifiedDividends = context.childQualifiedDividends;
   const netCapitalGain = context.childNetCapitalGain;
   if (qualifiedDividends === undefined || netCapitalGain === undefined) {
@@ -108,7 +116,7 @@ export function line5PreferentialIncome(
         remainingGain - otherGain,
       ),
     );
-  } else if (line2 > 2_700) {
+  } else if (line2 > kiddie.double) {
     // Line 5 Worksheet #2: itemized line 2 includes directly connected costs.
     const connected =
       source.itemized_deductions_directly_connected_to_preferential_income;
@@ -136,14 +144,14 @@ export function line5PreferentialIncome(
       Math.min(
         line5,
         qualifiedDividends - connectedQualified -
-          Math.round(1_350 * baseQualified),
+          Math.round(kiddie.base * baseQualified),
       ),
     );
     allocatedGain = Math.max(
       0,
       Math.min(
         line5 - allocatedQualified,
-        netCapitalGain - connectedGain - Math.round(1_350 * baseGain),
+        netCapitalGain - connectedGain - Math.round(kiddie.base * baseGain),
       ),
     );
   } else {
@@ -153,7 +161,7 @@ export function line5PreferentialIncome(
       Math.min(
         line5,
         qualifiedDividends -
-          Math.round(2_700 * roundedRatio(qualifiedDividends, line1)),
+          Math.round(kiddie.double * roundedRatio(qualifiedDividends, line1)),
       ),
     );
     allocatedGain = Math.max(
@@ -161,7 +169,7 @@ export function line5PreferentialIncome(
       Math.min(
         line5 - allocatedQualified,
         netCapitalGain -
-          Math.round(2_700 * roundedRatio(netCapitalGain, line1)),
+          Math.round(kiddie.double * roundedRatio(netCapitalGain, line1)),
       ),
     );
   }
@@ -220,9 +228,11 @@ export function calculateForm8615(
   }
 
   const line1 = Math.round(source.child_unearned_income);
-  const line2 = context.takingStandardDeduction ? 2_700 : Math.max(
-    2_700,
-    1_350 + Math.round(source.itemized_deductions_directly_connected ?? 0),
+  const kiddie = KIDDIE;
+  const line2 = context.takingStandardDeduction ? kiddie.double : Math.max(
+    kiddie.double,
+    kiddie.base +
+      Math.round(source.itemized_deductions_directly_connected ?? 0),
   );
   const line3 = line1 - line2;
   const base = {
@@ -350,13 +360,14 @@ export function calculateForm8615(
     (context.childNetCapitalGain ?? 0) - childPreferential.netCapitalGain,
   );
   const line9 = line8Qualified + line8Gain > 0
-    ? qualifiedDividendTax2025(
+    ? qualifiedDividendTax(
       line8,
       line8Qualified,
       line8Gain,
       source.parent_filing_status,
+      preferentialRateSchedule(context.taxYear),
     )
-    : ordinaryTax2025(line8, source.parent_filing_status);
+    : ordinaryTaxForYear(line8, source.parent_filing_status, context.taxYear);
   const line10 = Math.round(source.parent_income_tax);
   if (line10 > line9) {
     throw new Error("Form 8615 parent line 10 tax exceeds family line 9 tax");
@@ -371,25 +382,27 @@ export function calculateForm8615(
   );
   const line15 = line14 > 0
     ? childQualifiedOnLine14 + childGainOnLine14 > 0
-      ? qualifiedDividendTax2025(
+      ? qualifiedDividendTax(
         line14,
         childQualifiedOnLine14,
         childGainOnLine14,
         context.childFilingStatus,
+        preferentialRateSchedule(context.taxYear),
       )
-      : ordinaryTax2025(line14, context.childFilingStatus)
+      : ordinaryTaxForYear(line14, context.childFilingStatus, context.taxYear)
     : 0;
   const line16 = line13 + line15;
   const childQualified = context.childQualifiedDividends ?? 0;
   const childGain = context.childNetCapitalGain ?? 0;
   const line17 = childQualified + childGain > 0
-    ? qualifiedDividendTax2025(
+    ? qualifiedDividendTax(
       line4,
       childQualified,
       childGain,
       context.childFilingStatus,
+      preferentialRateSchedule(context.taxYear),
     )
-    : ordinaryTax2025(line4, context.childFilingStatus);
+    : ordinaryTaxForYear(line4, context.childFilingStatus, context.taxYear);
   const line18 = Math.max(line16, line17);
   return {
     fields: {

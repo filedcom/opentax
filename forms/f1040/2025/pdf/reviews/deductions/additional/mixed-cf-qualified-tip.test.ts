@@ -164,7 +164,7 @@ for (const c of mixedCfTipCases) {
       f.line16_income_tax - f.line21_credits_total + f.line23_other_taxes,
     );
     if (p.form8995a) {
-      const a = calculateFarmWotcLines(p.form8995a);
+      const a = calculateFarmWotcLines(p.form8995a, 2025);
       assertEquals(
         p.form8995a.farm_wotc_filing_source.qualified_tip_qbi_source,
         source,

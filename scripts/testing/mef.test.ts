@@ -1,6 +1,12 @@
 import { test } from "bun:test";
 import { assertEquals } from "@std/assert";
-import { compareFindings, keptReasons, summarize } from "./mef.ts";
+import {
+  compareFindings,
+  keptReasons,
+  signedForYear,
+  summarize,
+  unexplained,
+} from "./mef.ts";
 
 test("a new finding fails and a fixed one must leave the baseline", () => {
   assertEquals(
@@ -31,4 +37,23 @@ test("a baseline reason leaves with its fixed return", () => {
     keptReasons({ a: ["rule X"], b: [] }, { a: "why a", b: "why b", c: "gone" }),
     { a: "why a" },
   );
+});
+
+test("a blocked return without a reason is unexplained", () => {
+  assertEquals(
+    unexplained({ a: ["rule X"], b: ["rule Y"] }, { a: "dated 2025 fact" }),
+    ["b"],
+  );
+});
+
+test("a TY2026 run signs in 2027 regardless of the sample's own date", () => {
+  const general = signedForYear({
+    general: {
+      filing_status: "mfj",
+      taxpayer_signature_date: "2026-03-01",
+      spouse_signature_date: "2026-03-01",
+    },
+  }, 2026).general as Record<string, unknown>;
+  assertEquals(general.taxpayer_signature_date, "2027-02-01");
+  assertEquals(general.spouse_signature_date, "2027-02-01");
 });

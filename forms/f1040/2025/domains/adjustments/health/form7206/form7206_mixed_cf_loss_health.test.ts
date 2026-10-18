@@ -31,7 +31,7 @@ test("actual mixed C/F loss-owner established plans settle source SE health QBI 
     const r = f1040_2025.executeReturn(f.inputs),
       p = normalizeAllPending(r.pending) as any;
     assertEquals(r.diagnostics, []);
-    const h = assertIndependentOwnerHealth(p, f.filer);
+    const h = assertIndependentOwnerHealth(p, 2025, f.filer);
     assertEquals([
       h.deduction,
       p.f1040.line11_agi,
@@ -162,7 +162,7 @@ test("mixed C/F loss-owner source capacities and retained source records reject 
       const p = structuredClone(original);
       mutate(p);
       await assertRejects(() => f1040_2025.prepareReturn(p, f.filer));
-      assertThrows(() => assertIndependentOwnerHealth(p, f.filer));
+      assertThrows(() => assertIndependentOwnerHealth(p, 2025, f.filer));
       assertThrows(() =>
         form7206.build(p.form7206 as any, { pending: p, filer: f.filer })
       );

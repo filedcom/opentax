@@ -21,10 +21,11 @@ in [AGENTS.md](../../AGENTS.md); the rule each check owns is in the table in
 | `bun run verify:changed [base]`             | the gates a change since `base` (default `origin/main`) can reach pass | any selected gate failing, or a bench case that passes at the merge base and fails now |
 | `bun run bench:cached [bench flags]`        | same as `bench`, replayed when nothing it reads changed           | as `bench`                                                                                                                                                                                                                  |
 | `bun run check:mef [--update]`              | every signed PDF review fixture computes, builds MeF XML and passes the IRS business rules export applies | a calculation, XML or reject-level rule finding not in `scripts/testing/mef-baseline.json`, or a baselined finding that no longer occurs; `--update` rewrites the baseline |
+| `bun run check:ty2026 [--update]`           | the same sample returns run as TY2026 (`check:mef --year 2026`), signed and received in 2027 | a finding not in `scripts/testing/mef-baseline-2026.json`, a baselined finding that no longer occurs, or a baselined return without its reason; the clean count can only rise |
 
 Every check prints each problem with its fix, takes `--json`, and exits 1 on any
 problem. `.github/workflows/test.yml` runs the first three, `check:sandbox`,
-`test:unit`, `test:forms`, `check:mef` and `check:cli` on every pull request. `bench` runs locally until the baselined
+`test:unit`, `test:forms`, `check:mef`, `check:ty2026` and `check:cli` on every pull request. `bench` runs locally until the baselined
 cases below are fixed, then joins them.
 
 ## Changed-only runs
@@ -59,6 +60,7 @@ fails until it is removed, so a baseline only shrinks.
 | `benchmark/cases/baseline.json`               | `<form>/<year>/<case>` | cases whose inputs no longer fit their node schema  |
 | `scripts/testing/forms-failure-baseline.json` | test file, test name   | form tests known to fail                            |
 | `scripts/testing/mef-baseline.json`           | sample return id       | known calculation, XML and IRS-rule blockers, and why each is a correct block |
+| `scripts/testing/mef-baseline-2026.json`      | sample return id       | the same samples' TY2026 blockers, each with its reason: a dated 2025 fact, a 2026v1.0 schema gap, a named TY2025-only route or open TY2026 work |
 | `benchmark/cases/<form>/<year>/ledger.json`   | case, line             | every expected-value change, with its publication   |
 
 The ledger is history, not debt: it is append-only and never expires. An entry

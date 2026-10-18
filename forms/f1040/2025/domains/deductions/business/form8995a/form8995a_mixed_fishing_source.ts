@@ -12,10 +12,11 @@ import { assertOwnedScheduleSE } from "../../../taxes/self-employment/schedule-s
 export function assertMixedFishingQbiReturn(
   input: Form8995AInput,
   pending: Readonly<Record<string, unknown>> | undefined,
+  taxYear: number,
 ) {
   if (!input.mixed_fishing_qbi_source) return undefined;
   if (!pending) throw new Error("Mixed fishing QBI needs its final return");
-  const calculated = calculateMixedFishingQbi(input);
+  const calculated = calculateMixedFishingQbi(input, taxYear);
   const source = calculated.source;
   const c = (pending.schedule_c as { schedule_cs?: unknown[] } | undefined)
     ?.schedule_cs;
@@ -26,7 +27,10 @@ export function assertMixedFishingQbiReturn(
   const owner = String(filed?.taxpayer_ssn ?? "").replace(/\D/g, "");
   const joint = source.joint_se_source !== undefined;
   const owned = joint
-    ? assertOwnedScheduleSE(pending as Record<string, Record<string, unknown>>)
+    ? assertOwnedScheduleSE(
+      pending as Record<string, Record<string, unknown>>,
+      taxYear,
+    )
     : undefined;
   if (
     retainedFishingProfit({

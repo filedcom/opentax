@@ -4,12 +4,15 @@ import {
   projectScheduleCItems,
 } from "../../../../../inputs/income/business/schedule_c/model.ts";
 import { calculateCharitableNaturalResource } from "../../../../../inputs/deductions/charitable/f8283/natural-resource-source.ts";
-import { CONFIG_BY_YEAR } from "../../../../../config/index.ts";
+import { qbiPhaseInRange, qbiThreshold, qbiYearConfig } from "./thresholds.ts";
 import { FilingStatus } from "../../../../../types.ts";
 
 /** A depletion-only mineral interest is not UBIA depreciable property. Its
  * complete paid mine-cost account contains corporate vendors, not employees. */
-export function assertProducingMiningZeroQbi(input: Form8995AInput) {
+export function assertProducingMiningZeroQbi(
+  input: Form8995AInput,
+  taxYear: number,
+) {
   const retained = input.producing_mining_zero_qbi_source;
   if (!retained) return false;
   if (
@@ -53,7 +56,7 @@ export function assertProducingMiningZeroQbi(input: Form8995AInput) {
   }
   const current = source.annual_records.at(-1)!;
   if (
-    current.tax_year !== 2025 ||
+    current.tax_year !== taxYear ||
     current.expenses.some((row) =>
       row.vendor_entity_classification !== "c_corporation"
     )
@@ -77,8 +80,8 @@ export function assertProducingMiningZeroQbi(input: Form8995AInput) {
     input.unadjusted_basis !== 0 ||
     input.qbi !== profit - retained.se_tax_deduction || input.qbi! <= 0 ||
     input.taxable_income <=
-      CONFIG_BY_YEAR[2025].qbiThresholdSingle +
-        CONFIG_BY_YEAR[2025].qbiPhaseInRange / 2 ||
+      qbiThreshold(input.filing_status, qbiYearConfig(taxYear)) +
+        qbiPhaseInRange(input.filing_status, qbiYearConfig(taxYear)) ||
     (input.sstb_qbi ?? 0) !== 0 || input.net_capital_gain !== 0 ||
     (input.line6_sec199a_dividends ?? 0) !== 0 ||
     input.qbi_no_prior_loss_or_suspended_loss_confirmed !== true ||

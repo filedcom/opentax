@@ -60,7 +60,7 @@ test("joint C/F above full MFJ QBI phase-out retains two zero-limited 8995-A row
     const noJ = await packet(`zero-${fishingOwner}-without-j`, noJInput);
     const elected = await packet(`zero-${fishingOwner}`, input);
     const p = elected.pending;
-    const q = calculateMixedFishingQbi(p.form8995a);
+    const q = calculateMixedFishingQbi(p.form8995a, 2025);
     assertScheduleJSourceReturn(elected.result.pending);
     assertEquals(q.profits, [200_000, 400_000]);
     assertEquals(q.allocations, [13_596, 16_275]);

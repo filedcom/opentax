@@ -30,16 +30,17 @@ import {
   reconcileSingleScheduleCGraphSource,
 } from "../../../../../nodes/intermediate/forms/adjustments/health/form7206/index.ts";
 import { singleScheduleCPlanSchema } from "../../../../../nodes/intermediate/forms/adjustments/health/form7206/index.ts";
-import { CONFIG_BY_YEAR } from "../../../../../nodes/config/index.ts";
+import { qbiYearConfig } from "../../../../../nodes/intermediate/forms/deductions/business/form8995a/thresholds.ts";
 import { normalizeAllPending } from "../../../../return-processing/pending.ts";
 
 /** Replay public patron review, owned business, deductions and final tax joins. */
 export function assertForm8995APatronReturn(
   input: Form8995AInput,
   raw: Readonly<Record<string, unknown>> | undefined,
+  taxYear: number,
 ): void {
   if (input.independent_patron_sources) {
-    assertIndependentPatronReturn(input, raw);
+    assertIndependentPatronReturn(input, raw, taxYear);
     return;
   }
   if (!input.patron_business_source) return;
@@ -146,7 +147,7 @@ export function assertForm8995APatronReturn(
   );
   const amounts = patronSourceAmounts(source);
   const se = seSchema.parse(pending.schedule_se);
-  const seLines = scheduleSELines(se, CONFIG_BY_YEAR[2025].ssWageBase);
+  const seLines = scheduleSELines(se, qbiYearConfig(taxYear).ssWageBase);
   const noAmount = (value: unknown) => value === undefined || value === 0;
   const s1 = pending.schedule1;
   const f1040 = pending.f1040;
@@ -191,7 +192,7 @@ export function assertForm8995APatronReturn(
       "Patron retirement adjustments need an owned plan allocation route",
     );
   }
-  const lines = calculateOneBusiness8995ALines(input);
+  const lines = calculateOneBusiness8995ALines(input, taxYear);
   const medicareThreshold = joint
     ? 250000
     : input.filing_status === "mfs"

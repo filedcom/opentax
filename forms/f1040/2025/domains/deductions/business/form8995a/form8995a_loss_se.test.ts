@@ -117,6 +117,7 @@ for (const c of cases) {
     );
     const lines = calculateScheduleCLossLines(
       inputSchema.parse(pending.form8995a),
+      2025,
     );
     assertEquals(
       lines.schedule.rows.map((r) => r.line1a),

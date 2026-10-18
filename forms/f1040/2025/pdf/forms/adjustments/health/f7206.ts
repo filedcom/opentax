@@ -29,6 +29,7 @@ import { assertForm7206SpouseCoverage } from "../../../../domains/adjustments/he
 import { TS } from "../../../../../nodes/types.ts";
 import { assertScheduleCReceiptSourceIdentity } from "../../../../domains/general/return-assembly/filer-source-reconciliation.ts";
 import { extractFilerIdentity } from "../../../../../mef/filer.ts";
+import { mefTaxYear } from "../../../../mef/support/year-config.ts";
 
 // TY2025 AcroForm has two identity fields followed by printed lines 1-14.
 // Line 11 is blank for this Schedule C route, and line 6 prints a percentage.
@@ -61,7 +62,7 @@ function projectFields(
   allPending: Record<string, Record<string, unknown>>,
 ) {
   if (allPending.form7206?.independent_schedule_c_plans !== undefined) {
-    const family = assertIndependentOwnerHealth(allPending);
+    const family = assertIndependentOwnerHealth(allPending, mefTaxYear());
     if (fields.independent_plan_required === true) {
       const row = family.rows.find((r) =>
         r.plan_identifier === fields.plan_identifier
@@ -79,11 +80,11 @@ function projectFields(
       }
       return { ...row, line6_pct: `${row.line6 * 100}%` };
     }
-    assertIndependentOwnerHealth(allPending, undefined, fields);
+    assertIndependentOwnerHealth(allPending, mefTaxYear(), undefined, fields);
     return { ...fields };
   }
   if (fields.owned_sep_plans !== undefined) {
-    assertOwnedSepContext(allPending, undefined, fields);
+    assertOwnedSepContext(allPending, mefTaxYear(), undefined, fields);
     return fields;
   }
   if (
@@ -240,12 +241,12 @@ export const form7206Pdf: PdfFormDescriptor = {
   instances: (fields, filer, allPending) => {
     if (fields.independent_schedule_c_plans === undefined) {
       if (fields.owned_sep_plans !== undefined) {
-        assertOwnedSepContext(allPending, filer, fields);
+        assertOwnedSepContext(allPending, mefTaxYear(), filer, fields);
         return [];
       }
       return [fields];
     }
-    return assertIndependentOwnerHealth(allPending, filer, fields).rows.filter(
+    return assertIndependentOwnerHealth(allPending, mefTaxYear(), filer, fields).rows.filter(
       (row) => row.independent_plan_required,
     ).map((
       row,

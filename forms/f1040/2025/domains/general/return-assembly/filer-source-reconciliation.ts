@@ -500,8 +500,8 @@ export function assertEitcChildSources(
           !release.form8332_source_reference.trim() ||
           typeof release.custody_record_reference !== "string" ||
           !release.custody_record_reference.trim() ||
-          release.custodial_parent_for_2025 !== true ||
-          release.valid_2025_release_to_noncustodial_parent !== true ||
+          release.custodial_parent_for_tax_year !== true ||
+          release.valid_tax_year_release_to_noncustodial_parent !== true ||
           release.no_competing_eitc_claim_verified !== true)) ||
       (dep.dependent_on_another_return !== true && release !== undefined)
     ) {

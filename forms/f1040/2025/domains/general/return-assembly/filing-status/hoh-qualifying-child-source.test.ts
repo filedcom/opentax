@@ -22,8 +22,8 @@ const base = pdfReviewFixtures.find((fixture) =>
 const custody = {
   form8332_source_reference: "signed 2025 Form 8332",
   custody_record_reference: "2025 residence and nights ledger",
-  custodial_parent_for_2025: true,
-  valid_2025_release_to_noncustodial_parent: true,
+  custodial_parent_for_tax_year: true,
+  valid_tax_year_release_to_noncustodial_parent: true,
   no_competing_eitc_claim_verified: true,
 };
 const child = {

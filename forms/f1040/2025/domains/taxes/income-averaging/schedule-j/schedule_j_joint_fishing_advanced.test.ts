@@ -59,7 +59,7 @@ test("joint C/F above MFJ QBI threshold files two owner-specific 8995-A phase-in
     const noJ = await packet(`advanced-${fishingOwner}-without-j`, noJInput);
     const elected = await packet(`advanced-${fishingOwner}`, input);
     const p = elected.pending;
-    const q = calculateMixedFishingQbi(p.form8995a);
+    const q = calculateMixedFishingQbi(p.form8995a, 2025);
     assertScheduleJSourceReturn(elected.result.pending);
     assertEquals(q.profits, [200_000, 300_000]);
     assertEquals(q.allocations, [13_596, 14_935]);

@@ -132,7 +132,7 @@ const mutations = [
   (s: any) =>
     s.election_history = {
       status: "continued_unchanged",
-      filed_2024_schedule_b_reference: "prior-ref",
+      filed_prior_year_schedule_b_reference: "prior-ref",
       no_material_change_confirmed: true,
     },
   (s: any) =>

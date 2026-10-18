@@ -130,8 +130,8 @@ export const scheduleSE: MefFormDescriptor<
     const owned = context?.pending
       ? assertOwnedScheduleSE(
         context.pending as Record<string, Record<string, unknown>>,
-        context.filer,
         mefTaxYear(context),
+        context.filer,
       )
       : undefined;
     return owned

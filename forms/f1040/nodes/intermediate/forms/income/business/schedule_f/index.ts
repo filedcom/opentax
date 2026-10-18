@@ -116,13 +116,11 @@ class ScheduleFNode extends TaxNode<typeof inputSchema> {
         : (input.patron_filing_review || input.independent_patron_reviews)
         ? patronFiledBusinessLines("schedule_f", filedItems[index])
           .profit
-        : (ctx.taxYear === 2025
-          ? filedOwnedScheduleF(
-            filedItems[index],
-            input.farm_optional_method_elected === true,
-            reductions.get(input.schedule_fs[index].farm_id ?? "") ?? 0,
-          )?.profit
-          : undefined) ?? result.atRiskNet
+        : filedOwnedScheduleF(
+          filedItems[index],
+          input.farm_optional_method_elected === true,
+          reductions.get(input.schedule_fs[index].farm_id ?? "") ?? 0,
+        )?.profit ?? result.atRiskNet
     );
     const propertyNet = netProfits.reduce((sum, p) => sum + p, 0);
     const totalNetProfit = propertyNet;

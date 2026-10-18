@@ -12,3 +12,9 @@ export const CONFIG_BY_YEAR: Record<number, import("./types.ts").F1040Config> = 
   2025: config2025,
   2026: config2026,
 };
+
+export function configForYear(taxYear: number): import("./types.ts").F1040Config {
+  const cfg = CONFIG_BY_YEAR[taxYear];
+  if (!cfg) throw new Error(`No f1040 config for year ${taxYear}`);
+  return cfg;
+}

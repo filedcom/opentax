@@ -26,7 +26,7 @@ test("public joint owners calculate separate SE and prepare distinct native/PDF 
   const result = f1040_2025.executeReturn(inputsFor([60000, 40000], ["S"]));
   assertEquals(result.diagnostics, []);
   const pending = normalizeAllPending(result.pending);
-  const owned = assertOwnedScheduleSE(pending, joint.filer)!;
+  const owned = assertOwnedScheduleSE(pending, 2025, joint.filer)!;
   assertEquals(
     owned.instances.map((
       row,
@@ -57,7 +57,7 @@ test("public joint owner loss cannot erase other spouse's SE or small separate b
   const result = f1040_2025.executeReturn(inputsFor([-100, 500], []));
   assertEquals(result.diagnostics, []);
   const pending = normalizeAllPending(result.pending);
-  const owned = assertOwnedScheduleSE(pending, joint.filer)!;
+  const owned = assertOwnedScheduleSE(pending, 2025, joint.filer)!;
   assertEquals(owned.instances.length, 1);
   assertEquals(owned.instances[0].recipient, "S");
   assertEquals(owned.tax, 70);
@@ -128,7 +128,7 @@ test("public joint owner SE and attributable QBI file complete XSD/PDF returns",
     const result = f1040_2025.executeReturn(inputs);
     assertEquals(result.diagnostics, [], scenario.id);
     const pending = normalizeAllPending(result.pending);
-    const owned = assertOwnedScheduleSE(pending, joint.filer)!;
+    const owned = assertOwnedScheduleSE(pending, 2025, joint.filer)!;
     const prepared = await f1040_2025.prepareReturn!(
       result.pending,
       joint.filer,

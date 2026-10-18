@@ -17,13 +17,17 @@ function sum(v: unknown): number {
 /** Independently bind both filing projections to the actual retained farm and tax sources. */
 export function assertSingleFarmQbiReturn(
   pending: Readonly<Record<string, unknown>>,
+  taxYear: number,
 ): void {
   if (
     !pending.form8995a || !record(pending.form8995a).single_schedule_f_source
   ) return;
   const input = advancedInput.parse(pending.form8995a);
-  assertSingleFarmAmounts(input);
-  const source = singleFarmSourceAmounts(input.single_schedule_f_source!);
+  assertSingleFarmAmounts(input, taxYear);
+  const source = singleFarmSourceAmounts(
+    input.single_schedule_f_source!,
+    taxYear,
+  );
   const farms = farmInput.parse(pending.schedule_f).schedule_fs;
   const filedW2 =
     ((pending.w2 as Record<string, unknown> | undefined)?.w2s ?? []) as Record<

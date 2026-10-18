@@ -12,7 +12,7 @@ import {
 } from "../../../../../../nodes/inputs/income/business/schedule_c/model.ts";
 import { inputSchema as w2Schema } from "../../../../../../nodes/inputs/income/wages/w2/index.ts";
 import { scheduleSELines } from "../../../../../../nodes/intermediate/forms/taxes/self-employment/schedule_se/calculation.ts";
-import { CONFIG_BY_YEAR } from "../../../../../../nodes/config/index.ts";
+import { qbiYearConfig } from "../../../../../../nodes/intermediate/forms/deductions/business/form8995a/thresholds.ts";
 import {
   calculateOneSstb8995ALines,
   type Form8995AInput,
@@ -22,6 +22,7 @@ import {
 export function assertSstbScheduleCSource(
   input: Form8995AInput,
   pending: Readonly<Record<string, unknown>> | undefined,
+  taxYear: number,
   filerSSN?: string,
   filer?: FilerIdentity,
 ): void {
@@ -41,6 +42,7 @@ export function assertSstbScheduleCSource(
   const owned = joint
     ? assertOwnedScheduleSE(
       pending as Readonly<Record<string, Record<string, unknown>>>,
+      taxYear,
       filer,
     )
     : undefined;
@@ -65,7 +67,7 @@ export function assertSstbScheduleCSource(
     : "taxpayer_ssn";
   assertSstbServiceClassification(source);
   const profit = computeNetProfit(source);
-  const seLines = se && scheduleSELines(se, CONFIG_BY_YEAR[2025].ssWageBase);
+  const seLines = se && scheduleSELines(se, qbiYearConfig(taxYear).ssWageBase);
   const payroll = review?.employee_w2_records ?? [];
   if (
     !review || !f || !g || !s1 || !seLines || c.schedule_cs.length !== 1 ||
@@ -188,7 +190,7 @@ export function assertSstbScheduleCSource(
   ) {
     throw Error("SSTB capital limit needs retained investment sources");
   }
-  const lines = calculateOneSstb8995ALines(input);
+  const lines = calculateOneSstb8995ALines(input, taxYear);
   if (
     typeof f.line11_agi !== "number" ||
     typeof f.line12c_deduction_total !== "number" ||

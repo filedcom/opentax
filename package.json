@@ -30,6 +30,7 @@
     "check:oracle": "bun scripts/testing/oracle.ts",
     "check:sandbox": "bun scripts/testing/sandbox.ts",
     "check:mef": "bun scripts/testing/mef.ts",
+    "check:ty2026": "bun scripts/testing/mef.ts --year 2026",
     "check:cli": "bun scripts/testing/cli.ts",
     "check:ats": "bun scripts/testing/ats.ts",
     "check:irs": "bun scripts/testing/irs.ts",

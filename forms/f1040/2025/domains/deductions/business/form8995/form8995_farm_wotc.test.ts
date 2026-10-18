@@ -15,7 +15,7 @@ test("owned farm WOTC actual source full return native PDF and full local XSD", 
     const r = f1040_2025.executeReturn(fixture.inputs);
     assertEquals(r.diagnostics, []);
     const p = normalizeAllPending(r.pending);
-    assertFarmWotcReturn(p.form8995a ?? p.form8995, p, fixture.filer);
+    assertFarmWotcReturn(p.form8995a ?? p.form8995, p, 2025, fixture.filer);
     console.log(
       fixture.id,
       JSON.stringify({
@@ -27,7 +27,7 @@ test("owned farm WOTC actual source full return native PDF and full local XSD", 
         credit: p.f3800.allowed_credit,
         tax: p.f1040.line24_total_tax,
         phase: p.form8995a
-          ? calculateFarmWotcLines(inputSchema.parse(p.form8995a)).parent
+          ? calculateFarmWotcLines(inputSchema.parse(p.form8995a), 2025).parent
             .phaseIn
           : null,
       }),

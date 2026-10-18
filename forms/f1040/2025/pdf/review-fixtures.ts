@@ -580,8 +580,8 @@ const basePdfReviewFixtures: readonly PdfReviewFixture[] = [
           custodial_eitc_release_review: {
             form8332_source_reference: "Synthetic signed 2025 Form 8332",
             custody_record_reference: "Synthetic 2025 residence ledger",
-            custodial_parent_for_2025: true,
-            valid_2025_release_to_noncustodial_parent: true,
+            custodial_parent_for_tax_year: true,
+            valid_tax_year_release_to_noncustodial_parent: true,
             no_competing_eitc_claim_verified: true,
           },
         }],
@@ -878,8 +878,8 @@ const basePdfReviewFixtures: readonly PdfReviewFixture[] = [
           custodial_eitc_release_review: {
             form8332_source_reference: "Synthetic signed 2025 Form 8332",
             custody_record_reference: "Synthetic 2025 custody nights ledger",
-            custodial_parent_for_2025: true,
-            valid_2025_release_to_noncustodial_parent: true,
+            custodial_parent_for_tax_year: true,
+            valid_tax_year_release_to_noncustodial_parent: true,
             no_competing_eitc_claim_verified: true,
           },
         }],
@@ -935,8 +935,8 @@ const basePdfReviewFixtures: readonly PdfReviewFixture[] = [
           custodial_eitc_release_review: {
             form8332_source_reference: "Synthetic signed 2025 Form 8332",
             custody_record_reference: "Synthetic 2025 custody nights ledger",
-            custodial_parent_for_2025: true,
-            valid_2025_release_to_noncustodial_parent: true,
+            custodial_parent_for_tax_year: true,
+            valid_tax_year_release_to_noncustodial_parent: true,
             no_competing_eitc_claim_verified: true,
           },
         }],

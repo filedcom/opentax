@@ -30,6 +30,7 @@ import {
   calculateForm5884,
   inputSchema as form5884InputSchema,
 } from "../../../../../nodes/inputs/credits/business/f5884/index.ts";
+import { mefTaxYear } from "../../../../mef/support/year-config.ts";
 
 // Field names and locations are from the two-page 2025 Schedule C AcroForm.
 const page1 = "topmostSubform[0].Page1[0].";
@@ -407,6 +408,7 @@ export const scheduleCPdf: PdfFormDescriptor = {
       assertFarmWotcReturn(
         allPending.form8995a ?? allPending.form8995,
         allPending,
+        mefTaxYear(),
         undefined,
         { key: "schedule_c", value: raw },
       );

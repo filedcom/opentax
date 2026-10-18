@@ -9,6 +9,7 @@ import {
 import { FilingStatus as HeaderFilingStatus } from "../../../../../mef/header.ts";
 import { FilingStatus as NodeFilingStatus } from "../../../../../nodes/types.ts";
 import { assertZeroReductionScheduleAReturn } from "../../../../mef/forms/deductions/business/f8995a/f8995a_schedule_a.ts";
+import { mefTaxYear } from "../../../../mef/support/year-config.ts";
 
 const page = "topmostSubform[0].Page1[0].";
 const partI = `${page}Table_PartI[0].`;
@@ -70,8 +71,8 @@ export function projectOneSstbScheduleA(
       "Form 8995-A Schedule A PDF cannot accompany Form 8995 or Schedule D",
     );
   }
-  assertSstbScheduleCSource(input, allPending);
-  const lines = calculateOneSstb8995ALines(input);
+  assertSstbScheduleCSource(input, allPending, mefTaxYear());
+  const lines = calculateOneSstb8995ALines(input, mefTaxYear());
   assertZeroReductionScheduleAReturn(input, lines, allPending);
   if (allPending.f1040?.line13_qbi_deduction !== lines.line39) {
     throw new Error(
@@ -108,7 +109,7 @@ export const form8995aScheduleAPdf: PdfFormDescriptor = {
   instances(raw, filer, allPending) {
     if (Object.keys(raw).length === 0) return [];
     const input = inputSchema.strict().parse(allPending?.form8995a_schedule_a);
-    assertSstbScheduleCSource(input, allPending, filer?.primarySSN, filer);
+    assertSstbScheduleCSource(input, allPending, mefTaxYear(), filer?.primarySSN, filer);
     if (input.filing_status === NodeFilingStatus.MFS) {
       if (
         !filer ||

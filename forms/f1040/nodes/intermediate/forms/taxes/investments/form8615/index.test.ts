@@ -32,6 +32,7 @@ const context = {
   takingStandardDeduction: true,
   childHasPreferentialIncome: false,
   childForeignEarnedIncomeExclusion: 0,
+  taxYear: 2025,
   brackets: CONFIG_BY_YEAR[2025]!,
 };
 

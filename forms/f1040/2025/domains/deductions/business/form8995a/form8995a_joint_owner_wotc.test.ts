@@ -23,8 +23,8 @@ test("spouse and both-owner WOTC preserve actual owner credit/QBI joins and nati
     const p = normalizeAllPending(r.pending),
       q = inputSchema.parse(p.form8995a),
       lines = q.wotc_business_sources
-        ? calculateOwnedWotcBusinesses(q).parent
-        : calculateOneBusiness8995ALines(q);
+        ? calculateOwnedWotcBusinesses(q, 2025).parent
+        : calculateOneBusiness8995ALines(q, 2025);
     assertEquals(p.schedule_se.owner_instances instanceof Array, true);
     const owners = p.schedule_se.owner_instances as any[];
     const spouse = owners.find((row) => row.recipient === "S")!;
@@ -114,7 +114,7 @@ test("both-owner WOTC preserves independent wage caps, full reductions and limit
         f1040_2025.executeReturn(fixture.inputs).pending,
       ),
       q = inputSchema.parse(p.form8995a),
-      calc = calculateOwnedWotcBusinesses(q);
+      calc = calculateOwnedWotcBusinesses(q, 2025);
     const partial = fixture.id.endsWith("partial-above");
     assertEquals(
       q.wotc_business_sources!.map((s) => s.business.wotc_wage_reduction),
@@ -229,7 +229,7 @@ test("both-owner public source blocks conflicting proprietor and missing other-b
 test("owned WOTC PartIII follows the spouse row when only that wage limit binds", () => {
   const f = fixtures.find((f) => f.id.endsWith("one-phasein"))!,
     p = normalizeAllPending(f1040_2025.executeReturn(f.inputs).pending),
-    calc = calculateOwnedWotcBusinesses(inputSchema.parse(p.form8995a)),
+    calc = calculateOwnedWotcBusinesses(inputSchema.parse(p.form8995a), 2025),
     pdf = form8995aPdf.projectFields!(p.form8995a, p);
   assertEquals(calc.rows.map((row) => row.lines.phaseInRequired), [
     false,

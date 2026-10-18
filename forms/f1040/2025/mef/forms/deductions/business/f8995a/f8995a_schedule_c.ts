@@ -14,6 +14,7 @@ import {
   assertScheduleCLossFiler,
   assertScheduleCLossSources,
 } from "./f8995a.ts";
+import { mefTaxYear } from "../../../../support/year-config.ts";
 
 type Input = Form8995AInput | readonly [];
 
@@ -40,9 +41,14 @@ function buildScheduleC(rawFields: unknown, context?: MefBuildContext): string {
     );
   }
   assertNoFiledForm8995(context?.pending);
-  assertScheduleCLossSources(fields, context?.pending);
-  assertScheduleCLossFiler(fields, context?.pending, context?.filer);
-  const lines = calculateScheduleCLossLines(fields);
+  assertScheduleCLossSources(fields, context?.pending, mefTaxYear(context));
+  assertScheduleCLossFiler(
+    fields,
+    context?.pending,
+    context?.filer,
+    mefTaxYear(context),
+  );
+  const lines = calculateScheduleCLossLines(fields, mefTaxYear(context));
   const form1040 = z.object({ line13_qbi_deduction: z.number() })
     .safeParse(context?.pending?.f1040);
   if (

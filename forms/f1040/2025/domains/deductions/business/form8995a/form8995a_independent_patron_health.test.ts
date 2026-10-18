@@ -87,7 +87,7 @@ test("actual independent patron owner policies flow through7206, separate QBI an
           0,
         ]);
         assert(
-          calculateIndependentPatronBusinesses(pending.form8995a).rows[n].input
+          calculateIndependentPatronBusinesses(pending.form8995a, 2025).rows[n].input
             .patron_filing_details!.w2_wages_allocable_to_qualified_payments >
             0,
         );
@@ -211,7 +211,7 @@ test("zero business Part II wages and property stay zero above the shared income
   const result = f1040_2025.executeReturn(fixture.inputs);
   assertEquals(result.diagnostics, []);
   const pending = buildPending(result.pending) as any;
-  const rows = calculateIndependentPatronBusinesses(pending.form8995a).rows;
+  const rows = calculateIndependentPatronBusinesses(pending.form8995a, 2025).rows;
   for (const row of rows) {
     assert(row.input.w2_wages! > 0);
     // This printed-line control exercises the same zero business under a
@@ -220,7 +220,7 @@ test("zero business Part II wages and property stay zero above the shared income
       ...row.input,
       taxable_income: 600000,
     };
-    const filed = calculateOneBusiness8995ALines(highIncome);
+    const filed = calculateOneBusiness8995ALines(highIncome, 2025);
     assertEquals([
       filed.line2,
       filed.line4,

@@ -36,6 +36,7 @@ import { assertZeroReductionScheduleAReturn } from "../../../../mef/forms/deduct
 import { assertForm8995AWotcReturn } from "../../../../domains/deductions/business/form8995a/form8995a_wotc_reconciliation.ts";
 import { FilingStatus as HeaderFilingStatus } from "../../../../../mef/header.ts";
 import { FilingStatus as NodeFilingStatus } from "../../../../../nodes/types.ts";
+import { mefTaxYear } from "../../../../mef/support/year-config.ts";
 
 // Official TY2025 Form 8995-A: one identified business occupies column A.
 const page1 = "topmostSubform[0].Page1[0].";
@@ -144,7 +145,7 @@ export function projectStagedAggregatedParentPdf(
   allPending: Record<string, Record<string, unknown>>,
 ): Record<string, unknown> {
   const input = inputSchema.strict().parse(raw);
-  assertProducingMiningZeroQbiReturn(input, allPending);
+  assertProducingMiningZeroQbiReturn(input, allPending, mefTaxYear());
   const { source, parent } = assertScheduleBAggregationJoin(input, {
     filer,
     pending: allPending,
@@ -177,11 +178,11 @@ export function projectOneBusiness8995A(
 ): Record<string, unknown> {
   if (Object.keys(raw).length === 0) return {};
   const input = inputSchema.strict().parse(raw);
-  assertFarmWotcReturn(input as unknown as Record<string, unknown>, allPending);
+  assertFarmWotcReturn(input as unknown as Record<string, unknown>, allPending, mefTaxYear());
   if (!input.farm_wotc_filing_source) {
-    assertForm8995AWotcReturn(input, allPending);
+    assertForm8995AWotcReturn(input, allPending, mefTaxYear());
   }
-  assertForm8995APatronReturn(input, allPending);
+  assertForm8995APatronReturn(input, allPending, mefTaxYear());
   if (
     input.aggregation_filing_details || input.rpe_aggregation_source ||
     (input.aggregation_groups ?? []).length > 0
@@ -200,14 +201,14 @@ export function projectOneBusiness8995A(
     input.mixed_fishing_qbi_source
   ) {
     assertNoFiledForm8995(allPending);
-    const mixed = assertMixedFishingQbiReturn(input, allPending);
+    const mixed = assertMixedFishingQbiReturn(input, allPending, mefTaxYear());
     const oldMulti = input.independent_patron_sources
-      ? calculateIndependentPatronBusinesses(input)
+      ? calculateIndependentPatronBusinesses(input, mefTaxYear())
       : input.farm_wotc_filing_source
-      ? calculateFarmWotcLines(input)
+      ? calculateFarmWotcLines(input, mefTaxYear())
       : mixed
       ? undefined
-      : calculateOwnedWotcBusinesses(input);
+      : calculateOwnedWotcBusinesses(input, mefTaxYear());
     const parent = mixed?.parent ?? oldMulti!.parent;
     const rows = mixed
       ? mixed.rows.map((row) => ({ details: row.details, lines: row.lines }))
@@ -282,8 +283,8 @@ export function projectOneBusiness8995A(
       );
     }
     assertNoFiledForm8995(allPending);
-    assertScheduleCLossSources(input, allPending);
-    const lines = calculateScheduleCLossLines(input);
+    assertScheduleCLossSources(input, allPending, mefTaxYear());
+    const lines = calculateScheduleCLossLines(input, mefTaxYear());
     if (allPending.f1040?.line13_qbi_deduction !== lines.parent.line39) {
       throw new Error(
         "Form 8995-A PDF Schedule C line 39 differs from Form 1040 line 13",
@@ -314,8 +315,8 @@ export function projectOneBusiness8995A(
       );
     }
     assertNoFiledForm8995(allPending);
-    assertSstbScheduleCSource(input, allPending);
-    const lines = calculateOneSstb8995ALines(input);
+    assertSstbScheduleCSource(input, allPending, mefTaxYear());
+    const lines = calculateOneSstb8995ALines(input, mefTaxYear());
     assertZeroReductionScheduleAReturn(input, lines, allPending);
     if (allPending.f1040?.line13_qbi_deduction !== lines.line39) {
       throw new Error(
@@ -338,7 +339,7 @@ export function projectOneBusiness8995A(
       line40: 0,
     };
   }
-  const { details, lines } = validateOneBusiness(input);
+  const { details, lines } = validateOneBusiness(input, mefTaxYear());
   assertOneBusinessReitSource(input, allPending);
   if (allPending.form8995a_schedule_a !== undefined) {
     throw new Error("Form 8995-A PDF has Schedule A without an SSTB parent");
@@ -399,7 +400,7 @@ export function projectOneBusiness8995A(
 function projectLossParentCopies(
   input: Form8995AInput,
 ): Record<string, unknown>[] {
-  const lines = calculateScheduleCLossLines(input);
+  const lines = calculateScheduleCLossLines(input, mefTaxYear());
   const first =
     lines.businessLines.find((row) => row.business === lines.positive) ??
       lines.businessLines[0];
@@ -413,6 +414,7 @@ function projectLossParentCopies(
         parent.line3,
         parent.line10,
         input.filing_status,
+        mefTaxYear(),
       )
     );
     const phaseIn = phases.find((phase) => phase !== undefined);
@@ -494,10 +496,10 @@ export const form8995aPdf: PdfFormDescriptor = {
     // The builder passes projected print fields here; validate owner and
     // aggregation details against the retained source instead.
     const input = inputSchema.strict().parse(allPending?.form8995a ?? raw);
-    assertSstbScheduleCSource(input, allPending, filer?.primarySSN, filer);
+    assertSstbScheduleCSource(input, allPending, mefTaxYear(), filer?.primarySSN, filer);
     if (input.patron_business_source) patronProprietorSsn(input, filer);
     if (input.independent_patron_sources) {
-      assertOwnedScheduleSE(allPending!, filer);
+      assertOwnedScheduleSE(allPending!, mefTaxYear(), filer);
     }
     if (
       (input.patron_filing_details?.source_1099patr
@@ -522,7 +524,7 @@ export const form8995aPdf: PdfFormDescriptor = {
         !input.sstb_filing_details &&
         input.schedule_c_qbi_businesses?.some((business) => business.qbi < 0)
       ) {
-        calculateScheduleCLossLines(input);
+        calculateScheduleCLossLines(input, mefTaxYear());
       } else if (
         !input.aggregation_filing_details && !input.rpe_aggregation_source &&
         !input.patron_business_source
@@ -555,7 +557,7 @@ export const form8995aPdf: PdfFormDescriptor = {
       if (!allPending) {
         throw new Error("Form 8995-A loss copies need retained return sources");
       }
-      assertScheduleCLossFiler(input, allPending, filer);
+      assertScheduleCLossFiler(input, allPending, filer, mefTaxYear());
       projectOneBusiness8995A(allPending.form8995a, allPending);
       return projectLossParentCopies(input);
     }

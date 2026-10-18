@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { CONFIG_BY_YEAR } from "../../../../../config/index.ts";
+import { qbiYearConfig } from "./thresholds.ts";
 import { FilingStatus } from "../../../../../types.ts";
 import {
   computeGrossIncome,
@@ -22,6 +22,7 @@ export function reviewedLossSeAllocations(
   items: readonly ScheduleCItem[],
   status: FilingStatus,
   raw: z.infer<typeof lossSeSourceSchema>,
+  taxYear: number,
   wotcReductions: ReadonlyMap<string, number> = new Map(),
 ): number[] {
   const source = lossSeSourceSchema.parse(raw);
@@ -37,7 +38,7 @@ export function reviewedLossSeAllocations(
   if (source.joint_se_source) {
     const owned = ownedScheduleSE(
       source.joint_se_source,
-      CONFIG_BY_YEAR[2025].ssWageBase,
+      qbiYearConfig(taxYear).ssWageBase,
     );
     if (
       owned.deduction !== source.deduction ||

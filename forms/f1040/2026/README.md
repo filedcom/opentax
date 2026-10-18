@@ -16,10 +16,14 @@ Year differences live in two places, never in a 2026 copy of a node:
    `schedule_a/limits-2026.ts`).
 
 A node that cannot yet compute 2026 law throws its own named error for that
-path (Schedule H FUTA, Form 8995-A), rather than computing 2025 law.
+path (Schedule H FUTA, Form 8814, Schedule J), rather than computing 2025 law.
 
 Shared code that pins a tax year (`CONFIG_BY_YEAR[2025]`, `taxYear === 2025`,
 `z.literal(2025)`, a `^2025-` date pattern, a `_2025` identifier) fails
 `bun run check:structure` (year-pinned). Today's occurrences are listed in
 `scripts/testing/year-pinned-baseline.json`; that list is the TY2026
 correctness work queue, and each fix removes its entry.
+
+`bun run check:ty2026` runs every TY2025 `check:mef` sample return as TY2026.
+`scripts/testing/mef-baseline-2026.json` records each return that does not
+file, with why; the clean count can only rise.

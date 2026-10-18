@@ -143,6 +143,7 @@ import {
   assertPublicForm8839Attachments,
   hasForm8839Claim,
 } from "../../nodes/intermediate/forms/credits/individual/form8839/public_source.ts";
+import { mefTaxYear } from "../mef/support/year-config.ts";
 
 /** Diagnostic origin of a page in a prepared filled-PDF review packet. */
 export interface PdfPageOrigin {
@@ -587,7 +588,7 @@ async function buildPdfBytesInternal(
   const normalized = normalizeAllPending(pending);
   assertEmployeeContributionReturn(normalized);
   assertScheduleJSourceReturn(pending, executeComposedSourceReturn);
-  assertSingleFarmQbiReturn(normalized);
+  assertSingleFarmQbiReturn(normalized, mefTaxYear());
   if (normalized.f1040) {
     assertF1040FinalHeader(normalized.f1040, filer);
     assertLine1hSupportedSource(normalized.f1040, normalized, filer);

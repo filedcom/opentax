@@ -21,9 +21,14 @@ import {
 } from "../f8995/f8995-investment.ts";
 import { z } from "zod";
 import { element, elements } from "../../../../../../mef/xml.ts";
+import { mefTaxYear } from "../../../../support/year-config.ts";
+import {
+  phaseInRangeCodeElement,
+  thresholdCodeElement,
+} from "./f8995a-schema-codes.ts";
 import { FilingStatus as HeaderFilingStatus } from "../../../../../../mef/header.ts";
 import { FilingStatus as NodeFilingStatus } from "../../../../../../nodes/types.ts";
-import { CONFIG_BY_YEAR } from "../../../../../../nodes/config/index.ts";
+import { qbiYearConfig } from "../../../../../../nodes/intermediate/forms/deductions/business/form8995a/thresholds.ts";
 import {
   assertMfsSstbOwner,
   assertPatron1099PATRSource,
@@ -105,12 +110,12 @@ export function buildStagedAggregatedIRS8995A(
     element("TotalQBIComponentAmt", parent.line16),
     ...(parent.phaseInRequired
       ? [
-        element("FilingStatusThresholdCd", parent.patronThreshold),
+        thresholdCodeElement(parent.patronThreshold),
         element(
           "TXIBfrQBIDedLessThresholdAmt",
           parent.line33 - parent.patronThreshold!,
         ),
-        element("FilingStatusPhaseInRangeCd", parent.patronPhaseInRange),
+        phaseInRangeCodeElement(parent.patronPhaseInRange),
         element("PhaseInPct", parent.phaseIn!.toFixed(5)),
       ]
       : []),
@@ -131,7 +136,10 @@ export function buildStagedAggregatedIRS8995A(
   return elements("IRS8995A", lines);
 }
 
-export function validateOneBusiness(fields: Form8995AInput) {
+export function validateOneBusiness(
+  fields: Form8995AInput,
+  taxYear: number,
+) {
   const details = fields.business_filing_details;
   if (!details) {
     throw new Error(
@@ -146,8 +154,8 @@ export function validateOneBusiness(fields: Form8995AInput) {
     !fields.patron_business_source && !fields.single_schedule_c_source &&
       !fields.single_schedule_f_source &&
       fields.taxable_income <=
-        CONFIG_BY_YEAR[2025].qbiThresholdSingle +
-          CONFIG_BY_YEAR[2025].qbiPhaseInRange / 2
+        qbiYearConfig(taxYear).qbiThresholdSingle +
+          qbiYearConfig(taxYear).qbiPhaseInRange / 2
   ) {
     throw new Error(
       "Form 8995-A MeF needs its supported filing status and retained business source above the applicable threshold",
@@ -210,9 +218,9 @@ export function validateOneBusiness(fields: Form8995AInput) {
     );
   }
   if (fields.producing_mining_zero_qbi_source) {
-    assertProducingMiningZeroQbi(fields);
+    assertProducingMiningZeroQbi(fields, taxYear);
   }
-  const lines = calculateOneBusiness8995ALines(fields);
+  const lines = calculateOneBusiness8995ALines(fields, taxYear);
   if (
     !Object.entries(lines).filter(([key, value]) =>
       /^line\d+$/.test(key) && value !== undefined
@@ -320,6 +328,7 @@ export function assertScheduleCLossFiler(
   fields: Form8995AInput,
   pending: Readonly<Record<string, unknown>> | undefined,
   filer: FilerIdentity | undefined,
+  taxYear: number,
 ): void {
   if (
     fields.filing_status === NodeFilingStatus.Single ||
@@ -352,7 +361,7 @@ export function assertScheduleCLossFiler(
   }
   assertMfsLossSources(fields, pending, filer);
   if (fields.filing_status === NodeFilingStatus.MFJ) {
-    if (!assertOwnedScheduleSE(retained!, filer)) {
+    if (!assertOwnedScheduleSE(retained!, taxYear, filer)) {
       throw new Error(
         "Form 8995-A joint losses need retained proprietor computations",
       );
@@ -363,20 +372,24 @@ export function assertScheduleCLossFiler(
 export function assertScheduleCLossSources(
   fields: Form8995AInput,
   pending: Readonly<Record<string, unknown>> | undefined,
+  taxYear: number,
 ): void {
   if (fields.farm_wotc_filing_source) {
-    assertFarmWotcReturn(fields, pending);
-    if (!calculateFarmWotcLines(fields).lossSchedule) {
+    assertFarmWotcReturn(fields, pending, taxYear);
+    if (!calculateFarmWotcLines(fields, taxYear).lossSchedule) {
       throw new Error("Farm loss companion needs actual source loss");
     }
     return;
   }
-  const lines = calculateScheduleCLossLines(fields);
+  const lines = calculateScheduleCLossLines(fields, taxYear);
   assertLossWotcSources(fields, pending);
   assertMfsLossSources(fields, pending);
   if (fields.filing_status === NodeFilingStatus.MFJ) {
     if (
-      !assertOwnedScheduleSE(pending as Record<string, Record<string, unknown>>)
+      !assertOwnedScheduleSE(
+        pending as Record<string, Record<string, unknown>>,
+        taxYear,
+      )
     ) {
       throw new Error(
         "Form 8995-A joint losses need retained proprietor computations",
@@ -481,7 +494,7 @@ export function assertScheduleCLossSources(
       ? []
       : w2InputSchema.parse(pending.w2).w2s;
     if (fields.filing_status === NodeFilingStatus.MFJ) {
-      const owned = assertOwnedScheduleSE(retained);
+      const owned = assertOwnedScheduleSE(retained, taxYear);
       if (
         !owned ||
         JSON.stringify(fields.loss_se_tax_source.joint_se_source) !==
@@ -511,7 +524,7 @@ export function assertScheduleCLossSources(
           (sum, w) => sum + (w.box3_ss_wages ?? 0) + (w.box7_ss_tips ?? 0),
           0,
         ),
-      }, CONFIG_BY_YEAR[2025].ssWageBase);
+      }, qbiYearConfig(taxYear).ssWageBase);
       if (
         !se || se.line13 !== seDeduction ||
         retained.schedule2?.line4_se_tax !== se.line12 ||
@@ -579,6 +592,7 @@ function reconcileReturn(
       "Form 8995-A MeF needs return header and pending deduction reconciliation context",
     );
   }
+  const taxYear = mefTaxYear(context);
   const expectedStatus = fields.filing_status === NodeFilingStatus.MFJ
     ? HeaderFilingStatus.MarriedFilingJointly
     : fields.filing_status === NodeFilingStatus.MFS
@@ -661,6 +675,7 @@ function reconcileReturn(
     assertSstbScheduleCSource(
       fields,
       context.pending,
+      taxYear,
       context.filer.primarySSN,
       context.filer,
     );
@@ -678,14 +693,14 @@ function reconcileReturn(
   if (
     fields.schedule_c_qbi_businesses?.some((business) => business.qbi < 0) ||
     (fields.farm_wotc_filing_source &&
-      calculateFarmWotcLines(fields).lossSchedule)
+      calculateFarmWotcLines(fields, taxYear).lossSchedule)
   ) {
     if (aggregationCompanion !== undefined) {
       throw new Error(
         "Form 8995-A Schedule C loss cannot accompany Schedule B aggregation",
       );
     }
-    assertScheduleCLossSources(fields, context.pending);
+    assertScheduleCLossSources(fields, context.pending, taxYear);
     const parsed = inputSchema.strict().safeParse(lossCompanion);
     if (
       !parsed.success || JSON.stringify(parsed.data) !== JSON.stringify(fields)
@@ -770,8 +785,19 @@ function buildIRS8995A(rawFields: unknown, context?: MefBuildContext): string {
   ) {
     throw new Error("Form 8995-A MeF cannot file an empty pending record");
   }
+  // 2026 Form 8995-A adds line 40 (IRC §199A(i) minimum deduction); the
+  // 2026v1.0 IRS8995A schema keeps the TY2025 lines and has no element for it.
+  if (
+    rawFields && typeof rawFields === "object" &&
+    Object.hasOwn(rawFields, "minimum_deduction")
+  ) {
+    throw new Error(
+      "Form 8995-A line 40 minimum deduction has no 2026v1.0 MeF element; export waits for a schema that carries it",
+    );
+  }
   const fields = inputSchema.strict().parse(rawFields);
-  assertProducingMiningZeroQbiReturn(fields, context?.pending);
+  const taxYear = mefTaxYear(context);
+  assertProducingMiningZeroQbiReturn(fields, context?.pending, taxYear);
   if (fields.farm_wotc_filing_source) {
     assertQualifiedTipQbiSource(
       fields as unknown as Record<string, unknown>,
@@ -781,11 +807,12 @@ function buildIRS8995A(rawFields: unknown, context?: MefBuildContext): string {
   assertFarmWotcReturn(
     fields as unknown as Record<string, unknown>,
     context?.pending,
+    taxYear,
   );
   if (!fields.farm_wotc_filing_source) {
-    assertForm8995AWotcReturn(fields, context?.pending);
+    assertForm8995AWotcReturn(fields, context?.pending, taxYear);
   }
-  assertForm8995APatronReturn(fields, context?.pending);
+  assertForm8995APatronReturn(fields, context?.pending, taxYear);
   if (
     fields.aggregation_filing_details || fields.rpe_aggregation_source ||
     (fields.aggregation_groups ?? []).length > 0
@@ -793,8 +820,13 @@ function buildIRS8995A(rawFields: unknown, context?: MefBuildContext): string {
     return buildStagedAggregatedIRS8995A(fields, context);
   }
   if (fields.schedule_c_qbi_businesses?.some((business) => business.qbi < 0)) {
-    const lines = calculateScheduleCLossLines(fields);
-    assertScheduleCLossFiler(fields, context?.pending, context?.filer);
+    const lines = calculateScheduleCLossLines(fields, taxYear);
+    assertScheduleCLossFiler(
+      fields,
+      context?.pending,
+      context?.filer,
+      taxYear,
+    );
     reconcileReturn(context, lines.parent.line39, fields);
     const parent = lines.parent;
     const phases = lines.businessLines.map(({ parent }) =>
@@ -803,6 +835,7 @@ function buildIRS8995A(rawFields: unknown, context?: MefBuildContext): string {
         parent.line3,
         parent.line10,
         fields.filing_status,
+        taxYear,
       )
     );
     const phaseIn = phases.find((phase) => phase !== undefined);
@@ -850,9 +883,9 @@ function buildIRS8995A(rawFields: unknown, context?: MefBuildContext): string {
       element("TotalQBIComponentAmt", parent.line16),
       ...(phaseIn
         ? [
-          element("FilingStatusThresholdCd", phaseIn.threshold),
+          thresholdCodeElement(phaseIn.threshold),
           element("TXIBfrQBIDedLessThresholdAmt", phaseIn.excess),
-          element("FilingStatusPhaseInRangeCd", phaseIn.range),
+          phaseInRangeCodeElement(phaseIn.range),
           element("PhaseInPct", phaseIn.ratio.toFixed(5)),
         ]
         : []),
@@ -876,7 +909,7 @@ function buildIRS8995A(rawFields: unknown, context?: MefBuildContext): string {
     (fields.sstb_w2_wages ?? 0) !== 0 ||
     (fields.sstb_unadjusted_basis ?? 0) !== 0
   ) {
-    const lines = calculateOneSstb8995ALines(fields);
+    const lines = calculateOneSstb8995ALines(fields, taxYear);
     reconcileReturn(context, lines.line39, fields);
     assertZeroReductionScheduleAReturn(fields, lines, context?.pending);
     return elements("IRS8995A", [
@@ -903,15 +936,12 @@ function buildIRS8995A(rawFields: unknown, context?: MefBuildContext): string {
         element("QBIAfterPhaseInReductionAmt", lines.line26),
       ]),
       element("TotalQBIComponentAmt", lines.line16),
-      element(
-        "FilingStatusThresholdCd",
-        lines.threshold,
-      ),
+      thresholdCodeElement(lines.threshold),
       element(
         "TXIBfrQBIDedLessThresholdAmt",
         lines.line33 - lines.threshold,
       ),
-      element("FilingStatusPhaseInRangeCd", lines.phaseInRange),
+      phaseInRangeCodeElement(lines.phaseInRange),
       element("PhaseInPct", lines.phaseIn.toFixed(5)),
       element("QlfyREITDivPTPIncomeLossAmt", 0),
       element("PYQlfyREITDivPTPLossCfwdAmt", 0),
@@ -928,13 +958,13 @@ function buildIRS8995A(rawFields: unknown, context?: MefBuildContext): string {
       element("TotQlfyREITDivPTPLossCfwdAmt", 0),
     ]);
   }
-  const mixed = assertMixedFishingQbiReturn(fields, context?.pending);
+  const mixed = assertMixedFishingQbiReturn(fields, context?.pending, taxYear);
   const oldMulti = fields.independent_patron_sources
-    ? calculateIndependentPatronBusinesses(fields)
+    ? calculateIndependentPatronBusinesses(fields, taxYear)
     : fields.farm_wotc_filing_source
-    ? calculateFarmWotcLines(fields)
+    ? calculateFarmWotcLines(fields, taxYear)
     : fields.wotc_business_sources
-    ? calculateOwnedWotcBusinesses(fields)
+    ? calculateOwnedWotcBusinesses(fields, taxYear)
     : undefined;
   const multi = mixed ?? oldMulti;
   const multiRows = mixed
@@ -953,7 +983,7 @@ function buildIRS8995A(rawFields: unknown, context?: MefBuildContext): string {
       details: multiRows![0].details,
       lines: multi.parent,
     }
-    : validateOneBusiness(fields);
+    : validateOneBusiness(fields, taxYear);
   if (!multi) assertOneBusinessReitSource(fields, context?.pending);
   reconcileReturn(context, lines.line39, fields);
   return elements("IRS8995A", [
@@ -965,12 +995,12 @@ function buildIRS8995A(rawFields: unknown, context?: MefBuildContext): string {
     element("TotalQBIComponentAmt", lines.line16),
     ...(lines.phaseInRequired
       ? [
-        element("FilingStatusThresholdCd", lines.patronThreshold),
+        thresholdCodeElement(lines.patronThreshold),
         element(
           "TXIBfrQBIDedLessThresholdAmt",
           lines.line33 - lines.patronThreshold!,
         ),
-        element("FilingStatusPhaseInRangeCd", lines.patronPhaseInRange),
+        phaseInRangeCodeElement(lines.patronPhaseInRange),
         element("PhaseInPct", lines.phaseIn!.toFixed(5)),
       ]
       : []),

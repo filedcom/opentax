@@ -6,12 +6,17 @@ import {
   inputSchema,
 } from "../../../../../../nodes/intermediate/forms/deductions/business/form8995a/index.ts";
 import { element, elements } from "../../../../../../mef/xml.ts";
+import {
+  phaseInRangeCodeElement,
+  thresholdCodeElement,
+} from "./f8995a-schema-codes.ts";
 import { FilingStatus as HeaderFilingStatus } from "../../../../../../mef/header.ts";
 import { FilingStatus as NodeFilingStatus } from "../../../../../../nodes/types.ts";
 import type {
   MefBuildContext,
   MefFormDescriptor,
 } from "../../../../form-descriptor.ts";
+import { mefTaxYear } from "../../../../support/year-config.ts";
 
 type Input = Form8995AInput | readonly [];
 
@@ -46,6 +51,7 @@ export function assertZeroReductionScheduleAReturn(
 }
 
 function buildScheduleA(rawFields: unknown, context?: MefBuildContext): string {
+  const taxYear = mefTaxYear(context);
   if (Array.isArray(rawFields) && rawFields.length === 0) return "";
   const fields = inputSchema.strict().parse(rawFields);
   const parent = inputSchema.strict().safeParse(context?.pending?.form8995a);
@@ -64,10 +70,11 @@ function buildScheduleA(rawFields: unknown, context?: MefBuildContext): string {
   assertSstbScheduleCSource(
     fields,
     context?.pending,
+    taxYear,
     context?.filer?.primarySSN,
     context?.filer,
   );
-  const lines = calculateOneSstb8995ALines(fields);
+  const lines = calculateOneSstb8995ALines(fields, taxYear);
   assertZeroReductionScheduleAReturn(fields, lines, context?.pending);
   const expectedStatus = fields.filing_status === NodeFilingStatus.MFJ
     ? HeaderFilingStatus.MarriedFilingJointly
@@ -97,9 +104,9 @@ function buildScheduleA(rawFields: unknown, context?: MefBuildContext): string {
   return elements("IRS8995AScheduleA", [
     elements("NonPTPSSTBGrp", [
       element("TaxableIncomeBeforeQBIDedAmt", lines.line33),
-      element("FilingStatusThresholdCd", lines.threshold),
+      thresholdCodeElement(lines.threshold),
       element("TXIBfrQBIDedLessThresholdAmt", lines.line33 - lines.threshold),
-      element("FilingStatusPhaseInRangeCd", lines.phaseInRange),
+      phaseInRangeCodeElement(lines.phaseInRange),
       element("PhaseInPct", lines.phaseIn.toFixed(5)),
       element("ApplicablePct", lines.applicable.toFixed(5)),
       elements("NonPTPSSTBDtlGrp", [

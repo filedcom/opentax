@@ -5,11 +5,6 @@
     "count": 1
   },
   {
-    "path": "forms/f1040/2025/domains/adjustments/health/form7206/form7206_independent_owner_source.ts",
-    "pattern": "config-index",
-    "count": 1
-  },
-  {
     "path": "forms/f1040/2025/domains/adjustments/health/form8853/form8853_contributions_reconciliation.ts",
     "pattern": "year-value",
     "count": 1
@@ -270,26 +265,6 @@
     "count": 2
   },
   {
-    "path": "forms/f1040/2025/domains/deductions/business/form8995/form8995_farm_wotc_reconciliation.ts",
-    "pattern": "config-index",
-    "count": 5
-  },
-  {
-    "path": "forms/f1040/2025/domains/deductions/business/form8995a/form8995a_independent_patron_reconciliation.ts",
-    "pattern": "year-identifier",
-    "count": 3
-  },
-  {
-    "path": "forms/f1040/2025/domains/deductions/business/form8995a/form8995a_patron_reconciliation.ts",
-    "pattern": "config-index",
-    "count": 1
-  },
-  {
-    "path": "forms/f1040/2025/domains/deductions/business/form8995a/form8995a_producing_mining_source.ts",
-    "pattern": "year-value",
-    "count": 1
-  },
-  {
     "path": "forms/f1040/2025/domains/deductions/business/form8995a/form8995a_sstb_service_checks.ts",
     "pattern": "year-identifier",
     "count": 5
@@ -297,11 +272,6 @@
   {
     "path": "forms/f1040/2025/domains/deductions/business/form8995a/form8995a_sstb_service_checks.ts",
     "pattern": "year-value",
-    "count": 1
-  },
-  {
-    "path": "forms/f1040/2025/domains/deductions/business/form8995a/form8995a_wotc_reconciliation.ts",
-    "pattern": "config-index",
     "count": 1
   },
   {
@@ -377,7 +347,7 @@
   {
     "path": "forms/f1040/2025/domains/general/return-assembly/filer-source-reconciliation.ts",
     "pattern": "year-identifier",
-    "count": 6
+    "count": 4
   },
   {
     "path": "forms/f1040/2025/domains/income/business/form172/form172_amt_annual_limit.ts",
@@ -695,11 +665,6 @@
     "count": 3
   },
   {
-    "path": "forms/f1040/2025/domains/taxes/self-employment/schedule-se/schedule-se-owner-source.ts",
-    "pattern": "year-value",
-    "count": 1
-  },
-  {
     "path": "forms/f1040/2025/domains/taxes/underpayment/form2210/form2210_box_e_finalized.ts",
     "pattern": "year-identifier",
     "count": 1
@@ -928,16 +893,6 @@
     "path": "forms/f1040/2025/mef/forms/deductions/business/f8995/f8995-route.ts",
     "pattern": "year-value",
     "count": 1
-  },
-  {
-    "path": "forms/f1040/2025/mef/forms/deductions/business/f8995a/f8995a-sstb-source.ts",
-    "pattern": "config-index",
-    "count": 1
-  },
-  {
-    "path": "forms/f1040/2025/mef/forms/deductions/business/f8995a/f8995a.ts",
-    "pattern": "config-index",
-    "count": 3
   },
   {
     "path": "forms/f1040/2025/mef/forms/deductions/charitable/f8283/f8283_carryover_evidence.ts",
@@ -1700,21 +1655,6 @@
     "count": 1
   },
   {
-    "path": "forms/f1040/nodes/inputs/deductions/business/k1_rpe_aggregation_source.ts",
-    "pattern": "date-pinned",
-    "count": 7
-  },
-  {
-    "path": "forms/f1040/nodes/inputs/deductions/business/k1_rpe_aggregation_source.ts",
-    "pattern": "year-identifier",
-    "count": 3
-  },
-  {
-    "path": "forms/f1040/nodes/inputs/deductions/business/k1_rpe_aggregation_source.ts",
-    "pattern": "z-literal",
-    "count": 1
-  },
-  {
     "path": "forms/f1040/nodes/inputs/deductions/business/qbi_patron/independent.ts",
     "pattern": "config-index",
     "count": 3
@@ -1892,7 +1832,7 @@
   {
     "path": "forms/f1040/nodes/inputs/general/filing/general/index.ts",
     "pattern": "year-identifier",
-    "count": 19
+    "count": 17
   },
   {
     "path": "forms/f1040/nodes/inputs/general/filing/general/index.ts",
@@ -2017,7 +1957,7 @@
   {
     "path": "forms/f1040/nodes/inputs/income/business/schedule_c/index.ts",
     "pattern": "year-comparison",
-    "count": 3
+    "count": 2
   },
   {
     "path": "forms/f1040/nodes/inputs/income/business/schedule_c/index.ts",
@@ -2356,18 +2296,13 @@
   },
   {
     "path": "forms/f1040/nodes/inputs/taxes/investments/f8615/dependent-source-review.ts",
-    "pattern": "config-index",
-    "count": 2
-  },
-  {
-    "path": "forms/f1040/nodes/inputs/taxes/investments/f8615/dependent-source-review.ts",
     "pattern": "date-pinned",
     "count": 2
   },
   {
     "path": "forms/f1040/nodes/inputs/taxes/investments/f8615/dependent-source-review.ts",
     "pattern": "year-identifier",
-    "count": 9
+    "count": 7
   },
   {
     "path": "forms/f1040/nodes/inputs/taxes/other/f5405/index.ts",
@@ -2407,7 +2342,7 @@
   {
     "path": "forms/f1040/nodes/intermediate/forms/adjustments/health/form7206/index.ts",
     "pattern": "year-comparison",
-    "count": 3
+    "count": 1
   },
   {
     "path": "forms/f1040/nodes/intermediate/forms/adjustments/health/form7206/policy-records.ts",
@@ -2805,81 +2740,6 @@
     "count": 4
   },
   {
-    "path": "forms/f1040/nodes/intermediate/forms/deductions/business/form8995a/farm-wotc.ts",
-    "pattern": "config-index",
-    "count": 3
-  },
-  {
-    "path": "forms/f1040/nodes/intermediate/forms/deductions/business/form8995a/index.ts",
-    "pattern": "config-index",
-    "count": 12
-  },
-  {
-    "path": "forms/f1040/nodes/intermediate/forms/deductions/business/form8995a/index.ts",
-    "pattern": "date-pinned",
-    "count": 8
-  },
-  {
-    "path": "forms/f1040/nodes/intermediate/forms/deductions/business/form8995a/index.ts",
-    "pattern": "year-comparison",
-    "count": 3
-  },
-  {
-    "path": "forms/f1040/nodes/intermediate/forms/deductions/business/form8995a/index.ts",
-    "pattern": "year-identifier",
-    "count": 5
-  },
-  {
-    "path": "forms/f1040/nodes/intermediate/forms/deductions/business/form8995a/loss-se.ts",
-    "pattern": "config-index",
-    "count": 1
-  },
-  {
-    "path": "forms/f1040/nodes/intermediate/forms/deductions/business/form8995a/mixed-fishing.ts",
-    "pattern": "config-index",
-    "count": 2
-  },
-  {
-    "path": "forms/f1040/nodes/intermediate/forms/deductions/business/form8995a/positive-limit-inventory.ts",
-    "pattern": "date-pinned",
-    "count": 13
-  },
-  {
-    "path": "forms/f1040/nodes/intermediate/forms/deductions/business/form8995a/positive-limit-inventory.ts",
-    "pattern": "year-identifier",
-    "count": 21
-  },
-  {
-    "path": "forms/f1040/nodes/intermediate/forms/deductions/business/form8995a/positive-limit-inventory.ts",
-    "pattern": "z-literal",
-    "count": 1
-  },
-  {
-    "path": "forms/f1040/nodes/intermediate/forms/deductions/business/form8995a/producing-mining.ts",
-    "pattern": "config-index",
-    "count": 2
-  },
-  {
-    "path": "forms/f1040/nodes/intermediate/forms/deductions/business/form8995a/producing-mining.ts",
-    "pattern": "year-comparison",
-    "count": 1
-  },
-  {
-    "path": "forms/f1040/nodes/intermediate/forms/deductions/business/form8995a/single-farm-source.ts",
-    "pattern": "config-index",
-    "count": 1
-  },
-  {
-    "path": "forms/f1040/nodes/intermediate/forms/deductions/business/form8995a/zero-limit-inventory.ts",
-    "pattern": "date-pinned",
-    "count": 3
-  },
-  {
-    "path": "forms/f1040/nodes/intermediate/forms/deductions/business/form8995a/zero-limit-inventory.ts",
-    "pattern": "z-literal",
-    "count": 1
-  },
-  {
     "path": "forms/f1040/nodes/intermediate/forms/deductions/investments/form4952/debt_trace.ts",
     "pattern": "date-pinned",
     "count": 1
@@ -3080,11 +2940,6 @@
     "count": 1
   },
   {
-    "path": "forms/f1040/nodes/intermediate/forms/income/business/schedule_f/index.ts",
-    "pattern": "year-comparison",
-    "count": 1
-  },
-  {
     "path": "forms/f1040/nodes/intermediate/forms/income/foreign/form2555/calculation.ts",
     "pattern": "config-index",
     "count": 1
@@ -3217,7 +3072,7 @@
   {
     "path": "forms/f1040/nodes/intermediate/forms/taxes/investments/form8615/calculation.ts",
     "pattern": "year-identifier",
-    "count": 9
+    "count": 1
   },
   {
     "path": "forms/f1040/nodes/intermediate/forms/taxes/retirement/form4972/participant-collection.ts",
