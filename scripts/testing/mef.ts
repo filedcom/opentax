@@ -27,26 +27,47 @@ const baselineSchema = z.object({
 export type Baseline = z.infer<typeof baselineSchema>;
 export type Findings = Readonly<Record<string, readonly string[]>>;
 
+/**
+ * Self-Select PIN authentication (Pub 4164 §8.9.2): 0 is the prior-year AGI of
+ * a first-time filer, but a filer under 16 who never filed cannot use a
+ * Self-Select PIN (IND-674-01), so a minor authenticates with last year's PIN.
+ */
+function priorYearAuthentication(
+  general: Record<string, unknown>,
+  filer: "taxpayer" | "spouse",
+  dob: string,
+  priorYearPin: string,
+): Record<string, unknown> {
+  const agi = general[`${filer}_prior_year_agi`];
+  const pin = general[`${filer}_prior_year_pin`];
+  if (agi !== undefined || pin !== undefined) return {};
+  const under16 = Number(dob.slice(0, 4)) > 2025 - 16;
+  return under16
+    ? { [`${filer}_prior_year_pin`]: priorYearPin }
+    : { [`${filer}_prior_year_agi`]: 0 };
+}
+
 /** A filed return is signed; sample returns are calculation fixtures without PINs. */
 export function signed(
   inputs: Record<string, unknown>,
 ): Record<string, unknown> {
   const general = (inputs.general ?? {}) as Record<string, unknown>;
+  const taxpayerDob = String(general.taxpayer_dob ?? "1980-01-01");
+  const spouseDob = String(general.spouse_dob ?? "1980-01-01");
   return {
     ...structuredClone(inputs),
     general: {
       ...general,
       taxpayer_signature_pin: general.taxpayer_signature_pin ?? "12345",
       taxpayer_signature_date: general.taxpayer_signature_date ?? "2026-02-01",
-      // Self-Select PIN authentication (Pub 4164 §8.9.2); 0 is the prior-year AGI of a first-time filer.
-      taxpayer_dob: general.taxpayer_dob ?? "1980-01-01",
-      taxpayer_prior_year_agi: general.taxpayer_prior_year_agi ?? 0,
+      taxpayer_dob: taxpayerDob,
+      ...priorYearAuthentication(general, "taxpayer", taxpayerDob, "24680"),
       ...(general.filing_status === "mfj"
         ? {
           spouse_signature_pin: general.spouse_signature_pin ?? "54321",
           spouse_signature_date: general.spouse_signature_date ?? "2026-02-01",
-          spouse_dob: general.spouse_dob ?? "1980-01-01",
-          spouse_prior_year_agi: general.spouse_prior_year_agi ?? 0,
+          spouse_dob: spouseDob,
+          ...priorYearAuthentication(general, "spouse", spouseDob, "13579"),
         }
         : {}),
     },

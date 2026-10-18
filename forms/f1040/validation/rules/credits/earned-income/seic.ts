@@ -30,9 +30,9 @@ import {
   yearOf,
 } from "../../../../../../core/validation/mod.ts";
 import {
-  everyIssuableTin,
+  issuableTins,
   personNameControlAgrees,
-  wellFormedIpPins,
+  validIpPins,
 } from "../../../../../../core/validation/predicates.ts";
 
 /** No qualifying child was born before the filer; a birth in the same year cannot be ordered. */
@@ -163,7 +163,7 @@ export const SEIC_RULES: readonly RuleDef[] = [
       eachGroup(
         "QualifyingChildInformation",
         all(
-          everyIssuableTin("QualifyingChildSSN"),
+          issuableTins("QualifyingChildSSN"),
           personNameControlAgrees("QualifyingChildNameControlTxt", "QualifyingChildSSN"),
         ),
         "QualifyingChildSSN", "QualifyingChildNameControlTxt",
@@ -262,7 +262,7 @@ export const SEIC_RULES: readonly RuleDef[] = [
     "reject_and_stop",
     "database",
     // Offline: an SSN the SSA can issue; its lock is IRS data.
-    inOwnDocument(everyIssuableTin("QualifyingChildSSN")),
+    inOwnDocument(issuableTins("QualifyingChildSSN")),
     "The Qualifying Child SSN that has a value on Schedule EIC (Form 1040), has been locked because Social Security Administration records indicate the number belongs to a deceased individual.",
   ),
   rule(
@@ -270,7 +270,7 @@ export const SEIC_RULES: readonly RuleDef[] = [
     "reject_and_stop",
     "database",
     // Offline: an SSN the SSA can issue; its lock is IRS data.
-    inOwnDocument(everyIssuableTin("QualifyingChildSSN")),
+    inOwnDocument(issuableTins("QualifyingChildSSN")),
     "The Qualifying Child SSN that has a value on Schedule EIC (Form 1040), has been locked. The account was locked per the taxpayer's request.",
   ),
   rule(
@@ -278,21 +278,21 @@ export const SEIC_RULES: readonly RuleDef[] = [
     "reject_and_stop",
     "database",
     // Offline: an SSN the SSA can issue; its lock is IRS data.
-    inOwnDocument(everyIssuableTin("QualifyingChildSSN")),
+    inOwnDocument(issuableTins("QualifyingChildSSN")),
     "The Qualifying Child SSN that has a value on Schedule EIC (Form 1040), has been locked. The account was locked per the request of the qualifying child's parent or guardian.",
   ),
   rule(
     "SEIC-F1040-995-01",
     "reject_and_stop",
     "incorrect_data",
-    inOwnDocument(wellFormedIpPins("QualifyingChildInformation/IdentityProtectionPIN")),
+    inOwnDocument(validIpPins("QualifyingChildInformation/IdentityProtectionPIN")),
     "The Dependent/Qualifying Child Identity Protection Personal Identification Number (IP PIN) on Schedule EIC (Form 1040) must match the e-File database. Please double check your entry and resubmit your return with the correct number.",
   ),
   rule(
     "SEIC-F1040-996-01",
     "reject_and_stop",
     "incorrect_data",
-    inOwnDocument(wellFormedIpPins("QualifyingChildInformation/IdentityProtectionPIN")),
+    inOwnDocument(validIpPins("QualifyingChildInformation/IdentityProtectionPIN")),
     "The Primary Taxpayer did not enter a valid Identity Protection Personal Identification Number (IP PIN) for Dependent/Qualifying Child on Schedule EIC (Form 1040). Please visit www.irs.gov/getanippin for further information and resubmit your return with the correct number.",
   ),
 ];
