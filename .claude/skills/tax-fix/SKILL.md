@@ -12,7 +12,8 @@ agent. Nothing is persisted between runs: each round re-reads the scoreboards.
 
 ## 1. Read the failures
 
-- `{form}:{year}`: `bun run bench --form {form} --year {year} --json`. The last
+- `{form}:{year}`: `bun run bench:cached --form {form} --year {year} --json`
+  (replays `bench` when nothing it reads changed). The last
   line is `{ total, pass, fail, failing, failures }`; each failure has
   `lineFailures`, `unsupportedChecks` and `errors`.
 - `mef`: `bun run check:mef --json` (`returns`: sample return id → findings;
