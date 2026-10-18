@@ -825,7 +825,7 @@ function buildSchedule(raw: Input, context?: MefBuildContext): string {
   }
   if ((input.vehicle_loans?.length ?? 0) > 0) {
     const lines = calculateVehicleInterestSchedule1A(
-      { taxYear: 2025, formType: "f1040" },
+      { taxYear: context?.taxYear ?? 2025, formType: "f1040" },
       input,
     );
     const returnSsns = [form1040.taxpayer_ssn];
@@ -875,12 +875,19 @@ function buildSchedule(raw: Input, context?: MefBuildContext): string {
       element("QualifiedCarLoanInterestDedAmt", lines.line30_vehicle_interest),
     );
   }
-  if (seniorDeduction({ taxYear: 2025, formType: "f1040" }, input) > 0) {
-    const lines = calculateSeniorOnlySchedule1A(
-      { taxYear: 2025, formType: "f1040" },
+  const seniorContext = {
+    taxYear: context?.taxYear ?? 2025,
+    formType: "f1040",
+  };
+  if (seniorDeduction(seniorContext, input) > 0) {
+    const lines = calculateSeniorOnlySchedule1A(seniorContext, input);
+    assertSchedule1ASeniorGeneralSource(
+      context?.pending?.general,
       input,
+      lines.line36a_taxpayer,
+      lines.line36b_spouse,
+      seniorContext.taxYear,
     );
-    assertSchedule1ASeniorGeneralSource(context?.pending?.general, input, lines.line36a_taxpayer, lines.line36b_spouse);
     const matchesPerson = (
       claimed: number,
       sourceSsn: string | undefined,

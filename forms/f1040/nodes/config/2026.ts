@@ -304,6 +304,9 @@ export const config2026: F1040Config = {
   nonitemizerCharitableLimitMfj: 2_000,
   charitableAgiFloorRate: 0.005,
   itemizedDeductionReductionRate: 2 / 37,
+  // IRC §163(h)(3)(E) restored for amounts paid after 2025 by P.L. 119-21
+  // §70108; draft 2026 Schedule A line 8d.
+  mortgageInsurancePremiumsDeductible: true,
   // IRC §199A(i) (P.L. 119-21 §70105); RP §2.12: indexed only after 2026.
   qbiMinimumDeduction: 400,
   qbiMinimumDeductionQbiFloor: 1_000,

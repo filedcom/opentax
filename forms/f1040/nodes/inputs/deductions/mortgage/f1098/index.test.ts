@@ -1449,3 +1449,33 @@ test("f1098.compute: smoke — comprehensive item routes correctly", () => {
   assertEquals(findOutput(result, "schedule_e"), undefined);
   assertEquals(findOutput(result, "schedule_c"), undefined);
 });
+
+test("TY2026 export treats a 2026-originated Form 1098 as the current-year purchase", () => {
+  const purchase = {
+    lender_name: "Example Home Lender",
+    recipient_tin: "111223333",
+    source_document_reference: "2026 lender copy",
+    box1_mortgage_interest: 5_000,
+    box1_current_year_deductible_interest: 5_000,
+    box1_deduction_workpaper_reference: "Pub. 936 workpaper",
+    box3_origination_date: "03/01/2026",
+  };
+  const check = (taxYear: number) =>
+    assertForm1098MortgageLimitSources(
+      { f1098s: [purchase] },
+      ["111223333"],
+      FilingStatus.Single,
+      5_000,
+      0,
+      0,
+      false,
+      false,
+      undefined,
+      false,
+      undefined,
+      taxYear,
+    );
+  assertThrows(() => check(2026), Error, "2026-originated Form 1098");
+  // For TY2025 the same loan is outside the post-2017 snapshot window.
+  check(2025);
+});

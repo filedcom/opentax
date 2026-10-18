@@ -51,6 +51,8 @@ export interface Fields {
   home_mortgage_nonqualifying_use_review?: unknown;
   line_8b_mortgage_interest_no_1098?: number | null;
   line_8c_points_no_1098?: number | null;
+  // TY2026 line 8d after the AGI phaseout, finalized by the schedule_a node.
+  line_8d_mortgage_insurance_allowed?: number | null;
   form8396_interest_credit_reduction?: number | null;
   form8396_interest_reporting_line?: "8a" | "8b" | null;
   line_9_investment_interest?: number | null;
@@ -86,6 +88,7 @@ export const FIELD_MAP: ReadonlyArray<readonly [keyof Fields, string]> = [
   ["line_8a_mortgage_interest_1098", "RptHomeMortgIntAndPointsAmt"],
   ["line_8b_mortgage_interest_no_1098", "Form1098HomeMortgIntNotRptAmt"],
   ["line_8c_points_no_1098", "Form1098PointsNotReportedAmt"],
+  ["line_8d_mortgage_insurance_allowed", "MortgageInsurancePremiumsAmt"],
   ["line_9_investment_interest", "InvestmentInterestAmt"],
   ["line_11_cash_contributions", "GiftsByCashOrCheckAmt"],
   ["line_12_noncash_contributions", "OtherThanByCashOrCheckAmt"],
@@ -143,6 +146,7 @@ function buildIRS1040ScheduleA(
         | { cashout_source?: unknown }
         | undefined)?.cashout_source !== undefined,
       filer.spouse?.ssn,
+      context.taxYear,
     );
     assertPurchasePointsCrossLoanSources(
       context.pending.f1098,
@@ -417,6 +421,10 @@ function buildIRS1040ScheduleA(
       )
       : "",
     mapField(["line_8c_points_no_1098", "Form1098PointsNotReportedAmt"]),
+    mapField([
+      "line_8d_mortgage_insurance_allowed",
+      "MortgageInsurancePremiumsAmt",
+    ]),
     mapField(["line_9_investment_interest", "InvestmentInterestAmt"]),
     typeof fields.line_11_cash_contributions === "number"
       ? element(

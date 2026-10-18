@@ -50,6 +50,8 @@ export interface MefBuildContext {
   readonly preparedForm8886?: PreparedForm8886ReturnPackets;
   /** The initial document-discovery pass runs before stable document IDs exist. */
   readonly phase?: "discovery" | "final";
+  /** The return's tax year; absent means TY2025. */
+  readonly taxYear?: number;
   readonly filer?: FilerIdentity;
   /** Read-only full pending graph for cross-document reconciliation. */
   readonly pending?: Readonly<Record<string, unknown>>;

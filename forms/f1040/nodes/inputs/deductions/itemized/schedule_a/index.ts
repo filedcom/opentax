@@ -16,6 +16,10 @@ import type { NodeContext } from "../../../../../../../core/types/node-context.t
 import { FilingStatus } from "../../../../types.ts";
 import { CONFIG_BY_YEAR } from "../../../../config/index.ts";
 import type { F1040Config } from "../../../../config/index.ts";
+import {
+  charitableFloorAmount,
+  mortgageInsurancePremiumDeduction,
+} from "./limits-2026.ts";
 
 // Publication 526 (2025), Worksheet 2, lines 4-10. These are source
 // classifications, not the percentage of the final Schedule A deduction.
@@ -143,6 +147,10 @@ export const inputSchema = z.object({
   home_mortgage_nonqualifying_use_review:
     homeMortgageNonqualifyingUseReviewSchema.optional(),
   line_8c_points_no_1098: z.number().nonnegative().optional(),
+  // TY2026 line 8d: premiums on a contract issued after 2006 for acquisition
+  // debt on a qualified residence, before the AGI phaseout.
+  line_8d_mortgage_insurance_premiums: z.number().nonnegative().optional(),
+  mortgage_insurance_premiums_qualified_confirmed: z.literal(true).optional(),
   form8396_interest_credit_reduction: z.number().int().nonnegative()
     .optional(),
   form8396_interest_reporting_line: z.enum(["8a", "8b"]).optional(),
@@ -154,6 +162,10 @@ export const inputSchema = z.object({
   // Pub. 526 Worksheet 2 lines 5/7: cash to a second-category organization
   // or held for the use of any qualified organization.
   cash_contributions_other_30: z.number().nonnegative().optional(),
+  // TY2026 1040 line 12f: the part of the 50%-organization cash gifts made to
+  // donor-advised funds or supporting organizations (IRC §170(p)).
+  cash_contributions_to_daf_or_supporting_organizations: z.number()
+    .nonnegative().optional(),
   // The amount printed on the line 11 dotted line; it stays within line 11.
   line_11_qualified_contributions: z.number().positive().optional(),
   qualified_conservation_contributions: z.number().nonnegative().optional(),
@@ -232,6 +244,28 @@ export const inputSchema = z.object({
       path: ["line_11_qualified_contributions"],
       message:
         "Schedule A line 11 qualified contributions cannot exceed sourced cash gifts",
+    });
+  }
+  if (
+    (data.cash_contributions_to_daf_or_supporting_organizations ?? 0) >
+      (data.cash_contributions_to_50_percent_organizations ?? 0)
+  ) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ["cash_contributions_to_daf_or_supporting_organizations"],
+      message:
+        "Donor-advised fund and supporting organization gifts are part of the 50%-organization cash gifts",
+    });
+  }
+  if (
+    (data.line_8d_mortgage_insurance_premiums ?? 0) > 0 &&
+    data.mortgage_insurance_premiums_qualified_confirmed !== true
+  ) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ["mortgage_insurance_premiums_qualified_confirmed"],
+      message:
+        "Schedule A line 8d needs confirmation the premiums are for a post-2006 contract on qualified residence acquisition debt",
     });
   }
   if (data.force_itemized === true && data.force_standard === true) {
@@ -449,7 +483,10 @@ function computeSALT(input: ScheduleAInput, cfg: F1040Config): number {
   return Math.min(saltTotal, Math.round(effectiveSaltCap(input, cfg)));
 }
 
-function computeInterestTotal(input: ScheduleAInput): number {
+function computeInterestTotal(
+  input: ScheduleAInput,
+  mortgageInsurance: number,
+): number {
   const mortgage = Math.round(input.line_8a_mortgage_interest_1098 ?? 0) +
     Math.round(input.line_8b_mortgage_interest_no_1098 ?? 0);
   return Math.max(
@@ -457,7 +494,7 @@ function computeInterestTotal(input: ScheduleAInput): number {
     mortgage -
       Math.round(input.form8396_interest_credit_reduction ?? 0),
   ) +
-    Math.round(input.line_8c_points_no_1098 ?? 0) +
+    Math.round(input.line_8c_points_no_1098 ?? 0) + mortgageInsurance +
     Math.round(input.line_9_investment_interest ?? 0);
 }
 
@@ -697,6 +734,36 @@ function computeElectedCapitalGainCarryovers(
   return { allowed, remaining };
 }
 
+// Pub. 505 (2026) Worksheet 2-5 applies the floor to the year's total gifts.
+// How it interacts with the percentage limits and carryovers (IRC
+// §170(b)(1)(I)(ii)) awaits the final Schedule A worksheet, so a return the
+// limits or carryovers reach is refused rather than guessed.
+function assertCharitableFloorSupported(
+  contributions: { carryforwards: Record<string, number> },
+  input: ScheduleAInput,
+): void {
+  if (
+    Object.values(contributions.carryforwards).some((amount) => amount > 0) ||
+    (input.capital_gain_property_carryovers?.length ?? 0) > 0
+  ) {
+    throw new Error(
+      "TY2026 charitable 0.5% floor with AGI-limited gifts or carryovers needs the final Schedule A limitation worksheet",
+    );
+  }
+}
+
+// IRC §170(p): cash to §170(b)(1)(A) organizations other than donor-advised
+// funds and supporting organizations.
+function nonitemizerCashSource(input: ScheduleAInput) {
+  const cash = input.cash_contributions_to_50_percent_organizations ?? 0;
+  if (cash === 0) return {};
+  const excluded = input.cash_contributions_to_daf_or_supporting_organizations;
+  if (excluded === undefined) {
+    return { nonitemizer_charitable_cash_unclassified: true };
+  }
+  return { nonitemizer_charitable_cash: cash - excluded };
+}
+
 class ScheduleANode extends TaxNode<typeof inputSchema> {
   readonly nodeType = "schedule_a";
   readonly inputSchema = inputSchema;
@@ -755,13 +822,37 @@ class ScheduleANode extends TaxNode<typeof inputSchema> {
       );
     }
     const taxesTotal = saltCapped + Math.round(input.line_6_other_taxes ?? 0);
+    const mortgageInsurance = mortgageInsurancePremiumDeduction(
+      cfg,
+      input.filing_status,
+      agi,
+      input.line_8d_mortgage_insurance_premiums ?? 0,
+    );
+    const charitableBeforeFloor = Math.round(contributions.cash) +
+      Math.round(contributions.noncash) +
+      Math.round(electedCarryovers.allowed);
+    const charitableFloor = charitableFloorAmount(
+      cfg,
+      agi,
+      charitableBeforeFloor,
+    );
+    if (charitableFloor > 0) assertCharitableFloorSupported(contributions, input);
+    if (
+      ctx.taxYear >= 2026 && (input.line_16_other_deductions ?? 0) > 0
+    ) {
+      throw new Error(
+        "TY2026 Schedule A line 17 needs its categories; gambling losses are limited to 90% (IRC §165(d) as amended by P.L. 119-21 §70114)",
+      );
+    }
     const totalItemized = computeMedicalDeduction(input, agi) +
       taxesTotal +
-      computeInterestTotal(input) +
-      Math.round(contributions.cash) + Math.round(contributions.noncash) +
-      Math.round(electedCarryovers.allowed) +
+      computeInterestTotal(input, mortgageInsurance) +
+      charitableBeforeFloor - charitableFloor +
       Math.round(input.line_15_casualty_theft_loss ?? 0) +
       Math.round(input.line_16_other_deductions ?? 0);
+    const nonitemizerCash = cfg.nonitemizerCharitableLimit > 0
+      ? nonitemizerCashSource(input)
+      : {};
 
     const outputs: NodeOutput[] = [
       ...(charitableAmt &&
@@ -779,6 +870,7 @@ class ScheduleANode extends TaxNode<typeof inputSchema> {
         itemized_taxes: taxesTotal,
         itemized_investment_interest: input.line_9_investment_interest ?? 0,
         niit_allocable_state_local_tax: niitAllocatedTax,
+        ...nonitemizerCash,
       }),
       ...(totalItemized > 0 || input.force_itemized === true
         ? [this.outputNodes.output(form8995, {
@@ -800,6 +892,12 @@ class ScheduleANode extends TaxNode<typeof inputSchema> {
             : {}),
           charitable_limits_finalized: true,
           capital_gain_election_finalized: election,
+          ...(mortgageInsurance > 0
+            ? { line_8d_mortgage_insurance_allowed: mortgageInsurance }
+            : {}),
+          ...(charitableFloor > 0
+            ? { charitable_agi_floor: charitableFloor }
+            : {}),
         },
       }],
       carryforwards: {

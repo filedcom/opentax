@@ -306,7 +306,7 @@ function buildReturnXml(
   assertDigitalAssetDispositionAnswer(pending);
   assertGeneral1040DependentSource(pending);
   assertGeneral1040DepositSource(pending, filer);
-  assert1098EInterestSource(pending, filer);
+  assert1098EInterestSource(pending, filer, year);
   assert1099RRecipientOwner(pending.f1099r, filer);
   assertPositiveW2GRecipient(pending.w2g, filer);
   assertNecWithholdingRecipient(pending.f1099nec, filer);
@@ -414,6 +414,7 @@ function buildReturnXml(
   );
   const initial = buildFragments(pending, {
     phase: "discovery",
+    taxYear: year,
     preparedForm8886,
     filer,
     binaryAttachmentFileNames,
@@ -449,6 +450,7 @@ function buildReturnXml(
   let form3800Parts: Form3800DocumentParts | undefined;
   const linked = buildFragments(pending, {
     phase: "final",
+    taxYear: year,
     preparedForm8886,
     filer,
     binaryAttachmentFileNames,
@@ -615,7 +617,7 @@ export async function buildMefBundle(
       );
     }
   }
-  await assertForm1098IssuerCopies(pending);
+  await assertForm1098IssuerCopies(pending, options.year ?? 2025);
   const retainedSourceDocuments = (options.retainedSourceDocuments ?? []).map((
     d,
   ) => ({

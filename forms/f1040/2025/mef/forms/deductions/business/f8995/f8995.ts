@@ -30,6 +30,7 @@ export const form8995: MefFormDescriptor<"form8995", Input> = {
       assertNoUnfiled8995Loss(
         fields as Record<string, unknown>,
         context?.pending,
+        context?.taxYear,
       );
       return "";
     }
