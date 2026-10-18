@@ -5,10 +5,11 @@
  * when only its forms are identified; neither means an accepted transmission.
  *
  * `ty2025Comparison` contrasts each packet with the TY2025 scenario of the
- * same number in `ty2025_cases.ts`. `engineGaps` lists what keeps the case
- * from a TY2026 export today: the IRS 2026v1.0 schema the engine targets has
- * no Schedule 3-A, Form 1062, Form 4562-B or Form 7220, and the f1040:2026
- * product accepts only the inputs listed in `forms/f1040/2026/supported/`.
+ * same number in `ty2025_cases.ts`. `inputs` are the public input keys the
+ * packet's facts enter through; `bun run check:ats` reports those the
+ * f1040:2026 product still refuses (`forms/f1040/2026/supported/`).
+ * `unsupportedFacts` have no input in any year, and `schemaGaps` have no
+ * element in the IRS 2026v1.0 schema the engine targets.
  */
 
 import type { AtsCase } from "./ty2025_cases.ts";
@@ -18,7 +19,9 @@ export type Ty2026AtsCase = AtsCase & {
   readonly pages: number;
   readonly taxpayer: string;
   readonly ty2025Comparison: string;
-  readonly engineGaps: readonly string[];
+  readonly inputs: readonly string[];
+  readonly unsupportedFacts: readonly string[];
+  readonly schemaGaps: readonly string[];
 };
 
 export const TY2026_ATS_CASES: readonly Ty2026AtsCase[] = [
@@ -43,9 +46,10 @@ export const TY2026_ATS_CASES: readonly Ty2026AtsCase[] = [
     ],
     ty2025Comparison:
       "Same form list as TY2025 scenario 1, but Form 5695 is the four-line 2026 carryforward-only form ($200 TY2025 line 1 carryforward) instead of itemized door and air-conditioner credits, and the cover assumes Form 1062 and Form 1062 Schedule A (1040 line 24b prints $200).",
-    engineGaps: [
-      "Schedule H and Form 5695 nodes still apply TY2025 thresholds and dates",
-      "Form 1062 (1040 line 24b) has no 2026v1.0 schema element",
+    inputs: ["general", "w2", "schedule_h", "f5695"],
+    unsupportedFacts: [],
+    schemaGaps: [
+      "Form 1062 and its Schedule A (1040 line 24b, 24c; Schedule 3 line 13e)",
     ],
     capture: "partial-facts",
   },
@@ -71,10 +75,19 @@ export const TY2026_ATS_CASES: readonly Ty2026AtsCase[] = [
     requiredBinaryAttachmentDescriptions: [],
     ty2025Comparison:
       "Same form list as TY2025 scenario 2, without its nonresident-spouse choice statement: both spouses are U.S. citizens. Adds a statutory-employee W-2 that belongs on Schedule C, pre-July 2026 mileage (72.5 cents), a $300 2025 overpayment applied to 2026, a 2010 dependent, the 1040 line 27c EIC opt-out, a spouse IP PIN and cooperative-patron status.",
-    engineGaps: [
-      "Schedule A, Schedule C and Form 8283 routes are TY2025-only",
-      "Dependents are refused on a TY2026 return (ages are computed at 2025 year end)",
+    inputs: [
+      "general",
+      "w2",
+      "schedule_c",
+      "schedule_a",
+      "f1098",
+      "f8283",
+      "f1040es",
+      "f8812_credit_limit_worksheet",
+      "preparer",
     ],
+    unsupportedFacts: [],
+    schemaGaps: [],
     capture: "partial-facts",
   },
   {
@@ -100,9 +113,18 @@ export const TY2026_ATS_CASES: readonly Ty2026AtsCase[] = [
     ],
     ty2025Comparison:
       "Same form list as TY2025 scenario 3. New facts: IP PIN 876534, taxable state refund $4,089, the Schedule SE farm optional method, specified-cooperative patron status, no income averaging and no QOF investment; the 2026 Schedule F, E and Form 4835 add vehicle-loan interest lines.",
-    engineGaps: [
-      "Schedule F and Form 4835 inputs are not accepted for TY2026",
+    inputs: [
+      "general",
+      "f1099r",
+      "f1099g",
+      "f1099b",
+      "schedule_d",
+      "schedule_e",
+      "schedule_f",
+      "f4835",
     ],
+    unsupportedFacts: [],
+    schemaGaps: [],
     capture: "inventory-only",
   },
   {
@@ -129,10 +151,18 @@ export const TY2026_ATS_CASES: readonly Ty2026AtsCase[] = [
     ],
     ty2025Comparison:
       "Not the TY2025 scenario 4 clean-vehicle and electricity-credit return (3800, 8835, 8936); it resembles TY2025 scenario 5 (HOH, 2441, 8862, 8863, EIC, 8812) plus the new Schedule 3-A, a blind taxpayer, $890 of adjusted education expenses and $1,325 of moving expenses.",
-    engineGaps: [
-      "Schedule 3-A has no 2026v1.0 schema element",
-      "The 2026 EIC Table is not published; dependents and credits are refused for TY2026",
+    inputs: [
+      "general",
+      "w2",
+      "f2441",
+      "f8862",
+      "f8863",
+      "f3903",
+      "f8812_credit_limit_worksheet",
+      "f8812_earned_income_worksheet",
     ],
+    unsupportedFacts: [],
+    schemaGaps: ["Schedule 3-A (1040 line 32b)"],
     capture: "inventory-only",
   },
   {
@@ -149,7 +179,9 @@ export const TY2026_ATS_CASES: readonly Ty2026AtsCase[] = [
     requiredBinaryAttachmentDescriptions: [],
     ty2025Comparison:
       "Not the TY2025 scenario 5 HOH credit return: a single-W-2 return whose refund is split on Form 8888, $1,000 to savings and the remainder to checking.",
-    engineGaps: [],
+    inputs: ["general", "w2", "f8888"],
+    unsupportedFacts: [],
+    schemaGaps: [],
     capture: "partial-facts",
   },
   {
@@ -165,10 +197,11 @@ export const TY2026_ATS_CASES: readonly Ty2026AtsCase[] = [
     forms: ["1040", "W-2", "W-2G", "Schedule 1", "Schedule E"],
     ty2025Comparison:
       "No TY2025 Form 1040 scenario 6 exists (TY2025 scenario 6 was a 1040-SS return). New: a dependent filer born 2008 with W-2 overtime (box 12 TT $200), W-2G slot winnings and a gambling partnership on Schedule E Part II.",
-    engineGaps: [
-      "Schedule E Part II partnership (K-1) inputs are not accepted for TY2026",
-      "W-2 box 12 code TT and the Schedule 1-A overtime route are TY2025-only",
+    inputs: ["general", "w2", "w2g", "schedule_e", "k1_partnership"],
+    unsupportedFacts: [
+      "W-2 box 12 code TT and box 14b Treasury tipped occupation code (page 4): the W-2 input has neither",
     ],
+    schemaGaps: [],
     capture: "inventory-only",
   },
   {
@@ -204,10 +237,11 @@ export const TY2026_ATS_CASES: readonly Ty2026AtsCase[] = [
     ],
     ty2025Comparison:
       "TY2025 scenario 12 was Schedule C/SE with Forms 7206 and 7217. TY2026 keeps Schedule C/SE and the W-2 but replaces 7206/7217 with a credit-transfer return: Forms 3800 and 3800 Schedule A, 4562-B, 7205, 7207, 7220 and four binary attachments.",
-    engineGaps: [
-      "Forms 4562-B and 7220 have no 2026v1.0 schema element",
-      "Business-credit inputs are not accepted for TY2026",
+    inputs: ["general", "w2", "schedule_c", "f3800", "f7207"],
+    unsupportedFacts: [
+      "Forms 4562-B, 7205 and 7220: no input exists for any tax year",
     ],
+    schemaGaps: ["Form 4562-B", "Form 7220"],
     capture: "inventory-only",
   },
   {
@@ -237,10 +271,9 @@ export const TY2026_ATS_CASES: readonly Ty2026AtsCase[] = [
     ],
     ty2025Comparison:
       "TY2025 scenario 13 was Schedule 3 with Forms 6251 and 8911. TY2026 is a farm return: Schedule F/SE, Schedule 1-A, Form 4136 with two Schedules A, and Form 1062 with its Schedule A.",
-    engineGaps: [
-      "Form 1062 and its Schedule A have no 2026v1.0 schema element",
-      "Schedule F, Schedule 1-A and Form 4136 inputs are not accepted for TY2026",
-    ],
+    inputs: ["general", "w2", "schedule_f", "schedule1a", "f4136"],
+    unsupportedFacts: [],
+    schemaGaps: ["Form 1062 and its Schedule A (1040 line 24b)"],
     capture: "inventory-only",
   },
   {
@@ -256,11 +289,17 @@ export const TY2026_ATS_CASES: readonly Ty2026AtsCase[] = [
     forms: ["1040", "Schedule 3-A", "Schedule EIC", "Schedule 8812", "W-2"],
     ty2025Comparison:
       "No TY2025 Form 1040 scenario 14 exists. A W-2 return claiming EIC and the child tax credit, which on the 2026 form brings in Schedule 3-A.",
-    engineGaps: [
-      "Schedule 3-A has no 2026v1.0 schema element",
-      "Dependents are refused for TY2026 and the 2026 EIC Table is not published",
+    inputs: [
+      "general",
+      "w2",
+      "f8812_credit_limit_worksheet",
+      "f8812_earned_income_worksheet",
     ],
-    capture: "inventory-only",
+    unsupportedFacts: [],
+    schemaGaps: [
+      "Schedule 3-A (page 4); 1040 lines 11b, 24c, 32b and 32c (page 3)",
+    ],
+    capture: "partial-facts",
   },
 ];
 
@@ -379,6 +418,6 @@ export const TY2026_SCHEMA_GAPS: readonly {
       "USCtznUSNatlQlfyAlienAmt",
     ],
     assumption:
-      "Schedule 3-A (refundable credits subject to PRWORA) is not emitted; TY2026 refuses the EIC and child-credit inputs that require it.",
+      "Schedule 3-A (refundable credits subject to PRWORA) is not emitted, so an EIC or ACTC return exports without it (ATS scenario 14).",
   },
 ];

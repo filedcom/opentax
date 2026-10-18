@@ -139,7 +139,8 @@ test("TY2026 ATS 1040 Scenario 5 on TY2025 law gives the TY2025 answer", () => {
 test("TY2026 ATS 1040 Scenario 5 inventory and assumptions stay explicit", () => {
   const scenario5 = TY2026_ATS_CASES.find((c) => c.id === "1040-05");
   assertEquals(scenario5?.forms, ["1040", "W-2", "8888"]);
-  assertEquals(scenario5?.engineGaps, []);
+  assertEquals(scenario5?.schemaGaps, []);
+  assertEquals(scenario5?.unsupportedFacts, []);
   assertEquals(TY2026_ATS_CASES.map((c) => c.scenario), [
     1,
     2,

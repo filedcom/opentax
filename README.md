@@ -226,7 +226,8 @@ first live run must confirm are in
 | TY2025 XML           | Built on the 2025v5.4 schema; validated against `Return1040.xsd` when `irs/` has the schemas                                                               |
 | Submission ZIP       | Pub 4164 layout, manifest checked against the submission and transmission rules before it is written                                                       |
 | A2A client           | Built and tested against a local mock IRS server; not yet run against the live IRS, which needs the credentials above                                      |
-| TY2026               | Form 1040 on the 2026v1.0 schema, which ATS does not accept; only `general`, `w2` and `f8888` inputs so far. Form 4868 on 2026v1.0                         |
+| TY2026               | Form 1040 on the 2026v1.0 schema, which ATS does not accept, for the inputs in `forms/f1040/2026/supported/`. Form 4868 on 2026v1.0                         |
+| TY2026 ATS scenarios | 1 of 9 Form 1040 packets pass the same offline check against 2026v1.0; `check:ats` names the refused inputs and schema gaps that block the rest            |
 
 None of this is IRS acceptance or authorization of any product.
 
@@ -297,7 +298,7 @@ bun run bench --form f1040 --year 2025   # engine output against IRS ground trut
 
 # Reports and helpers
 bun run check:irs         # which IRS files in irs/ are present, against irs/manifest.json
-bun run check:ats         # TY2025 ATS scenario readiness
+bun run check:ats         # TY2025 and TY2026 ATS scenario readiness
 bun run verify:changed    # only the gates a change since origin/main can reach
 bun run ats:stage         # write the ATS scenarios into ./.state/returns for `opentax mef ats-run`
 bun run test              # full suite

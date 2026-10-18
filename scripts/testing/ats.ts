@@ -1,4 +1,4 @@
-/** ATS readiness: each IRS Assurance Testing scenario scored on what an ATS accept needs offline. */
+/** ATS readiness: each TY2025 and TY2026 IRS Assurance Testing scenario scored on what an ATS accept needs offline. */
 import {
   ATS_SCENARIO_INPUTS,
   replayAtsChecks,
@@ -10,6 +10,12 @@ import {
   xsdAvailable,
 } from "../../forms/f1040/e2e/ats/ats-export.ts";
 import type { MefPdfAttachment } from "../../forms/f1040/2025/mef/form-descriptor.ts";
+import {
+  rankRefusedInputs,
+  scoreTy2026Scenarios,
+  type Ty2026ScenarioScore,
+  ty2026Passes,
+} from "../../forms/f1040/e2e/ats/ty2026-ats.ts";
 
 export type ScenarioScore = {
   readonly id: string;
@@ -140,10 +146,31 @@ function row(score: ScenarioScore): string {
   }  ${score.id}  values ${score.valuesMatched}/${score.valuesCompared} match, ${score.valuesConflicting} packet conflicts, ${unexplained} unexplained  xsd ${schema}  blockers: ${findings}`;
 }
 
+function ty2026Row(score: Ty2026ScenarioScore): string {
+  const schema = score.schemaValid === null
+    ? "n/a"
+    : score.schemaValid
+    ? "valid"
+    : "INVALID";
+  const unexplained = score.valuesCompared - score.valuesMatched -
+    score.valuesConflicting - score.valuesUnrepresentable;
+  const gaps = [...score.schemaGaps, ...score.unsupportedFacts];
+  return `${
+    ty2026Passes(score) ? "PASS" : score.refusedInputs.length ? "BLOCKED" : "FAIL"
+  }  ${score.id}  values ${score.valuesMatched}/${score.valuesCompared} match, ${score.valuesConflicting} packet conflicts, ${score.valuesUnrepresentable} not in 2026v1.0, ${unexplained} unexplained  xsd ${schema}  blockers: ${
+    score.findings.length === 0 ? "none" : score.findings.join("; ")
+  }${gaps.length ? `  gaps: ${gaps.join("; ")}` : ""}`;
+}
+
 async function main(args: string[]): Promise<number> {
   const scores = await scoreScenarios();
+  const ty2026 = await scoreTy2026Scenarios();
   if (args.includes("--json")) {
-    console.log(JSON.stringify(scores, null, 2));
+    console.log(JSON.stringify(
+      [...scores.map((s) => ({ ...s, taxYear: 2025 })), ...ty2026],
+      null,
+      2,
+    ));
   } else {
     for (const score of scores) console.log(row(score));
     const matched = scores.reduce((n, s) => n + s.valuesMatched, 0);
@@ -154,6 +181,18 @@ async function main(args: string[]): Promise<number> {
         scores.filter(passes).length
       } of ${scores.length} TY2025 ATS scenarios pass; ${matched}/${compared} packet values match, ${conflicting} are documented packet conflicts`,
     );
+    console.log("");
+    for (const score of ty2026) console.log(ty2026Row(score));
+    console.log(
+      `${ty2026.filter(ty2026Passes).length} of ${ty2026.length} TY2026 ATS scenarios pass (2026v1.0 schema and rules)`,
+    );
+    for (const { input, scenarios, soleBlocker } of rankRefusedInputs(ty2026)) {
+      console.log(
+        `  refused ${input}: needed by ${scenarios.join(", ")}; alone unblocks ${
+          soleBlocker.length ? soleBlocker.join(", ") : "none"
+        }`,
+      );
+    }
   }
   // A readiness report, not a gate: scenarios are still being completed.
   return 0;
