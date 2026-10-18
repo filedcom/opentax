@@ -304,7 +304,7 @@ function buildReturnXml(
   }
   assertGeneral1040HeaderSource(pending);
   assertDigitalAssetDispositionAnswer(pending);
-  assertGeneral1040DependentSource(pending);
+  assertGeneral1040DependentSource(pending, year);
   assertGeneral1040DepositSource(pending, filer);
   assert1098EInterestSource(pending, filer);
   assert1099RRecipientOwner(pending.f1099r, filer);
@@ -359,7 +359,7 @@ function buildReturnXml(
   assertExtensionPaymentSource(pending, filer);
   assertForm8915FSourceLinks(pending);
   assertKIncomeClassification(pending);
-  assertEitcChildSources(pending, filer);
+  assertEitcChildSources(pending, filer, year);
   assertKReportedErrorSources(pending, filer);
   assertScheduleCReceiptSourceIdentity(pending, filer);
   assertScheduleCStatutoryW2Sources(pending, filer);
@@ -414,6 +414,7 @@ function buildReturnXml(
   );
   const initial = buildFragments(pending, {
     phase: "discovery",
+    taxYear: year,
     preparedForm8886,
     filer,
     binaryAttachmentFileNames,
@@ -449,6 +450,7 @@ function buildReturnXml(
   let form3800Parts: Form3800DocumentParts | undefined;
   const linked = buildFragments(pending, {
     phase: "final",
+    taxYear: year,
     preparedForm8886,
     filer,
     binaryAttachmentFileNames,

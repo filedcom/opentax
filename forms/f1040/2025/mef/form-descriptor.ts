@@ -47,6 +47,8 @@ import type { Form3800DocumentParts } from "./forms/credits/business/f3800/f3800
 import type { PreparedForm8886ReturnPackets } from "../domains/general/filing/form8886/return-packets.ts";
 
 export interface MefBuildContext {
+  /** The return's tax year; TY2025 when omitted. */
+  readonly taxYear?: number;
   readonly preparedForm8886?: PreparedForm8886ReturnPackets;
   /** The initial document-discovery pass runs before stable document IDs exist. */
   readonly phase?: "discovery" | "final";

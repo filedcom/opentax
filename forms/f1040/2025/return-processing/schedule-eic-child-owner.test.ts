@@ -45,7 +45,7 @@ test.skipIf(!xsdAvailable)("Schedule EIC three distinct children survive graph, 
       },
     );
     assertEquals(result.diagnostics, []);
-    assertEitcChildSources(result.pending, fixture.filer);
+    assertEitcChildSources(result.pending, fixture.filer, 2025);
     const children = result.pending.eitc.qualifying_child_details as Array<
       Record<string, unknown>
     >;
@@ -264,7 +264,7 @@ test("Schedule EIC final child source cannot reuse taxpayer or joint-spouse SSN"
     eitc,
     f1040: result.pending.f1040,
   };
-  assertEitcChildSources(pending, filer);
+  assertEitcChildSources(pending, filer, 2025);
   for (const ownerSsn of ["111-22-3333", "444-55-6666"]) {
     const altered = {
       ...pending,
@@ -288,7 +288,7 @@ test("Schedule EIC final child source cannot reuse taxpayer or joint-spouse SSN"
       ownerSsn.replaceAll("-", ""),
     );
     assertThrows(
-      () => assertEitcChildSources(altered, filer),
+      () => assertEitcChildSources(altered, filer, 2025),
       Error,
       "cannot use filer or joint-spouse SSN",
     );

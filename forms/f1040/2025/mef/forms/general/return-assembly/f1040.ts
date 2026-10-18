@@ -368,6 +368,7 @@ function dependentXml(fields: Input, context?: MefBuildContext): string[] {
   ) {
     throw new Error("Form 1040 dependent rows need a filing status");
   }
+  const taxYear = context?.taxYear ?? 2025;
   const filer = filerCreditEligibility({
     filing_status: fields.filing_status as FilingStatus,
     taxpayer_ssn: fields.taxpayer_ssn,
@@ -409,7 +410,7 @@ function dependentXml(fields: Input, context?: MefBuildContext): string[] {
         `${label} needs a confirmed qualifying-child or qualifying-relative support basis`,
       );
     }
-    if (dep.credit_category !== dependentCreditCategory(dep, filer)) {
+    if (dep.credit_category !== dependentCreditCategory(dep, filer, taxYear)) {
       throw new Error(
         `${label} credit category does not match the dependent facts`,
       );
@@ -483,7 +484,11 @@ function dependentXml(fields: Input, context?: MefBuildContext): string[] {
 }
 
 function buildIRS1040(fields: Input, context?: MefBuildContext): string {
-  assertHohQualifyingChildSource(fields, context?.pending ?? {});
+  assertHohQualifyingChildSource(
+    fields,
+    context?.pending ?? {},
+    context?.taxYear ?? 2025,
+  );
   assertQssNonclaimedChildSource(fields, context?.pending ?? {});
   assertIdentified1099IntOwner(
     fields as Record<string, unknown>,
@@ -812,6 +817,7 @@ function buildIRS1040(fields: Input, context?: MefBuildContext): string {
     resolveNumber(fields.line27_eitc),
     mainHomeInUS,
     context?.pending,
+    context?.taxYear ?? 2025,
   );
 
   const capitalGain = resolveNumber(fields.line7_capital_gain);

@@ -54,6 +54,7 @@ export function assertEicSource(
   credit: number | undefined,
   mainHomeInUS: unknown,
   pending: Readonly<Record<string, unknown>> | undefined,
+  taxYear = 2025,
 ): void {
   if ((credit ?? 0) <= 0) return;
   const form2555 = pending?.form2555;
@@ -346,7 +347,7 @@ export function assertEicSource(
     return;
   }
   if (
-    !childlessEicEligible(source.data) || mainHomeInUS !== true
+    !childlessEicEligible(source.data, taxYear) || mainHomeInUS !== true
   ) {
     throw new Error(
       "Form 1040 childless EIC needs reviewed general source facts",

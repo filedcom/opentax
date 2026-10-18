@@ -31,7 +31,7 @@ const general = generalInputSchema.parse({
 });
 
 test("retained general dependents project only claimed Form 1040 rows", () => {
-  const rows = filedDependentsFromGeneral(general);
+  const rows = filedDependentsFromGeneral(general, 2025);
   assertGeneral1040DependentSource({
     general,
     f1040: {
@@ -40,7 +40,7 @@ test("retained general dependents project only claimed Form 1040 rows", () => {
       qualifying_child_tax_credit_count: 0,
       other_dependent_count: 0,
     },
-  });
+  }, 2025);
   assertThrows(
     () =>
       assertGeneral1040DependentSource({
@@ -49,7 +49,7 @@ test("retained general dependents project only claimed Form 1040 rows", () => {
           dependent_details: [{ ...rows[0], last_name: "Changed" }],
           dependent_count: 1,
         },
-      }),
+      }, 2025),
     Error,
     "dependent rows differ from the retained general source",
   );
@@ -61,7 +61,7 @@ test("retained general dependents project only claimed Form 1040 rows", () => {
           dependent_details: rows,
           dependent_count: 2,
         },
-      }),
+      }, 2025),
     Error,
     "dependent counts differ from the retained general source",
   );

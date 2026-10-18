@@ -412,7 +412,7 @@ test.skipIf(!xsdAvailable)("XSD: Form 8863 AOC and LLC validate in TY2025 return
       line29_refundable_aoc: 1_000,
       dependent_count: 2,
       other_dependent_count: 2,
-      dependent_details: filedDependentsFromGeneral(educationGeneralReview),
+      dependent_details: filedDependentsFromGeneral(educationGeneralReview, 2025),
     },
     schedule3: { line3_education_credit: 2_500, line8_total: 2_500 },
   }, filer);
