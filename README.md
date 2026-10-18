@@ -324,65 +324,26 @@ and check them with `bun run check:irs` (see [`irs/README.md`](./irs/README.md))
 
 ### Contributing with Claude Code
 
-The repo includes four skills that automate the full development lifecycle. Open the project in [Claude Code](https://claude.ai/code) and invoke them with `/skill-name`.
+Open the repo in [Claude Code](https://claude.ai/code); these skills under `.claude/skills/` run the harness for you:
 
-#### `/tax-status`
+- `/tax-status`: benchmark pass rate per form:year, MeF readiness of the sample returns and the TY2025 ATS scoreboard.
+- `/tax-fix [form:year | mef]`: clusters benchmark (or MeF and ATS) failures by root cause, fixes the engine in parallel, gates each round with `bun run verify:changed`, and commits only net-positive engine fixes; cases are never edited to pass.
+- `/tax-cases [form:year] [vita | pub17 | instructions | "scenario"]`: adds benchmark cases whose expected values come from an IRS publication, checked with `check:cases` and `check:oracle`.
+- `/tax-build <form-number> [year]`: researches a new form product, sources its cases, builds its nodes and hands off to `/tax-fix`.
 
-Run this first. Shows pass/fail counts, pending root causes, and build phase for every form.
-
-```
-/tax-status
-```
-
-#### `/tax-fix [form:year]`
-
-Autonomous bug-fixing loop. Reads failing benchmark cases, clusters them by root cause, spawns parallel fixer agents, validates with the harness, and commits net-positive engine fixes only; benchmark cases are never edited to pass. Loops until all cases pass or progress stalls.
+Typical workflows:
 
 ```
-/tax-fix f1040:2025
+/tax-status                       # where things stand
+/tax-fix f1040:2025               # fix benchmark failures
+
+/tax-cases pub17                  # add IRS examples
+/tax-fix f1040:2025               # fix what they expose
+
+/tax-fix mef                      # clear MeF and ATS blockers
 ```
 
-#### `/tax-cases [source]`
-
-Sources test cases from IRS publications (VITA exercises, Pub 17, MeF test packages) and validates what it writes with `bun run check:cases`. Run `/tax-fix` after to see how the engine performs on the new cases.
-
-```
-/tax-cases vita                            # VITA Pub 4491 training exercises
-/tax-cases pub17                           # Publication 17 worked examples
-/tax-cases "senior with SSA and 1099-R"    # free-form scenario
-```
-
-#### `/tax-build [form-number]`
-
-End-to-end form builder. Researches IRS instructions, extracts ground truth, builds all nodes section by section, then runs a validate + fix loop until >= 95% of benchmark cases pass. Resumes if interrupted.
-
-```
-/tax-build 1120
-```
-
-#### Typical workflows
-
-**Adding a new form:**
-
-```
-/tax-cases f1120:2025 vita    # source benchmark cases first
-/tax-build 1120               # build nodes, iterate until >= 95% pass
-/tax-status                   # confirm it's green
-```
-
-**Fixing a regression:**
-
-```
-/tax-status                   # find what's failing and why
-/tax-fix f1040:2025           # autonomous fix loop
-```
-
-**Expanding test coverage:**
-
-```
-/tax-cases pub17              # pull new IRS examples
-/tax-fix f1040:2025           # fix loop against expanded case set
-```
+Before a pull request, run the proof list in [AGENTS.md](AGENTS.md).
 
 ---
 
