@@ -5,11 +5,6 @@
     "count": 1
   },
   {
-    "path": "forms/f1040/2025/domains/adjustments/health/form8853/form8853_contributions_reconciliation.ts",
-    "pattern": "year-value",
-    "count": 1
-  },
-  {
     "path": "forms/f1040/2025/domains/adjustments/health/form8889/form8889_employer_code2_source.ts",
     "pattern": "date-pinned",
     "count": 3
@@ -490,11 +485,6 @@
     "count": 1
   },
   {
-    "path": "forms/f1040/2025/domains/income/investments/broker-sale-source-reconciliation.ts",
-    "pattern": "year-value",
-    "count": 1
-  },
-  {
     "path": "forms/f1040/2025/domains/income/investments/form8815/form8815_contribution_return.ts",
     "pattern": "year-identifier",
     "count": 1
@@ -548,16 +538,6 @@
     "path": "forms/f1040/2025/domains/income/retirement/form8606/form8606_roth_reconciliation.ts",
     "pattern": "date-pinned",
     "count": 3
-  },
-  {
-    "path": "forms/f1040/2025/domains/income/retirement/ira1099r-income-reconciliation.ts",
-    "pattern": "year-value",
-    "count": 1
-  },
-  {
-    "path": "forms/f1040/2025/domains/income/retirement/rrb1099r-pension-reconciliation.ts",
-    "pattern": "year-value",
-    "count": 1
   },
   {
     "path": "forms/f1040/2025/domains/income/wages/form4852/form4852_retained_evidence.ts",
@@ -745,11 +725,6 @@
     "count": 1
   },
   {
-    "path": "forms/f1040/2025/mef/forms/adjustments/health/f7206.ts",
-    "pattern": "year-value",
-    "count": 1
-  },
-  {
     "path": "forms/f1040/2025/mef/forms/credits/business/f3800/f3800_passive_rows.ts",
     "pattern": "year-comparison",
     "count": 2
@@ -757,11 +732,6 @@
   {
     "path": "forms/f1040/2025/mef/forms/credits/business/f3800/f3800_passive_tags.ts",
     "pattern": "year-comparison",
-    "count": 1
-  },
-  {
-    "path": "forms/f1040/2025/mef/forms/credits/business/f8826_cap_ledger.ts",
-    "pattern": "year-value",
     "count": 1
   },
   {
@@ -790,11 +760,6 @@
     "count": 1
   },
   {
-    "path": "forms/f1040/2025/mef/forms/credits/elderly-disabled/schedule_r.ts",
-    "pattern": "year-value",
-    "count": 1
-  },
-  {
     "path": "forms/f1040/2025/mef/forms/credits/foreign/f1116/f1116_schedule_c_current_year.ts",
     "pattern": "year-value",
     "count": 1
@@ -816,18 +781,8 @@
   },
   {
     "path": "forms/f1040/2025/mef/forms/credits/health/f8962/f8962.ts",
-    "pattern": "date-pinned",
-    "count": 4
-  },
-  {
-    "path": "forms/f1040/2025/mef/forms/credits/health/f8962/f8962.ts",
     "pattern": "year-identifier",
-    "count": 13
-  },
-  {
-    "path": "forms/f1040/2025/mef/forms/credits/health/f8962/f8962.ts",
-    "pattern": "year-value",
-    "count": 8
+    "count": 11
   },
   {
     "path": "forms/f1040/2025/mef/forms/credits/individual/f8396.ts",
@@ -855,28 +810,8 @@
     "count": 3
   },
   {
-    "path": "forms/f1040/2025/mef/forms/deductions/additional/schedule1a/schedule1a.ts",
-    "pattern": "year-value",
-    "count": 4
-  },
-  {
     "path": "forms/f1040/2025/mef/forms/deductions/business/f8995/f8995-investment.ts",
     "pattern": "year-identifier",
-    "count": 1
-  },
-  {
-    "path": "forms/f1040/2025/mef/forms/deductions/business/f8995/f8995-investment.ts",
-    "pattern": "year-value",
-    "count": 2
-  },
-  {
-    "path": "forms/f1040/2025/mef/forms/deductions/business/f8995/f8995-route.ts",
-    "pattern": "config-index",
-    "count": 1
-  },
-  {
-    "path": "forms/f1040/2025/mef/forms/deductions/business/f8995/f8995-route.ts",
-    "pattern": "year-value",
     "count": 1
   },
   {
@@ -887,31 +822,6 @@
   {
     "path": "forms/f1040/2025/mef/forms/deductions/charitable/f8283/f8283_carryover.ts",
     "pattern": "year-identifier",
-    "count": 1
-  },
-  {
-    "path": "forms/f1040/2025/mef/forms/deductions/charitable/f8283/f8283_carryover.ts",
-    "pattern": "year-value",
-    "count": 1
-  },
-  {
-    "path": "forms/f1040/2025/mef/forms/deductions/charitable/f8283/f8283_depreciation_return.ts",
-    "pattern": "year-value",
-    "count": 1
-  },
-  {
-    "path": "forms/f1040/2025/mef/forms/deductions/charitable/f8283/f8283_election.ts",
-    "pattern": "year-value",
-    "count": 6
-  },
-  {
-    "path": "forms/f1040/2025/mef/forms/deductions/charitable/f8283/f8283_natural_resource_return.ts",
-    "pattern": "year-value",
-    "count": 1
-  },
-  {
-    "path": "forms/f1040/2025/mef/forms/deductions/charitable/f8283/f8283_return.ts",
-    "pattern": "year-value",
     "count": 1
   },
   {
@@ -958,11 +868,6 @@
     "path": "forms/f1040/2025/mef/forms/income/business/f8582/f8582.ts",
     "pattern": "year-identifier",
     "count": 6
-  },
-  {
-    "path": "forms/f1040/2025/mef/forms/income/business/f8582/f8582.ts",
-    "pattern": "year-value",
-    "count": 1
   },
   {
     "path": "forms/f1040/2025/mef/forms/income/business/f8824.ts",
@@ -1375,11 +1280,6 @@
     "count": 1
   },
   {
-    "path": "forms/f1040/nodes/inputs/credits/business/f8826/index.ts",
-    "pattern": "date-pinned",
-    "count": 2
-  },
-  {
     "path": "forms/f1040/nodes/inputs/credits/business/f8835/bond-source.ts",
     "pattern": "date-pinned",
     "count": 2
@@ -1461,11 +1361,6 @@
   },
   {
     "path": "forms/f1040/nodes/inputs/credits/business/f8874/no_event_status_evidence.ts",
-    "pattern": "date-pinned",
-    "count": 2
-  },
-  {
-    "path": "forms/f1040/nodes/inputs/credits/business/f8874/no_event_status_evidence.ts",
     "pattern": "year-identifier",
     "count": 4
   },
@@ -1518,16 +1413,6 @@
     "path": "forms/f1040/nodes/inputs/credits/business/f8994/index.ts",
     "pattern": "year-identifier",
     "count": 5
-  },
-  {
-    "path": "forms/f1040/nodes/inputs/credits/health/f1095a/index.ts",
-    "pattern": "date-pinned",
-    "count": 2
-  },
-  {
-    "path": "forms/f1040/nodes/inputs/credits/health/f1095a/index.ts",
-    "pattern": "z-literal",
-    "count": 3
   },
   {
     "path": "forms/f1040/nodes/inputs/credits/health/f8941/arrangements.ts",
@@ -1708,11 +1593,6 @@
     "path": "forms/f1040/nodes/inputs/deductions/charitable/f8283/section_b_carryover_source.ts",
     "pattern": "year-identifier",
     "count": 18
-  },
-  {
-    "path": "forms/f1040/nodes/inputs/deductions/charitable/f8283/section_b_carryover_source.ts",
-    "pattern": "year-value",
-    "count": 1
   },
   {
     "path": "forms/f1040/nodes/inputs/deductions/charitable/f8283/section_b_carryover_source.ts",
@@ -2290,16 +2170,6 @@
     "count": 2
   },
   {
-    "path": "forms/f1040/nodes/inputs/taxes/passthrough/f8978/index.ts",
-    "pattern": "date-pinned",
-    "count": 1
-  },
-  {
-    "path": "forms/f1040/nodes/inputs/taxes/passthrough/f8978/index.ts",
-    "pattern": "z-literal",
-    "count": 1
-  },
-  {
     "path": "forms/f1040/nodes/inputs/taxes/underpayment/f2210/calculation.ts",
     "pattern": "date-pinned",
     "count": 5
@@ -2322,11 +2192,6 @@
   {
     "path": "forms/f1040/nodes/intermediate/forms/adjustments/health/form7206/index.ts",
     "pattern": "year-comparison",
-    "count": 1
-  },
-  {
-    "path": "forms/f1040/nodes/intermediate/forms/adjustments/health/form7206/policy-records.ts",
-    "pattern": "date-pinned",
     "count": 1
   },
   {
@@ -2418,16 +2283,6 @@
     "path": "forms/f1040/nodes/intermediate/forms/credits/business/form8582cr/carryforward-ledger.ts",
     "pattern": "z-literal",
     "count": 2
-  },
-  {
-    "path": "forms/f1040/nodes/intermediate/forms/credits/business/form8582cr/line6_ordinary_worksheet.ts",
-    "pattern": "year-identifier",
-    "count": 4
-  },
-  {
-    "path": "forms/f1040/nodes/intermediate/forms/credits/business/form8582cr/line6_source.ts",
-    "pattern": "z-literal",
-    "count": 1
   },
   {
     "path": "forms/f1040/nodes/intermediate/forms/credits/business/form8582cr/next_year_import.ts",
@@ -2602,7 +2457,7 @@
   {
     "path": "forms/f1040/nodes/intermediate/forms/deductions/additional/schedule1a/calculation.ts",
     "pattern": "year-comparison",
-    "count": 4
+    "count": 3
   },
   {
     "path": "forms/f1040/nodes/intermediate/forms/deductions/additional/schedule1a/index.ts",
