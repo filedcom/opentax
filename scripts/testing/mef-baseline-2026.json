@@ -483,10 +483,10 @@
       "xml Schedule 1-A 2026 overtime filing needs W-2 box 12 code TT amounts"
     ],
     "single-k-business-refund": [
-      "calculation f1099k"
+      "xml Form 8995 line 16 minimum deduction has no 2026v1.0 MeF element; export waits for a schema that carries it"
     ],
     "single-k-business-refund-and-fee": [
-      "calculation f1099k"
+      "xml Form 8995 line 16 minimum deduction has no 2026v1.0 MeF element; export waits for a schema that carries it"
     ],
     "single-k-mixed-business-personal": [
       "xml Form 8995 line 16 minimum deduction has no 2026v1.0 MeF element; export waits for a schema that carries it"
@@ -773,8 +773,8 @@
     "single-form4070-high-wage-qualified-tips-schedule1a": "Named TY2025-only route: the node refuses TY2026 Form 4070 and employer tip statements until 2026 reporting is implemented",
     "single-form4070-form4137-no-w2-code-schedule1a": "Named TY2025-only route: the node refuses TY2026 Form 4070 and employer tip statements until 2026 reporting is implemented",
     "joint-mixed-schedule1a": "TY2026 law: the sample reports overtime on a box 14 or employer statement, the TY2025 reporting route; 2026 W-2s report it in box 12 code TT (2026 W-2 instructions, irs/corpus/ty2026/authorities/iw2w3--2026.pdf)",
-    "single-k-business-refund": "Named TY2025-only route: the node refuses TY2026 1099-K customer refund reviews",
-    "single-k-business-refund-and-fee": "Named TY2025-only route: the node refuses TY2026 1099-K customer refund reviews",
+    "single-k-business-refund": "MeF schema gap: 2026v1.0 has no element for the IRC \u00a7199A(i) minimum deduction (P.L. 119-21 \u00a770105; draft 2026 Form 8995 line 16)",
+    "single-k-business-refund-and-fee": "MeF schema gap: 2026v1.0 has no element for the IRC \u00a7199A(i) minimum deduction (P.L. 119-21 \u00a770105; draft 2026 Form 8995 line 16)",
     "single-k-mixed-business-personal": "MeF schema gap: 2026v1.0 has no element for the IRC \u00a7199A(i) minimum deduction (P.L. 119-21 \u00a770105; draft 2026 Form 8995 line 16)",
     "single-k-mixed-duplicate-personal": "MeF schema gap: 2026v1.0 has no element for the IRC \u00a7199A(i) minimum deduction (P.L. 119-21 \u00a770105; draft 2026 Form 8995 line 16)",
     "single-k-mixed-error-duplicate-personal": "MeF schema gap: 2026v1.0 has no element for the IRC \u00a7199A(i) minimum deduction (P.L. 119-21 \u00a770105; draft 2026 Form 8995 line 16)",

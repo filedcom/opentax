@@ -132,7 +132,7 @@ export const itemSchema = z.object({
         refund_transaction_id: z.string().trim().min(1),
         amount: z.number().int().positive(),
         refund_record_reference: z.string().trim().min(1),
-        issued_in_2025: z.literal(true),
+        issued_in_tax_year: z.literal(true),
         same_business_sale: z.literal(true),
         not_claimed_elsewhere: z.literal(true),
       }).strict(),
@@ -713,15 +713,6 @@ class F1099kNode extends TaxNode<typeof inputSchema> {
         (item.personal_item_sales_review ?? []).map((sale) => sale.date_sold),
         `1099-K personal item sales need a ${ctx.taxYear} sale date`,
       );
-      // The refund review attests `issued_in_2025`.
-      if (
-        ctx.taxYear !== 2025 &&
-        item.schedule_c_receipts_review?.customer_refunds_review
-      ) {
-        throw new Error(
-          `1099-K customer refund review is not yet supported for TY${ctx.taxYear}`,
-        );
-      }
     }
 
     const outputs: NodeOutput[] = [

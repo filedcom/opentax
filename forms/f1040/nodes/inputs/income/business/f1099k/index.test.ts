@@ -67,8 +67,8 @@ function personalSale(overrides: Record<string, unknown> = {}) {
   };
 }
 
-function compute(items: ReturnType<typeof minimalItem>[]) {
-  return f1099k.compute({ taxYear: 2025, formType: "f1040" }, {
+function compute(items: ReturnType<typeof minimalItem>[], taxYear = 2025) {
+  return f1099k.compute({ taxYear, formType: "f1040" }, {
     f1099ks: items,
   });
 }
@@ -1032,7 +1032,7 @@ test("1099-K reviewed business refunds retain gross receipts for Schedule C", ()
     refund_transaction_id: "refund-1",
     amount: 400,
     refund_record_reference: "processor refund ledger",
-    issued_in_2025: true,
+    issued_in_tax_year: true,
     same_business_sale: true,
     not_claimed_elsewhere: true,
   }];
@@ -1049,6 +1049,13 @@ test("1099-K reviewed business refunds retain gross receipts for Schedule C", ()
     .f1099k_receipt_sources as Array<Record<string, unknown>>;
   assertEquals(rows[0].amount, 3_000);
   assertEquals(rows[0].customer_refunds_review, refunds);
+  // A refund issued in the return year is a Schedule C line 2 return or
+  // allowance in 2026 as in 2025 (draft 2026 Schedule C line 2).
+  const rows2026 = findOutput(
+    compute([item], 2026),
+    "schedule_c",
+  )!.fields.f1099k_receipt_sources as Array<Record<string, unknown>>;
+  assertEquals(rows2026[0].customer_refunds_review, refunds);
   assertThrows(
     () =>
       compute([businessItem(3_000, {

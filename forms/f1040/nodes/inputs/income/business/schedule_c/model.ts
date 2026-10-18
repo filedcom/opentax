@@ -430,7 +430,7 @@ export const inputSchema = z.object({
           refund_transaction_id: z.string().trim().min(1),
           amount: z.number().int().positive(),
           refund_record_reference: z.string().trim().min(1),
-          issued_in_2025: z.literal(true),
+          issued_in_tax_year: z.literal(true),
           same_business_sale: z.literal(true),
           not_claimed_elsewhere: z.literal(true),
         }).strict(),

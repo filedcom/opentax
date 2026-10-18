@@ -709,7 +709,7 @@ export function assertScheduleCReceiptSourceIdentity(
           !Number.isSafeInteger(refund.amount) || refund.amount <= 0 ||
           typeof refund.refund_record_reference !== "string" ||
           !refund.refund_record_reference.trim() ||
-          refund.issued_in_2025 !== true ||
+          refund.issued_in_tax_year !== true ||
           refund.same_business_sale !== true ||
           refund.not_claimed_elsewhere !== true
         ) {

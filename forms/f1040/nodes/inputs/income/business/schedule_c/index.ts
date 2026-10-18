@@ -72,7 +72,7 @@ export {
 };
 export type { ScheduleCItem };
 
-// AMT workpapers and refund reviews whose schemas attest TY2025 dates.
+// AMT workpapers whose schemas attest TY2025 dates.
 function assertTy2025OnlyFacts(
   taxYear: number,
   input: z.infer<typeof inputSchema>,
@@ -82,13 +82,10 @@ function assertTy2025OnlyFacts(
     item.amt_mining_cost_workpaper !== undefined ||
     item.amt_long_term_contract_workpaper !== undefined ||
     item.amt_long_term_contract_workpapers !== undefined
-  ) ||
-    (input.f1099k_receipt_sources ?? []).some((source) =>
-      source.customer_refunds_review !== undefined
-    );
+  );
   if (dated) {
     throw new Error(
-      `Schedule C AMT workpapers and 1099-K refund reviews are not yet supported for TY${taxYear}`,
+      `Schedule C AMT workpapers are not yet supported for TY${taxYear}`,
     );
   }
 }
