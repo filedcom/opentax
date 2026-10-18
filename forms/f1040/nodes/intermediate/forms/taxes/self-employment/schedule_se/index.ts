@@ -114,8 +114,11 @@ class ScheduleSENode extends TaxNode<typeof nodeInputSchema> {
         (sum, row) => row.kind === "schedule_f" ? sum : sum + row.net_profit,
         0,
       );
+      // Every line 2 producer also sends its total; a total the owner
+      // sources do not account for is earnings no spouse owns.
       if (
-        Math.abs((input.net_profit_schedule_c ?? 0) - ownedLine2) > 0.005
+        input.net_profit_schedule_c !== undefined &&
+        Math.abs(input.net_profit_schedule_c - ownedLine2) > 0.005
       ) {
         throw new Error(
           "Joint Schedule SE line 2 has earnings without an owning spouse",
