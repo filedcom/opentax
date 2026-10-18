@@ -1,5 +1,6 @@
 import { test } from "bun:test";
 import { assertEquals, assertThrows } from "@std/assert";
+import { shiftDatedFacts } from "../../../../../../../scripts/testing/sample-year.ts";
 import {
   assertRefinancePointsSource,
   inputSchema,
@@ -31,6 +32,15 @@ const refinance = {
   acquisition_debt_limit_verified: true as const,
 };
 const source = { refinances: [refinance] };
+
+function accepted(candidate: unknown, taxYear = 2025): boolean {
+  try {
+    refinancePointsDeduction(candidate, taxYear);
+    return true;
+  } catch {
+    return false;
+  }
+}
 const form1098 = {
   f1098s: [{
     lender_name: refinance.lender_name,
@@ -47,13 +57,13 @@ const form1098 = {
 };
 
 test("ordinary refinance points amortize once and reconcile to line 8c", () => {
-  assertEquals(refinancePointsDeduction(source), 67);
+  assertEquals(refinancePointsDeduction(source, 2025), 67);
   const result = mortgage_refinance_points.compute(
     { taxYear: 2025, formType: "f1040" },
     inputSchema.parse(source),
   );
   assertEquals(result.outputs[0].fields.line_8c_points_no_1098, 67);
-  assertRefinancePointsSource(source, form1098, ["111-22-3333"], 67);
+  assertRefinancePointsSource(source, form1098, ["111-22-3333"], 67, 2025);
   assertThrows(
     () =>
       assertRefinancePointsSource(
@@ -62,7 +72,7 @@ test("ordinary refinance points amortize once and reconcile to line 8c", () => {
           f1098s: [{ ...form1098.f1098s[0], issuer_copy: undefined }],
         },
         ["111-22-3333"],
-        67,
+        67, 2025,
       ),
     Error,
     "reviewed Form 1098 issuer Copy B",
@@ -79,7 +89,7 @@ test("2025 refinance principal agrees with the linked current-year Form 1098 box
     source,
     { f1098s: [reported] },
     [refinance.recipient_tin],
-    67,
+    67, 2025,
   );
   assertThrows(
     () =>
@@ -87,7 +97,7 @@ test("2025 refinance principal agrees with the linked current-year Form 1098 box
         source,
         { f1098s: [{ ...reported, box2_outstanding_principal: 90_000 }] },
         [refinance.recipient_tin],
-        67,
+        67, 2025,
       ),
     Error,
     "principal differs from the linked 2025 Form 1098 box 2",
@@ -101,15 +111,15 @@ test("ordinary refinance points paid off in 2025 deduct remaining balance on lin
       month,
       document_reference: `payment-${month}`,
     })),
-    early_payoff_2025: {
-      payoff_month_2025: 9,
+    early_payoff: {
+      payoff_month: 9,
       payoff_statement_reference: "2025 full-payoff statement",
       full_payoff_verified: true as const,
       refinanced_with_same_lender: false as const,
     },
   };
   const paidOffSource = { refinances: [paidOff] };
-  assertEquals(refinancePointsDeduction(paidOffSource), 2_000);
+  assertEquals(refinancePointsDeduction(paidOffSource, 2025), 2_000);
   const result = mortgage_refinance_points.compute(
     { taxYear: 2025, formType: "f1040" },
     inputSchema.parse(paidOffSource),
@@ -119,27 +129,27 @@ test("ordinary refinance points paid off in 2025 deduct remaining balance on lin
     paidOffSource,
     form1098,
     ["111-22-3333"],
-    2_000,
+    2_000, 2025,
   );
   assertEquals(
-    inputSchema.safeParse({
+    accepted({
       refinances: [{
         ...paidOff,
-        early_payoff_2025: {
-          ...paidOff.early_payoff_2025,
+        early_payoff: {
+          ...paidOff.early_payoff,
           refinanced_with_same_lender: true,
         },
       }],
-    }).success,
+    }),
     false,
   );
   assertEquals(
-    inputSchema.safeParse({
+    accepted({
       refinances: [{
         ...paidOff,
         monthly_payment_records: refinance.monthly_payment_records,
       }],
-    }).success,
+    }),
     false,
   );
 });
@@ -159,21 +169,21 @@ test("mixed prior-debt and main-home-improvement refinance points allocate immed
   };
   const improvedSource = { refinances: [improved] };
   // $500 immediately plus $50 from six months of the remaining $1,500.
-  assertEquals(refinancePointsDeduction(improvedSource), 550);
+  assertEquals(refinancePointsDeduction(improvedSource, 2025), 550);
   assertRefinancePointsSource(
     improvedSource,
     form1098,
     ["111223333"],
-    550,
+    550, 2025,
   );
   assertEquals(
-    inputSchema.safeParse({
+    accepted({
       refinances: [{ ...improved, prior_qualified_home_debt: 70_000 }],
-    }).success,
+    }),
     false,
   );
   assertEquals(
-    inputSchema.safeParse({
+    accepted({
       refinances: [{
         ...improved,
         improvement: {
@@ -181,7 +191,7 @@ test("mixed prior-debt and main-home-improvement refinance points allocate immed
           points_paid_with_own_funds_verified: false,
         },
       }],
-    }).success,
+    }),
     false,
   );
 });
@@ -195,47 +205,47 @@ test("2024-origin refinance points use a filed-year ledger for 2025 amortization
       month: index + 1,
       document_reference: `2025-payment-${index + 1}`,
     })),
-    prior_year_2024: {
-      filed_2024_return_reference: "Filed 2024 Form 1040/Schedule A",
-      filed_2024_points_workpaper_reference: "2024 loan points ledger",
-      filed_2024_loan_points_deduction: 67,
-      payment_records_2024: [7, 8, 9, 10, 11, 12].map((month) => ({
+    prior_year: {
+      filed_return_reference: "Filed 2024 Form 1040/Schedule A",
+      filed_points_workpaper_reference: "2024 loan points ledger",
+      filed_loan_points_deduction: 67,
+      payment_records: [7, 8, 9, 10, 11, 12].map((month) => ({
         month,
         document_reference: `2024-payment-${month}`,
       })),
     },
   };
   const priorSource = { refinances: [priorLoan] };
-  assertEquals(refinancePointsDeduction(priorSource), 133);
-  assertRefinancePointsSource(priorSource, form1098, ["111223333"], 133);
+  assertEquals(refinancePointsDeduction(priorSource, 2025), 133);
+  assertRefinancePointsSource(priorSource, form1098, ["111223333"], 133, 2025);
   assertEquals(
-    inputSchema.safeParse({
+    accepted({
       refinances: [{
         ...priorLoan,
-        prior_year_2024: {
-          ...priorLoan.prior_year_2024,
-          filed_2024_loan_points_deduction: 0,
+        prior_year: {
+          ...priorLoan.prior_year,
+          filed_loan_points_deduction: 0,
         },
       }],
-    }).success,
+    }),
     false,
   );
   assertEquals(
-    inputSchema.safeParse({
+    accepted({
       refinances: [{
         ...priorLoan,
-        prior_year_2024: undefined,
+        prior_year: undefined,
       }],
-    }).success,
+    }),
     false,
   );
   assertEquals(
-    inputSchema.safeParse({
+    accepted({
       refinances: [{
         ...priorLoan,
         monthly_payment_records: priorLoan.monthly_payment_records.slice(1),
       }],
-    }).success,
+    }),
     false,
   );
 });
@@ -249,69 +259,69 @@ test("2023-origin refinance points require two filed-year ledgers before 2025 am
       month: index + 1,
       document_reference: `2025-payment-${index + 1}`,
     })),
-    prior_year_2023: {
-      filed_2023_return_reference: "Filed 2023 Form 1040/Schedule A",
-      filed_2023_points_workpaper_reference: "2023 loan points ledger",
-      filed_2023_loan_points_deduction: 67,
-      payment_records_2023: [7, 8, 9, 10, 11, 12].map((month) => ({
+    second_prior_year: {
+      filed_return_reference: "Filed 2023 Form 1040/Schedule A",
+      filed_points_workpaper_reference: "2023 loan points ledger",
+      filed_loan_points_deduction: 67,
+      payment_records: [7, 8, 9, 10, 11, 12].map((month) => ({
         month,
         document_reference: `2023-payment-${month}`,
       })),
     },
-    prior_year_2024: {
-      filed_2024_return_reference: "Filed 2024 Form 1040/Schedule A",
-      filed_2024_points_workpaper_reference: "2024 loan points ledger",
-      filed_2024_loan_points_deduction: 133,
-      payment_records_2024: Array.from({ length: 12 }, (_, index) => ({
+    prior_year: {
+      filed_return_reference: "Filed 2024 Form 1040/Schedule A",
+      filed_points_workpaper_reference: "2024 loan points ledger",
+      filed_loan_points_deduction: 133,
+      payment_records: Array.from({ length: 12 }, (_, index) => ({
         month: index + 1,
         document_reference: `2024-payment-${index + 1}`,
       })),
     },
   };
   const priorSource = { refinances: [priorLoan] };
-  assertEquals(refinancePointsDeduction(priorSource), 133);
-  assertRefinancePointsSource(priorSource, form1098, ["111223333"], 133);
+  assertEquals(refinancePointsDeduction(priorSource, 2025), 133);
+  assertRefinancePointsSource(priorSource, form1098, ["111223333"], 133, 2025);
   for (
     const invalid of [
-      { ...priorLoan, prior_year_2023: undefined },
-      { ...priorLoan, prior_year_2024: undefined },
+      { ...priorLoan, second_prior_year: undefined },
+      { ...priorLoan, prior_year: undefined },
       {
         ...priorLoan,
-        prior_year_2023: {
-          ...priorLoan.prior_year_2023,
-          filed_2023_return_reference:
-            priorLoan.prior_year_2024.filed_2024_return_reference,
+        second_prior_year: {
+          ...priorLoan.second_prior_year,
+          filed_return_reference:
+            priorLoan.prior_year.filed_return_reference,
         },
       },
       {
         ...priorLoan,
-        prior_year_2023: {
-          ...priorLoan.prior_year_2023,
-          filed_2023_loan_points_deduction: 66,
+        second_prior_year: {
+          ...priorLoan.second_prior_year,
+          filed_loan_points_deduction: 66,
         },
       },
       {
         ...priorLoan,
-        prior_year_2024: {
-          ...priorLoan.prior_year_2024,
-          payment_records_2024: priorLoan.prior_year_2024.payment_records_2024
+        prior_year: {
+          ...priorLoan.prior_year,
+          payment_records: priorLoan.prior_year.payment_records
             .slice(1),
         },
       },
       {
         ...priorLoan,
-        prior_year_2023: {
-          ...priorLoan.prior_year_2023,
-          payment_records_2023: [
-            ...priorLoan.prior_year_2023.payment_records_2023.slice(0, 5),
-            priorLoan.prior_year_2024.payment_records_2024[0],
+        second_prior_year: {
+          ...priorLoan.second_prior_year,
+          payment_records: [
+            ...priorLoan.second_prior_year.payment_records.slice(0, 5),
+            priorLoan.prior_year.payment_records[0],
           ],
         },
       },
     ]
   ) {
     assertEquals(
-      inputSchema.safeParse({ refinances: [invalid] }).success,
+      accepted({ refinances: [invalid] }),
       false,
     );
   }
@@ -319,17 +329,17 @@ test("2023-origin refinance points require two filed-year ledgers before 2025 am
 
 test("refinance points reject mismatched payer, owner, and filed amount", () => {
   assertThrows(
-    () => assertRefinancePointsSource(source, undefined, ["111223333"], 67),
+    () => assertRefinancePointsSource(source, undefined, ["111223333"], 67, 2025),
     Error,
     "linked payer-issued Form 1098",
   );
   assertThrows(
-    () => assertRefinancePointsSource(source, form1098, ["999887777"], 67),
+    () => assertRefinancePointsSource(source, form1098, ["999887777"], 67, 2025),
     Error,
     "recipient must match",
   );
   assertThrows(
-    () => assertRefinancePointsSource(source, form1098, ["111223333"], 68),
+    () => assertRefinancePointsSource(source, form1098, ["111223333"], 68, 2025),
     Error,
     "line 8c must equal",
   );
@@ -346,7 +356,7 @@ test("refinance points reject mismatched payer, owner, and filed amount", () => 
           }],
         },
         ["111223333"],
-        67,
+        67, 2025,
       ),
     Error,
     "no box 6 points",
@@ -374,10 +384,44 @@ test("refinance points reject cash-out, service fees, and payment gaps", () => {
     ]
   ) {
     assertEquals(
-      inputSchema.safeParse({
+      accepted({
         refinances: [{ ...refinance, ...change }],
-      }).success,
+      }),
       false,
     );
   }
+});
+
+// Pub. 936 (2025): points on a refinance are deducted ratably over the loan
+// term. The 2026 return reads the same ledgers one year later.
+test("refinance points ledgers are read against the return year", () => {
+  const in2026 = shiftDatedFacts(source, 1);
+  assertEquals(refinancePointsDeduction(in2026, 2026), 67);
+  assertEquals(accepted(source, 2026), false);
+  const ledger = shiftDatedFacts({
+    refinances: [{
+      ...refinance,
+      refinance_close_year: 2024,
+      refinance_close_month: 6,
+      prior_year: {
+        filed_return_reference: "Filed 2024 Form 1040/Schedule A",
+        filed_points_workpaper_reference: "2024 loan points ledger",
+        filed_loan_points_deduction: 67,
+        payment_records: [7, 8, 9, 10, 11, 12].map((month) => ({
+          month,
+          document_reference: `2024-payment-${month}`,
+        })),
+      },
+      monthly_payment_records: Array.from({ length: 12 }, (_, index) => ({
+        month: index + 1,
+        document_reference: `2025-payment-${index + 1}`,
+      })),
+    }],
+  }, 1);
+  assertEquals(refinancePointsDeduction(ledger, 2026), 133);
+  assertThrows(
+    () => refinancePointsDeduction(ledger, 2027),
+    Error,
+    "needs reviewed 2025 and 2026 filed loan-points workpapers",
+  );
 });

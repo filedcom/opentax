@@ -1352,20 +1352,20 @@ const sourcePdfReviewFixtures: readonly PdfReviewFixture[] = [
           pub936_workpaper_reference: "2025 refinance points workpaper",
           refinance_close_year: 2023,
           refinance_close_month: 6,
-          prior_year_2023: {
-            filed_2023_return_reference: "Filed 2023 Form 1040/Schedule A",
-            filed_2023_points_workpaper_reference: "2023 loan points ledger",
-            filed_2023_loan_points_deduction: 67,
-            payment_records_2023: [7, 8, 9, 10, 11, 12].map((month) => ({
+          second_prior_year: {
+            filed_return_reference: "Filed 2023 Form 1040/Schedule A",
+            filed_points_workpaper_reference: "2023 loan points ledger",
+            filed_loan_points_deduction: 67,
+            payment_records: [7, 8, 9, 10, 11, 12].map((month) => ({
               month,
               document_reference: `2023-payment-${month}`,
             })),
           },
-          prior_year_2024: {
-            filed_2024_return_reference: "Filed 2024 Form 1040/Schedule A",
-            filed_2024_points_workpaper_reference: "2024 loan points ledger",
-            filed_2024_loan_points_deduction: 133,
-            payment_records_2024: Array.from({ length: 12 }, (_, index) => ({
+          prior_year: {
+            filed_return_reference: "Filed 2024 Form 1040/Schedule A",
+            filed_points_workpaper_reference: "2024 loan points ledger",
+            filed_loan_points_deduction: 133,
+            payment_records: Array.from({ length: 12 }, (_, index) => ({
               month: index + 1,
               document_reference: `2024-payment-${index + 1}`,
             })),

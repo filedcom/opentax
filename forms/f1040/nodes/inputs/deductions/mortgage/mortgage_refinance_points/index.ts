@@ -28,11 +28,11 @@ function reviewedPaymentSchedule(
 const paymentSchema = z.object({
   month: z.number().int().min(1).max(12),
   document_reference: z.string().trim().min(1),
-  paid_on: z.string().regex(/^2025-\d{2}-\d{2}$/).optional(),
+  paid_on: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
 }).strict();
 
 const cashoutPointsPaymentSchema = z.object({
-  paid_on: z.string().regex(/^2025-\d{2}-\d{2}$/),
+  paid_on: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
   payer_tin: z.string().regex(/^\d{3}-?\d{2}-?\d{4}$/),
   payer_bank_record_reference: z.string().trim().min(1),
   payer_bank_debit_amount: z.number().int().positive(),
@@ -48,7 +48,7 @@ const cashoutPointsPaymentSchema = z.object({
 }).strict();
 
 const earlyPayoffSchema = z.object({
-  payoff_month_2025: z.number().int().min(1).max(12),
+  payoff_month: z.number().int().min(1).max(12),
   payoff_statement_reference: z.string().trim().min(1),
   full_payoff_verified: z.literal(true),
   refinanced_with_same_lender: z.literal(false),
@@ -69,18 +69,12 @@ const improvementSchema = z.object({
   }).strict().optional(),
 }).strict();
 
-const priorYear2024Schema = z.object({
-  filed_2024_return_reference: z.string().trim().min(1),
-  filed_2024_points_workpaper_reference: z.string().trim().min(1),
-  filed_2024_loan_points_deduction: z.number().int().nonnegative(),
-  payment_records_2024: z.array(paymentSchema).min(1).max(12),
-}).strict();
-
-const priorYear2023Schema = z.object({
-  filed_2023_return_reference: z.string().trim().min(1),
-  filed_2023_points_workpaper_reference: z.string().trim().min(1),
-  filed_2023_loan_points_deduction: z.number().int().nonnegative(),
-  payment_records_2023: z.array(paymentSchema).min(1).max(12),
+/** A filed earlier-year return's loan-points workpaper and that year's payments. */
+const priorYearLedgerSchema = z.object({
+  filed_return_reference: z.string().trim().min(1),
+  filed_points_workpaper_reference: z.string().trim().min(1),
+  filed_loan_points_deduction: z.number().int().nonnegative(),
+  payment_records: z.array(paymentSchema).min(1).max(12),
 }).strict();
 
 export const itemSchema = z.object({
@@ -90,181 +84,41 @@ export const itemSchema = z.object({
   form1098_source_document_reference: z.string().trim().min(1),
   closing_disclosure_reference: z.string().trim().min(1),
   pub936_workpaper_reference: z.string().trim().min(1),
-  refinance_close_year: z.union([
-    z.literal(2023),
-    z.literal(2024),
-    z.literal(2025),
-  ]),
+  // The return year or one of the two before it.
+  refinance_close_year: z.number().int(),
   refinance_close_month: z.number().int().min(1).max(12),
-  prior_year_2023: priorYear2023Schema.optional(),
-  prior_year_2024: priorYear2024Schema.optional(),
+  // The year before the return year, and the year before that.
+  second_prior_year: priorYearLedgerSchema.optional(),
+  prior_year: priorYearLedgerSchema.optional(),
   prior_qualified_home_debt: z.number().finite().positive(),
   refinanced_principal: z.number().finite().positive(),
   loan_term_months: z.number().int().min(1).max(600),
   total_points_charged: z.number().finite().positive(),
   points_for_nondeductible_services: z.number().finite().nonnegative(),
   monthly_payment_records: z.array(paymentSchema).min(1).max(12),
-  early_payoff_2025: earlyPayoffSchema.optional(),
+  early_payoff: earlyPayoffSchema.optional(),
   improvement: improvementSchema.optional(),
   qualified_home_secured_verified: z.literal(true),
   points_not_reported_in_box6_verified: z.literal(true),
   points_paid_directly_verified: z.literal(true),
   acquisition_debt_limit_verified: z.literal(true),
   cashout_points_payment: cashoutPointsPaymentSchema.optional(),
-}).strict().superRefine((item, ctx) => {
-  const records = item.monthly_payment_records;
-  const months = records.map((record) => record.month).sort((a, b) => a - b);
-  const finalMonth = item.early_payoff_2025?.payoff_month_2025 ?? 12;
-  const improvementAmount = item.improvement
-    ?.amount_used_to_substantially_improve_main_home ?? 0;
-  const prior = item.prior_year_2024;
-  const prior2023 = item.prior_year_2023;
-  const prior2023Months = prior2023?.payment_records_2023.map((record) =>
-    record.month
-  ).sort((a, b) => a - b) ?? [];
-  const priorMonths = prior?.payment_records_2024.map((record) =>
-    record.month
-  )
-    .sort((a, b) => a - b) ?? [];
-  const expectedPrior = Array.from(
-    { length: priorMonths.length },
-    (_, index) => 13 - priorMonths.length + index,
-  );
-  const interestPoints = item.total_points_charged -
-    item.points_for_nondeductible_services;
-  const expected2024Deduction = Math.round(
-    interestPoints * priorMonths.length / item.loan_term_months,
-  );
-  const expected2023Deduction = Math.round(
-    interestPoints * prior2023Months.length / item.loan_term_months,
-  );
-  const expected = Array.from(
-    { length: months.length },
-    (_, index) => finalMonth + 1 - months.length + index,
-  );
-  if (
-    (!item.cashout_points_payment && item.improvement
-      ? item.refinanced_principal !==
-        item.prior_qualified_home_debt + improvementAmount
-      : !item.cashout_points_payment &&
-        item.refinanced_principal > item.prior_qualified_home_debt) ||
-    item.points_for_nondeductible_services >= item.total_points_charged ||
-    item.loan_term_months < months.length ||
-    (item.early_payoff_2025 !== undefined &&
-      item.loan_term_months === months.length) ||
-    (item.refinance_close_year === 2025 &&
-      months[0] < item.refinance_close_month) ||
-    months.some((month, index) => month !== expected[index]) ||
-    (item.early_payoff_2025 !== undefined &&
-      item.early_payoff_2025.payoff_month_2025 <
-        item.refinance_close_month) ||
-    new Set(records.map((record) => record.document_reference)).size !==
-      records.length
-  ) {
-    ctx.addIssue({
-      code: z.ZodIssueCode.custom,
-      message:
-        "Refinance points need qualified prior debt plus any documented main-home improvement to cover the new principal, interest-like points, and distinct consecutive 2025 payment records through December or the reviewed full-payoff month",
-    });
-  }
-  if (
-    item.refinance_close_year === 2025 &&
-    (prior !== undefined || prior2023 !== undefined)
-  ) {
-    ctx.addIssue({
-      code: z.ZodIssueCode.custom,
-      path: [prior2023 !== undefined ? "prior_year_2023" : "prior_year_2024"],
-      message:
-        "A 2025 refinance cannot claim an earlier-year amortization ledger",
-    });
-  }
-  if (item.refinance_close_year === 2024 && prior2023 !== undefined) {
-    ctx.addIssue({
-      code: z.ZodIssueCode.custom,
-      path: ["prior_year_2023"],
-      message: "A 2024 refinance cannot claim a 2023 amortization ledger",
-    });
-  }
-  if (
-    item.refinance_close_year === 2024 && (
-      prior === undefined || item.early_payoff_2025 !== undefined ||
-      item.improvement !== undefined || months.length !== 12 ||
-      priorMonths[0] < item.refinance_close_month ||
-      priorMonths.some((month, index) => month !== expectedPrior[index]) ||
-      new Set(
-          prior.payment_records_2024.map((record) => record.document_reference),
-        ).size !== prior.payment_records_2024.length ||
-      prior.payment_records_2024.some((record) =>
-        records.some((current) =>
-          current.document_reference === record.document_reference
-        )
-      ) ||
-      prior.filed_2024_loan_points_deduction !== expected2024Deduction ||
-      item.loan_term_months < priorMonths.length + months.length ||
-      Math.round(interestPoints * months.length / item.loan_term_months) >
-        interestPoints - prior.filed_2024_loan_points_deduction
-    )
-  ) {
-    ctx.addIssue({
-      code: z.ZodIssueCode.custom,
-      path: ["prior_year_2024"],
-      message:
-        "A 2024 refinance needs its filed 2024 loan-points workpaper and distinct consecutive payment records through December 2024, a matching claimed deduction, and twelve 2025 payments within the remaining loan term",
-    });
-  }
-  if (
-    item.refinance_close_year === 2023 &&
-    (prior2023 === undefined || prior === undefined ||
-      item.early_payoff_2025 !== undefined || item.improvement !== undefined ||
-      months.length !== 12 || priorMonths.length !== 12 ||
-      prior2023Months[0] < item.refinance_close_month ||
-      prior2023Months.some((month, index) =>
-        month !== 13 - prior2023Months.length + index
-      ) ||
-      priorMonths.some((month, index) => month !== index + 1) ||
-      prior2023.filed_2023_return_reference ===
-        prior.filed_2024_return_reference ||
-      prior2023.filed_2023_points_workpaper_reference ===
-        prior.filed_2024_points_workpaper_reference ||
-      new Set([
-          ...prior2023.payment_records_2023,
-          ...prior.payment_records_2024,
-          ...records,
-        ].map((record) => record.document_reference)).size !==
-        prior2023.payment_records_2023.length +
-          prior.payment_records_2024.length + records.length ||
-      prior2023.filed_2023_loan_points_deduction !==
-        expected2023Deduction ||
-      prior.filed_2024_loan_points_deduction !== expected2024Deduction ||
-      item.loan_term_months <
-        prior2023Months.length + priorMonths.length + months.length ||
-      Math.round(interestPoints * months.length / item.loan_term_months) >
-        interestPoints - prior2023.filed_2023_loan_points_deduction -
-          prior.filed_2024_loan_points_deduction)
-  ) {
-    ctx.addIssue({
-      code: z.ZodIssueCode.custom,
-      path: ["prior_year_2023"],
-      message:
-        "A 2023 refinance needs reviewed 2023 and 2024 filed loan-points workpapers, distinct consecutive payments through each December, and twelve 2025 payments within the remaining loan term",
-    });
-  }
-});
+}).strict();
 
-function valid2025Date(value: string): Date | undefined {
-  const match = /^2025-(\d{2})-(\d{2})$/.exec(value);
-  if (!match) return;
-  const date = new Date(Date.UTC(2025, Number(match[1]) - 1, Number(match[2])));
-  if (date.getUTCFullYear() !== 2025 ||
-    date.getUTCMonth() + 1 !== Number(match[1]) ||
-    date.getUTCDate() !== Number(match[2])) return;
+function validDateInYear(value: string, taxYear: number): Date | undefined {
+  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value);
+  if (!match || Number(match[1]) !== taxYear) return;
+  const date = new Date(Date.UTC(taxYear, Number(match[2]) - 1, Number(match[3])));
+  if (date.getUTCFullYear() !== taxYear ||
+    date.getUTCMonth() + 1 !== Number(match[2]) ||
+    date.getUTCDate() !== Number(match[3])) return;
   return date;
 }
 
 export const inputSchema = z.object({
   refinances: z.array(itemSchema).min(1).max(20),
   cashout_source: form1098InputSchema.optional(),
-}).strict().superRefine(({ refinances, cashout_source }, ctx) => {
+}).strict().superRefine(({ refinances }, ctx) => {
   for (
     const key of [
       "mortgage_id",
@@ -280,6 +134,145 @@ export const inputSchema = z.object({
       });
     }
   }
+});
+
+type Item = z.infer<typeof itemSchema>;
+
+function monthsOf(records: ReadonlyArray<{ month: number }>): number[] {
+  return records.map((record) => record.month).sort((a, b) => a - b);
+}
+
+/**
+ * Pub. 936 ratable points for a refinance closed in the return year or one of
+ * the two years before it, each earlier year proved by its filed workpaper.
+ */
+function assertRefinanceItemForYear(item: Item, taxYear: number): void {
+  const records = item.monthly_payment_records;
+  const months = monthsOf(records);
+  const finalMonth = item.early_payoff?.payoff_month ?? 12;
+  const improvementAmount = item.improvement
+    ?.amount_used_to_substantially_improve_main_home ?? 0;
+  const prior = item.prior_year;
+  const second = item.second_prior_year;
+  const secondMonths = second ? monthsOf(second.payment_records) : [];
+  const priorMonths = prior ? monthsOf(prior.payment_records) : [];
+  const expectedPrior = Array.from(
+    { length: priorMonths.length },
+    (_, index) => 13 - priorMonths.length + index,
+  );
+  const interestPoints = item.total_points_charged -
+    item.points_for_nondeductible_services;
+  const expectedPriorDeduction = Math.round(
+    interestPoints * priorMonths.length / item.loan_term_months,
+  );
+  const expectedSecondDeduction = Math.round(
+    interestPoints * secondMonths.length / item.loan_term_months,
+  );
+  const expected = Array.from(
+    { length: months.length },
+    (_, index) => finalMonth + 1 - months.length + index,
+  );
+  const closedThisYear = item.refinance_close_year === taxYear;
+  const closedLastYear = item.refinance_close_year === taxYear - 1;
+  const closedTwoYearsAgo = item.refinance_close_year === taxYear - 2;
+  if (!closedThisYear && !closedLastYear && !closedTwoYearsAgo) {
+    throw new Error(
+      `Refinance points support a refinance closed in ${taxYear - 2} through ${taxYear}`,
+    );
+  }
+  if (
+    (!item.cashout_points_payment && item.improvement
+      ? item.refinanced_principal !==
+        item.prior_qualified_home_debt + improvementAmount
+      : !item.cashout_points_payment &&
+        item.refinanced_principal > item.prior_qualified_home_debt) ||
+    item.points_for_nondeductible_services >= item.total_points_charged ||
+    item.loan_term_months < months.length ||
+    (item.early_payoff !== undefined &&
+      item.loan_term_months === months.length) ||
+    (closedThisYear && months[0] < item.refinance_close_month) ||
+    months.some((month, index) => month !== expected[index]) ||
+    (item.early_payoff !== undefined &&
+      item.early_payoff.payoff_month < item.refinance_close_month) ||
+    new Set(records.map((record) => record.document_reference)).size !==
+      records.length
+  ) {
+    throw new Error(
+      `Refinance points need qualified prior debt plus any documented main-home improvement to cover the new principal, interest-like points, and distinct consecutive ${taxYear} payment records through December or the reviewed full-payoff month`,
+    );
+  }
+  if (closedThisYear && (prior !== undefined || second !== undefined)) {
+    throw new Error(
+      `A ${taxYear} refinance cannot claim an earlier-year amortization ledger`,
+    );
+  }
+  if (closedLastYear && second !== undefined) {
+    throw new Error(
+      `A ${taxYear - 1} refinance cannot claim a ${taxYear - 2} amortization ledger`,
+    );
+  }
+  if (
+    closedLastYear && (
+      prior === undefined || item.early_payoff !== undefined ||
+      item.improvement !== undefined || months.length !== 12 ||
+      priorMonths[0] < item.refinance_close_month ||
+      priorMonths.some((month, index) => month !== expectedPrior[index]) ||
+      new Set(prior.payment_records.map((record) => record.document_reference))
+          .size !== prior.payment_records.length ||
+      prior.payment_records.some((record) =>
+        records.some((current) =>
+          current.document_reference === record.document_reference
+        )
+      ) ||
+      prior.filed_loan_points_deduction !== expectedPriorDeduction ||
+      item.loan_term_months < priorMonths.length + months.length ||
+      Math.round(interestPoints * months.length / item.loan_term_months) >
+        interestPoints - prior.filed_loan_points_deduction
+    )
+  ) {
+    throw new Error(
+      `A ${taxYear - 1} refinance needs its filed ${taxYear - 1} loan-points workpaper and distinct consecutive payment records through December ${taxYear - 1}, a matching claimed deduction, and twelve ${taxYear} payments within the remaining loan term`,
+    );
+  }
+  if (
+    closedTwoYearsAgo &&
+    (second === undefined || prior === undefined ||
+      item.early_payoff !== undefined || item.improvement !== undefined ||
+      months.length !== 12 || priorMonths.length !== 12 ||
+      secondMonths[0] < item.refinance_close_month ||
+      secondMonths.some((month, index) =>
+        month !== 13 - secondMonths.length + index
+      ) ||
+      priorMonths.some((month, index) => month !== index + 1) ||
+      second.filed_return_reference === prior.filed_return_reference ||
+      second.filed_points_workpaper_reference ===
+        prior.filed_points_workpaper_reference ||
+      new Set([
+          ...second.payment_records,
+          ...prior.payment_records,
+          ...records,
+        ].map((record) => record.document_reference)).size !==
+        second.payment_records.length + prior.payment_records.length +
+          records.length ||
+      second.filed_loan_points_deduction !== expectedSecondDeduction ||
+      prior.filed_loan_points_deduction !== expectedPriorDeduction ||
+      item.loan_term_months <
+        secondMonths.length + priorMonths.length + months.length ||
+      Math.round(interestPoints * months.length / item.loan_term_months) >
+        interestPoints - second.filed_loan_points_deduction -
+          prior.filed_loan_points_deduction)
+  ) {
+    throw new Error(
+      `A ${taxYear - 2} refinance needs reviewed ${taxYear - 2} and ${taxYear - 1} filed loan-points workpapers, distinct consecutive payments through each December, and twelve ${taxYear} payments within the remaining loan term`,
+    );
+  }
+}
+
+/** A cash-out refinance's points, payment and loan schedule in the return year. */
+function assertCashoutPointsForYear(
+  { refinances, cashout_source }: z.infer<typeof inputSchema>,
+  taxYear: number,
+): void {
   const review = cashout_source?.cashout_refinance_review;
   if (cashout_source !== undefined || refinances.some((item) =>
     item.cashout_points_payment !== undefined
@@ -290,13 +283,15 @@ export const inputSchema = z.object({
       loan.source_document_reference === review?.new_source_document_reference
     );
     const closingDate = review?.refinance_on ??
-      `2025-${String(review?.refinance_month ?? 0).padStart(2, "0")}-01`;
+      `${taxYear}-${String(review?.refinance_month ?? 0).padStart(2, "0")}-01`;
     const midmonth = review?.refinance_on !== undefined &&
       !review.refinance_on.endsWith("-01");
     const months = review?.new_loan_months.map((row) => row.month) ?? [];
     const schedule = reviewedPaymentSchedule(payment?.payment_schedule_document);
     const paymentDatesValid = item?.monthly_payment_records.every((row) => {
-      const date = row.paid_on ? valid2025Date(row.paid_on) : undefined;
+      const date = row.paid_on
+        ? validDateInYear(row.paid_on, taxYear)
+        : undefined;
       return date !== undefined && date.getUTCMonth() + 1 === row.month &&
         row.paid_on! >= closingDate;
     });
@@ -314,9 +309,9 @@ export const inputSchema = z.object({
         review.new_loan_proceeds_to_old_payoff +
           (review.new_loan_proceeds_to_home_improvement ?? 0) +
           review.new_loan_proceeds_to_personal_cashout ||
-      item.refinance_close_year !== 2025 ||
+      item.refinance_close_year !== taxYear ||
       item.refinance_close_month !== review.refinance_month ||
-      item.early_payoff_2025 !== undefined ||
+      item.early_payoff !== undefined ||
       (review.new_loan_proceeds_to_home_improvement
         ? item.improvement?.amount_used_to_substantially_improve_main_home !==
             review.new_loan_proceeds_to_home_improvement ||
@@ -361,7 +356,7 @@ export const inputSchema = z.object({
           JSON.stringify(schedule.payment_records) !==
             JSON.stringify(item.monthly_payment_records) ||
           item.monthly_payment_records.some((row) =>
-            row.paid_on !== new Date(Date.UTC(2025, row.month, 0))
+            row.paid_on !== new Date(Date.UTC(taxYear, row.month, 0))
               .toISOString().slice(0, 10))
         : payment.payment_schedule_document !== undefined ||
           item.monthly_payment_records.length !== months.length ||
@@ -371,21 +366,17 @@ export const inputSchema = z.object({
               review.new_loan_months[index]?.lender_statement_reference
           ))
     ) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        path: ["cashout_source"],
-        message: "Cash-out points need matching owner, closing, separate cash payment, service/term note, and every dated loan payment joined to the reviewed Form 1098 mortgage",
-      });
+      throw new Error(
+        "Cash-out points need matching owner, closing, separate cash payment, service/term note, and every dated loan payment joined to the reviewed Form 1098 mortgage",
+      );
     }
   }
-});
-
-type Item = z.infer<typeof itemSchema>;
+}
 
 function deductiblePoints(item: Item, ratio = 1): number {
   const interestPoints = item.total_points_charged -
     item.points_for_nondeductible_services;
-  if (item.early_payoff_2025) return Math.round(interestPoints);
+  if (item.early_payoff) return Math.round(interestPoints);
   const improvementPoints = item.improvement
     ? interestPoints *
       (item.improvement.amount_used_to_substantially_improve_main_home /
@@ -400,8 +391,13 @@ function deductiblePoints(item: Item, ratio = 1): number {
   return Math.round(beforeTable1 * ratio);
 }
 
-export function refinancePointsDeduction(source: unknown): number {
+export function refinancePointsDeduction(
+  source: unknown,
+  taxYear: number,
+): number {
   const parsed = inputSchema.parse(source);
+  parsed.refinances.forEach((item) => assertRefinanceItemForYear(item, taxYear));
+  assertCashoutPointsForYear(parsed, taxYear);
   const ratio = parsed.cashout_source?.cashout_refinance_review
     ? cashoutRefinanceRatio(parsed.cashout_source.cashout_refinance_review)
     : 1;
@@ -417,6 +413,7 @@ export function assertRefinancePointsSource(
   form1098Source: unknown,
   recipientTins: readonly string[],
   filedLine8c: number,
+  taxYear: number,
 ): void {
   if (source === undefined) return;
   const parsed = inputSchema.parse(source);
@@ -453,16 +450,15 @@ export function assertRefinancePointsSource(
         "Schedule A refinance points need one matching Form 1098 source with no box 6 points",
       );
     }
-    const originatedThisYear = /^\d{2}\/\d{2}\/2025$/.test(
-      matches[0].box3_origination_date ?? "",
-    );
+    const originatedThisYear = (matches[0].box3_origination_date ?? "")
+      .endsWith(`/${taxYear}`);
     if (
-      item.refinance_close_year === 2025 && originatedThisYear &&
+      item.refinance_close_year === taxYear && originatedThisYear &&
       matches[0].box2_outstanding_principal !== undefined &&
       matches[0].box2_outstanding_principal !== item.refinanced_principal
     ) {
       throw new Error(
-        "Schedule A refinance points principal differs from the linked 2025 Form 1098 box 2",
+        `Schedule A refinance points principal differs from the linked ${taxYear} Form 1098 box 2`,
       );
     }
     if (!matches[0].issuer_copy) {
@@ -471,7 +467,7 @@ export function assertRefinancePointsSource(
       );
     }
   }
-  const calculated = refinancePointsDeduction(parsed);
+  const calculated = refinancePointsDeduction(parsed, taxYear);
   if (filedLine8c !== calculated) {
     throw new Error(
       "Schedule A line 8c must equal sourced refinance-points amortization",
@@ -485,10 +481,10 @@ class MortgageRefinancePointsNode extends TaxNode<typeof inputSchema> {
   readonly outputNodes = new OutputNodes([scheduleA]);
 
   compute(
-    _ctx: NodeContext,
+    ctx: NodeContext,
     rawInput: z.infer<typeof inputSchema>,
   ): NodeResult {
-    const amount = refinancePointsDeduction(rawInput);
+    const amount = refinancePointsDeduction(rawInput, ctx.taxYear);
     return {
       outputs: amount > 0
         ? [this.outputNodes.output(scheduleA, {
