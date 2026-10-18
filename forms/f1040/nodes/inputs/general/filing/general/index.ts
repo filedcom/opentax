@@ -1468,15 +1468,6 @@ class GeneralNode extends TaxNode<typeof inputSchema> {
       );
     }
     if (
-      (parsed.taxpayer_can_be_claimed_as_dependent === true ||
-        parsed.spouse_can_be_claimed_as_dependent === true) &&
-      parsed.dependent_earned_income === undefined
-    ) {
-      throw new Error(
-        "Dependent standard deduction needs earned income from the return sources",
-      );
-    }
-    if (
       parsed.taxpayer_can_be_claimed_as_dependent !== true &&
       parsed.spouse_can_be_claimed_as_dependent !== true &&
       parsed.dependent_earned_income !== undefined
@@ -1543,7 +1534,11 @@ class GeneralNode extends TaxNode<typeof inputSchema> {
       parsed.spouse_can_be_claimed_as_dependent === true
     ) {
       sdInput["taxpayer_can_be_claimed_as_dependent"] = true;
-      sdInput["dependent_earned_income"] = parsed.dependent_earned_income;
+      // Absent a reviewed figure, standard_deduction derives earned income
+      // from the return's own lines (agi_aggregator).
+      if (parsed.dependent_earned_income !== undefined) {
+        sdInput["dependent_earned_income"] = parsed.dependent_earned_income;
+      }
     }
 
     if (parsed.dependent_education_income_review) {

@@ -376,6 +376,23 @@ function computeSsaTaxable(
 
 // ─── Pure helpers ─────────────────────────────────────────────────────────────
 
+// Earned income for the 2025 Form 1040 Standard Deduction Worksheet for
+// Dependents: line 1z plus Schedule 1 lines 3, 6 and 8r, minus Schedule 1
+// line 15 (the deductible part of self-employment tax).
+function dependentWorksheetEarnedIncome(input: AgiInput): number {
+  return Math.round(sumField(input.line1a_wages)) +
+    Math.round(sumField(input.line1b_household_wages)) +
+    Math.round(sumField(input.line1h_other_earned)) +
+    Math.round(input.line1c_unreported_tips ?? 0) +
+    Math.round(input.line1e_taxable_dep_care ?? 0) +
+    Math.round(input.line1f_taxable_adoption_benefits ?? 0) +
+    Math.round(input.line1g_wages_8919 ?? 0) +
+    Math.round(input.line3_schedule_c ?? 0) +
+    Math.round(input.line6_schedule_f ?? 0) +
+    (input.line8r_taxable_scholarships ?? 0) -
+    Math.round(input.line15_se_deduction ?? 0);
+}
+
 // Sum all non-SSA income items before the IRC §469 limit is applied.
 function nonSsaIncomeBeforePal(input: AgiInput): number {
   return (
@@ -822,6 +839,7 @@ class AgiAggregatorNode extends TaxNode<typeof inputSchema> {
       ),
       this.outputNodes.output(standard_deduction, {
         agi,
+        return_earned_income: dependentWorksheetEarnedIncome(input),
         form8615_total_income: totalIncome,
         form8615_early_withdrawal_penalty: Math.max(
           0,

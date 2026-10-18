@@ -36,7 +36,12 @@ export const inputSchema = z.object({
   spouse_age_65_or_older: z.boolean().optional(),
   spouse_blind: z.boolean().optional(),
   taxpayer_can_be_claimed_as_dependent: z.boolean().optional(),
+  // A reviewed figure from the general node (scholarship and MFJ dependent
+  // worksheets); otherwise the worksheet uses return_earned_income.
   dependent_earned_income: z.number().nonnegative().optional(),
+  // From agi_aggregator: Form 1040 line 1z plus Schedule 1 lines 3, 6 and 8r,
+  // minus Schedule 1 line 15 (Standard Deduction Worksheet for Dependents).
+  return_earned_income: z.number().optional(),
   form8615_total_income: z.number().optional(),
   form8615_reviewed_unearned_income: z.number().nonnegative().optional(),
   form8615_reviewed_source: form8615SourceSchema.optional(),
@@ -96,6 +101,13 @@ const SPOUSE_STATUSES = new Set<FilingStatus>([
 
 // ─── Standard Deduction helpers ───────────────────────────────────────────────
 
+// Earned income on the Standard Deduction Worksheet for Dependents.
+function dependentEarnedIncome(
+  input: StandardDeductionInput,
+): number | undefined {
+  return input.dependent_earned_income ?? input.return_earned_income;
+}
+
 // Count the total number of additional-deduction factors for age/blindness.
 function additionalFactorCount(input: StandardDeductionInput): number {
   let count = 0;
@@ -117,15 +129,15 @@ function computeStandardAmount(
   const additionalPerFactor =
     cfg.standardDeductionAdditional[input.filing_status];
   if (input.taxpayer_can_be_claimed_as_dependent === true) {
-    if (input.dependent_earned_income === undefined) {
+    const earned = dependentEarnedIncome(input);
+    if (earned === undefined) {
       throw new Error("Dependent standard deduction needs earned income");
     }
     const dependentBase = Math.min(
       base,
       Math.max(
         cfg.dependentStandardDeductionFloor,
-        input.dependent_earned_income +
-          cfg.dependentStandardDeductionEarnedIncomeAddOn,
+        earned + cfg.dependentStandardDeductionEarnedIncomeAddOn,
       ),
     );
     return dependentBase + additionalFactorCount(input) * additionalPerFactor;
@@ -337,13 +349,13 @@ class StandardDeductionNode extends TaxNode<typeof inputSchema> {
         form8615_child_agi: input.agi,
         form8615_child_deduction: deduction,
         ...(input.taxpayer_can_be_claimed_as_dependent === true &&
-            input.dependent_earned_income !== undefined &&
+            dependentEarnedIncome(input) !== undefined &&
             input.form8615_total_income !== undefined
           ? {
             form8615_computed_unearned_income:
               input.form8615_reviewed_unearned_income ?? Math.max(
                 0,
-                input.form8615_total_income - input.dependent_earned_income -
+                input.form8615_total_income - dependentEarnedIncome(input)! -
                   (input.form8615_early_withdrawal_penalty ?? 0),
               ),
           }
