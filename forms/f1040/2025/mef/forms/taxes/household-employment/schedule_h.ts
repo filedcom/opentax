@@ -9,6 +9,7 @@ import type {
   MefFormDescriptor,
 } from "../../../form-descriptor.ts";
 import { FilingStatus } from "../../../types.ts";
+import { mefTaxYear } from "../../../support/year-config.ts";
 import {
   inputSchema as schedule2InputSchema,
   schedule2,
@@ -16,7 +17,7 @@ import {
 
 function sourcedOtherTaxes(context: MefBuildContext): unknown {
   return schedule2.compute(
-    { taxYear: 2025, formType: "f1040" },
+    { taxYear: mefTaxYear(context), formType: "f1040" },
     schedule2InputSchema.parse(context.pending?.schedule2 ?? {}),
   ).outputs.find((entry) => entry.nodeType === "f1040")
     ?.fields.line23_other_taxes ?? 0;
@@ -82,7 +83,7 @@ function buildIRS1040ScheduleH(
       "Schedule H FICA-only export needs employee payroll source",
     );
   }
-  const amounts = computeScheduleHAmounts(source, 2025);
+  const amounts = computeScheduleHAmounts(source, mefTaxYear(context));
   if (source.fica_only_payroll) {
     const retained = inputSchema.parse(context.pending?.schedule_h ?? {});
     if (

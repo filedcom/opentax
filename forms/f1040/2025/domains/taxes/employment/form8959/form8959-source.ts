@@ -40,7 +40,8 @@ function box14Amount(item: W2Item, description: string): number | undefined {
 }
 
 function replayedDeposits(
-  pending?: Readonly<Record<string, unknown>>,
+  pending: Readonly<Record<string, unknown>> | undefined,
+  taxYear: number,
 ): Pick<Partial<Source>, "unreported_tips" | "wages_8919" | "se_income"> {
   const deposits: Pick<
     Partial<Source>,
@@ -51,18 +52,19 @@ function replayedDeposits(
   if (pending?.form4137 !== undefined) {
     deposits.unreported_tips = calculateForm4137(
       form4137Schema.parse(pending.form4137),
-      CONFIG_BY_YEAR[2025].ssWageBase,
+      CONFIG_BY_YEAR[taxYear].ssWageBase,
+      taxYear,
     ).reduce((sum, form) => sum + form.medicareTips, 0);
   }
   if (pending?.form8919 !== undefined) {
     deposits.wages_8919 = calculateForm8919(
       form8919Schema.parse(pending.form8919),
-      CONFIG_BY_YEAR[2025].ssWageBase,
+      CONFIG_BY_YEAR[taxYear].ssWageBase,
     ).reduce((sum, form) => sum + form.line6, 0);
   }
   if (pending?.schedule_se !== undefined) {
     const result = schedule_se.compute(
-      { taxYear: 2025, formType: "f1040" },
+      { taxYear, formType: "f1040" },
       scheduleSESchema.parse(pending.schedule_se),
     );
     const medicare = result.outputs.find((entry) =>
@@ -77,14 +79,15 @@ function replayedDeposits(
 
 function assertOriginalDeposits(
   source: Partial<Source>,
-  pending?: Readonly<Record<string, unknown>>,
+  pending: Readonly<Record<string, unknown>> | undefined,
+  taxYear: number,
 ): void {
   const checkDeposit = (key: keyof Source, expected: number): void => {
     if ((source[key] ?? 0) !== expected) {
       throw new Error(`Form 8959 ${key} differs from original source records`);
     }
   };
-  for (const [key, amount] of Object.entries(replayedDeposits(pending))) {
+  for (const [key, amount] of Object.entries(replayedDeposits(pending, taxYear))) {
     checkDeposit(key as "unreported_tips" | "wages_8919" | "se_income", amount);
   }
   const w2 = pending?.["w2"];
@@ -210,6 +213,7 @@ export function hasForm8959Print(raw: unknown): boolean {
 export function assertForm8959Absent(
   raw: unknown,
   pending?: Readonly<Record<string, unknown>>,
+  taxYear = 2025,
 ): void {
   if (raw === null || typeof raw !== "object" || Array.isArray(raw)) {
     throw new Error("Form 8959 source-only record must be an object");
@@ -217,16 +221,16 @@ export function assertForm8959Absent(
   if (Object.keys(raw).length === 0) {
     // A prepared return may omit an inactive Form 8959 entirely. Retained
     // employment forms still need their combined filing trigger checked.
-    const deposits = replayedDeposits(pending);
-    assertOriginalDeposits(deposits, pending);
+    const deposits = replayedDeposits(pending, taxYear);
+    assertOriginalDeposits(deposits, pending, taxYear);
     if (!Object.values(deposits).some((amount) => amount > 0)) return;
     const f1040 = pending?.f1040 as Record<string, unknown> | undefined;
     raw = { ...deposits, filing_status: f1040?.filing_status };
   }
   const source = inputSchema.parse(raw);
-  assertOriginalDeposits(source, pending);
+  assertOriginalDeposits(source, pending, taxYear);
   const result = form8959.compute(
-    { taxYear: 2025, formType: "f1040" },
+    { taxYear, formType: "f1040" },
     source,
   );
   if (result.outputs.some((entry) => entry.nodeType === "form8959")) {
@@ -241,9 +245,10 @@ export function assertForm8959Sources(
   raw: unknown,
   fields: Form8959PrintFields,
   pending?: Readonly<Record<string, unknown>>,
+  taxYear = 2025,
 ): void {
   const source = inputSchema.passthrough().parse(raw);
-  assertOriginalDeposits(source, pending);
+  assertOriginalDeposits(source, pending, taxYear);
   const lines: ReadonlyArray<readonly [keyof Form8959PrintFields, number]> = [
     [
       "line1_medicare_wages",

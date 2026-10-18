@@ -332,3 +332,26 @@ test("Form 8919 rejects duplicate recipient forms and duplicate firms", () => {
     }, 176_100)
   );
 });
+
+// Draft 2026 Form 8919 (irs/corpus/ty2026/draft/f8919.pdf) line 7: $184,500.
+test("2026: line 9 uses the $184,500 wage base", () => {
+  const result = form8919.compute(
+    { taxYear: 2026, formType: "f1040" },
+    inputSchema.parse(input({
+      w2_sources: [{
+        employee_ssn: "123-45-6789",
+        employer_name: "Other Employer",
+        employer_ein: "22-2222222",
+        ss_wages_and_tips: 145_000,
+        rrta_compensation: 0,
+      }],
+      form4137_sources: [{ recipient: "taxpayer", line10_ss_tips: 5_000 }],
+    })),
+  );
+  // Line 10 $34,500: 6.2% = $2,139; line 12 1.45% of $50,000 = $725.
+  assertEquals(fieldsOf(result.outputs, schedule_se)?.wages_8919, 34_500);
+  assertEquals(
+    fieldsOf(result.outputs, schedule2)?.line6_uncollected_8919,
+    2_864,
+  );
+});

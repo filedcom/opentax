@@ -17,11 +17,7 @@ import { calculateForm8615 } from "../../../../forms/taxes/investments/form8615/
 import { inputSchema as form8615SourceSchema } from "../../../../../inputs/taxes/investments/f8615/schema.ts";
 import { f8812 } from "../../../../../inputs/credits/child/f8812/index.ts";
 import { CONFIG_BY_YEAR } from "../../../../../config/index.ts";
-import {
-  ordinaryTax2025,
-  ordinaryTaxFromSchedule,
-} from "../tax_table_2025.ts";
-import { bracketsForStatus } from "../tax_brackets.ts";
+import { ordinaryTaxForYear } from "../tax_table_2025.ts";
 import {
   foreignEarnedIncomePreferentialTax,
   preferentialTax,
@@ -117,7 +113,8 @@ type IncomeTaxCalcInput = z.infer<typeof inputSchema>;
 
 // ─── Pure helpers ─────────────────────────────────────────────────────────────
 
-// The preferential, foreign-exclusion, Form 8615, Form 8814 and section 1294
+// The QDCGT, Schedule D Tax and Foreign Earned Income Tax Worksheets read the
+// year's rates. The Form 8615, Form 8814, section 1294 and Schedule J
 // worksheets still apply TY2025 brackets and thresholds.
 function assertYearSupportsWorksheets(
   taxYear: number,
@@ -125,9 +122,6 @@ function assertYearSupportsWorksheets(
 ): void {
   if (taxYear === 2025) return;
   const worksheetSources = [
-    sumField(input.qualified_dividends as number | number[] | undefined),
-    input.net_capital_gain ?? 0,
-    input.foreign_earned_income_exclusion ?? 0,
     input.form8814_tax ?? 0,
     input.form8621_1294_undistributed_ordinary ?? 0,
     input.form8621_1294_undistributed_capital ?? 0,
@@ -181,6 +175,7 @@ class IncomeTaxCalculationNode extends TaxNode<typeof inputSchema> {
     }
 
     assertYearSupportsWorksheets(ctx.taxYear, input);
+    const ordinaryTax = ordinaryTaxForYear(cfg);
     const foreignExclusion = input.foreign_earned_income_exclusion ?? 0;
     if (
       foreignExclusion > 0 &&
@@ -268,13 +263,14 @@ class IncomeTaxCalculationNode extends TaxNode<typeof inputSchema> {
             rate28Gain: rate28,
             form4952Election,
             electedCapitalGain,
+            rates: cfg,
           }, floor);
         } else {
-          const stackedTax = ordinaryTax2025(
+          const stackedTax = ordinaryTax(
             input.taxable_income + floor,
             input.filing_status,
           );
-          const floorTax = ordinaryTax2025(floor, input.filing_status);
+          const floorTax = ordinaryTax(floor, input.filing_status);
           tax = Math.max(0, stackedTax - floorTax);
         }
       }
@@ -290,14 +286,10 @@ class IncomeTaxCalculationNode extends TaxNode<typeof inputSchema> {
         rate28Gain: rate28,
         form4952Election,
         electedCapitalGain,
+        rates: cfg,
       });
     } else {
-      tax = ctx.taxYear === 2025
-        ? ordinaryTax2025(input.taxable_income, input.filing_status)
-        : ordinaryTaxFromSchedule(
-          input.taxable_income,
-          bracketsForStatus(input.filing_status, cfg),
-        );
+      tax = ordinaryTax(input.taxable_income, input.filing_status);
     }
     let regularTaxBeforeAdditionalItems = tax;
 
@@ -375,11 +367,12 @@ class IncomeTaxCalculationNode extends TaxNode<typeof inputSchema> {
             rate28Gain: rate28,
             form4952Election,
             electedCapitalGain,
+            rates: cfg,
           }, floor)
           : Math.max(
             0,
-            ordinaryTax2025(withoutTaxable + floor, input.filing_status) -
-              ordinaryTax2025(floor, input.filing_status),
+            ordinaryTax(withoutTaxable + floor, input.filing_status) -
+              ordinaryTax(floor, input.filing_status),
           );
       } else if (hasPrefIncome) {
         without = preferentialTax({
@@ -393,9 +386,10 @@ class IncomeTaxCalculationNode extends TaxNode<typeof inputSchema> {
           rate28Gain: rate28,
           form4952Election,
           electedCapitalGain,
+          rates: cfg,
         });
       } else {
-        without = ordinaryTax2025(withoutTaxable, input.filing_status);
+        without = ordinaryTax(withoutTaxable, input.filing_status);
       }
       form8621DeferredTaxBeforeCredits = Math.max(0, tax - without);
     }

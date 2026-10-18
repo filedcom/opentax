@@ -8,7 +8,8 @@ import {
   QDCGT_TWENTY_FLOOR_2025,
   QDCGT_ZERO_CEILING_2025,
 } from "../../../../config/2025.ts";
-import { taxFromBrackets } from "./tax_brackets.ts";
+import { bracketsForStatus, taxFromBrackets } from "./tax_brackets.ts";
+import type { F1040Config } from "../../../../config/types.ts";
 
 /**
  * TY2025 Form 1040 Tax Table, for taxable income below $100,000.
@@ -105,6 +106,37 @@ export function ordinaryTaxFromSchedule(
     : Math.round(taxFromBrackets(wholeDollarIncome, brackets));
 }
 
+/** A year's rate schedules and QDCGT Worksheet breakpoints. */
+export type TaxRateYear = Pick<
+  F1040Config,
+  | "bracketsMfj"
+  | "bracketsSingle"
+  | "bracketsHoh"
+  | "bracketsMfs"
+  | "qdcgtZeroCeiling"
+  | "qdcgtTwentyFloor"
+>;
+
+export type OrdinaryTax = (income: number, status: FilingStatus) => number;
+
+export const TY2025_RATES: TaxRateYear = {
+  bracketsMfj: BRACKETS_MFJ_2025,
+  bracketsSingle: BRACKETS_SINGLE_2025,
+  bracketsHoh: BRACKETS_HOH_2025,
+  bracketsMfs: BRACKETS_MFS_2025,
+  qdcgtZeroCeiling: QDCGT_ZERO_CEILING_2025,
+  qdcgtTwentyFloor: QDCGT_TWENTY_FLOOR_2025,
+};
+
+/**
+ * The year's Tax Table and Tax Computation Worksheet amount. With the 2025
+ * rate schedules it equals `ordinaryTax2025` for every income.
+ */
+export function ordinaryTaxForYear(rates: TaxRateYear): OrdinaryTax {
+  return (income, status) =>
+    ordinaryTaxFromSchedule(income, bracketsForStatus(status, rates));
+}
+
 /**
  * TY2025 Qualified Dividends and Capital Gain Tax Worksheet, shared by
  * Form 1040 line 16 and Form 8615 lines 9, 15, and 17.
@@ -119,6 +151,23 @@ export function qualifiedDividendTax2025(
   netCapitalGain: number,
   status: FilingStatus,
 ): number {
+  return qualifiedDividendTaxForYear(
+    taxableIncome,
+    qualifiedDividends,
+    netCapitalGain,
+    status,
+    TY2025_RATES,
+  );
+}
+
+/** The same worksheet with a year's breakpoints and ordinary tax. */
+export function qualifiedDividendTaxForYear(
+  taxableIncome: number,
+  qualifiedDividends: number,
+  netCapitalGain: number,
+  status: FilingStatus,
+  rates: TaxRateYear,
+): number {
   if (
     !Number.isFinite(taxableIncome) || !Number.isFinite(qualifiedDividends) ||
     !Number.isFinite(netCapitalGain) || taxableIncome < 0 ||
@@ -128,22 +177,23 @@ export function qualifiedDividendTax2025(
       "The 2025 qualified-dividend worksheet needs nonnegative amounts",
     );
   }
+  const ordinaryTax = ordinaryTaxForYear(rates);
   const line1 = Math.round(taxableIncome);
   const line4 = Math.round(qualifiedDividends) + Math.round(netCapitalGain);
   const line5 = Math.max(0, line1 - line4);
-  const line7 = Math.min(line1, QDCGT_ZERO_CEILING_2025[status]);
+  const line7 = Math.min(line1, rates.qdcgtZeroCeiling[status]);
   const line8 = Math.min(line5, line7);
   const line9 = line7 - line8;
   const line10 = Math.min(line1, line4);
   const line12 = Math.max(0, line10 - line9);
-  const line14 = Math.min(line1, QDCGT_TWENTY_FLOOR_2025[status]);
+  const line14 = Math.min(line1, rates.qdcgtTwentyFloor[status]);
   const line16 = Math.max(0, line14 - (line5 + line9));
   const line17 = Math.min(line12, line16);
   const line18 = line17 * 0.15;
   const line20 = Math.max(0, line10 - (line9 + line17));
   const line21 = line20 * 0.20;
-  const line22 = ordinaryTax2025(line5, status);
+  const line22 = ordinaryTax(line5, status);
   const line23 = line18 + line21 + line22;
-  const line24 = ordinaryTax2025(line1, status);
+  const line24 = ordinaryTax(line1, status);
   return Math.round(Math.min(line23, line24));
 }

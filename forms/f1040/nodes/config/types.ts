@@ -31,6 +31,23 @@ export type DepCareSecondPhaseout = {
   readonly floorRate: number;
 };
 
+/** IRC §36B(b)(3)(A) applicable percentage band, in hundredths of a percent. */
+export type PtcApplicablePercentageBand = {
+  /** Household income as a percentage of the FPL: at least this. */
+  readonly fromFplPct: number;
+  /** Less than this; the last band includes it. */
+  readonly toFplPct: number;
+  readonly initial: number;
+  readonly final: number;
+};
+
+/** IRC §36B(f)(2)(B) repayment limitation below `maxFplPct`. */
+export type PtcRepaymentCap = {
+  readonly maxFplPct: number;
+  readonly singleCap: number;
+  readonly otherCap: number;
+};
+
 export interface F1040Config {
   // ── Tax brackets ──────────────────────────────────────────────────────────
   bracketsMfj: ReadonlyArray<Bracket>;
@@ -272,4 +289,26 @@ export interface F1040Config {
   // ── Trump accounts (IRC §§128, 530A) ─────────────────────────────────────
   trumpAccountContributionLimit: number;
   trumpAccountEmployerExclusionLimit: number;
+
+  // ── Taxes and payments ───────────────────────────────────────────────────
+  /** Schedule SE line 14: maximum income for the optional methods. */
+  seOptionalMethodMax: number;
+  /** Schedule SE Part II: farm optional method gross farm income limit. */
+  seFarmOptionalGrossIncomeLimit: number;
+  /** Schedule SE Part II: net farm or nonfarm profit limit. */
+  seOptionalMethodNetProfitLimit: number;
+  /** AMT exemption reduction per dollar of AMTI over the phase-out start. */
+  amtExemptionPhaseOutRate: number;
+  /** Form 8962 Tables 1-1 (`fplBase`), 1-2 Alaska and 1-3 Hawaii. */
+  fplBaseAlaska: number;
+  fplIncrementAlaska: number;
+  fplBaseHawaii: number;
+  fplIncrementHawaii: number;
+  ptcApplicablePercentages: ReadonlyArray<PtcApplicablePercentageBand>;
+  /** Household income above this FPL percentage gets no PTC; null if none. */
+  ptcIncomeLimitFplPct: number | null;
+  /** IRC §36B(c)(2)(C)(i)(II); also the Pub. 974 QSEHRA affordability test. */
+  ptcRequiredContributionPercentage: number;
+  /** Empty when the year has no repayment limitation. */
+  ptcRepaymentCaps: ReadonlyArray<PtcRepaymentCap>;
 }

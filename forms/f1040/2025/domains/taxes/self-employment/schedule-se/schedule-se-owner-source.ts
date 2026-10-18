@@ -29,6 +29,8 @@ import { patronFiledBusinessLines } from "../../../../../nodes/inputs/deductions
 export function assertOwnedScheduleSE(
   pending: Readonly<Record<string, Record<string, unknown>>>,
   filer?: FilerIdentity,
+  // Callers outside Schedule SE and Schedule 2 still replay TY2025 only.
+  ssWageBase = CONFIG_BY_YEAR[2025].ssWageBase,
 ) {
   const general = pending.general;
   const retained = pending.schedule_se;
@@ -178,12 +180,12 @@ export function assertOwnedScheduleSE(
       });
     }
   }
-  const actual = ownedScheduleSE(source, CONFIG_BY_YEAR[2025].ssWageBase);
+  const actual = ownedScheduleSE(source, ssWageBase);
   const retainedActual = ownedScheduleSE({
     identity: retained.owner_identity,
     businesses: retained.owner_business_sources,
     wages: retained.owner_wage_sources ?? [],
-  }, CONFIG_BY_YEAR[2025].ssWageBase);
+  }, ssWageBase);
   const canonical = (value: unknown): string =>
     JSON.stringify(
       value,

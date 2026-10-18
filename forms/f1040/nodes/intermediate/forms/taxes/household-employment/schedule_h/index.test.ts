@@ -738,3 +738,84 @@ test("FUTA quarter test accepts a documented prior-year threshold only when curr
     5,
   );
 });
+
+// ── TY2026 ───────────────────────────────────────────────────────────────────
+// Draft 2026 Schedule H (irs/corpus/ty2026/draft/f1040sh.pdf) line A and
+// MeF 2026v1.0 rules SH-F1040-008-11/009-11: the cash-wage threshold is
+// $3,000. Lines 2 and 4: 12.4% and 2.9% of the cash wages.
+
+function compute2026(input: Record<string, unknown>) {
+  return schedule_h.compute({ taxYear: 2026, formType: "f1040" }, input);
+}
+
+function ficaOnly2026(wages: number, taxableWages: number) {
+  return {
+    cash_wages_over_2025_limit: taxableWages > 0,
+    cash_wages_over_quarter_limit: false,
+    ss_wages: taxableWages,
+    medicare_wages: taxableWages,
+    fica_only_payroll: {
+      all_household_employees_included: true,
+      prior_year_payroll_source_reference: "2025-synthetic-payroll-review",
+      prior_year_quarter_cash_wages: [0, 0, 0, 0],
+      employee_wages: [{
+        employee_id: "synthetic-worker-1",
+        payroll_source_reference: "2026-synthetic-payroll-review",
+        relationship: "unrelated",
+        age_18_or_older_for_fica: true,
+        ordinary_cash_only: true,
+        annual_cash_wages: wages,
+        quarterly_cash_wages: [wages / 4, wages / 4, wages / 4, wages / 4],
+        w2: {
+          source_reference: "2026-synthetic-household-w2",
+          box2_federal_income_tax_withheld: 0,
+          box3_social_security_wages: taxableWages,
+          box5_medicare_wages: taxableWages,
+        },
+      }],
+    },
+  };
+}
+
+test("2026: FICA-only payroll taxes $3,600 of cash wages", () => {
+  // $446 Social Security plus $104 Medicare.
+  assertEquals(
+    findOutput(compute2026(ficaOnly2026(3_600, 3_600)), "schedule2")?.fields
+      .line9_household_employment,
+    550,
+  );
+});
+
+test("2026: cash wages below $3,000 are not FICA wages", () => {
+  assertEquals(compute2026(ficaOnly2026(2_996, 0)).outputs, []);
+  assertThrows(
+    () => compute2026(ficaOnly2026(2_996, 2_996)),
+    Error,
+    "W-2 FICA wages differ from payroll",
+  );
+  // TY2025's $2,800 threshold taxed the same wages: $372 + $87.
+  assertEquals(
+    findOutput(compute(ficaOnly2026(2_996, 2_996)), "schedule2")?.fields
+      .line9_household_employment,
+    459,
+  );
+});
+
+test("2026: FUTA and minor classifications stay refused", () => {
+  assertThrows(
+    () =>
+      compute2026({
+        ...ficaOnly2026(3_600, 3_600),
+        fica_only_payroll: {
+          ...ficaOnly2026(3_600, 3_600).fica_only_payroll,
+          employee_wages: [{
+            ...ficaOnly2026(3_600, 3_600).fica_only_payroll.employee_wages[0],
+            age_18_or_older_for_fica: false,
+          }],
+        },
+      }),
+    Error,
+    "minor FICA classifications are not supported for 2026",
+  );
+  assertThrows(() => compute2026(studentMinorFuta), Error);
+});

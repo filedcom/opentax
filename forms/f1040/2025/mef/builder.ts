@@ -337,13 +337,13 @@ function buildReturnXml(
   assertSchedule2W2Line13Sources(pending);
   assertSchedule2W2Line17KSource(pending);
   assertSchedule2Line17HSources(pending, filer);
-  assertSchedule2Form4137Tax(pending);
-  assertLine1cForm4137Income(pending);
-  assertSchedule2Form8919Tax(pending);
-  assertLine1gForm8919Wages(pending);
-  assertSchedule2ScheduleHTax(pending);
+  assertSchedule2Form4137Tax(pending, year);
+  assertLine1cForm4137Income(pending, year);
+  assertSchedule2Form8919Tax(pending, year);
+  assertLine1gForm8919Wages(pending, year);
+  assertSchedule2ScheduleHTax(pending, year);
   assertSchedule2Form8960Tax(pending);
-  assertSchedule2ScheduleSETax(pending);
+  assertSchedule2ScheduleSETax(pending, year);
   assertSchedule2Form8828Tax(pending);
   assertSchedule2Form8936Repayment(pending);
   assertSchedule3Form8859Credit(pending);
@@ -416,6 +416,7 @@ function buildReturnXml(
     phase: "discovery",
     preparedForm8886,
     filer,
+    taxYear: year,
     binaryAttachmentFileNames,
     attachmentDescriptionsByFileName,
     attachmentSha256ByFileName,
@@ -451,6 +452,7 @@ function buildReturnXml(
     phase: "final",
     preparedForm8886,
     filer,
+    taxYear: year,
     binaryAttachmentFileNames,
     attachmentDescriptionsByFileName,
     attachmentSha256ByFileName,

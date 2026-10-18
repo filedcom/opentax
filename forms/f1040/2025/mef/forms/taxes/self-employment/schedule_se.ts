@@ -1,7 +1,7 @@
 import { assertOwnedScheduleSE } from "../../../../domains/taxes/self-employment/schedule-se/schedule-se-owner-source.ts";
 import { element, elements } from "../../../../../mef/xml.ts";
 import { scheduleSELines } from "../../../../../nodes/intermediate/forms/taxes/self-employment/schedule_se/calculation.ts";
-import { CONFIG_BY_YEAR } from "../../../../../nodes/config/index.ts";
+import { mefYearConfig } from "../../../support/year-config.ts";
 import type { MefBuildContext, MefFormDescriptor } from "../../../form-descriptor.ts";
 import { FilingStatus as MefFilingStatus } from "../../../../../mef/header.ts";
 import { scheduleSeSpouseProprietor } from "../../../../domains/taxes/self-employment/schedule-se/schedule-se-proprietor.ts";
@@ -47,7 +47,7 @@ function buildIRS1040ScheduleSE(
   fields: Input,
   context?: MefBuildContext,
 ): string {
-  const lines = scheduleSELines(fields, CONFIG_BY_YEAR[2025].ssWageBase);
+  const lines = scheduleSELines(fields, mefYearConfig(context).ssWageBase);
   const optional = fields.farm_optional_method_elected === true;
   const hasSeIncome = SE_INCOME_KEYS.some((key) =>
     typeof fields[key] === "number"
@@ -130,6 +130,7 @@ export const scheduleSE: MefFormDescriptor<
       ? assertOwnedScheduleSE(
         context.pending as Record<string, Record<string, unknown>>,
         context.filer,
+        mefYearConfig(context).ssWageBase,
       )
       : undefined;
     return owned

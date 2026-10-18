@@ -386,3 +386,63 @@ test("smoke: MFJ with all NII components and deductions", () => {
   const sch2 = findOutput(result, "schedule2");
   assertEquals(sch2?.fields.line12_niit, 1_482);
 });
+
+// ── TY2026 ───────────────────────────────────────────────────────────────────
+// Draft 2026 Instructions for Form 8960 (Oct 15, 2026): the $250,000/
+// $125,000/$200,000 thresholds are unchanged and line 17 is 3.8% (IRC
+// §1411). The Lines 9 and 10 Section 68 Limitation Worksheet reduces
+// deductions only above $768,700/$640,600/$384,350 (worksheet line 2).
+
+function compute2026(input: Record<string, unknown>) {
+  return form8960.compute(
+    { taxYear: 2026, formType: "f1040" },
+    inputSchema.parse(input),
+  );
+}
+
+test("2026: NIIT uses the unindexed $200,000 threshold", () => {
+  const result = compute2026({
+    filing_status: FilingStatus.Single,
+    magi: 260_000,
+    line1_taxable_interest: 80_000,
+  });
+  assertEquals(findOutput(result, "schedule2")?.fields.line12_niit, 2_280);
+});
+
+test("2026: deductions below the 37% bracket start are not limited by section 68", () => {
+  const result = compute2026({
+    filing_status: FilingStatus.MFJ,
+    magi: 500_000,
+    line1_taxable_interest: 100_000,
+    line9b_state_local_tax: 5_000,
+  });
+  assertEquals(findOutput(result, "schedule2")?.fields.line12_niit, 3_610);
+});
+
+test("2026: deductions above the 37% bracket start need the section 68 worksheet", () => {
+  // The instructions' example: Terry, unmarried, $2,000,000 AGI.
+  assertThrows(
+    () =>
+      compute2026({
+        filing_status: FilingStatus.Single,
+        magi: 2_000_000,
+        line1_taxable_interest: 400_000,
+        line9a_investment_interest_expense: 75_000,
+        line9b_state_local_tax: 2_000,
+      }),
+    Error,
+    "section 68 limitation worksheet",
+  );
+  // Without deductions the 2026 tax is unaffected.
+  assertEquals(
+    findOutput(
+      compute2026({
+        filing_status: FilingStatus.Single,
+        magi: 2_000_000,
+        line1_taxable_interest: 400_000,
+      }),
+      "schedule2",
+    )?.fields.line12_niit,
+    15_200,
+  );
+});

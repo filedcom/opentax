@@ -51,6 +51,8 @@ export interface MefBuildContext {
   /** The initial document-discovery pass runs before stable document IDs exist. */
   readonly phase?: "discovery" | "final";
   readonly filer?: FilerIdentity;
+  /** The return's tax year; descriptors that recompute lines read its config. */
+  readonly taxYear?: number;
   /** Read-only full pending graph for cross-document reconciliation. */
   readonly pending?: Readonly<Record<string, unknown>>;
   readonly binaryAttachmentFileNames?: readonly string[];

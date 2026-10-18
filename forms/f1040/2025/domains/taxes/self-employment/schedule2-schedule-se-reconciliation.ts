@@ -5,6 +5,7 @@ import { scheduleSELines } from "../../../../nodes/intermediate/forms/taxes/self
 /** Replay retained Schedule SE line 12 into Schedule 2 line 4. */
 export function assertSchedule2ScheduleSETax(
   pending: Readonly<Record<string, unknown>>,
+  taxYear: number,
 ): void {
   const fields = pending.schedule2 as
     | Readonly<Record<string, unknown>>
@@ -12,10 +13,14 @@ export function assertSchedule2ScheduleSETax(
   const source = pending.schedule_se as
     | Parameters<typeof scheduleSELines>[0]
     | undefined;
-  const owned = assertOwnedScheduleSE(pending as Record<string, Record<string, unknown>>);
+  const owned = assertOwnedScheduleSE(
+    pending as Record<string, Record<string, unknown>>,
+    undefined,
+    CONFIG_BY_YEAR[taxYear].ssWageBase,
+  );
   const tax = owned ? owned.tax : source === undefined ? 0 : scheduleSELines(
     source,
-    CONFIG_BY_YEAR[2025].ssWageBase,
+    CONFIG_BY_YEAR[taxYear].ssWageBase,
   )?.line12 ?? 0;
   const filed = fields?.line4_se_tax ?? 0;
   if (
