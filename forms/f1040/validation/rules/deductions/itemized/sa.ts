@@ -536,7 +536,9 @@ export const SA_RULES: readonly RuleDef[] = [
     "SA-F8995A-003-05",
     "reject",
     "incorrect_data",
-    ifThen(hasValue("FilingStatusThresholdCd"), any(all(filingStatusIs(2), eqStr("FilingStatusThresholdCd", "383900")), all(filingStatusNot(2), eqStr("FilingStatusThresholdCd", "191950")))),
+    // The 2025v3.0 text prints the TY2024 thresholds; SA-F8995A-003-06 (2026v1.0
+    // package) and Rev. Proc. 2024-40 give TY2025's 394,600 and 197,300.
+    ifThen(hasValue("FilingStatusThresholdCd"), any(all(filingStatusIs(2), eqStr("FilingStatusThresholdCd", "394600")), all(filingStatusNot(2), eqStr("FilingStatusThresholdCd", "197300")))),
     "If Schedule A (Form 8995-A), 'FilingStatusThresholdCd' has a value, then it must be one of the following based on the filing status of the return: (1) \"383900\" if married filing jointly or (2) \"191950\" for all other filing status.",
   ),
   rule(

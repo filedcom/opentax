@@ -4,9 +4,10 @@ Files are grouped by the tax concern or tool purpose. Tests and fixtures stay be
 
 | Group | Contents |
 | --- | --- |
-| [maintenance](./maintenance/) | 4 files |
-| [release](./release/) | 1 files |
+| [maintenance](./maintenance/) | 2 files |
+| [release](./release/) | 2 files |
 | [research](./research/) | 18 files |
 | [site](./site/) | 1 files |
-| [testing](./testing/) | 11 files |
+| [support](./support/) | 2 files |
+| [testing](./testing/) | 30 files |
 | [verification](./verification/) | 2 files |

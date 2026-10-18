@@ -25,7 +25,7 @@ import {
   zipValidForState,
 } from "../../../../../../core/validation/mod.ts";
 import {
-  everyIssuableTin,
+  issuableTins,
 } from "../../../../../../core/validation/predicates.ts";
 
 export const FW2G_RULES: readonly RuleDef[] = [
@@ -40,7 +40,7 @@ export const FW2G_RULES: readonly RuleDef[] = [
     "FW2G-002",
     "reject",
     "incorrect_data",
-    inOwnDocument(everyIssuableTin("PayerSSN")),
+    inOwnDocument(issuableTins("PayerSSN")),
     "Form W-2G, 'PayerSSN' is invalid for processing an Individual e-filed return.",
   ),
   rule(
@@ -119,7 +119,7 @@ export const FW2G_RULES: readonly RuleDef[] = [
     "FW2G-599",
     "reject",
     "database",
-    inOwnDocument(everyIssuableTin("PayerSSN")),
+    inOwnDocument(issuableTins("PayerSSN")),
     "Form W-2G, 'PayerSSN' must match data in the e-File database.",
   ),
 ];
