@@ -713,4 +713,97 @@ export const config2025: F1040Config = {
   sepContributionRate: SEP_CONTRIBUTION_RATE_2025,
   sepMaxContribution: SEP_MAX_CONTRIBUTION_2025,
   simpleEmployerMatchRate: SIMPLE_EMPLOYER_MATCH_RATE_2025,
+  // Rev. Proc. 2025-16 Tables 1-2, each succeeding year.
+  luxuryAutoSucceedingYears: 7_060,
+  // Rev. Proc. 2024-40 §2.06(1); credit and phaseout rates IRC §32(b)(1).
+  eitcByChildren: [
+    {
+      creditRate: 0.0765,
+      phaseoutRate: 0.0765,
+      earnedIncomeAmount: 8_490,
+      maxCredit: 649,
+      phaseoutStart: 10_620,
+      phaseoutStartMfj: 17_730,
+      phaseoutEnd: 19_104,
+      phaseoutEndMfj: 26_214,
+    },
+    {
+      creditRate: 0.34,
+      phaseoutRate: 0.1598,
+      earnedIncomeAmount: 12_730,
+      maxCredit: 4_328,
+      phaseoutStart: 23_350,
+      phaseoutStartMfj: 30_470,
+      phaseoutEnd: 50_434,
+      phaseoutEndMfj: 57_554,
+    },
+    {
+      creditRate: 0.40,
+      phaseoutRate: 0.2106,
+      earnedIncomeAmount: 17_880,
+      maxCredit: 7_152,
+      phaseoutStart: 23_350,
+      phaseoutStartMfj: 30_470,
+      phaseoutEnd: 57_310,
+      phaseoutEndMfj: 64_430,
+    },
+    {
+      creditRate: 0.45,
+      phaseoutRate: 0.2106,
+      earnedIncomeAmount: 17_880,
+      maxCredit: 8_046,
+      phaseoutStart: 23_350,
+      phaseoutStartMfj: 30_470,
+      phaseoutEnd: 61_555,
+      phaseoutEndMfj: 68_675,
+    },
+  ],
+  // IRC §21(a)(2) before P.L. 119-21 §70405: 35% down to a 20% floor.
+  depCareCreditMaxRate: 0.35,
+  depCareCreditFirstFloorRate: 0.20,
+  depCareCreditSecondPhaseout: null,
+  // IRC §224(b), §225(b) and §163(h)(4)(C), added by P.L. 119-21
+  // §§70201-70203 for 2025-2028.
+  qualifiedTipsCap: 25_000,
+  qualifiedOvertimeCap: 12_500,
+  qualifiedOvertimeCapMfj: 25_000,
+  tipsOvertimePhaseoutThreshold: 150_000,
+  tipsOvertimePhaseoutThresholdMfj: 300_000,
+  tipsOvertimePhaseoutPerThousand: 100,
+  vehicleLoanInterestCap: 10_000,
+  vehicleLoanInterestPhaseoutThreshold: 100_000,
+  vehicleLoanInterestPhaseoutThresholdMfj: 200_000,
+  vehicleLoanInterestPhaseoutPerThousand: 200,
+  // P.L. 119-21 §§70424, 70425 and 70111 apply only after 2025; §68 was
+  // suspended for 2025 by IRC §68(f) as then in effect.
+  nonitemizerCharitableLimit: 0,
+  nonitemizerCharitableLimitMfj: 0,
+  charitableAgiFloorRate: 0,
+  itemizedDeductionReductionRate: 0,
+  // IRC §199A(i) (P.L. 119-21 §70105) applies after 2025.
+  qbiMinimumDeduction: 0,
+  qbiMinimumDeductionQbiFloor: 0,
+  // Rev. Proc. 2024-40 §2.04; refundable $5,000 IRC §23(a)(4) (P.L. 119-21
+  // §70402); $40,000 phaseout range IRC §23(b)(2)(A)(ii).
+  adoptionCreditMax: 17_280,
+  adoptionCreditRefundableMax: 5_000,
+  adoptionPhaseoutStart: 259_190,
+  adoptionPhaseoutRange: 40_000,
+  // Rev. Proc. 2024-40 §§2.24, 2.15(2), 2.13.
+  qualifyingRelativeGrossIncomeLimit: 5_200,
+  dependentStandardDeductionFloor: 1_350,
+  dependentStandardDeductionEarnedIncomeAddOn: 450,
+  educatorExpenseLimit: 300,
+  // Notice 2025-5 §3; charitable rate IRC §170(i).
+  standardMileageRates: [
+    {
+      from: "2025-01-01",
+      business: 0.70,
+      medicalMoving: 0.21,
+      charitable: 0.14,
+    },
+  ],
+  // P.L. 119-21 §70204(e): Trump accounts apply after 2025.
+  trumpAccountContributionLimit: 0,
+  trumpAccountEmployerExclusionLimit: 0,
 };

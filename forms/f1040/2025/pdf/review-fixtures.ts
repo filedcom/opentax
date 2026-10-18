@@ -11,6 +11,7 @@ import { multipleNuaReviewFixtures } from "./reviews/taxes/retirement/form4972/r
 import { twoFarmHealthFixtures } from "./reviews/general/composed-returns/review-two-farm-health.fixture.ts";
 import { mixedCfHealthFixtures } from "./reviews/general/composed-returns/review-mixed-cf-health.fixture.ts";
 import { qualifiedTipReviewFixtures } from "./reviews/deductions/additional/review-qualified-tips.fixture.ts";
+import { form8995InvestmentReviewFixtures } from "./reviews/deductions/business/form8995-investment-income.fixture.ts";
 import { form8941MixedThreeReviewFixtures } from "./reviews/general/composed-returns/review-8941-mixed-three.fixture.ts";
 import { ownedFarmShopReviewFixtures, carrierDailyBilledShopReviewFixtures, independentOwnerHealthReviewFixtures } from "./reviews/general/composed-returns/review-farm-shop-partmonth-health.fixture.ts";
 import { mixedControlledWotcFixtures } from "./reviews/general/composed-returns/review-mixed-controlled-wotc.fixture.ts";
@@ -9247,4 +9248,5 @@ mutablePdfReviewFixtures.push(
   ...ownedFarmShopReviewFixtures(existingPdfReviewFixtures.find((row) => row.id === "owned-farm-wotc-single-below")!),
   ...carrierDailyBilledShopReviewFixtures(),
   ...independentOwnerHealthReviewFixtures(),
+  ...form8995InvestmentReviewFixtures,
 );

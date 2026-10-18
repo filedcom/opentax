@@ -32,6 +32,7 @@ import {
 import { OutputNodes } from "../../../../../../../core/types/output-nodes.ts";
 import { f1040 } from "../../../../outputs/general/return-assembly/f1040/index.ts";
 import { agi_aggregator } from "../../../../intermediate/aggregation/general/return-assembly/agi_aggregator/index.ts";
+import { eitc } from "../../../../intermediate/forms/credits/earned-income/eitc/index.ts";
 import { form5329 } from "../../../../intermediate/forms/taxes/retirement/form5329/index.ts";
 import { form4972Elections } from "../../../../intermediate/forms/taxes/retirement/form4972/elections.ts";
 import {
@@ -2045,6 +2046,7 @@ class F1099rNode extends TaxNode<typeof inputSchema> {
   readonly outputNodes = new OutputNodes([
     f1040,
     agi_aggregator,
+    eitc,
     form5329,
     form4972Elections,
     form8606,
@@ -2172,6 +2174,13 @@ class F1099rNode extends TaxNode<typeof inputSchema> {
     }
     if ((correctiveFields.line1h_other_earned ?? 0) > 0) {
       agiFields.line1h_other_earned = correctiveFields.line1h_other_earned;
+    }
+    // Pub. 596 (2025) Rule 7, Disability Benefits: employer disability
+    // retirement benefits are earned income until minimum retirement age.
+    if ((disWagesFields.line1a_wages ?? 0) > 0) {
+      outputs.push(this.outputNodes.output(eitc, {
+        disability_pension_earned_income: disWagesFields.line1a_wages,
+      }));
     }
     if (Object.keys(agiFields).length > 0) {
       outputs.push(

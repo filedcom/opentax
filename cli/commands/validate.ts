@@ -78,7 +78,8 @@ export async function validateReturnCommand(
   try {
     const files = await loadReturnSourceFiles(returnPath, pending);
     missing = files.missing;
-    // A return with source files is assembled as export assembles it.
+    // Assemble the filed projection export uses (Form 8949 rows, only a
+    // completed Form 8960), with source files when the return has them.
     const xml = files.attachments.length + files.retained.length > 0
       ? (await def.prepareReturn(
         pending,
@@ -86,7 +87,7 @@ export async function validateReturnCommand(
         files.attachments,
         files.retained,
       )).bundle.xml
-      : def.buildMefXml(pending, filerIdentity);
+      : def.buildMefXml(def.buildPending(result.pending), filerIdentity);
     if (def.mefRuleReport) ownReport = def.mefRuleReport(pending, xml);
     else scope = emittedValidationScope(xml);
   } catch (error) {

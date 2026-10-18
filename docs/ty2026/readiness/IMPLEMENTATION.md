@@ -8,9 +8,13 @@ TY2025 ATS approval or that the May 2026 MeF v1 package is the final target.
 
 ## Current state
 
-The TY2026 calculation registry and local calculation validation are
-executable, and a growing set of source routes has a reconciled draft-PDF
-bundle. They are not registered as a filing product in `catalog.ts`. The
+> Current TY2026 status: `forms/f1040/2026/README.md`. This document is a
+> research snapshot; the 2026-only modules it names (`2026/registry.ts`,
+> `2026/inputs.ts`, `2026/pdf/`, `2026/validation.ts`,
+> `config/2026-indexed.ts`, `nodes/f1040.ts`, `itemized-deductions.ts`,
+> `schedule-a.ts`, `form2441/year-rules.ts`) are not in the current code.
+
+The
 remaining TY2025-supported form surface, current TY2026 MeF XML and rules,
 and ATS/XSD checks are open. The May v1 package cannot validate the September
 draft Form 1040; the IRS September 24 v4 package must be obtained through
@@ -325,7 +329,7 @@ The shared Form 8962 node now selects TY2025 or TY2026 applicable percentage,
 repayment cap, and QSEHRA affordability rules explicitly; 2026 FPL figures
 are sourced from the 2025 HHS guideline PDF. The final Form 8962 instruction
 table remains outstanding.
-`forms/f1040/nodes/config/2026-indexed.ts` now holds all 111 source-backed 2026
+`forms/f1040/nodes/config/2026.ts` now holds the source-backed 2026
 config members, including tax brackets, standard deduction, AMT, capital-gain,
 HSA, IRA, QBI, EITC, and other amounts. The QBI config distinguishes the TY2026
 MFS threshold from other nonjoint statuses and shares one threshold selector

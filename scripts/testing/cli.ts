@@ -24,6 +24,7 @@ export const CLI_RETURNS = [
   "single-form8815-series-ee-bond-exclusion",
   "qualified-tip-qbi-wholly-excluded-qbi",
   "independent-primary-spouse-c-health-different-owner-eligible-months",
+  "joint-spouse-c-qbi-investment-income",
   // These need files filed with the return or retained for it.
   "single-form8994-direct-employer-full",
   "single-form8978-multiple-reviewed-source",

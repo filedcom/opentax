@@ -2,6 +2,35 @@
 import type { FilingStatus } from "../types.ts";
 import type { Bracket } from "./2025.ts";
 
+/** IRC §32(b) amounts for one qualifying-child count. */
+export type EitcParameters = {
+  readonly creditRate: number;
+  readonly phaseoutRate: number;
+  readonly earnedIncomeAmount: number;
+  readonly maxCredit: number;
+  readonly phaseoutStart: number;
+  readonly phaseoutStartMfj: number;
+  readonly phaseoutEnd: number;
+  readonly phaseoutEndMfj: number;
+};
+
+/** Standard mileage rates in dollars per mile, from `from` (ISO date) on. */
+export type MileagePeriod = {
+  readonly from: string;
+  readonly business: number;
+  readonly medicalMoving: number;
+  readonly charitable: number;
+};
+
+/** IRC §21(a)(2)(B) as amended for 2026: the second applicable-percentage step. */
+export type DepCareSecondPhaseout = {
+  readonly agiThreshold: number;
+  readonly agiThresholdMfj: number;
+  readonly bracketSize: number;
+  readonly bracketSizeMfj: number;
+  readonly floorRate: number;
+};
+
 export interface F1040Config {
   // ── Tax brackets ──────────────────────────────────────────────────────────
   bracketsMfj: ReadonlyArray<Bracket>;
@@ -68,6 +97,13 @@ export interface F1040Config {
 
   // ── EITC ──────────────────────────────────────────────────────────────────
   eitcInvestmentIncomeLimit: number;
+  /** Indexed by qualifying children: 0, 1, 2, 3 or more. */
+  eitcByChildren: readonly [
+    EitcParameters,
+    EitcParameters,
+    EitcParameters,
+    EitcParameters,
+  ];
 
   // ── CTC / ACTC ────────────────────────────────────────────────────────────
   ctcPerChild: number;
@@ -103,7 +139,9 @@ export interface F1040Config {
   luxuryAutoYear1NoBonus: number;
   luxuryAutoYear1WithBonus: number;
   luxuryAutoYear2: number;
+  /** Third recovery year; later years use `luxuryAutoSucceedingYears`. */
   luxuryAutoYear3Plus: number;
+  luxuryAutoSucceedingYears: number;
 
   // ── Household Employment (Schedule H) ─────────────────────────────────────
   householdFicaThreshold: number;
@@ -124,6 +162,11 @@ export interface F1040Config {
   depCareEmployerExclusionMfs: number;
   depCareCreditRateAgiThreshold: number;
   depCareCreditRateBracketSize: number;
+  depCareCreditMaxRate: number;
+  /** Floor of the first reduction step. */
+  depCareCreditFirstFloorRate: number;
+  /** null when the year has a single reduction step. */
+  depCareCreditSecondPhaseout: DepCareSecondPhaseout | null;
 
   // ── ACA Premium Tax Credit (8962) ─────────────────────────────────────────
   fplBase: number;
@@ -182,4 +225,51 @@ export interface F1040Config {
   sepContributionRate: number;
   sepMaxContribution: number;
   simpleEmployerMatchRate: number;
+
+  // ── Schedule 1-A: tips, overtime, vehicle loan interest ──────────────────
+  qualifiedTipsCap: number;
+  qualifiedOvertimeCap: number;
+  qualifiedOvertimeCapMfj: number;
+  tipsOvertimePhaseoutThreshold: number;
+  tipsOvertimePhaseoutThresholdMfj: number;
+  /** Reduction per whole $1,000 of MAGI over the threshold. */
+  tipsOvertimePhaseoutPerThousand: number;
+  vehicleLoanInterestCap: number;
+  vehicleLoanInterestPhaseoutThreshold: number;
+  vehicleLoanInterestPhaseoutThresholdMfj: number;
+  /** Reduction per $1,000 or portion of MAGI over the threshold. */
+  vehicleLoanInterestPhaseoutPerThousand: number;
+
+  // ── Charitable and itemized-deduction limits ─────────────────────────────
+  /** 1040 line 12f; zero when the year has no non-itemizer deduction. */
+  nonitemizerCharitableLimit: number;
+  nonitemizerCharitableLimitMfj: number;
+  /** Share of the contribution base disallowed under IRC §170(b)(1)(I). */
+  charitableAgiFloorRate: number;
+  /** IRC §68(a) reduction fraction; zero when §68 does not apply. */
+  itemizedDeductionReductionRate: number;
+
+  // ── QBI minimum deduction (IRC §199A(i)) ─────────────────────────────────
+  qbiMinimumDeduction: number;
+  qbiMinimumDeductionQbiFloor: number;
+
+  // ── Adoption (8839) ──────────────────────────────────────────────────────
+  adoptionCreditMax: number;
+  adoptionCreditRefundableMax: number;
+  adoptionPhaseoutStart: number;
+  adoptionPhaseoutRange: number;
+
+  // ── Dependents and educators ─────────────────────────────────────────────
+  qualifyingRelativeGrossIncomeLimit: number;
+  dependentStandardDeductionFloor: number;
+  dependentStandardDeductionEarnedIncomeAddOn: number;
+  educatorExpenseLimit: number;
+
+  // ── Standard mileage rates ───────────────────────────────────────────────
+  /** Ordered by `from`; a rate applies to miles driven from that date. */
+  standardMileageRates: ReadonlyArray<MileagePeriod>;
+
+  // ── Trump accounts (IRC §§128, 530A) ─────────────────────────────────────
+  trumpAccountContributionLimit: number;
+  trumpAccountEmployerExclusionLimit: number;
 }

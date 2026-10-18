@@ -2,8 +2,15 @@
 
 Snapshot audit: 2026-09-27. This records whether the **research and coding
 handoff** cover the current TY2025 Form 1040 architecture and identified
-TY2026 additions. It is not a claim that `f1040:2026` is registered, that a
-TY2026 return can be filed, or that IRS ATS has accepted an XML submission.
+TY2026 additions. It is not a claim that a TY2026 return can be filed or that
+IRS ATS has accepted an XML submission.
+
+> Current TY2026 status: `forms/f1040/2026/README.md`. This document is a
+> research snapshot; the 2026-only modules it names (`2026/registry.ts`,
+> `2026/inputs.ts`, `2026/pdf/`, `2026/validation.ts`,
+> `config/2026-indexed.ts`, `nodes/f1040.ts`, `itemized-deductions.ts`,
+> `schedule-a.ts`, `form2441/year-rules.ts`) are not in the current code.
+
 
 | Surface | Audit result | Coding entry point |
 | --- | --- | --- |

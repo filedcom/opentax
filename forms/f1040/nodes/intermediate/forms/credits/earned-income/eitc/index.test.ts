@@ -199,7 +199,11 @@ test("MFJ childless EIC accepts one age-eligible spouse; HOH requires unmarried 
 
 test("EIC requires reviewed prior-disallowance history and the matching Form 8862 when needed", () => {
   const base = { earned_income: 12_000, filing_status: FilingStatus.Single };
-  noCredit({ ...base, prior_eic_disallowance_review: undefined });
+  assertThrows(
+    () => compute({ ...base, prior_eic_disallowance_review: undefined }),
+    Error,
+    "EIC needs general.prior_eic_disallowance_review",
+  );
   const required = {
     status: "requires_8862",
     disallowed_year: 2023,
@@ -595,5 +599,51 @@ test("TY2026 EIC is zero at the completed phaseout and refused below it", () => 
     () => compute({ ...claim, earned_income: 12_000 }, 2026),
     Error,
     "2026 EIC Table",
+  );
+});
+
+// Pub. 596 (2025) ch. 5: EIC denied or reduced for any year after 1996, other
+// than for a math or clerical error, requires Form 8862. A missing answer is a
+// named error, not a silent zero; it does not matter when no credit is due.
+test("a missing prior-disallowance answer is a named error only when EIC would be allowed", () => {
+  assertThrows(
+    () =>
+      compute({
+        earned_income: 12_000,
+        qualifying_children: 1,
+        filing_status: FilingStatus.Single,
+        prior_eic_disallowance_review: undefined,
+      }),
+    Error,
+    "EIC needs general.prior_eic_disallowance_review",
+  );
+  noCredit({
+    earned_income: 80_000,
+    qualifying_children: 1,
+    filing_status: FilingStatus.Single,
+    prior_eic_disallowance_review: undefined,
+  });
+  noCredit({
+    earned_income: 12_000,
+    qualifying_children: 1,
+    filing_status: FilingStatus.Single,
+    prior_eic_disallowance_review: undefined,
+    do_not_claim_eic: true,
+  });
+});
+
+// Pub. 596 (2025) Rule 7, Disability Benefits: taxable benefits under an
+// employer's disability retirement plan are earned income until minimum
+// retirement age. 2025 EIC Table, one child, $12,000-$12,050 row: $4,089.
+test("employer disability-plan benefits before minimum retirement age are EIC earned income", () => {
+  assertEquals(
+    getCredit({
+      earned_income: 1_000,
+      disability_pension_earned_income: 11_000,
+      agi: 16_000,
+      qualifying_children: 1,
+      filing_status: FilingStatus.QSS,
+    }),
+    4_089,
   );
 });

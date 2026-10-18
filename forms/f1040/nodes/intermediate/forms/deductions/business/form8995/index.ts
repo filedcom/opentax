@@ -1837,7 +1837,7 @@ class Form8995Node extends TaxNode<typeof inputSchema> {
           sumField(input.line6_sec199a_dividends) !== 0 ||
           (input.qbi_loss_carryforward ?? 0) !== 0 ||
           (input.reit_loss_carryforward ?? 0) !== 0 ||
-          qbiCapitalTotal(input) !== 0
+          !Number.isSafeInteger(qbiCapitalTotal(input, true))
         ) {
           throw new Error(
             "Joint owner QBI needs its actual ordinary source and reviewed no-other-component records",
@@ -1852,6 +1852,7 @@ class Form8995Node extends TaxNode<typeof inputSchema> {
           sumField(input.se_health_insurance_deduction),
           input.joint_owner_health_plans_source,
           input.qualified_tip_qbi_source,
+          qbiCapitalTotal(input, true),
         );
       })()
       : undefined;

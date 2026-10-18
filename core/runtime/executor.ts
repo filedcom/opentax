@@ -136,8 +136,11 @@ export function execute(
 
     if (!parsed.success) {
       // Empty pending slot means no upstream data was deposited — truly optional node, skip silently.
-      // Non-empty pending slot with parse failure means bad data was deposited — emit diagnostic.
-      if (Object.keys(input).length > 0) {
+      // A slot holding only context fields does not put the form on the return, so skip it too.
+      // Any other parse failure means bad data was deposited — emit diagnostic.
+      if (
+        Object.keys(input).some((key) => !node.contextFields.includes(key))
+      ) {
         diagnostics.push({
           severity: "error",
           code: "EXECUTOR_NODE_FAILURE",

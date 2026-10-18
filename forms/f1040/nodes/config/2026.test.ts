@@ -56,7 +56,10 @@ test("2026 deductions and credits use the Rev. Proc. 2025-32 amounts", () => {
   assertEquals(config2026.eitcInvestmentIncomeLimit, 12_200);
   assertEquals(config2026.kiddieUnearnedIncomeThreshold, 2 * 1_350);
   assertEquals(config2026.feieHousingBase, 0.16 * config2026.feieLimit);
-  assertEquals(config2026.qbiThresholdMfj + config2026.qbiPhaseInRange, 553_500);
+  assertEquals(
+    config2026.qbiThresholdMfj + config2026.qbiPhaseInRange,
+    553_500,
+  );
   assertEquals(config2026.section179Limit, 2_560_000);
   assertEquals(config2026.eblThresholdMfj, 512_000);
   assertEquals(config2026.saltCap, 40_000 * 1.01);
@@ -78,4 +81,96 @@ test("2026 ordinary tax is the Tax Table cell below $100,000 and the rate above"
     11_504,
   );
   assertEquals(ordinaryTaxFromSchedule(0, config2026.bracketsSingle), 0);
+});
+
+test("2026 EIC amounts match Rev. Proc. 2025-32 §4.06 and the §32(b) rates", () => {
+  const [none, one, two, three] = config2026.eitcByChildren;
+  assertEquals(
+    [none, one, two, three].map((row) => row.maxCredit),
+    [664, 4_427, 7_316, 8_231],
+  );
+  assertEquals(one.phaseoutStartMfj, 31_160);
+  assertEquals(none.phaseoutStart, 10_860);
+  for (const row of config2026.eitcByChildren) {
+    assertEquals(
+      Math.round(row.earnedIncomeAmount * row.creditRate),
+      row.maxCredit,
+    );
+    assertEquals(
+      Math.round(row.phaseoutStart + row.maxCredit / row.phaseoutRate),
+      row.phaseoutEnd,
+    );
+    assertEquals(
+      row.phaseoutEndMfj - row.phaseoutEnd,
+      row.phaseoutStartMfj - row.phaseoutStart,
+    );
+  }
+});
+
+test("2026 Schedule 1-A limits match P.L. 119-21 §§70201-70203 and the draft schedule", () => {
+  assertEquals(config2026.qualifiedTipsCap, 25_000);
+  assertEquals(
+    config2026.qualifiedOvertimeCapMfj,
+    2 * config2026.qualifiedOvertimeCap,
+  );
+  assertEquals(config2026.tipsOvertimePhaseoutThresholdMfj, 300_000);
+  assertEquals(config2026.vehicleLoanInterestCap, 10_000);
+  assertEquals(config2026.vehicleLoanInterestPhaseoutPerThousand, 200);
+  assertEquals(config2026.seniorDeductionMax, 6_000);
+});
+
+test("2026-only itemized, charitable and QBI rules come from P.L. 119-21", () => {
+  // §70424: $1,000/$2,000 for non-itemizers; §70425: 0.5% floor;
+  // §70111: 2/37 reduction; §70105: $400 minimum QBI deduction.
+  assertEquals(config2026.nonitemizerCharitableLimitMfj, 2_000);
+  assertEquals(config2026.charitableAgiFloorRate, 0.005);
+  assertEquals(config2026.itemizedDeductionReductionRate, 2 / 37);
+  assertEquals(config2026.qbiMinimumDeduction, 400);
+  // None of them apply to TY2025.
+  assertEquals(config2025.nonitemizerCharitableLimit, 0);
+  assertEquals(config2025.charitableAgiFloorRate, 0);
+  assertEquals(config2025.itemizedDeductionReductionRate, 0);
+  assertEquals(config2025.qbiMinimumDeduction, 0);
+});
+
+test("2026 dependent care credit follows the §70405 two-step percentage", () => {
+  assertEquals(config2026.depCareCreditMaxRate, 0.50);
+  assertEquals(config2026.depCareCreditFirstFloorRate, 0.35);
+  assertEquals(
+    config2026.depCareCreditSecondPhaseout?.agiThresholdMfj,
+    150_000,
+  );
+  assertEquals(config2026.depCareCreditSecondPhaseout?.bracketSizeMfj, 4_000);
+  assertEquals(config2026.depCareCreditSecondPhaseout?.floorRate, 0.20);
+  assertEquals(config2025.depCareCreditSecondPhaseout, null);
+});
+
+test("2026 adoption, dependent and educator amounts match Rev. Proc. 2025-32", () => {
+  // §4.04: phaseout complete at $305,080.
+  assertEquals(
+    config2026.adoptionPhaseoutStart + config2026.adoptionPhaseoutRange,
+    305_080,
+  );
+  assertEquals(config2026.adoptionCreditRefundableMax, 5_120);
+  assertEquals(config2026.qualifyingRelativeGrossIncomeLimit, 5_300);
+  assertEquals(config2026.dependentStandardDeductionFloor, 1_350);
+  assertEquals(config2026.educatorExpenseLimit, 350);
+  assertEquals(config2026.luxuryAutoSucceedingYears, 7_160);
+});
+
+test("2026 mileage changes on July 1 under Announcement 2026-11", () => {
+  assertEquals(
+    config2026.standardMileageRates.map((
+      period,
+    ) => [period.from, period.business]),
+    [["2026-01-01", 0.725], ["2026-07-01", 0.76]],
+  );
+  assertEquals(config2026.standardMileageRates[1].medicalMoving, 0.235);
+  assertEquals(config2025.standardMileageRates[0].business, 0.70);
+});
+
+test("Trump account limits start in 2026 under P.L. 119-21 §70204", () => {
+  assertEquals(config2026.trumpAccountContributionLimit, 5_000);
+  assertEquals(config2026.trumpAccountEmployerExclusionLimit, 2_500);
+  assertEquals(config2025.trumpAccountContributionLimit, 0);
 });

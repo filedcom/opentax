@@ -2,6 +2,7 @@ import {
   inputSchema as scheduleDSchema,
   schedule_d,
 } from "../../../../../../nodes/intermediate/aggregation/income/investments/schedule_d/index.ts";
+import { assertCapitalSaleSourceRows } from "../../../../../domains/income/investments/broker-sale-source-reconciliation.ts";
 import { f1099b } from "../../../../../../nodes/inputs/income/investments/f1099b/index.ts";
 import { qbiCapitalTotal } from "../../../../../../nodes/intermediate/forms/deductions/business/qbi-capital-sources.ts";
 import {
@@ -18,8 +19,11 @@ import {
   qualifiedDividendTax2025,
 } from "../../../../../../nodes/intermediate/worksheets/taxes/calculation/tax_table_2025.ts";
 import { FilingStatus } from "../../../../../../nodes/types.ts";
+import { SCHEDULE_B_DIVIDEND_THRESHOLD } from "../../../../../../nodes/config/2025.ts";
 
-/** Owned issued-copy replay for ordinary interest, dividends and capital distributions. */
+/** Owned issued-copy replay for ordinary interest, dividends and capital distributions.
+ * Form 8995-A routes retain issued-copy identities (account, payer TIN, holding
+ * review); the simplified joint route reconciles the graph's copies directly. */
 export function assertMultiBusinessInvestmentSources(
   input: Pick<
     Form8995Input,
@@ -33,6 +37,7 @@ export function assertMultiBusinessInvestmentSources(
   pending: Record<string, Record<string, unknown>>,
   enteredTotal = false,
   jointSpouseSsn?: string,
+  requireIssuedIdentity = true,
 ) {
   const interest = pending.f1099int === undefined
     ? []
@@ -44,9 +49,13 @@ export function assertMultiBusinessInvestmentSources(
   assertDistinct1099DIVCopies(dividends);
   const same = (a: unknown, b: unknown) =>
     JSON.stringify(a) === JSON.stringify(b);
+  const retained = (copies: unknown[] | undefined, graph: unknown[]) =>
+    copies === undefined && !requireIssuedIdentity
+      ? true
+      : same(copies ?? [], graph);
   if (
-    !same(input.investment_interest_sources ?? [], interest) ||
-    !same(input.investment_dividend_sources ?? [], dividends)
+    !retained(input.investment_interest_sources, interest) ||
+    !retained(input.investment_dividend_sources, dividends)
   ) {
     throw new Error(
       "Multi-business QBI investment copies differ from their retained graph sources",
@@ -71,8 +80,11 @@ export function assertMultiBusinessInvestmentSources(
     new Set(references).size !== references.length ||
     references.some((reference) => !reference) ||
     interest.some((item) =>
-      !item.payer_name.trim() || !/^\d{2}-?\d{7}$/.test(item.payer_tin ?? "") ||
-      !item.account_number || !owners.includes(item.recipient_tin) ||
+      !item.payer_name.trim() ||
+      (requireIssuedIdentity &&
+        (!/^\d{2}-?\d{7}$/.test(item.payer_tin ?? "") ||
+          !item.account_number)) ||
+      !owners.includes(item.recipient_tin) ||
       ![
         "box2",
         "box3",
@@ -95,7 +107,8 @@ export function assertMultiBusinessInvestmentSources(
       item.elect_bond_premium_amortization === true
     ) ||
     dividends.some((item) =>
-      !item.payerName?.trim() || !item.payerTin || !item.account_number ||
+      !item.payerName?.trim() ||
+      (requireIssuedIdentity && (!item.payerTin || !item.account_number)) ||
       !owners.includes(item.recipient_tin) || item.isNominee ||
       item.nominee_distribution || item.box11 ||
       (item.box1b ?? 0) > item.box1a ||
@@ -118,8 +131,10 @@ export function assertMultiBusinessInvestmentSources(
         "foreign_source_dividends_usd",
         "foreign_source_qualified_dividends_usd",
       ].every((key) => zero(item[key as keyof typeof item])) ||
-      ((item.box1b ?? 0) > 0 && (!item.qualified_dividend_filing_review ||
-        item.qualified_dividend_filing_review
+      ((item.box1b ?? 0) > 0 &&
+        (requireIssuedIdentity || item.qualified_dividend_filing_review) &&
+        (!item.qualified_dividend_filing_review ||
+          item.qualified_dividend_filing_review
                 .qualified_held_days_in_121_day_window +
               item.qualified_dividend_filing_review
                 .diminished_risk_days_excluded > 121))
@@ -137,6 +152,7 @@ export function assertMultiBusinessInvestmentSources(
   };
   if (
     dividends.length > 0 &&
+      (requireIssuedIdentity || input.investment_dividend_totals !== undefined) &&
       !same(input.investment_dividend_totals, {
         ordinary: totals.ordinary,
         qualified: totals.qualified,
@@ -149,20 +165,25 @@ export function assertMultiBusinessInvestmentSources(
     );
   }
   const scheduleB = pending.schedule_b;
-  if (interest.length > 0 || dividends.length > 0) {
+  // Schedule B Part II lists dividends only above $1,500 (nominees are refused above).
+  const dividendsOnB = totals.ordinary > SCHEDULE_B_DIVIDEND_THRESHOLD;
+  if (interest.length > 0 || dividendsOnB) {
     const expectedInterest = interest.map((item) => ({
       payerName: item.payer_name,
       amount: item.box1 ?? 0,
     }));
-    const expectedDividends = dividends.map((item) => ({
-      payerName: item.payerName,
-      amount: item.box1a,
-    }));
+    const expectedDividends = dividendsOnB
+      ? dividends.map((item) => ({
+        payerName: item.payerName,
+        amount: item.box1a,
+      }))
+      : [];
     if (
       !scheduleB || !same(scheduleB.interest_rows ?? [], expectedInterest) ||
       !same(scheduleB.dividend_rows ?? [], expectedDividends) ||
       (scheduleB.print_line4_total ?? 0) !== totals.interest ||
-      (scheduleB.print_line6_total ?? 0) !== totals.ordinary
+      (scheduleB.print_line6_total ?? 0) !==
+        (dividendsOnB ? totals.ordinary : 0)
     ) {
       throw new Error(
         "Multi-business QBI Schedule B payer rows do not reconcile to investment copies",
@@ -186,7 +207,8 @@ export function assertMultiBusinessInvestmentSources(
         brokerRows.length ||
       brokerRows.some((row) =>
         !owners.includes(row.recipient_ssn) || !row.payer_tin ||
-        !row.source_document_reference || !row.transaction_id ||
+        (requireIssuedIdentity && !row.source_document_reference) ||
+        !row.transaction_id ||
         row.box3_transaction_type ||
         row.adjustment_codes || row.adjustment_amount ||
         row.box1f_accrued_market_discount ||
@@ -215,7 +237,11 @@ export function assertMultiBusinessInvestmentSources(
       );
     }
   } else if (d?.transaction !== undefined) {
-    throw new Error("QBI actual Schedule D sales need retained broker copies");
+    if (requireIssuedIdentity) {
+      throw new Error("QBI actual Schedule D sales need retained broker copies");
+    }
+    // Direct Form 8949 and 1099-K sales replay through their own source nodes.
+    assertCapitalSaleSourceRows(pending);
   }
   if (d !== undefined) {
     const parsedD = scheduleDSchema.parse(d);
@@ -303,7 +329,7 @@ export function assertMultiBusinessInvestmentSources(
   return {
     ...totals,
     capitalGain,
-    returnCapital: pending.f1099b === undefined
+    returnCapital: pending.f1099b === undefined && d?.transaction === undefined
       ? totals.capital
       : Number(pending.f1040?.line7_capital_gain ?? 0),
     filedQbiCapitalLimit: Math.round(totals.qualified) +

@@ -743,3 +743,45 @@ test("a slot holding only a node's context fields does not put that form on the 
     loss: -2_200,
   });
 });
+
+const requiredContextSchema = z.object({
+  filing_status: z.string(),
+  auto_agi: z.number().optional(),
+});
+class MockRequiredContextNode extends TaxNode<typeof requiredContextSchema> {
+  readonly nodeType = "mock_required_context";
+  readonly inputSchema = requiredContextSchema;
+  readonly outputNodes = new OutputNodes([]);
+  override readonly contextFields = ["auto_agi"];
+  compute(): NodeResult {
+    return { outputs: [] };
+  }
+}
+class MockAgiSource extends TaxNode<typeof contextSourceSchema> {
+  readonly nodeType = "start";
+  readonly inputSchema = contextSourceSchema;
+  readonly outputNodes = new OutputNodes([]);
+  compute(): NodeResult {
+    return {
+      outputs: [{
+        nodeType: "mock_required_context",
+        fields: { auto_agi: 16_000 },
+      }],
+    };
+  }
+}
+
+test("context fields alone do not fail a form whose own required inputs are absent", () => {
+  const registry: NodeRegistry = {
+    start: new MockAgiSource(),
+    mock_required_context: new MockRequiredContextNode(),
+  };
+  const plan: ExecutionStep[] = [
+    { id: "start", nodeType: "start" },
+    { id: "mock_required_context", nodeType: "mock_required_context" },
+  ];
+  const ctx: NodeContext = { taxYear: 2025, formType: "f1040" };
+  const result = execute(plan, registry, { filing_status: "single" }, ctx);
+  assertEquals(result.diagnostics, []);
+  assertEquals(result.pending.mock_required_context, undefined);
+});

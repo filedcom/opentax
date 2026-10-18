@@ -19,6 +19,7 @@ export function jointOwnerQbi(
   healthDeduction = 0,
   rawHealthPlans?: unknown,
   rawTips?: unknown,
+  netCapitalGain = 0,
 ) {
   const owned = ownedScheduleSE(rawSource, ssWageBase);
   const source = owned.source;
@@ -149,7 +150,10 @@ export function jointOwnerQbi(
   const line2 = rows.reduce((sum, row) => sum + row.qbi, 0);
   const line4 = Math.max(0, line2), line5 = Math.round(line4 * .2);
   const line11 = Math.round(Math.max(0, taxableIncomeBefore));
-  const line14 = Math.round(line11 * .2);
+  // i8995 line 12: qualified dividends plus net capital gain, already in whole dollars.
+  const line12 = netCapitalGain;
+  const line13 = Math.max(0, line11 - line12);
+  const line14 = Math.round(line13 * .2);
   return {
     joint_owner_filing_rows: rows,
     line2,
@@ -162,8 +166,8 @@ export function jointOwnerQbi(
     line9: 0,
     line10: line5,
     line11,
-    line12: 0,
-    line13: line11,
+    line12,
+    line13,
     line14,
     line15: Math.min(line5, line14),
     line16: Math.max(0, -line2),
