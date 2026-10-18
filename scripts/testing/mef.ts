@@ -10,14 +10,21 @@ import {
 } from "../../forms/f1040/2025/pdf/review-fixtures.ts";
 import { normalizeAllPending } from "../../forms/f1040/2025/return-processing/pending.ts";
 import { extractFilerIdentity } from "../../forms/f1040/mef/filer.ts";
+import { shiftDatedFacts } from "./sample-year.ts";
+import { withSyntheticForm1098Copy } from "../../forms/f1040/2025/pdf/reviews/deductions/mortgage/review-1098-copy.fixture.ts";
 import {
   businessRuleReport,
   emittedValidationScope,
 } from "../../cli/commands/export.ts";
 
 export const BASELINE_FILE = "scripts/testing/mef-baseline.json";
+/** The tax year the sample returns are written for. */
+export const SAMPLE_TAX_YEAR = 2025;
 
-/** Each tax year the samples run as, with its own baseline. TY2026 runs the TY2025 samples with 2027 signatures. */
+/**
+ * Each tax year the samples run as, with its own baseline. TY2026 runs the
+ * TY2025 samples with their dated facts a year later and 2027 signatures.
+ */
 export const SAMPLE_YEARS: Readonly<
   Record<number, { form: FormDefinition; baseline: string; reasons: boolean }>
 > = {
@@ -114,6 +121,61 @@ export function signedForYear(
   };
 }
 
+const COPY_B_SUFFIX = "-Form1098-CopyB.pdf";
+const copyBSourceSchema = z.object({
+  lender_name: z.string(),
+  recipient_tin: z.string(),
+  source_document_reference: z.string(),
+  box1_mortgage_interest: z.number(),
+  box2_outstanding_principal: z.number().optional(),
+  box3_origination_date: z.string().optional(),
+  box4_refund_overpaid: z.number().optional(),
+  box5_mip: z.number().optional(),
+  box6_points_paid: z.number().optional(),
+}).passthrough();
+
+/**
+ * A synthetic Form 1098 Copy B prints its calendar year and box 3 date, so a
+ * sample moved to another year is issued a Copy B for that year.
+ */
+async function reissuedForm1098Copies(
+  inputs: Record<string, unknown>,
+  taxYear: number,
+): Promise<Record<string, unknown>> {
+  if (!Array.isArray(inputs.f1098)) return inputs;
+  const f1098 = await Promise.all(
+    inputs.f1098.map(async (item: Record<string, unknown>) => {
+      const copy = item.issuer_copy as { file_name?: unknown } | undefined;
+      const fileName = typeof copy?.file_name === "string" ? copy.file_name : "";
+      if (!fileName.endsWith(COPY_B_SUFFIX)) return item;
+      const { issuer_copy: _, ...source } = item;
+      return await withSyntheticForm1098Copy(
+        fileName.slice(0, -COPY_B_SUFFIX.length),
+        copyBSourceSchema.parse(source),
+        taxYear,
+      );
+    }),
+  );
+  return { ...inputs, f1098 };
+}
+
+/** A sample return as filed for `taxYear`: its dated facts and Copy B moved to that year. */
+export async function sampleForYear(
+  inputs: Record<string, unknown>,
+  taxYear: number,
+): Promise<Record<string, unknown>> {
+  if (taxYear === SAMPLE_TAX_YEAR) return inputs;
+  return await reissuedForm1098Copies(
+    shiftDatedFacts(inputs, taxYear - SAMPLE_TAX_YEAR),
+    taxYear,
+  );
+}
+
+function oneLine(error: unknown): string {
+  const message = error instanceof Error ? error.message : String(error);
+  return message.replace(/\s+/g, " ").trim().slice(0, 160);
+}
+
 /** What stops one signed sample return from filing, as sorted findings. */
 export async function returnFindings(
   inputs: Record<string, unknown>,
@@ -125,7 +187,14 @@ export async function returnFindings(
 ): Promise<string[]> {
   const form = SAMPLE_YEARS[taxYear]?.form;
   if (!form) throw new Error(`No sample returns for tax year ${taxYear}`);
-  const result = form.executeReturn(signedForYear(inputs, taxYear));
+  let result: ReturnType<FormDefinition["executeReturn"]>;
+  try {
+    result = form.executeReturn(
+      signedForYear(await sampleForYear(inputs, taxYear), taxYear),
+    );
+  } catch (error) {
+    return [`calculation threw ${oneLine(error)}`];
+  }
   if (result.diagnostics.length > 0) {
     return [
       ...new Set(result.diagnostics.map((d) => `calculation ${d.nodeType}`)),
@@ -147,8 +216,7 @@ export async function returnFindings(
       documents.retainedSourceDocuments ?? [],
     )).bundle.xml;
   } catch (error) {
-    const message = error instanceof Error ? error.message : String(error);
-    return [`xml ${message.replace(/\s+/g, " ").trim().slice(0, 160)}`];
+    return [`xml ${oneLine(error)}`];
   }
   const report = businessRuleReport(
     pending,
