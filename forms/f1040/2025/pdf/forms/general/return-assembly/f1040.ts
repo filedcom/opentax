@@ -903,7 +903,7 @@ export const irs1040Pdf: PdfFormDescriptor = {
         (dep.ssn ?? dep.itin ?? dep.atin)?.replaceAll("-", "");
       printedDependents[`dependent_${i}_relationship`] = dep.relationship;
       printedDependents[`dependent_${i}_home`] =
-        dependentLivedWithFilerOverHalfYear(dep);
+        dependentLivedWithFilerOverHalfYear(dep, mefTaxYear());
       printedDependents[`dependent_${i}_home_us`] =
         dep.lived_in_us_over_half_year;
       printedDependents[`dependent_${i}_full_time_student`] =

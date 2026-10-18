@@ -870,8 +870,8 @@ const sourcePdfReviewFixtures: readonly PdfReviewFixture[] = [
               birth_record_reference: "Synthetic 2025 birth certificate",
               us_home_residence_record_reference:
                 "Synthetic December 2025 home and custody record",
-              lived_with_filer_in_us_from_birth_through_2025_verified: true,
-              alive_on_2025_12_31_verified: true,
+              lived_with_filer_in_us_from_birth_through_year_end_verified: true,
+              alive_at_year_end_verified: true,
             },
           },
         ],

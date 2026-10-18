@@ -97,8 +97,8 @@ export function deathResidencyInputs(index: number) {
 }
 test("death source conserves inclusive lifetime and rejects invalid or conflicting residence", () => {
   for (const c of deathResidencyCases) {
-    assertEquals(reviewedEicDeathResidence(facts(c)), true);
-    assertEquals(scheduleEicLine6Months(facts(c)), 12);
+    assertEquals(reviewedEicDeathResidence(facts(c), 2025), true);
+    assertEquals(scheduleEicLine6Months(facts(c), 2025), 12);
   }
   const base = facts(deathResidencyCases[1]);
   for (
@@ -125,18 +125,18 @@ test("death source conserves inclusive lifetime and rejects invalid or conflicti
           ...base.eic_death_residency_review,
           ...changes,
         },
-      })
+      }, 2025)
     );
   }
-  assertThrows(() => reviewedEicDeathResidence({ ...base, ssn: undefined }));
+  assertThrows(() => reviewedEicDeathResidence({ ...base, ssn: undefined }, 2025));
   assertThrows(() =>
-    reviewedEicDeathResidence({ ...base, months_lived_with_you_in_us: 2 })
+    reviewedEicDeathResidence({ ...base, months_lived_with_you_in_us: 2 }, 2025)
   );
   assertThrows(() =>
-    reviewedEicDeathResidence({ ...base, eic_birth_residency_review: {} })
+    reviewedEicDeathResidence({ ...base, eic_birth_residency_review: {} }, 2025)
   );
   assertThrows(() =>
-    reviewedEicDeathResidence({ ...base, eic_dated_residency_review: {} })
+    reviewedEicDeathResidence({ ...base, eic_dated_residency_review: {} }, 2025)
   );
   const older = facts(deathResidencyCases[0]);
   assertThrows(() =>
@@ -146,7 +146,7 @@ test("death source conserves inclusive lifetime and rejects invalid or conflicti
         ...older.eic_death_residency_review,
         us_home_residence_periods: [period("2025-01-01", "2025-01-29")],
       },
-    })
+    }, 2025)
   );
 });
 for (let index = 0; index < deathResidencyCases.length; index++) {

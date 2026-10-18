@@ -46,7 +46,7 @@ export function jointResidencyInputs(
           period("2025-12-24", "2025-12-31"),
           period("2025-12-01", "2025-12-08"),
         ],
-        alive_on_2025_12_31_verified: true,
+        alive_at_year_end_verified: true,
       },
     });
   } else {Object.assign(deps[2], {

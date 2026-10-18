@@ -172,7 +172,7 @@ test("reviewed partial-life birth prints 12 on Schedule EIC in native and PDF", 
         "Synthetic December 10-31, 2025 U.S. home record",
       us_home_residence_start_date: "2025-12-10",
       us_home_residence_end_date: "2025-12-31",
-      alive_on_2025_12_31_verified: true,
+      alive_at_year_end_verified: true,
     },
   };
   const inputs = {

@@ -585,7 +585,7 @@ export function hohQualifyingChildFromGeneral(
     matches.length !== 1 || !child ||
     input.hoh_paid_more_than_half_home_costs !== true ||
     !child.ssn || !/^\d{3}-?\d{2}-?\d{4}$/.test(child.ssn) ||
-    !dependentLivedWithFilerOverHalfYear(child) ||
+    !dependentLivedWithFilerOverHalfYear(child, taxYear) ||
     !passesRelationshipTest(child) || !passesEitcAgeTest(child, taxYear) ||
     !passesJointReturnTest(child) ||
     child.us_citizen_national_or_resident !== true ||
@@ -792,9 +792,6 @@ const CTC_QUALIFYING_RELATIONSHIPS = new Set<DependentRelationship>([
 
 // Dependent review facts whose schemas still encode TY2025 dates or limits.
 const TY2025_DATED_DEPENDENT_FACTS = [
-  "eic_birth_residency_review",
-  "eic_dated_residency_review",
-  "eic_death_residency_review",
   "ptc_tax_return",
 ] as const;
 
@@ -855,16 +852,17 @@ function passesAgeTest(dep: DependentItem, taxYear: number): boolean {
 }
 
 // IRS CTC residency test: lived with taxpayer MORE than 6 months.
-function passesResidencyTest(dep: DependentItem): boolean {
-  return dependentLivedWithFilerOverHalfYear(dep);
+function passesResidencyTest(dep: DependentItem, taxYear: number): boolean {
+  return dependentLivedWithFilerOverHalfYear(dep, taxYear);
 }
 
 export function dependentLivedWithFilerOverHalfYear(
   dep: DependentItem,
+  taxYear: number,
 ): boolean {
-  const reviewedBirth = reviewedEicBirthResidence(dep);
-  const reviewedDated = reviewedEicDatedResidence(dep);
-  const reviewedDeath = reviewedEicDeathResidence(dep);
+  const reviewedBirth = reviewedEicBirthResidence(dep, taxYear);
+  const reviewedDated = reviewedEicDatedResidence(dep, taxYear);
+  const reviewedDeath = reviewedEicDeathResidence(dep, taxYear);
   return dep.months_in_home > 6 || reviewedBirth || reviewedDated ||
     reviewedDeath;
 }
@@ -893,7 +891,7 @@ function isQualifyingChildForCTC(dep: DependentItem, taxYear: number): boolean {
     passesRelationshipTest(dep) &&
     passesJointReturnTest(dep) &&
     passesQualifyingChildSupportTest(dep) &&
-    (passesResidencyTest(dep) || dep.qualifying_child_for_ctc === true)
+    (passesResidencyTest(dep, taxYear) || dep.qualifying_child_for_ctc === true)
   );
 }
 
@@ -910,7 +908,7 @@ function hasTin(dep: DependentItem): boolean {
 // still qualifies as a "qualifying child" and therefore qualifies for ODC.
 function isQualifyingChildForODC(dep: DependentItem, taxYear: number): boolean {
   return (
-    passesResidencyTest(dep) &&
+    passesResidencyTest(dep, taxYear) &&
     passesRelationshipTest(dep) &&
     passesEitcAgeTest(dep, taxYear) &&
     passesJointReturnTest(dep) &&
@@ -1059,7 +1057,8 @@ function isEitcQualifyingChild(
       `EIC ${taxYear} birth needs reviewed residence before child eligibility can be decided`,
     );
   }
-  const otherwiseQualified = passesResidencyTest(dep) && qualifyingIdentity;
+  const otherwiseQualified = passesResidencyTest(dep, taxYear) &&
+    qualifyingIdentity;
   if (
     otherwiseQualified &&
     dep.months_lived_with_you_in_us === undefined
@@ -1068,7 +1067,7 @@ function isEitcQualifyingChild(
       "EIC qualifying child needs exact U.S. months no greater than home months",
     );
   }
-  if (otherwiseQualified) scheduleEicLine6Months(dep);
+  if (otherwiseQualified) scheduleEicLine6Months(dep, taxYear);
   return otherwiseQualified;
 }
 

@@ -9,22 +9,22 @@ import {
 const fullLifeBirthReviewSchema = z.object({
   birth_record_reference: z.string().trim().min(1),
   us_home_residence_record_reference: z.string().trim().min(1),
-  lived_with_filer_in_us_from_birth_through_2025_verified: z.literal(true),
-  alive_on_2025_12_31_verified: z.literal(true),
+  lived_with_filer_in_us_from_birth_through_year_end_verified: z.literal(true),
+  alive_at_year_end_verified: z.literal(true),
 }).strict();
 
 const partialLifeBirthReviewSchema = z.object({
   birth_record_reference: z.string().trim().min(1),
   us_home_residence_record_reference: z.string().trim().min(1),
-  us_home_residence_start_date: z.string().regex(/^2025-\d{2}-\d{2}$/),
-  us_home_residence_end_date: z.string().regex(/^2025-\d{2}-\d{2}$/),
-  alive_on_2025_12_31_verified: z.literal(true),
+  us_home_residence_start_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+  us_home_residence_end_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+  alive_at_year_end_verified: z.literal(true),
 }).strict();
 
 const multiplePeriodBirthReviewSchema = z.object({
   birth_record_reference: z.string().trim().min(1),
   us_home_residence_periods: z.array(residencePeriodSchema).min(1),
-  alive_on_2025_12_31_verified: z.literal(true),
+  alive_at_year_end_verified: z.literal(true),
 }).strict();
 
 export const eicBirthResidencyReviewSchema = z.union([
@@ -43,23 +43,31 @@ export interface EicBirthResidencyFacts {
   readonly eic_birth_residency_review?: unknown;
 }
 
+function birthInYear(dob: string, taxYear: number): RegExpExecArray | null {
+  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(dob);
+  return match && Number(match[1]) === taxYear ? match : null;
+}
+
 /** A reviewed full-life birth route is narrower than the IRS half-life rule. */
 export function reviewedEicBirthResidence(
   child: EicBirthResidencyFacts,
+  taxYear: number,
 ): boolean {
   if (child.eic_birth_residency_review === undefined) return false;
   const review = eicBirthResidencyReviewSchema.parse(
     child.eic_birth_residency_review,
   );
-  const match = /^(2025)-(\d{2})-(\d{2})$/.exec(child.dob);
+  const match = birthInYear(child.dob, taxYear);
   if (!match) {
-    throw new Error("EIC birth residency review needs a 2025 birth date");
+    throw new Error(
+      `EIC birth residency review needs a ${taxYear} birth date`,
+    );
   }
   const month = Number(match[2]);
   const day = Number(match[3]);
-  const date = new Date(Date.UTC(2025, month - 1, day));
+  const date = new Date(Date.UTC(taxYear, month - 1, day));
   if (
-    date.getUTCFullYear() !== 2025 || date.getUTCMonth() !== month - 1 ||
+    date.getUTCFullYear() !== taxYear || date.getUTCMonth() !== month - 1 ||
     date.getUTCDate() !== day
   ) {
     throw new Error("EIC birth residency review needs a valid birth date");
@@ -68,15 +76,17 @@ export function reviewedEicBirthResidence(
   if ("us_home_residence_periods" in review) {
     const { days, months } = reviewedResidencePeriodTotals(
       review.us_home_residence_periods,
+      taxYear,
       child.dob,
     );
-    const lifeDays = (Date.UTC(2025, 11, 31) - date.getTime()) / 86_400_000 + 1;
+    const lifeDays = (Date.UTC(taxYear, 11, 31) - date.getTime()) /
+        86_400_000 + 1;
     if (
       days * 2 <= lifeDays || child.months_in_home !== months.size ||
       child.months_lived_with_you_in_us !== months.size
     ) {
       throw new Error(
-        "EIC birth residence periods need more than half of 2025 life and matching actual months",
+        `EIC birth residence periods need more than half of ${taxYear} life and matching actual months`,
       );
     }
     return true;
@@ -96,7 +106,7 @@ export function reviewedEicBirthResidence(
     };
     const start = parseResidenceDate(review.us_home_residence_start_date);
     const end = parseResidenceDate(review.us_home_residence_end_date);
-    const yearEnd = Date.UTC(2025, 11, 31);
+    const yearEnd = Date.UTC(taxYear, 11, 31);
     const birthTime = date.getTime();
     const residenceDays = (end.getTime() - start.getTime()) / 86_400_000 + 1;
     const lifeDays = (yearEnd - birthTime) / 86_400_000 + 1;
@@ -111,7 +121,7 @@ export function reviewedEicBirthResidence(
       child.months_lived_with_you_in_us !== residenceMonths
     ) {
       throw new Error(
-        "EIC birth residency review needs U.S. home for more than half of 2025 life",
+        `EIC birth residency review needs U.S. home for more than half of ${taxYear} life`,
       );
     }
     return true;
@@ -121,37 +131,40 @@ export function reviewedEicBirthResidence(
     child.months_lived_with_you_in_us !== calendarMonths
   ) {
     throw new Error(
-      "EIC birth residency review needs U.S. home for every 2025 birth month",
+      `EIC birth residency review needs U.S. home for every ${taxYear} birth month`,
     );
   }
   return true;
 }
 
 /** The published line 6 value differs from actual calendar months for births. */
-export function scheduleEicLine6Months(child: EicBirthResidencyFacts): number {
+export function scheduleEicLine6Months(
+  child: EicBirthResidencyFacts,
+  taxYear: number,
+): number {
   if (
     child.eic_dated_residency_review !== undefined &&
     child.eic_birth_residency_review !== undefined
   ) throw new Error("Schedule EIC needs one consistent residency review");
-  if (reviewedEicDeathResidence(child)) return 12;
-  if (reviewedEicBirthResidence(child)) return 12;
-  if (reviewedEicDatedResidence(child)) {
+  if (reviewedEicDeathResidence(child, taxYear)) return 12;
+  if (reviewedEicBirthResidence(child, taxYear)) return 12;
+  if (reviewedEicDatedResidence(child, taxYear)) {
     return Math.max(7, child.months_lived_with_you_in_us!);
   }
   const actual = child.months_lived_with_you_in_us;
-  const birth = /^(2025)-(\d{2})-(\d{2})$/.exec(child.dob);
+  const birth = birthInYear(child.dob, taxYear);
   if (birth) {
     const month = Number(birth[2]);
     const day = Number(birth[3]);
-    const date = new Date(Date.UTC(2025, month - 1, day));
+    const date = new Date(Date.UTC(taxYear, month - 1, day));
     if (
-      date.getUTCFullYear() !== 2025 || date.getUTCMonth() !== month - 1 ||
+      date.getUTCFullYear() !== taxYear || date.getUTCMonth() !== month - 1 ||
       date.getUTCDate() !== day ||
       child.months_in_home > 13 - month ||
       (actual ?? 0) > 13 - month
     ) {
       throw new Error(
-        "Schedule EIC 2025 birth months exceed possible calendar residence",
+        `Schedule EIC ${taxYear} birth months exceed possible calendar residence`,
       );
     }
   }
