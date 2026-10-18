@@ -1,3 +1,4 @@
+import { mefTaxYear } from "../../../support/year-config.ts";
 import { z } from "zod";
 import { PDFDocument, StandardFonts } from "pdf-lib";
 import { element, elements } from "../../../../../mef/xml.ts";
@@ -88,8 +89,8 @@ function groupXml(group: DistributionGroup, context?: MefBuildContext) {
   return elements("IRS8915F", [
     element("PersonNm", group.name),
     element("SSN", item.recipient_ssn),
-    element("TaxYearFilingFormCd", "2025"),
-    element("CalendarYrDisasterCd", "2025"),
+    element("TaxYearFilingFormCd", String(mefTaxYear(context))),
+    element("CalendarYrDisasterCd", item.disaster_begin_date.slice(0, 4)),
     element("FEMADisasterDeclarationNum", item.fema_number),
     elements("TotalDistriAllRetirePlansGrp", [
       elements("FEMADisasterDeclarationGrp", [

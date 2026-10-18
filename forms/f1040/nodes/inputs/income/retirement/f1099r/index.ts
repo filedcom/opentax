@@ -2098,12 +2098,6 @@ class F1099rNode extends TaxNode<typeof inputSchema> {
         "TY2025 code P Form 1099-R needs prior-year correction and receipt-date review before current-year filing",
       );
     }
-    if (
-      ctx.taxYear !== 2025 &&
-      r1099s.some((item) => item.form8915f_treatment !== undefined)
-    ) {
-      throw new Error("Form 8915-F source treatment is limited to TY2025");
-    }
 
     // Cross-field validation
     for (const item of r1099s) {

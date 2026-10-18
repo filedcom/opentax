@@ -16,7 +16,7 @@ const dateSchema = z.string().regex(/^\d{4}-\d{2}-\d{2}$/).refine(
 );
 const referenceSchema = z.string().trim().min(1);
 
-/** One 2025 disaster, one fully taxable distribution, one 1099-R. */
+/** One disaster and distribution in the same year, one fully taxable distribution, one 1099-R. */
 export const itemSchema = z.object({
   retirement_source_kind: z.enum(["plan", "traditional_ira"]),
   owner: z.enum(["T", "S"]),
@@ -63,16 +63,16 @@ export const itemSchema = z.object({
   const declaration = Date.parse(`${item.disaster_declaration_date}T00:00:00Z`);
   const distribution = Date.parse(`${item.distribution_date}T00:00:00Z`);
   const last = Math.max(begin, declaration) + 179 * 24 * 60 * 60 * 1000;
+  const year = Number(item.distribution_date.slice(0, 4));
   if (
-    item.disaster_begin_date.slice(0, 4) !== "2025" ||
-    declaration < begin || distribution < begin || distribution > last ||
-    item.distribution_date.slice(0, 4) !== "2025"
+    Number(item.disaster_begin_date.slice(0, 4)) !== year ||
+    declaration < begin || distribution < begin || distribution > last
   ) {
     context.addIssue({
       code: z.ZodIssueCode.custom,
       path: ["distribution_date"],
       message:
-        "Form 8915-F distribution must be within this 2025 disaster's qualified period",
+        "Form 8915-F distribution must be within its same-year disaster's qualified period",
     });
   }
   if (item.taxable_distribution !== item.gross_distribution) {
@@ -87,19 +87,22 @@ export const itemSchema = z.object({
     const currentIncome = item.full_inclusion_elected
       ? item.gross_distribution
       : Math.round(item.gross_distribution / 3);
-    const ordinaryDeadline = "2026-04-15";
+    // The return for the distribution year is due April 15 of the next year,
+    // or October 15 with an automatic extension.
+    const filingYear = year + 1;
+    const ordinaryDeadline = `${filingYear}-04-15`;
     const deadline = item.repayment.filing_deadline.kind === "ordinary"
       ? ordinaryDeadline
-      : "2026-10-15";
+      : `${filingYear}-10-15`;
     const extension = item.repayment.filing_deadline;
     if (
       item.repayment.date <= item.distribution_date ||
-      item.repayment.return_filing_date.slice(0, 4) !== "2026" ||
+      item.repayment.return_filing_date.slice(0, 4) !== String(filingYear) ||
       item.repayment.date >= item.repayment.return_filing_date ||
       item.repayment.date > deadline ||
       item.repayment.return_filing_date > deadline ||
       (extension.kind === "automatic_extension" &&
-        (extension.accepted_on < "2026-01-01" ||
+        (extension.accepted_on < `${filingYear}-01-01` ||
           extension.accepted_on > ordinaryDeadline ||
           extension.accepted_on > item.repayment.return_filing_date)) ||
       item.repayment.amount > currentIncome
@@ -108,7 +111,7 @@ export const itemSchema = z.object({
         code: z.ZodIssueCode.custom,
         path: ["repayment"],
         message:
-          "Form 8915-F repayment must precede filing and the reviewed 2025 return deadline, follow the distribution, and fit current-year income",
+          "Form 8915-F repayment must precede filing and the reviewed return deadline, follow the distribution, and fit current-year income",
       });
     }
   }
@@ -325,10 +328,19 @@ class F8915FNode extends TaxNode<typeof inputSchema> {
   readonly outputNodes = new OutputNodes([]);
 
   compute(
-    _ctx: NodeContext,
+    ctx: NodeContext,
     rawInput: z.infer<typeof inputSchema>,
   ): NodeResult {
     const input = inputSchema.parse(rawInput);
+    if (
+      input.f8915fs?.some((item) =>
+        !item.distribution_date.startsWith(`${ctx.taxYear}-`)
+      )
+    ) {
+      throw new Error(
+        `Form 8915-F current-year path needs a ${ctx.taxYear} distribution`,
+      );
+    }
     if ((input.f8915fs?.length ?? 0) > 0) {
       for (const group of distributionOwnerGroups(input.f8915fs!)) {
         currentYearDistributionGroupLines(group, { planGross: 0, iraGross: 0 });

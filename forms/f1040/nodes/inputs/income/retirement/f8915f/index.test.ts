@@ -469,3 +469,35 @@ test("Form 8915-F matches one issued 1099-R and recipient", () => {
     "recipient must match",
   );
 });
+
+// IRC §72(t)(11) qualified disaster recovery distributions have no end year:
+// the 180-day window and $22,000 limit apply to a 2026 disaster on the 2026
+// return; MeF 2026v1.0 IRS8915F enumerates TaxYearFilingFormCd and
+// CalendarYrDisasterCd 2026.
+test("Form 8915-F current-year path follows the return year", () => {
+  const plan2026 = {
+    ...reviewed2025Plan,
+    disaster_begin_date: "2026-03-26",
+    disaster_declaration_date: "2026-05-21",
+    distribution_date: "2026-06-01",
+  };
+  assertEquals(
+    f8915f.compute({ taxYear: 2026, formType: "f1040" }, {
+      f8915fs: [plan2026],
+    }).outputs,
+    [],
+  );
+  assertThrows(
+    () => compute({ f8915fs: [plan2026] }),
+    Error,
+    "needs a 2025 distribution",
+  );
+  assertEquals(
+    itemSchema.safeParse({
+      ...plan2026,
+      disaster_begin_date: "2025-12-20",
+      disaster_declaration_date: "2025-12-28",
+    }).success,
+    false,
+  );
+});

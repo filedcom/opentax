@@ -1,3 +1,4 @@
+import { mefTaxYear } from "../../../support/year-config.ts";
 import {
   groupedDistributionAttachments,
   groupedDistributionXml,
@@ -95,8 +96,8 @@ export function buildCurrentYearDistributionForm8915F(
   return elements("IRS8915F", [
     element("PersonNm", name),
     element("SSN", item.recipient_ssn),
-    element("TaxYearFilingFormCd", "2025"),
-    element("CalendarYrDisasterCd", "2025"),
+    element("TaxYearFilingFormCd", String(mefTaxYear(context))),
+    element("CalendarYrDisasterCd", item.disaster_begin_date.slice(0, 4)),
     element("FEMADisasterDeclarationNum", item.fema_number),
     elements("TotalDistriAllRetirePlansGrp", [
       elements("FEMADisasterDeclarationGrp", [
