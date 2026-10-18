@@ -39,7 +39,7 @@ function hasReportedAmount(
 /** Form 4852 amounts cannot be filed until its completed substitute-form route exists. */
 export function assertForm4852FilingRoute(
   pending: Record<string, unknown>,
-  filer?: FilerIdentity,
+  filer: FilerIdentity | undefined,
   retainedEvidenceVerified: boolean,
   taxYear: number,
 ): void {

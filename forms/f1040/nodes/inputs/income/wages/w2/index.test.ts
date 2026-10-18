@@ -1913,7 +1913,7 @@ test("2026 reviewed W-2 box 12 code TT overtime routes to Schedule 1-A", () => {
 // tips reported to the employer, with the occupation code in box 14b; draft
 // 2026 Schedule 1-A line 4 column (iii) takes it per employer.
 test("2026 W-2 box 12 code TP tips route to Schedule 1-A line 4", () => {
-  const item = minimalItem({
+  const tipped = (code: string) => minimalItem({
     employee_ssn: "111223333",
     employer_ein: "123456789",
     employer_name: "Example Restaurant",
@@ -1922,8 +1922,9 @@ test("2026 W-2 box 12 code TP tips route to Schedule 1-A line 4", () => {
     box5_medicare_wages: 60_000,
     box7_ss_tips: 15_000,
     box12_entries: [{ code: Box12Code.TP, amount: 12_000 }],
-    box14b_tipped_code: "102",
+    box14b_tipped_code: code,
   });
+  const item = tipped("102");
   const run = (taxYear: number, items: ReturnType<typeof minimalItem>[]) =>
     w2.compute({ taxYear, formType: "f1040" }, { w2s: items });
   assertEquals(
@@ -1953,7 +1954,7 @@ test("2026 W-2 box 12 code TP tips route to Schedule 1-A line 4", () => {
   );
   assertEquals(
     fieldsOf(
-      run(2026, [{ ...item, box14b_tipped_code: "000" }]).outputs,
+      run(2026, [tipped("000")]).outputs,
       schedule1a,
     )?.qualified_employee_tips,
     undefined,

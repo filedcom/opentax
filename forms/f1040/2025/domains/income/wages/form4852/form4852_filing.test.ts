@@ -1097,7 +1097,6 @@ test("Form4852 retained source cannot also enter income as an ordinary W2 or ret
         form4852Filer,
         [],
         retained.documents,
-        2025,
       )
     );
     const { w2: _issuedW2, f1099r: _issuedR, ...validInput } = inputs as Record<
