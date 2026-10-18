@@ -32,8 +32,8 @@ import {
 } from "../../../../../../nodes/intermediate/forms/income/business/form8582/index.ts";
 import {
   computePropertyNet,
-  isPassiveProperty,
   inputSchema as scheduleEInputSchema,
+  isPassiveProperty,
   qualifiedEntireDispositionGain,
   qualifiedFirstYearRetainedPropertySale,
   qualifiedRetainedPropertySale,
