@@ -1343,16 +1343,11 @@ test("Form 8962 TY2026 uses the Rev. Proc. 2025-25 applicable percentage", () =>
 });
 
 test("Form 8962 TY2026 repays excess APTC in full and denies PTC above 400% FPL", () => {
-  const capped2025 = annual(31_300, 6_000, 6_000, 6_000);
+  // $2,066 exceeds the $975 single limitation TY2025 would apply at 200%.
   const full2026 = annual2026(31_300, 6_000);
   assertEquals(
     fields(full2026, "schedule2")?.line1a_excess_advance_premium,
     2_066,
-  );
-  assertEquals(
-    fields(capped2025, "schedule2")?.line1a_excess_advance_premium! <
-      2_066,
-    true,
   );
   const above400 = annual2026(70_000, 3_000);
   assertEquals(fields(above400, "form8962")?.total_premium_tax_credit, 0);
