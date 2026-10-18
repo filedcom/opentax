@@ -1449,6 +1449,52 @@ test("two_employers_at_max_ss_round_excess_on_schedule3: 2 × $10,918.20 → fil
   assertEquals(fieldsOf(result.outputs, schedule3)!.line11_excess_ss, 10918);
 });
 
+// 2025 Instructions for Schedule 3, line 11: on a joint return figure each
+// spouse's excess separately; one spouse's withholding never offsets the
+// other's wage base, even when an employer EIN is missing.
+test("joint_spouses_each_at_max_ss_without_ein_have_no_excess", () => {
+  const result = compute([
+    minimalItem({
+      employee_ssn: "111223333",
+      box1_wages: 176100,
+      box3_ss_wages: 176100,
+      box4_ss_withheld: 10918.20,
+    }),
+    minimalItem({
+      employee_ssn: "444556666",
+      employer_ein: "223456789",
+      box1_wages: 176100,
+      box3_ss_wages: 176100,
+      box4_ss_withheld: 10918.20,
+    }),
+  ]);
+  assertEquals(findOutput(result, "schedule3"), undefined);
+});
+
+test("one_spouse_two_employers_without_ein_keeps_only_their_excess", () => {
+  const result = compute([
+    minimalItem({
+      employee_ssn: "111223333",
+      box1_wages: 176100,
+      box3_ss_wages: 176100,
+      box4_ss_withheld: 10918.20,
+    }),
+    minimalItem({
+      employee_ssn: "111223333",
+      box1_wages: 50000,
+      box3_ss_wages: 50000,
+      box4_ss_withheld: 3100,
+    }),
+    minimalItem({
+      employee_ssn: "444556666",
+      box1_wages: 100000,
+      box3_ss_wages: 100000,
+      box4_ss_withheld: 6200,
+    }),
+  ]);
+  assertEquals(fieldsOf(result.outputs, schedule3)!.line11_excess_ss, 3100);
+});
+
 test("single_employer_at_max_ss_no_excess_schedule3: single employer does not produce schedule3", () => {
   const result = compute([
     minimalItem({

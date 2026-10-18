@@ -798,13 +798,22 @@ function excessSsOutput(
         : 0), 0));
     return excess > 0 ? [output(schedule3, { line11_excess_ss: excess })] : [];
   }
-  const totalSsWithheld = w2s.reduce(
-    (sum, item) => sum + (item.box4_ss_withheld ?? 0),
-    0,
-  );
-  const excess = Math.round(totalSsWithheld - ssTaxPerEmployer);
-  if (w2s.length < 2 || excess <= 0) return [];
-  return [output(schedule3, { line11_excess_ss: excess })];
+  // Without every employer EIN, still figure each spouse separately
+  // (Schedule 3 line 11 instructions); W-2s with no employee SSN form one
+  // unidentified group.
+  const owners = new Map<string, { copies: number; withheld: number }>();
+  for (const row of w2s) {
+    const owner = row.employee_ssn?.replace(/\D/g, "") ?? "";
+    const group = owners.get(owner) ?? { copies: 0, withheld: 0 };
+    owners.set(owner, {
+      copies: group.copies + 1,
+      withheld: group.withheld + (row.box4_ss_withheld ?? 0),
+    });
+  }
+  const excess = Math.round([...owners.values()].reduce((sum, owner) =>
+    sum +
+    (owner.copies > 1 ? Math.max(0, owner.withheld - ssTaxPerEmployer) : 0), 0));
+  return excess > 0 ? [output(schedule3, { line11_excess_ss: excess })] : [];
 }
 
 function statutoryOutput(w2s: W2Items): NodeOutput[] {
