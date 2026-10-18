@@ -76,7 +76,7 @@ function aggregationInput() {
       tax_year_end: "2025-12-31",
       tax_year_end_source_reference: "calendar-year-ledger",
       election_history: {
-        status: "new_2025",
+        status: "new_election",
         no_prior_election_confirmed: true,
       },
       annual_disclosure: {
@@ -125,7 +125,7 @@ function aggregationInput() {
         ubia: 100_000,
         owner_share_pct: 100,
         ownership_start_date: "2020-01-01",
-        owned_on_2025_12_31: true,
+        owned_on_tax_year_end: true,
         ownership_source_reference: "north-ownership-ledger",
         qbi_adjustments: {
           deductible_se_tax: 5_000,
@@ -148,7 +148,7 @@ function aggregationInput() {
         ubia: 100_000,
         owner_share_pct: 100,
         ownership_start_date: "2025-01-01",
-        owned_on_2025_12_31: true,
+        owned_on_tax_year_end: true,
         ownership_source_reference: "south-ownership-ledger",
         qbi_adjustments: {
           deductible_se_tax: 4_000,
@@ -207,7 +207,7 @@ function stagedContext() {
 
 test("Schedule B evidence derives two member totals and emits companion", () => {
   const input = aggregationInput();
-  const derived = validateTwoBusinessAggregationSource(input);
+  const derived = validateTwoBusinessAggregationSource(input, 2025);
   assertEquals(derived.qbi, 171_000);
   assertEquals(derived.w2Wages, 30_000);
   assertEquals(derived.ubia, 200_000);
@@ -232,7 +232,7 @@ test("Schedule B source rejects changed member amounts and duplicate factors", (
             index,
           ) => index === 0 ? { ...member, qbi: member.qbi + 1 } : member),
         },
-      })),
+      }), 2025),
     Error,
     "member QBI, wages, UBIA",
   );
@@ -247,7 +247,7 @@ test("Schedule B source rejects changed member amounts and duplicate factors", (
             input.aggregation_filing_details!.operational_factors[0],
           ],
         },
-      })),
+      }), 2025),
     Error,
     "distinct sourced operational factors",
   );
@@ -305,7 +305,7 @@ test("Schedule B source rejects short ownership and mismatched election names", 
               : member
           ),
         },
-      })),
+      }), 2025),
     Error,
     "majority-year ownership",
   );
@@ -317,7 +317,7 @@ test("Schedule B source rejects short ownership and mismatched election names", 
           ...input.aggregation_groups![0],
           business_names: ["North Store", "Unknown"],
         }],
-      })),
+      }), 2025),
     Error,
     "member identities",
   );

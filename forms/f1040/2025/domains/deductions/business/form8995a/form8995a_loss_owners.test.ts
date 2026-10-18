@@ -299,20 +299,20 @@ test("ordinary loss phase-in uses joint thresholds only for MFJ", () => {
     const status of [FilingStatus.Single, FilingStatus.HOH, FilingStatus.QSS]
   ) {
     assertEquals(
-      calculateLossBusinessPhase(222300, 20, 15, status)?.ratio,
+      calculateLossBusinessPhase(222300, 20, 15, status, 2025)?.ratio,
       0.5,
     );
   }
   assertEquals(
-    calculateLossBusinessPhase(444600, 20, 15, FilingStatus.MFJ)?.ratio,
+    calculateLossBusinessPhase(444600, 20, 15, FilingStatus.MFJ, 2025)?.ratio,
     0.5,
   );
   assertEquals(
-    calculateLossBusinessPhase(494600, 20, 15, FilingStatus.MFJ)?.ratio,
+    calculateLossBusinessPhase(494600, 20, 15, FilingStatus.MFJ, 2025)?.ratio,
     1,
   );
   assertEquals(
-    calculateLossBusinessPhase(494601, 20, 15, FilingStatus.MFJ),
+    calculateLossBusinessPhase(494601, 20, 15, FilingStatus.MFJ, 2025),
     undefined,
   );
 });

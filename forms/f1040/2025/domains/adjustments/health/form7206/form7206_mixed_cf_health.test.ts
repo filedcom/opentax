@@ -29,7 +29,7 @@ test("independent actual C/F health full limited excluded phase and current-use 
     const r = f1040_2025.executeReturn(fixture.inputs),
       p = normalizeAllPending(r.pending);
     assertEquals(r.diagnostics, []);
-    const health = assertIndependentOwnerHealth(p, fixture.filer);
+    const health = assertIndependentOwnerHealth(p, 2025, fixture.filer);
     assertEquals([
       health.deduction,
       p.f1040.line11_agi,
@@ -157,7 +157,7 @@ test("mixed C/F health rejects actual owner issuer month business payroll and pr
       const p = structuredClone(original);
       mutate(p);
       await assertRejects(() => f1040_2025.prepareReturn(p, fixture.filer));
-      assertThrows(() => assertIndependentOwnerHealth(p, fixture.filer));
+      assertThrows(() => assertIndependentOwnerHealth(p, 2025, fixture.filer));
       assertThrows(() =>
         form7206.build(p.form7206 as any, { pending: p, filer: fixture.filer })
       );

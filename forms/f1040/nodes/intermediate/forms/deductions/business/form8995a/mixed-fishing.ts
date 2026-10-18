@@ -16,7 +16,7 @@ import {
   ownedScheduleSE,
   ownerSourcesSchema,
 } from "../../../taxes/self-employment/schedule_se/owner-calculation.ts";
-import { CONFIG_BY_YEAR } from "../../../../../config/index.ts";
+import { qbiPhaseInRange, qbiThreshold, qbiYearConfig } from "./thresholds.ts";
 import { assertZeroLimitInventory } from "./zero-limit-inventory.ts";
 import { reviewedPositiveLimits } from "./positive-limit-inventory.ts";
 import {
@@ -33,19 +33,25 @@ export const mixedFishingQbiSourceSchema = z.object({
 }).strict();
 
 /** Two separate owned businesses; neither an aggregation election nor a wage source. */
-export function calculateMixedFishingQbi(input: Form8995AInput) {
+export function calculateMixedFishingQbi(
+  input: Form8995AInput,
+  taxYear: number,
+) {
   const source = mixedFishingQbiSourceSchema.parse(
     input.mixed_fishing_qbi_source,
   );
+  const cfg = qbiYearConfig(taxYear);
+  const threshold = qbiThreshold(input.filing_status, cfg);
+  const fullPhaseIn = threshold + qbiPhaseInRange(input.filing_status, cfg);
   const c = source.schedule_c, f = source.schedule_f;
   const profits = [scheduleCProfit(c), scheduleFProfit(f)];
   const joint = source.joint_se_source !== undefined;
   const se = joint ? undefined : scheduleSELines({
     net_profit_schedule_c: profits[0],
     net_profit_schedule_f: profits[1],
-  }, CONFIG_BY_YEAR[2025].ssWageBase);
+  }, cfg.ssWageBase);
   const owned = joint
-    ? ownedScheduleSE(source.joint_se_source!, CONFIG_BY_YEAR[2025].ssWageBase)
+    ? ownedScheduleSE(source.joint_se_source!, cfg.ssWageBase)
     : undefined;
   const allocations = owned
     ? [c.proprietor_recipient, f.proprietor_recipient].map((recipient) =>
@@ -64,7 +70,7 @@ export function calculateMixedFishingQbi(input: Form8995AInput) {
   if (
     (joint
       ? input.filing_status !== "mfj" ||
-        input.taxable_income <= 394_600 ||
+        input.taxable_income <= threshold ||
         source.owner_ssn !== undefined || !owned ||
         owned.source.businesses.length !== 2 ||
         owned.instances.length !== 2 ||
@@ -82,7 +88,8 @@ export function calculateMixedFishingQbi(input: Form8995AInput) {
             business.net_profit !== profits[index];
         }) || allocations.some((value) => value < 0)
       : input.filing_status !== "single" ||
-        input.taxable_income <= 197_300 || input.taxable_income >= 247_300 ||
+        input.taxable_income <= threshold ||
+        input.taxable_income >= fullPhaseIn ||
         source.owner_ssn === undefined || !se ||
         se.line13 !== source.se_tax_deduction) ||
     !Number.isInteger(input.taxable_income) ||
@@ -98,7 +105,7 @@ export function calculateMixedFishingQbi(input: Form8995AInput) {
     c.line_f_accounting_method !== "cash" || f.accounting_method !== "cash" ||
     c.qbi_no_other_adjustments_confirmed !== true ||
     f.qbi_no_other_adjustments_confirmed !== true ||
-    (input.taxable_income < 494_600 &&
+    (input.taxable_income < fullPhaseIn &&
       ((c.qbi_w2_wages ?? 0) !== 0 || (f.qbi_w2_wages ?? 0) !== 0 ||
         (c.qbi_unadjusted_basis ?? 0) !== 0 ||
         (f.qbi_unadjusted_basis ?? 0) !== 0)) ||
@@ -120,7 +127,7 @@ export function calculateMixedFishingQbi(input: Form8995AInput) {
     (input.sstb_qbi ?? 0) !== 0 || (input.line6_sec199a_dividends ?? 0) !== 0 ||
     (input.qbi_loss_carryforward ?? 0) !== 0 ||
     (input.reit_loss_carryforward ?? 0) !== 0 ||
-    (input.taxable_income < 494_600 &&
+    (input.taxable_income < fullPhaseIn &&
       (input.w2_wages !== 0 || input.unadjusted_basis !== 0))
   ) {
     throw new Error(
@@ -138,7 +145,7 @@ export function calculateMixedFishingQbi(input: Form8995AInput) {
   const limits = [{ wages: 0, basis: 0 }, { wages: 0, basis: 0 }];
   let employerTax = 0;
   let farmSales: number | undefined;
-  if (input.taxable_income >= 494_600) {
+  if (input.taxable_income >= fullPhaseIn) {
     if (
       (c.line_26_wages ?? 0) !== 0 || (c.line_13_depreciation ?? 0) !== 0 ||
       (f.line14_depreciation ?? 0) !== 0 ||
@@ -160,7 +167,7 @@ export function calculateMixedFishingQbi(input: Form8995AInput) {
       owner_ssn: ownerSsns[0]!,
       business_reference: c.business_reference!,
       employer_ein: eins[0]!,
-    });
+    }, taxYear);
     if (f.qbi_positive_limit_inventory) {
       if (f.qbi_zero_limit_inventory) {
         throw new Error(
@@ -171,7 +178,7 @@ export function calculateMixedFishingQbi(input: Form8995AInput) {
         owner_ssn: ownerSsns[1]!,
         business_reference: f.farm_id!,
         employer_ein: eins[1]!,
-      });
+      }, taxYear);
       limits[1] = positive;
       employerTax = positive.employerTax;
       farmSales = positive.farmSales;
@@ -180,7 +187,7 @@ export function calculateMixedFishingQbi(input: Form8995AInput) {
         owner_ssn: ownerSsns[1]!,
         business_reference: f.farm_id!,
         employer_ein: eins[1]!,
-      });
+      }, taxYear);
     }
     if (
       (f.line22_labor_hired ?? 0) !== limits[1].wages ||
@@ -225,7 +232,7 @@ export function calculateMixedFishingQbi(input: Form8995AInput) {
       unadjusted_basis: limits[i].basis,
       business_filing_details: details,
     };
-    return { details, lines: calculateOneBusiness8995ALines(child) };
+    return { details, lines: calculateOneBusiness8995ALines(child, taxYear) };
   });
   const line16 = rows.reduce((sum, row) => sum + row.lines.line15, 0);
   const line36 = rows[0].lines.line36;

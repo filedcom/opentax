@@ -134,3 +134,30 @@ test("an SSN-formatted payer TIN is not filed as an EIN", () => {
   assertEquals(xmlValues(xml, "EIN"), []);
   assertEquals(xmlValues(xml, "WithholdingAmt"), ["240"]);
 });
+
+// 2025 Form 1040 instructions, "Rounding Off to Whole Dollars": add the
+// copies with cents and round only the line 25b total.
+test("cent-valued copies keep the rounded line 25b total on the statement", async () => {
+  const copies = Array.from({ length: 12 }, (_, index) => ({
+    payer_name: `Example Bank ${index + 1}`,
+    payer_tin: `45-67890${String(index + 10)}`,
+    recipient_tin: "111223333",
+    box1: 100,
+    box4: 100.49,
+  }));
+  const inputs = { ...backupWithholding.inputs, f1099int: copies };
+  const xml = await exported(inputs);
+  const [statement] = xmlDocuments(xml, "OtherWithholdingStatement");
+  const rows = xmlValues(statement, "WithholdingAmt").map(Number);
+  assertEquals(rows.length, 13);
+  assertEquals(rows.reduce((sum, value) => sum + value, 0), 1_686);
+  assertEquals(xmlValues(xml, "Form1099WithheldTaxAmt"), ["1686"]);
+  if (xsdAvailable()) {
+    const { success, stderr } = await validateReturn1040Xsd(xml);
+    assertEquals(success, true, stderr);
+  }
+  assertEquals(
+    (await returnFindings(inputs)).includes("rule F1040-034-08"),
+    false,
+  );
+});

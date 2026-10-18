@@ -12,6 +12,7 @@ import {
   assertScheduleCLossSources,
 } from "../../../../mef/forms/deductions/business/f8995a/f8995a.ts";
 import { projectOneBusiness8995A } from "./f8995a.ts";
+import { mefTaxYear } from "../../../../mef/support/year-config.ts";
 
 const page = "topmostSubform[0].Page1[0].";
 const row = (index: number, field: number): string =>
@@ -73,12 +74,12 @@ function projectLossScheduleCopies(
       "Form 8995-A Schedule C PDF cannot accompany Schedule B aggregation",
     );
   }
-  assertScheduleCLossSources(input, allPending);
+  assertScheduleCLossSources(input, allPending, mefTaxYear());
   const parentProjection = projectOneBusiness8995A(
     allPending.form8995a,
     allPending,
   );
-  const lines = calculateScheduleCLossLines(input);
+  const lines = calculateScheduleCLossLines(input, mefTaxYear());
   if (
     parentProjection.line39 !== lines.parent.line39 ||
     allPending.f1040?.line13_qbi_deduction !== lines.parent.line39
@@ -140,6 +141,7 @@ export const form8995aScheduleCPdf: PdfFormDescriptor = {
       inputSchema.parse(allPending.form8995a_schedule_c),
       allPending,
       filer,
+      mefTaxYear(),
     );
     return projectLossScheduleCopies(
       allPending.form8995a_schedule_c,

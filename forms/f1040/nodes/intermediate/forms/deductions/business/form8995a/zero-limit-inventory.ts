@@ -1,8 +1,9 @@
 import { createHash } from "node:crypto";
 import { z } from "zod";
+import { taxYearEnd, taxYearStart } from "../../../../../utils.ts";
 
 const monthSchema = z.object({
-  month: z.string().regex(/^2025-(0[1-9]|1[0-2])$/),
+  month: z.string().regex(/^\d{4}-(0[1-9]|1[0-2])$/),
   payroll_journal_reference: z.string().min(1),
   fixed_asset_register_reference: z.string().min(1),
   employee_payments: z.array(
@@ -20,12 +21,12 @@ const monthSchema = z.object({
 }).strict();
 
 const bookSchema = z.object({
-  tax_year: z.literal(2025),
+  tax_year: z.number().int(),
   owner_ssn: z.string().regex(/^\d{9}$/),
   business_reference: z.string().min(1),
   employer_ein: z.string().regex(/^\d{9}$/),
-  period_start: z.literal("2025-01-01"),
-  period_end: z.literal("2025-12-31"),
+  period_start: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+  period_end: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
   months: z.array(monthSchema).length(12),
 }).strict();
 
@@ -43,6 +44,7 @@ export function assertZeroLimitInventory(
     business_reference: string;
     employer_ein: string;
   },
+  taxYear: number,
 ): void {
   if (!raw) {
     throw new Error(
@@ -57,12 +59,14 @@ export function assertZeroLimitInventory(
   const book = bookSchema.parse(JSON.parse(new TextDecoder().decode(bytes)));
   if (
     raw.document_id !==
-      `${expected.business_reference}-2025-payroll-property` ||
+      `${expected.business_reference}-${taxYear}-payroll-property` ||
+    book.tax_year !== taxYear || book.period_start !== taxYearStart(taxYear) ||
+    book.period_end !== taxYearEnd(taxYear) ||
     book.owner_ssn !== expected.owner_ssn ||
     book.business_reference !== expected.business_reference ||
     book.employer_ein !== expected.employer_ein ||
     book.months.some((row, index) =>
-      row.month !== `2025-${String(index + 1).padStart(2, "0")}` ||
+      row.month !== `${taxYear}-${String(index + 1).padStart(2, "0")}` ||
       row.employee_payments.length !== 0 || row.qualifying_property.length !== 0
     ) ||
     new Set(book.months.flatMap((row) => [

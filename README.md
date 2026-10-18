@@ -147,6 +147,11 @@ computed and any carryforwards. Returns are stored under `./.state/returns`.
 opentax node inspect --node_type w2
 opentax node list
 
+# Print the JSON form add takes for a source document or input (--full adds optional fields)
+opentax node template --document 1099-int
+opentax node template w2 --full
+opentax node template --list-documents
+
 # List, update or delete form entries
 opentax form list --returnId a1b2c3
 opentax form update --returnId a1b2c3 --entryId w2_01 '{"box1_wages": 60000, "box2_fed_withheld": 5800}'
@@ -226,7 +231,8 @@ first live run must confirm are in
 | TY2025 XML           | Built on the 2025v5.4 schema; validated against `Return1040.xsd` when `irs/` has the schemas                                                               |
 | Submission ZIP       | Pub 4164 layout, manifest checked against the submission and transmission rules before it is written                                                       |
 | A2A client           | Built and tested against a local mock IRS server; not yet run against the live IRS, which needs the credentials above                                      |
-| TY2026               | Form 1040 on the 2026v1.0 schema, which ATS does not accept; only `general`, `w2` and `f8888` inputs so far. Form 4868 on 2026v1.0                         |
+| TY2026               | Form 1040 on the 2026v1.0 schema, which ATS does not accept, for every TY2025 input. Form 4868 on 2026v1.0                                                  |
+| TY2026 ATS scenarios | 1 of 9 Form 1040 packets pass the same offline check against 2026v1.0; `check:ats` names the findings and schema gaps that block the rest                  |
 
 None of this is IRS acceptance or authorization of any product.
 
@@ -297,7 +303,7 @@ bun run bench --form f1040 --year 2025   # engine output against IRS ground trut
 
 # Reports and helpers
 bun run check:irs         # which IRS files in irs/ are present, against irs/manifest.json
-bun run check:ats         # TY2025 ATS scenario readiness
+bun run check:ats         # TY2025 and TY2026 ATS scenario readiness
 bun run verify:changed    # only the gates a change since origin/main can reach
 bun run ats:stage         # write the ATS scenarios into ./.state/returns for `opentax mef ats-run`
 bun run test              # full suite

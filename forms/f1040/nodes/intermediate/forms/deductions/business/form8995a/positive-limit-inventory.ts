@@ -1,5 +1,7 @@
 import { createHash } from "node:crypto";
 import { z } from "zod";
+import { qbiYearConfig } from "./thresholds.ts";
+import { taxYearEnd, taxYearStart } from "../../../../../utils.ts";
 
 const realDate = (value: string) => {
   if (!/^20\d{2}-\d{2}-\d{2}$/.test(value)) return false;
@@ -8,10 +10,9 @@ const realDate = (value: string) => {
     parsed.toISOString().slice(0, 10) === value;
 };
 const date = z.string().refine(realDate, "Actual calendar date required");
-const date2025 = date.refine((value) => value.startsWith("2025-"));
 const payment = z.object({
   employee_ssn: z.string().regex(/^\d{9}$/),
-  paid_on: date2025,
+  paid_on: date,
   check_reference: z.string().min(1),
   cash_wages: z.number().int().positive(),
   net_check_paid: z.number().int().positive(),
@@ -52,43 +53,43 @@ const property = z.object({
   original_cost_paid: z.number().int().positive(),
   owner_ssn: z.string().regex(/^\d{9}$/),
   tangible_depreciable_property: z.literal(true),
-  held_at_2025_year_end: z.literal(true),
-  used_in_2025_qbi_production: z.literal(true),
-  retained_2025_use_record_reference: z.string().min(1),
+  held_at_tax_year_end: z.literal(true),
+  used_in_tax_year_qbi_production: z.literal(true),
+  retained_tax_year_use_record_reference: z.string().min(1),
 }).strict();
 const bookSchema = z.object({
-  tax_year: z.literal(2025),
+  tax_year: z.number().int(),
   owner_ssn: z.string().regex(/^\d{9}$/),
   business_reference: z.string().min(1),
   employer_ein: z.string().regex(/^\d{9}$/),
-  period_start: z.literal("2025-01-01"),
-  period_end: z.literal("2025-12-31"),
+  period_start: date,
+  period_end: date,
   farm_product_sales: z.array(
     z.object({
       buyer: z.string().min(1),
       crop: z.string().min(1),
-      sold_on: date2025,
+      sold_on: date,
       buyer_invoice_reference: z.string().min(1),
-      paid_on: date2025,
+      paid_on: date,
       deposit_reference: z.string().min(1),
       amount: z.number().int().positive(),
     }).strict(),
   ).min(1),
   months: z.array(
     z.object({
-      month: z.string().regex(/^2025-(0[1-9]|1[0-2])$/),
+      month: z.string().regex(/^\d{4}-(0[1-9]|1[0-2])$/),
       payroll_journal_reference: z.string().min(1),
       payments: z.array(payment),
     }).strict(),
   ).length(12),
   issued_employee_w2_copies: z.array(employeeW2),
-  current_2025_agricultural_service_weeks: z.array(
+  current_year_agricultural_service_weeks: z.array(
     z.object({
-      week_end: date2025,
+      week_end: date,
       employee_count: z.number().int().positive(),
     }).strict(),
   ),
-  prior_2024_agricultural_payroll: z.object({
+  prior_year_agricultural_payroll: z.object({
     source_reference: z.string().min(1),
     quarter_cash_wages: z.tuple([
       z.number().int().nonnegative(),
@@ -105,7 +106,7 @@ const bookSchema = z.object({
   }).strict(),
   form943_filing_reference: z.string().min(1).optional(),
   employer_payroll_tax_deposit: z.object({
-    paid_on: date2025,
+    paid_on: date,
     bank_debit_reference: z.string().min(1),
     amount: z.number().int().positive(),
   }).strict().optional(),
@@ -141,6 +142,28 @@ export const positiveLimitInventorySchema = z.object({
   bytes_base64: z.string().min(1),
 }).strict();
 
+/** Monday when a date falls on a weekend; IRC §7503. */
+function nextBusinessDay(value: string): string {
+  const day = new Date(`${value}T00:00:00.000Z`);
+  const shift = day.getUTCDay() === 6 ? 2 : day.getUTCDay() === 0 ? 1 : 0;
+  return new Date(day.getTime() + shift * 86_400_000).toISOString().slice(
+    0,
+    10,
+  );
+}
+
+/** Filing dates in the year after the tax year, as the retained books reconcile them. */
+function filingDeadlines(taxYear: number) {
+  const next = taxYear + 1;
+  return {
+    january31: `${next}-01-31`,
+    january31Business: nextBusinessDay(`${next}-01-31`),
+    // Form 940 is due February 10 when every FUTA deposit was timely.
+    form940Deposited: `${next}-02-10`,
+    ssaFiled: `${next}-04-03`,
+  };
+}
+
 /** Compute §199A wage and UBIA inputs from retained employer books and issued copies. */
 export function reviewedPositiveLimits(
   raw: z.infer<typeof positiveLimitInventorySchema> | undefined,
@@ -149,6 +172,7 @@ export function reviewedPositiveLimits(
     business_reference: string;
     employer_ein: string;
   },
+  taxYear: number,
 ) {
   if (!raw) {
     throw new Error(
@@ -165,10 +189,30 @@ export function reviewedPositiveLimits(
     );
   }
   const book = bookSchema.parse(JSON.parse(new TextDecoder().decode(bytes)));
+  const yearStart = taxYearStart(taxYear);
+  const yearEnd = taxYearEnd(taxYear);
+  const deadlines = filingDeadlines(taxYear);
+  const inYear = (value: string) => value >= yearStart && value <= yearEnd;
+  if (
+    book.tax_year !== taxYear || book.period_start !== yearStart ||
+    book.period_end !== yearEnd ||
+    book.farm_product_sales.some((row) =>
+      !inYear(row.sold_on) || !inYear(row.paid_on)
+    ) ||
+    book.current_year_agricultural_service_weeks.some((week) =>
+      !inYear(week.week_end)
+    ) ||
+    (book.employer_payroll_tax_deposit !== undefined &&
+      !inYear(book.employer_payroll_tax_deposit.paid_on))
+  ) {
+    throw new Error(
+      "Positive QBI books must cover the return's tax year",
+    );
+  }
   const payments = book.months.flatMap((month, index) => {
-    if (month.month !== `2025-${String(index + 1).padStart(2, "0")}`) {
+    if (month.month !== `${taxYear}-${String(index + 1).padStart(2, "0")}`) {
       throw new Error(
-        "QBI payroll journals need all twelve ordered 2025 months",
+        "QBI payroll journals need all twelve ordered months of the tax year",
       );
     }
     return month.payments.map((payment) => {
@@ -187,13 +231,13 @@ export function reviewedPositiveLimits(
   }
   const unemploymentRequired =
     quarterWages.some((amount) => amount >= 20_000) ||
-    book.prior_2024_agricultural_payroll.quarter_cash_wages.some((amount) =>
+    book.prior_year_agricultural_payroll.quarter_cash_wages.some((amount) =>
       amount >= 20_000
     ) ||
-    book.current_2025_agricultural_service_weeks.filter((week) =>
+    book.current_year_agricultural_service_weeks.filter((week) =>
         week.employee_count >= 10
       ).length >= 20 ||
-    book.prior_2024_agricultural_payroll.quarter_employee_service_week_counts
+    book.prior_year_agricultural_payroll.quarter_employee_service_week_counts
         .reduce((sum, count) => sum + count, 0) >= 20;
   const unemployment = book.unemployment;
   const copies = book.issued_employee_w2_copies;
@@ -207,12 +251,12 @@ export function reviewedPositiveLimits(
   );
   const stateTax = stateBase * 270 / 10_000;
   const futaTax = futaBase * 60 / 1_000 - futaBase * 54 / 1_000;
-  const paidIn2025 = (value: string) => value <= "2025-12-31";
+  const paidInYear = (value: string) => value <= yearEnd;
   const employerTax = ficaTax +
-    (unemployment && paidIn2025(unemployment.state_tax_payment.paid_on)
+    (unemployment && paidInYear(unemployment.state_tax_payment.paid_on)
       ? stateTax
       : 0) +
-    (unemployment && paidIn2025(unemployment.futa_tax_payment.paid_on)
+    (unemployment && paidInYear(unemployment.futa_tax_payment.paid_on)
       ? futaTax
       : 0);
   const assets = book.owned_property_register;
@@ -223,31 +267,31 @@ export function reviewedPositiveLimits(
   );
   if (
     raw.document_id !==
-      `${expected.business_reference}-2025-positive-qbi-books` ||
+      `${expected.business_reference}-${taxYear}-positive-qbi-books` ||
     book.owner_ssn !== expected.owner_ssn ||
     book.business_reference !== expected.business_reference ||
     book.employer_ein !== expected.employer_ein ||
     (wages === 0 && basis === 0) ||
     !Number.isInteger(ficaTax) || !Number.isInteger(employerTax) ||
     unemploymentRequired !== (unemployment !== undefined) ||
-    book.current_2025_agricultural_service_weeks.length !==
+    book.current_year_agricultural_service_weeks.length !==
       new Set(
-        book.current_2025_agricultural_service_weeks.map((week) =>
+        book.current_year_agricultural_service_weeks.map((week) =>
           week.week_end
         ),
       ).size ||
     (wages > 0 &&
-      book.current_2025_agricultural_service_weeks.length === 0) ||
+      book.current_year_agricultural_service_weeks.length === 0) ||
     (unemployment && (
       !Number.isInteger(stateTax) || !Number.isInteger(futaTax) ||
-      unemployment.state_q4_report_filed_on < "2025-12-31" ||
-      unemployment.state_q4_report_filed_on > "2026-01-31" ||
-      unemployment.form940_filed_on < "2025-12-31" ||
-      unemployment.form940_filed_on > "2026-02-10" ||
+      unemployment.state_q4_report_filed_on < yearEnd ||
+      unemployment.state_q4_report_filed_on > deadlines.january31 ||
+      unemployment.form940_filed_on < yearEnd ||
+      unemployment.form940_filed_on > deadlines.form940Deposited ||
       unemployment.state_tax_payment.paid_on < payments.at(-1)!.paid_on ||
       unemployment.futa_tax_payment.paid_on < payments.at(-1)!.paid_on ||
       unemployment.state_tax_payment.paid_on > unemployment.form940_filed_on ||
-      unemployment.state_tax_payment.paid_on > "2026-02-02" ||
+      unemployment.state_tax_payment.paid_on > deadlines.january31Business ||
       unemployment.futa_tax_payment.paid_on > unemployment.form940_filed_on ||
       unemployment.state_tax_payment.amount !== stateTax ||
       unemployment.futa_tax_payment.amount !== futaTax ||
@@ -282,10 +326,11 @@ export function reviewedPositiveLimits(
     new Set(payments.map((row) => row.employee_ssn)).size !== copies.length ||
     copies.some((copy) =>
       copy.employer_ein !== expected.employer_ein ||
-      copy.issued_on < "2025-12-31" || copy.issued_on > "2026-01-31" ||
-      copy.ssa_filed_on < copy.issued_on || copy.ssa_filed_on > "2026-04-03" ||
+      copy.issued_on < yearEnd || copy.issued_on > deadlines.january31 ||
+      copy.ssa_filed_on < copy.issued_on ||
+      copy.ssa_filed_on > deadlines.ssaFiled ||
       copy.box1_wages !== copy.box3_social_security_wages ||
-      copy.box3_social_security_wages > 176_100 ||
+      copy.box3_social_security_wages > qbiYearConfig(taxYear).ssWageBase ||
       copy.box1_wages !== copy.box5_medicare_wages ||
       copy.box4_social_security_tax_withheld !==
         copy.box3_social_security_wages * 62 / 1000 ||
@@ -303,9 +348,9 @@ export function reviewedPositiveLimits(
         String(asset.prior_depreciation_ledger[0].tax_year) ||
       asset.prior_depreciation_ledger[0].deduction !==
         asset.original_cost_paid ||
-      asset.placed_in_service_on < "2016-01-01" ||
-      asset.placed_in_service_on >= "2025-01-01" ||
-      !asset.retained_2025_use_record_reference
+      asset.placed_in_service_on < taxYearStart(taxYear - 9) ||
+      asset.placed_in_service_on >= yearStart ||
+      !asset.retained_tax_year_use_record_reference
     )
   ) {
     throw new Error(

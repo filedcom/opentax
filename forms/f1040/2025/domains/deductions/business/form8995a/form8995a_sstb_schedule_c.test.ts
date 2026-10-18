@@ -37,7 +37,7 @@ test("owned accounting SSTB payroll and filed SE reach Schedule A, fractional ph
   assertEquals(p.f1040.line13_qbi_deduction, 2652);
   assertEquals(p.f1040.line15_taxable_income, 219648);
   assertEquals(p.f1040.line24_total_tax, 48437);
-  const l = calculateOneSstb8995ALines(inputSchema.parse(p.form8995a));
+  const l = calculateOneSstb8995ALines(inputSchema.parse(p.form8995a), 2025);
   assertEquals([l.line2, l.line4, l.line3, l.line19, l.line25, l.line39], [
     14025,
     5000,
@@ -158,7 +158,7 @@ test("owner-only SSTB has a positive phase-in deduction with no employee wages",
   assertEquals(p.f1040.line11_agi, 238050);
   assertEquals(p.f1040.line13_qbi_deduction, 1402);
   assertEquals(p.f1040.line15_taxable_income, 220898);
-  const l = calculateOneSstb8995ALines(inputSchema.parse(p.form8995a));
+  const l = calculateOneSstb8995ALines(inputSchema.parse(p.form8995a), 2025);
   assertEquals([
     l.line2,
     l.line4,
@@ -230,7 +230,7 @@ test("joint primary-owner SSTB uses joint threshold, source SE and fractional ap
   assertEquals(p.f1040.line15_taxable_income, 412275);
   assertEquals(p.f1040.line16_income_tax, 86054);
   assertEquals(p.f1040.line24_total_tax, 88581);
-  const l = calculateOneSstb8995ALines(inputSchema.parse(p.form8995a));
+  const l = calculateOneSstb8995ALines(inputSchema.parse(p.form8995a), 2025);
   assertEquals([l.threshold, l.phaseInRange, l.phaseIn, l.applicable], [
     394600,
     100000,
@@ -287,7 +287,7 @@ test("MFS Colorado primary SSTB actual source joins status, spouse deductions an
     p.f1040.line24_total_tax,
   ], [238050, 15750, 2652, 219648, 49112]);
   assertEquals(p.f1040.mfs_spouse_itemizing, false);
-  const l = calculateOneSstb8995ALines(inputSchema.parse(p.form8995a));
+  const l = calculateOneSstb8995ALines(inputSchema.parse(p.form8995a), 2025);
   assertEquals([l.threshold, l.phaseInRange, l.applicable, l.line39], [
     197300,
     50000,

@@ -24,7 +24,7 @@ import {
   calculateOneBusiness8995ALines,
   type Form8995AInput,
 } from "./index.ts";
-import { CONFIG_BY_YEAR } from "../../../../../config/index.ts";
+import { qbiThreshold, qbiYearConfig } from "./thresholds.ts";
 
 export { farmWotcSourceSchema } from "./farm-wotc-source.ts";
 import {
@@ -123,6 +123,7 @@ export function farmWotcBusinessAmounts(
 export function farmWotcAdvancedFields(
   input: any,
   taxableIncome: number,
+  taxYear: number,
 ): Form8995AInput | undefined {
   const farms = input.schedule_f_qbi_businesses as any[] | undefined;
   if (!farms?.some((r) => r.source_schedule_f?.qbi_wotc_filing_review)) {
@@ -149,7 +150,7 @@ export function farmWotcAdvancedFields(
     : calculateIndependentOwnerHealth(
       input.joint_owner_health_plans_source,
       input.joint_se_source,
-      CONFIG_BY_YEAR[2025].ssWageBase,
+      qbiYearConfig(taxYear).ssWageBase,
     );
   const source = farmWotcSourceSchema.parse({
     businesses,
@@ -195,7 +196,7 @@ export function farmWotcAdvancedFields(
       ? { qualified_tip_qbi_source: source.qualified_tip_qbi_source }
       : {}),
   };
-  const calculated = calculateFarmWotcLines(fields, false);
+  const calculated = calculateFarmWotcLines(fields, taxYear, false);
   return {
     ...fields,
     qbi: calculated.rows.reduce((s, r) => s + r.lines.line2, 0),
@@ -206,8 +207,10 @@ export function farmWotcAdvancedFields(
 
 export function calculateFarmWotcLines(
   input: Form8995AInput,
+  taxYear: number,
   checkTotals = true,
 ) {
+  const cfg = qbiYearConfig(taxYear);
   const source = farmWotcSourceSchema.parse(input.farm_wotc_filing_source);
   const amounts = source.businesses.map(farmWotcBusinessAmounts);
   const tips = reviewedQualifiedTipExclusions(source.qualified_tip_qbi_source);
@@ -232,7 +235,7 @@ export function calculateFarmWotcLines(
     (reviewed.length === 2 && (input.filing_status !== "mfj" ||
       new Set(reviewed.map((a) => a.recipient)).size !== 2)) ||
     !["single", "mfj"].includes(input.filing_status) ||
-    input.taxable_income <= (input.filing_status === "mfj" ? 394600 : 197300) ||
+    input.taxable_income <= qbiThreshold(input.filing_status, cfg) ||
     !Number.isInteger(input.taxable_income) ||
     new Set(amounts.map((a) => a.reference)).size !== amounts.length ||
     new Set(amounts.map((a) => a.ein)).size !== amounts.length ||
@@ -253,7 +256,7 @@ export function calculateFarmWotcLines(
   if (input.filing_status === "mfj") {
     const owned = ownedScheduleSE(
       source.joint_se_source,
-      CONFIG_BY_YEAR[2025].ssWageBase,
+      cfg.ssWageBase,
     );
     if (
       owned.deduction !== source.se_tax_deduction ||
@@ -272,7 +275,7 @@ export function calculateFarmWotcLines(
     const qbi = jointOwnerQbi(
       source.joint_se_source,
       input.taxable_income,
-      CONFIG_BY_YEAR[2025].ssWageBase,
+      cfg.ssWageBase,
       undefined,
       source.se_health_insurance_deduction ?? 0,
       source.independent_health_plans_source,
@@ -392,7 +395,7 @@ export function calculateFarmWotcLines(
       source: source.businesses[i],
       amounts: a,
       input: child,
-      lines: calculateOneBusiness8995ALines(child),
+      lines: calculateOneBusiness8995ALines(child, taxYear),
     };
   });
   if (

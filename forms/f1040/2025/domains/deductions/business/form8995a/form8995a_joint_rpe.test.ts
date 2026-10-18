@@ -61,7 +61,7 @@ for (const c of jointRpeCases) {
       tax - payments,
     ]);
     const fields = inputSchema.parse(pending.form8995a);
-    const lines = calculateTwoBusinessAggregationLines(fields);
+    const lines = calculateTwoBusinessAggregationLines(fields, 2025);
     const phase = c.count === 4 && c.wages === 100000;
     assertEquals(lines.parent.phaseInRequired, phase);
     assertEquals(lines.parent.line39, c.deduction);
@@ -77,14 +77,14 @@ for (const c of jointRpeCases) {
       calculateTwoBusinessAggregationLines({
         ...fields,
         taxable_income: 394600,
-      })
+      }, 2025)
     );
     if (c.count === 4) {
       for (const excess of [1, 99999, 100000, 100001]) {
         const p = calculateTwoBusinessAggregationLines({
           ...fields,
           taxable_income: 394600 + excess,
-        }).parent;
+        }, 2025).parent;
         assertEquals(
           p.line39,
           excess <= 100000 ? 70000 - Math.round(3750 * excess / 100000) : 66250,

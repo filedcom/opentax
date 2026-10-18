@@ -291,8 +291,8 @@ export const dependentSchema = z.object({
   custodial_eitc_release_review: z.object({
     form8332_source_reference: z.string().trim().min(1),
     custody_record_reference: z.string().trim().min(1),
-    custodial_parent_for_2025: z.literal(true),
-    valid_2025_release_to_noncustodial_parent: z.literal(true),
+    custodial_parent_for_tax_year: z.literal(true),
+    valid_tax_year_release_to_noncustodial_parent: z.literal(true),
     no_competing_eitc_claim_verified: z.literal(true),
   }).strict().optional(),
   child_care_months: z.number().int().min(0).max(12).optional(), // For Form 2441
@@ -785,7 +785,6 @@ const TY2025_DATED_DEPENDENT_FACTS = [
   "eic_birth_residency_review",
   "eic_dated_residency_review",
   "eic_death_residency_review",
-  "custodial_eitc_release_review",
   "ptc_tax_return",
 ] as const;
 

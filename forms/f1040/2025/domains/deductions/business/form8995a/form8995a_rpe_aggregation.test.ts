@@ -80,7 +80,7 @@ test("issued S-corp RPE aggregation keeps complete members, annual copy, wage-pr
     );
     assertEquals(pending.f1040.line16_income_tax, totalTax);
     assertEquals(pending.f1040.line24_total_tax, totalTax);
-    const lines = calculateTwoBusinessAggregationLines(pending.form8995a);
+    const lines = calculateTwoBusinessAggregationLines(pending.form8995a, 2025);
     assertEquals(lines.schedule.rows.length, count);
     assertEquals(lines.schedule.totalW2Wages, wages);
     assertEquals(lines.schedule.totalUbia, 2000000);

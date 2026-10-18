@@ -107,7 +107,7 @@ for (const c of qualifiedTipCases) {
     }
     if (c.advanced) {
       assertEquals(a.qbi, c.qbi);
-      const lines = calculateOneBusiness8995ALines(advancedSchema.parse(a));
+      const lines = calculateOneBusiness8995ALines(advancedSchema.parse(a), 2025);
       // Independently prescribed filed equations: 45250 - round(43450 * .26396).
       assertEquals([
         lines.line2,

@@ -31,6 +31,7 @@ import {
   assertMultiBusinessInvestmentTax,
 } from "../f8995/f8995-investment.ts";
 import { inputSchema as w2InputSchema } from "../../../../../../nodes/inputs/income/wages/w2/index.ts";
+import { mefTaxYear } from "../../../../support/year-config.ts";
 
 /** Keep portfolio sources outside the business group, but in its income limit. */
 function assertAggregationInvestments(
@@ -106,7 +107,7 @@ function assertRpeScheduleBJoin(
   input: Form8995AInput,
   context: MefBuildContext | undefined,
 ) {
-  const calculated = calculateTwoBusinessAggregationLines(input),
+  const calculated = calculateTwoBusinessAggregationLines(input, mefTaxYear(context)),
     pending = context?.pending,
     filer = context?.filer;
   aggregationOwner(input, filer);
@@ -115,7 +116,10 @@ function assertRpeScheduleBJoin(
   if (k1.k1_s_corps.length !== 1) {
     throw Error("RPE Schedule B needs the complete actual issuer K1 inventory");
   }
-  const issued = currentSCorpRpeAggregation(k1.k1_s_corps[0]);
+  const issued = currentSCorpRpeAggregation(
+    mefTaxYear(context),
+    k1.k1_s_corps[0],
+  );
   const parent = inputSchema.strict().parse(pending?.form8995a);
   const companion = inputSchema.strict().parse(pending?.form8995a_schedule_b);
   const upstream = pending?.form8995 as Record<string, unknown> | undefined;
@@ -224,7 +228,7 @@ export function assertScheduleBAggregationJoin(
   if (input.rpe_aggregation_source) {
     return assertRpeScheduleBJoin(input, context);
   }
-  const calculated = calculateTwoBusinessAggregationLines(input);
+  const calculated = calculateTwoBusinessAggregationLines(input, mefTaxYear(context));
   const pending = context?.pending;
   const filer = context?.filer;
   aggregationOwner(input, filer);
@@ -268,6 +272,7 @@ export function assertScheduleBAggregationJoin(
   if (input.filing_status === "mfj") {
     const ownedSe = assertOwnedScheduleSE(
       pending as Readonly<Record<string, Record<string, unknown>>>,
+      mefTaxYear(context),
       filer,
     );
     if (!ownedSe) {

@@ -98,7 +98,7 @@ test("actual patron sources phase in wages before Schedule D and DPAD with full 
   ) {
     const { fixture, pending } = prepared(kind);
     const input = inputSchema.parse(pending.form8995a);
-    const lines = calculateOneBusiness8995ALines(input);
+    const lines = calculateOneBusiness8995ALines(input, 2025);
     const schedule = calculatePatronScheduleDLines(input);
     const amounts = patronSourceAmounts(input.patron_business_source!);
     assertEquals(amounts.filed_gross - amounts.filed_expenses, amounts.profit);
@@ -180,6 +180,7 @@ test("public patron whole-dollar threshold boundaries retain source and filed eq
     const pending = buildPending(result.pending) as any;
     const lines = calculateOneBusiness8995ALines(
       inputSchema.parse(pending.form8995a),
+      2025,
     );
     assertEquals(lines.line33, target);
     assertEquals(lines.phaseInRequired, target > 197300 && target <= 247300);

@@ -38,7 +38,7 @@ import { inputSchema as necSchema } from "../../../../../nodes/inputs/income/bus
 import { inputSchema as w2Schema } from "../../../../../nodes/inputs/income/wages/w2/index.ts";
 import { inputSchema as seSchema } from "../../../../../nodes/intermediate/forms/taxes/self-employment/schedule_se/index.ts";
 import { scheduleSELines } from "../../../../../nodes/intermediate/forms/taxes/self-employment/schedule_se/calculation.ts";
-import { CONFIG_BY_YEAR } from "../../../../../nodes/config/index.ts";
+import { qbiYearConfig } from "../../../../../nodes/intermediate/forms/deductions/business/form8995a/thresholds.ts";
 import { inputSchema as parentSchema } from "../../../../../nodes/intermediate/forms/deductions/business/form8995a/index.ts";
 import {
   calculateFarmWotcLines,
@@ -52,6 +52,7 @@ import { assertForm3800FinalCreditJoin } from "../../../credits/business/form380
 export function assertFarmWotcReturn(
   fieldsValue: unknown,
   rawPending: Readonly<Record<string, unknown>> | undefined,
+  taxYear: number,
   filer?: FilerIdentity,
   descriptorSource?: {
     key: "schedule_f" | "schedule_c" | "f5884";
@@ -357,7 +358,7 @@ export function assertFarmWotcReturn(
       if (
         !record ||
         record.box3_social_security_wages !==
-          Math.min(record.box1_wages, CONFIG_BY_YEAR[2025].ssWageBase) ||
+          Math.min(record.box1_wages, qbiYearConfig(taxYear).ssWageBase) ||
         record.employer_ein !== employer.employer_ein ||
         [primary, spouse].includes(record.employee_ssn) ||
         record.swa_certification_reference !==
@@ -451,7 +452,7 @@ export function assertFarmWotcReturn(
         !record || !record.employee_ssn ||
         [primary, spouse].includes(record.employee_ssn) ||
         record.box3_social_security_wages !==
-          Math.min(record.box1_wages, CONFIG_BY_YEAR[2025].ssWageBase) ||
+          Math.min(record.box1_wages, qbiYearConfig(taxYear).ssWageBase) ||
         record.employer_ein !== employer.employer_ein ||
         record.swa_certification_reference !==
           e.certification.swa_certification_reference ||
@@ -490,7 +491,7 @@ export function assertFarmWotcReturn(
     );
   }
   const owned = general.filing_status === "mfj"
-    ? assertOwnedScheduleSE(pending)
+    ? assertOwnedScheduleSE(pending, taxYear)
     : undefined;
   const profits = source.schedule_fs.map((f) =>
     f.qbi_wotc_filing_review
@@ -515,7 +516,7 @@ export function assertFarmWotcReturn(
     tax = owned.tax;
   } else {
     const se = seSchema.parse(pending.schedule_se),
-      expected = scheduleSELines(se, CONFIG_BY_YEAR[2025].ssWageBase);
+      expected = scheduleSELines(se, qbiYearConfig(taxYear).ssWageBase);
     if (
       se.net_profit_schedule_f !== farmProfit ||
       (se.net_profit_schedule_c ?? 0) !== 0 || !expected
@@ -532,7 +533,7 @@ export function assertFarmWotcReturn(
     : calculateIndependentOwnerHealth(
       pending.form7206.independent_schedule_c_plans,
       owned?.source,
-      CONFIG_BY_YEAR[2025].ssWageBase,
+      qbiYearConfig(taxYear).ssWageBase,
     );
   if (health) {
     reconcileIndependentOwnerHealthGraph(pending.form7206!, health);
@@ -608,7 +609,7 @@ export function assertFarmWotcReturn(
       ? jointOwnerQbi(
         owned.source,
         taxable,
-        CONFIG_BY_YEAR[2025].ssWageBase,
+        qbiYearConfig(taxYear).ssWageBase,
         undefined,
         health?.deduction ?? 0,
         health?.source,
@@ -630,7 +631,7 @@ export function assertFarmWotcReturn(
   }
   if (rawFields.farm_wotc_filing_source) {
     const fields = parentSchema.strict().parse(rawFields),
-      calculated = calculateFarmWotcLines(fields);
+      calculated = calculateFarmWotcLines(fields, taxYear);
     if (
       !isDeepStrictEqual(
         parentSchema.strict().parse(pending.form8995a),

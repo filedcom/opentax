@@ -78,10 +78,9 @@ test("TY2026 still refuses the worksheets that apply TY2025 rules", () => {
       tax2026({
         taxable_income: 40_000,
         filing_status: FilingStatus.Single,
-        foreign_earned_income_exclusion: 10_000,
-        foreign_exclusion_disallowed_deductions: 0,
+        form8814_tax: 135,
       }),
     Error,
-    "TY2026 tax worksheets beyond the rate schedule",
+    "TY2026 Form 8814 and Schedule J tax worksheets are not supported yet",
   );
 });

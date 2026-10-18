@@ -147,7 +147,7 @@ for (const c of cases) {
     assertEquals(companion.row3_a, -c.loss);
     // Reordering public sources cannot reassign rounded dollars or wage limits.
     const expectedByName = Object.fromEntries(
-      calculateScheduleCLossLines(qbiInputSchema.parse(pending.form8995a))
+      calculateScheduleCLossLines(qbiInputSchema.parse(pending.form8995a), 2025)
         .businessLines.map(
           (r) => [r.business.business_name, [
             r.loss,
@@ -166,6 +166,7 @@ for (const c of cases) {
       assertEquals(replay.diagnostics, []);
       const lines = calculateScheduleCLossLines(
         qbiInputSchema.parse(normalizeAllPending(replay.pending).form8995a),
+        2025,
       );
       assertEquals(
         Object.fromEntries(
@@ -360,6 +361,7 @@ test("Form8995A proportional allocation conserves tied and fully used dollars in
       assertEquals(result.diagnostics, []);
       const lines = calculateScheduleCLossLines(
         qbiInputSchema.parse(normalizeAllPending(result.pending).form8995a),
+        2025,
       );
       const byRef = Object.fromEntries(
         lines.businessLines.map((r) => [r.business.business_reference, r]),

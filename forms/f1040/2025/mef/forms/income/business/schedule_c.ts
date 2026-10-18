@@ -34,6 +34,7 @@ import {
   inputSchema as form5884InputSchema,
 } from "../../../../../nodes/inputs/credits/business/f5884/index.ts";
 import { assertCurrentYearSection481aMatches } from "../../../../../nodes/inputs/income/business/f3115/index.ts";
+import { mefTaxYear } from "../../../support/year-config.ts";
 
 interface Fields {
   readonly schedule_cs?: readonly ScheduleCItem[];
@@ -343,6 +344,7 @@ export const scheduleC: MefFormDescriptor<
       assertFarmWotcReturn(
         context.pending.form8995a ?? context.pending.form8995,
         context.pending,
+        mefTaxYear(context),
         context.filer,
         { key: "schedule_c", value: fields },
       );

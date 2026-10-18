@@ -195,10 +195,10 @@ export function scheduleJJointFishingPositiveLimitsInputs(
         box6_medicare_tax_withheld: 290,
       }]
       : [],
-    current_2025_agricultural_service_weeks: hasWages
+    current_year_agricultural_service_weeks: hasWages
       ? [{ week_end: "2025-10-18", employee_count: 1 }]
       : [],
-    prior_2024_agricultural_payroll: {
+    prior_year_agricultural_payroll: {
       source_reference: "grain-2024-quarterly-payroll-archive",
       quarter_cash_wages: [0, 0, 0, 0],
       quarter_employee_service_week_counts: [0, 0, 0, 0],
@@ -258,9 +258,9 @@ export function scheduleJJointFishingPositiveLimitsInputs(
         original_cost_paid: 400_000,
         owner_ssn: ownerSsn,
         tangible_depreciable_property: true,
-        held_at_2025_year_end: true,
-        used_in_2025_qbi_production: true,
-        retained_2025_use_record_reference: "grain-tractor-harvest-log-2025",
+        held_at_tax_year_end: true,
+        used_in_tax_year_qbi_production: true,
+        retained_tax_year_use_record_reference: "grain-tractor-harvest-log-2025",
       }]
       : [],
   };

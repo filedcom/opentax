@@ -30,7 +30,7 @@ test("actual controlled farm employers file separate owner SE/QBI and joint curr
     const r = f1040_2025.executeReturn(f.inputs),
       p = normalizeAllPending(r.pending);
     assertEquals(r.diagnostics, []);
-    assertFarmWotcReturn(p.form8995a ?? p.form8995, p, f.filer);
+    assertFarmWotcReturn(p.form8995a ?? p.form8995, p, 2025, f.filer);
     assertEquals([
       p.schedule1.line6_schedule_f,
       p.schedule1.line15_se_deduction,
@@ -63,7 +63,7 @@ test("actual controlled farm employers file separate owner SE/QBI and joint curr
       assertEquals(owners[1].line10, 6321);
     }
     if (i === 3) {
-      const a = calculateFarmWotcLines(parentSchema.parse(p.form8995a));
+      const a = calculateFarmWotcLines(parentSchema.parse(p.form8995a), 2025);
       assertEquals(a.lossSchedule?.rows.map((row) => row.line1a), [
         -11201,
         181669,
@@ -82,7 +82,7 @@ test("actual controlled farm employers file separate owner SE/QBI and joint curr
         use: p.f3800.allowed_credit,
         tax: p.f1040.line24_total_tax,
         phase: p.form8995a
-          ? calculateFarmWotcLines(parentSchema.parse(p.form8995a)).parent
+          ? calculateFarmWotcLines(parentSchema.parse(p.form8995a), 2025).parent
             .phaseIn
           : null,
       }),
@@ -186,7 +186,7 @@ test("two farm actual ownership attribution payroll and issued-income conflicts 
       const p = structuredClone(original);
       change(p);
       assertThrows(() =>
-        assertFarmWotcReturn(p.form8995a ?? p.form8995, p, f.filer)
+        assertFarmWotcReturn(p.form8995a ?? p.form8995, p, 2025, f.filer)
       );
       assertThrows(() =>
         scheduleF.build(p.schedule_f as any, { pending: p, filer: f.filer })

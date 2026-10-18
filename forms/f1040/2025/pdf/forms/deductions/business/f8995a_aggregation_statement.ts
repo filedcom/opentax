@@ -6,6 +6,7 @@ import {
   calculateTwoBusinessAggregationLines,
   type Form8995AInput,
 } from "../../../../../nodes/intermediate/forms/deductions/business/form8995a/index.ts";
+import { mefTaxYear } from "../../../../mef/support/year-config.ts";
 
 export const AGGREGATION_DISCLOSURE_FILE =
   "Form8995AAggregationAnnualDisclosure.pdf";
@@ -15,7 +16,7 @@ export const AGGREGATION_DISCLOSURE_DESCRIPTION =
 export function aggregationChangeDescription(
   input: Form8995AInput,
 ): string | undefined {
-  const { source } = calculateTwoBusinessAggregationLines(input);
+  const { source } = calculateTwoBusinessAggregationLines(input, mefTaxYear());
   const events = source.annual_disclosure.businesses.flatMap((b) =>
     b.events.map((e) =>
       `${
@@ -40,7 +41,7 @@ export async function appendAggregationAnnualDisclosure(
   filer?: FilerIdentity,
   includeIssuedCopy = true,
 ): Promise<void> {
-  const { source, schedule } = calculateTwoBusinessAggregationLines(input);
+  const { source, schedule } = calculateTwoBusinessAggregationLines(input, mefTaxYear());
   const owner = aggregationOwner(input, filer);
   const disclosure = source.annual_disclosure;
   const font = await document.embedFont(StandardFonts.Helvetica);

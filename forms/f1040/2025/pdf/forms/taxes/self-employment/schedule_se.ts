@@ -4,6 +4,7 @@ import { scheduleSELines } from "../../../../../nodes/intermediate/forms/taxes/s
 import { CONFIG_BY_YEAR } from "../../../../../nodes/config/index.ts";
 import { FilingStatus } from "../../../../../nodes/types.ts";
 import { scheduleSeSpouseProprietor } from "../../../../domains/taxes/self-employment/schedule-se/schedule-se-proprietor.ts";
+import { mefTaxYear } from "../../../../mef/support/year-config.ts";
 
 // IRS Schedule SE (2025) AcroForm field names.
 // Verified layout from https://www.irs.gov/pub/irs-prior/f1040sse--2025.pdf
@@ -69,7 +70,7 @@ export const scheduleSePdf: PdfFormDescriptor = {
   projectFields(fields, allPending) {
     if (Object.keys(fields).length === 0) return fields;
     if (fields.owner_identity) {
-      assertOwnedScheduleSE(allPending);
+      assertOwnedScheduleSE(allPending, mefTaxYear());
       return fields;
     }
     const lines = scheduleSELines(fields, CONFIG_BY_YEAR[2025].ssWageBase);
@@ -110,7 +111,7 @@ export const scheduleSePdf: PdfFormDescriptor = {
   },
   instances(fields, filer, allPending) {
     const owned = allPending
-      ? assertOwnedScheduleSE(allPending, filer)
+      ? assertOwnedScheduleSE(allPending, mefTaxYear(), filer)
       : undefined;
     if (!owned) return [fields];
     return owned.instances.map((row) => {

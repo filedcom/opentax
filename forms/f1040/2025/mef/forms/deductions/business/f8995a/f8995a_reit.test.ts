@@ -90,7 +90,7 @@ const pending = {
 
 test("Form 8995-A carries one sourced REIT dividend through calculation, MeF, and PDF", () => {
   const parsed = form8995aInputSchema.parse(fields);
-  const lines = calculateOneBusiness8995ALines(parsed);
+  const lines = calculateOneBusiness8995ALines(parsed, 2025);
   assertEquals(lines.line28, 1_000);
   assertEquals(lines.line31, 200);
   assertEquals(lines.line32, 10_200);

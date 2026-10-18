@@ -7,6 +7,7 @@ import {
   inputSchema,
 } from "../../../../../nodes/intermediate/forms/deductions/business/form8995a/index.ts";
 import { projectOneBusiness8995A } from "./f8995a.ts";
+import { mefTaxYear } from "../../../../mef/support/year-config.ts";
 
 // The current IRS Schedule D is Rev. December 2022 and is attached to the
 // TY2025 parent. The bounded one-business route uses only column A.
@@ -58,7 +59,7 @@ export const form8995aScheduleDPdf: PdfFormDescriptor = {
       );
     }
     if (input.independent_patron_sources) {
-      assertOwnedScheduleSE(allPending!, filer);
+      assertOwnedScheduleSE(allPending!, mefTaxYear(), filer);
     }
     return [raw];
   },
@@ -79,7 +80,7 @@ export const form8995aScheduleDPdf: PdfFormDescriptor = {
       allPending,
     );
     if (schedule.independent_patron_sources) {
-      const result = calculateIndependentPatronBusinesses(schedule);
+      const result = calculateIndependentPatronBusinesses(schedule, mefTaxYear());
       const projection: Record<string, unknown> = {};
       result.rows.forEach((r, i) => {
         const suffix = i === 0 ? "" : "_b";

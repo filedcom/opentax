@@ -61,7 +61,7 @@ test("public patron farm, owned C health and capped cooperative pass-through fil
     const { fixture, pending } = prepared(kind);
     const input = inputSchema.parse(pending.form8995a);
     const amounts = patronSourceAmounts(input.patron_business_source!);
-    const parent = calculateOneBusiness8995ALines(input);
+    const parent = calculateOneBusiness8995ALines(input, 2025);
     const schedule = calculatePatronScheduleDLines(input);
     assertEquals(amounts.filed_gross - amounts.filed_expenses, amounts.profit);
     assertEquals(

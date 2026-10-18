@@ -28,7 +28,7 @@ export function assertJointOwner8995(
   const cfg = CONFIG_BY_YEAR[taxYear];
   if (!cfg) throw new Error(`No f1040 config for year ${taxYear}`);
   const p = normalizeAllPending(raw as Record<string, unknown>);
-  const owned = assertOwnedScheduleSE(p, undefined, taxYear);
+  const owned = assertOwnedScheduleSE(p, taxYear);
   const f = p.f1040;
   const g = p.general;
   if (
@@ -56,7 +56,7 @@ export function assertJointOwner8995(
   const rawFamily = p.form7206?.independent_schedule_c_plans;
   const family = rawFamily === undefined
     ? undefined
-    : assertIndependentOwnerHealth(p);
+    : assertIndependentOwnerHealth(p, taxYear);
   const rawPlan = p.form7206?.single_schedule_c_plan;
   const plan = rawPlan === undefined
     ? undefined

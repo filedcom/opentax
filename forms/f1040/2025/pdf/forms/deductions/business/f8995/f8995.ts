@@ -4,6 +4,7 @@ import {
   assertNoUnfiled8995Loss,
   assertPositive8995,
 } from "../../../../../mef/forms/deductions/business/f8995/f8995-route.ts";
+import { mefTaxYear } from "../../../../../mef/support/year-config.ts";
 
 const page1 = "topmostSubform[0].Page1[0].";
 const fields: ReadonlyArray<PdfFieldEntry> = [
@@ -108,7 +109,7 @@ export const form8995Pdf: PdfFormDescriptor = {
       !(typeof fields.line1_qbi === "number" && fields.line1_qbi > 0 &&
         typeof fields.line1_business_reference === "string")
     ) {
-      assertNoUnfiled8995Loss(fields, allPending);
+      assertNoUnfiled8995Loss(fields, allPending, mefTaxYear());
       return {};
     }
     if (

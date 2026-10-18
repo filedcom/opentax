@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { computeNetProfit, itemSchema } from "../../../income/business/schedule_f/model.ts";
 import { scheduleSELines } from "../../../taxes/self-employment/schedule_se/calculation.ts";
-import { CONFIG_BY_YEAR } from "../../../../../config/index.ts";
+import { qbiYearConfig } from "./thresholds.ts";
 import { FilingStatus } from "../../../../../types.ts";
 import type { Form8995AInput } from "./index.ts";
 export const ownerW2WageSourceSchema = z.object({
@@ -22,6 +22,7 @@ export const singleFarmSourceSchema = z.object({
 }).strict();
 export function singleFarmSourceAmounts(
   raw: z.infer<typeof singleFarmSourceSchema>,
+  taxYear: number,
 ) {
   const source = singleFarmSourceSchema.parse(raw);
   const item = source.item;
@@ -34,7 +35,7 @@ export function singleFarmSourceAmounts(
   );
   const se = scheduleSELines(
     { net_profit_schedule_f: profit, w2_ss_wages: w2SsWages },
-    CONFIG_BY_YEAR[2025].ssWageBase,
+    qbiYearConfig(taxYear).ssWageBase,
   );
   if (
     !item.farm_id || !item.line_c_farm_name ||
@@ -62,9 +63,15 @@ export function singleFarmSourceAmounts(
     ein: item.line_d_ein!.replaceAll("-", ""),
   };
 }
-export function assertSingleFarmAmounts(input: Form8995AInput): void {
+export function assertSingleFarmAmounts(
+  input: Form8995AInput,
+  taxYear: number,
+): void {
   if (!input.single_schedule_f_source) return;
-  const source = singleFarmSourceAmounts(input.single_schedule_f_source);
+  const source = singleFarmSourceAmounts(
+    input.single_schedule_f_source,
+    taxYear,
+  );
   const details = input.business_filing_details;
   if (
     input.filing_status !== FilingStatus.Single ||

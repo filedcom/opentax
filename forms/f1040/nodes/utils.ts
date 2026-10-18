@@ -19,3 +19,19 @@ export function assertDatesInTaxYear(
     throw new Error(message);
   }
 }
+
+export function taxYearStart(taxYear: number): string {
+  return `${taxYear}-01-01`;
+}
+
+export function taxYearEnd(taxYear: number): string {
+  return `${taxYear}-12-31`;
+}
+
+/** Latest start date that leaves more than half the year's days through December 31. */
+export function majorityOwnershipLatestStart(taxYear: number): string {
+  const days = (Date.UTC(taxYear + 1, 0, 1) - Date.UTC(taxYear, 0, 1)) /
+    86_400_000;
+  const latest = Date.UTC(taxYear, 11, 31) - Math.floor(days / 2) * 86_400_000;
+  return new Date(latest).toISOString().slice(0, 10);
+}

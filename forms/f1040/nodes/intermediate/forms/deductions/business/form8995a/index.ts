@@ -49,7 +49,16 @@ import { f1040 } from "../../../../../outputs/general/return-assembly/f1040/inde
 import { standard_deduction } from "../../../../worksheets/deductions/standard/standard_deduction/index.ts";
 import { FilingStatus, filingStatusSchema, TS } from "../../../../../types.ts";
 import type { NodeContext } from "../../../../../../../../core/types/node-context.ts";
-import { CONFIG_BY_YEAR } from "../../../../../config/index.ts";
+import type { F1040Config } from "../../../../../config/index.ts";
+import { qbiPhaseInRange, qbiThreshold, qbiYearConfig } from "./thresholds.ts";
+import { minimumDeductionLine40 } from "./minimum-deduction.ts";
+import {
+  assertDatesInTaxYear,
+  ISO_DATE,
+  majorityOwnershipLatestStart,
+  taxYearEnd,
+  taxYearStart,
+} from "../../../../../utils.ts";
 import {
   inputSchema as f1099patrInputSchema,
   itemSchema as f1099patrItemSchema,
@@ -93,7 +102,7 @@ const aggregationMemberSchema = z.object({
   ubia: z.number().int().nonnegative(),
   owner_share_pct: z.literal(100),
   ownership_start_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
-  owned_on_2025_12_31: z.literal(true),
+  owned_on_tax_year_end: z.literal(true),
   ownership_source_reference: z.string().trim().min(1),
   qbi_adjustments: z.object({
     deductible_se_tax: z.number().int().nonnegative(),
@@ -129,7 +138,7 @@ const aggregationAnnualDisclosureSchema = z.object({
             "disposed",
             "ceased_operations",
           ]),
-          date: z.string().regex(/^2025-\d{2}-\d{2}$/),
+          date: z.string().regex(ISO_DATE),
           source_reference: z.string().trim().min(1),
         }).strict(),
       ),
@@ -145,16 +154,16 @@ export const aggregationFilingDetailsSchema = z.object({
   group_name: z.string().trim().min(1).max(75),
   group_description: z.string().trim().min(1).max(180),
   common_owner_ssn: z.string().regex(/^\d{9}$/),
-  tax_year_end: z.literal("2025-12-31"),
+  tax_year_end: z.string().regex(ISO_DATE),
   tax_year_end_source_reference: z.string().trim().min(1),
   election_history: z.discriminatedUnion("status", [
     z.object({
-      status: z.literal("new_2025"),
+      status: z.literal("new_election"),
       no_prior_election_confirmed: z.literal(true),
     }).strict(),
     z.object({
       status: z.literal("continued_unchanged"),
-      filed_2024_schedule_b_reference: z.string().trim().min(1),
+      filed_prior_year_schedule_b_reference: z.string().trim().min(1),
       no_material_change_confirmed: z.literal(true),
     }).strict(),
   ]),
@@ -282,7 +291,7 @@ export const inputSchema = z.object({
       source_document_reference: z.string().trim().min(1),
       box1a: z.number().positive().int(),
       box5: z.number().positive().int(),
-      ex_dividend_date: z.string().regex(/^2025-\d{2}-\d{2}$/),
+      ex_dividend_date: z.string().regex(ISO_DATE),
       qualified_held_days_in_91_day_window: z.number().int().min(46).max(91),
       diminished_risk_days_excluded: z.number().int().nonnegative(),
       no_related_payment_obligation_confirmed: z.literal(true),
@@ -345,9 +354,13 @@ export const inputSchema = z.object({
 
 export type Form8995AInput = z.infer<typeof inputSchema>;
 
-export function assertSingleScheduleCWotcAmounts(input: Form8995AInput): void {
+export function assertSingleScheduleCWotcAmounts(
+  input: Form8995AInput,
+  taxYear: number,
+): void {
   const retained = input.single_schedule_c_source;
   if (!retained) return;
+  const cfg = qbiYearConfig(taxYear);
   const business = retained.business;
   const item = business.source_schedule_c;
   const details = input.business_filing_details;
@@ -372,19 +385,18 @@ export function assertSingleScheduleCWotcAmounts(input: Form8995AInput): void {
   }
   const qbi = Math.round(business.qbi - retained.se_tax_deduction - tips.total);
   const se = retained.joint_se_source
-    ? ownedScheduleSE(retained.joint_se_source, CONFIG_BY_YEAR[2025].ssWageBase)
+    ? ownedScheduleSE(retained.joint_se_source, cfg.ssWageBase)
       .instances.find((row) =>
         row.recipient === (item.proprietor_recipient ?? "T")
       )
     : scheduleSELines(
       { net_profit_schedule_c: business.qbi },
-      CONFIG_BY_YEAR[2025].ssWageBase,
+      cfg.ssWageBase,
     );
   if (
     (input.filing_status !== FilingStatus.Single &&
       input.filing_status !== FilingStatus.MFJ) ||
-    input.taxable_income <=
-      (input.filing_status === FilingStatus.MFJ ? 394600 : 197300) ||
+    input.taxable_income <= qbiThreshold(input.filing_status, cfg) ||
     (input.filing_status === FilingStatus.MFJ &&
       (!retained.joint_se_source || retained.joint_wages_total === undefined ||
         item.qbi_wotc_filing_review?.owner_ssn !==
@@ -442,16 +454,22 @@ export function assertSingleScheduleCWotcAmounts(input: Form8995AInput): void {
   }
 }
 
-export function validateTwoBusinessAggregationSource(input: Form8995AInput) {
+export function validateTwoBusinessAggregationSource(
+  input: Form8995AInput,
+  taxYear: number,
+) {
   const source = input.aggregation_filing_details;
   const groups = input.aggregation_groups;
   const group = groups?.[0];
-  const cfg = CONFIG_BY_YEAR[2025];
+  const cfg = qbiYearConfig(taxYear);
   const joint = input.filing_status === FilingStatus.MFJ;
   const owner = source?.members[0]?.source_schedule_c.proprietor_recipient;
-  const threshold = joint ? cfg.qbiThresholdMfj : cfg.qbiThresholdSingle;
+  const threshold = qbiThreshold(input.filing_status, cfg);
+  const yearStart = taxYearStart(taxYear);
+  const yearEnd = taxYearEnd(taxYear);
   if (
     !source || !group || groups?.length !== 1 ||
+    source.tax_year_end !== yearEnd ||
     group.group_name !== source.group_name ||
     group.combined_for_limitation !== true ||
     (owner !== TS.T && !(joint && owner === TS.S)) ||
@@ -503,7 +521,7 @@ export function validateTwoBusinessAggregationSource(input: Form8995AInput) {
     if (
       !Number.isFinite(date.valueOf()) ||
       date.toISOString().slice(0, 10) !== member.ownership_start_date ||
-      member.ownership_start_date > "2025-07-02"
+      member.ownership_start_date > majorityOwnershipLatestStart(taxYear)
     ) {
       throw new Error(
         "Form 8995-A Schedule B needs majority-year ownership including December 31",
@@ -513,10 +531,10 @@ export function validateTwoBusinessAggregationSource(input: Form8995AInput) {
       !Number.isFinite(reviewDate.valueOf()) ||
       reviewDate.toISOString().slice(0, 10) !==
         member.qbi_adjustments.allocation_worksheet_review_date ||
-      member.qbi_adjustments.allocation_worksheet_review_date < "2025-12-31"
+      member.qbi_adjustments.allocation_worksheet_review_date < yearEnd
     ) {
       throw new Error(
-        "Form 8995-A Schedule B needs a valid reviewed 2025 allocation worksheet date",
+        "Form 8995-A Schedule B needs a valid allocation worksheet reviewed at or after the tax year end",
       );
     }
     const scheduleC = member.source_schedule_c;
@@ -547,7 +565,7 @@ export function validateTwoBusinessAggregationSource(input: Form8995AInput) {
   if (
     !Number.isFinite(reviewDate.valueOf()) ||
     reviewDate.toISOString().slice(0, 10) !== disclosure.review_date ||
-    disclosure.review_date < "2025-12-31" ||
+    disclosure.review_date < yearEnd ||
     disclosure.businesses.length !== source.members.length ||
     new Set(disclosure.businesses.map((b) => b.business_reference)).size !==
       source.members.length
@@ -585,7 +603,7 @@ export function validateTwoBusinessAggregationSource(input: Form8995AInput) {
       if (
         !Number.isFinite(date.valueOf()) ||
         date.toISOString().slice(0, 10) !== event.date ||
-        event.date > "2025-12-31" ||
+        event.date > yearEnd || event.date < yearStart ||
         event.event === "disposed" || event.event === "ceased_operations" ||
         event.date !== member.ownership_start_date
       ) {
@@ -595,7 +613,7 @@ export function validateTwoBusinessAggregationSource(input: Form8995AInput) {
       }
     }
     if (
-      member.ownership_start_date >= "2025-01-01" &&
+      member.ownership_start_date >= yearStart &&
       !business.events.some((e) =>
         e.event === "formed" || e.event === "acquired"
       )
@@ -641,7 +659,11 @@ export function validateTwoBusinessAggregationSource(input: Form8995AInput) {
   };
 }
 
-export function calculateTwoBusinessAggregationLines(input: Form8995AInput) {
+export function calculateTwoBusinessAggregationLines(
+  input: Form8995AInput,
+  taxYear: number,
+) {
+  const cfg = qbiYearConfig(taxYear);
   const mfs = input.filing_status === FilingStatus.MFS;
   const owner = input.aggregation_filing_details?.common_owner_ssn ??
     input.rpe_aggregation_source?.recipient_tin;
@@ -656,12 +678,11 @@ export function calculateTwoBusinessAggregationLines(input: Form8995AInput) {
     );
   }
   if (input.rpe_aggregation_source) {
-    const totals = reviewedRpeAggregation(input.rpe_aggregation_source),
+    const totals = reviewedRpeAggregation(input.rpe_aggregation_source, taxYear),
       issued = totals.source;
     const group = input.aggregation_groups?.[0];
     if (
-      input.taxable_income <=
-        (input.filing_status === FilingStatus.MFJ ? 394600 : 197300) ||
+      input.taxable_income <= qbiThreshold(input.filing_status, cfg) ||
       !Number.isInteger(input.taxable_income) ||
       !Number.isSafeInteger(input.net_capital_gain) ||
       input.aggregation_groups?.length !== 1 || !group ||
@@ -732,7 +753,7 @@ export function calculateTwoBusinessAggregationLines(input: Form8995AInput) {
         },
       })),
     };
-    const parent = calculateOneBusiness8995ALines(input);
+    const parent = calculateOneBusiness8995ALines(input, taxYear);
     if (
       !Object.entries(parent).filter(([key, value]) =>
         /^line\d+$/.test(key) && value !== undefined
@@ -762,8 +783,8 @@ export function calculateTwoBusinessAggregationLines(input: Form8995AInput) {
   // Schedule C net profit alone is not generally QBI. Each member's explicit
   // attributable deductions are checked against its retained Schedule C and
   // the Schedule 1 totals in the native/PDF join.
-  const totals = validateTwoBusinessAggregationSource(input);
-  const parent = calculateOneBusiness8995ALines(input);
+  const totals = validateTwoBusinessAggregationSource(input, taxYear);
+  const parent = calculateOneBusiness8995ALines(input, taxYear);
   if (
     !Object.entries(parent).filter(([key, value]) =>
       /^line\d+$/.test(key) && value !== undefined
@@ -828,7 +849,8 @@ export function calculateLossBusinessPhase(
   taxableIncome: number,
   potential: number,
   limit: number,
-  filingStatus: FilingStatus = FilingStatus.Single,
+  filingStatus: FilingStatus,
+  taxYear: number,
 ): {
   threshold: number;
   range: number;
@@ -841,11 +863,9 @@ export function calculateLossBusinessPhase(
   line25: number;
   line26: number;
 } | undefined {
-  const joint = filingStatus === FilingStatus.MFJ;
-  const threshold = joint
-    ? CONFIG_BY_YEAR[2025].qbiThresholdMfj
-    : CONFIG_BY_YEAR[2025].qbiThresholdSingle;
-  const range = CONFIG_BY_YEAR[2025].qbiPhaseInRange / (joint ? 1 : 2);
+  const cfg = qbiYearConfig(taxYear);
+  const threshold = qbiThreshold(filingStatus, cfg);
+  const range = qbiPhaseInRange(filingStatus, cfg);
   const filedIncome = Math.round(taxableIncome);
   if (filedIncome > threshold + range || limit >= potential) return undefined;
   const excess = Math.max(0, filedIncome - threshold);
@@ -869,9 +889,11 @@ export function calculateLossBusinessPhase(
 
 export function calculateScheduleCLossLines(
   input: Form8995AInput,
+  taxYear: number,
 ): ScheduleCLossLines {
+  const cfg = qbiYearConfig(taxYear);
   if (input.farm_wotc_filing_source) {
-    const farm = calculateFarmWotcLines(input);
+    const farm = calculateFarmWotcLines(input, taxYear);
     if (!farm.lossSchedule) {
       throw new Error("Farm Schedule C needs actual sourced QBI loss");
     }
@@ -902,10 +924,7 @@ export function calculateScheduleCLossLines(
       FilingStatus.QSS,
     ]
       .includes(input.filing_status) ||
-    input.taxable_income <=
-      (input.filing_status === FilingStatus.MFJ
-        ? CONFIG_BY_YEAR[2025].qbiThresholdMfj
-        : CONFIG_BY_YEAR[2025].qbiThresholdSingle) ||
+    input.taxable_income <= qbiThreshold(input.filing_status, cfg) ||
     input.qbi_no_prior_loss_or_suspended_loss_confirmed !== true ||
     (input.qbi_loss_carryforward ?? 0) !== 0 ||
     (input.reit_loss_carryforward ?? 0) !== 0 ||
@@ -1011,6 +1030,7 @@ export function calculateScheduleCLossLines(
       businesses.map((b) => b.source_schedule_c),
       input.filing_status,
       input.loss_se_tax_source,
+      taxYear,
       wotcReductions,
     )
     : businesses.map(() => 0);
@@ -1114,6 +1134,7 @@ export function calculateScheduleCLossLines(
       line3,
       line10,
       input.filing_status,
+      taxYear,
     );
     const line13 = phase ? Math.max(line11, phase.line26) : line11;
     const parent = {
@@ -1184,16 +1205,16 @@ export function calculateScheduleCLossLines(
   };
 }
 
-export function calculateOneSstb8995ALines(input: Form8995AInput) {
+export function calculateOneSstb8995ALines(
+  input: Form8995AInput,
+  taxYear: number,
+) {
   const source = input.sstb_filing_details;
   const joint = input.filing_status === FilingStatus.MFJ;
   const separate = input.filing_status === FilingStatus.MFS;
-  const threshold = joint
-    ? CONFIG_BY_YEAR[2025].qbiThresholdMfj
-    : CONFIG_BY_YEAR[2025].qbiThresholdSingle;
-  const phaseInRange = joint
-    ? CONFIG_BY_YEAR[2025].qbiPhaseInRange
-    : CONFIG_BY_YEAR[2025].qbiPhaseInRange / 2;
+  const cfg = qbiYearConfig(taxYear);
+  const threshold = qbiThreshold(input.filing_status, cfg);
+  const phaseInRange = qbiPhaseInRange(input.filing_status, cfg);
   if (
     !source ||
     (input.filing_status !== FilingStatus.Single &&
@@ -1497,13 +1518,17 @@ export function calculatePatronScheduleDLines(input: Form8995AInput) {
   return { line2, line3, line4, line5, line6 };
 }
 
-export function calculateOwnedWotcBusinesses(input: Form8995AInput) {
+export function calculateOwnedWotcBusinesses(
+  input: Form8995AInput,
+  taxYear: number,
+) {
   const sources = input.wotc_business_sources;
+  const cfg = qbiYearConfig(taxYear);
   if (
     !sources || input.single_schedule_c_source ||
     input.business_filing_details ||
     input.filing_status !== FilingStatus.MFJ ||
-    input.taxable_income <= 394600 ||
+    input.taxable_income <= cfg.qbiThresholdMfj ||
     input.aggregation_filing_details || input.sstb_filing_details ||
     input.patron_filing_details ||
     (input.sstb_qbi ?? 0) !== 0 || (input.net_capital_gain ?? 0) !== 0 ||
@@ -1574,7 +1599,7 @@ export function calculateOwnedWotcBusinesses(input: Form8995AInput) {
     return {
       source,
       input: child,
-      lines: calculateOneBusiness8995ALines(child),
+      lines: calculateOneBusiness8995ALines(child, taxYear),
     };
   });
   if (
@@ -1603,7 +1628,10 @@ export function calculateOwnedWotcBusinesses(input: Form8995AInput) {
   };
 }
 
-export function calculateIndependentPatronBusinesses(input: Form8995AInput) {
+export function calculateIndependentPatronBusinesses(
+  input: Form8995AInput,
+  taxYear: number,
+) {
   const family = replayIndependentPatronSources(
     input.independent_patron_sources,
   );
@@ -1669,7 +1697,7 @@ export function calculateIndependentPatronBusinesses(input: Form8995AInput) {
     };
     return {
       input: child,
-      lines: calculateOneBusiness8995ALines(child),
+      lines: calculateOneBusiness8995ALines(child, taxYear),
       schedule: calculatePatronScheduleDLines(child),
     };
   });
@@ -1702,9 +1730,13 @@ export function calculateIndependentPatronBusinesses(input: Form8995AInput) {
   };
 }
 
-export function calculateOneBusiness8995ALines(input: Form8995AInput) {
-  assertSingleScheduleCWotcAmounts(input);
-  assertSingleFarmAmounts(input);
+export function calculateOneBusiness8995ALines(
+  input: Form8995AInput,
+  taxYear: number,
+) {
+  const cfg = qbiYearConfig(taxYear);
+  assertSingleScheduleCWotcAmounts(input, taxYear);
+  assertSingleFarmAmounts(input, taxYear);
   const patronReduction = input.patron_of_specified_cooperative === true
     ? calculatePatronScheduleDLines(input).line6
     : 0;
@@ -1730,12 +1762,8 @@ export function calculateOneBusiness8995ALines(input: Form8995AInput) {
   const line9 = line6 + line8;
   const line10 = Math.max(line5, line9);
   const line11 = Math.min(line3, line10);
-  const patronThreshold = input.filing_status === FilingStatus.MFJ
-    ? 394600
-    : 197300;
-  const patronPhaseInRange = input.filing_status === FilingStatus.MFJ
-    ? 100000
-    : 50000;
+  const patronThreshold = qbiThreshold(input.filing_status, cfg);
+  const patronPhaseInRange = qbiPhaseInRange(input.filing_status, cfg);
   // Part III applies only in the middle band when the wage/property limit binds.
   const phaseInRequired = Boolean(
     input.patron_business_source || input.single_schedule_c_source ||
@@ -1833,15 +1861,6 @@ export function calculateOneBusiness8995ALines(input: Form8995AInput) {
 
 // ── Threshold helpers ─────────────────────────────────────────────────────────
 
-function threshold(
-  filingStatus: FilingStatus,
-  cfg: import("../../../../../config/index.ts").F1040Config,
-): number {
-  return filingStatus === FilingStatus.MFJ
-    ? cfg.qbiThresholdMfj
-    : cfg.qbiThresholdSingle;
-}
-
 /**
  * Reduction ratio for phase-in of wage limitation and SSTB phase-out.
  * 0 = below threshold (no limitation), 1 = fully above range (full limitation).
@@ -1849,14 +1868,10 @@ function threshold(
 function reductionRatio(
   taxableIncome: number,
   filingStatus: FilingStatus,
-  cfg: import("../../../../../config/index.ts").F1040Config,
+  cfg: F1040Config,
 ): number {
-  const base = threshold(filingStatus, cfg);
-  // The configured range is the joint-return amount. IRC §199A(e)(2)(B)
-  // uses half that range for every other filing status.
-  const phaseInRange = filingStatus === FilingStatus.MFJ
-    ? cfg.qbiPhaseInRange
-    : cfg.qbiPhaseInRange / 2;
+  const base = qbiThreshold(filingStatus, cfg);
+  const phaseInRange = qbiPhaseInRange(filingStatus, cfg);
   const excess = taxableIncome - base;
   if (excess <= 0) return 0;
   if (excess >= phaseInRange) return 1;
@@ -1968,8 +1983,16 @@ function hasQbiActivity(input: Form8995AInput): boolean {
 }
 
 /** Reject required Schedules A-D before a deduction reaches Form 1040. */
-function assertSupportedSchedulePath(input: Form8995AInput): void {
+function assertSupportedSchedulePath(
+  input: Form8995AInput,
+  taxYear: number,
+): void {
   const reit = input.line6_sec199a_dividends ?? 0;
+  assertDatesInTaxYear(
+    taxYear,
+    (input.reit_dividend_sources ?? []).map((row) => row.ex_dividend_date),
+    "Form 8995-A REIT 1099-DIV ex-dividend date must fall in the tax year",
+  );
   if (
     reit > 0 &&
       (!input.business_filing_details ||
@@ -1990,13 +2013,13 @@ function assertSupportedSchedulePath(input: Form8995AInput): void {
     (input.sstb_unadjusted_basis ?? 0) !== 0 ||
     input.sstb_filing_details
   ) {
-    calculateOneSstb8995ALines(input);
+    calculateOneSstb8995ALines(input, taxYear);
   }
   if (
     (input.aggregation_groups ?? []).length > 0 ||
     input.aggregation_filing_details || input.rpe_aggregation_source
   ) {
-    calculateTwoBusinessAggregationLines(input);
+    calculateTwoBusinessAggregationLines(input, taxYear);
   }
   if ((input.qbi ?? 0) < 0 || (input.qbi_loss_carryforward ?? 0) < 0) {
     if (
@@ -2008,10 +2031,10 @@ function assertSupportedSchedulePath(input: Form8995AInput): void {
     }
   }
   if (input.schedule_c_qbi_businesses?.some((business) => business.qbi < 0)) {
-    calculateScheduleCLossLines(input);
+    calculateScheduleCLossLines(input, taxYear);
   }
   if (input.independent_patron_sources) {
-    calculateIndependentPatronBusinesses(input);
+    calculateIndependentPatronBusinesses(input, taxYear);
   } else if (input.patron_of_specified_cooperative === true) {
     const details = input.business_filing_details;
     if (!details || !input.patron_filing_details) {
@@ -2022,7 +2045,10 @@ function assertSupportedSchedulePath(input: Form8995AInput): void {
     if (
       (!input.patron_business_source &&
         input.filing_status !== FilingStatus.Single) ||
-      (!input.patron_business_source && input.taxable_income <= 247_300) ||
+      (!input.patron_business_source &&
+        input.taxable_income <=
+          qbiThreshold(input.filing_status, qbiYearConfig(taxYear)) +
+            qbiPhaseInRange(input.filing_status, qbiYearConfig(taxYear))) ||
       (input.qbi ?? 0) !== details.business_qbi ||
       (input.w2_wages ?? 0) !== details.business_w2_wages ||
       (input.unadjusted_basis ?? 0) !== details.business_ubia ||
@@ -2035,7 +2061,7 @@ function assertSupportedSchedulePath(input: Form8995AInput): void {
         "Form 8995-A Schedule D needs one sourced owner business with sourced capital gain and zero REIT/PTP activity; unsourced projections require Single fully above phase-in",
       );
     }
-    const lines = calculateOneBusiness8995ALines(input);
+    const lines = calculateOneBusiness8995ALines(input, taxYear);
     if (
       !Object.entries(lines).filter(([key, value]) =>
         /^line\d+$/.test(key) && value !== undefined
@@ -2072,8 +2098,8 @@ class Form8995AScheduleANode extends TaxNode<typeof inputSchema> {
   readonly inputSchema = inputSchema;
   readonly outputNodes = new OutputNodes([]);
 
-  compute(_ctx: NodeContext, rawInput: Form8995AInput): NodeResult {
-    calculateOneSstb8995ALines(inputSchema.parse(rawInput));
+  compute(ctx: NodeContext, rawInput: Form8995AInput): NodeResult {
+    calculateOneSstb8995ALines(inputSchema.parse(rawInput), ctx.taxYear);
     return { outputs: [] };
   }
 }
@@ -2085,8 +2111,8 @@ class Form8995AScheduleCNode extends TaxNode<typeof inputSchema> {
   readonly inputSchema = inputSchema;
   readonly outputNodes = new OutputNodes([]);
 
-  compute(_ctx: NodeContext, rawInput: Form8995AInput): NodeResult {
-    calculateScheduleCLossLines(inputSchema.parse(rawInput));
+  compute(ctx: NodeContext, rawInput: Form8995AInput): NodeResult {
+    calculateScheduleCLossLines(inputSchema.parse(rawInput), ctx.taxYear);
     return { outputs: [] };
   }
 }
@@ -2098,8 +2124,8 @@ class Form8995AScheduleBNode extends TaxNode<typeof inputSchema> {
   readonly inputSchema = inputSchema;
   readonly outputNodes = new OutputNodes([]);
 
-  compute(_ctx: NodeContext, rawInput: Form8995AInput): NodeResult {
-    calculateTwoBusinessAggregationLines(inputSchema.parse(rawInput));
+  compute(ctx: NodeContext, rawInput: Form8995AInput): NodeResult {
+    calculateTwoBusinessAggregationLines(inputSchema.parse(rawInput), ctx.taxYear);
     return { outputs: [] };
   }
 }
@@ -2119,34 +2145,52 @@ class Form8995ANode extends TaxNode<typeof inputSchema> {
   ]);
 
   compute(ctx: NodeContext, rawInput: Form8995AInput): NodeResult {
-    const cfg = CONFIG_BY_YEAR[ctx.taxYear];
-    if (!cfg) throw new Error(`No f1040 config for year ${ctx.taxYear}`);
+    const cfg = qbiYearConfig(ctx.taxYear);
     const input = inputSchema.parse(rawInput);
-    // Its threshold, phase-in and SE-wage helpers still read the TY2025
-    // config, and it has no 2026 §199A(i) minimum deduction.
-    if (ctx.taxYear !== 2025 && hasQbiActivity(input)) {
-      throw new Error(
-        `Form 8995-A above the QBI threshold is not yet supported for TY${ctx.taxYear}`,
-      );
-    }
+    return this.withMinimumDeduction(
+      this.line39Result(ctx, input, cfg),
+      input,
+      cfg,
+    );
+  }
 
-    if (input.sstb_filing_details && ctx.taxYear !== 2025) {
-      throw new Error(
-        "Form 8995-A Schedule A bounded SSTB route is TY2025 only",
-      );
-    }
+  /** Lines 40-41: the deduction is the greater of line 39 or the line 40 minimum. */
+  private withMinimumDeduction(
+    result: NodeResult,
+    input: Form8995AInput,
+    cfg: F1040Config,
+  ): NodeResult {
+    const routed = result.outputs.find((output) =>
+      output.nodeType === f1040.nodeType
+    )?.fields.line13_qbi_deduction;
+    const line39 = typeof routed === "number" ? routed : 0;
+    const line40 = minimumDeductionLine40(input, line39, cfg);
+    if (line40 === undefined) return result;
+    const own = result.outputs.find((output) =>
+      output.nodeType === this.nodeType
+    )?.fields ?? input;
+    return {
+      ...result,
+      outputs: [
+        this.outputNodes.output(f1040, { line13_qbi_deduction: line40 }),
+        this.outputNodes.output(standard_deduction, { qbi_deduction: line40 }),
+        { nodeType: this.nodeType, fields: { ...own, minimum_deduction: line40 } },
+        ...result.outputs.filter((output) =>
+          output.nodeType !== f1040.nodeType &&
+          output.nodeType !== standard_deduction.nodeType &&
+          output.nodeType !== this.nodeType
+        ),
+      ],
+    };
+  }
 
-    if (
-      (input.aggregation_filing_details || input.rpe_aggregation_source) &&
-      ctx.taxYear !== 2025
-    ) {
-      throw new Error(
-        "Form 8995-A Schedule B bounded aggregation route is TY2025 only",
-      );
-    }
-
-    assertSupportedSchedulePath(input);
-    assertSingleScheduleCWotcAmounts(input);
+  private line39Result(
+    ctx: NodeContext,
+    input: Form8995AInput,
+    cfg: F1040Config,
+  ): NodeResult {
+    assertSupportedSchedulePath(input, ctx.taxYear);
+    assertSingleScheduleCWotcAmounts(input, ctx.taxYear);
 
     if (
       !hasQbiActivity(input) && !input.farm_wotc_filing_source &&
@@ -2157,7 +2201,7 @@ class Form8995ANode extends TaxNode<typeof inputSchema> {
 
     if (input.aggregation_filing_details || input.rpe_aggregation_source) {
       const deduction =
-        calculateTwoBusinessAggregationLines(input).parent.line39;
+        calculateTwoBusinessAggregationLines(input, ctx.taxYear).parent.line39;
       return {
         outputs: [
           this.outputNodes.output(f1040, { line13_qbi_deduction: deduction }),
@@ -2171,7 +2215,7 @@ class Form8995ANode extends TaxNode<typeof inputSchema> {
     }
 
     if (input.sstb_filing_details) {
-      const deduction = calculateOneSstb8995ALines(input).line39;
+      const deduction = calculateOneSstb8995ALines(input, ctx.taxYear).line39;
       return {
         outputs: [
           this.outputNodes.output(f1040, { line13_qbi_deduction: deduction }),
@@ -2185,7 +2229,7 @@ class Form8995ANode extends TaxNode<typeof inputSchema> {
     }
 
     if (input.schedule_c_qbi_businesses?.some((business) => business.qbi < 0)) {
-      const lines = calculateScheduleCLossLines(input);
+      const lines = calculateScheduleCLossLines(input, ctx.taxYear);
       return {
         outputs: [
           this.outputNodes.output(f1040, {
@@ -2209,8 +2253,8 @@ class Form8995ANode extends TaxNode<typeof inputSchema> {
 
     if (input.patron_of_specified_cooperative === true) {
       const deduction = input.independent_patron_sources
-        ? calculateIndependentPatronBusinesses(input).parent.line39
-        : calculateOneBusiness8995ALines(input).line39;
+        ? calculateIndependentPatronBusinesses(input, ctx.taxYear).parent.line39
+        : calculateOneBusiness8995ALines(input, ctx.taxYear).line39;
       return {
         outputs: [
           this.outputNodes.output(f1040, { line13_qbi_deduction: deduction }),
@@ -2224,7 +2268,7 @@ class Form8995ANode extends TaxNode<typeof inputSchema> {
     }
 
     if (input.farm_wotc_filing_source) {
-      const farm = calculateFarmWotcLines(input);
+      const farm = calculateFarmWotcLines(input, ctx.taxYear);
       const deduction = farm.parent.line39;
       return {
         outputs: [
@@ -2247,7 +2291,8 @@ class Form8995ANode extends TaxNode<typeof inputSchema> {
       };
     }
     if (input.mixed_fishing_qbi_source) {
-      const deduction = calculateMixedFishingQbi(input).parent.line39;
+      const deduction = calculateMixedFishingQbi(input, ctx.taxYear).parent
+        .line39;
       return {
         outputs: [
           this.outputNodes.output(f1040, { line13_qbi_deduction: deduction }),
@@ -2259,7 +2304,8 @@ class Form8995ANode extends TaxNode<typeof inputSchema> {
       };
     }
     if (input.wotc_business_sources) {
-      const deduction = calculateOwnedWotcBusinesses(input).parent.line39;
+      const deduction = calculateOwnedWotcBusinesses(input, ctx.taxYear).parent
+        .line39;
       return {
         outputs: [
           this.outputNodes.output(f1040, { line13_qbi_deduction: deduction }),
@@ -2270,7 +2316,7 @@ class Form8995ANode extends TaxNode<typeof inputSchema> {
         ],
       };
     }
-    if (assertProducingMiningZeroQbi(input)) {
+    if (assertProducingMiningZeroQbi(input, ctx.taxYear)) {
       return {
         outputs: [
           this.outputNodes.output(f1040, { line13_qbi_deduction: 0 }),
@@ -2280,7 +2326,7 @@ class Form8995ANode extends TaxNode<typeof inputSchema> {
       };
     }
     if (input.single_schedule_c_source || input.single_schedule_f_source) {
-      const deduction = calculateOneBusiness8995ALines(input).line39;
+      const deduction = calculateOneBusiness8995ALines(input, ctx.taxYear).line39;
       return {
         outputs: [
           this.outputNodes.output(f1040, { line13_qbi_deduction: deduction }),

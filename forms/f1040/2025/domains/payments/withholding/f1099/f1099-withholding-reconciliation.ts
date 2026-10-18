@@ -1,4 +1,5 @@
 import { type FilerIdentity, FilingStatus } from "../../../../../mef/header.ts";
+import { roundWholeDollars } from "../../../../../whole-dollars.ts";
 import { inputSchema as bSchema } from "../../../../../nodes/inputs/income/investments/f1099b/index.ts";
 import {
   assertDistinct1099DIVCopies,
@@ -160,20 +161,94 @@ export interface OtherWithholdingRow {
 // IRS1099R documents; every other line 25b copy needs a statement row.
 const filedOnForm1099R = new Set(["f1099r", "f4852"]);
 
-/** Line 25b withholding for the OtherWithholdingStatement, one row per copy. */
-export function otherWithholdingStatementRows(
+interface CopyWithholding {
+  readonly onForm1099R: boolean;
+  readonly ein?: string;
+  readonly cents: number;
+}
+
+function line25bCopies(
   pending: Readonly<Record<string, unknown>>,
-): readonly OtherWithholdingRow[] {
+): readonly CopyWithholding[] {
+  const substitutesOn1099R =
+    (pending.f1099r as Record<string, unknown> | undefined)
+      ?.substitute_f1099rs !== undefined;
   return sources.flatMap((source) => {
     const raw = pending[source.key];
-    if (filedOnForm1099R.has(source.key) || raw === undefined) return [];
+    if (raw === undefined) return [];
+    if (source.key === "f4852" && substitutesOn1099R) return [];
     const parsed = source.schema.parse(raw) as Record<string, unknown>;
     return (parsed[source.rows] as Record<string, unknown>[]).flatMap((row) => {
       const amount = rowWithholding(source, row);
       if (amount <= 0) return [];
       const ein = source.payer ? payerEin(row[source.payer]) : undefined;
-      return [ein ? { ein, amount } : { amount }];
+      return [{
+        onForm1099R: filedOnForm1099R.has(source.key),
+        cents: Math.round(amount * 100),
+        ...(ein ? { ein } : {}),
+      }];
     });
+  });
+}
+
+// Largest-remainder allocation: whole-dollar rows that sum to `target`.
+function allocateWholeDollars(
+  cents: readonly number[],
+  target: number,
+): readonly number[] {
+  const floors = cents.map((value) => Math.floor(value / 100));
+  const order = cents
+    .map((value, index) => ({ index, fraction: value % 100 }))
+    .sort((a, b) => b.fraction - a.fraction || a.index - b.index)
+    .map((item) => item.index);
+  const shortfall = target - floors.reduce((sum, value) => sum + value, 0);
+  const adjust = (index: number, rank: number): number =>
+    shortfall >= 0
+      ? floors[index] + Math.floor(shortfall / order.length) +
+        (rank < shortfall % order.length ? 1 : 0)
+      : floors[index] - (rank >= order.length + shortfall ? 1 : 0);
+  const allocated = [...floors];
+  order.forEach((index, rank) => {
+    allocated[index] = adjust(index, rank);
+  });
+  if (
+    allocated.some((value) => value < 0) ||
+    allocated.reduce((sum, value) => sum + value, 0) !== target
+  ) {
+    throw new Error(
+      "OtherWithholdingStatement rows cannot reconcile to Form 1040 line 25b in whole dollars",
+    );
+  }
+  return allocated;
+}
+
+/**
+ * Line 25b withholding for the OtherWithholdingStatement, one row per copy.
+ * Form 1040 adds the copies with cents and rounds only the total (2025 Form
+ * 1040 instructions, "Rounding Off to Whole Dollars"), so the whole-dollar
+ * rows are allocated to sum to rounded line 25b less the Form 1099-R amounts
+ * filed on their own documents.
+ */
+export function otherWithholdingStatementRows(
+  pending: Readonly<Record<string, unknown>>,
+): readonly OtherWithholdingRow[] {
+  const copies = line25bCopies(pending);
+  const statement = copies.filter((copy) => !copy.onForm1099R);
+  if (statement.length === 0) return [];
+  const line25b = roundWholeDollars(
+    copies.reduce((sum, copy) => sum + copy.cents, 0) / 100,
+  );
+  const onForm1099R = copies
+    .filter((copy) => copy.onForm1099R)
+    .reduce((sum, copy) => sum + roundWholeDollars(copy.cents / 100), 0);
+  const amounts = allocateWholeDollars(
+    statement.map((copy) => copy.cents),
+    line25b - onForm1099R,
+  );
+  return statement.flatMap((copy, index) => {
+    const amount = amounts[index];
+    if (amount <= 0) return [];
+    return [copy.ein ? { ein: copy.ein, amount } : { amount }];
   });
 }
 

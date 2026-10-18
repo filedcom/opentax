@@ -39,6 +39,8 @@ jobs:
         run: bun run test:forms
       - name: Sample returns gain no new MeF blockers
         run: bun run check:mef
+      - name: Sample returns run as TY2026 gain no new blockers
+        run: bun run check:ty2026
       - name: Complete returns work end to end through the product CLI
         run: bun run check:cli
       - name: Code names only declared IRS files

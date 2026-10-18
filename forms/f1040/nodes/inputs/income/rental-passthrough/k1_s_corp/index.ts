@@ -543,7 +543,10 @@ function resolveUbia(item: K1SCorpItem): number {
   return (item.ubia_qualified_property ?? 0) + (item.box17_ubia ?? 0);
 }
 
-function form8995Output(items: K1SCorpItems): NodeOutput[] {
+function form8995Output(
+  items: K1SCorpItems,
+  taxYear: number,
+): NodeOutput[] {
   if (items.length === 1 && items[0].first_year_passive_loss_source) {
     return [
       output(form8995, {
@@ -558,7 +561,7 @@ function form8995Output(items: K1SCorpItems): NodeOutput[] {
         "RPE aggregation needs its complete single-issuer current K1 inventory; other issuer combinations need their source route",
       );
     }
-    const group = currentSCorpRpeAggregation(rpe[0])!;
+    const group = currentSCorpRpeAggregation(taxYear, rpe[0])!;
     return [output(form8995, {
       qbi: group.qbi,
       w2_wages: group.wages,
@@ -979,7 +982,7 @@ class K1SCorpNode extends TaxNode<typeof inputSchema> {
     disabledAccessLimit,
   ]);
 
-  compute(_ctx: NodeContext, input: z.infer<typeof inputSchema>): NodeResult {
+  compute(ctx: NodeContext, input: z.infer<typeof inputSchema>): NodeResult {
     const { k1_s_corps } = inputSchema.parse(input);
 
     for (const item of k1_s_corps) {
@@ -1147,7 +1150,7 @@ class K1SCorpNode extends TaxNode<typeof inputSchema> {
       ...scheduleBDividendOutputs(k1_s_corps),
       ...f1040QualDivOutput(k1_s_corps),
       ...scheduleDOutput(k1_s_corps),
-      ...form8995Output(k1_s_corps),
+      ...form8995Output(k1_s_corps, ctx.taxYear),
       ...form1116Outputs(k1_s_corps),
       ...form7203Outputs(k1_s_corps),
       ...form4797Outputs(k1_s_corps),

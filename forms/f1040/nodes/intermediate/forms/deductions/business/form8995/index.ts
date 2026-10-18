@@ -76,6 +76,7 @@ import { calculateScheduleCAtRiskNet } from "../../../../../inputs/income/busine
 import type { NodeContext } from "../../../../../../../../core/types/node-context.ts";
 import { CONFIG_BY_YEAR, type F1040Config } from "../../../../../config/index.ts";
 import { withMinimumDeduction } from "./minimum-deduction.ts";
+import { qbiThreshold } from "../form8995a/thresholds.ts";
 
 // ── TY2025 Constants ─────────────────────────────────────────────────────────
 
@@ -394,15 +395,6 @@ function taxableIncomeBeforeQbi(
   );
 }
 
-function qbiThreshold(
-  filingStatus: FilingStatus,
-  cfg: F1040Config,
-): number {
-  return filingStatus === FilingStatus.MFJ
-    ? cfg.qbiThresholdMfj
-    : cfg.qbiThresholdSingle;
-}
-
 /** Retained fishing C/F sources have no 8995-A when their deduction is zero
  * above the completed wage/property phase-in. */
 function zeroLimitedMixedScheduleCF(
@@ -456,16 +448,17 @@ function advancedFormOutput(
   input: Form8995Input,
   taxableIncome: number,
   cfg: F1040Config,
+  taxYear: number,
 ): NodeOutput {
   if (input.rpe_aggregation_source) {
-    const group = reviewedRpeAggregation(input.rpe_aggregation_source);
+    const group = reviewedRpeAggregation(input.rpe_aggregation_source, taxYear);
     const joint = input.filing_status === FilingStatus.MFJ;
     const owners = [input.taxpayer_ssn, ...(joint ? [input.spouse_ssn] : [])]
       .map((ssn) => ssn?.replaceAll("-", ""));
     if (
       owners.some((ssn) => !ssn) || new Set(owners).size !== owners.length ||
       !owners.includes(group.source.recipient_tin) ||
-      taxableIncome <= (joint ? 394600 : 197300) ||
+      taxableIncome <= qbiThreshold(input.filing_status!, cfg) ||
       sumField(input.qbi) !== group.qbi ||
       sumField(input.w2_wages) !== group.wages ||
       sumField(input.unadjusted_basis) !== group.ubia ||
@@ -501,7 +494,7 @@ function advancedFormOutput(
       rpe_aggregation_source: group.source,
     });
   }
-  const farmWotc = farmWotcAdvancedFields(input, taxableIncome);
+  const farmWotc = farmWotcAdvancedFields(input, taxableIncome, taxYear);
   if (farmWotc) return output(form8995a, farmWotc);
 
   const c = input.schedule_c_qbi_businesses?.[0];
@@ -640,7 +633,7 @@ function advancedFormOutput(
         w2_wages: b.w2_wages,
         unadjusted_basis: b.ubia,
         se_tax_deduction: half,
-      }, taxableIncome, cfg);
+      }, taxableIncome, cfg, taxYear);
       return result.fields as Form8995AInput;
     });
     const wages = input.agi! - businesses.reduce((sum, b) => sum + b.qbi, 0) +
@@ -1020,7 +1013,7 @@ function advancedFormOutput(
       ...(input.single_farm_owner_w2_sources?.length
         ? { owner_w2_wage_sources: input.single_farm_owner_w2_sources }
         : {}),
-    });
+    }, taxYear);
     if (
       farm.qbi !== source.profit ||
       sumField(input.qbi_from_schedule_f) !== source.profit
@@ -1747,7 +1740,7 @@ class Form8995Node extends TaxNode<typeof inputSchema> {
         return { outputs: [] };
       }
       return {
-        outputs: [advancedFormOutput(input, taxableIncome, cfg), {
+        outputs: [advancedFormOutput(input, taxableIncome, cfg, ctx.taxYear), {
           nodeType: this.nodeType,
           fields: { net_capital_gain: qbiCapitalTotal(input) },
         }],

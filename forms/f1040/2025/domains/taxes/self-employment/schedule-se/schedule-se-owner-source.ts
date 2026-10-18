@@ -28,8 +28,8 @@ import { patronFiledBusinessLines } from "../../../../../nodes/inputs/deductions
 /** Rebuild owner computations from the actual finalized public businesses and W2s. */
 export function assertOwnedScheduleSE(
   pending: Readonly<Record<string, Record<string, unknown>>>,
+  taxYear: number,
   filer?: FilerIdentity,
-  taxYear = 2025,
 ) {
   const cfg = CONFIG_BY_YEAR[taxYear];
   if (!cfg) throw new Error(`No f1040 config for year ${taxYear}`);

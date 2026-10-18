@@ -44,7 +44,7 @@ for (const c of aggregationStatusCases) {
       c.kind === "direct" ? f.line35a_refund : f.line37_amount_owed,
     ], expected[c.name]);
     const fields = inputSchema.parse(pending.form8995a);
-    const p = calculateTwoBusinessAggregationLines(fields).parent;
+    const p = calculateTwoBusinessAggregationLines(fields, 2025).parent;
     assertEquals(p.patronThreshold, 197300);
     assertEquals(p.patronPhaseInRange, 50000);
     assertEquals(p.phaseInRequired, c.kind === "direct");
@@ -52,13 +52,13 @@ for (const c of aggregationStatusCases) {
       calculateTwoBusinessAggregationLines({
         ...fields,
         taxable_income: 197300,
-      })
+      }, 2025)
     );
     for (const excess of [1, 49999, 50000, 50001]) {
       const b = calculateTwoBusinessAggregationLines({
         ...fields,
         taxable_income: 197300 + excess,
-      }).parent;
+      }, 2025).parent;
       const deduction = b.line10 >= b.line3
         ? b.line3
         : excess <= 50000

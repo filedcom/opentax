@@ -45,6 +45,8 @@ The layout the checks enforce, and which check owns each rule, is in
   or the test.
 - File order: imports, enums, item schema, input schema, type aliases, pure
   helpers, node class, singleton export.
+- Never pin a tax year in shared code; read it from `ctx.taxYear` and
+  `CONFIG_BY_YEAR` (`check:structure`).
 
 ## Benchmark truth
 

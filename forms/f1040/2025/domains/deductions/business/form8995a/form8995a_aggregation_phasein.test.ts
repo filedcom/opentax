@@ -32,7 +32,7 @@ for (const c of aggregationPhaseInCases) {
       Math.abs(c.tax - c.payments),
     );
     const fields = inputSchema.parse(pending.form8995a);
-    const { parent } = calculateTwoBusinessAggregationLines(fields);
+    const { parent } = calculateTwoBusinessAggregationLines(fields, 2025);
     assertEquals([
       parent.line33,
       parent.phaseIn,
@@ -46,13 +46,13 @@ for (const c of aggregationPhaseInCases) {
       calculateTwoBusinessAggregationLines({
         ...fields,
         taxable_income: threshold,
-      })
+      }, 2025)
     );
     for (const excess of [1, range - 1, range, range + 1]) {
       const { parent: p } = calculateTwoBusinessAggregationLines({
         ...fields,
         taxable_income: threshold + excess,
-      });
+      }, 2025);
       const phased = excess <= range;
       const expected = phased
         ? p.line3 - Math.round((p.line3 - p.line10) * excess / range)
@@ -201,7 +201,7 @@ test("aggregation skips Part III when sourced property makes the wage/property l
     assertEquals(result.diagnostics, []);
     const pending = result.pending as Row;
     const fields = inputSchema.parse(pending.form8995a);
-    const { parent } = calculateTwoBusinessAggregationLines(fields);
+    const { parent } = calculateTwoBusinessAggregationLines(fields, 2025);
     assertEquals(parent.phaseInRequired, false);
     assertEquals(parent.line39, parent.line3);
     const projection = projectStagedAggregatedParentPdf(fields, filer, pending);

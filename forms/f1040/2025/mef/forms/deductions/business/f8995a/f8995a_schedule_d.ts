@@ -16,6 +16,7 @@ import type {
   MefFormDescriptor,
 } from "../../../../form-descriptor.ts";
 import { validateOneBusiness } from "./f8995a.ts";
+import { mefTaxYear } from "../../../../support/year-config.ts";
 
 type Input = Form8995AInput | readonly [];
 
@@ -34,12 +35,13 @@ function buildScheduleD(rawFields: unknown, context?: MefBuildContext): string {
   }
   assertPatron1099PATRSource(fields, context?.pending?.f1099patr);
   if (fields.independent_patron_sources) {
-    assertForm8995APatronReturn(fields, context?.pending);
+    assertForm8995APatronReturn(fields, context?.pending, mefTaxYear(context));
     assertOwnedScheduleSE(
       normalizeAllPending(context!.pending! as Record<string, unknown>),
+      mefTaxYear(context),
       context?.filer,
     );
-    const result = calculateIndependentPatronBusinesses(fields);
+    const result = calculateIndependentPatronBusinesses(fields, mefTaxYear(context));
     return elements(
       "IRS8995AScheduleD",
       result.rows.map((row) =>
@@ -60,8 +62,8 @@ function buildScheduleD(rawFields: unknown, context?: MefBuildContext): string {
       ),
     );
   }
-  validateOneBusiness(fields);
-  assertForm8995APatronReturn(fields, context?.pending);
+  validateOneBusiness(fields, mefTaxYear(context));
+  assertForm8995APatronReturn(fields, context?.pending, mefTaxYear(context));
   const source = fields.patron_filing_details;
   const business = fields.business_filing_details;
   if (!source || !business) {
@@ -79,7 +81,7 @@ function buildScheduleD(rawFields: unknown, context?: MefBuildContext): string {
     );
   }
   const schedule = calculatePatronScheduleDLines(fields);
-  const parentLines = calculateOneBusiness8995ALines(fields);
+  const parentLines = calculateOneBusiness8995ALines(fields, mefTaxYear(context));
   if (schedule.line6 !== parentLines.line14) {
     throw new Error(
       "Form 8995-A Schedule D line 6 differs from parent line 14",

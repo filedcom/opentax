@@ -121,11 +121,11 @@ export const config2026: F1040Config = {
   iraPhaseoutNoncoveredMfjUpper: 252_000,
   iraPhaseoutMfsLower: 0,
   iraPhaseoutMfsUpper: 10_000,
-  // RP §4.26. The joint phase-in range is $553,500 - $403,500 (P.L. 119-21
-  // §70105). RP lists $201,775 for MFS; the config's single field holds the
-  // $201,750 "all other returns" amount.
+  // RP §4.26; draft 2026 Form 8995-A lines 21 and 23. The joint phase-in
+  // range is $553,500 - $403,500 (P.L. 119-21 §70105).
   qbiThresholdSingle: 201_750,
   qbiThresholdMfj: 403_500,
+  qbiThresholdMfs: 201_775,
   qbiPhaseInRange: 150_000,
   // RP §4.06(2).
   eitcInvestmentIncomeLimit: 12_200,
