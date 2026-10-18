@@ -56,12 +56,12 @@ const context = {
 
 test("positive non-withheld W-2G belongs to the taxpayer or joint spouse", () => {
   const noWithholding = { ...issued, box4_federal_withheld: 0 };
-  assertPositiveW2GRecipient({ w2gs: [noWithholding] }, filer);
+  assertPositiveW2GRecipient({ w2gs: [noWithholding] }, filer, 2025);
   assertThrows(
     () =>
       assertPositiveW2GRecipient({
         w2gs: [{ ...noWithholding, box9_winner_tin: "999-88-7777" }],
-      }, filer),
+      }, filer, 2025),
     Error,
     "winner name, SSN, and address",
   );
@@ -69,7 +69,7 @@ test("positive non-withheld W-2G belongs to the taxpayer or joint spouse", () =>
     () =>
       assertPositiveW2GRecipient({
         w2gs: [{ ...noWithholding, box9_winner_tin: undefined }],
-      }, filer),
+      }, filer, 2025),
     Error,
     "winner name, SSN, and address",
   );
@@ -83,7 +83,7 @@ test("non-withheld winnings and withholding claims need a TY2025 source year", (
     ]
   ) {
     assertThrows(
-      () => assertPositiveW2GRecipient({ w2gs: [row] }, filer),
+      () => assertPositiveW2GRecipient({ w2gs: [row] }, filer, 2025),
       Error,
       "issued 2025 tax year",
     );
@@ -92,7 +92,7 @@ test("non-withheld winnings and withholding claims need a TY2025 source year", (
     () =>
       assertPositiveW2GRecipient({
         w2gs: [{ ...issued, box1_winnings: 0, box9_winner_tin: "999-88-7777" }],
-      }, filer),
+      }, filer, 2025),
     Error,
     "winner name, SSN, and address",
   );

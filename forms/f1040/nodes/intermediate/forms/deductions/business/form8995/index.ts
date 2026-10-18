@@ -75,6 +75,7 @@ import {
 import { calculateScheduleCAtRiskNet } from "../../../../../inputs/income/business/schedule_c/model.ts";
 import type { NodeContext } from "../../../../../../../../core/types/node-context.ts";
 import { CONFIG_BY_YEAR, type F1040Config } from "../../../../../config/index.ts";
+import { withMinimumDeduction } from "./minimum-deduction.ts";
 
 // ── TY2025 Constants ─────────────────────────────────────────────────────────
 
@@ -454,6 +455,7 @@ function zeroLimitedMixedScheduleCF(
 function advancedFormOutput(
   input: Form8995Input,
   taxableIncome: number,
+  cfg: F1040Config,
 ): NodeOutput {
   if (input.rpe_aggregation_source) {
     const group = reviewedRpeAggregation(input.rpe_aggregation_source);
@@ -505,26 +507,27 @@ function advancedFormOutput(
   const c = input.schedule_c_qbi_businesses?.[0];
   const f = input.schedule_f_qbi_businesses?.[0];
   const jointFishing = input.filing_status === FilingStatus.MFJ &&
-    taxableIncome > CONFIG_BY_YEAR[2025].qbiThresholdMfj &&
+    taxableIncome > cfg.qbiThresholdMfj &&
     input.joint_se_source !== undefined;
   if (
     input.schedule_c_qbi_businesses?.length === 1 &&
     input.schedule_f_qbi_businesses?.length === 1 && c && f &&
     c.source_schedule_c.schedule_j_fishing_evidence &&
     (jointFishing ||
-      (taxableIncome > 197_300 && taxableIncome < 247_300 &&
+      (taxableIncome > cfg.qbiThresholdSingle &&
+        taxableIncome < cfg.qbiThresholdSingle + cfg.qbiPhaseInRange / 2 &&
         c.source_schedule_c.qbi_se_tax_allocation_review &&
         farmItemSchema.parse(f.source_schedule_f).qbi_se_tax_allocation_review))
   ) {
     const owned = jointFishing
       ? ownedScheduleSE(
         input.joint_se_source!,
-        CONFIG_BY_YEAR[2025].ssWageBase,
+        cfg.ssWageBase,
       )
       : undefined;
     const reviewed = jointFishing ? undefined : mixedScheduleCFLines(
       input,
-      CONFIG_BY_YEAR[2025],
+      cfg,
     );
     const rows = jointFishing
       ? [c, f].map((business) => {
@@ -616,7 +619,7 @@ function advancedFormOutput(
     }
     const owned = ownedScheduleSE(
       input.joint_se_source,
-      CONFIG_BY_YEAR[2025].ssWageBase,
+      cfg.ssWageBase,
     );
     if (owned.deduction !== sumField(input.se_tax_deduction)) {
       throw new Error(
@@ -637,7 +640,7 @@ function advancedFormOutput(
         w2_wages: b.w2_wages,
         unadjusted_basis: b.ubia,
         se_tax_deduction: half,
-      }, taxableIncome);
+      }, taxableIncome, cfg);
       return result.fields as Form8995AInput;
     });
     const wages = input.agi! - businesses.reduce((sum, b) => sum + b.qbi, 0) +
@@ -724,7 +727,7 @@ function advancedFormOutput(
       (input.filing_status !== FilingStatus.Single &&
         input.filing_status !== FilingStatus.MFJ) ||
       taxableIncome <=
-        qbiThreshold(input.filing_status!, CONFIG_BY_YEAR[2025]) ||
+        qbiThreshold(input.filing_status!, cfg) ||
       input.qbi_no_prior_loss_or_suspended_loss_confirmed !== true ||
       input.qbi_not_patron_of_specified_cooperative_confirmed !== true ||
       sumField(input.qbi_from_schedule_c) !== business.qbi ||
@@ -1744,7 +1747,7 @@ class Form8995Node extends TaxNode<typeof inputSchema> {
         return { outputs: [] };
       }
       return {
-        outputs: [advancedFormOutput(input, taxableIncome), {
+        outputs: [advancedFormOutput(input, taxableIncome, cfg), {
           nodeType: this.nodeType,
           fields: { net_capital_gain: qbiCapitalTotal(input) },
         }],
@@ -1967,9 +1970,20 @@ class Form8995Node extends TaxNode<typeof inputSchema> {
         : reitOnlyLines(input, cfg));
     // The bounded filed routes carry whole-dollar line 15 exactly
     // into Form 1040. Other QBI routes retain their existing calculation.
-    const deduction = simplifiedLines === undefined
+    const beforeMinimum = simplifiedLines === undefined
       ? qbiDeduction(input, cfg)
       : simplifiedLines.line15;
+    const deduction = withMinimumDeduction(beforeMinimum, {
+      businesses: (input.schedule_c_qbi_businesses ?? []).map((business) => ({
+        qbi: business.qbi,
+        materiallyParticipates:
+          business.source_schedule_c.line_g_material_participation === true,
+      })),
+      totalQbi: totalQbi(input),
+      otherQbiSources: sumField(input.qbi_from_schedule_f) !== 0 ||
+        sumField(input.qbi) !== 0 ||
+        (input.schedule_f_qbi_businesses?.length ?? 0) > 0,
+    }, cfg);
     if (
       deduction <= 0 && multipleLines === undefined &&
       currentK1Lines === undefined && currentPropertyLines === undefined &&
@@ -1998,6 +2012,9 @@ class Form8995Node extends TaxNode<typeof inputSchema> {
           qbi_deduction: deduction,
           net_capital_gain: qbiCapitalTotal(input),
           ...simplifiedLines,
+          ...(deduction > beforeMinimum
+            ? { minimum_deduction: deduction }
+            : {}),
         },
       },
     ];

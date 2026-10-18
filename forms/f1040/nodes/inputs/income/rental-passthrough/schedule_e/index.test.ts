@@ -1822,3 +1822,39 @@ test("edge case self-rental (property_type=7): net loss is passive — routes to
   const input = s1!.fields as Record<string, number>;
   assertEquals(input.line5_schedule_e, 0);
 });
+
+test("TY2026 Schedule E refuses prior-year passive losses dated to TY2025", () => {
+  const rental = {
+    tsj: "T",
+    activity_id: "ty2026-rental",
+    property_description: "Example rental",
+    property_type: 1,
+    activity_type: "A",
+    fair_rental_days: 365,
+    personal_use_days: 0,
+    rent_income: 12_000,
+    expense_repairs: 2_000,
+    form_1099_payments_made: false,
+  };
+  const ctx = { taxYear: 2026, formType: "f1040" };
+  const result = scheduleE.compute(
+    ctx,
+    inputSchema.parse({ schedule_es: [rental] }),
+  );
+  assertEquals(
+    result.outputs.find((o) => o.nodeType === "schedule1")?.fields
+      .line5_schedule_e,
+    10_000,
+  );
+  assertThrows(
+    () =>
+      scheduleE.compute(
+        ctx,
+        inputSchema.parse({
+          schedule_es: [{ ...rental, prior_unallowed_passive_operating: 500 }],
+        }),
+      ),
+    Error,
+    "not yet supported for TY2026",
+  );
+});

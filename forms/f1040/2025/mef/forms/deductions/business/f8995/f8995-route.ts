@@ -1406,6 +1406,7 @@ function assertMixedScheduleCF8995(
 export function assertPositive8995(
   fields: Record<string, unknown>,
   pending: Readonly<Record<string, unknown>> | undefined,
+  taxYear: number,
 ): Filed8995 {
   if (fields.current_passive_s_corp_loss !== undefined) {
     if (!pending || !isDeepStrictEqual(fields, pending.form8995)) {
@@ -1451,10 +1452,10 @@ export function assertPositive8995(
     return assertMixedScheduleCF8995(fields, pending);
   }
   if (fields.joint_owner_filing_rows !== undefined) {
-    return assertJointOwner8995(fields, pending);
+    return assertJointOwner8995(fields, pending, taxYear);
   }
   if (fields.multi_business_filing_rows !== undefined) {
-    return assertMultipleScheduleC8995(fields, pending);
+    return assertMultipleScheduleC8995(fields, pending, taxYear);
   }
   if (fields.schedule_f_qbi_businesses !== undefined) {
     return assertOneScheduleF8995(fields, pending);

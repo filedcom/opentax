@@ -65,9 +65,9 @@ grouped by the return section of the node each input key enters
 
 `amendment_request`, `f1310`, `f2120`, `f4547`, `f5471`, `f56`, `f8082`, `f8275`, `f8332`, `f8822`, `f8833`, `f8840`, `f8843`, `f8854`, `f8854_annual`, `f8858`, `f8867`, `f8886`, `f8938`, `f8958`, `f8997`, `f9000`, `preparer`, `schedule_b_part_iii`, `schedule_lep`
 
-### income (54)
+### income (40)
 
-`alimony_received`, `auto_expense`, `benefit_1042s`, `clergy`, `depletion`, `education_income`, `f1099b`, `f1099c`, `f1099div`, `f1099g`, `f1099int`, `f1099k`, `f1099m`, `f1099nec`, `f1099oid`, `f1099patr`, `f1099r`, `f3115`, `f3921`, `f4835`, `f4852`, `f4852_reviewed_source`, `f7217`, `f8621`, `f8814`, `f8873`, `f8915d`, `f8915f`, `f8949`, `f970`, `fec`, `form2555`, `form4797_investment_1245`, `form4797_prior_history`, `form6252`, `form6781`, `form8582_prior_year_record`, `form8815`, `form8824`, `household_wages`, `k1_partnership`, `k1_s_corp`, `k1_trust`, `lump_sum_ss`, `nol_carryforward`, `personal_property_rental`, `ppp_forgiveness`, `rrb1099r`, `schedule_c`, `schedule_d`, `schedule_e`, `schedule_f`, `ssa1099`, `w2g`
+`alimony_received`, `auto_expense`, `benefit_1042s`, `clergy`, `depletion`, `education_income`, `f1099c`, `f1099oid`, `f1099patr`, `f3115`, `f3921`, `f4835`, `f4852`, `f4852_reviewed_source`, `f7217`, `f8621`, `f8814`, `f8873`, `f8915d`, `f8915f`, `f970`, `fec`, `form2555`, `form4797_investment_1245`, `form4797_prior_history`, `form6252`, `form6781`, `form8582_prior_year_record`, `form8815`, `form8824`, `household_wages`, `k1_partnership`, `k1_s_corp`, `k1_trust`, `lump_sum_ss`, `nol_carryforward`, `personal_property_rental`, `ppp_forgiveness`, `rrb1099r`, `schedule_f`
 
 ### adjustments (14)
 

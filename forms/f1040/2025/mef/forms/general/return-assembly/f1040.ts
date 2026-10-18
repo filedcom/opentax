@@ -621,7 +621,10 @@ function buildIRS1040(fields: Input, context?: MefBuildContext): string {
         "Form 1040 line 4c rollover does not match the reviewed IRA Form 1099-R source",
       );
     }
-    const explanation = iraDistributionExplanation(parsed.data.f1099rs);
+    const explanation = iraDistributionExplanation(
+      parsed.data.f1099rs,
+      context?.taxYear ?? 2025,
+    );
     if (explanation !== undefined && context?.documentIdsByPendingKey) {
       const ids = context.documentIdsByPendingKey.ira_distribution_statement ??
         [];

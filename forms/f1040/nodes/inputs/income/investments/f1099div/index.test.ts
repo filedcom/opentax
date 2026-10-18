@@ -1447,3 +1447,29 @@ test("only payers that withheld foreign tax contribute foreign_income", () => {
     5000,
   );
 });
+
+test("TY2026 1099-DIV holding reviews need a 2026 ex-dividend date", () => {
+  const compute2026 = (items: ItemOverrides[]) =>
+    f1099div.compute(
+      { taxYear: 2026, formType: "f1040" },
+      inputSchema.parse({ f1099divs: items }),
+    );
+  const review2026 = {
+    ...foreignHoldingReview,
+    ex_dividend_date: "2026-06-15",
+    reviewed_on: "2027-02-01",
+  };
+  const result = compute2026([
+    taxedDividend(30, 300, { foreign_tax_holding_review: review2026 }),
+  ]);
+  assertEquals(
+    fieldsOf(result.outputs, form_1116)?.foreign_tax_items?.[0]
+      ?.foreign_tax_paid,
+    30,
+  );
+  assertThrows(
+    () => compute2026([taxedDividend(30, 300)]),
+    Error,
+    "need a 2026 ex-dividend date",
+  );
+});

@@ -1,7 +1,21 @@
-// One TY2025 calculation for the Part II farm optional method, shared by the
-// tax node and both filing representations. The election has no separate MeF
+import { config2025 } from "../../../../../config/2025.ts";
+import type { F1040Config } from "../../../../../config/types.ts";
+
+// One calculation for the Part II farm optional method, shared by the tax
+// node and both filing representations. The election has no separate MeF
 // checkbox: Part II line 15, repeated on Part I line 4b, conveys it.
 export const NET_EARNINGS_MULTIPLIER = 0.9235;
+
+/** Schedule SE Part II farm optional method amounts for one tax year. */
+export type FarmOptionalLimits = Pick<
+  F1040Config,
+  | "seOptionalMethodMaximum"
+  | "seFarmOptionalGrossIncomeLimit"
+  | "seFarmOptionalNetProfitLimit"
+>;
+
+// Callers that build only TY2025 filings keep the TY2025 amounts.
+const FARM_OPTIONAL_LIMITS_2025: FarmOptionalLimits = config2025;
 
 export function scheduleSELines(input: {
   readonly net_profit_schedule_c?: number | null;
@@ -11,8 +25,8 @@ export function scheduleSELines(input: {
   readonly w2_ss_wages?: number | null;
   readonly unreported_tips_4137?: number | null;
   readonly wages_8919?: number | null;
-}, ssWageBase: number) {
-  const optional = farmOptionalMethodLines(input);
+}, ssWageBase: number, limits = FARM_OPTIONAL_LIMITS_2025) {
+  const optional = farmOptionalMethodLines(input, limits);
   const line3 = optional?.line3 ??
     ((input.net_profit_schedule_c ?? 0) + (input.net_profit_schedule_f ?? 0));
   const line4a = optional?.line4a ??
@@ -53,7 +67,7 @@ export function farmOptionalMethodLines(input: {
   readonly gross_farm_income?: unknown;
   readonly net_profit_schedule_f?: unknown;
   readonly net_profit_schedule_c?: unknown;
-}): {
+}, limits = FARM_OPTIONAL_LIMITS_2025): {
   line3: number;
   line4a: number;
   line4b: number;
@@ -75,9 +89,12 @@ export function farmOptionalMethodLines(input: {
       "Schedule SE farm optional method requires gross farm income and net farm profit as finite amounts",
     );
   }
-  if (gross > 10_860 && farmProfit >= 7_840) {
+  if (
+    gross > limits.seFarmOptionalGrossIncomeLimit &&
+    farmProfit >= limits.seFarmOptionalNetProfitLimit
+  ) {
     throw new Error(
-      "Schedule SE farm optional method is unavailable when gross farm income exceeds $10,860 and net farm profit is at least $7,840",
+      `Schedule SE farm optional method is unavailable when gross farm income exceeds $${limits.seFarmOptionalGrossIncomeLimit.toLocaleString("en-US")} and net farm profit is at least $${limits.seFarmOptionalNetProfitLimit.toLocaleString("en-US")}`,
     );
   }
 
@@ -85,7 +102,7 @@ export function farmOptionalMethodLines(input: {
   // 4b, without the line 4a 92.35% multiplier.
   const line3 = nonfarmProfit;
   const line4a = line3 > 0 ? line3 * NET_EARNINGS_MULTIPLIER : line3;
-  const line15 = Math.min(gross * 2 / 3, 7_240);
+  const line15 = Math.min(gross * 2 / 3, limits.seOptionalMethodMaximum);
   const line4b = line15;
   const line4c = line4a + line4b;
   return { line3, line4a, line4b, line4c, line6: line4c, line15 };

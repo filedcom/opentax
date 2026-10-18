@@ -47,7 +47,9 @@ function buildIRS1040ScheduleSE(
   fields: Input,
   context?: MefBuildContext,
 ): string {
-  const lines = scheduleSELines(fields, CONFIG_BY_YEAR[2025].ssWageBase);
+  const cfg = CONFIG_BY_YEAR[context?.taxYear ?? 2025];
+  if (!cfg) throw new Error("Schedule SE MeF has no config for its tax year");
+  const lines = scheduleSELines(fields, cfg.ssWageBase, cfg);
   const optional = fields.farm_optional_method_elected === true;
   const hasSeIncome = SE_INCOME_KEYS.some((key) =>
     typeof fields[key] === "number"
@@ -130,6 +132,7 @@ export const scheduleSE: MefFormDescriptor<
       ? assertOwnedScheduleSE(
         context.pending as Record<string, Record<string, unknown>>,
         context.filer,
+        context.taxYear,
       )
       : undefined;
     return owned

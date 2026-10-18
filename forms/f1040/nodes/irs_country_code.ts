@@ -4,6 +4,7 @@ import { z } from "zod";
 // Source SHA-256: d149341c9554ca338f18c68a9d34c55e3a8c41f0e2485058c54a11aae8bdf5e5.
 // Form 1116 ForeignCountryCd uses this type. These are not ISO alpha-2 codes:
 // Germany is GM; DE is absent. Keep ISO-valued employer country fields separate.
+// The TY2026 2026v1.0 CountryType enumerates the same 258 codes.
 const TY2025_IRS_COUNTRY_CODES = new Set([
   "AF",
   "AX",

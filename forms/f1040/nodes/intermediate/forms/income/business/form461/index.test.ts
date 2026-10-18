@@ -161,3 +161,19 @@ test("Form 461 rejects unresolved passive losses before filing", () => {
     })
   );
 });
+
+test("TY2026 Form 461 uses the $256,000 Rev. Proc. 2025-32 threshold", () => {
+  // Rev. Proc. 2025-32 §4.31 and draft 2026 Form 461 line 15.
+  const result = form461.compute(
+    { taxYear: 2026, formType: "f1040" },
+    inputSchema.parse({
+      filing_status: "single",
+      line2_schedule_c: -200_000,
+      line6_schedule_f: -200_000,
+      scope_review: review,
+    }),
+  );
+  assertEquals(fields(result)?.line15_threshold, 256_000);
+  assertEquals(fields(result)?.line16_excess_business_loss, -144_000);
+  assertEquals(result.carryforwards?.excess_business_loss_nol_origin, 144_000);
+});

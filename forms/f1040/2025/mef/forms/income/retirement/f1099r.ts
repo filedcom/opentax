@@ -204,7 +204,11 @@ export const f1099r: MefFormDescriptor<"f1099r", Fields, readonly string[]> = {
       );
     }
     assertDistinct1099RCopies(allSources);
-    assert1099RRecipientOwner({ f1099rs: allSources }, context?.filer);
+    assert1099RRecipientOwner(
+      { f1099rs: allSources },
+      context?.filer,
+      context?.taxYear ?? 2025,
+    );
     return allSources.map((item, index) =>
       build1099R(item, context ?? {}, index)
     );

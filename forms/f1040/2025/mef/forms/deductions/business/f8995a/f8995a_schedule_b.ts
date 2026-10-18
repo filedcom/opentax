@@ -99,7 +99,7 @@ function assertAggregationInvestments(
       "Aggregation income limit must reconcile owned wages, business and investment records",
     );
   }
-  assertMultiBusinessInvestmentTax(pending, totals, input.filing_status);
+  assertMultiBusinessInvestmentTax(pending, totals, 2025, input.filing_status);
 }
 
 function assertRpeScheduleBJoin(

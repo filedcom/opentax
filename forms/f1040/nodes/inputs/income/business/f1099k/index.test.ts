@@ -1441,3 +1441,27 @@ test("smoke: three PSEs — PayPal (TPSO), Square (payment card), Stripe (backup
   );
   assertEquals(totalFromStateFields, 0);
 });
+
+test("TY2026 1099-K personal sales need a 2026 sale date", () => {
+  const ctx = { taxYear: 2026, formType: "f1040" };
+  const item = (sale: Record<string, unknown>) =>
+    minimalItem({
+      pse_tin: "12-3456789",
+      recipient_tin: "987-65-4321",
+      box1a_gross_payments: 700,
+      for_routing: "personal_item_sales",
+      personal_item_sales_review: [personalSale(sale)],
+    });
+  const result = f1099k.compute(ctx, {
+    f1099ks: [item({ date_acquired: "2025-06-15", date_sold: "2026-06-15" })],
+  });
+  const row = result.outputs.find((o) => o.nodeType === "form8949")?.fields
+    .transaction as Record<string, unknown>;
+  assertEquals(row.date_sold, "2026-06-15");
+  assertEquals(row.adjustment_amount, 300);
+  assertThrows(
+    () => f1099k.compute(ctx, { f1099ks: [item({})] }),
+    Error,
+    "need a 2026 sale date",
+  );
+});

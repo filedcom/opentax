@@ -1,8 +1,10 @@
 import { FilingStatus } from "../../../../../types.ts";
+import { qualifiedDividendTax } from "../tax_table_2025.ts";
 import {
-  ordinaryTax2025,
-  qualifiedDividendTax2025,
-} from "../tax_table_2025.ts";
+  ordinaryTaxForYear,
+  preferentialRateSchedule,
+  rate24BracketCeiling,
+} from "../year_schedule.ts";
 
 export interface PreferentialTaxFacts {
   taxableIncome: number;
@@ -15,11 +17,20 @@ export interface PreferentialTaxFacts {
   rate28Gain?: number;
   form4952Election?: number;
   electedCapitalGain?: number;
+  /** Selects the year's Tax Table and 24% bracket; TY2025 when omitted. */
+  taxYear?: number;
 }
 
-// TY2025 Schedule D Tax Worksheet, lines 1–47. Lines 44/46 use the Tax Table
+function yearOf(facts: PreferentialTaxFacts): number {
+  return facts.taxYear ?? 2025;
+}
+
+// Schedule D Tax Worksheet, lines 1–47. Lines 44/46 use the Tax Table
 // below $100,000, per https://www.irs.gov/instructions/i1040sd.
 export function scheduleDTax(facts: PreferentialTaxFacts): number {
+  const taxYear = yearOf(facts);
+  const ordinaryTax = (income: number, status: FilingStatus) =>
+    ordinaryTaxForYear(income, status, taxYear);
   const {
     taxableIncome: line1,
     qualifiedDividends,
@@ -44,18 +55,14 @@ export function scheduleDTax(facts: PreferentialTaxFacts): number {
   const line16 = Math.min(line1, zeroCeiling[filingStatus]);
   const line17 = Math.min(line14, line16);
   const line18 = Math.max(0, line1 - line10);
-  const limit19 = filingStatus === FilingStatus.MFJ ||
-      filingStatus === FilingStatus.QSS
-    ? 394_600
-    : 197_300;
-  const line19 = Math.min(line1, limit19);
+  const line19 = Math.min(line1, rate24BracketCeiling(filingStatus, taxYear));
   const line20 = Math.min(line14, line19);
   const line21 = Math.max(line18, line20);
   const line22 = line16 - line17;
   if (line1 === line16) {
     return Math.min(
-      ordinaryTax2025(line21, filingStatus),
-      ordinaryTax2025(line1, filingStatus),
+      ordinaryTax(line21, filingStatus),
+      ordinaryTax(line1, filingStatus),
     );
   }
   const line23 = Math.min(line1, line13);
@@ -69,8 +76,8 @@ export function scheduleDTax(facts: PreferentialTaxFacts): number {
   const line32 = line24 + line30;
   if (line1 === line32) {
     return Math.round(Math.min(
-      line31 + ordinaryTax2025(line21, filingStatus),
-      ordinaryTax2025(line1, filingStatus),
+      line31 + ordinaryTax(line21, filingStatus),
+      ordinaryTax(line1, filingStatus),
     ));
   }
   const line33 = line23 - line32;
@@ -83,12 +90,12 @@ export function scheduleDTax(facts: PreferentialTaxFacts): number {
   const line41 = line21 + line22 + line30 + line33 + line39;
   const line42 = line1 - line41;
   const line43 = rate28Gain > 0 ? line42 * 0.28 : 0;
-  const line44 = ordinaryTax2025(line21, filingStatus);
+  const line44 = ordinaryTax(line21, filingStatus);
   const line45 = line31 + line34 + line40 + line43 + line44;
-  return Math.round(Math.min(line45, ordinaryTax2025(line1, filingStatus)));
+  return Math.round(Math.min(line45, ordinaryTax(line1, filingStatus)));
 }
 
-// TY2025 Qualified Dividends and Capital Gain Tax Worksheet. Schedule D's
+// Qualified Dividends and Capital Gain Tax Worksheet. Schedule D's
 // special-rate route is selected when 25%/28% gains or Form 4952 apply.
 export function preferentialTax(facts: PreferentialTaxFacts): number {
   const {
@@ -105,11 +112,12 @@ export function preferentialTax(facts: PreferentialTaxFacts): number {
   ) {
     return scheduleDTax(facts);
   }
-  return qualifiedDividendTax2025(
+  return qualifiedDividendTax(
     taxableIncome,
     qualifiedDividends,
     netCapitalGain,
     filingStatus,
+    preferentialRateSchedule(yearOf(facts)),
   );
 }
 
@@ -120,6 +128,9 @@ export function foreignEarnedIncomePreferentialTax(
   facts: PreferentialTaxFacts,
   taxableExcludedIncome: number,
 ): number {
+  const taxYear = yearOf(facts);
+  const ordinaryTax = (income: number, status: FilingStatus) =>
+    ordinaryTaxForYear(income, status, taxYear);
   const capitalGainExcess = Math.max(
     0,
     facts.qualifiedDividends + facts.netCapitalGain - facts.taxableIncome,
@@ -134,7 +145,7 @@ export function foreignEarnedIncomePreferentialTax(
       scheduleDTax({
         ...facts,
         taxableIncome: facts.taxableIncome + taxableExcludedIncome,
-      }) - ordinaryTax2025(taxableExcludedIncome, facts.filingStatus),
+      }) - ordinaryTax(taxableExcludedIncome, facts.filingStatus),
     );
   }
   if (usesScheduleD) {
@@ -151,14 +162,15 @@ export function foreignEarnedIncomePreferentialTax(
     facts.qualifiedDividends -
       Math.max(0, capitalGainExcess - facts.netCapitalGain),
   );
-  const stackedTax = qualifiedDividendTax2025(
+  const stackedTax = qualifiedDividendTax(
     facts.taxableIncome + taxableExcludedIncome,
     adjustedQualifiedDividends,
     adjustedNetCapitalGain,
     facts.filingStatus,
+    preferentialRateSchedule(taxYear),
   );
   return Math.max(
     0,
-    stackedTax - ordinaryTax2025(taxableExcludedIncome, facts.filingStatus),
+    stackedTax - ordinaryTax(taxableExcludedIncome, facts.filingStatus),
   );
 }

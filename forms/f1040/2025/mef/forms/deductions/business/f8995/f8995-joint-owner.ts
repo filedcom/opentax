@@ -22,10 +22,13 @@ import { extractFilerIdentity } from "../../../../../../mef/filer.ts";
 export function assertJointOwner8995(
   fields: Record<string, unknown>,
   raw: Readonly<Record<string, unknown>> | undefined,
+  taxYear: number,
 ): Filed8995 {
   if (!raw) throw new Error("Joint owner QBI needs the complete source return");
+  const cfg = CONFIG_BY_YEAR[taxYear];
+  if (!cfg) throw new Error(`No f1040 config for year ${taxYear}`);
   const p = normalizeAllPending(raw as Record<string, unknown>);
-  const owned = assertOwnedScheduleSE(p);
+  const owned = assertOwnedScheduleSE(p, undefined, taxYear);
   const f = p.f1040;
   const g = p.general;
   if (
@@ -133,7 +136,7 @@ export function assertJointOwner8995(
   const expected = jointOwnerQbi(
     owned.source,
     f.line11_agi - f.line12c_deduction_total - additional,
-    CONFIG_BY_YEAR[2025].ssWageBase,
+    cfg.ssWageBase,
     plan,
     health,
     family?.source,

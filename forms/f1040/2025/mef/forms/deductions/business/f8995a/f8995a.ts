@@ -440,6 +440,7 @@ export function assertScheduleCLossSources(
     assertMultiBusinessInvestmentTax(
       retained,
       investment,
+      2025,
       fields.filing_status,
     );
   }

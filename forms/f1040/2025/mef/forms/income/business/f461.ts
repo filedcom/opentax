@@ -5,6 +5,7 @@ import {
   form461ScopeReviewSchema,
 } from "../../../../../nodes/intermediate/forms/income/business/form461/index.ts";
 import type { MefBuildContext, MefFormDescriptor } from "../../../form-descriptor.ts";
+import { CONFIG_BY_YEAR } from "../../../../../nodes/config/index.ts";
 
 type Fields = z.infer<typeof filedForm461Schema>;
 type Input = Fields | readonly [];
@@ -85,7 +86,11 @@ function buildIRS461(rawFields: Input, context?: MefBuildContext): string {
   if (!f1040.filing_status) {
     throw new Error("Form 461 needs the filed Form 1040 filing status");
   }
-  const expectedThreshold = f1040.filing_status === "mfj" ? 626_000 : 313_000;
+  const cfg = CONFIG_BY_YEAR[context?.taxYear ?? 2025];
+  if (!cfg) throw new Error("Form 461 has no threshold for its tax year");
+  const expectedThreshold = f1040.filing_status === "mfj"
+    ? cfg.eblThresholdMfj
+    : cfg.eblThresholdSingle;
   if (fields.line15_threshold !== expectedThreshold) {
     throw new Error(
       "Form 461 line 15 does not match the return filing status",
