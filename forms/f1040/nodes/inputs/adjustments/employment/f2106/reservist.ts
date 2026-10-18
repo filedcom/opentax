@@ -1,12 +1,13 @@
 import { z } from "zod";
+import { configForYear } from "../../../../config/index.ts";
 
 const amount = z.number().int().nonnegative();
 const reference = z.string().trim().min(1);
-const date = z.string().regex(/^2025-\d{2}-\d{2}$/).refine((value) => {
+const date = z.string().regex(/^\d{4}-\d{2}-\d{2}$/).refine((value) => {
   const parsed = new Date(`${value}T00:00:00Z`);
   return Number.isFinite(parsed.getTime()) &&
     parsed.toISOString().slice(0, 10) === value;
-}, "Reservist travel needs a real TY2025 date");
+}, "Reservist travel needs a real date");
 
 export enum ReserveComponent {
   ARMY_RESERVE = "ARMY_RESERVE",
@@ -40,9 +41,10 @@ const daySchema = z.object({
     reviewed_for_locality_and_date: z.literal(true),
   }).strict(),
 }).strict().superRefine((day, ctx) => {
-  if (
-    day.federal_rate.fiscal_year !== (day.date < "2025-10-01" ? 2025 : 2026)
-  ) {
+  // The federal fiscal year starts October 1.
+  const fiscalYear = Number(day.date.slice(0, 4)) +
+    (Number(day.date.slice(5, 7)) >= 10 ? 1 : 0);
+  if (day.federal_rate.fiscal_year !== fiscalYear) {
     ctx.addIssue({
       code: z.ZodIssueCode.custom,
       message: "Reservist rate fiscal year differs from travel date",
@@ -93,6 +95,25 @@ export const reservistTripsSchema = z.array(reservistTripSchema).min(1)
   });
 
 type Trips = z.infer<typeof reservistTripsSchema>;
+type Trip = Trips[number];
+
+/** The business standard mileage rate in effect on an ISO date. */
+export function businessMileageRateOn(date: string): number {
+  const periods = configForYear(Number(date.slice(0, 4))).standardMileageRates;
+  const period = periods.findLast((p) => p.from <= date);
+  if (!period) throw new Error(`No standard mileage rate for ${date}`);
+  return period.business;
+}
+
+function tripMileageRate(trip: Trip): number {
+  const rate = businessMileageRateOn(trip.days[0].date);
+  if (businessMileageRateOn(trip.days.at(-1)!.date) !== rate) {
+    throw new Error(
+      "Reservist trip crossing a standard mileage rate change needs a trip for each rate period",
+    );
+  }
+  return rate;
+}
 
 /** Full expenses stay on Form 2106; only eligible federal-limited costs reach AGI. */
 export function reservistTravelTotals(trips: Trips) {
@@ -101,7 +122,8 @@ export function reservistTravelTotals(trips: Trips) {
   );
   const limited = qualifying.reduce(
     (sum, trip) =>
-      sum + trip.business_miles * .70 + trip.parking_ferry_tolls +
+      sum + trip.business_miles * tripMileageRate(trip) +
+      trip.parking_ferry_tolls +
       trip.days.reduce((daily, day, i) => {
         const fraction = i === 0 || i === trip.days.length - 1 ? .75 : 1;
         return daily +

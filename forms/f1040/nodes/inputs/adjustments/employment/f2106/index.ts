@@ -14,6 +14,7 @@ import type { NodeContext } from "../../../../../../../core/types/node-context.t
 import { schedule1 } from "../../../../outputs/general/return-assembly/schedule1/index.ts";
 import { scheduleA } from "../../../deductions/itemized/schedule_a/index.ts";
 import { agi_aggregator } from "../../../../intermediate/aggregation/general/return-assembly/agi_aggregator/index.ts";
+import { configForYear } from "../../../../config/index.ts";
 
 export enum EmployeeType {
   RESERVIST = "RESERVIST",
@@ -34,11 +35,11 @@ const sourceReference = z.string().trim().min(1);
 const vehicleDate = z.string().regex(/^20\d\d-\d\d-\d\d$/).refine((value) => {
   const parsed = new Date(`${value}T00:00:00.000Z`);
   return Number.isFinite(parsed.getTime()) &&
-    parsed.toISOString().slice(0, 10) === value && value <= "2025-12-31";
-}, "Form 2106 needs a valid vehicle service date no later than 2025");
+    parsed.toISOString().slice(0, 10) === value;
+}, "Form 2106 needs a valid vehicle service date");
 
 const jobSchema = z.object({
-  tax_year: z.literal(2025),
+  tax_year: z.number().int(),
   owner: z.enum(["taxpayer", "spouse"]),
   employee_name: z.string().trim().min(1),
   employee_ssn: z.string().regex(/^\d{3}-?\d{2}-?\d{4}$/),
@@ -127,6 +128,8 @@ const standardMileageVehicleSchema = z.object({
   available_for_personal_use_off_duty: z.boolean(),
   other_personal_vehicle_available: z.boolean(),
   written_mileage_evidence_reference: sourceReference,
+  /** Line 13 miles in each of the year's standard mileage rate periods, in order. */
+  business_miles_by_rate_period: z.array(miles).min(1).optional(),
   no_personal_to_business_conversion_during_year_confirmed: z.literal(true),
   standard_mileage_eligibility: standardMileageEligibilitySchema,
 }).strict();
@@ -322,10 +325,36 @@ export const form2106LinesSchema = z.object({
 
 export type Form2106Lines = z.infer<typeof form2106LinesSchema>;
 
-function vehicleExpense(vehicle: F2106Item["vehicle"]): number {
+type StandardMileageVehicle = Extract<
+  F2106Item["vehicle"],
+  { method: VehicleMethod.STANDARD_MILEAGE }
+>;
+
+/** Line 22: line 13 miles at each rate the year's periods set. */
+function standardMileageDeduction(
+  vehicle: StandardMileageVehicle,
+  taxYear: number,
+): number {
+  const periods = configForYear(taxYear).standardMileageRates;
+  const byPeriod = vehicle.business_miles_by_rate_period ??
+    (periods.length === 1 ? [vehicle.business_miles] : undefined);
+  if (
+    !byPeriod || byPeriod.length !== periods.length ||
+    byPeriod.reduce((sum, m) => sum + m, 0) !== vehicle.business_miles
+  ) {
+    throw new Error(
+      `Form 2106 line 22 needs ${taxYear} business miles split across its ${periods.length} standard mileage rate periods`,
+    );
+  }
+  return Math.round(
+    byPeriod.reduce((sum, m, i) => sum + m * periods[i].business, 0),
+  );
+}
+
+function vehicleExpense(vehicle: F2106Item["vehicle"], taxYear: number): number {
   if (vehicle.method === VehicleMethod.NONE) return 0;
   if (vehicle.method === VehicleMethod.STANDARD_MILEAGE) {
-    return Math.round(vehicle.business_miles * 0.70);
+    return standardMileageDeduction(vehicle, taxYear);
   }
   throw new Error(
     "Form 2106 actual vehicle expenses need a sourced depreciation and business-use calculation",
@@ -334,6 +363,7 @@ function vehicleExpense(vehicle: F2106Item["vehicle"]): number {
 
 function standardMileageLines(
   vehicle: F2106Item["vehicle"],
+  taxYear: number,
 ): z.infer<typeof standardMileageLinesSchema> | null {
   if (vehicle.method !== VehicleMethod.STANDARD_MILEAGE) return null;
   return standardMileageLinesSchema.parse({
@@ -351,13 +381,36 @@ function standardMileageLines(
     line19_other_vehicle_available: vehicle.other_personal_vehicle_available,
     line20_evidence: true,
     line21_written_evidence: true,
-    line22_standard_mileage_deduction: Math.round(
-      vehicle.business_miles * 0.70,
+    line22_standard_mileage_deduction: standardMileageDeduction(
+      vehicle,
+      taxYear,
     ),
   });
 }
 
+/** Vehicle and reserve-travel dates belong to the job's tax year. */
+function assertJobYearDates(item: F2106Item): void {
+  const year = item.job.tax_year;
+  if (
+    item.vehicle.method !== VehicleMethod.NONE &&
+    item.vehicle.placed_in_service_date > `${year}-12-31`
+  ) {
+    throw new Error(
+      `Form 2106 vehicle must be placed in service by the end of ${year}`,
+    );
+  }
+  if (
+    item.qualification.kind === EmployeeType.RESERVIST &&
+    item.qualification.trips.some((trip) =>
+      trip.days.some((day) => !day.date.startsWith(`${year}-`))
+    )
+  ) {
+    throw new Error(`Form 2106 reserve travel must fall in ${year}`);
+  }
+}
+
 function assertQualifiedCategory(item: F2106Item): void {
+  assertJobYearDates(item);
   const qualification = item.qualification;
   if (qualification.kind === EmployeeType.RESERVIST) {
     const totals = reservistTravelTotals(qualification.trips);
@@ -398,7 +451,7 @@ function assertQualifiedCategory(item: F2106Item): void {
 export function calculateForm2106Lines(raw: unknown): Form2106Lines {
   const item = itemSchema.parse(raw);
   assertQualifiedCategory(item);
-  const line1 = vehicleExpense(item.vehicle);
+  const line1 = vehicleExpense(item.vehicle, item.job.tax_year);
   const line2 = item.expenses.line2_parking_tolls_local_transportation;
   const line3 = item.expenses.line3_overnight_travel_excluding_meals;
   const line4 = item.expenses.line4_other_business_expenses;
@@ -428,7 +481,7 @@ export function calculateForm2106Lines(raw: unknown): Form2106Lines {
     line9_column_b: line9B,
     line10_deduction: line10,
     excess_nonmeal_reimbursement_to_1040_line1a: Math.max(0, line7A - line6A),
-    vehicle_part_ii: standardMileageLines(item.vehicle),
+    vehicle_part_ii: standardMileageLines(item.vehicle, item.job.tax_year),
   });
 }
 
@@ -532,8 +585,11 @@ class F2106Node extends TaxNode<typeof inputSchema> {
     agi_aggregator,
   ]);
 
-  compute(_ctx: NodeContext, rawInput: unknown): NodeResult {
+  compute(ctx: NodeContext, rawInput: unknown): NodeResult {
     const parsed = inputSchema.parse(rawInput);
+    if (parsed.f2106s.some((item) => item.job.tax_year !== ctx.taxYear)) {
+      throw new Error(`Form 2106 job records must be for ${ctx.taxYear}`);
+    }
     return { outputs: routedOutputs(parsed.f2106s) };
   }
 }

@@ -397,3 +397,55 @@ test("Form 2106 performing-artist source checks owner-wide qualification", () =>
     false,
   );
 });
+
+// Draft 2026 Form 2106 line 22 (created 8/18/26): line 13 miles at 72.5 cents
+// (January 1-June 30) and 76 cents (July 1-December 31); Notice 2026-10 and
+// Announcement 2026-11.
+test("Form 2106 2026 line 22 applies each rate period's standard mileage rate", () => {
+  const job = { ...feeJob().job, tax_year: 2026 };
+  const vehicle: Item["vehicle"] = {
+    method: VehicleMethod.STANDARD_MILEAGE,
+    placed_in_service_date: "2026-02-01",
+    total_miles: 10_000,
+    business_miles: 1_000,
+    business_miles_by_rate_period: [400, 600],
+    average_daily_roundtrip_commuting_miles: 20,
+    commuting_miles: 4_000,
+    available_for_personal_use_off_duty: true,
+    other_personal_vehicle_available: false,
+    written_mileage_evidence_reference: "2026 mileage log",
+    no_personal_to_business_conversion_during_year_confirmed: true,
+    standard_mileage_eligibility: {
+      ownership: "owned",
+      used_standard_mileage_first_business_year: true,
+      method_history_reference: "2026 vehicle election record",
+    },
+  };
+  const lines = calculateForm2106Lines({ ...feeJob(), job, vehicle });
+  // 400 x $0.725 + 600 x $0.76 = $746.
+  assertEquals(lines.vehicle_part_ii?.line22_standard_mileage_deduction, 746);
+  assertEquals(lines.line10_deduction, 1_946);
+  const { business_miles_by_rate_period: _, ...unsplit } = vehicle;
+  assertThrows(
+    () => calculateForm2106Lines({ ...feeJob(), job, vehicle: unsplit }),
+    Error,
+    "split across its 2 standard mileage rate periods",
+  );
+  assertThrows(
+    () =>
+      calculateForm2106Lines({
+        ...feeJob(),
+        vehicle: { ...vehicle, placed_in_service_date: "2026-02-01" },
+      }),
+    Error,
+    "placed in service by the end of 2025",
+  );
+  assertThrows(
+    () =>
+      f2106.compute({ taxYear: 2026, formType: "f1040" }, {
+        f2106s: [feeJob()],
+      }),
+    Error,
+    "job records must be for 2026",
+  );
+});

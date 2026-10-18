@@ -600,11 +600,6 @@
       "calculation standard_deduction",
       "calculation start"
     ],
-    "single-fee-basis-employee-expenses": [
-      "calculation form8960",
-      "calculation standard_deduction",
-      "calculation start"
-    ],
     "single-certified-work-opportunity-credit": [
       "calculation form8960",
       "calculation standard_deduction",
@@ -814,8 +809,8 @@
     "single-w2-three-eic-children-with-reviewed-birth": "Named TY2025-only route: the node refuses TY2026 until that year's law is implemented",
     "single-unreported-refinance-points": "Open TY2026 work: refinance-points ledger names its prior years in field names (prior_year_2023/2024)",
     "single-2023-refinance-points-ledger": "Open TY2026 work: refinance-points ledger names its prior years in field names (prior_year_2023/2024)",
-    "single-8862-ctc-reinstatement": "Open TY2026 work in Schedule 8812 (owned by the Schedule 8812 earned-income work)",
-    "single-five-dependent-continuation": "Open TY2026 work in Schedule 8812 (owned by the Schedule 8812 earned-income work)",
+    "single-8862-ctc-reinstatement": "Sample amount: the reviewed Schedule 8812 carries the TY2025 Form 1040 line 18 tax ($9,055 on $80,000 single AGI); the 2026 return figures line 18 with the Rev. Proc. 2025-32 standard deduction and rates, and amounts are not shifted",
+    "single-five-dependent-continuation": "Sample amount: the reviewed Schedule 8812 carries the TY2025 Form 1040 line 18 tax ($9,055 on $80,000 single AGI); the 2026 return figures line 18 with the Rev. Proc. 2025-32 standard deduction and rates, and amounts are not shifted",
     "single-withheld-w2g": "Named TY2025-only route: W-2G payer Copy B verification reads the 2025 Form W-2G template; the 2026 template (irs/corpus/ty2026/authorities/fw2g--2026.pdf) is not mapped yet",
     "joint-schedule-h-spouse-withholding-only": "Open TY2026 work: Schedule H family withholding source replays TY2025 payroll rules",
     "single-schedule-h-fica-and-futa": "Named TY2025-only route: Schedule H FUTA credit-reduction states for 2026 are not yet published",
@@ -860,7 +855,6 @@
     "single-schedule-j-farm-income-averaging": "Named TY2025-only route: TY2026 Form 8814 and Schedule J tax worksheets are not supported yet",
     "single-form8881-startup-and-auto-enrollment": "Open TY2026 work: Form 8881 pins the 2025 first credit year and cost dates",
     "mfj-form2210f-first-joint-filing": "Open TY2026 work: Form 2210-F box B source names 2024/2025 gross income years and 2026 payment dates",
-    "single-fee-basis-employee-expenses": "Open TY2026 work: Form 2106 pins tax_year 2025 and the 70-cent rate; 2026 has two rates (Notice 2026-10, Announcement 2026-11)",
     "single-certified-work-opportunity-credit": "TY2026 law: shifted a year, the sample hires its WOTC employee in 2026; IRC \u00a751(c)(4) ends the work opportunity credit for individuals who begin work after December 31, 2025, so the 2026 return correctly cannot claim it",
     "single-reported-tax-credit-bond": "Dated fact outside TY2026: shifting the sample moves its 2017 QECB issue date past the December 31, 2017 cutoff (P.L. 115-97 \u00a713404 repealed tax credit bonds issued after 2017); a 2026 version of this bond cannot exist",
     "single-employer-childcare-facility-and-referral-credit": "Open TY2026 work: Form 8882 pins 2025 cost dates",

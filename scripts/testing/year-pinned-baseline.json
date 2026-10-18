@@ -1155,26 +1155,6 @@
     "count": 1
   },
   {
-    "path": "forms/f1040/nodes/inputs/adjustments/employment/f2106/index.ts",
-    "pattern": "date-pinned",
-    "count": 1
-  },
-  {
-    "path": "forms/f1040/nodes/inputs/adjustments/employment/f2106/index.ts",
-    "pattern": "z-literal",
-    "count": 1
-  },
-  {
-    "path": "forms/f1040/nodes/inputs/adjustments/employment/f2106/reservist.ts",
-    "pattern": "date-pinned",
-    "count": 2
-  },
-  {
-    "path": "forms/f1040/nodes/inputs/adjustments/employment/f2106/reservist.ts",
-    "pattern": "year-identifier",
-    "count": 1
-  },
-  {
     "path": "forms/f1040/nodes/inputs/adjustments/retirement/sep_retirement/index.ts",
     "pattern": "year-comparison",
     "count": 1
