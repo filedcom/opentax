@@ -1,7 +1,7 @@
 # TY2026 SSA and railroad-equivalent benefits
 
-Sources: the pinned [2026 draft Form 1040](../corpus/draft/f1040.pdf),
-[IRS Publication 915 (2025)](../corpus/authorities/p915--2025.pdf) as the
+Sources: the pinned [2026 draft Form 1040](../../../irs/corpus/ty2026/draft/f1040.pdf),
+[IRS Publication 915 (2025)](../../../irs/corpus/ty2026/authorities/p915--2025.pdf) as the
 latest published benefits/box guide available in this snapshot, and the
 existing Social Security taxability worksheet in the shared AGI node. Replace
 the publication comparator with the 2026 edition when issued, and check any

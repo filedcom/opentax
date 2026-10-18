@@ -1,14 +1,14 @@
 # TY2026 Form 8960 investment-income tax contract
 
-The pinned [2026 draft Form 8960](../corpus/draft/f8960.pdf), SHA-256
+The pinned [2026 draft Form 8960](../../../irs/corpus/ty2026/draft/f8960.pdf), SHA-256
 `2306f4f334a8b3b1ed73fd5045dec86eed194902923462bf485431c756f66982`,
 prints the individual NIIT calculation on lines 1–17. The current [IRS
 instructions](https://www.irs.gov/instructions/i8960) and pinned
-[PDF](../corpus/authorities/i8960--2025.pdf), SHA-256
+[PDF](../../../irs/corpus/ty2026/authorities/i8960--2025.pdf), SHA-256
 `b10fbb23ff4a053db197285497a00914c558e3ae0cdf5c956b7c0c7867376428`,
 are explicitly **2025 comparators**. Obtain 2026 instructions before
 finalizing line-specific inclusion, deductions, and election worksheets.
-The 2026 [Schedule 2 draft](../corpus/draft/f1040s2.pdf) places NIIT on line 6.
+The 2026 [Schedule 2 draft](../../../irs/corpus/ty2026/draft/f1040s2.pdf) places NIIT on line 6.
 
 ## Source ownership and calculation order
 
@@ -42,8 +42,8 @@ the exact 2026 filing instruction before retaining or changing that gate.
 - The 2026 [PDF descriptor](https://github.com/filedcom/opentax/blob/b7c07b616564167a91bc588dba05caab2a28e054/forms/f1040/2026/pdf/forms/f8960.ts)
   and [builder](https://github.com/filedcom/opentax/blob/b7c07b616564167a91bc588dba05caab2a28e054/forms/f1040/2026/pdf/f8960.ts) fill 21 numeric lines
   but omit the election boxes and printed lines 5c, 6 and 9c. The PDF
-  attachment gate requires line 17 > 0. The complete [draft field
-  inventory](../inventories/pdf-fields/pdf-fields-f8960.csv) is the map for closing this gap.
+  attachment gate requires line 17 > 0. The complete draft field
+  inventory is the map for closing this gap.
 - The TY2025 [MeF serializer](../../../forms/f1040/2025/mef/forms/taxes/investments/f8960.ts)
   emits only a subset of inputs. It omits intermediate/final line values
   and 5c/6/9c/elections; the TY2025 rule set already contains arithmetic

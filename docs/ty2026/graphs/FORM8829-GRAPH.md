@@ -5,14 +5,14 @@ elections must share asset basis and activity identity with
 [Form 4562](./FORM4562-GRAPH.md); its line 22 cannot be deducted again after
 Form 8829 depreciation has entered Schedule C line 30.
 
-Sources: pinned [2026 draft Form 8829](../corpus/draft/f8829.pdf), SHA-256
+Sources: pinned [2026 draft Form 8829](../../../irs/corpus/ty2026/draft/f8829.pdf), SHA-256
 `90b84dd20515aa148e26b2c0f9b2c3a6d381475403d48bdd6a1f02aafeaac7e9`,
-and [2026 draft instructions](../corpus/draft/i8829.pdf), SHA-256
+and [2026 draft instructions](../../../irs/corpus/ty2026/draft/i8829.pdf), SHA-256
 `1b6750eec4fb1e613fe3fa5e059f81e0e45b30412933ec986a5bfe7e4e42ac35`.
-The instructions cite final [Notice 2026-16](../corpus/authorities/n-26-16.pdf),
+The instructions cite final [Notice 2026-16](../../../irs/corpus/ty2026/authorities/n-26-16.pdf),
 SHA-256 `742cb325c91706c97aa6cb65728e3f1ce78b19ae47f91d75217f7f976cba32ae`,
 for a possible qualified-production-property (QPP) election. Pinned
-[2025 Publication 587](../corpus/authorities/p587--2025.pdf), SHA-256
+[2025 Publication 587](../../../irs/corpus/ty2026/authorities/p587--2025.pdf), SHA-256
 `7f68de213b25a0f826b6112191fcf89e29c121865ef59c4945f8699de0a6d2af`,
 is a **prior-year comparator** for simplified-method and home-office
 background, not 2026 authority. Recheck final 2026 forms/instructions,
@@ -40,7 +40,7 @@ and separate direct/indirect/personal portions.
 | II, lines 29–36 | Excess casualty loss, current home depreciation and prior excess casualty/depreciation carryover. Apply the residual line 28 limit. Line 35 casualty portion goes to Form 4684 line 27; line 36 excludes that amount from the Schedule C expense. | **Line 36 → Schedule C line 30** once, allocated if the home serves multiple businesses. Line 44 = line 32 − line 33 carries to 2027 separately from operating expenses. |
 | III, lines 37–42 | Smaller of adjusted basis or FMV at conversion, less land, times line 7 percentage; choose depreciation by actual first-business-use date and property history. The 2026 mid-month first-year line 41 table ranges January **2.461%** to December **0.107%**; pre-2026 use generally has **2.564%** subject to exceptions. Additions/improvements have separate dates, basis and statement/Form 4562 rules. A QPP election requires its own eligibility evidence under Notice 2026-16 and basis/recapture tracking. | Line 42 returns to line 30 of this form; do **not** also put this amount on Schedule C line 13. Form 4562 is required for first 2026 home use or 2026 additions/improvements. |
 
-The [PDF field inventory](../inventories/pdf-fields/pdf-fields-f8829.csv) has **58 widgets**, all in
+The PDF field inventory has **58 widgets**, all in
 the field tree on one printed page (PDF page 2 after the draft cover).
 It includes both direct and indirect columns for lines 9–12 and 16–23,
 Part III depreciation, and separate Part IV carryovers. Verify the field

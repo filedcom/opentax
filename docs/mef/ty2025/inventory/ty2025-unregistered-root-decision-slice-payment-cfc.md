@@ -7,7 +7,7 @@ The twelve roots below are present in the ignored local TY2025 v5.4
 historical: bounded `IRS8992` and `IRS8992ScheduleA` native/PDF descriptors have
 since been registered, while their positive Category 5a packet remains guarded.
 The schema cache is not tracked in Git, so reproducible provenance remains open.
-The [ordered root reviews](./ty2025-unregistered-roots-01-25.md) are historical;
+The ordered root reviews were historical;
 the [current census](./ty2025-xsd-document-root-census.md), public input registry,
 and form registry were rechecked for this slice. No full tests, XSD validation,
 filled-PDF review, business-rule run, or ATS transmission was performed.

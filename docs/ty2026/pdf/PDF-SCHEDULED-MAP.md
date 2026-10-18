@@ -1,9 +1,9 @@
 # TY2026 Schedule D PDF map
 
-Source: the hash-pinned [2026 draft Schedule D](../corpus/draft/f1040sd.pdf)
+Source: the hash-pinned [2026 draft Schedule D](../../../irs/corpus/ty2026/draft/f1040sd.pdf)
 (`0df9af0711964b3198ea04bb0037b29d6afa85578a671553daed46251630b5f1`).
 Physical page 1 is an IRS draft cover. Printed Schedule D pages are physical
-pages 2 and 3. The [field inventory](../inventories/pdf-fields/pdf-fields-f1040sd.csv) records all 55
+pages 2 and 3. The field inventory records all 55
 widgets, their tooltips, rectangles, and physical page numbers. All 55 are in
 the AcroForm tree. Each of the 27 fields mapped by the TY2025 descriptor
 still exists under the same name in this draft; that verifies names only,

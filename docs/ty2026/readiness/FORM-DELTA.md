@@ -1,6 +1,6 @@
 # TY2026 form topology changes to implement
 
-Evidence here is from the IRS draft PDFs in `corpus/draft/`, captured
+Evidence here is from the IRS draft PDFs in `irs/corpus/ty2026/draft/`, captured
 2026-09-27. Recheck final PDFs and current MeF XSD before coding serializers.
 
 | Draft form/line | TY2026 requirement | Existing TY2025 code to inspect |

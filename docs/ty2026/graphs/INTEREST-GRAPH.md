@@ -1,9 +1,9 @@
 # TY2026 interest income: 1099-INT/OID to the return
 
-Source: pinned [2026 draft Schedule B](../corpus/draft/f1040sb.pdf) and its
-[August 2026 draft instructions](../corpus/draft/i1040sb.pdf). The instruction
+Source: pinned [2026 draft Schedule B](../../../irs/corpus/ty2026/draft/f1040sb.pdf) and its
+[August 2026 draft instructions](../../../irs/corpus/ty2026/draft/i1040sb.pdf). The instruction
 PDF is recorded by URL, byte count, SHA-256, and retrieval time in
-`corpus/manifest.json`. Recheck the final instructions and MeF v4 or later
+`docs/ty2026/corpus/manifest.json`. Recheck the final instructions and MeF v4 or later
 before calling this an accepted return path.
 
 ## Calculation and attachment contract
@@ -19,7 +19,7 @@ before calling this an accepted return path.
 | Affirmed investment-property interest | `f1099int` → Form 4952 | TY2026 public input emits a diagnostic before routing this branch. Finish 2026 investment-interest limitation, Schedule A deduction, and NIIT expense interactions. |
 | Taxable interest as investment income | `schedule_b` → Form 8960 → 2026 Schedule 2 line 6 → 1040 line 23 | The Form 8960 line-6 route is registered and tested. Verify above-threshold interest returns from source facts and the Form 8960 attachment. |
 
-The [2026 draft instructions](../corpus/draft/i1040sb.pdf) require Schedule B
+The [2026 draft instructions](../../../irs/corpus/ty2026/draft/i1040sb.pdf) require Schedule B
 for interest or dividends over $1,500 and for several other cases, including
 seller-financed mortgage interest, nominee or accrued-interest adjustments,
 amortizable bond premium, savings-bond exclusion, and foreign accounts or
@@ -39,9 +39,9 @@ The full MeF, Form 1116, and Form 4952 paths remain.
 
 ## Form 1099-OID source boundary
 
-The IRS [current Form 1099-OID](../corpus/authorities/f1099oid--2024.pdf)
-and [combined 1099-INT/OID instructions](../corpus/authorities/i1099int--2024.pdf)
-are January 2024 continuous-use revisions; the matching [Form 1099-INT](../corpus/authorities/f1099int--2024.pdf)
+The IRS [current Form 1099-OID](../../../irs/corpus/ty2026/authorities/f1099oid--2024.pdf)
+and [combined 1099-INT/OID instructions](../../../irs/corpus/ty2026/authorities/i1099int--2024.pdf)
+are January 2024 continuous-use revisions; the matching [Form 1099-INT](../../../irs/corpus/ty2026/authorities/f1099int--2024.pdf)
 is pinned too. Their hashes are in the manifest. A form's reporting threshold
 does not decide whether accrued OID is taxable. Preserve payer, account,
 recipient, instrument/CUSIP, covered status, acquisition/disposition dates,

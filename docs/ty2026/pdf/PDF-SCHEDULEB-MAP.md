@@ -1,11 +1,10 @@
 # TY2026 draft Schedule B PDF field map
 
-Source: pinned [`corpus/draft/f1040sb.pdf`](../corpus/draft/f1040sb.pdf), SHA-256
+Source: pinned [`irs/corpus/ty2026/draft/f1040sb.pdf`](../../../irs/corpus/ty2026/draft/f1040sb.pdf), SHA-256
 `aa6272f6b3b8a8c6a2aa6ef9d1069f1edb88fb9df4df60278d198da89cdfd93f`.
-The 72 fields and widget rectangles are in `pdf-fields-f1040sb.csv`; all 72
+All 72 fields
 are in the AcroForm tree. The first physical PDF page is a draft cover, and
-the one printed Schedule B page is physical page 2. Regenerate the inventory
-with `build_pdf_fields.py`. Recheck this map against the final 2026 form.
+the one printed Schedule B page is physical page 2. Recheck this map against the final 2026 form.
 
 | Schedule B area | 2026 pending value | Draft PDF fields |
 | --- | --- | --- |

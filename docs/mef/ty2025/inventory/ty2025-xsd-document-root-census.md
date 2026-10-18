@@ -17,7 +17,7 @@ can emit the root, has a valid calculation, or passes XSD/business rules. `No`
 likewise does not prove a form is required. The
 [registered-document audit](../domains/general/return-assembly/form1040/ty2025-form1040-form-audit.md) covers the
 registered-descriptor `INV-01` evidence inventory. The five
-[ordered unregistered-root reviews](./ty2025-unregistered-roots-01-25.md) cover
+ordered unregistered-root reviews covered
 the former 128-`No` snapshot; the current scan has 83 `No` rows. Their ordinal labels are historical, not current
 missing-root counts. A per-root review is not approval to exclude a filing
 situation, and product applicability decisions for these roots remain open

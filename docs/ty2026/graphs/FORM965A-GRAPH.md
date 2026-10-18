@@ -1,11 +1,11 @@
 # TY2026 Form 965-A liability and installment graph
 
 Snapshot: September 27, 2026. The IRS still lists the January 2021
-[Form 965-A](../corpus/authorities/f965a--2021.pdf) and
-[instructions](../corpus/authorities/i965a--2021.pdf) as current. Their SHA-256
+[Form 965-A](../../../irs/corpus/ty2026/authorities/f965a--2021.pdf) and
+[instructions](../../../irs/corpus/ty2026/authorities/i965a--2021.pdf) as current. Their SHA-256
 hashes are `ec389e548af6627533adba1293017a5cc101e41b1ae237de608eae7efa09a446`
 and `c6f7b4a89f68261975754572be6bd55b0e29ab642fe14017cbf92e7f37a9bef1`.
-The form has [413 AcroForm fields/widgets](../inventories/pdf-fields/pdf-fields-f965a.csv). This
+The form has 413 AcroForm fields/widgets. This
 continuous-use revision is the 2026 comparator until superseded.
 
 ## Source facts and calculation
@@ -38,9 +38,9 @@ continuous-use revision is the 2026 comparator until superseded.
 
 ## 2026 return route and source conflict
 
-The pinned [2026 Schedule 2 draft](../corpus/draft/f1040s2.pdf) explicitly
+The pinned [2026 Schedule 2 draft](../../../irs/corpus/ty2026/draft/f1040s2.pdf) explicitly
 prints **line 12** as “Section 965 net tax liability installment from Form
-965-A”; [its PDF field](../inventories/pdf-fields/pdf-fields-f1040s2.csv) is on page 2. The same draft
+965-A”; its PDF field is on page 2. The same draft
 instructs line **15** to add lines **4 through 11 and line 14**, omitting line
 12. Treat that as a source inconsistency: map the amount to the printed line
 12, but do not silently include or exclude it from line 15 or Form 1040 line

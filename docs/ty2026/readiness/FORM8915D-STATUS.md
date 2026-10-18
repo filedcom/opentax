@@ -1,8 +1,8 @@
 # TY2026 Form 8915-D source and filing decision
 
-Pinned official comparators: [2024 Form 8915-D](../corpus/authorities/f8915d--2024.pdf),
+Pinned official comparators: [2024 Form 8915-D](../../../irs/corpus/ty2026/authorities/f8915d--2024.pdf),
 SHA-256 `89681a2b779f03b8c2f7c6dbecd444ff0cc17ed5850a467e4ebf047f8e79e72d`,
-and [2024 instructions](../corpus/authorities/i8915d--2024.pdf), SHA-256
+and [2024 instructions](../../../irs/corpus/ty2026/authorities/i8915d--2024.pdf), SHA-256
 `2309b4e6602bd3d61d48b4fc45eb06d88722cf2b24a1961db6ee4cb98aff289a`.
 The [IRS current-product page](https://www.irs.gov/forms-pubs/about-form-8915-d)
 still points to 2024 as the latest Form 8915-D revision in this September
@@ -22,7 +22,7 @@ Form 8915-D and, if needed, amended **2021–2023** returns. Preserve those
 records for historical/amendment support, but do not invent a 2026
 Form 8915-D attachment or Schedule 1 adjustment.
 
-The pinned [2026 draft Form 8915-F](../corpus/draft/f8915f.pdf) begins with
+The pinned [2026 draft Form 8915-F](../../../irs/corpus/ty2026/draft/f8915f.pdf) begins with
 2021-and-later disasters and does not replace the 2019-disaster amendment
 path. Recheck the IRS Form 8915-D product page, current MeF accepted-forms
 list and any superseding disaster relief before finalizing the TY2026

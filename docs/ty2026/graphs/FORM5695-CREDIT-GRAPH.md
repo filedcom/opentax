@@ -1,9 +1,9 @@
 # TY2026 Form 5695 carryforward and credit ordering
 
-Sources: the pinned [2026 draft Form 5695](../corpus/draft/f5695.pdf), its
-[2026 draft instructions](../corpus/draft/i5695.pdf) (SHA-256
+Sources: the pinned [2026 draft Form 5695](../../../irs/corpus/ty2026/draft/f5695.pdf), its
+[2026 draft instructions](../../../irs/corpus/ty2026/draft/i5695.pdf) (SHA-256
 `1efab06c78f27ce81c7f3ee0335a91e7a195c2702f35d908609e4cfee0db4bf0`), and the
-pinned [2026 draft Schedule 8812 instructions](../corpus/draft/i1040s8.pdf). The
+pinned [2026 draft Schedule 8812 instructions](../../../irs/corpus/ty2026/draft/i1040s8.pdf). The
 current draft Form 5695 has one printed page, six AcroForm fields, and only four
 amount lines. The prior-year Form 5695 expense and Part II inputs are no longer
 its 2026 filing surface.

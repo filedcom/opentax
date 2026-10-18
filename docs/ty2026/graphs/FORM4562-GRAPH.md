@@ -1,15 +1,15 @@
 # TY2026 Form 4562 depreciation and asset-ledger contract
 
-Source snapshot: pinned [2026 draft Form 4562](../corpus/draft/f4562.pdf),
+Source snapshot: pinned [2026 draft Form 4562](../../../irs/corpus/ty2026/draft/f4562.pdf),
 SHA-256 `c76264c1ecc0792abc12315eed87802cd934dc18d072c2d72e94180591ca94ef`.
 The [2026 draft instruction URL](https://www.irs.gov/pub/irs-dft/i4562--dft.pdf)
-still serves **2025** instructions. Pinned [2025 instructions](../corpus/authorities/i4562--2025.pdf)
-and [2025 Publication 946](../corpus/authorities/p946--2025.pdf) are prior-year
+still serves **2025** instructions. Pinned [2025 instructions](../../../irs/corpus/ty2026/authorities/i4562--2025.pdf)
+and [2025 Publication 946](../../../irs/corpus/ty2026/authorities/p946--2025.pdf) are prior-year
 comparators, not authority for an unverified 2026 rule. Final [Notice
-2026-11](../corpus/authorities/n-26-11.pdf) supplies interim §168(k) guidance;
-[Notice 2026-16](../corpus/authorities/n-26-16.pdf) supplies interim §168(n)
-qualified-production-property guidance. [Rev. Proc. 2025-32](../corpus/authorities/rp-25-32.pdf)
-sets 2026 §179 limits, and [Rev. Proc. 2026-15](../corpus/authorities/rp-26-15.pdf)
+2026-11](../../../irs/corpus/ty2026/authorities/n-26-11.pdf) supplies interim §168(k) guidance;
+[Notice 2026-16](../../../irs/corpus/ty2026/authorities/n-26-16.pdf) supplies interim §168(n)
+qualified-production-property guidance. [Rev. Proc. 2025-32](../../../irs/corpus/ty2026/authorities/rp-25-32.pdf)
+sets 2026 §179 limits, and [Rev. Proc. 2026-15](../../../irs/corpus/ty2026/authorities/rp-26-15.pdf)
 sets 2026 placed-in-service passenger-auto caps. Recheck every draft/final
 revision and the current MeF release before filing.
 
@@ -54,7 +54,7 @@ The form's line 22 is a reconciliation total, not an additional deduction.
 The draft is **three printed pages** after its coversheet and has **no Part
 VI**. Amortization beginning in 2026 belongs on [Form 4562-B](./FORM4562B-GRAPH.md),
 whose asset rows and source-schedule deduction must reconcile separately.
-The [AcroForm inventory](../inventories/pdf-fields/pdf-fields-f4562.csv) records **271 terminal widgets**:
+The AcroForm inventory records **271 terminal widgets**:
 137 on printed page 1, 124 on page 2 and 10 on page 3 (PDF pages 2–4).
 Every widget is in the field tree. It includes line 14d (`f1_25`), the line
 19k row (`f1_101`–`f1_106`), the listed-property table, six mileage columns

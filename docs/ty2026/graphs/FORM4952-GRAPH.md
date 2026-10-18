@@ -1,10 +1,10 @@
 # TY2026 Form 4952 investment-interest contract
 
 Source snapshot: [draft 2026 Form 4952 with **instructions on printed pages
-3–4**](../corpus/draft/f4952.pdf), SHA-256
+3–4**](../../../irs/corpus/ty2026/draft/f4952.pdf), SHA-256
 `3ddbc607b62b1b17e03df6059120b0f91a7691808657442136fda08db5ef7c41`.
 The missing `i4952--dft.pdf` URL is expected: this draft embeds the
-instructions. [Publication 550 (2025)](../corpus/authorities/p550--2025.pdf),
+instructions. [Publication 550 (2025)](../../../irs/corpus/ty2026/authorities/p550--2025.pdf),
 SHA-256 `83552968a07e63d1c81e5b4f311fc0e54728b5ff9654b5a0d2ba6292c5574317`,
 is a **prior-year comparator** for investment-property classification and
 interest allocation. Verify final 2026 form/instructions, current Pub. 550,
@@ -63,8 +63,8 @@ Model that filing decision separately from a zero computed deduction.
   qualified-dividend tax worksheet inputs, not just the Form 4952 result.
   The TY2025 MeF serializer only emits numeric line tags; it does not prove
   the current 2026 schema, filing exception or required election annotation.
-- The TY2025 PDF descriptor maps all 15 numeric form lines; the [2026 draft
-  inventory](../inventories/pdf-fields/pdf-fields-f4952.csv) has **17 terminal widgets**, all in the
+- The TY2025 PDF descriptor maps all 15 numeric form lines; the 2026 draft
+  inventory has **17 terminal widgets**, all in the
   field tree: name/ID plus those 15 fields. It contains one printed form
   page, a blank page and two printed instruction pages, after the draft
   cover. Confirm field positions and the dotted-line election annotation

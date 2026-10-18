@@ -1,8 +1,8 @@
 # TY2026 Additional Medicare Tax and withholding contract
 
-Sources: pinned [2026 draft Form 8959](../corpus/draft/f8959.pdf), SHA-256
+Sources: pinned [2026 draft Form 8959](../../../irs/corpus/ty2026/draft/f8959.pdf), SHA-256
 `8f663b2ca3dd052537a4d8aea4ae9aada0606b0f7dc7711fa8948489ef870d2f`,
-and [2026 draft instructions](../corpus/draft/i8959.pdf), SHA-256
+and [2026 draft instructions](../../../irs/corpus/ty2026/draft/i8959.pdf), SHA-256
 `c5b1661eeb6cb33be840a0a01616d477d2731d2b3928e1bcd3fa13b1494bbaf1`.
 Recheck final revisions and current MeF XSD/rules before filing. The 0.9%
 rate and status thresholds are not indexed: $250,000 MFJ, $125,000 MFS,
@@ -18,7 +18,7 @@ by that employer; liability uses the return's filing-status threshold.
 | IV, lines 13–18: self-employment | Start with Schedule SE Part I line 6 (negative amounts become zero). Reduce the status threshold by Part I line 4 Medicare wages, floored at zero; do **not** reduce it by RRTA compensation. Line 18 is 0.9% of positive SE income above that remaining threshold. | Line **18 → Schedule 2 line 11**, separate from line 12. |
 | V, lines 19–24: withholding | Sum W-2 box **6** Medicare tax withheld. Subtract 1.45% of line 1 W-2 box 5 wages from that sum, floored at zero, to isolate additional withholding on wages. Add the separately reported RRTA Additional Medicare withholding from W-2 box 14a/CT-2. Keep the withholding evidence by employer and owner before aggregation. | Line **24 → Form 1040 line 25c**. It is creditable even when computed Additional Medicare Tax is zero. |
 
-The [2026 PDF field inventory](../inventories/pdf-fields/pdf-fields-f8959.csv) has **26 widgets**, all
+The 2026 PDF field inventory has **26 widgets**, all
 in the canonical field tree: name/SSN plus lines 1–24 on PDF page 2 after
 the draft coversheet. It is one printed page. Field names still run
 `f1_3[0]`–`f1_26[0]`, but the **meanings at positions 8–18 changed**; a

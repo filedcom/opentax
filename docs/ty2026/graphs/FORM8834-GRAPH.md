@@ -1,9 +1,9 @@
 # TY2026 Form 8834 legacy electric-vehicle passive credit contract
 
-Current authority: [Form 8834 (Rev. October 2024)](../corpus/authorities/f8834--2024.pdf),
+Current authority: [Form 8834 (Rev. October 2024)](../../../irs/corpus/ty2026/authorities/f8834--2024.pdf),
 SHA-256 `6a48b2d674eaf6d41eb7c0d0fb1195ce996702b1ce32cacb44ee19f655ef81f9`.
 Its embedded instructions say to use this revision for tax years beginning
-in 2024 **or later** until superseded. The pinned [2026 Schedule 3 draft](../corpus/draft/f1040s3.pdf)
+in 2024 **or later** until superseded. The pinned [2026 Schedule 3 draft](../../../irs/corpus/ty2026/draft/f1040s3.pdf)
 still carries its allowable credit on line 6i. Recheck the current form,
 Form 8582-CR and 2026 MeF XSD/rules before filing.
 
@@ -31,8 +31,8 @@ only after Form 8582-CR limitation.
 
 - Shared `f8834` requires a Form 8582-CR source activity and sends tentative
   credit plus Form 6251 work into the TY2025 graph. TY2025 PDF/MeF have
-  line-to-field and finalized-return reconciliation. The [current PDF
-  inventory](../inventories/pdf-fields/pdf-fields-f8834.csv) has **11 terminal text widgets** on
+  line-to-field and finalized-return reconciliation. The current PDF
+  inventory has **11 terminal text widgets** on
   the form page; page 2 contains instructions. These are reusable baselines
   after 2026 line/MeF review, not registered TY2026 filing support.
 - The input trusts `allowed_passive_activity_credit` as already released
