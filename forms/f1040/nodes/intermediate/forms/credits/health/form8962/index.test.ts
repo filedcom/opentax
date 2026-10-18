@@ -1302,3 +1302,82 @@ test("zero-percent shared allocation still produces Form 8962 Part IV", () => {
   ]);
   assertEquals(fields(result, "form8962")?.total_premium_tax_credit, 0);
 });
+
+// ─── TY2026 ─────────────────────────────────────────────────────────────────
+// Rev. Proc. 2025-25 §3.01 Applicable Percentage Table; 2025 HHS poverty
+// guidelines ($15,650 + $5,500); P.L. 119-21 §71305 ends the repayment
+// limitation (draft 2026 Form 8962 lines 27-29).
+
+function annual2026(
+  householdIncome: number,
+  annualAptc: number,
+  extra: Record<string, unknown> = {},
+) {
+  return form8962.compute({ taxYear: 2026, formType: "f1040" }, {
+    fpl_region: "contiguous",
+    filing_status: FilingStatus.Single,
+    dependent_income_complete: true,
+    household_size: 1,
+    taxpayer_modified_agi: householdIncome,
+    annual_premium: 6_000,
+    annual_slcsp: 6_000,
+    annual_aptc: annualAptc,
+    annual_line11_eligible: true,
+    ...extra,
+  });
+}
+
+test("Form 8962 TY2026 uses the Rev. Proc. 2025-25 applicable percentage", () => {
+  // 200% FPL: 6.60% of $31,300 is $2,066; $6,000 - $2,066 = $3,934.
+  const result = annual2026(31_300, 0);
+  assertEquals(fields(result, "form8962")?.applicable_figure, 0.066);
+  assertEquals(
+    fields(result, "schedule3")?.line9_premium_tax_credit,
+    3_934,
+  );
+  // 134% interpolates between 3.14% at 133% and 4.19% at 150%.
+  assertEquals(
+    fields(annual2026(20_971, 0), "form8962")?.applicable_figure,
+    0.032,
+  );
+});
+
+test("Form 8962 TY2026 repays excess APTC in full and denies PTC above 400% FPL", () => {
+  const capped2025 = annual(31_300, 6_000, 6_000, 6_000);
+  const full2026 = annual2026(31_300, 6_000);
+  assertEquals(
+    fields(full2026, "schedule2")?.line1a_excess_advance_premium,
+    2_066,
+  );
+  assertEquals(
+    fields(capped2025, "schedule2")?.line1a_excess_advance_premium! <
+      2_066,
+    true,
+  );
+  const above400 = annual2026(70_000, 3_000);
+  assertEquals(fields(above400, "form8962")?.total_premium_tax_credit, 0);
+  assertEquals(
+    fields(above400, "schedule2")?.line1a_excess_advance_premium,
+    3_000,
+  );
+});
+
+test("Form 8962 TY2026 uses the 2025 Alaska guideline and drops the lawfully present exception", () => {
+  const alaska = annual2026(39_100, 0, { fpl_region: "alaska" });
+  assertEquals(fields(alaska, "form8962")?.federal_poverty_line, 19_550);
+  assertThrows(
+    () =>
+      annual2026(10_000, 1_000, {
+        below_100_fpl_status: {
+          basis: "lawfully_present",
+          no_one_can_claim_taxpayer: true,
+          marketplace_coverage: true,
+          enrolled_individual_lawfully_present: true,
+          medicaid_ineligible_due_to_immigration_status: true,
+          otherwise_applicable_taxpayer: true,
+        },
+      }),
+    Error,
+    "§71302",
+  );
+});
