@@ -15,12 +15,11 @@ import { CONFIG_BY_YEAR } from "../../../../../config/index.ts";
 import type { F1040Config } from "../../../../../config/index.ts";
 import {
   calculateForm2441Benefits,
+  dependentCareCreditRate,
+  dependentCareExclusionLimit,
+  dependentCareExpenseLimit,
   filingDetailsSchema,
 } from "./calculation.ts";
-
-// IRC §21(a): credit rate — 35% at AGI ≤ $15,000, drops 1% per $2,000, floor 20%
-const MAX_CREDIT_RATE = 0.35;
-const MIN_CREDIT_RATE = 0.20;
 
 // ─── Schema ───────────────────────────────────────────────────────────────────
 
@@ -32,12 +31,12 @@ export const inputSchema = z.object({
   // Aggregated across all W-2s by the w2 input node.
   dep_care_benefits: z.number().nonnegative().optional(),
 
-  // Filing status — determines §129 employer exclusion cap (MFS = $2,500, others = $5,000)
-  // and earned income cap (MFJ uses lesser of two spouses)
+  // Filing status — determines the §129 employer exclusion cap and the
+  // earned income cap (MFJ uses lesser of two spouses)
   filing_status: filingStatusSchema.optional(),
 
   // Number of qualifying persons (Form 2441 Part I)
-  // Determines qualifying expense cap: 1 person = $3,000; 2+ = $6,000 (IRC §21(c))
+  // Determines the IRC §21(c) qualifying expense cap
   qualifying_persons: z.number().int().min(0).optional(),
 
   // Total qualifying expenses actually paid to care providers (Form 2441 Part II line 2)
@@ -61,38 +60,13 @@ type Form2441Input = z.infer<typeof inputSchema>;
 
 // ─── Pure helpers ─────────────────────────────────────────────────────────────
 
-// IRC §129(a)(2): employer exclusion limit — $5,000 general, $2,500 for MFS
-function employerExclusionLimit(
-  status: FilingStatus | undefined,
-  cfg: F1040Config,
-): number {
-  return status === FilingStatus.MFS
-    ? cfg.depCareEmployerExclusionMfs
-    : cfg.depCareEmployerExclusion;
-}
-
 // Amount of employer benefits that exceeds the §129 exclusion → taxable income (f1040 line 1e)
 function taxableExcess(
   benefits: number,
   status: FilingStatus | undefined,
   cfg: F1040Config,
 ): number {
-  return Math.max(0, benefits - employerExclusionLimit(status, cfg));
-}
-
-// IRC §21(a)(2): applicable credit percentage based on AGI
-function applicablePercentage(agi: number, cfg: F1040Config): number {
-  if (agi <= cfg.depCareCreditRateAgiThreshold) return MAX_CREDIT_RATE;
-  const stepsOver = Math.ceil(
-    (agi - cfg.depCareCreditRateAgiThreshold) /
-      cfg.depCareCreditRateBracketSize,
-  );
-  return Math.max(MIN_CREDIT_RATE, MAX_CREDIT_RATE - stepsOver * 0.01);
-}
-
-// Qualifying expense dollar limit (IRC §21(c)): $3,000 for 1 person, $6,000 for 2+
-function expenseDollarLimit(persons: number, cfg: F1040Config): number {
-  return persons >= 2 ? cfg.depCareExpenseCapTwoPlus : cfg.depCareExpenseCapOne;
+  return Math.max(0, benefits - dependentCareExclusionLimit(status, cfg));
 }
 
 // Earned income cap: MFJ uses lesser of two spouses' earned incomes (IRC §21(d))
@@ -119,12 +93,12 @@ function computeSection21Credit(
   const benefits = input.dep_care_benefits ?? 0;
   const excludedBenefits = Math.min(
     benefits,
-    employerExclusionLimit(input.filing_status, cfg),
+    dependentCareExclusionLimit(input.filing_status, cfg),
   );
 
   if (expenses <= 0 || persons <= 0) return 0;
 
-  const dollarCap = expenseDollarLimit(persons, cfg);
+  const dollarCap = dependentCareExpenseLimit(persons, cfg);
   // Employer-excluded benefits reduce the qualifying expense base (Form 2441 line 9)
   const reducedCap = Math.max(0, dollarCap - excludedBenefits);
   const earnedCap = earnedIncomeCap(
@@ -136,7 +110,10 @@ function computeSection21Credit(
 
   if (allowedExpenses <= 0) return 0;
 
-  return Math.round(allowedExpenses * applicablePercentage(agi, cfg));
+  return Math.round(
+    allowedExpenses *
+      dependentCareCreditRate(agi, input.filing_status, cfg),
+  );
 }
 
 // ─── Node class ───────────────────────────────────────────────────────────────
@@ -174,6 +151,7 @@ class Form2441Node extends TaxNode<typeof inputSchema> {
       const lines = calculateForm2441Benefits(
         parsed.filing_details,
         benefits,
+        cfg,
       );
       if (lines.line26 > 0) {
         outputs.push(this.outputNodes.output(f1040, {

@@ -331,3 +331,53 @@ test("form2441 non-MFS: employer exclusion still $5,000", () => {
   });
   assertEquals(findOutput(result, "f1040"), undefined);
 });
+
+// ---------------------------------------------------------------------------
+// TY2026: IRC §21(a)(2) and §129(a)(2)(A) as amended by P.L. 119-21
+// §§70404-70405; rates from the draft 2026 Form 2441 instructions, line 8
+// "2026 Phaseout Schedule".
+// ---------------------------------------------------------------------------
+
+function compute2026(input: Record<string, unknown>) {
+  return form2441.compute({ taxYear: 2026, formType: "f1040" }, input);
+}
+
+function credit2026(agi: number, filingStatus: FilingStatus) {
+  const result = compute2026({
+    agi,
+    filing_status: filingStatus,
+    qualifying_persons: 1,
+    qualifying_expenses: 3_000,
+    taxpayer_earned_income: 200_000,
+    spouse_earned_income: 200_000,
+  });
+  return fieldsOf(result.outputs, schedule3)?.line2_childcare_credit;
+}
+
+test("form2441 TY2026: the credit rate follows the 2026 phaseout schedule", () => {
+  // $0-$15,000 .50; $29,000-$31,000 .42; $43,000-$150,000 MFJ .35;
+  // $158,000-$162,000 MFJ .32; $79,000-$81,000 other .32; over $206,000
+  // MFJ / $103,000 other .20.
+  assertEquals(credit2026(15_000, FilingStatus.Single), 1_500);
+  assertEquals(credit2026(30_000, FilingStatus.Single), 1_260);
+  assertEquals(credit2026(100_000, FilingStatus.MFJ), 1_050);
+  assertEquals(credit2026(160_000, FilingStatus.MFJ), 960);
+  assertEquals(credit2026(80_000, FilingStatus.HOH), 960);
+  assertEquals(credit2026(210_000, FilingStatus.MFJ), 600);
+  assertEquals(credit2026(110_000, FilingStatus.Single), 600);
+});
+
+test("form2441 TY2026: the employer benefit exclusion is $7,500 ($3,750 MFS)", () => {
+  const joint = compute2026({ dep_care_benefits: 8_000 });
+  assertEquals(fieldsOf(joint.outputs, f1040)?.line1e_taxable_dep_care, 500);
+  const separate = compute2026({
+    dep_care_benefits: 4_000,
+    filing_status: FilingStatus.MFS,
+  });
+  assertEquals(
+    fieldsOf(separate.outputs, f1040)?.line1e_taxable_dep_care,
+    250,
+  );
+  const ty2025 = compute({ dep_care_benefits: 8_000 });
+  assertEquals(fieldsOf(ty2025.outputs, f1040)?.line1e_taxable_dep_care, 3_000);
+});
