@@ -5,6 +5,7 @@ import {
   rothOwnerPrintFields,
 } from "./roth-inventory.ts";
 import {
+  assertRothActivityTaxYear,
   reviewedRothActivity,
   rothActivityReviewSchema,
 } from "./roth-activity.ts";
@@ -619,6 +620,9 @@ class Form8606Node extends TaxNode<typeof inputSchema> {
   compute(ctx: NodeContext, rawInput: Form8606Input): NodeResult {
     const input = inputSchema.parse(rawInput);
     assertForm8606SourceYears(input, ctx.taxYear);
+    if (input.roth_activity_review) {
+      assertRothActivityTaxYear(input.roth_activity_review, ctx.taxYear);
+    }
     const priorYear = input.distribution_evidence?.prior_form8606.tax_year;
     if (priorYear !== undefined && priorYear >= ctx.taxYear) {
       throw new Error(

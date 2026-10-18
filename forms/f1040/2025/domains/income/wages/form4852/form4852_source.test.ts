@@ -66,7 +66,7 @@ function fixture() {
 test("4852 retained source contract binds owner, reviewed facts and exact document bytes", () => {
   const { pending, documents } = fixture();
   assertEquals(
-    assertForm4852RetainedBytes(pending, filer, documents).f4852s[0].wages,
+    assertForm4852RetainedBytes(pending, filer, documents, 2025).f4852s[0].wages,
     75000,
   );
   for (
@@ -92,19 +92,20 @@ test("4852 retained source contract binds owner, reviewed facts and exact docume
   ) {
     const f = fixture();
     mutate(f.pending);
-    assertThrows(() => reconcileForm4852Source(f.pending, filer));
+    assertThrows(() => reconcileForm4852Source(f.pending, filer, 2025));
   }
   assertThrows(() =>
-    assertForm4852RetainedBytes(pending, filer, documents.slice(0, 1))
+    assertForm4852RetainedBytes(pending, filer, documents.slice(0, 1), 2025)
   );
   assertThrows(() =>
-    assertForm4852RetainedBytes(pending, filer, [...documents, documents[0]])
+    assertForm4852RetainedBytes(pending, filer, [...documents, documents[0]], 2025)
   );
   assertThrows(() =>
     assertForm4852RetainedBytes(
       pending,
       filer,
       documents.map((d) => ({ ...d, bytes: new Uint8Array([1]) })),
+      2025,
     )
   );
 });
@@ -123,7 +124,7 @@ test("4852 rejects duplicate substitute and original-source double counting", ()
     },
   };
   assertThrows(
-    () => reconcileForm4852Source(both, filer),
+    () => reconcileForm4852Source(both, filer, 2025),
     Error,
     "both enter current income",
   );
@@ -132,7 +133,7 @@ test("4852 rejects duplicate substitute and original-source double counting", ()
     structuredClone(pending.f4852.reviewed_source.records[0]),
   );
   assertThrows(
-    () => reconcileForm4852Source(pending, filer),
+    () => reconcileForm4852Source(pending, filer, 2025),
     Error,
     "duplicate owner/payer",
   );
@@ -167,7 +168,7 @@ test("4852 1099-R original ownership and joint same-payer substitutes use distin
       },
     },
   };
-  assertEquals(reconcileForm4852Source(combined, filer).f4852s.length, 2);
+  assertEquals(reconcileForm4852Source(combined, filer, 2025).f4852s.length, 2);
   const { wages: _wages, ...facts } = w2;
   const pension = {
     ...facts,
@@ -217,7 +218,7 @@ test("4852 1099-R original ownership and joint same-payer substitutes use distin
     },
   };
   assertThrows(
-    () => reconcileForm4852Source(p, filer),
+    () => reconcileForm4852Source(p, filer, 2025),
     Error,
     "both enter current income",
   );
@@ -226,7 +227,7 @@ test("4852 1099-R original ownership and joint same-payer substitutes use distin
 test("4852 derived W2 native copy preserves nonstandard owner amounts without mutating calculation sources", () => {
   const { pending } = fixture();
   const before = structuredClone(pending);
-  const derived = form4852NativeSources(pending, filer);
+  const derived = form4852NativeSources(pending, filer, 2025);
   assertEquals(derived.w2s[0].box1_wages, 75000);
   const xml = w2.build({}, { filer, pending })[0];
   assertStringIncludes(
@@ -240,7 +241,7 @@ test("4852 derived W2 native copy preserves nonstandard owner amounts without mu
   item.payer_tin = "";
   pending.f4852.reviewed_source.records[0].reviewed_substitute.payer_tin = "";
   assertThrows(
-    () => form4852NativeSources(pending, filer),
+    () => form4852NativeSources(pending, filer, 2025),
     Error,
     "known nine-digit payer EIN",
   );

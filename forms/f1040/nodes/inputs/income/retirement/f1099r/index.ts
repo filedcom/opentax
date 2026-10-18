@@ -16,6 +16,7 @@ import {
 } from "../../../../intermediate/forms/income/retirement/form8606/recharacterization.ts";
 import { reconcileRothOwnerInventoryCopies, rothOwnerInventorySchema } from "../../../../intermediate/forms/income/retirement/form8606/roth-inventory.ts";
 import {
+  assertRothActivityTaxYear,
   reviewedRothActivity,
   rothActivityReviewSchema,
 } from "../../../../intermediate/forms/income/retirement/form8606/roth-activity.ts";
@@ -1169,6 +1170,7 @@ function validateItem(item: R1099Item, taxYear: number): void {
     throw new Error("Complete Roth inventory conflicts with another distribution treatment");
   }
   if (item.roth_activity_review) {
+    assertRothActivityTaxYear(item.roth_activity_review, taxYear);
     const facts = reviewedRothActivity(item.roth_activity_review);
     const payment = facts.review.payment;
     if (

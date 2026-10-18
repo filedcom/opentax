@@ -72,7 +72,7 @@ export function assertRrb1099rPensionSource(
   if (
     pending.f4852 &&
     (pending.f4852 as Record<string, unknown>).reviewed_source && filer
-  ) reconcileForm4852Source(pending, filer);
+  ) reconcileForm4852Source(pending, filer, taxYear);
   const pensionFrom = (
     source: unknown,
     node: typeof f1099r | typeof f4852,

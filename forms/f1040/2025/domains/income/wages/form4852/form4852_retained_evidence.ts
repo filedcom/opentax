@@ -34,12 +34,13 @@ export async function assertForm4852RetainedEvidence(
   pending: Readonly<Record<string, unknown>>,
   filer: FilerIdentity | undefined,
   documents: readonly Form4852RetainedDocument[],
+  taxYear: number,
 ): Promise<void> {
   if (!pending.f4852) return;
   if (!filer) {
     throw new Error("Form 4852 retained evidence requires filer identity");
   }
-  const source = assertForm4852RetainedBytes(pending, filer, documents);
+  const source = assertForm4852RetainedBytes(pending, filer, documents, taxYear);
   const expectedDocuments = source.reviewed_source!.records.flatMap((
     record,
   ) => [
@@ -140,7 +141,7 @@ export async function assertForm4852RetainedEvidence(
         !transfer ||
         transfer.owner_ssn !== item.recipient_ssn?.replace(/\D/g, "") ||
         dob !== transfer.date_of_birth || transfer.amount !== qcd ||
-        !transfer.transferred_on.startsWith("2025-") ||
+        !transfer.transferred_on.startsWith(`${taxYear}-`) ||
         new Date(`${transfer.transferred_on}T00:00:00Z`) < eligibleOn!
       ) {
         throw new Error(
@@ -187,7 +188,7 @@ export async function assertForm4852RetainedEvidence(
           payrollPeriods.has(identity) ||
           payroll.payer_tin !== item.payer_tin?.replace(/\D/g, "") ||
           payroll.owner_ssn !== item.recipient_ssn?.replace(/\D/g, "") ||
-          !payroll.paid_on.startsWith("2025-")
+          !payroll.paid_on.startsWith(`${taxYear}-`)
         ) {
           throw new Error(
             "Form 4852 payroll period is repeated or differs from actual owner/employer/year",
@@ -228,7 +229,7 @@ export async function assertForm4852RetainedEvidence(
         distribution.owner_ssn !== item.recipient_ssn?.replace(/\D/g, "") ||
         distribution.account_number !== item.account_number ||
         distribution.distribution_reference !== item.distribution_reference ||
-        !distribution.paid_on.startsWith("2025-")
+        !distribution.paid_on.startsWith(`${taxYear}-`)
       ) {
         throw new Error(
           "Form 4852 retirement needs its actual owned custodian/account/distribution source",

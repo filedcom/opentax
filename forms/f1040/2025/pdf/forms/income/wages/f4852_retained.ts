@@ -9,6 +9,7 @@ import {
   itemSchema,
 } from "../../../../../nodes/inputs/income/wages/f4852/index.ts";
 import { FilingStatus } from "../../../../../mef/header.ts";
+import { mefTaxYear } from "../../../../mef/support/year-config.ts";
 import type { PdfFieldEntry, PdfFormDescriptor } from "../../../review-support/form-descriptor.ts";
 
 // Taxpayer/ERO packet copy. Final rendering separately verifies the completed
@@ -178,7 +179,7 @@ export const form4852RetainedPdf: PdfFormDescriptor = {
         return_names: returnNames,
         recipient_ssn: recipientSsn,
         return_address: returnAddress,
-        form_year: "2025",
+        form_year: String(item.form_year ?? mefTaxYear()),
         form_type: item.form_type,
         payer_name_address: payerNameAddress,
         payer_tin: item.payer_tin,

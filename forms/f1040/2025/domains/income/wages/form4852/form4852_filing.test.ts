@@ -981,6 +981,7 @@ test("Form4852 actual public completed-PDF sources reconcile multiple owners/cop
               changed,
               row.filer,
               changedDocuments,
+              2025,
             ),
           Error,
         );
@@ -1087,6 +1088,7 @@ test("Form4852 retained source cannot also enter income as an ordinary W2 or ret
         result.pending,
         form4852Filer,
         retained.documents,
+        2025,
       )
     );
     await assertRejects(() =>
@@ -1095,6 +1097,7 @@ test("Form4852 retained source cannot also enter income as an ordinary W2 or ret
         form4852Filer,
         [],
         retained.documents,
+        2025,
       )
     );
     const { w2: _issuedW2, f1099r: _issuedR, ...validInput } = inputs as Record<

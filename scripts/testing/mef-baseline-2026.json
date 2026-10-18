@@ -390,11 +390,6 @@
     "single-form8863-missing-tuition-form-taxable-scholarship-phaseout": [
       "xml Form 8863 filing needs source MAGI, Credit Limit Worksheet, and finalized Form 1040/Schedule 3 credit lines to reconcile"
     ],
-    "single-retained-4852-ordinary-roth": [
-      "calculation form8960",
-      "calculation standard_deduction",
-      "calculation start"
-    ],
     "single-passive-partnership-new-markets": [
       "xml Form 8582-CR line 6 tax sides must use the finalized Form 1040 ordinary-tax method"
     ],
@@ -703,7 +698,6 @@
     "joint-spouse-owned-form8995a-patron-income-cap": "MeF schema gap: 2026v1.0 IRS8995A/IRS8995AScheduleA enumerate only the TY2025 FilingStatusThresholdCd values (197300, 394600); Rev. Proc. 2025-32 \u00a74.26 sets 201750/201775/403500 for 2026",
     "single-form8995a-two-business-aggregation": "Sample amount: the reviewed Form 8995-A Schedule B members carry QBI computed with the 2025 self-employment tax deduction; amounts are not shifted",
     "single-form8863-missing-tuition-form-taxable-scholarship-phaseout": "Sample fixture input: its Form 8863 filer MAGI and Credit Limit Worksheet operands are TY2025 amounts",
-    "single-retained-4852-ordinary-roth": "Open TY2026 work: the Form 4852 substitute pins form_year 2025 and its Roth activity review caps contribution years at 2025 (the Form 4852 retained-evidence replays have no return year yet)",
     "single-passive-partnership-new-markets": "Sample amount: the reviewed Form 8582-CR line 6 worksheet carries tax computed under the 2025 rate schedule; amounts are not shifted",
     "single-mixed-passive-new-markets": "Sample amount: the reviewed Form 8582-CR line 6 worksheet carries tax computed under the 2025 rate schedule; amounts are not shifted",
     "single-reviewed-adoption-credit": "Open TY2026 work: the staged Form 8839 route requires a 2025 decree (childSchema finalization_date) and carries TY2025 amounts through prepare/settle ($17,280 maximum, $259,190 phase-out start, $5,000 refundable), its carryforward (origin 2025) and MeF; the Rev. Proc. 2025-32 \u00a74.04 2026 amounts are in config but not threaded through that route",
