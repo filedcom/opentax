@@ -253,6 +253,11 @@ export const SCENARIO_1040_13_TY2026_ASSUMPTIONS = [
 const SE_TAX =
   "Schedule SE page 14 prints line 10 $1,145 (12.4% of $9,235) and line 11 blank, then line 12 $268, the 2.9% Medicare part alone. Line 12 is lines 10 plus 11: $1,145 + $268 = $1,413, and line 13 half of it, $707 (2026 Schedule SE lines 10-13; IRC §1401(a), (b)). AGI falls by the $573 larger deduction.";
 
+const TAXABLE_INCOME =
+  "1040 line 15 is line 11a less line 14: the packet's $49,850 of deductions from AGI lowered by the Schedule SE correction, $135,793 - $49,850 = $85,943.";
+const LINE16_TAX =
+  "1040 line 16 on $85,943 with $500 of line 7a capital gain distributions and no Schedule D takes the 2026 Qualified Dividends and Capital Gain Tax Worksheet: the $500 is within the $98,900 joint 0% amount (Rev. Proc. 2025-32 §4.03) and $85,443 is taxed at the 2026 joint rates (§4.01) at the $85,400-$85,450 midpoint, $2,480 + 12% of $60,625 = $9,755.";
+
 /** Printed values that differ from 2026 law, each with the engine's value. */
 export const SCENARIO_1040_13_TY2026_RECONCILIATION = {
   conflicts: [
@@ -272,6 +277,19 @@ export const SCENARIO_1040_13_TY2026_RECONCILIATION = {
       printed,
       current,
       why: SE_TAX,
+    })),
+    ...([
+      [3, "1040 line 15", 86_516, 85_943, TAXABLE_INCOME],
+      [3, "1040 line 16", 9_886, 9_755, LINE16_TAX],
+      [3, "1040 line 18", 9_886, 9_755, LINE16_TAX],
+      [3, "1040 line 22", 9_886, 9_755, LINE16_TAX],
+      [3, "1040 line 24a", 10_154, 11_168, `${LINE16_TAX} ${SE_TAX}`],
+    ] as const).map(([page, line, printed, current, why]) => ({
+      page,
+      line,
+      printed,
+      current,
+      why,
     })),
   ],
   notes: [
