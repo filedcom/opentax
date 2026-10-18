@@ -7,6 +7,7 @@ import {
 /** Match the filed line 5 tax to all retained taxpayer/spouse Form 4137 copies. */
 export function assertSchedule2Form4137Tax(
   pending: Readonly<Record<string, unknown>>,
+  taxYear: number,
 ): void {
   const fields = pending.schedule2 as
     | Readonly<Record<string, unknown>>
@@ -14,7 +15,8 @@ export function assertSchedule2Form4137Tax(
   const source = pending.form4137;
   const tax = source === undefined ? 0 : calculateForm4137(
     form4137InputSchema.parse(source),
-    CONFIG_BY_YEAR[2025].ssWageBase,
+    CONFIG_BY_YEAR[taxYear].ssWageBase,
+    taxYear,
   ).reduce((sum, form) => sum + form.totalTax, 0);
   if ((fields?.line5_unreported_tip_tax ?? 0) !== tax) {
     throw new Error(
@@ -26,12 +28,14 @@ export function assertSchedule2Form4137Tax(
 /** Replay Form 4137 unreported tips into Form 1040 line 1c and AGI. */
 export function assertLine1cForm4137Income(
   pending: Readonly<Record<string, unknown>>,
+  taxYear: number,
 ): void {
   if (pending.f1040 === undefined) return;
   const source = pending.form4137;
   const income = source === undefined ? 0 : calculateForm4137(
     form4137InputSchema.parse(source),
-    CONFIG_BY_YEAR[2025].ssWageBase,
+    CONFIG_BY_YEAR[taxYear].ssWageBase,
+    taxYear,
   ).reduce((sum, form) => sum + form.unreportedTips, 0);
   const filed = (pending.f1040 as Readonly<Record<string, unknown>> | undefined)
     ?.line1c_unreported_tips ?? 0;

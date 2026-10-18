@@ -636,11 +636,11 @@ async function buildPdfBytesInternal(
   assertSchedule2W2Line13Sources(normalized);
   assertSchedule2W2Line17KSource(normalized);
   assertSchedule2Line17HSources(normalized, filer);
-  assertSchedule2Form4137Tax(normalized);
-  assertLine1cForm4137Income(normalized);
-  assertSchedule2Form8919Tax(normalized);
-  assertLine1gForm8919Wages(normalized);
-  assertSchedule2ScheduleHTax(normalized);
+  assertSchedule2Form4137Tax(normalized, 2025);
+  assertLine1cForm4137Income(normalized, 2025);
+  assertSchedule2Form8919Tax(normalized, 2025);
+  assertLine1gForm8919Wages(normalized, 2025);
+  assertSchedule2ScheduleHTax(normalized, 2025);
   assertSchedule2Form8960Tax(normalized);
   assertSchedule2ScheduleSETax(normalized, 2025);
   assertSchedule2Form8828Tax(normalized);

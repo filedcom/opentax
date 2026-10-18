@@ -2,6 +2,7 @@ import { element, elements } from "../../../../../mef/xml.ts";
 import { inputSchema, type W2GItem } from "../../../../../nodes/inputs/income/gambling/w2g/index.ts";
 import { type FilerIdentity, FilingStatus } from "../../../../../mef/header.ts";
 import type { MefBuildContext, MefFormDescriptor } from "../../../form-descriptor.ts";
+import { mefTaxYear } from "../../../support/year-config.ts";
 
 function digits(value: string): string {
   return value.replace(/\D/g, "");
@@ -115,7 +116,7 @@ function buildWithheldW2G(
   item: W2GItem,
   context: MefBuildContext | undefined,
 ): string {
-  const taxYear = context?.taxYear ?? 2025;
+  const taxYear = mefTaxYear(context);
   assertWithheldW2GSource(item, context?.filer, taxYear);
   const file = item.issued_copy_attachment_file_name;
   if (

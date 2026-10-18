@@ -5,6 +5,7 @@ import {
   assertForm8959Sources,
   hasForm8959Print,
 } from "../../../../domains/taxes/employment/form8959/form8959-source.ts";
+import { mefTaxYear } from "../../../support/year-config.ts";
 import {
   additionalMedicareTax,
   type Form8959PrintFields,
@@ -212,15 +213,15 @@ function validatePrintLines(
 
 function buildIRS8959(raw: unknown, context?: MefBuildContext): string {
   if (Array.isArray(raw) && raw.length === 0) {
-    assertForm8959Absent({}, context?.pending);
+    assertForm8959Absent({}, context?.pending, mefTaxYear(context));
     return "";
   }
   if (!hasForm8959Print(raw)) {
-    assertForm8959Absent(raw, context?.pending);
+    assertForm8959Absent(raw, context?.pending, mefTaxYear(context));
     return "";
   }
   const fields = printFieldsSchema.passthrough().parse(raw);
-  assertForm8959Sources(raw, fields, context?.pending);
+  assertForm8959Sources(raw, fields, context?.pending, mefTaxYear(context));
   if (!context) {
     throw new Error("Form 8959 needs finalized filer and return context");
   }

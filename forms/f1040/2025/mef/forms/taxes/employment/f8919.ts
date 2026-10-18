@@ -1,5 +1,5 @@
+import { mefTaxYear, mefYearConfig } from "../../../support/year-config.ts";
 import { element, elements } from "../../../../../mef/xml.ts";
-import { CONFIG_BY_YEAR } from "../../../../../nodes/config/index.ts";
 import {
   form8919W2Sources,
   inputSchema as w2InputSchema,
@@ -91,7 +91,8 @@ export const form8919: MefFormDescriptor<
       const form4137Sources = context?.pending?.form4137
         ? calculateForm4137(
           form4137InputSchema.parse(context.pending.form4137),
-          CONFIG_BY_YEAR[2025].ssWageBase,
+          mefYearConfig(context).ssWageBase,
+          mefTaxYear(context),
         ).map((form) => ({
           recipient: form.recipient,
           line10_ss_tips: form.ssTips,
@@ -108,7 +109,7 @@ export const form8919: MefFormDescriptor<
     }
     const calculated = calculateForm8919(
       input,
-      CONFIG_BY_YEAR[2025].ssWageBase,
+      mefYearConfig(context).ssWageBase,
     );
     if (calculated.length === 0) return [];
     const filer = context?.filer;

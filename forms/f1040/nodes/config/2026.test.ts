@@ -174,3 +174,39 @@ test("Trump account limits start in 2026 under P.L. 119-21 §70204", () => {
   assertEquals(config2026.trumpAccountEmployerExclusionLimit, 2_500);
   assertEquals(config2025.trumpAccountContributionLimit, 0);
 });
+
+test("2026 taxes and payments values match their sources", () => {
+  // Draft 2026 Schedule SE lines 14-15 and Part II print $7,560, $11,340 and
+  // $8,186: 150% of the maximum, and the maximum over 92.35%.
+  assertEquals(config2026.seOptionalMethodMaximum, 7_560);
+  assertEquals(config2026.seFarmOptionalGrossIncomeLimit, 7_560 * 1.5);
+  assertEquals(
+    config2026.seFarmOptionalNetProfitLimit,
+    Math.round(7_560 / 0.9235),
+  );
+  assertEquals(config2026.ssTaxPerEmployer, config2026.ssWageBase * 0.062);
+  // IRC §55(d)(4)(A)(ii)(IV); draft 2026 Form 6251 line 4: $640,200.
+  assertEquals(config2026.amtExemptionPhaseOutRate, 0.5);
+  assertEquals(
+    config2026.amtPhaseOutStart[FilingStatus.MFS] +
+      config2026.amtExemption[FilingStatus.MFS] /
+        config2026.amtExemptionPhaseOutRate,
+    640_200,
+  );
+  assertEquals(
+    config2025.amtPhaseOutStart[FilingStatus.MFS] +
+      config2025.amtExemption[FilingStatus.MFS] /
+        config2025.amtExemptionPhaseOutRate,
+    900_350,
+  );
+  // Rev. Proc. 2025-25 §3.01: bands meet and end at 9.96% through 400%.
+  const bands = config2026.ptcApplicablePercentages;
+  for (let i = 1; i < bands.length; i++) {
+    assertEquals(bands[i].fromFplPct, bands[i - 1].toFplPct);
+  }
+  assertEquals(bands.at(-1)?.final, 996);
+  assertEquals(config2026.ptcIncomeLimitFplPct, 400);
+  assertEquals(config2026.ptcRepaymentCaps, []);
+  assertEquals(config2026.fplBaseAlaska + 7 * config2026.fplIncrementAlaska, 67_710);
+  assertEquals(config2026.fplBaseHawaii + 7 * config2026.fplIncrementHawaii, 62_300);
+});

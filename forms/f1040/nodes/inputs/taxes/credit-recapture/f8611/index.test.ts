@@ -174,3 +174,25 @@ test("Form 8611 rejects missing source facts and inconsistent prior credits", ()
     })
   );
 });
+
+// Form 8611 line 4: the compliance-period year of a 2026 recapture for a
+// credit period beginning in 2015 is year 12, so 26.7% (the form's table).
+// Lines 3 $30,000 × 26.7% = $8,010 = line 10; line 12 adds $100 interest;
+// line 14 subtracts $1,000 of unused credits.
+test("2026 recapture uses the 2026 compliance-period year", () => {
+  const item = owner({ credit_period_start_year: 2015 });
+  const recapture = { ...item, recapture_year: 2026 };
+  const result = f8611.compute({ taxYear: 2026, formType: "f1040" }, {
+    f8611s: [recapture],
+  });
+  assertEquals(
+    fieldsOf(result.outputs, schedule2)?.line16_lihtc_recapture,
+    7_110,
+  );
+  assertThrows(
+    () =>
+      f8611.compute({ taxYear: 2026, formType: "f1040" }, { f8611s: [item] }),
+    Error,
+    "recapture year must match",
+  );
+});

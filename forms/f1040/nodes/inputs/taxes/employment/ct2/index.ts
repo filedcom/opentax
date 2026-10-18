@@ -11,7 +11,7 @@ const CT2_WITHHOLDING_THRESHOLD = 200_000;
 export const itemSchema = z.object({
   recipient: z.enum(["taxpayer", "spouse"]),
   recipient_ssn: z.string().regex(/^\d{3}-?\d{2}-?\d{4}$/),
-  tax_year: z.literal(2025),
+  tax_year: z.number().int().min(2025),
   quarter: z.number().int().min(1).max(4),
   line2_tier1_medicare_compensation: z.number().nonnegative(),
   line3_additional_medicare_compensation: z.number().nonnegative(),
@@ -92,10 +92,10 @@ class CT2Node extends TaxNode<typeof inputSchema> {
   readonly outputNodes = new OutputNodes([form8959]);
 
   compute(ctx: NodeContext, rawInput: z.infer<typeof inputSchema>): NodeResult {
-    if (ctx.taxYear !== 2025) {
-      throw new Error("CT-2 source currently requires tax year 2025");
-    }
     const { ct2s } = inputSchema.parse(rawInput);
+    if (ct2s.some((item) => item.tax_year !== ctx.taxYear)) {
+      throw new Error(`CT-2 records must be for tax year ${ctx.taxYear}`);
+    }
     for (const recipient of ["taxpayer", "spouse"] as const) {
       const records = ct2s.filter((item) => item.recipient === recipient);
       if (records.length > 0) validateRecipientYear(records, recipient);

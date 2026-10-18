@@ -595,3 +595,69 @@ test("combine_small_c_and_f: two profits under $400 each owe SE tax once combine
   // Line 4a = 600 x 92.35% = 554.10; line 10 = 69, line 11 = 16.
   assertEquals(findOutput(result, "schedule2")?.fields.line4_se_tax, 85);
 });
+
+// ── TY2026 ───────────────────────────────────────────────────────────────────
+// Draft 2026 Schedule SE (irs/corpus/ty2026/draft/f1040sse.pdf): line 7
+// $184,500; Part II and line 14: $11,340 gross, $8,186 profit, $7,560 maximum.
+
+function compute2026(input: Record<string, unknown>) {
+  return schedule_se.compute(
+    { taxYear: 2026, formType: "f1040" },
+    inputSchema.parse(input),
+  );
+}
+
+test("2026: line 9 uses the $184,500 wage base", () => {
+  const result = compute2026({ net_profit_schedule_c: 200_000 });
+  // Line 4a $184,700; line 10 = 12.4% of $184,500 = $22,878; line 11 =
+  // 2.9% of $184,700 = $5,356; line 12 $28,234; line 13 $14,117.
+  assertEquals(findOutput(result, "schedule2")!.fields.line4_se_tax, 28_234);
+  assertEquals(
+    findOutput(result, "schedule1")!.fields.line15_se_deduction,
+    14_117,
+  );
+});
+
+test("2026: W-2 Social Security wages reduce the $184,500 base", () => {
+  const result = compute2026({
+    net_profit_schedule_c: 50_000,
+    w2_ss_wages: 170_000,
+  });
+  // Line 4a $46,175; line 9 $14,500; line 10 $1,798; line 11 $1,339.
+  assertEquals(findOutput(result, "schedule2")!.fields.line4_se_tax, 3_137);
+});
+
+test("2026: farm optional method uses the 2026 limits", () => {
+  assertEquals(
+    findOutput(
+      compute2026({
+        net_profit_schedule_f: 8_186,
+        gross_farm_income: 11_340,
+        farm_optional_method_elected: true,
+      }),
+      "form8959",
+    )!.fields.se_income,
+    7_560,
+  );
+  assertEquals(
+    findOutput(
+      compute2026({
+        net_profit_schedule_f: 8_185,
+        gross_farm_income: 20_000,
+        farm_optional_method_elected: true,
+      }),
+      "form8959",
+    )!.fields.se_income,
+    7_560,
+  );
+  assertThrows(
+    () =>
+      compute2026({
+        net_profit_schedule_f: 8_186,
+        gross_farm_income: 11_341,
+        farm_optional_method_elected: true,
+      }),
+    Error,
+    "$11,340",
+  );
+});

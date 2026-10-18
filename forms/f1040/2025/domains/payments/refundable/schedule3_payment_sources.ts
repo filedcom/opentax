@@ -6,10 +6,7 @@ import {
   inputSchema as f4852InputSchema,
 } from "../../../../nodes/inputs/income/wages/f4852/index.ts";
 import { inputSchema as w2InputSchema } from "../../../../nodes/inputs/income/wages/w2/index.ts";
-import {
-  SS_MAX_TAX_PER_EMPLOYER_2025,
-  SS_WAGE_BASE_2025,
-} from "../../../../nodes/config/2025.ts";
+import { CONFIG_BY_YEAR } from "../../../../nodes/config/index.ts";
 
 const cents = (value: unknown, line: string): number => {
   if (value === undefined || value === null) return 0;
@@ -29,8 +26,10 @@ const cents = (value: unknown, line: string): number => {
 export function assertSchedule3PaymentSources(
   fields: Readonly<Record<string, unknown>>,
   pending: Readonly<Record<string, unknown>> | undefined,
+  taxYear: number,
 ): void {
   if (!pending || !("f1040" in pending)) return;
+  const { ssTaxPerEmployer, ssWageBase } = CONFIG_BY_YEAR[taxYear];
 
   const premium = cents(fields.line9_premium_tax_credit, "line 9");
   if (pending.form8962 === undefined) {
@@ -113,7 +112,7 @@ export function assertSchedule3PaymentSources(
     }
     if (
       cents(row.box4_ss_withheld, "W-2 box 4") >
-        cents(SS_MAX_TAX_PER_EMPLOYER_2025, "2025 SS maximum")
+        cents(ssTaxPerEmployer, "SS maximum")
     ) {
       throw new Error(
         "Schedule 3 line 11 cannot claim a single employer's excess withholding",
@@ -123,7 +122,7 @@ export function assertSchedule3PaymentSources(
     const employerTax = (employerTotals.get(employerKey) ?? 0) +
       cents(row.box4_ss_withheld, "W-2 box 4");
     employerTotals.set(employerKey, employerTax);
-    if (employerTax > cents(SS_MAX_TAX_PER_EMPLOYER_2025, "2025 SS maximum")) {
+    if (employerTax > cents(ssTaxPerEmployer, "SS maximum")) {
       throw new Error(
         "Schedule 3 line11 cannot claim one employer's excess across multiple source copies",
       );
@@ -141,11 +140,11 @@ export function assertSchedule3PaymentSources(
   const expectedCents = [...owners.values()].reduce(
     (total, group) =>
       total +
-      (group.employers.size > 1 && group.wages > SS_WAGE_BASE_2025
+      (group.employers.size > 1 && group.wages > ssWageBase
         ? Math.max(
           0,
           cents(group.withheld, "W-2 box 4 total") -
-            cents(SS_MAX_TAX_PER_EMPLOYER_2025, "2025 SS maximum"),
+            cents(ssTaxPerEmployer, "SS maximum"),
         )
         : 0),
     0,

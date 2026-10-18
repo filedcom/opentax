@@ -6,6 +6,7 @@ import {
 /** Replay Schedule H line 26 into the filed Schedule 2 line 9 tax. */
 export function assertSchedule2ScheduleHTax(
   pending: Readonly<Record<string, unknown>>,
+  taxYear: number,
 ): void {
   const fields = pending.schedule2 as
     | Readonly<Record<string, unknown>>
@@ -13,7 +14,7 @@ export function assertSchedule2ScheduleHTax(
   const source = pending.schedule_h;
   const tax = source === undefined ? 0 : computeScheduleHAmounts(
     scheduleHInputSchema.parse(source),
-    2025,
+    taxYear,
   ).totalTax;
   if ((fields?.line9_household_employment ?? 0) !== tax) {
     throw new Error(

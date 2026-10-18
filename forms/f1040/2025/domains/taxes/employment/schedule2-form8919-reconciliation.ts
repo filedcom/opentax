@@ -7,6 +7,7 @@ import {
 /** Replay the sum of retained Form 8919 line 13 copies into Schedule 2 line 6. */
 export function assertSchedule2Form8919Tax(
   pending: Readonly<Record<string, unknown>>,
+  taxYear: number,
 ): void {
   const fields = pending.schedule2 as
     | Readonly<Record<string, unknown>>
@@ -14,7 +15,7 @@ export function assertSchedule2Form8919Tax(
   const source = pending.form8919;
   const tax = source === undefined ? 0 : calculateForm8919(
     form8919InputSchema.parse(source),
-    CONFIG_BY_YEAR[2025].ssWageBase,
+    CONFIG_BY_YEAR[taxYear].ssWageBase,
   ).reduce((sum, form) => sum + form.line13, 0);
   if ((fields?.line6_uncollected_8919 ?? 0) !== tax) {
     throw new Error(
@@ -26,12 +27,13 @@ export function assertSchedule2Form8919Tax(
 /** Replay Form 8919 line 6 wages into Form 1040 line 1g and AGI. */
 export function assertLine1gForm8919Wages(
   pending: Readonly<Record<string, unknown>>,
+  taxYear: number,
 ): void {
   if (pending.f1040 === undefined) return;
   const source = pending.form8919;
   const wages = source === undefined ? 0 : calculateForm8919(
     form8919InputSchema.parse(source),
-    CONFIG_BY_YEAR[2025].ssWageBase,
+    CONFIG_BY_YEAR[taxYear].ssWageBase,
   ).reduce((sum, form) => sum + form.line6, 0);
   const filed = (pending.f1040 as Readonly<Record<string, unknown>>)
     .line1g_wages_8919 ?? 0;

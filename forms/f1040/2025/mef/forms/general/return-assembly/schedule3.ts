@@ -6,6 +6,7 @@ import { assertSchedule3Line6jSource } from "../../../../domains/credits/individ
 import { assertSchedule3PrintedTotals } from "../../../../domains/credits/individual/schedule3_printed_totals.ts";
 import { assertSchedule3Line12Source } from "../../../../domains/credits/individual/schedule3_line12_source.ts";
 import { assertSchedule3PaymentSources } from "../../../../domains/payments/refundable/schedule3_payment_sources.ts";
+import { mefTaxYear } from "../../../support/year-config.ts";
 
 export interface Fields {
   line1_total?: number | null;
@@ -89,7 +90,11 @@ function buildIRS1040Schedule3(
     context?.pending?.f4136,
   );
   assertSchedule3PrintedTotals(fields, context?.pending);
-  assertSchedule3PaymentSources(fields, context?.pending);
+  assertSchedule3PaymentSources(
+    fields,
+    context?.pending,
+    mefTaxYear(context),
+  );
   assertSchedule3Line6jSource(
     fields.line6j_alt_fuel_vehicle_refueling,
     context?.pending?.f8911,

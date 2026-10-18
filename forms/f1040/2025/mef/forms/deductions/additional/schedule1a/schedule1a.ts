@@ -31,6 +31,7 @@ import {
   physicalPresenceFilingSchema,
 } from "../../../../../../nodes/intermediate/forms/income/foreign/form2555/calculation.ts";
 import type { MefBuildContext, MefFormDescriptor } from "../../../../form-descriptor.ts";
+import { mefTaxYear } from "../../../../support/year-config.ts";
 
 const form1040ReconciliationSchema = z.object({
   filing_status: z.nativeEnum(FilingStatus).optional(),
@@ -825,7 +826,7 @@ function buildSchedule(raw: Input, context?: MefBuildContext): string {
   }
   if ((input.vehicle_loans?.length ?? 0) > 0) {
     const lines = calculateVehicleInterestSchedule1A(
-      { taxYear: context?.taxYear ?? 2025, formType: "f1040" },
+      { taxYear: mefTaxYear(context), formType: "f1040" },
       input,
     );
     const returnSsns = [form1040.taxpayer_ssn];
@@ -876,7 +877,7 @@ function buildSchedule(raw: Input, context?: MefBuildContext): string {
     );
   }
   const seniorContext = {
-    taxYear: context?.taxYear ?? 2025,
+    taxYear: mefTaxYear(context),
     formType: "f1040",
   };
   if (seniorDeduction(seniorContext, input) > 0) {

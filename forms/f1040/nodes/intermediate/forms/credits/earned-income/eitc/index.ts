@@ -335,7 +335,7 @@ function computeEitc(
 ): number {
   return requirePriorDisallowanceAnswer(
     input,
-    tentativeEitc(input, investmentIncomeLimit, lookupEic),
+    tentativeEitc(input, investmentIncomeLimit, lookupEic, cfg, taxYear),
   );
 }
 
@@ -343,6 +343,8 @@ function tentativeEitc(
   input: EitcInput,
   investmentIncomeLimit: number,
   lookupEic: EicLookup,
+  cfg: F1040Config,
+  taxYear: number,
 ): number {
   if (input.do_not_claim_eic === true) return 0;
   const earnedIncome = (input.earned_income ?? 0) +

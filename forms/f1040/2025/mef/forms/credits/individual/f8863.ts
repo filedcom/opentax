@@ -20,6 +20,7 @@ import {
   validateForm8863FilingSource,
 } from "../../../../../nodes/inputs/credits/individual/f8863/index.ts";
 import type { MefBuildContext, MefFormDescriptor } from "../../../form-descriptor.ts";
+import { mefTaxYear } from "../../../support/year-config.ts";
 
 export function assertForm8863FinalizedReturn(
   fields: F8863Input,
@@ -295,7 +296,7 @@ export function assertForm8863FinalizedReturn(
     (source) =>
       educationDependentSourceEligible(
         dependentSchema.parse(source),
-        context?.taxYear ?? 2025,
+        mefTaxYear(context),
       ),
     filer.spouse?.ssn,
   );

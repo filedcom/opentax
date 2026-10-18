@@ -34,6 +34,7 @@ import { reviewedHomeMortgageNonqualifyingUse } from "../../../../../nodes/input
 import { scheduleAOtherTaxRows } from "../../../../domains/deductions/itemized/schedule-a/schedule_a_other_tax_source.ts";
 import { sellerFinancedLine8b } from "../../../../domains/deductions/itemized/schedule-a/schedule_a_line8b_source.ts";
 import { scheduleALine16Rows } from "../../../../domains/deductions/itemized/schedule-a/schedule_a_line16_estate_source.ts";
+import { mefTaxYear } from "../../../support/year-config.ts";
 
 export interface Fields {
   force_itemized?: boolean;
@@ -146,7 +147,7 @@ function buildIRS1040ScheduleA(
         | { cashout_source?: unknown }
         | undefined)?.cashout_source !== undefined,
       filer.spouse?.ssn,
-      context.taxYear,
+      mefTaxYear(context),
     );
     assertPurchasePointsCrossLoanSources(
       context.pending.f1098,

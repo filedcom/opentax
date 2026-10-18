@@ -9,6 +9,7 @@ import { schedule2 } from "../../../../aggregation/taxes/other/schedule2/index.t
 import { FilingStatus } from "../../../../../types.ts";
 import type { NodeContext } from "../../../../../../../../core/types/node-context.ts";
 import { CONFIG_BY_YEAR, type F1040Config } from "../../../../../config/index.ts";
+import { bracketsForStatus } from "../../../../worksheets/taxes/calculation/tax_brackets.ts";
 import { normalizeArray } from "../../../../../utils.ts";
 
 // ─── TY2025 Constants ──────────────────────────────────────────────────────────
@@ -204,6 +205,26 @@ function niitTax(base: number): number {
   return toCents(base * NIIT_RATE);
 }
 
+// From 2026, IRC §68 (P.L. 119-21 §70111) reduces line 9 and 10 itemized
+// deductions through the draft 2026 instructions' Lines 9 and 10 Section 68
+// Limitation Worksheet once taxable income plus itemized deductions exceeds
+// the start of the 37% bracket. That sum cannot exceed MAGI, so a return at
+// or below the bracket start keeps its full deductions; above it, the
+// worksheet's Schedule A totals are not yet a Form 8960 source.
+function assertSection68Unlimited(
+  input: Form8960Input,
+  cfg: F1040Config,
+): void {
+  if (cfg.itemizedDeductionReductionRate === 0) return;
+  const bracketStart = bracketsForStatus(input.filing_status, cfg).at(-1)!
+    .over;
+  if (input.magi > bracketStart && totalDeductions(input) > 0) {
+    throw new Error(
+      `Form 8960 lines 9-10 above $${bracketStart.toLocaleString("en-US")} MAGI need the section 68 limitation worksheet`,
+    );
+  }
+}
+
 // Route NIIT to schedule2 line 12 when > 0
 function schedule2Output(niit: number): NodeOutput[] {
   if (niit <= 0) return [];
@@ -236,6 +257,7 @@ class Form8960Node extends TaxNode<typeof inputSchema> {
     const gross = niiGross(input);
 
     // Part II
+    assertSection68Unlimited(input, cfg);
     const deductions = totalDeductions(input);
 
     // Part III

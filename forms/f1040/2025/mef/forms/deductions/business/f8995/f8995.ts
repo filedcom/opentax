@@ -2,6 +2,7 @@ import type { inputSchema } from "../../../../../../nodes/intermediate/forms/ded
 import type { MefFormDescriptor } from "../../../../form-descriptor.ts";
 import { element, elements } from "../../../../../../mef/xml.ts";
 import { assertNoUnfiled8995Loss, assertPositive8995 } from "./f8995-route.ts";
+import { mefTaxYear } from "../../../../support/year-config.ts";
 
 type Input = Partial<ReturnType<typeof inputSchema.parse>> & {
   qbi_deduction?: number | null;
@@ -38,7 +39,7 @@ export const form8995: MefFormDescriptor<"form8995", Input> = {
       assertNoUnfiled8995Loss(
         fields as Record<string, unknown>,
         context?.pending,
-        context?.taxYear,
+        mefTaxYear(context),
       );
       return "";
     }
@@ -51,7 +52,7 @@ export const form8995: MefFormDescriptor<"form8995", Input> = {
     const { businesses, lines } = assertPositive8995(
       fields as Record<string, unknown>,
       context?.pending,
-      context?.taxYear ?? 2025,
+      mefTaxYear(context),
     );
     return elements("IRS8995", [
       ...businesses.map(({ businessName, tin, qbi }) =>
