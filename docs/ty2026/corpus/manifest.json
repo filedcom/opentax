@@ -705,6 +705,22 @@
       "sha256": "6d44ae53fe842b804258ca1a49400f0cc5d15a17b6fdb0cc74c016927b54c9bf"
     },
     {
+      "path": "ats/1040-scenario-13.pdf",
+      "url": "https://www.irs.gov/pub/irs-efile/ty26-1040-ats-scenario-13.pdf",
+      "kind": "draft-ats",
+      "status": "downloaded",
+      "bytes": 690493,
+      "sha256": "b5160868f1b46ad83a49c9018f5452f02b0cd3596c731ee359e958b916feafdd"
+    },
+    {
+      "path": "ats/1040-scenario-14.pdf",
+      "url": "https://www.irs.gov/pub/irs-efile/ty26-1040-ats-scenario-14.pdf",
+      "kind": "draft-ats",
+      "status": "downloaded",
+      "bytes": 230646,
+      "sha256": "56b3ee3429ee3c6adfa295514cec2134b106ff274171cbc5dd955ecb95167fd1"
+    },
+    {
       "path": "ats/1040nr-scenario-01.pdf",
       "url": "https://www.irs.gov/pub/irs-efile/1040NR-mef-ats-scenario-1-09222026.pdf",
       "kind": "draft-ats",

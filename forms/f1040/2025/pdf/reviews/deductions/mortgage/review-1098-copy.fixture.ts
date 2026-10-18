@@ -53,10 +53,11 @@ interface Form1098CopySource {
   readonly box6_points_paid?: number;
 }
 
-/** Synthetic, byte-bound 2025 issuer Copy B for filled-return review only. */
+/** Synthetic, byte-bound issuer Copy B for filled-return review only. */
 export async function withSyntheticForm1098Copy<T extends Form1098CopySource>(
   caseId: string,
   source: T,
+  calendarYear = 2025,
 ): Promise<
   T & {
     issuer_copy: {
@@ -70,7 +71,7 @@ export async function withSyntheticForm1098Copy<T extends Form1098CopySource>(
   const form = pdf.getForm();
   const prefix = "topmostSubform[0].CopyB[0]";
   const values: Record<string, string> = {
-    [`${prefix}.CopyHeader[0].CalendarYear[0].f2_1[0]`]: "25",
+    [`${prefix}.CopyHeader[0].CalendarYear[0].f2_1[0]`]: String(calendarYear).slice(2),
     [`${prefix}.LeftCol[0].f2_2[0]`]:
       `${source.lender_name}\n${source.source_document_reference}`,
     [`${prefix}.LeftCol[0].f2_4[0]`]: `***-**-${
