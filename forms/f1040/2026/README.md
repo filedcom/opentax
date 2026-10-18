@@ -25,6 +25,7 @@ Shared code that pins a tax year (`CONFIG_BY_YEAR[2025]`, `taxYear === 2025`,
 `scripts/testing/year-pinned-baseline.json`; that list is the TY2026
 correctness work queue, and each fix removes its entry.
 
-`bun run check:ty2026` runs every TY2025 `check:mef` sample return as TY2026.
+`bun run check:ty2026` runs every TY2025 `check:mef` sample return as TY2026,
+with its dates and year fields moved one year later (amounts never move).
 `scripts/testing/mef-baseline-2026.json` records each return that does not
 file, with why; the clean count can only rise.
