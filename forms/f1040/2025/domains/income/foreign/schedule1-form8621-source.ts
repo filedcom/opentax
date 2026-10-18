@@ -1,7 +1,7 @@
 import { f8621, type Form8621Lines } from "../../../../nodes/inputs/income/foreign/f8621/index.ts";
 import { income_tax_calculation } from "../../../../nodes/intermediate/worksheets/taxes/calculation/income_tax_calculation/index.ts";
 import { assertForm8621QefRefigureSource } from "./form8621/form8621_1294_refigure.ts";
-import type { NodeContext } from "../../../../../core/types/node-context.ts";
+import type { NodeContext } from "../../../../../../core/types/node-context.ts";
 
 const incomeKeys = [
   "line8z_form8621_qef",

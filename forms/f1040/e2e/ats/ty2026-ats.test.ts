@@ -77,8 +77,10 @@ test("TY2026 ATS 1040 Scenario 5 matches every printed W-2 and Form 8888 value",
   assertEquals(built?.values.length, 16);
 });
 
-const results = (values: { result: string }[] | undefined, result: string) =>
-  values?.filter((v) => v.result === result) ?? [];
+const results = <T extends { result: string }>(
+  values: readonly T[] | undefined,
+  result: string,
+) => values?.filter((v) => v.result === result) ?? [];
 
 test("TY2026 ATS 1040 Scenario 3 files and matches every printed value", async () => {
   const built = await ty2026ScenarioValues("1040-03");

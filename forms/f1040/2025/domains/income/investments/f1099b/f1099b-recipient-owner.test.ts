@@ -35,7 +35,7 @@ test("1099-B broker sale needs payer identity at final export", () => {
   const missing = { ...row, payer_tin: undefined };
   const message = "1099-B filing needs broker TIN or issued-copy reference";
   assertThrows(
-    () => assert1099BRecipientOwner({ f1099bs: [missing] }, filer),
+    () => assert1099BRecipientOwner({ f1099bs: [missing] }, filer, 2025),
     Error,
     message,
   );
@@ -43,11 +43,11 @@ test("1099-B broker sale needs payer identity at final export", () => {
     f1099bs: [
       { ...missing, source_document_reference: "issued-broker-statement" },
     ],
-  }, filer);
+  }, filer, 2025);
 });
 
 test("1099-B recipient belongs to taxpayer or joint spouse", () => {
-  assert1099BRecipientOwner({ f1099bs: [row] }, filer);
+  assert1099BRecipientOwner({ f1099bs: [row] }, filer, 2025);
   assert1099BRecipientOwner({
     f1099bs: [{ ...row, recipient_ssn: "222334444" }],
   }, {
@@ -59,7 +59,7 @@ test("1099-B recipient belongs to taxpayer or joint spouse", () => {
       lastName: "Spouse",
       nameControl: "SPOU",
     },
-  });
+  }, 2025);
 });
 
 test("1099-B wrong recipient blocks native and PDF final return", async () => {
