@@ -1,5 +1,5 @@
 import { test } from "bun:test";
-import { assertEquals } from "@std/assert";
+import { assertEquals, assertThrows } from "@std/assert";
 import { schedule_r } from "./index.ts";
 import { fieldsOf } from "../../../../../../../core/test-utils/output.ts";
 import { schedule3 } from "../../../../intermediate/aggregation/general/return-assembly/schedule3/index.ts";
@@ -72,6 +72,7 @@ test("schedule_r.compute: single age 65+ qualifies — credit = 5000 * 15% = 750
   const result = compute({
     filing_status: FilingStatus.Single,
     taxpayer_age_65_or_older: true,
+    auto_agi: 0,
   });
   const fields = fieldsOf(result.outputs, schedule3)!;
   assertEquals(fields.line6d_elderly_disabled_credit, 750);
@@ -82,6 +83,7 @@ test("schedule_r.compute: single disabled qualifies — disability income $5000 
     filing_status: FilingStatus.Single,
     taxpayer_disabled: true,
     taxpayer_disability_income: 5000,
+    auto_agi: 0,
   });
   const fields = fieldsOf(result.outputs, schedule3)!;
   assertEquals(fields.line6d_elderly_disabled_credit, 750);
@@ -387,4 +389,68 @@ test("schedule_r.compute: smoke test — MFJ both 65+ with SSA and AGI phaseout"
   assertEquals(findOutput(result, "schedule3") !== undefined, true);
   const fields = fieldsOf(result.outputs, schedule3)!;
   assertEquals(fields.line6d_elderly_disabled_credit, 675);
+});
+
+// Schedule R (Form 1040) 2025 instructions, Part III line 14: "Enter the
+// amount from Form 1040 or 1040-SR, line 11." Box 4 (QSS, under 65, retired
+// on permanent and total disability): line 10 $5,000, line 11 taxable
+// disability $11,000, line 12 $5,000, line 13c $0, line 14 $16,000, line 15
+// $7,500, line 16 $8,500, line 17 $4,250, line 18 $4,250, line 19 $750,
+// line 20 15% = $112.50, rounded to $113.
+test("schedule_r.compute: line 14 takes the computed Form 1040 line 11 AGI", () => {
+  const result = compute({
+    filing_status: FilingStatus.QSS,
+    taxpayer_disabled: true,
+    taxpayer_disability_income: 11_000,
+    auto_agi: 16_000,
+  });
+  const fields = fieldsOf(result.outputs, schedule3)!;
+  assertEquals(fields.line6d_elderly_disabled_credit, 113);
+  assertEquals(
+    (fields.schedule_r_source as { agi?: number; auto_agi?: number }).agi,
+    16_000,
+  );
+  assertEquals(
+    "auto_agi" in (fields.schedule_r_source as Record<string, unknown>),
+    false,
+  );
+});
+
+test("schedule_r.compute: a typed AGI is only a cross-check of Form 1040 line 11", () => {
+  assertThrows(
+    () =>
+      compute({
+        filing_status: FilingStatus.QSS,
+        taxpayer_disabled: true,
+        taxpayer_disability_income: 11_000,
+        agi: 15_000,
+        auto_agi: 16_000,
+      }),
+    Error,
+    "Schedule R agi disagrees with Form 1040 line 11",
+  );
+  const agreeing = compute({
+    filing_status: FilingStatus.QSS,
+    taxpayer_disabled: true,
+    taxpayer_disability_income: 11_000,
+    agi: 16_000,
+    auto_agi: 16_000,
+  });
+  assertEquals(
+    fieldsOf(agreeing.outputs, schedule3)!.line6d_elderly_disabled_credit,
+    113,
+  );
+});
+
+test("schedule_r.compute: a qualifying credit without any AGI throws instead of skipping line 15", () => {
+  assertThrows(
+    () =>
+      compute({
+        filing_status: FilingStatus.QSS,
+        taxpayer_disabled: true,
+        taxpayer_disability_income: 11_000,
+      }),
+    Error,
+    "Schedule R line 14 needs Form 1040 line 11 AGI",
+  );
 });

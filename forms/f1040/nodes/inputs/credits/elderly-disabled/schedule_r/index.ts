@@ -12,6 +12,7 @@ import type { NodeContext } from "../../../../../../../core/types/node-context.t
 import {
   computeCredit,
   inputSchema,
+  scheduleRAgi,
   validDisabilityEvidence,
 } from "./calculation.ts";
 export {
@@ -20,13 +21,23 @@ export {
   validDisabilityEvidence,
 } from "./calculation.ts";
 
+type ScheduleRInput = z.infer<typeof inputSchema>;
+
+/** The filed source carries Form 1040 line 11 as its line 14 AGI. */
+function filedSource(input: ScheduleRInput): ScheduleRInput {
+  const { auto_agi: computed, ...source } = input;
+  if (computed === undefined && input.agi === undefined) return source;
+  return { ...source, agi: scheduleRAgi(input) };
+}
+
 class ScheduleRNode extends TaxNode<typeof inputSchema> {
   readonly nodeType = "schedule_r";
   readonly inputSchema = inputSchema;
   readonly outputNodes = new OutputNodes([schedule3, f1040]);
+  override readonly contextFields = ["auto_agi"];
 
-  compute(_ctx: NodeContext, input: z.infer<typeof inputSchema>): NodeResult {
-    const parsed = inputSchema.parse(input);
+  compute(_ctx: NodeContext, input: ScheduleRInput): NodeResult {
+    const parsed = filedSource(inputSchema.parse(input));
     const credit = computeCredit(parsed);
 
     if (credit === 0) return { outputs: [] };

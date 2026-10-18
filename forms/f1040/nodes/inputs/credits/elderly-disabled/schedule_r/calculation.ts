@@ -54,8 +54,10 @@ export const inputSchema = z.object({
   taxpayer_disability_income: z.number().nonnegative().optional(),
   // Spouse's disability income (if under 65 and disabled, MFJ)
   spouse_disability_income: z.number().nonnegative().optional(),
-  // AGI (Form 1040 line 11) — for phaseout calculation
+  // Schedule R line 14 is Form 1040 line 11. A typed AGI is only a cross-check
+  // of the computed auto_agi.
   agi: z.number().nonnegative().optional(),
+  auto_agi: z.number().optional(),
   // Nontaxable Social Security / RRB benefits
   nontaxable_ssa: z.number().nonnegative().optional(),
   // Nontaxable pension / annuity income excluded from gross income
@@ -90,6 +92,23 @@ export function validDisabilityEvidence(
   return evidence !== undefined &&
     (evidence.physician_statement !== "prior_year" ||
       evidence.prior_year_line_b_or_1983_verified === true);
+}
+
+/** Schedule R (2025) line 14: the amount from Form 1040 line 11. */
+export function scheduleRAgi(input: ScheduleRInput): number {
+  const agi = input.auto_agi ?? input.agi;
+  if (agi === undefined) {
+    throw new Error("Schedule R line 14 needs Form 1040 line 11 AGI");
+  }
+  if (input.agi !== undefined && input.agi !== agi) {
+    throw new Error(
+      "Schedule R agi disagrees with Form 1040 line 11 AGI computed for line 14",
+    );
+  }
+  if (agi < 0) {
+    throw new Error("Schedule R line 14 cannot carry a negative Form 1040 AGI");
+  }
+  return agi;
 }
 
 // Whether the taxpayer qualifies for Schedule R (age 65+ or disabled)
@@ -157,7 +176,7 @@ function reduceByNontaxableBenefits(
 
 // Step 4 — AGI phaseout: reduce by 50% of excess AGI over threshold
 function agiPhaseout(input: ScheduleRInput, amount: number): number {
-  const agi = input.agi ?? 0;
+  const agi = scheduleRAgi(input);
   const threshold = AGI_PHASEOUT[input.filing_status];
   const excess = Math.max(0, agi - threshold);
   const reduction = Math.round(excess * 0.5);
