@@ -319,8 +319,7 @@ Local schema success is not IRS business-rule validation or ATS acceptance.
 The October 4 one-job county-official case retained six reviewed pages:
 line 4/6/8/9/10 expenses of 1,200, Schedule 1 lines 12/26 and Form 1040 line 10
 of 1,200, and AGI of 48,800 from wages of 50,000. Its selected manifest passed
-hashes, page origins and local XSD; see the
-[validation batch](../../../../testing/ty2025-form1040-validation-batch.md).
+hashes, page origins and local XSD.
 The October 9 group supersedes the earlier written-but-unrun test notes.
 
 ## Remaining boundaries
