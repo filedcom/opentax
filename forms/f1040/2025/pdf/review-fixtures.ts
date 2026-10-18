@@ -4763,6 +4763,11 @@ const sourcePdfReviewFixtures: readonly PdfReviewFixture[] = [
     id: "single-k-reported-error",
     inputs: {
       general: singleGeneral,
+      // Synthetic: a part-time W-2 with withholding. Below the filing
+      // threshold, the return is filed to get the withholding back (2025
+      // Form 1040 instructions, Do You Have To File?); an all-zero return is
+      // rejected by MeF F1040-065-05.
+      w2: [wage(3_000, 150, "Example Employer", "12-3456789")],
       f1099k: [{
         pse_name: "Example Payment App",
         pse_tin: "34-5678901",
@@ -4796,7 +4801,8 @@ const sourcePdfReviewFixtures: readonly PdfReviewFixture[] = [
     reviewFocus: [
       "K box 1a $1,000 splits into a $800 personal gift and $200 expense reimbursement",
       "Schedule 1 top entry shows $1,000 reported in error without line 8 income",
-      "Form 1040 total income and AGI remain zero",
+      "Form 1040 total income and AGI are the $3,000 W-2 wages alone",
+      "The $150 W-2 withholding is refunded",
     ],
   },
   {
@@ -7114,6 +7120,20 @@ const sourcePdfReviewFixtures: readonly PdfReviewFixture[] = [
           claiming_housing_exclusion_or_deduction: false,
           deductions_allocable_to_excluded_income: 0,
           amt_line2b_disallowed_deductions_and_exclusions: 0,
+        },
+      },
+      // Synthetic: the prior-year return's overpayment, applied to this year's
+      // estimated tax. Excluded foreign income still counts toward the filing
+      // requirement (2025 Form 1040 instructions, Chart A), and refunding this
+      // payment keeps the return off MeF F1040-065-05's all-zero reject.
+      f1040es: {
+        applied_from_prior_year: 1_000,
+        prior_year_applied_credit_review: {
+          accepted_prior_year_return_reference:
+            "Synthetic accepted prior-year Form 1040 electing the credit",
+          irs_account_credit_record_reference:
+            "Synthetic IRS account transcript showing the applied credit",
+          applied_amount: 1_000,
         },
       },
     },

@@ -238,7 +238,7 @@
     "id": "tip-health-mfj-fully-phased-out",
     "originalSourceSha256": "5b5aab3031528af6ba7d888ae40e6d3accb5ab3a303619944ee9aa15f5b89e22",
     "originalPdfSha256": "3320c73ee945c6e9cd4a766cb65f5a3173e8058d218997936e8d987a6d7b11ee",
-    "inputsSha256": "2182a39a9e4af61efcac7d778688ff568f618ec89944576ad8b20ea4814660f5",
+    "inputsSha256": "011344b27275a3e4d8fefbedf64735e86bd671baaf4483cf368947854982855d",
     "pageOrigins": [
       {
         "pageNumber": 1,
@@ -433,7 +433,7 @@
     "id": "tip-health-mfj-owned-cap-phaseout",
     "originalSourceSha256": "a6975e821549767a43c56f24fd2b705c0b4246f4faf495a67adea52029196203",
     "originalPdfSha256": "da74499346483bfef17b1de210dfcefc02334c36801a05966f7617b4b2f3261f",
-    "inputsSha256": "1b46f2805df1ad7674435167d3430c93c6ee07fbf87f2c0d0d90f5b7b7cc7f28",
+    "inputsSha256": "565e1e777afa83177c12964502fe8504e009d10420886a06cecb39ec3162b4ee",
     "pageOrigins": [
       {
         "pageNumber": 1,
@@ -639,7 +639,7 @@
     "id": "tip-health-mfj-primary-health-limited",
     "originalSourceSha256": "f947202e1ca9abbea3cd174e39bd60893db6f42259bbcfd7362b6b6655fa6a57",
     "originalPdfSha256": "bcdf0e3891ed79cfef24a00551ddb25b4dab414de177acdce9b424f55917f751",
-    "inputsSha256": "7b5c09b19922cd4b72a1f5067e8faf29d93c94f2cd116713560a06fc03f25767",
+    "inputsSha256": "42c7554255c2b95117579775aa58be7b7587df3dbf97887454b458821f73e3e9",
     "pageOrigins": [
       {
         "pageNumber": 1,
@@ -833,7 +833,7 @@
     "id": "tip-health-single-fully-phased-out",
     "originalSourceSha256": "359533a8671f264c3b9cc5590181a1aafa4e806ee9bedc9a3a2a8330b760134f",
     "originalPdfSha256": "0312c719000d69dc78b1ccaecb63a4ad7d802a9cecb492b9071e1a0d855c3ef6",
-    "inputsSha256": "af5884742993df0254897972e2b164427afc875d48a63884f94678360beb5e74",
+    "inputsSha256": "32b5de3262f45b07e606d4d1befa158bbd2527c4f6bbaa1237ee021d5762a13f",
     "pageOrigins": [
       {
         "pageNumber": 1,
@@ -958,7 +958,7 @@
     "id": "tip-health-single-health-income-limited",
     "originalSourceSha256": "1ea9003c6cefa2512b8d3efd7f7740c66d720a382968859edc0a258e1b0c03e1",
     "originalPdfSha256": "b288709745ab8bb586c48aa939942a8273e1f0199fce157541e69ad92903cc98",
-    "inputsSha256": "152501f2bdb01d8bbf20cd8da8ebcf846bbf62beae8633a8077c03c42dd089bb",
+    "inputsSha256": "174c6965eff4010b666e2b6e6376de97eb331b6fc530b56b9a3d4bd4eb35ee21",
     "pageOrigins": [
       {
         "pageNumber": 1,
@@ -1077,7 +1077,7 @@
     "id": "tip-health-single-positive-health",
     "originalSourceSha256": "75731a0d059cd4cbbca917d2d3cf971cfc401473463ef9f6ce35ab4c67675a67",
     "originalPdfSha256": "eb0e22bbd8106f610030b02d55069a1bd1203d568c98495ed6753663c0344b36",
-    "inputsSha256": "a314e8de541be4a04ff597e9c0839d731c56739dde474472f48e10c237396657",
+    "inputsSha256": "09221691964bb74047aa7b65f31f6ec3903e2e9f1aaca5edaddc1ea56d3a3604",
     "pageOrigins": [
       {
         "pageNumber": 1,
@@ -1213,7 +1213,7 @@
     "id": "tip-health-single-tip-netincome-limited",
     "originalSourceSha256": "ddf41233a51d9126787a5a6ad774601d71830c3781d7fe1a28e1b8a2293f9f67",
     "originalPdfSha256": "deceb17521f34a81901fdf66e1169524ebc2225144cee6df15c5f5129113f92e",
-    "inputsSha256": "3fd637691c3f37c28156c66005a363d078fc23fe181c6176d81f630b1e8fa621",
+    "inputsSha256": "f70e9d8427dd9475882ceaab16c5a7e7fee2e7e522f024383c51f7c8ff093443",
     "pageOrigins": [
       {
         "pageNumber": 1,
@@ -1343,7 +1343,7 @@
     "id": "tip-health-single-w2-qbi-binding",
     "originalSourceSha256": "8753f911f892884d203f5d30e9e9565eaa39e9a83390a05c6c78f9223f6eaff3",
     "originalPdfSha256": "f81415a1ec7efaa483cab14d4673752aa98db4204910f20036e868779d1e85cb",
-    "inputsSha256": "995072f6b6545c801f884703052af9e3b28ddc5ba5e909a0e9fe4d89942593bf",
+    "inputsSha256": "6e23bf953d8a62f68f91ede2b3aa1b48f134b154ec1a954157458e538dddb575",
     "pageOrigins": [
       {
         "pageNumber": 1,
