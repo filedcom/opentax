@@ -94,6 +94,20 @@ export const inputSchema = z.object({
   form8814_line12_investment_income: z.number().nonnegative().optional(),
   amt_refigure: amtRefigureSchema.optional(),
 }).superRefine((input, context) => {
+  // Reject at entry rather than at compute: a compute() throw drops the whole
+  // Schedule A line 9 deduction and leaves only an executor warning.
+  if (
+    ((input.investment_interest_expense ?? 0) > 0 ||
+      (input.prior_year_carryforward ?? 0) > 0) &&
+    input.amt_refigure === undefined
+  ) {
+    context.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ["amt_refigure"],
+      message:
+        "Form 4952 needs explicit AMT refigure facts when investment interest expense or a prior-year carryforward is entered",
+    });
+  }
   const prior = input.prior_year_carryforward ?? 0;
   const amtPrior = input.amt_refigure?.prior_year_disallowed_interest ?? 0;
   const source = input.prior_year_carryforward_source;

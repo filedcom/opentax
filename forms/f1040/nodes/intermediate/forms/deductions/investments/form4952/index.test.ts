@@ -1,6 +1,11 @@
 import { test } from "bun:test";
 import { assertEquals, assertThrows } from "@std/assert";
-import { calculateAmtForm4952, calculateForm4952, form4952 } from "./index.ts";
+import {
+  calculateAmtForm4952,
+  calculateForm4952,
+  form4952,
+  inputSchema,
+} from "./index.ts";
 import { form4952 as mef4952 } from "../../../../../../2025/mef/forms/deductions/investments/f4952/f4952.ts";
 
 function compute(input: Record<string, unknown>) {
@@ -282,6 +287,31 @@ test("Form 4952 carries forward interest when net investment income is zero", ()
   assertEquals(result.outputs.some((o) => o.nodeType === "form4952"), true);
   assertEquals(result.outputs.some((o) => o.nodeType === "schedule_a"), false);
   assertEquals(result.carryforwards?.investment_interest_excess_4952, 5_000);
+});
+
+test("Form 4952 input rejects investment interest entered without AMT refigure facts", () => {
+  for (const entry of [
+    { investment_interest_expense: 1_000 },
+    {
+      prior_year_carryforward: 500,
+      prior_year_carryforward_source: reviewedPriorCarryforward(500, 0),
+    },
+  ]) {
+    const parsed = inputSchema.safeParse(entry);
+    assertEquals(parsed.success, false);
+    assertEquals(
+      parsed.error?.issues.some((issue) => issue.path[0] === "amt_refigure"),
+      true,
+    );
+  }
+  assertEquals(
+    inputSchema.safeParse({
+      investment_interest_expense: 1_000,
+      amt_refigure: sameAmtFacts(),
+    }).success,
+    true,
+  );
+  assertEquals(inputSchema.safeParse({ source_1099_interest: 2_000 }).success, true);
 });
 
 test("Form 4952 requires and calculates a separate AMT interest refigure", () => {
