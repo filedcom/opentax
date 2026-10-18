@@ -495,11 +495,6 @@
     "count": 1
   },
   {
-    "path": "forms/f1040/2025/domains/income/investments/f1099b/f1099b-recipient-owner.ts",
-    "pattern": "year-identifier",
-    "count": 1
-  },
-  {
     "path": "forms/f1040/2025/domains/income/investments/form8815/form8815_contribution_return.ts",
     "pattern": "year-identifier",
     "count": 1
@@ -583,11 +578,6 @@
     "path": "forms/f1040/2025/domains/taxes/amt/form6251/form6251_prior_iso_sale.ts",
     "pattern": "year-identifier",
     "count": 11
-  },
-  {
-    "path": "forms/f1040/2025/domains/taxes/amt/form6251/form6251_refund_source.ts",
-    "pattern": "year-comparison",
-    "count": 1
   },
   {
     "path": "forms/f1040/2025/domains/taxes/employment/form8959/form8959-source.ts",
@@ -1621,18 +1611,13 @@
   },
   {
     "path": "forms/f1040/nodes/inputs/credits/individual/f8863/index.ts",
-    "pattern": "date-pinned",
-    "count": 5
-  },
-  {
-    "path": "forms/f1040/nodes/inputs/credits/individual/f8863/index.ts",
     "pattern": "year-identifier",
     "count": 1
   },
   {
     "path": "forms/f1040/nodes/inputs/credits/individual/f8863/index.ts",
     "pattern": "z-literal",
-    "count": 3
+    "count": 2
   },
   {
     "path": "forms/f1040/nodes/inputs/credits/individual/f8912/allowance.ts",

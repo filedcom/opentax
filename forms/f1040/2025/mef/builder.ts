@@ -310,7 +310,7 @@ function buildReturnXml(
   assert1099RRecipientOwner(pending.f1099r, filer, year);
   assertPositiveW2GRecipient(pending.w2g, filer, year);
   assertNecWithholdingRecipient(pending.f1099nec, filer);
-  assert1099BRecipientOwner(pending.f1099b, filer);
+  assert1099BRecipientOwner(pending.f1099b, filer, year);
   assertNoRepeatedBrokerSaleSources(pending.f1099b, pending.f8949);
   assertCapitalSaleSourceRows(pending);
   assertPatrIssuedCopies(pending.f1099patr);

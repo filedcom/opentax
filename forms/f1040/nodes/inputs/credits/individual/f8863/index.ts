@@ -83,7 +83,7 @@ const missing1098tCommonSchema = z.object({
   enrolled_in_degree_or_credential_program: z.boolean(),
   enrollment_record_id: z.string().trim().min(1),
   academic_period_start_date: z.string().date(),
-  payment_tax_year: z.literal(2025),
+  payment_tax_year: z.number().int(),
   assistance_record_id: z.string().trim().min(1),
   nonreceipt_basis_record_id: z.string().trim().min(1),
 });
@@ -323,6 +323,7 @@ export function form8863InstitutionWorkpapers(item: F8863Item) {
 export function validateForm8863FilingSource(
   item: F8863Item,
   credit: "aoc" | "llc",
+  taxYear: number,
 ): void {
   const institutions = item.filing_details?.institutions;
   const workpaper = item.education_expense_workpaper;
@@ -372,7 +373,7 @@ export function validateForm8863FilingSource(
         ...(credit === "aoc"
           ? { aoc_adjusted_expenses: adjusted }
           : { llc_adjusted_expenses: adjusted }),
-      }, credit);
+      }, credit, taxYear);
       combinedExpenses += adjusted;
     }
     const claimed = credit === "aoc"
@@ -422,13 +423,13 @@ export function validateForm8863FilingSource(
         !workpaper.issued_form1098t_source) ||
       workpaper.payment_sources.some((payment) =>
         payment.payment_date === undefined ||
-        payment.payment_date < "2025-01-01" ||
-        payment.payment_date > "2025-12-31" ||
+        payment.payment_date < `${taxYear}-01-01` ||
+        payment.payment_date > `${taxYear}-12-31` ||
         !payment.payment_account_record_reference
       ))
   ) {
     throw new Error(
-      "Form 8863 prior-year or foreign-school history needs current issued or exception evidence, assistance inventory and dated 2025 payment account records",
+      "Form 8863 prior-year or foreign-school history needs current issued or exception evidence, assistance inventory and payment account records dated in the tax year",
     );
   }
   const issued = workpaper.issued_form1098t_source;
@@ -575,8 +576,9 @@ export function validateForm8863FilingSource(
       exception.student_ssn.replaceAll("-", "") !==
         item.student_ssn?.replaceAll("-", "") ||
       exception.institution_name !== institution.name ||
-      exception.academic_period_start_date < "2025-01-01" ||
-      exception.academic_period_start_date > "2026-03-31" ||
+      exception.payment_tax_year !== taxYear ||
+      exception.academic_period_start_date < `${taxYear}-01-01` ||
+      exception.academic_period_start_date > `${taxYear + 1}-03-31` ||
       (credit === "aoc" &&
         (!institution.ein ||
           !exception.enrolled_in_degree_or_credential_program))
@@ -587,11 +589,11 @@ export function validateForm8863FilingSource(
     }
     if (
       exception.reason === "required_but_not_received" &&
-      (exception.requested_1098t_date <= "2026-01-31" ||
+      (exception.requested_1098t_date <= `${taxYear + 1}-01-31` ||
         exception.requested_1098t_date >= exception.return_filing_date)
     ) {
       throw new Error(
-        "Form 8863 required missing 1098-T must be requested after January 31, 2026 and before filing",
+        "Form 8863 required missing 1098-T must be requested after January 31 of the next year and before filing",
       );
     }
     if (
@@ -1034,7 +1036,10 @@ function llcOutputs(
   return [output(schedule3, { line3_education_credit: llcAllowed })];
 }
 
-export function calculateForm8863Lines(rawInput: F8863Input) {
+export function calculateForm8863Lines(
+  rawInput: F8863Input,
+  taxYear: number,
+) {
   const input = inputSchema.parse(rawInput);
   const items = reviewedEducationStudents(input);
   validateReturnContext(items);
@@ -1077,10 +1082,10 @@ export function calculateForm8863Lines(rawInput: F8863Input) {
     : 0;
   if (line8 > 0 || line19 > 0) {
     for (const student of aocStudents) {
-      validateForm8863FilingSource(student, "aoc");
+      validateForm8863FilingSource(student, "aoc", taxYear);
     }
     for (const student of llcStudents) {
-      validateForm8863FilingSource(student, "llc");
+      validateForm8863FilingSource(student, "llc", taxYear);
     }
     assertDistinctEducationSourceReferences([...aocStudents, ...llcStudents]);
   }
@@ -1134,8 +1139,8 @@ class F8863Node extends TaxNode<typeof inputSchema> {
   readonly inputSchema = inputSchema;
   readonly outputNodes = new OutputNodes([schedule3, f1040]);
 
-  compute(_ctx: NodeContext, input: z.infer<typeof inputSchema>): NodeResult {
-    const lines = calculateForm8863Lines(input);
+  compute(ctx: NodeContext, input: z.infer<typeof inputSchema>): NodeResult {
+    const lines = calculateForm8863Lines(input, ctx.taxYear);
     if (!lines) return { outputs: [] };
     return {
       outputs: [

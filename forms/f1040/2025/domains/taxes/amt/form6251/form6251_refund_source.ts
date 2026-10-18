@@ -4,7 +4,9 @@ import { inputSchema as form1099GSourceSchema } from "../../../../../nodes/input
 export function assertForm6251RefundSource(
   fields: Readonly<Record<string, unknown>>,
   pending: Readonly<Record<string, unknown>> | undefined,
+  taxYear: number,
 ): void {
+  const priorYear = taxYear - 1;
   const claimed = fields.line2b_tax_refund;
   const parsed = form1099GSourceSchema.safeParse(pending?.f1099g);
   const refunds = parsed.success
@@ -52,7 +54,8 @@ export function assertForm6251RefundSource(
       !refund.box_2_recovery_workpaper_reference?.trim() ||
       ((refund.box_2_taxable_recovery_verified_amount ?? 0) > 0 &&
         refund.box_2_prior_year_itemized !== true) ||
-      (refund.box_3_tax_year !== undefined && refund.box_3_tax_year !== 2024) ||
+      (refund.box_3_tax_year !== undefined &&
+        refund.box_3_tax_year !== priorYear) ||
       refund.box_8_trade_or_business === true ||
       (refund.box_1_unemployment ?? 0) !== 0 ||
       (refund.box_1_repaid ?? 0) !== 0 ||
@@ -71,7 +74,7 @@ export function assertForm6251RefundSource(
             [
               refund.payer_tin?.replace(/[-\s]/g, ""),
               refund.recipient_tin?.replaceAll("-", ""),
-              refund.box_3_tax_year ?? 2024,
+              refund.box_3_tax_year ?? priorYear,
             ].join("|")
           )).size !== refunds.length ||
         refunds.some((refund) =>

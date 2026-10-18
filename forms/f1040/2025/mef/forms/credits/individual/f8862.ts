@@ -430,7 +430,10 @@ function validateFinalizedCreditClaims(
       const filedName = details
         ? `${details.first_name} ${details.last_name}`.trim().toUpperCase()
         : undefined;
-      const creditLines = calculateForm8863Lines(form8863.data);
+      const creditLines = calculateForm8863Lines(
+        form8863.data,
+        mefTaxYear(context),
+      );
       if (
         !details || filedName !== filedStudents[0] ||
         !student.student_ssn || !creditLines ||
@@ -467,7 +470,10 @@ function validateFinalizedCreditClaims(
         }
         if (samePerson) {
           const form8812 = form8812InputSchema.safeParse(pending?.f8812);
-          const creditLines = calculateForm8863Lines(form8863.data);
+          const creditLines = calculateForm8863Lines(
+        form8863.data,
+        mefTaxYear(context),
+      );
           if (!form8812.success || !creditLines) {
             throw new Error(
               "Form 8862 shared ODC and AOTC amounts need Schedule 8812 and Form 8863 source",

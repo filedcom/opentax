@@ -1432,7 +1432,7 @@ test("Form 8863 parts I and II agree with capped return outputs", () => {
       schedule3_line6d: 0,
       schedule3_line6l: 0,
     },
-  });
+  }, 2025);
   assertEquals(lines?.line1, 2_500);
   assertEquals(lines?.line6, 0.5);
   assertEquals(lines?.line7, 1_250);

@@ -608,7 +608,7 @@ async function buildPdfBytesInternal(
   assert1099RRecipientOwner(normalized.f1099r, filer, 2025);
   assertPositiveW2GRecipient(normalized.w2g, filer, 2025);
   assertNecWithholdingRecipient(normalized.f1099nec, filer);
-  assert1099BRecipientOwner(normalized.f1099b, filer);
+  assert1099BRecipientOwner(normalized.f1099b, filer, mefTaxYear());
   assertNoRepeatedBrokerSaleSources(normalized.f1099b, normalized.f8949);
   assertCapitalSaleSourceRows(normalized);
   assertPatrIssuedCopies(normalized.f1099patr);

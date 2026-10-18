@@ -143,7 +143,7 @@ test("TY2025 broker sale needs a real 2025 sale date in both final exports", asy
     const result = f1040_2025.executeReturn({ general, f1099b: [sale] });
     assertEquals(result.diagnostics, []);
     const pending = buildPending(result.pending);
-    const message = "TY2025 1099-B sale date must be a real 2025 date";
+    const message = "1099-B sale date must be a real date in the return's tax year";
     assertThrows(() => buildMefXml(pending, filer), Error, message);
     await assertRejects(() => buildPdfBytes(pending, filer), Error, message);
   }

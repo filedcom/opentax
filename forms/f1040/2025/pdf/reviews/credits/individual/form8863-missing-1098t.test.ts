@@ -531,7 +531,7 @@ test("waived and scholarship missing-form basis cannot invent paid or untaxed cr
     });
   // Admission of the source contract is conditional on all three economic
   // records; this is not a full-return or authenticated scholarship packet.
-  validateForm8863FilingSource(changed(taxableBasis), "aoc");
+  validateForm8863FilingSource(changed(taxableBasis), "aoc", 2025);
   for (
     const changes of [
       { scholarship_terms_allow_taxable_allocation: false },
@@ -557,6 +557,7 @@ test("waived and scholarship missing-form basis cannot invent paid or untaxed cr
       validateForm8863FilingSource(
         changed({ ...taxableBasis, ...changes }),
         "aoc",
+        2025,
       )
     );
   }
@@ -573,7 +574,7 @@ test("waived and scholarship missing-form basis cannot invent paid or untaxed cr
     { tax_free_assistance_applied_to_expenses: 4_000 },
     { aoc_adjusted_expenses: 0 },
   );
-  validateForm8863FilingSource(fullyTaxFree, "aoc");
+  validateForm8863FilingSource(fullyTaxFree, "aoc", 2025);
   const pending = returnCase(fullyTaxFree);
   assertEquals(pending.schedule3?.line3_education_credit ?? 0, 0);
   assertEquals(pending.f1040!.line29_refundable_aoc ?? 0, 0);
