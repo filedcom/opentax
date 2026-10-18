@@ -73,6 +73,7 @@ export enum Box12Code {
   R = "R", // Employer contributions to Archer MSA
   S = "S", // 408(p) SIMPLE salary reduction contributions
   T = "T", // Adoption benefits
+  TP = "TP", // Cash tips reported to the employer (2026 W-2)
   TT = "TT", // Qualified overtime compensation (2026 W-2)
   V = "V", // Income from exercise of nonstatutory stock options
   W = "W", // Employer contributions to HSA
@@ -481,6 +482,24 @@ function codeTTAmount(item: W2Item): number {
     .reduce((sum, entry) => sum + entry.amount, 0);
 }
 
+function codeTPAmount(item: W2Item): number {
+  return (item.box12_entries ?? [])
+    .filter((entry) => entry.code === Box12Code.TP)
+    .reduce((sum, entry) => sum + entry.amount, 0);
+}
+
+/**
+ * 2026 W-2 box 12 code TP: total cash tips reported to the employer, with the
+ * Treasury Tipped Occupation Code in box 14b (2026 General Instructions for
+ * Forms W-2 and W-3, Code TP). Draft 2026 Schedule 1-A line 4 column (iii)
+ * takes this amount for a qualifying occupation.
+ */
+function claimsCodeTP(item: W2Item): boolean {
+  return codeTPAmount(item) > 0 &&
+    item.box14b_tipped_code !== undefined &&
+    isQualifiedTipsOccupationCode(item.box14b_tipped_code);
+}
+
 /** From 2026 a reviewed overtime claim reads box 12 code TT when it is reported. */
 function claimsCodeTT(item: W2Item, taxYear: number): boolean {
   return taxYear >= 2026 && item.flsa_overtime_review !== undefined &&
@@ -541,6 +560,24 @@ function validateItem(
       );
     }
   }
+  if (codeTPAmount(item) > 0) {
+    // Code TP first appears on the 2026 Form W-2.
+    const codeTPReported = taxYear >= 2026;
+    if (!codeTPReported) {
+      throw new Error("W-2 box 12 code TP tips need tax year 2026 or later");
+    }
+    if (
+      item.box14b_tipped_code === undefined ||
+      item.qualified_tips_box14_review !== undefined ||
+      !Number.isSafeInteger(codeTPAmount(item)) ||
+      codeTPAmount(item) > item.box1_wages ||
+      item.box13_statutory_employee === true
+    ) {
+      throw new Error(
+        "W-2 box 12 code TP needs a box 14b occupation code and whole-dollar tips included in box 1",
+      );
+    }
+  }
   if (item.qualified_tips_box14_review !== undefined) {
     const review = item.qualified_tips_box14_review;
     const matches = (item.box14_entries ?? []).filter((entry) =>
@@ -568,7 +605,7 @@ function validateItem(
   if (
     item.box14b_tipped_code !== undefined &&
     isQualifiedTipsOccupationCode(item.box14b_tipped_code) &&
-    (item.box7_ss_tips ?? 0) > 0 &&
+    ((item.box7_ss_tips ?? 0) > 0 || codeTPAmount(item) > 0) &&
     !/^\d{9}$/.test(item.employee_ssn?.replaceAll("-", "") ?? "")
   ) {
     throw new Error("W-2 qualified tips need a nine-digit employee SSN");
@@ -576,7 +613,7 @@ function validateItem(
   if (
     item.box14b_tipped_code !== undefined &&
     isQualifiedTipsOccupationCode(item.box14b_tipped_code) &&
-    (item.box7_ss_tips ?? 0) > 0 &&
+    ((item.box7_ss_tips ?? 0) > 0 || codeTPAmount(item) > 0) &&
     (!/^\d{2}-?\d{7}$/.test(item.employer_ein ?? "") ||
       !item.employer_name?.trim())
   ) {
@@ -981,6 +1018,7 @@ function scheduleSEOutput(w2s: W2Items): NodeOutput[] {
 function qualifiedTipsOutput(w2s: W2Items): NodeOutput[] {
   const tips = regularItems(w2s)
     .filter((item) =>
+      claimsCodeTP(item) ||
       item.qualified_tips_box14_review !== undefined ||
       (item.box14b_tipped_code !== undefined &&
         isQualifiedTipsOccupationCode(item.box14b_tipped_code) &&
@@ -988,16 +1026,21 @@ function qualifiedTipsOutput(w2s: W2Items): NodeOutput[] {
     )
     .map((item) => {
       const review = item.qualified_tips_box14_review;
+      const codeTP = claimsCodeTP(item);
       return {
         employee_ssn: item.employee_ssn!,
         employer_ein: item.employer_ein!,
         employer_name: item.employer_name!,
-        amount: review === undefined
+        amount: codeTP
+          ? codeTPAmount(item)
+          : review === undefined
           ? item.box7_ss_tips!
           : box14Amount(item, review.box14_description)!,
         box5_medicare_wages: item.box5_medicare_wages,
         occupation_code: review?.occupation_code ?? item.box14b_tipped_code!,
-        source_type: review === undefined
+        source_type: codeTP
+          ? "w2_code_tp" as const
+          : review === undefined
           ? "w2_box7" as const
           : "w2_box14" as const,
       };
