@@ -39,3 +39,16 @@ bun run bench:llm score --out /tmp/tcb --reference   # upstream's Opus 5.5 outpu
 
 opentax computes federal returns only, so on the 40 state cases it can help
 with federal inputs (AGI and the like) but not the state form itself.
+
+## Results: federal TY2025 (10 cases), Claude Opus 5.5 as subagent test takers
+
+| arm | engine | strict | lenient (±$5) | lines exact | median CLI calls |
+|---|---|---|---|---|---|
+| A: Claude alone | n/a | 5/10 | 8/10 | 94.2% | n/a |
+| B: Claude + opentax | v2.0.14 | 7/10 | 8/10 | 94.2% | 46 |
+| B: Claude + opentax | main 1e145173 (`node template`) | 7/10 | 9/10 | 94.2% | 44 |
+
+Remaining misses on main 1e145173:
+- us-010: line 19 (Schedule R not claimed).
+- us-002: no input for a net qualified disaster loss added to the standard deduction.
+- us-003: the Schedule 1-A senior deduction and Form 8606 were figured by hand, with a $2 rounding difference.
