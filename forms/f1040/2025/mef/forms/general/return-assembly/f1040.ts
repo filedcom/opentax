@@ -52,6 +52,7 @@ import { assertEicSource } from "../../../../domains/credits/earned-income/earne
 import { residentElectionName } from "../../../../domains/general/return-assembly/resident-election-source.ts";
 import { assertSchedule2Line23 } from "../../../../domains/taxes/other/schedule2-line23-reconciliation.ts";
 import { assertEstimatedPaymentLine26 } from "../../../../domains/payments/settlement/estimated-payment-reconciliation.ts";
+import { mefTaxYear } from "../../../support/year-config.ts";
 import { assertOtherFormsWithholding } from "../../../../domains/payments/withholding/f8288/f8288-withholding-reconciliation.ts";
 import { assertPresidentialCampaignSource } from "../../../../domains/general/return-assembly/presidential-campaign-source.ts";
 import {
@@ -525,6 +526,7 @@ function buildIRS1040(fields: Input, context?: MefBuildContext): string {
   const formerSpouseEstimatedTaxSsn = assertEstimatedPaymentLine26(
     fields,
     context?.pending,
+    mefTaxYear(context),
   );
   assertOtherFormsWithholding(fields, context?.pending);
   assertReturnScheduleJoins(fields, context?.pending);

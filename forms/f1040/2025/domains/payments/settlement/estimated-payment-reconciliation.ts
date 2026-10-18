@@ -1,13 +1,15 @@
 import {
+  appliedCreditFormerSpouseSsn,
   estimatedPaymentTotal,
   inputSchema,
   reviewedJointAllocation,
 } from "../../../../nodes/inputs/payments/estimated/f1040es/index.ts";
 
-/** Reconcile the retained 1040-ES input to the final 2025 return payment. */
+/** Reconcile the retained 1040-ES input to the final return payment. */
 export function assertEstimatedPaymentLine26(
   fields: Readonly<Record<string, unknown>>,
   pending: Readonly<Record<string, unknown>> | undefined,
+  taxYear: number,
 ): string | undefined {
   const filed = fields.line26_estimated_tax;
   const raw = pending?.f1040es;
@@ -15,7 +17,7 @@ export function assertEstimatedPaymentLine26(
   if (raw === undefined) {
     throw new Error("Form 1040 line 26 needs its 1040-ES payment source");
   }
-  const source = estimatedPaymentTotal(raw);
+  const source = estimatedPaymentTotal(raw, taxYear);
   if (
     typeof filed !== "number" || !Number.isFinite(filed) ||
     Math.abs(filed - source) >= 0.01
@@ -25,7 +27,12 @@ export function assertEstimatedPaymentLine26(
     );
   }
   const input = inputSchema.parse(raw);
-  const appliedFormerSsn = appliedCreditFormerSpouse(input, fields, pending);
+  const appliedFormerSsn = appliedCreditFormerSpouse(
+    input,
+    fields,
+    pending,
+    taxYear,
+  );
   const review = reviewedJointAllocation(input);
   if (!review) {
     const hasQuarterPayment = (["q1", "q2", "q3", "q4"] as const).some(
@@ -93,6 +100,7 @@ function appliedCreditFormerSpouse(
   input: ReturnType<typeof inputSchema.parse>,
   fields: Readonly<Record<string, unknown>>,
   pending: Readonly<Record<string, unknown>> | undefined,
+  taxYear: number,
 ): string | undefined {
   const applied = input.applied_from_prior_year ?? 0;
   const review = input.prior_year_applied_credit_review;
@@ -106,10 +114,12 @@ function appliedCreditFormerSpouse(
   }
   if (!review || review.applied_amount !== applied) {
     throw new Error(
-      "Form 1040 line 26 prior-year applied credit needs the accepted 2024 return and IRS-account credit evidence",
+      `Form 1040 line 26 prior-year applied credit needs the accepted ${
+        taxYear - 1
+      } return and IRS-account credit evidence`,
     );
   }
-  const former = review.joint_2024_former_spouse_ssn?.replaceAll("-", "");
+  const former = appliedCreditFormerSpouseSsn(review)?.replaceAll("-", "");
   if (former === undefined) return undefined;
   const general = pending?.general as Record<string, unknown> | undefined;
   const current = [

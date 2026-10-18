@@ -9,10 +9,11 @@ import { schedule3 } from "../../../../intermediate/aggregation/general/return-a
 import type { NodeContext } from "../../../../../../../core/types/node-context.ts";
 
 export const extensionPaymentEvidenceSchema = z.object({
-  tax_year: z.literal(2025),
+  tax_year: z.number().int().min(2025),
   primary_ssn: z.string().regex(/^\d{3}-?\d{2}-?\d{4}$/),
   spouse_ssn: z.string().regex(/^\d{3}-?\d{2}-?\d{4}$/).optional(),
-  payment_date: z.string().regex(/^2026-(0[1-3]-\d{2}|04-(0[1-9]|1[0-5]))$/),
+  // January 1 through the April 15 due date of the following year.
+  payment_date: z.string().regex(/^\d{4}-(0[1-3]-\d{2}|04-(0[1-9]|1[0-5]))$/),
   amount: z.number().positive().int(),
   payment_confirmation_reference: z.string().trim().min(1),
   extension_request_reference: z.string().trim().min(1),
@@ -22,6 +23,7 @@ export const extensionPaymentEvidenceSchema = z.object({
   if (
     Number.isNaN(date.getTime()) ||
     date.toISOString().slice(0, 10) !== source.payment_date ||
+    date.getUTCFullYear() !== source.tax_year + 1 ||
     source.payment_confirmation_reference === source.extension_request_reference
   ) {
     context.addIssue({
@@ -67,7 +69,7 @@ class EXTNode extends TaxNode<typeof inputSchema> {
   readonly inputSchema = inputSchema;
   readonly outputNodes = new OutputNodes([schedule3]);
 
-  compute(_ctx: NodeContext, input: EXTInput): NodeResult {
+  compute(ctx: NodeContext, input: EXTInput): NodeResult {
     const parsed = inputSchema.parse(input);
 
     // Master switch: without produce_4868 = "X", nothing is generated
@@ -77,9 +79,12 @@ class EXTNode extends TaxNode<typeof inputSchema> {
 
     const line7 = parsed.line_7_amount_paying ?? 0;
 
-    if (line7 > 0 && parsed.payment_evidence?.amount !== line7) {
+    if (
+      line7 > 0 && (parsed.payment_evidence?.amount !== line7 ||
+        parsed.payment_evidence.tax_year !== ctx.taxYear)
+    ) {
       throw new Error(
-        "Extension payment needs matching reviewed 2025 payment evidence",
+        `Extension payment needs matching reviewed ${ctx.taxYear} payment evidence`,
       );
     }
     if (line7 === 0 && parsed.payment_evidence !== undefined) {
