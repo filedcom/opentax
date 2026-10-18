@@ -1401,6 +1401,21 @@ test("f1099r.compute: code G without box 2a stays a non-taxable direct rollover"
   assertEquals(input.line5c_pension_rollover, true);
 });
 
+// 2025 Instructions for Forms 1099-R and 5498, Box 7 code H: a direct
+// rollover of a designated Roth account distribution to a Roth IRA. It is not
+// taxable (2025 Instructions for Form 1040, lines 5a and 5b: enter the total
+// on 5a, the taxable part on 5b, and check 5c(1) for the rollover).
+test("f1099r.compute: designated Roth code H direct rollover is nontaxable", () => {
+  const input = f1040Input(compute([minimalPensionItem({
+    box1_gross_distribution: 42_000,
+    box7_distribution_code: DistributionCode.CodeH,
+    direct_rollover_confirmed: true,
+  })]));
+  assertEquals(input.line5a_pension_gross, 42_000);
+  assertEquals(input.line5b_pension_taxable, 0);
+  assertEquals(input.line5c_pension_rollover, true);
+});
+
 test("f1099r.compute: taxable pension code G checks line 5c without changing box 2a income", () => {
   const input = f1040Input(compute([minimalPensionItem({
     box1_gross_distribution: 20_300,
