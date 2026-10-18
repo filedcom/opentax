@@ -6,7 +6,7 @@ import { f1040_2025 } from "../../../../index.ts";
 import { pdfReviewFixtures } from "../../../../pdf/review-fixtures.ts";
 import { buildPending } from "../../../../mef/execution/pending.ts";
 import { buildMefBundle } from "../../../../mef/builder.ts";
-import { buildPdfBytes } from "../../../../pdf/builder.ts";
+import { buildPdfBytes, type PdfPageOrigin } from "../../../../pdf/builder.ts";
 import { extractFilerIdentity } from "../../../../../mef/filer.ts";
 import { form6251 } from "../../../../mef/forms/taxes/amt/f6251.ts";
 import { PersonalCasualtyKind } from "../../../../../nodes/intermediate/forms/deductions/casualty/form4684/index.ts";
@@ -98,7 +98,7 @@ async function file(inputs: Record<string, unknown>) {
   const pending = buildPending(result.pending);
   const filer = extractFilerIdentity(result.pending.f1040)!;
   const bundle = await buildMefBundle(pending, { filer, attachments: [] });
-  const origins: { formKey: string }[] = [];
+  const origins: PdfPageOrigin[] = [];
   await buildPdfBytes(bundle.pending, filer, ".pdf-cache", bundle, origins);
   return { result, xml: bundle.xml, origins };
 }

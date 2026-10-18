@@ -47,6 +47,7 @@ const STRING_SAMPLES: readonly string[] = [
   "AB1234567",
   "P12345678",
   "DR-4321-CA",
+  "DR-4321",
   "CC12345",
   "M12345",
   "statement.pdf",

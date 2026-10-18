@@ -46,7 +46,7 @@ const monsoon = {
   casualty_date: "2025-02-01",
   kind: PersonalCasualtyKind.QualifiedDisaster,
   fema_declaration_number: "EM-2345",
-  qualified_disaster_confirmed: true,
+  qualified_disaster_confirmed: true as const,
   properties: [property({
     property_type: "Shed",
     basis: 12_000,
