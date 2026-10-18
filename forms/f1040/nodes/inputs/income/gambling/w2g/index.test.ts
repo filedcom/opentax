@@ -365,3 +365,22 @@ test("w2g.inputSchema: obsolete misnumbered source boxes fail instead of being i
     false,
   );
 });
+
+test("TY2026 W-2G winnings route to Schedule 1 line 8b; a 2025 form is refused", () => {
+  const ctx = { taxYear: 2026, formType: "f1040" };
+  const result = w2g.compute(ctx, {
+    w2gs: [minimalItem({ calendar_year: 2026, box1_winnings: 1_000 })],
+  });
+  assertEquals(
+    fieldsOf(result.outputs, schedule1)?.line8b_gambling_winnings,
+    1_000,
+  );
+  assertThrows(
+    () =>
+      w2g.compute(ctx, {
+        w2gs: [minimalItem({ calendar_year: 2025, box1_winnings: 1_000 })],
+      }),
+    Error,
+    "calendar year must be 2026",
+  );
+});

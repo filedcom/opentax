@@ -104,7 +104,7 @@ export const w2gPdf: PdfFormDescriptor = {
       (item.box4_federal_withheld ?? 0) > 0
     );
     if (active.length === 0) return [];
-    active.forEach((item) => assertWithheldW2GSource(item, filer));
+    active.forEach((item) => assertWithheldW2GSource(item, filer, 2025));
     const withheld = active.reduce(
       (sum, item) => sum + item.box4_federal_withheld!,
       0,

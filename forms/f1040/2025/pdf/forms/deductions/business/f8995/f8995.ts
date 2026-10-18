@@ -120,6 +120,7 @@ export const form8995Pdf: PdfFormDescriptor = {
     const { businesses, lines } = assertPositive8995(
       fields,
       allPending,
+      2025,
     );
     return {
       pdf_current_joint_ordinary: allPending.general?.filing_status === "mfj" &&

@@ -12,7 +12,8 @@ import type { NodeContext } from "../../../../../../../core/types/node-context.t
 
 // Per-entry schema — one W-2G from one payer
 export const itemSchema = z.object({
-  calendar_year: z.literal(2025).optional(),
+  // The issued form's year; compute() requires the return's tax year.
+  calendar_year: z.number().int().optional(),
   box1_winnings: z.number().nonnegative().optional(),
   box2_date_won: z.string().optional(),
   box3_type_of_wager: z.string().optional(),
@@ -196,9 +197,16 @@ class W2GNode extends TaxNode<typeof inputSchema> {
   readonly inputSchema = inputSchema;
   readonly outputNodes = new OutputNodes([schedule1, f1040, agi_aggregator]);
 
-  compute(_ctx: NodeContext, input: z.infer<typeof inputSchema>): NodeResult {
+  compute(ctx: NodeContext, input: z.infer<typeof inputSchema>): NodeResult {
     const parsed = inputSchema.parse(input);
     const { w2gs } = parsed;
+    if (
+      w2gs.some((item) =>
+        item.calendar_year !== undefined && item.calendar_year !== ctx.taxYear
+      )
+    ) {
+      throw new Error(`W-2G calendar year must be ${ctx.taxYear}`);
+    }
 
     const outputs: NodeOutput[] = [
       ...schedule1Output(w2gs),

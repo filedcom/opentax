@@ -67,6 +67,16 @@ export interface F1040Config {
   additionalMedicareThresholdMfs: number;
   additionalMedicareThresholdOther: number;
 
+  // ── Schedule SE optional methods ─────────────────────────────────────────
+  /** Part II line 14: maximum income for the optional methods. */
+  seOptionalMethodMaximum: number;
+  /**
+   * The farm optional method is available when gross farm income is at most
+   * the first amount or net farm profits are below the second.
+   */
+  seFarmOptionalGrossIncomeLimit: number;
+  seFarmOptionalNetProfitLimit: number;
+
   // ── NIIT ──────────────────────────────────────────────────────────────────
   niitThresholdMfj: number;
   niitThresholdMfs: number;

@@ -922,7 +922,7 @@ export const irs1040Pdf: PdfFormDescriptor = {
           "Form 1040 PDF line 5c needs valid Form 1099-R source facts",
         );
       }
-      assertIraRolloverEvidence(source.data.f1099rs);
+      assertIraRolloverEvidence(source.data.f1099rs, 2025);
       if (rollover !== source.data.f1099rs.some(isPensionDirectRollover)) {
         throw new Error(
           "Form 1040 PDF line 5c rollover does not match the payer-reported Form 1099-R code G",

@@ -20,7 +20,10 @@ import type { Filed8995 } from "./f8995-route.ts";
 export function assertMultipleScheduleC8995(
   fields: Record<string, unknown>,
   rawPending: Readonly<Record<string, unknown>> | undefined,
+  taxYear: number,
 ): Filed8995 {
+  const cfg = CONFIG_BY_YEAR[taxYear];
+  if (!cfg) throw new Error(`No f1040 config for year ${taxYear}`);
   if (!rawPending) {
     throw new Error(
       "Multiple Schedule C Form 8995 needs its complete return source",
@@ -52,12 +55,12 @@ export function assertMultipleScheduleC8995(
   const seExpected = scheduleSELines({
     net_profit_schedule_c: profit,
     w2_ss_wages: ssWages,
-  }, CONFIG_BY_YEAR[2025].ssWageBase);
+  }, cfg.ssWageBase, cfg);
   const se = pending.schedule_se === undefined
     ? undefined
     : seSchema.parse(pending.schedule_se);
   const seActual = se
-    ? scheduleSELines(se, CONFIG_BY_YEAR[2025].ssWageBase)
+    ? scheduleSELines(se, cfg.ssWageBase, cfg)
     : undefined;
   const healthSource = pending.form7206?.schedule_c_source as {
     businesses?: Array<Record<string, unknown>>;
@@ -218,7 +221,7 @@ export function assertMultipleScheduleC8995(
   const line11 = Math.round(
     Math.max(0, f1040.line11_agi - f1040.line12c_deduction_total),
   );
-  if (line11 > CONFIG_BY_YEAR[2025].qbiThresholdSingle) {
+  if (line11 > cfg.qbiThresholdSingle) {
     throw new Error(
       "Multiple Schedule C simplified QBI must remain below the Form 8995 threshold",
     );
@@ -258,7 +261,7 @@ export function assertMultipleScheduleC8995(
       "Multiple Schedule C Form 8995 signed rows, loss offset and filed lines differ from Form 1040",
     );
   }
-  assertMultiBusinessInvestmentTax(pending, investment);
+  assertMultiBusinessInvestmentTax(pending, investment, taxYear);
   return {
     businesses: rows.map((row) => ({
       businessName: row.business_name,

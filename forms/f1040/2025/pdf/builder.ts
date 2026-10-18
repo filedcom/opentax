@@ -597,8 +597,8 @@ async function buildPdfBytesInternal(
   assertGeneral1040DepositSource(normalized, filer);
   if (filer) assert1098EInterestSource(normalized, filer);
   assertExtensionPaymentSource(normalized, filer);
-  assert1099RRecipientOwner(normalized.f1099r, filer);
-  assertPositiveW2GRecipient(normalized.w2g, filer);
+  assert1099RRecipientOwner(normalized.f1099r, filer, 2025);
+  assertPositiveW2GRecipient(normalized.w2g, filer, 2025);
   assertNecWithholdingRecipient(normalized.f1099nec, filer);
   assert1099BRecipientOwner(normalized.f1099b, filer);
   assertNoRepeatedBrokerSaleSources(normalized.f1099b, normalized.f8949);
@@ -642,7 +642,7 @@ async function buildPdfBytesInternal(
   assertLine1gForm8919Wages(normalized);
   assertSchedule2ScheduleHTax(normalized);
   assertSchedule2Form8960Tax(normalized);
-  assertSchedule2ScheduleSETax(normalized);
+  assertSchedule2ScheduleSETax(normalized, 2025);
   assertSchedule2Form8828Tax(normalized);
   assertSchedule2Form8936Repayment(normalized);
   assertSchedule3Form8859Credit(normalized);

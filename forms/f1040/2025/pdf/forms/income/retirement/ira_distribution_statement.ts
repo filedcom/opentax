@@ -15,7 +15,7 @@ export async function appendIraDistributionStatement(
   if (source === undefined) return;
   const parsed = f1099rInputSchema.parse(source);
   const explanation = recharacterizationText ??
-    iraDistributionExplanation(parsed.f1099rs);
+    iraDistributionExplanation(parsed.f1099rs, 2025);
   if (explanation === undefined) return;
   if (!filer?.nameLine1 || !filer.primarySSN) {
     throw new Error("IRA distribution PDF statement needs filer identity");

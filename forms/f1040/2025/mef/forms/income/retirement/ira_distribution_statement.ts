@@ -18,7 +18,10 @@ export const iraDistributionStatement: MefFormDescriptor<
     const raw = context?.pending?.f1099r;
     if (raw === undefined) return "";
     const source = f1099rInputSchema.parse(raw);
-    const explanation = iraDistributionExplanation(source.f1099rs);
+    const explanation = iraDistributionExplanation(
+      source.f1099rs,
+      context?.taxYear ?? 2025,
+    );
     return explanation === undefined
       ? ""
       : elements("IRADistributionStatement", [

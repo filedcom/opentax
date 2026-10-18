@@ -71,7 +71,26 @@ export {
 };
 export type { ScheduleCItem };
 
-// ── TY2025 Constants ────────────────────────────────────────────────────────
+// AMT workpapers and refund reviews whose schemas attest TY2025 dates.
+function assertTy2025OnlyFacts(
+  taxYear: number,
+  input: z.infer<typeof inputSchema>,
+): void {
+  if (taxYear === 2025) return;
+  const dated = input.schedule_cs.some((item) =>
+    item.amt_mining_cost_workpaper !== undefined ||
+    item.amt_long_term_contract_workpaper !== undefined ||
+    item.amt_long_term_contract_workpapers !== undefined
+  ) ||
+    (input.f1099k_receipt_sources ?? []).some((source) =>
+      source.customer_refunds_review !== undefined
+    );
+  if (dated) {
+    throw new Error(
+      `Schedule C AMT workpapers and 1099-K refund reviews are not yet supported for TY${taxYear}`,
+    );
+  }
+}
 
 function amtDepletionOutputs(item: ScheduleCItem): NodeOutput[] {
   const regularDepletion = item.line_12_depletion ?? 0;
@@ -163,6 +182,7 @@ class ScheduleCNode extends TaxNode<typeof inputSchema> {
     if (!cfg) throw new Error(`No f1040 config for year ${ctx.taxYear}`);
     // Validate schema — throws on invalid data (negative amounts, bad enums)
     inputSchema.parse(input);
+    assertTy2025OnlyFacts(ctx.taxYear, input);
     assertDistinctMiningSources(input.schedule_cs);
     assertDistinctLongTermContractSources(input.schedule_cs);
     const statutoryTotals = new Map<string, number>();

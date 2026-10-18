@@ -624,6 +624,10 @@ export const config2025: F1040Config = {
   amtBracketAdjustmentMfs: AMT_BRACKET_ADJUSTMENT_MFS_2025,
   ssWageBase: SS_WAGE_BASE_2025,
   ssTaxPerEmployer: SS_MAX_TAX_PER_EMPLOYER_2025,
+  // 2025 Schedule SE Part II lines 14-15 and instructions.
+  seOptionalMethodMaximum: 7_240,
+  seFarmOptionalGrossIncomeLimit: 10_860,
+  seFarmOptionalNetProfitLimit: 7_840,
   additionalMedicareThresholdMfj: ADDITIONAL_MEDICARE_THRESHOLD_MFJ,
   additionalMedicareThresholdMfs: ADDITIONAL_MEDICARE_THRESHOLD_MFS,
   additionalMedicareThresholdOther: ADDITIONAL_MEDICARE_THRESHOLD_OTHER,

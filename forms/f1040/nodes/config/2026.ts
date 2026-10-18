@@ -95,6 +95,10 @@ export const config2026: F1040Config = {
   // IRS Topic 751: 2026 Social Security wage base; 6.2% under IRC §3101(a).
   ssWageBase: 184_500,
   ssTaxPerEmployer: 11_439,
+  // Draft 2026 Schedule SE Part II lines 14-15 and its instructions.
+  seOptionalMethodMaximum: 7_560,
+  seFarmOptionalGrossIncomeLimit: 11_340,
+  seFarmOptionalNetProfitLimit: 8_186,
   // IRC §3101(b)(2) and §1411(b); not indexed.
   additionalMedicareThresholdMfj: 250_000,
   additionalMedicareThresholdMfs: 125_000,

@@ -307,8 +307,8 @@ function buildReturnXml(
   assertGeneral1040DependentSource(pending);
   assertGeneral1040DepositSource(pending, filer);
   assert1098EInterestSource(pending, filer);
-  assert1099RRecipientOwner(pending.f1099r, filer);
-  assertPositiveW2GRecipient(pending.w2g, filer);
+  assert1099RRecipientOwner(pending.f1099r, filer, year);
+  assertPositiveW2GRecipient(pending.w2g, filer, year);
   assertNecWithholdingRecipient(pending.f1099nec, filer);
   assert1099BRecipientOwner(pending.f1099b, filer);
   assertNoRepeatedBrokerSaleSources(pending.f1099b, pending.f8949);
@@ -343,7 +343,7 @@ function buildReturnXml(
   assertLine1gForm8919Wages(pending);
   assertSchedule2ScheduleHTax(pending);
   assertSchedule2Form8960Tax(pending);
-  assertSchedule2ScheduleSETax(pending);
+  assertSchedule2ScheduleSETax(pending, year);
   assertSchedule2Form8828Tax(pending);
   assertSchedule2Form8936Repayment(pending);
   assertSchedule3Form8859Credit(pending);
@@ -416,6 +416,7 @@ function buildReturnXml(
     phase: "discovery",
     preparedForm8886,
     filer,
+    taxYear: year,
     binaryAttachmentFileNames,
     attachmentDescriptionsByFileName,
     attachmentSha256ByFileName,
@@ -451,6 +452,7 @@ function buildReturnXml(
     phase: "final",
     preparedForm8886,
     filer,
+    taxYear: year,
     binaryAttachmentFileNames,
     attachmentDescriptionsByFileName,
     attachmentSha256ByFileName,

@@ -10,6 +10,7 @@ import { TS } from "../../../../../nodes/types.ts";
 export function assert1099RRecipientOwner(
   source: unknown,
   filer: FilerIdentity | undefined,
+  taxYear: number,
 ): void {
   if (source === undefined) return;
   if (!filer) {
@@ -20,7 +21,7 @@ export function assert1099RRecipientOwner(
     throw new Error("1099-R owner review needs valid payer source rows");
   }
   assertDistinct1099RCopies(parsed.data.f1099rs);
-  assertIraRolloverEvidence(parsed.data.f1099rs);
+  assertIraRolloverEvidence(parsed.data.f1099rs, taxYear);
   for (const [index, item] of parsed.data.f1099rs.entries()) {
     if (
       !item.payer_name.trim() ||
