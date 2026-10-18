@@ -735,11 +735,6 @@
     "count": 1
   },
   {
-    "path": "forms/f1040/2025/mef/forms/credits/business/f8835_domestic_statement.ts",
-    "pattern": "year-comparison",
-    "count": 1
-  },
-  {
     "path": "forms/f1040/2025/mef/forms/credits/business/f8835_pwa_statement.ts",
     "pattern": "date-pinned",
     "count": 1
@@ -748,11 +743,6 @@
     "path": "forms/f1040/2025/mef/forms/credits/business/f8835_pwa_statement.ts",
     "pattern": "year-identifier",
     "count": 2
-  },
-  {
-    "path": "forms/f1040/2025/mef/forms/credits/business/f8835.ts",
-    "pattern": "year-comparison",
-    "count": 1
   },
   {
     "path": "forms/f1040/2025/mef/forms/credits/earned-income/eitc.ts",

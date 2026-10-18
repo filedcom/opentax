@@ -500,18 +500,6 @@
       "calculation standard_deduction",
       "calculation start"
     ],
-    "single-geothermal-general-business-credit": [
-      "calculation f8835"
-    ],
-    "single-two-geothermal-business-credits": [
-      "calculation f8835"
-    ],
-    "single-wind-and-geothermal-business-credits": [
-      "calculation f8835"
-    ],
-    "single-geothermal-and-new-markets-credits": [
-      "calculation f8835"
-    ],
     "single-partnership-code-k-and-w2g": [
       "xml Withheld W-2G needs the issued 2025 form, structured payer identity, standard code, winnings, and withholding"
     ],
@@ -870,10 +858,6 @@
     "single-section-a-donor-prepared-manuscript-reduction": "Open TY2026 work: Form 8283 reduction reviews replay TY2025 holding-period facts",
     "single-two-short-term-reduced-gifts": "Open TY2026 work: Form 8283 reduction reviews replay TY2025 holding-period facts",
     "single-trust-clean-electricity-investment-credit": "Open TY2026 work: Form 3468 Part V pins a 2025 service date",
-    "single-geothermal-general-business-credit": "Open TY2026 work: Form 8835 rates need the 2026 IRC \u00a745(e)(2) inflation adjustment factor, not in irs/corpus/ty2026; the node accepts only 2025 production",
-    "single-two-geothermal-business-credits": "Open TY2026 work: Form 8835 rates need the 2026 IRC \u00a745(e)(2) inflation adjustment factor, not in irs/corpus/ty2026; the node accepts only 2025 production",
-    "single-wind-and-geothermal-business-credits": "Open TY2026 work: Form 8835 rates need the 2026 IRC \u00a745(e)(2) inflation adjustment factor, not in irs/corpus/ty2026; the node accepts only 2025 production",
-    "single-geothermal-and-new-markets-credits": "Open TY2026 work: Form 8835 rates need the 2026 IRC \u00a745(e)(2) inflation adjustment factor, not in irs/corpus/ty2026; the node accepts only 2025 production",
     "single-partnership-code-k-and-w2g": "Named TY2025-only route: W-2G payer Copy B verification reads the 2025 Form W-2G template; the 2026 template (irs/corpus/ty2026/authorities/fw2g--2026.pdf) is not mapped yet",
     "single-two-w2-flsa-overtime-schedule1a": "TY2026 law: the sample reports overtime on a box 14 or employer statement, the TY2025 reporting route; 2026 W-2s report it in box 12 code TT (2026 W-2 instructions, irs/corpus/ty2026/authorities/iw2w3--2026.pdf)",
     "single-employer-statement-flsa-overtime-schedule1a": "TY2026 law: the sample reports overtime on a box 14 or employer statement, the TY2025 reporting route; 2026 W-2s report it in box 12 code TT (2026 W-2 instructions, irs/corpus/ty2026/authorities/iw2w3--2026.pdf)",
