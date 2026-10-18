@@ -477,7 +477,7 @@
       "xml Withheld W-2G needs the issued 2025 form, structured payer identity, standard code, winnings, and withholding"
     ],
     "single-two-w2-flsa-overtime-schedule1a": [
-      "xml Schedule 1-A overtime filing needs tax year 2025"
+      "xml Schedule 1-A 2026 overtime filing needs W-2 box 12 code TT amounts"
     ],
     "single-employer-statement-flsa-overtime-schedule1a": [
       "calculation form8960",
@@ -504,7 +504,7 @@
       "calculation schedule1a"
     ],
     "joint-mixed-schedule1a": [
-      "xml Schedule 1-A overtime filing needs tax year 2025"
+      "xml Schedule 1-A 2026 overtime filing needs W-2 box 12 code TT amounts"
     ],
     "single-k-business-refund": [
       "calculation f1099k"
@@ -611,9 +611,7 @@
       "calculation start"
     ],
     "single-employer-childcare-facility-and-referral-credit": [
-      "calculation form8960",
-      "calculation standard_deduction",
-      "calculation start"
+      "calculation f8882"
     ],
     "single-form8863-two-school-llc": [
       "xml Form 8863 filing needs source MAGI, Credit Limit Worksheet, and finalized Form 1040/Schedule 3 credit lines to reconcile"
@@ -857,7 +855,7 @@
     "mfj-form2210f-first-joint-filing": "Open TY2026 work: Form 2210-F box B source names 2024/2025 gross income years and 2026 payment dates",
     "single-certified-work-opportunity-credit": "TY2026 law: shifted a year, the sample hires its WOTC employee in 2026; IRC \u00a751(c)(4) ends the work opportunity credit for individuals who begin work after December 31, 2025, so the 2026 return correctly cannot claim it",
     "single-reported-tax-credit-bond": "Dated fact outside TY2026: shifting the sample moves its 2017 QECB issue date past the December 31, 2017 cutoff (P.L. 115-97 \u00a713404 repealed tax credit bonds issued after 2017); a 2026 version of this bond cannot exist",
-    "single-employer-childcare-facility-and-referral-credit": "Open TY2026 work: Form 8882 pins 2025 cost dates",
+    "single-employer-childcare-facility-and-referral-credit": "Sample input: the draft 2026 Form 8882 (Rev. December 2026) item A asks whether the employer is an IRC \u00a745F(c)(4) eligible small business (40% or 50% rate, P.L. 119-21 \u00a770401), a fact the TY2025 sample does not carry; once answered, export still waits for a schema past 2026v1.0, whose IRS8882 has only the 25% facility line and $150,000 limit",
     "single-form8863-two-school-llc": "Sample fixture input: its Form 8863 filer MAGI and Credit Limit Worksheet operands are TY2025 amounts",
     "single-form8863-two-school-aoc": "Sample fixture input: its Form 8863 filer MAGI and Credit Limit Worksheet operands are TY2025 amounts",
     "qualified-tip-qbi-advanced-event-wotc-tip-exclusion": "TY2026 law: shifted a year, the sample hires its WOTC employee in 2026; IRC \u00a751(c)(4) ends the work opportunity credit for individuals who begin work after December 31, 2025, so the 2026 return correctly cannot claim it",

@@ -19,7 +19,10 @@ import {
   qualifiedEmployeeTipRows,
   seniorDeduction,
 } from "../../../../../../nodes/intermediate/forms/deductions/additional/schedule1a/index.ts";
-import { inputSchema as w2InputSchema } from "../../../../../../nodes/inputs/income/wages/w2/index.ts";
+import {
+  Box12Code,
+  inputSchema as w2InputSchema,
+} from "../../../../../../nodes/inputs/income/wages/w2/index.ts";
 import { inputSchema as form4137InputSchema } from "../../../../../../nodes/intermediate/forms/taxes/employment/form4137/index.ts";
 import { inputSchema as necInputSchema } from "../../../../../../nodes/inputs/income/business/f1099nec/index.ts";
 import { inputSchema as miscInputSchema } from "../../../../../../nodes/inputs/income/business/f1099m/index.ts";
@@ -651,10 +654,45 @@ function buildSchedule(raw: Input, context?: MefBuildContext): string {
       entry.double_time_excess_statement_reference !== undefined
     );
     const box14Entries = input.qualified_w2_overtime!.filter((entry) =>
+      entry.w2_box12_code_tt === undefined &&
       entry.employer_statement_reference === undefined &&
       entry.aggregate_overtime_statement_reference === undefined &&
       entry.double_time_excess_statement_reference === undefined
     );
+    const codeTTEntries = input.qualified_w2_overtime!.filter((entry) =>
+      entry.w2_box12_code_tt === true
+    );
+    if (codeTTEntries.length > 0) {
+      const sourceW2s = context?.pending?.w2
+        ? w2InputSchema.parse(context.pending.w2).w2s
+        : [];
+      const normalize = (value: string) => value.replaceAll("-", "");
+      const codeTT = (w2: (typeof sourceW2s)[number]) =>
+        (w2.box12_entries ?? []).filter((entry) => entry.code === Box12Code.TT)
+          .reduce((sum, entry) => sum + entry.amount, 0);
+      const sourceCodeTTW2s = sourceW2s.filter((w2) =>
+        w2.flsa_overtime_review !== undefined && codeTT(w2) > 0 &&
+        w2.box13_statutory_employee !== true
+      );
+      if (
+        sourceCodeTTW2s.length !== codeTTEntries.length ||
+        !codeTTEntries.every((entry) =>
+          sourceCodeTTW2s.filter((w2) =>
+            normalize(w2.employee_ssn ?? "") ===
+              normalize(entry.employee_ssn) &&
+            normalize(w2.employer_ein ?? "") ===
+              normalize(entry.employer_ein) &&
+            w2.box1_wages === entry.box1_wages &&
+            codeTT(w2) === entry.amount &&
+            w2.flsa_overtime_review?.source_reference === entry.source_reference
+          ).length === 1
+        )
+      ) {
+        throw new Error(
+          "Schedule 1-A code TT overtime does not match the filed W-2 box 12 and review",
+        );
+      }
+    }
     if (box14Entries.length > 0) {
       const sourceW2s = context?.pending?.w2
         ? w2InputSchema.parse(context.pending.w2).w2s

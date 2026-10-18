@@ -281,7 +281,7 @@ export const SCENARIO_1040_13_TY2026_RECONCILIATION = {
   ],
   blockers: [
     "Form 1062 and its Schedule A (pages 28-29; 1040 line 24b $1,763, Schedule 3 line 13z '1062NL' $5,288): no input carries a section 1062 farmland sale and 2026v1.0 has no Form 1062 element.",
-    "W-2 box 12 code TT $5,000 (page 30) and Schedule 1-A Part III (page 7): the TY2026 overtime deduction has no route from code TT, and 2026v1.0 lacks the 2026 Schedule 1-A groups.",
+    "Schedule 1-A Part III (page 7): 2026v1.0 has no group for the per-employer code TT rows on lines 16a-16e; lines 17-27 file in the TY2025 elements.",
   ],
 } as const;
 
@@ -493,6 +493,11 @@ export function ty2026Scenario104013Input(): Record<string, unknown> {
       box5_medicare_wages: w2.box5MedicareWages,
       box6_medicare_withheld: w2.box6MedicareWithholding,
       box12_entries: [{ code: Box12Code.TT, amount: w2.box12aAmount }],
+      flsa_overtime_review: {
+        covered_nonexempt_employee: true,
+        premium_included_in_box1: true,
+        source_reference: `${PACKET}-w2-page-30-box-12-tt`,
+      },
     }],
     f1099div: [{
       payerName: "ATS Assumed Fund",

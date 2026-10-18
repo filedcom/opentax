@@ -1827,3 +1827,56 @@ test("comprehensive_w2_full_workflow: two W-2s with all major boxes populate all
     5400,
   );
 });
+
+// 2026 General Instructions for Forms W-2 and W-3, box 12 Code TT: the total
+// qualified overtime compensation; draft 2026 Schedule 1-A line 16 column
+// (iii) takes it per employer.
+test("2026 reviewed W-2 box 12 code TT overtime routes to Schedule 1-A", () => {
+  const review = {
+    covered_nonexempt_employee: true,
+    premium_included_in_box1: true,
+    source_reference: "2026 W-2 box 12 code TT review",
+  };
+  const item = minimalItem({
+    employee_ssn: "111223333",
+    employer_ein: "123456789",
+    box1_wages: 80_000,
+    box12_entries: [{ code: Box12Code.TT, amount: 5_000 }],
+    flsa_overtime_review: review,
+  });
+  const run = (taxYear: number, items: ReturnType<typeof minimalItem>[]) =>
+    w2.compute({ taxYear, formType: "f1040" }, { w2s: items });
+  assertEquals(
+    fieldsOf(run(2026, [item]).outputs, schedule1a)?.qualified_w2_overtime,
+    [{
+      employee_ssn: "111223333",
+      employer_ein: "123456789",
+      amount: 5_000,
+      box1_wages: 80_000,
+      covered_nonexempt_employee: true,
+      premium_included_in_box1: true,
+      source_reference: "2026 W-2 box 12 code TT review",
+      w2_box12_code_tt: true,
+    }],
+  );
+  const { flsa_overtime_review: _, ...unreviewed } = item;
+  assertEquals(
+    fieldsOf(run(2026, [unreviewed]).outputs, schedule1a)
+      ?.qualified_w2_overtime,
+    undefined,
+  );
+  assertThrows(() => run(2025, [item]), Error, "W-2 FLSA overtime review");
+  assertThrows(
+    () =>
+      run(2026, [{
+        ...item,
+        box14_entries: [{
+          description: "FLSA Overtime Premium",
+          amount: 5_000,
+          is_state_sdi_pfml: false,
+        }],
+      }]),
+    Error,
+    "W-2 FLSA overtime review",
+  );
+});

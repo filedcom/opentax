@@ -494,8 +494,21 @@ function retirementLimit(
   return limits[Infinity];
 }
 
+function codeTTAmount(item: W2Item): number {
+  return (item.box12_entries ?? [])
+    .filter((entry) => entry.code === Box12Code.TT)
+    .reduce((sum, entry) => sum + entry.amount, 0);
+}
+
+/** From 2026 a reviewed overtime claim reads box 12 code TT when it is reported. */
+function claimsCodeTT(item: W2Item, taxYear: number): boolean {
+  return taxYear >= 2026 && item.flsa_overtime_review !== undefined &&
+    codeTTAmount(item) > 0;
+}
+
 function validateItem(
   item: W2Item,
+  taxYear: number,
   ssWageBase: number,
   ssTaxPerEmployer: number,
   retirementLimits: Record<string, Record<number, number>>,
@@ -509,7 +522,10 @@ function validateItem(
     );
     if (
       [statement, aggregate, doubleTime].filter(Boolean).length > 1 ||
-      (doubleTime
+      (claimsCodeTT(item, taxYear)
+        ? premiums.length !== 0 || statement || aggregate || doubleTime ||
+          codeTTAmount(item) > item.box1_wages
+        : doubleTime
         ? premiums.length !== 0 ||
           doubleTime.excess_over_regular_pay > item.box1_wages ||
           doubleTime.excess_over_regular_pay % 2 !== 0 ||
@@ -1010,9 +1026,14 @@ function qualifiedTipsOutput(w2s: W2Items): NodeOutput[] {
     : [];
 }
 
-function qualifiedOvertimeOutput(w2s: W2Items): NodeOutput[] {
-  const premiums = regularItems(w2s)
-    .filter((item) => item.flsa_overtime_review !== undefined)
+function qualifiedOvertimeOutput(
+  w2s: W2Items,
+  taxYear: number,
+): NodeOutput[] {
+  const statementPremiums = regularItems(w2s)
+    .filter((item) =>
+      item.flsa_overtime_review !== undefined && !claimsCodeTT(item, taxYear)
+    )
     .map((item) => ({
       employee_ssn: item.employee_ssn!,
       employer_ein: item.employer_ein!,
@@ -1054,9 +1075,30 @@ function qualifiedOvertimeOutput(w2s: W2Items): NodeOutput[] {
         }
         : {}),
     }));
+  const premiums = [...statementPremiums, ...codeTTOvertime(w2s, taxYear)];
   return premiums.length > 0
     ? [output(schedule1a, { qualified_w2_overtime: premiums })]
     : [];
+}
+
+/**
+ * 2026 W-2 box 12 code TT: the employer-reported premium portion of FLSA
+ * overtime (2026 General Instructions for Forms W-2 and W-3, Code TT), which
+ * draft 2026 Schedule 1-A lines 16a-16e take per employer.
+ */
+function codeTTOvertime(w2s: W2Items, taxYear: number) {
+  return regularItems(w2s)
+    .filter((item) => claimsCodeTT(item, taxYear))
+    .map((item) => ({
+      employee_ssn: item.employee_ssn!,
+      employer_ein: item.employer_ein!,
+      amount: codeTTAmount(item),
+      box1_wages: item.box1_wages,
+      covered_nonexempt_employee: true as const,
+      premium_included_in_box1: true as const,
+      source_reference: item.flsa_overtime_review!.source_reference,
+      w2_box12_code_tt: true as const,
+    }));
 }
 
 function box12NodeOutputs(w2s: W2Items): NodeOutput[] {
@@ -1253,6 +1295,7 @@ class W2Node extends TaxNode<typeof inputSchema> {
     for (const item of input.w2s) {
       validateItem(
         item,
+        ctx.taxYear,
         cfg.ssWageBase,
         cfg.ssTaxPerEmployer,
         cfg.retirementLimits,
@@ -1324,7 +1367,7 @@ class W2Node extends TaxNode<typeof inputSchema> {
         : []),
       output(form8919, { w2_sources: form8919W2Sources(input.w2s) }),
       ...qualifiedTipsOutput(input.w2s),
-      ...qualifiedOvertimeOutput(input.w2s),
+      ...qualifiedOvertimeOutput(input.w2s, ctx.taxYear),
       ...box12NodeOutputs(input.w2s),
       this.outputNodes.output(f1040, f1040Fields as AtLeastOne<F1040Input>),
     ];

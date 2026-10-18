@@ -280,7 +280,6 @@ export const TY2026_ATS_CASES: readonly Ty2026AtsCase[] = [
     inputs: ["general", "w2", "f1099div", "schedule_f", "schedule1a", "f4136"],
     unsupportedFacts: [
       "Form 1062 and its Schedule A (pages 28-29): no input carries a section 1062 qualified farmland sale or its net tax liability installment (Schedule 3 line 13z '1062NL')",
-      "W-2 box 12 code TT qualified overtime (page 30) and Schedule 1-A Part III (page 7): the overtime deduction reads only the TY2025 box 14 statement route",
     ],
     schemaGaps: [
       "Form 1062 and its Schedule A; 1040 lines 24b, 24c and 32c (pages 3, 28-29)",

@@ -163,6 +163,8 @@ export const inputSchema = claimInputSchema.extend({
         .optional(),
       double_time_excess_statement_reference: z.string().trim().min(1)
         .optional(),
+      /** Reported in W-2 box 12 code TT (2026 and later W-2s). */
+      w2_box12_code_tt: z.literal(true).optional(),
     }).strict(),
   ).optional(),
   qualified_employee_tips: z.array(z.object({
@@ -1144,10 +1146,22 @@ export function calculateW2OvertimeSchedule1A(
   ctx: NodeContext,
   rawInput: Schedule1AInput,
 ): W2OvertimeLines {
-  if (ctx.taxYear !== 2025) {
-    throw new Error("Schedule 1-A overtime filing needs tax year 2025");
-  }
   const input = inputSchema.parse(rawInput);
+  // From 2026 the W-2 reports qualified overtime in box 12 code TT (draft
+  // 2026 Schedule 1-A line 16); box 14 and employer statements are the TY2025
+  // reporting route.
+  const codeTT = ctx.taxYear >= 2026;
+  if (
+    (input.qualified_w2_overtime ?? []).some((entry) =>
+      (entry.w2_box12_code_tt === true) !== codeTT
+    )
+  ) {
+    throw new Error(
+      codeTT
+        ? "Schedule 1-A 2026 overtime filing needs W-2 box 12 code TT amounts"
+        : "Schedule 1-A W-2 box 12 code TT overtime needs tax year 2026 or later",
+    );
+  }
   if (
     !input.senior_zero_exclusions_review &&
     !input.form2555_exclusion_review
