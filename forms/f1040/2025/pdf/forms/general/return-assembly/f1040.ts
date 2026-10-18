@@ -800,7 +800,7 @@ export const irs1040Pdf: PdfFormDescriptor = {
   // season; this module is the 2025 form and must always fetch the 2025 PDF.
   pdfUrl: "https://www.irs.gov/pub/irs-prior/f1040--2025.pdf",
   projectFields(fields, allPending) {
-    assertHohQualifyingChildSource(fields, allPending);
+    assertHohQualifyingChildSource(fields, allPending, 2025);
     assertQssNonclaimedChildSource(fields, allPending);
     const hasForm8888 = allPending.f8888 !== undefined;
     if (
@@ -847,6 +847,7 @@ export const irs1040Pdf: PdfFormDescriptor = {
     const printFormerSpouseEstimatedTaxSsn = assertEstimatedPaymentLine26(
       fields,
       allPending,
+      2025,
     );
     assertOtherFormsWithholding(fields, allPending);
     assertReturnScheduleJoins(fields, allPending);
@@ -922,7 +923,7 @@ export const irs1040Pdf: PdfFormDescriptor = {
           "Form 1040 PDF line 5c needs valid Form 1099-R source facts",
         );
       }
-      assertIraRolloverEvidence(source.data.f1099rs);
+      assertIraRolloverEvidence(source.data.f1099rs, 2025);
       if (rollover !== source.data.f1099rs.some(isPensionDirectRollover)) {
         throw new Error(
           "Form 1040 PDF line 5c rollover does not match the payer-reported Form 1099-R code G",

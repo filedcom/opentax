@@ -22,8 +22,9 @@ const SS_RATE_EMPLOYER = 0.062;
 const SS_RATE_EMPLOYEE = 0.062;
 const MEDICARE_RATE_EMPLOYER = 0.0145;
 const MEDICARE_RATE_EMPLOYEE = 0.0145;
+// Parent and child family-payroll helpers are dated to 2025; their callers
+// refuse other years.
 const TY2025_FICA_CASH_WAGE_THRESHOLD = 2_800;
-const TY2025_SOCIAL_SECURITY_WAGE_BASE = 176_100;
 function cashCents(amount: number): number {
   const value = Math.round(amount * 100);
   if (!Number.isFinite(amount) || Math.abs(amount * 100 - value) > 1e-7) {
@@ -1901,6 +1902,8 @@ export function computeScheduleHAmounts(
   input: ScheduleHInput,
   taxYear: number,
 ) {
+  const cfg = CONFIG_BY_YEAR[taxYear];
+  if (!cfg) throw new Error(`No f1040 config for year ${taxYear}`);
   if ((input.ss_wages === undefined) !== (input.medicare_wages === undefined)) {
     throw new Error(
       "Schedule H requires both taxable Social Security and Medicare wage amounts",
@@ -1993,7 +1996,7 @@ export function computeScheduleHAmounts(
   }
   if (
     ficaOnly && (
-      unemployment || taxYear !== 2025 ||
+      unemployment ||
       input.cash_wages_over_quarter_limit !== false ||
       ficaOnly.prior_year_quarter_cash_wages.some((wages) =>
         cashCents(wages) >= 100_000
@@ -2109,7 +2112,7 @@ export function computeScheduleHAmounts(
           }
           const expectedSS = Math.min(
             parentWages,
-            TY2025_SOCIAL_SECURITY_WAGE_BASE,
+            cfg.ssWageBase,
           );
           if (
             (employee.w2?.box3_social_security_wages ?? 0) !== expectedSS ||
@@ -2129,12 +2132,12 @@ export function computeScheduleHAmounts(
         }
         if (childTransition) {
           const ficaWages = childTransition.wages >=
-              TY2025_FICA_CASH_WAGE_THRESHOLD
+              cfg.householdFicaThreshold
             ? childTransition.wages
             : 0;
           const expectedSS = Math.min(
             ficaWages,
-            TY2025_SOCIAL_SECURITY_WAGE_BASE,
+            cfg.ssWageBase,
           );
           if (
             (employee.w2?.box3_social_security_wages ?? 0) !== expectedSS ||
@@ -2199,6 +2202,12 @@ export function computeScheduleHAmounts(
           );
         }
       } else {
+        // The minor attestations and their age window are dated 2025.
+        if (taxYear !== 2025) {
+          throw new Error(
+            `Schedule H minor FICA classifications are not supported for ${taxYear}`,
+          );
+        }
         if ((minor === undefined) === (workingMinor === undefined)) {
           throw new Error(
             "Schedule H minor needs exactly one student or principal-occupation source classification",
@@ -2239,11 +2248,11 @@ export function computeScheduleHAmounts(
       });
       const ficaWages = (employee.age_18_or_older_for_fica ||
           workingMinor !== undefined) &&
-          employee.annual_cash_wages >= TY2025_FICA_CASH_WAGE_THRESHOLD
+          employee.annual_cash_wages >= cfg.householdFicaThreshold
         ? employee.annual_cash_wages
         : 0;
       sourcedFicaThresholdMet ||= ficaWages > 0;
-      const expectedSS = Math.min(ficaWages, TY2025_SOCIAL_SECURITY_WAGE_BASE);
+      const expectedSS = Math.min(ficaWages, cfg.ssWageBase);
       if (
         (employee.w2?.box3_social_security_wages ?? 0) !== expectedSS ||
         (employee.w2?.box5_medicare_wages ?? 0) !== ficaWages ||

@@ -338,6 +338,7 @@ export function assertEligibleContributor(
   dob: string | undefined,
   studentFiveMonths: boolean | undefined,
   claimedAsDependent: boolean | undefined,
+  taxYear: number,
 ): void {
   const parsedDate = dob && /^\d{4}-\d{2}-\d{2}$/.test(dob)
     ? new Date(`${dob}T00:00:00Z`)
@@ -351,8 +352,14 @@ export function assertEligibleContributor(
       `Form 8880 ${owner} contribution needs birth date, five-month student answer, and dependent-claim answer`,
     );
   }
-  if (dob > "2008-01-01" || studentFiveMonths || claimedAsDependent) {
-    throw new Error(`Form 8880 ${owner} is not eligible for the 2025 credit`);
+  // IRC §25B(c)(1): age 18 by year end; born on or before January 1 of the
+  // year 18 years before the year after the tax year (Form 8880 line A).
+  if (
+    dob > `${taxYear - 17}-01-01` || studentFiveMonths || claimedAsDependent
+  ) {
+    throw new Error(
+      `Form 8880 ${owner} is not eligible for the ${taxYear} credit`,
+    );
   }
 }
 
@@ -481,6 +488,27 @@ export function ownedLine1Contributions(
     : { taxpayer, spouse };
 }
 
+// These reviews encode TY2025 test-period dates (IRC §25B(d)(2)) and dated
+// ABLE and employee-contribution sources.
+const TY2025_DATED_REVIEWS = [
+  "joint_distribution_review",
+  "nonjoint_distribution_review",
+  "able_contribution_review",
+  "employee_contribution_review",
+] as const;
+
+function assertReviewsForYear(input: Form8880Input, taxYear: number): void {
+  if (taxYear === 2025) return;
+  const dated = TY2025_DATED_REVIEWS.filter((key) => input[key] !== undefined);
+  if (dated.length > 0) {
+    throw new Error(
+      `TY${taxYear} Form 8880 does not yet support these reviews: ${
+        dated.join(", ")
+      }`,
+    );
+  }
+}
+
 export type Form8880Calculation =
   | { readonly credit: 0; readonly calculatedZero: true }
   | {
@@ -497,6 +525,7 @@ export function calculateForm8880(
   const cfg = CONFIG_BY_YEAR[ctx.taxYear];
   if (!cfg) throw new Error(`No f1040 config for year ${ctx.taxYear}`);
   const parsed = inputSchema.parse(input);
+  assertReviewsForYear(parsed, ctx.taxYear);
   if (!Number.isFinite(capacity) || capacity < 0) {
     throw new Error("Form 8880 needs a finite sourced tax-liability limit");
   }
@@ -570,7 +599,9 @@ export function calculateForm8880(
 
   if (status === FilingStatus.MFJ && !parsed.joint_distribution_review) {
     throw new Error(
-      "Form 8880 positive joint credit needs one reviewed 2023-through-prefiling-2026 distribution ledger",
+      ctx.taxYear === 2025
+        ? "Form 8880 positive joint credit needs one reviewed 2023-through-prefiling-2026 distribution ledger"
+        : `TY${ctx.taxYear} Form 8880 positive joint credit needs a reviewed testing-period distribution ledger, not yet supported`,
     );
   }
 
@@ -580,6 +611,7 @@ export function calculateForm8880(
       parsed.taxpayer_dob,
       parsed.taxpayer_student_five_months,
       parsed.taxpayer_claimed_as_dependent,
+      ctx.taxYear,
     );
   }
   if (sEligible > 0) {
@@ -588,6 +620,7 @@ export function calculateForm8880(
       parsed.spouse_dob,
       parsed.spouse_student_five_months,
       parsed.spouse_claimed_as_dependent,
+      ctx.taxYear,
     );
   }
 

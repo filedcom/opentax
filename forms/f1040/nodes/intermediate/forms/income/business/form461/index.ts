@@ -50,7 +50,15 @@ export const filedForm461Schema = z.object({
   line12_nonbusiness_total: z.literal(0),
   line13_adjustment: z.literal(0),
   line14_adjusted_total: z.number(),
-  line15_threshold: z.union([z.literal(313000), z.literal(626000)]),
+  // A configured year's threshold: $313,000/$626,000 for TY2025 and
+  // $256,000/$512,000 for TY2026 (Rev. Proc. 2025-32 §4.31).
+  line15_threshold: z.number().refine(
+    (amount) =>
+      Object.values(CONFIG_BY_YEAR).some((cfg) =>
+        amount === cfg.eblThresholdSingle || amount === cfg.eblThresholdMfj
+      ),
+    "Form 461 line 15 must be a configured year's threshold",
+  ),
   line16_excess_business_loss: z.number(),
 });
 
@@ -103,9 +111,12 @@ class Form461Node extends TaxNode<typeof inputSchema> {
       ? cfg.eblThresholdMfj
       : cfg.eblThresholdSingle;
     const line16 = line9 + threshold;
-    // The IRS's per-line filing trigger is $156,500 for every filing status.
-    const mustFile = line9 < -threshold || line2 < -156_500 ||
-      line6 < -156_500;
+    // Who Must File: a loss of more than half the single threshold on any
+    // one line, for every filing status ($156,500 in the 2025 instructions).
+    // It decides only whether the form is attached, never line 16.
+    const lineTrigger = cfg.eblThresholdSingle / 2;
+    const mustFile = line9 < -threshold || line2 < -lineTrigger ||
+      line6 < -lineTrigger;
     if (!mustFile) return { outputs: [] };
 
     const fields = filedForm461Schema.parse({

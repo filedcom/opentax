@@ -174,3 +174,29 @@ test("CT-2 line 3 credit needs a payment reference and full tax payment", () => 
     0,
   );
 });
+
+// Draft 2026 Instructions for Form 8959: the $200,000 withholding threshold
+// isn't indexed, so 2026 quarters reconcile as in 2025.
+test("2026 CT-2 quarters feed Form 8959 and must be dated 2026", () => {
+  const items = [1, 2, 3].map((q) => quarter(q, { tax_year: 2026 })).concat(
+    quarter(4, {
+      tax_year: 2026,
+      line2_tier1_medicare_compensation: 70_000,
+      line3_additional_medicare_compensation: 20_000,
+      line3_additional_medicare_tax_paid: 180,
+      payment_reference: "EFTPS-Q4-2026-001",
+    }),
+  );
+  const result = ct2.compute({ taxYear: 2026, formType: "f1040" }, {
+    ct2s: items,
+  });
+  assertEquals(fieldsOf(result.outputs, form8959)?.ct2_rrta_wages, 220_000);
+  assertThrows(
+    () =>
+      ct2.compute({ taxYear: 2026, formType: "f1040" }, {
+        ct2s: [1, 2, 3, 4].map((q) => quarter(q)),
+      }),
+    Error,
+    "tax year 2026",
+  );
+});

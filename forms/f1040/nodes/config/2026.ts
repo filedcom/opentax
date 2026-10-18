@@ -95,6 +95,10 @@ export const config2026: F1040Config = {
   // IRS Topic 751: 2026 Social Security wage base; 6.2% under IRC §3101(a).
   ssWageBase: 184_500,
   ssTaxPerEmployer: 11_439,
+  // Draft 2026 Schedule SE Part II lines 14-15 and its instructions.
+  seOptionalMethodMaximum: 7_560,
+  seFarmOptionalGrossIncomeLimit: 11_340,
+  seFarmOptionalNetProfitLimit: 8_186,
   // IRC §3101(b)(2) and §1411(b); not indexed.
   additionalMedicareThresholdMfj: 250_000,
   additionalMedicareThresholdMfs: 125_000,
@@ -304,6 +308,9 @@ export const config2026: F1040Config = {
   nonitemizerCharitableLimitMfj: 2_000,
   charitableAgiFloorRate: 0.005,
   itemizedDeductionReductionRate: 2 / 37,
+  // IRC §163(h)(3)(E) restored for amounts paid after 2025 by P.L. 119-21
+  // §70108; draft 2026 Schedule A line 8d.
+  mortgageInsurancePremiumsDeductible: true,
   // IRC §199A(i) (P.L. 119-21 §70105); RP §2.12: indexed only after 2026.
   qbiMinimumDeduction: 400,
   qbiMinimumDeductionQbiFloor: 1_000,
@@ -337,4 +344,32 @@ export const config2026: F1040Config = {
   // is accepted before July 4, 2026, IRC §530A(b)(1)(C)(i)(I).
   trumpAccountContributionLimit: 5_000,
   trumpAccountEmployerExclusionLimit: 2_500,
+  // ── Taxes and payments ───────────────────────────────────────────────────
+  // IRC §55(d)(4)(A)(ii)(IV), added by P.L. 119-21 §70107(b).
+  amtExemptionPhaseOutRate: 0.50,
+  // 2025 HHS poverty guidelines (FR Doc. 2025-01377), used for 2026 coverage.
+  fplBaseAlaska: 19_550,
+  fplIncrementAlaska: 6_880,
+  fplBaseHawaii: 17_990,
+  fplIncrementHawaii: 6_330,
+  // Rev. Proc. 2025-25 §3.01; the IRC §36B(c)(1)(A) 400% limit returns
+  // after the IRC §36B(b)(3)(A)(iii) extension ends with 2025.
+  // Form 8962 Table 2 figures are interpolated per Treas. Reg.
+  // §1.36B-3(g); the 2026 instructions' table is not yet published.
+  ptcApplicablePercentages: [
+    { fromFplPct: 0, toFplPct: 133, initial: 210, final: 210 },
+    { fromFplPct: 133, toFplPct: 150, initial: 314, final: 419 },
+    { fromFplPct: 150, toFplPct: 200, initial: 419, final: 660 },
+    { fromFplPct: 200, toFplPct: 250, initial: 660, final: 844 },
+    { fromFplPct: 250, toFplPct: 300, initial: 844, final: 996 },
+    { fromFplPct: 300, toFplPct: 400, initial: 996, final: 996 },
+  ],
+  ptcIncomeLimitFplPct: 400,
+  // Rev. Proc. 2025-25 §3.02.
+  ptcRequiredContributionPercentage: 0.0996,
+  // IRC §36B(f)(2)(B) as amended by P.L. 119-21 §71305: no limitation after
+  // 2025; draft 2026 Form 8962 line 27 goes to Schedule 2 line 1a.
+  ptcRepaymentCaps: [],
+  // P.L. 119-21 §71302 ends the IRC §36B(c)(1)(B) exception after 2025.
+  ptcLawfullyPresentBelow100Fpl: false,
 };

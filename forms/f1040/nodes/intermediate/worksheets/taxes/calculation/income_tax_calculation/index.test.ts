@@ -741,3 +741,65 @@ test("form_1116: zero taxable income routes a zero limitation base", () => {
   });
   assertEquals(fieldsOf(result.outputs, form_1116)?.us_tax_before_credits, 0);
 });
+
+// ── TY2026 ───────────────────────────────────────────────────────────────────
+// Rev. Proc. 2025-32 §4.01 rate schedules and §4.03 maximum zero-rate and
+// 15%-rate amounts, through the 2025 Qualified Dividends and Capital Gain
+// Tax Worksheet and Schedule D Tax Worksheet (line 19: the top of the 24%
+// bracket, $403,550 joint for 2026). Below $100,000 the Tax Table cell is
+// the tax at the row midpoint.
+
+function compute2026(input: Record<string, unknown>) {
+  return income_tax_calculation.compute(
+    { taxYear: 2026, formType: "f1040" },
+    inputSchema.parse({
+      form6251_line1b: input.taxable_income,
+      form6251_line2a: 0,
+      ...input,
+    }),
+  );
+}
+
+function tax2026(input: Record<string, unknown>) {
+  return fieldsOf(compute2026(input).outputs, f1040)?.line16_income_tax;
+}
+
+test("2026 QDCGT: qualified dividends inside the $49,450 zero-rate amount", () => {
+  // Line 5 $30,000 is in the 0% band; tax is the $30,000-$30,050 row:
+  // $1,240 + 12% x ($30,025 - $12,400) = $3,355.
+  assertEquals(
+    tax2026({
+      taxable_income: 40_000,
+      filing_status: FilingStatus.Single,
+      qualified_dividends: 10_000,
+    }),
+    3_355,
+  );
+});
+
+test("2026 QDCGT: qualified dividends at 15%", () => {
+  // Line 22: $80,000 row, $5,800 + 22% x ($80,025 - $50,400) = $12,318;
+  // line 18: 15% x $20,000 = $3,000.
+  assertEquals(
+    tax2026({
+      taxable_income: 100_000,
+      filing_status: FilingStatus.Single,
+      qualified_dividends: 20_000,
+    }),
+    15_318,
+  );
+});
+
+test("2026 Schedule D Tax Worksheet: line 19 is $403,550 for a joint return", () => {
+  // Line 21 $403,550; line 39 $46,450 at 25% = $11,612.50; line 44
+  // $35,932 + 24% x $192,150 = $82,048; line 45 $93,660.50.
+  assertEquals(
+    tax2026({
+      taxable_income: 450_000,
+      filing_status: FilingStatus.MFJ,
+      net_capital_gain: 100_000,
+      unrecaptured_1250_gain: 100_000,
+    }),
+    93_661,
+  );
+});

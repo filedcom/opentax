@@ -630,8 +630,9 @@ export function requiresIraDistributionStatement(item: R1099Item): boolean {
 
 export function iraDistributionExplanation(
   items: readonly R1099Item[],
+  taxYear: number,
 ): string | undefined {
-  assertIraRolloverEvidence(items);
+  assertIraRolloverEvidence(items, taxYear);
   const rows = items.flatMap((item, index) => {
     if (!requiresIraDistributionStatement(item)) return [];
     const rollover = item.ira_rollover;
@@ -702,8 +703,11 @@ export function iraDistributionExplanation(
   return explanation;
 }
 
-export function assertIraRolloverEvidence(items: readonly R1099Item[]): void {
-  for (const item of items) validateIraRolloverEvidence(item);
+export function assertIraRolloverEvidence(
+  items: readonly R1099Item[],
+  taxYear: number,
+): void {
+  for (const item of items) validateIraRolloverEvidence(item, taxYear);
   for (const owner of ["T", "S"] as const) {
     const dates = items.filter((item) =>
       (item.ts ?? "T") === owner &&
@@ -934,7 +938,7 @@ function validatePrivateLetterWaiver(item: R1099Item): void {
   }
 }
 
-function validateIraRolloverEvidence(item: R1099Item): void {
+function validateIraRolloverEvidence(item: R1099Item, taxYear: number): void {
   const iraRolloverCode = item.rollover_code === RolloverCode.G ||
     item.rollover_code === RolloverCode.S ||
     item.rollover_code === RolloverCode.X ||
@@ -1074,17 +1078,19 @@ function validateIraRolloverEvidence(item: R1099Item): void {
     const elapsedDays =
       (Date.parse(completed_on) - Date.parse(distributed_on)) /
       86_400_000;
-    if (!distributed_on.startsWith("2025-") || elapsedDays < 0) {
+    if (!distributed_on.startsWith(`${taxYear}-`) || elapsedDays < 0) {
       throw new Error(
-        "IRA rollover needs a 2025 distribution completed after payment",
+        `IRA rollover needs a ${taxYear} distribution completed after payment`,
       );
     }
     validateLateWaiver(item);
     if (
-      !completed_on.startsWith("2025-") &&
-      !completed_on.startsWith("2026-")
+      !completed_on.startsWith(`${taxYear}-`) &&
+      !completed_on.startsWith(`${taxYear + 1}-`)
     ) {
-      throw new Error("IRA rollover completion must be in 2025 or 2026");
+      throw new Error(
+        `IRA rollover completion must be in ${taxYear} or ${taxYear + 1}`,
+      );
     }
     if (
       item.rollover_code === RolloverCode.X &&
@@ -1108,7 +1114,7 @@ function validateIraRolloverEvidence(item: R1099Item): void {
 }
 
 // Cross-field validation for a single item
-function validateItem(item: R1099Item): void {
+function validateItem(item: R1099Item, taxYear: number): void {
   if (item.ira_recharacterization_review) reviewedIraRecharacterization(item);
   if (
     item.box7_distribution_code === DistributionCode.Code8 &&
@@ -1134,7 +1140,7 @@ function validateItem(item: R1099Item): void {
       "Non-IRA code 8 corrective distribution needs one identified 2025 Form 1099-R, owner, payer and positive taxable box 2a",
     );
   }
-  validateIraRolloverEvidence(item);
+  validateIraRolloverEvidence(item, taxYear);
   if (item.roth_owner_inventory_review &&
     (item.roth_activity_review || item.roth_distribution_evidence || item.prior_ira_basis !== undefined ||
       item.form8606_distribution_evidence || (item.rollover_code && !(item.rollover_code === "C" && item.roth_owner_inventory_review.current_conversion?.accounts.some(a => a.transfers.some(t => (t.issued_form1099r.completed_form4852_reference ?? t.issued_form1099r.source_document_reference) === item.source_document_reference)))) || item.exclude_4972 || item.qcd_full ||
@@ -1184,13 +1190,13 @@ function validateItem(item: R1099Item): void {
       item.box2a_taxable_amount !== undefined ||
       item.box2b_not_determined !== true ||
       !item.box13_date_of_payment ||
-      !/^2025-\d{2}-\d{2}$/.test(item.box13_date_of_payment) ||
+      !/^\d{4}-\d{2}-\d{2}$/.test(item.box13_date_of_payment) ||
       Number.isNaN(Date.parse(`${item.box13_date_of_payment}T00:00:00Z`)) ||
       new Date(`${item.box13_date_of_payment}T00:00:00Z`).toISOString()
           .slice(0, 10) !== item.box13_date_of_payment ||
       item.box13_date_of_payment <=
         evidence.contribution_receipt.received_on ||
-      !item.box13_date_of_payment.startsWith("2025-") ||
+      !item.box13_date_of_payment.startsWith(`${taxYear}-`) ||
       item.source_document_reference !==
         evidence.form1099r_source_document_reference ||
       item.recipient_ssn?.replace(/\D/g, "") !==
@@ -2082,7 +2088,7 @@ class F1099rNode extends TaxNode<typeof inputSchema> {
 
     // Cross-field validation
     for (const item of r1099s) {
-      validateItem(item);
+      validateItem(item, ctx.taxYear);
     }
     const corrective = correctivePlanItems(r1099s);
     const stateLocalWithholding = activeItems(r1099s).reduce(
@@ -2100,7 +2106,7 @@ class F1099rNode extends TaxNode<typeof inputSchema> {
         "TY2025 corrective plan distributions need distinct Form 1099-R source references",
       );
     }
-    assertIraRolloverEvidence(r1099s);
+    assertIraRolloverEvidence(r1099s, ctx.taxYear);
 
     const outputs: NodeOutput[] = [
       ...(stateLocalWithholding > 0

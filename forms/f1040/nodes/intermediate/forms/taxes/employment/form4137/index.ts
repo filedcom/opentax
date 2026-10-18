@@ -59,12 +59,13 @@ const below20TipMonthSchema = z.object({
 });
 
 const allocatedTipDailyRecordSchema = z.object({
+  // calculateForm4137 requires December of the prior year or the tax year.
   date: z.string().refine((value) => {
-    if (!/^(2024-12|2025-\d{2})-\d{2}$/.test(value)) return false;
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
     const date = new Date(`${value}T00:00:00Z`);
     return !Number.isNaN(date.getTime()) &&
       date.toISOString().slice(0, 10) === value;
-  }, "Form 4137 tip record date must be in December 2024 or 2025"),
+  }, "Form 4137 tip record date must be valid"),
   cash_charge_tips_received: z.number().nonnegative(),
   tips_reported_to_employer: z.number().nonnegative(),
   report_date: z.string().refine((value) => {
@@ -108,22 +109,44 @@ const allocatedTipRecordSchema = z.object({
   daily_records: z.array(allocatedTipDailyRecordSchema).min(1),
 }).strict();
 
-function included2025TipAmounts(
+// Pub. 531: tips are reported by the 10th of the next month, or the next
+// business day when the 10th falls on a weekend (January 10, 2025; January
+// 12, 2026; January 11, 2027).
+function januaryTipReportDeadline(year: number): string {
+  const tenth = new Date(Date.UTC(year, 0, 10));
+  const day = tenth.getUTCDay();
+  const shift = day === 6 ? 2 : day === 0 ? 1 : 0;
+  return new Date(Date.UTC(year, 0, 10 + shift)).toISOString().slice(0, 10);
+}
+
+// Tips reported to the employer count in the year reported; December tips
+// reported by the January deadline belong to the following year.
+function includedTipAmounts(
   record: z.infer<typeof allocatedTipDailyRecordSchema>,
+  taxYear: number,
 ): { received: number; reported: number } {
+  const priorDecember = `${taxYear - 1}-12-`;
+  if (
+    !record.date.startsWith(priorDecember) &&
+    !record.date.startsWith(`${taxYear}-`)
+  ) {
+    throw new Error(
+      `Form 4137 tip record date must be in December ${taxYear - 1} or ${taxYear}`,
+    );
+  }
   const unreported = record.cash_charge_tips_received -
     record.tips_reported_to_employer;
   const receiptYear = Number(record.date.slice(0, 4));
-  const reportedIn2025 = record.report_date !== undefined &&
-    (record.date.startsWith("2024-12-")
-      ? record.report_date > "2024-12-31" &&
-        record.report_date <= "2025-01-10"
-      : !(record.date.startsWith("2025-12-") &&
-        record.report_date > "2025-12-31" &&
-        record.report_date <= "2026-01-12"));
-  const reported = reportedIn2025 ? record.tips_reported_to_employer : 0;
+  const reportedInYear = record.report_date !== undefined &&
+    (record.date.startsWith(priorDecember)
+      ? record.report_date > `${taxYear - 1}-12-31` &&
+        record.report_date <= januaryTipReportDeadline(taxYear)
+      : !(record.date.startsWith(`${taxYear}-12-`) &&
+        record.report_date > `${taxYear}-12-31` &&
+        record.report_date <= januaryTipReportDeadline(taxYear + 1)));
+  const reported = reportedInYear ? record.tips_reported_to_employer : 0;
   return {
-    received: (receiptYear === 2025 ? unreported : 0) + reported,
+    received: (receiptYear === taxYear ? unreported : 0) + reported,
     reported,
   };
 }
@@ -179,6 +202,7 @@ export type Form4137Calculation = {
 export function calculateForm4137(
   input: Form4137Input,
   ssWageBase: number,
+  taxYear: number,
 ): Form4137Calculation[] {
   const forms = input.forms ?? [];
   const sources = input.w2_tip_sources ?? [];
@@ -312,7 +336,7 @@ export function calculateForm4137(
           throw new Error("Form 4137 duplicate daily tip record date");
         }
         dates.add(record.date);
-        const included = included2025TipAmounts(record);
+        const included = includedTipAmounts(record, taxYear);
         received += included.received;
         reported += included.reported;
       }
@@ -472,7 +496,7 @@ class Form4137Node extends TaxNode<typeof inputSchema> {
     const cfg = CONFIG_BY_YEAR[ctx.taxYear];
     if (!cfg) throw new Error(`No form4137 config for year ${ctx.taxYear}`);
     const input = inputSchema.parse(rawInput);
-    const forms = calculateForm4137(input, cfg.ssWageBase);
+    const forms = calculateForm4137(input, cfg.ssWageBase, ctx.taxYear);
     const tipIncome = forms.reduce((sum, form) => sum + form.unreportedTips, 0);
     const medicareTips = forms.reduce(
       (sum, form) => sum + form.medicareTips,

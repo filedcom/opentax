@@ -1,6 +1,6 @@
 import {
   inputSchema as standardDeductionInputSchema,
-  standardAmountFor2025,
+  filedStandardAmount,
 } from "../../../../../nodes/intermediate/worksheets/deductions/standard/standard_deduction/index.ts";
 
 /** Reconcile an explicit Schedule A election with the filed deduction choice. */
@@ -19,11 +19,13 @@ export function itemizeBelowStandardElection(
   if (
     comparison.force_itemized !== true ||
     typeof filedItemized !== "number" || filedItemized < 0 ||
-    comparison.itemized_deductions !== filedItemized
+    comparison.itemized_deductions === undefined ||
+    comparison.itemized_deductions -
+          (comparison.overall_itemized_limit_reduction ?? 0) !== filedItemized
   ) {
     throw new Error(
       "Schedule A line 18 election differs from the filed deduction choice",
     );
   }
-  return filedItemized < standardAmountFor2025(comparison);
+  return filedItemized < filedStandardAmount(comparison);
 }

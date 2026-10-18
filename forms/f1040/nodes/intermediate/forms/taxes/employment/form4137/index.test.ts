@@ -234,6 +234,7 @@ test("Form 4137 applies the $20 test separately by employer and month", () => {
       ],
     }),
     176_100,
+    2025,
   );
   assertEquals(calculated.unreportedTips, 3_050);
   assertEquals(calculated.incidentalTips, 29);
@@ -281,6 +282,7 @@ test("Form 4137 line 8 includes RRTA compensation up to the 2025 wage base", () 
       ],
     }),
     176_100,
+    2025,
   );
   assertEquals(calculated.ssWagesAndTips, 226_100);
   assertEquals(calculated.ssWageBaseRoom, 0);
@@ -322,7 +324,7 @@ test("Form 4137 government employee tips are Medicare-only", () => {
       ss_wages_and_tips: 0,
     }],
   });
-  const [calculated] = calculateForm4137(input, 176_100);
+  const [calculated] = calculateForm4137(input, 176_100, 2025);
   assertEquals(calculated.medicareTips, 3_000);
   assertEquals(calculated.ssTips, 2_000);
   assertEquals(calculated.totalTax, 168);
@@ -400,6 +402,7 @@ test("Form 4137 attributes W-2 wages by employee SSN, including an explicit taxp
       ],
     }),
     176_100,
+    2025,
   );
   assertEquals(calculated.map((form) => form.ssWagesAndTips), [
     30_000,
@@ -672,6 +675,7 @@ test("Form 4137 attributes December tips by timely or late January report", () =
       }],
     }),
     176_100,
+    2025,
   );
   assertEquals(calculated.totalTipsReceived, 300);
   assertEquals(calculated.totalTipsReported, 200);
@@ -842,6 +846,7 @@ test("Form 4137 compares allocated tips with the same employer, not a return tot
       }],
     }),
     176_100,
+    2025,
   );
   assertEquals(appliedFor.totalTax, 77);
 });
@@ -932,5 +937,63 @@ test("Form 4137 with no tip activity has no outputs", () => {
     compute({ w2_tip_sources: [{ allocated_tips: 0 }] })
       .outputs,
     [],
+  );
+});
+
+// Pub. 531: December tips reported to the employer by the January deadline
+// (the 10th, or the next business day) count in the following year. For 2026
+// the deadlines are Monday, January 12, 2026 and Monday, January 11, 2027;
+// draft 2026 Form 4137 line 7 is $184,500.
+test("2026: December tips follow the January 12, 2026 and January 11, 2027 deadlines", () => {
+  const daily = (
+    date: string,
+    cash_charge_tips_received: number,
+    tips_reported_to_employer: number,
+    report_date: string,
+  ) => ({
+    date,
+    cash_charge_tips_received,
+    tips_reported_to_employer,
+    report_date,
+    evidence_type: "daily_tip_diary" as const,
+    evidence_reference: `diary-${date}`,
+  });
+  const source = (records: ReturnType<typeof daily>[]) =>
+    inputSchema.parse({
+      forms: [{
+        recipient: "taxpayer",
+        employers: [{ ...employer, tips_received: 300, tips_reported: 200 }],
+        allocated_tip_records: [{ employer_index: 1, daily_records: records }],
+      }],
+      w2_tip_sources: [{
+        employer_name: "CAFE",
+        employer_ein: "12-3456789",
+        allocated_tips: 200,
+        ss_wages_and_tips: 0,
+      }],
+    });
+  const [calculated] = calculateForm4137(
+    source([
+      daily("2025-12-30", 100, 100, "2026-01-12"),
+      daily("2025-12-31", 50, 50, "2026-01-13"),
+      daily("2026-12-01", 200, 100, "2027-01-11"),
+      daily("2026-12-02", 100, 100, "2027-01-12"),
+    ]),
+    184_500,
+    2026,
+  );
+  assertEquals(calculated.totalTipsReceived, 300);
+  assertEquals(calculated.totalTipsReported, 200);
+  assertEquals(calculated.unreportedTips, 100);
+  assertEquals(calculated.totalTax, 7);
+  assertThrows(
+    () =>
+      calculateForm4137(
+        source([daily("2024-12-30", 100, 100, "2025-01-10")]),
+        184_500,
+        2026,
+      ),
+    Error,
+    "December 2025 or 2026",
   );
 });

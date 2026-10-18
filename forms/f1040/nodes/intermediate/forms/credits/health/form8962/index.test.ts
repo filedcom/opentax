@@ -1302,3 +1302,128 @@ test("zero-percent shared allocation still produces Form 8962 Part IV", () => {
   ]);
   assertEquals(fields(result, "form8962")?.total_premium_tax_credit, 0);
 });
+
+// ── TY2026 ───────────────────────────────────────────────────────────────────
+// 2025 HHS poverty guidelines for 2026 coverage ($15,650 for one person;
+// Alaska $19,550). Rev. Proc. 2025-25 §3.01 applicable percentages,
+// interpolated per Treas. Reg. §1.36B-3(g)(1): 2.10% below 133%, 3.14-4.19%,
+// 4.19-6.60%, 6.60-8.44%, 8.44-9.96%, then 9.96% through 400%. Draft 2026
+// Form 8962 lines 6 and 27-29: 401% is ineligible and excess APTC is repaid
+// in full (IRC §36B(f)(2)(B) as amended by P.L. 119-21 §71305). P.L. 119-21
+// §71302 ends the lawfully present below-100% FPL exception.
+
+function annual2026(
+  householdIncome: number,
+  annualPremium: number,
+  annualSlcsp: number,
+  annualAptc = 0,
+  extra: Record<string, unknown> = {},
+) {
+  return form8962.compute({ taxYear: 2026, formType: "f1040" }, {
+    fpl_region: "contiguous",
+    filing_status: FilingStatus.Single,
+    dependent_income_complete: true,
+    household_size: 1,
+    taxpayer_modified_agi: householdIncome,
+    annual_premium: annualPremium,
+    annual_slcsp: annualSlcsp,
+    annual_aptc: annualAptc,
+    annual_line11_eligible: true,
+    ...extra,
+  });
+}
+
+test("Form 8962 TY2026 uses the Rev. Proc. 2025-25 applicable percentage", () => {
+  // 200% FPL: 6.60% of $31,300 is $2,066; $6,000 - $2,066 = $3,934.
+  const result = annual2026(31_300, 6_000, 6_000, 0);
+  assertEquals(fields(result, "form8962")?.applicable_figure, 0.066);
+  assertEquals(
+    fields(result, "schedule3")?.line9_premium_tax_credit,
+    3_934,
+  );
+  // 134% interpolates between 3.14% at 133% and 4.19% at 150%.
+  assertEquals(
+    fields(annual2026(20_971, 6_000, 6_000, 0), "form8962")?.applicable_figure,
+    0.032,
+  );
+});
+
+test("Form 8962 TY2026 repays excess APTC in full and denies PTC above 400% FPL", () => {
+  // $2,066 exceeds the $975 single limitation TY2025 would apply at 200%.
+  const full2026 = annual2026(31_300, 6_000, 6_000, 6_000);
+  assertEquals(
+    fields(full2026, "schedule2")?.line1a_excess_advance_premium,
+    2_066,
+  );
+  const above400 = annual2026(70_000, 6_000, 6_000, 3_000);
+  assertEquals(fields(above400, "form8962")?.total_premium_tax_credit, 0);
+  assertEquals(
+    fields(above400, "schedule2")?.line1a_excess_advance_premium,
+    3_000,
+  );
+});
+
+test("Form 8962 TY2026 uses the 2025 Alaska guideline and drops the lawfully present exception", () => {
+  const alaska = annual2026(39_100, 6_000, 6_000, 0, { fpl_region: "alaska" });
+  assertEquals(fields(alaska, "form8962")?.federal_poverty_line, 19_550);
+  assertThrows(
+    () =>
+      annual2026(10_000, 6_000, 6_000, 1_000, {
+        below_100_fpl_status: {
+          basis: "lawfully_present",
+          no_one_can_claim_taxpayer: true,
+          marketplace_coverage: true,
+          enrolled_individual_lawfully_present: true,
+          medicaid_ineligible_due_to_immigration_status: true,
+          otherwise_applicable_taxpayer: true,
+        },
+      }),
+    Error,
+    "§71302",
+  );
+});
+
+test("2026: applicable figures follow the Rev. Proc. 2025-25 table", () => {
+  const cases = [
+    { income: 20_658, pct: 132, figure: 0.021 },
+    { income: 20_815, pct: 133, figure: 0.0314 },
+    { income: 23_475, pct: 150, figure: 0.0419 },
+    // 4.19% + (6.60% − 4.19%) × 10/50 = 4.672%.
+    { income: 25_100, pct: 160, figure: 0.0467 },
+    { income: 50_000, pct: 319, figure: 0.0996 },
+    { income: 62_600, pct: 400, figure: 0.0996 },
+  ];
+  for (const sample of cases) {
+    const filed = fields(annual2026(sample.income, 9_000, 9_000), "form8962");
+    assertEquals(filed?.federal_poverty_line, 15_650);
+    assertEquals(filed?.federal_poverty_pct, sample.pct);
+    assertEquals(filed?.applicable_figure, sample.figure);
+  }
+});
+
+test("2026: Alaska uses the 2025 Alaska poverty guideline", () => {
+  const filed = fields(
+    annual2026(30_000, 9_000, 9_000, 0, { fpl_region: "alaska" }),
+    "form8962",
+  );
+  assertEquals(filed?.federal_poverty_line, 19_550);
+});
+
+test("2026: above 400% FPL no PTC is allowed and all APTC is repaid", () => {
+  const result = annual2026(62_601, 8_000, 8_000, 5_000);
+  assertEquals(fields(result, "form8962")?.federal_poverty_pct, 401);
+  assertEquals(fields(result, "form8962")?.total_premium_tax_credit, 0);
+  assertEquals(fields(result, "form8962")?.excess_advance_payment, 5_000);
+  assertEquals(fields(result, "schedule2")?.line1a_excess_advance_premium, 5_000);
+  assertEquals(fields(result, "schedule3"), undefined);
+});
+
+test("2026: excess APTC has no repayment limitation", () => {
+  // 144%: 3.14% + 1.05% × 11/17 = 3.8194%, so 3.82%; $22,590 × 3.82% =
+  // $863; PTC $3,137; the whole $6,863 excess is repaid.
+  const result = annual2026(22_590, 4_000, 4_000, 10_000);
+  assertEquals(fields(result, "form8962")?.applicable_figure, 0.0382);
+  assertEquals(fields(result, "form8962")?.total_premium_tax_credit, 3_137);
+  assertEquals(fields(result, "form8962")?.repayment_limitation, undefined);
+  assertEquals(fields(result, "schedule2")?.line1a_excess_advance_premium, 6_863);
+});

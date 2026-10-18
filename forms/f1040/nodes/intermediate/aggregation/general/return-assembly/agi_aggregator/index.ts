@@ -562,9 +562,14 @@ function computeAdjustedSli(
   return Math.round(raw * (1 - phaseOutRatio));
 }
 
-/** Replay the TY2025 Schedule 1 line 21 result from retained AGI inputs. */
-export function expectedTy2025StudentLoanDeduction(rawInput: unknown): number {
-  return computeAdjustedSli(inputSchema.parse(rawInput), CONFIG_BY_YEAR[2025]);
+/** Replay the Schedule 1 line 21 result from retained AGI inputs. */
+export function expectedStudentLoanDeduction(
+  rawInput: unknown,
+  taxYear = 2025,
+): number {
+  const cfg = CONFIG_BY_YEAR[taxYear];
+  if (!cfg) throw new Error(`No f1040 config for year ${taxYear}`);
+  return computeAdjustedSli(inputSchema.parse(rawInput), cfg);
 }
 
 // Sum above-the-line deductions (Schedule 1 Part II).

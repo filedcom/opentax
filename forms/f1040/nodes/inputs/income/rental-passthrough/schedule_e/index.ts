@@ -531,6 +531,33 @@ export function reviewPre2025PartIEntireGainCandidate(item: EItem): {
 
 // ─── Validation ──────────────────────────────────────────────────────────────
 
+// Prior-year passive losses, dispositions and first-year sources are keyed to
+// TY2025 (filed 2024 Form 8582 records, 2025 acquisition and sale dates).
+function assertTy2025OnlyFacts(
+  taxYear: number,
+  input: z.infer<typeof inputSchema>,
+): void {
+  if (taxYear === 2025) return;
+  const dated = input.filed_2024_form8582_record !== undefined ||
+    input.schedule_es.some((item) =>
+      item.current_property_source !== undefined ||
+      item.passive_property_sales !== undefined ||
+      item.section_1231_lookback_source !== undefined ||
+      item.first_year_activity_source !== undefined ||
+      item.pre2025_part1_entire_disposition_source !== undefined ||
+      item.prior_year_8582_source !== undefined ||
+      (item.prior_unallowed_passive_operating ?? 0) > 0 ||
+      (item.prior_unallowed_passive_4797_part1 ?? 0) > 0 ||
+      (item.prior_unallowed_passive_4797_part2 ?? 0) > 0 ||
+      (item.prior_unallowed_at_risk ?? 0) > 0
+    );
+  if (dated) {
+    throw new Error(
+      `Schedule E prior-year passive losses and property dispositions are not yet supported for TY${taxYear}`,
+    );
+  }
+}
+
 function validateItem(item: EItem): void {
   reconcileCurrentPropertySource(item);
   if (reviewPre2025PartIEntireGainCandidate(item)) {
@@ -1386,8 +1413,9 @@ class ScheduleENode extends TaxNode<typeof inputSchema> {
     form4562,
   ]);
 
-  compute(_ctx: NodeContext, input: z.infer<typeof inputSchema>): NodeResult {
+  compute(ctx: NodeContext, input: z.infer<typeof inputSchema>): NodeResult {
     const parsed = inputSchema.parse(input);
+    assertTy2025OnlyFacts(ctx.taxYear, parsed);
     const {
       schedule_es,
       rental_income,

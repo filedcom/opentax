@@ -624,6 +624,10 @@ export const config2025: F1040Config = {
   amtBracketAdjustmentMfs: AMT_BRACKET_ADJUSTMENT_MFS_2025,
   ssWageBase: SS_WAGE_BASE_2025,
   ssTaxPerEmployer: SS_MAX_TAX_PER_EMPLOYER_2025,
+  // 2025 Schedule SE Part II lines 14-15 and instructions.
+  seOptionalMethodMaximum: 7_240,
+  seFarmOptionalGrossIncomeLimit: 10_860,
+  seFarmOptionalNetProfitLimit: 7_840,
   additionalMedicareThresholdMfj: ADDITIONAL_MEDICARE_THRESHOLD_MFJ,
   additionalMedicareThresholdMfs: ADDITIONAL_MEDICARE_THRESHOLD_MFS,
   additionalMedicareThresholdOther: ADDITIONAL_MEDICARE_THRESHOLD_OTHER,
@@ -780,6 +784,8 @@ export const config2025: F1040Config = {
   nonitemizerCharitableLimitMfj: 0,
   charitableAgiFloorRate: 0,
   itemizedDeductionReductionRate: 0,
+  // IRC §163(h)(3)(E)(iv): no premiums paid after December 31, 2021.
+  mortgageInsurancePremiumsDeductible: false,
   // IRC §199A(i) (P.L. 119-21 §70105) applies after 2025.
   qbiMinimumDeduction: 0,
   qbiMinimumDeductionQbiFloor: 0,
@@ -806,4 +812,31 @@ export const config2025: F1040Config = {
   // P.L. 119-21 §70204(e): Trump accounts apply after 2025.
   trumpAccountContributionLimit: 0,
   trumpAccountEmployerExclusionLimit: 0,
+  // ── Taxes and payments ───────────────────────────────────────────────────
+  // IRC §55(d)(2) before P.L. 119-21 §70107.
+  amtExemptionPhaseOutRate: 0.25,
+  // 2024 HHS poverty guidelines, used for 2025 coverage.
+  fplBaseAlaska: 18_810,
+  fplIncrementAlaska: 6_730,
+  fplBaseHawaii: 17_310,
+  fplIncrementHawaii: 6_190,
+  // IRC §36B(b)(3)(A)(iii) (ARP, extended through 2025 by P.L. 117-169).
+  ptcApplicablePercentages: [
+    { fromFplPct: 0, toFplPct: 150, initial: 0, final: 0 },
+    { fromFplPct: 150, toFplPct: 200, initial: 0, final: 200 },
+    { fromFplPct: 200, toFplPct: 250, initial: 200, final: 400 },
+    { fromFplPct: 250, toFplPct: 300, initial: 400, final: 600 },
+    { fromFplPct: 300, toFplPct: 400, initial: 600, final: 850 },
+    { fromFplPct: 400, toFplPct: Infinity, initial: 850, final: 850 },
+  ],
+  ptcIncomeLimitFplPct: null,
+  // Rev. Proc. 2024-35 §3.02.
+  ptcRequiredContributionPercentage: 0.0902,
+  // 2025 Form 8962 instructions, Table 5.
+  ptcRepaymentCaps: [
+    { maxFplPct: 200, singleCap: 375, otherCap: 750 },
+    { maxFplPct: 300, singleCap: 975, otherCap: 1_950 },
+    { maxFplPct: 400, singleCap: 1_625, otherCap: 3_250 },
+  ],
+  ptcLawfullyPresentBelow100Fpl: true,
 };

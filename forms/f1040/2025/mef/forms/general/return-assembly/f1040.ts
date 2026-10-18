@@ -52,6 +52,7 @@ import { assertEicSource } from "../../../../domains/credits/earned-income/earne
 import { residentElectionName } from "../../../../domains/general/return-assembly/resident-election-source.ts";
 import { assertSchedule2Line23 } from "../../../../domains/taxes/other/schedule2-line23-reconciliation.ts";
 import { assertEstimatedPaymentLine26 } from "../../../../domains/payments/settlement/estimated-payment-reconciliation.ts";
+import { mefTaxYear } from "../../../support/year-config.ts";
 import { assertOtherFormsWithholding } from "../../../../domains/payments/withholding/f8288/f8288-withholding-reconciliation.ts";
 import { assertPresidentialCampaignSource } from "../../../../domains/general/return-assembly/presidential-campaign-source.ts";
 import {
@@ -368,6 +369,7 @@ function dependentXml(fields: Input, context?: MefBuildContext): string[] {
   ) {
     throw new Error("Form 1040 dependent rows need a filing status");
   }
+  const taxYear = mefTaxYear(context);
   const filer = filerCreditEligibility({
     filing_status: fields.filing_status as FilingStatus,
     taxpayer_ssn: fields.taxpayer_ssn,
@@ -409,7 +411,7 @@ function dependentXml(fields: Input, context?: MefBuildContext): string[] {
         `${label} needs a confirmed qualifying-child or qualifying-relative support basis`,
       );
     }
-    if (dep.credit_category !== dependentCreditCategory(dep, filer)) {
+    if (dep.credit_category !== dependentCreditCategory(dep, filer, taxYear)) {
       throw new Error(
         `${label} credit category does not match the dependent facts`,
       );
@@ -483,7 +485,11 @@ function dependentXml(fields: Input, context?: MefBuildContext): string[] {
 }
 
 function buildIRS1040(fields: Input, context?: MefBuildContext): string {
-  assertHohQualifyingChildSource(fields, context?.pending ?? {});
+  assertHohQualifyingChildSource(
+    fields,
+    context?.pending ?? {},
+    mefTaxYear(context),
+  );
   assertQssNonclaimedChildSource(fields, context?.pending ?? {});
   assertIdentified1099IntOwner(
     fields as Record<string, unknown>,
@@ -525,6 +531,7 @@ function buildIRS1040(fields: Input, context?: MefBuildContext): string {
   const formerSpouseEstimatedTaxSsn = assertEstimatedPaymentLine26(
     fields,
     context?.pending,
+    mefTaxYear(context),
   );
   assertOtherFormsWithholding(fields, context?.pending);
   assertReturnScheduleJoins(fields, context?.pending);
@@ -621,7 +628,10 @@ function buildIRS1040(fields: Input, context?: MefBuildContext): string {
         "Form 1040 line 4c rollover does not match the reviewed IRA Form 1099-R source",
       );
     }
-    const explanation = iraDistributionExplanation(parsed.data.f1099rs);
+    const explanation = iraDistributionExplanation(
+      parsed.data.f1099rs,
+      mefTaxYear(context),
+    );
     if (explanation !== undefined && context?.documentIdsByPendingKey) {
       const ids = context.documentIdsByPendingKey.ira_distribution_statement ??
         [];
@@ -812,6 +822,7 @@ function buildIRS1040(fields: Input, context?: MefBuildContext): string {
     resolveNumber(fields.line27_eitc),
     mainHomeInUS,
     context?.pending,
+    mefTaxYear(context),
   );
 
   const capitalGain = resolveNumber(fields.line7_capital_gain);

@@ -14,25 +14,9 @@ import { CONFIG_BY_YEAR } from "../../../../../config/index.ts";
 import type { F1040Config } from "../../../../../config/index.ts";
 import { attributableSpecifiedPtc } from "../../../adjustments/health/form7206/pub974_attribution.ts";
 
-// 2025 Form 8962 instructions, Table 2: line 5 is an integer percentage.
-// Through 150% FPL the applicable figure is zero; it rises by 0.0004 per
-// percentage point through 300%, then by 0.00025 to 8.5% at 400%.
-
-// IRC §36B(f)(2)(B): APTC repayment caps by household income as % of FPL
-// Table 5 has a Single column and one column for every other filing status.
-// Above 400% FPL (TY2025): no cap — ARP extension means 400%+ still eligible,
-//   so full excess APTC is repaid with no limit
-type RepaymentCapTier = {
-  readonly maxPct: number; // income pct upper bound (exclusive)
-  readonly singleCap: number;
-  readonly otherCap: number;
-};
-
-const REPAYMENT_CAP_TIERS: readonly RepaymentCapTier[] = [
-  { maxPct: 200, singleCap: 375, otherCap: 750 },
-  { maxPct: 300, singleCap: 975, otherCap: 1_950 },
-  { maxPct: 400, singleCap: 1_625, otherCap: 3_250 },
-];
+// Form 8962 line 7: the applicable figure for the integer line 5 percentage,
+// interpolated within the year's IRC §36B(b)(3)(A) band and rounded to four
+// decimal places (2025 instructions, Table 2).
 
 const MONTH_CODES = [
   "JANUARY",
@@ -279,21 +263,36 @@ function federalPovertyLevel(
   cfg: F1040Config,
 ): number {
   const [base, increment] = region === "alaska"
-    ? [18_810, 6_730]
+    ? [cfg.fplBaseAlaska, cfg.fplIncrementAlaska]
     : region === "hawaii"
-    ? [17_310, 6_190]
+    ? [cfg.fplBaseHawaii, cfg.fplIncrementHawaii]
     : [cfg.fplBase, cfg.fplIncrement];
   return base + increment * (householdSize - 1);
 }
 
-function applicableContributionPct(incomeAsFplPct: number): number {
+// Infinity above the year's PTC income limit: no contribution is applicable.
+function applicableContributionPct(
+  incomeAsFplPct: number,
+  cfg: F1040Config,
+): number {
   const line5 = Math.floor(incomeAsFplPct);
-  if (line5 <= 150) return 0;
-  if (line5 <= 300) return ((line5 - 150) * 4) / 10_000;
-  if (line5 < 400) {
-    return Math.round(600 + (line5 - 300) * 2.5) / 10_000;
+  if (cfg.ptcIncomeLimitFplPct !== null && line5 > cfg.ptcIncomeLimitFplPct) {
+    return Infinity;
   }
-  return 0.085;
+  const bands = cfg.ptcApplicablePercentages;
+  const band = bands.find((row, index) =>
+    line5 >= row.fromFplPct &&
+    (line5 < row.toFplPct || index === bands.length - 1)
+  );
+  if (!band) throw new Error(`No PTC applicable percentage for ${line5}%`);
+  if (band.initial === band.final) return band.initial / 10_000;
+  // Bands are in hundredths of a percent, so the rounded figure is an
+  // integer number of 0.0001 units.
+  const width = band.toFplPct - band.fromFplPct;
+  const offset = Math.min(line5, band.toFplPct) - band.fromFplPct;
+  return Math.round(
+    (band.initial * width + (band.final - band.initial) * offset) / width,
+  ) / 10_000;
 }
 
 function totalPremium(input: Form8962Input): number {
@@ -332,10 +331,11 @@ function qsehraMonthlyCredit(
   tentativeCredit: number,
   householdIncome: number,
   facts: NonNullable<Form8962Input["qsehra_monthly_facts"]>[number],
+  requiredContribution: number,
 ): number {
   if (facts === null) return tentativeCredit;
   // Pub. 974 Worksheet N, lines 4 and 8. Equality is affordable.
-  const affordabilityThreshold = householdIncome * 0.0902 / 12;
+  const affordabilityThreshold = householdIncome * requiredContribution / 12;
   const employeeCost = facts.self_only_slcsp -
     facts.self_only_permitted_benefit;
   if (affordabilityThreshold >= employeeCost) return 0;
@@ -351,10 +351,11 @@ function qsehraAnnualCredit(
   annualTentativeCredit: number,
   householdIncome: number,
   facts: NonNullable<Form8962Input["qsehra_monthly_facts"]>,
+  requiredContribution: number,
 ): number {
   const provided = facts.filter((month) => month !== null);
   const monthlyTentative = annualTentativeCredit / 12;
-  const threshold = householdIncome * 0.0902 / 12;
+  const threshold = householdIncome * requiredContribution / 12;
   const isAffordable = (month: NonNullable<(typeof facts)[number]>) =>
     threshold >= month.self_only_slcsp - month.self_only_permitted_benefit;
 
@@ -375,24 +376,32 @@ function qsehraAnnualCredit(
   // line 26 adds back the annual line-11 share for the other months.
   return provided.reduce(
     (sum, month) =>
-      sum + qsehraMonthlyCredit(monthlyTentative, householdIncome, month),
+      sum +
+      qsehraMonthlyCredit(
+        monthlyTentative,
+        householdIncome,
+        month,
+        requiredContribution,
+      ),
     annualTentativeCredit - monthlyTentative * provided.length,
   );
 }
 
-// IRC §36B(f)(2)(B): cap on excess APTC repayment liability
-// Returns null when no cap applies (income ≥ 400% FPL)
+// IRC §36B(f)(2)(B): cap on excess APTC repayment liability. Table 5 has a
+// Single column and one column for every other filing status. Null when no
+// cap applies: at or above 400% FPL, or in a year with no limitation.
 function repaymentCap(
   incomePct: number,
   status: FilingStatus | undefined,
+  cfg: F1040Config,
 ): number | null {
   const isSingle = status === FilingStatus.Single;
-  for (const tier of REPAYMENT_CAP_TIERS) {
-    if (incomePct < tier.maxPct) {
+  for (const tier of cfg.ptcRepaymentCaps) {
+    if (incomePct < tier.maxFplPct) {
       return isSingle ? tier.singleCap : tier.otherCap;
     }
   }
-  return null; // ≥ 400% FPL — no cap
+  return null;
 }
 
 interface AlternativeMarriageGroup {
@@ -563,7 +572,7 @@ function alternativeMarriageCalculation(
       : Math.floor(halfIncome / alternativeFpl * 100);
     const contribution = Math.round(
       Math.round(
-        halfIncome * applicableContributionPct(alternativePct),
+        halfIncome * applicableContributionPct(alternativePct, cfg),
       ) / 12,
     );
     result[role] = {
@@ -659,6 +668,7 @@ function aptcOnlyRepayment(
   input: Form8962Input,
   aptc: number,
   baseFields: Form8962BaseFields,
+  cfg: F1040Config,
 ): NodeResult {
   if (aptc === 0) return noForm8962Required();
   const monthlyAptc = input.monthly_aptcs;
@@ -670,7 +680,11 @@ function aptcOnlyRepayment(
     );
   }
   const line25 = Math.round(aptc);
-  const cap = repaymentCap(baseFields.federal_poverty_pct, input.filing_status);
+  const cap = repaymentCap(
+    baseFields.federal_poverty_pct,
+    input.filing_status,
+    cfg,
+  );
   const line29 = cap === null ? line25 : Math.min(line25, cap);
   return {
     outputs: buildOutputs(0, line29, {
@@ -707,6 +721,14 @@ class Form8962Node extends TaxNode<typeof inputSchema> {
     const cfg = CONFIG_BY_YEAR[ctx.taxYear];
     if (!cfg) throw new Error(`No f1040 config for year ${ctx.taxYear}`);
     const input = inputSchema.parse(rawInput);
+    if (
+      !cfg.ptcLawfullyPresentBelow100Fpl &&
+      input.below_100_fpl_status?.basis === "lawfully_present"
+    ) {
+      throw new Error(
+        `TY${ctx.taxYear} Form 8962 has no lawfully present below-100% FPL exception (P.L. 119-21 §71302)`,
+      );
+    }
 
     if (
       input.alternative_marriage &&
@@ -975,7 +997,7 @@ class Form8962Node extends TaxNode<typeof inputSchema> {
       throw new Error("Form 8962 shared policy must use monthly calculation");
     }
     if (mfsStatus?.basis === "no_exception") {
-      return aptcOnlyRepayment(input, aptc, baseFields);
+      return aptcOnlyRepayment(input, aptc, baseFields, cfg);
     }
     if (incomePct < 100) {
       const status = input.below_100_fpl_status;
@@ -990,8 +1012,21 @@ class Form8962Node extends TaxNode<typeof inputSchema> {
         );
       }
       if (status.basis === "not_applicable") {
-        return aptcOnlyRepayment(input, aptc, baseFields);
+        return aptcOnlyRepayment(input, aptc, baseFields, cfg);
       }
+    }
+    // Draft 2026 Form 8962 line 6: at 401% the filer is not eligible for the
+    // PTC and repays all APTC on line 27.
+    if (
+      cfg.ptcIncomeLimitFplPct !== null &&
+      incomePct > cfg.ptcIncomeLimitFplPct
+    ) {
+      if (input.alternative_marriage) {
+        throw new Error(
+          "Form 8962 marriage alternative above the PTC income limit is not supported",
+        );
+      }
+      return aptcOnlyRepayment(input, aptc, baseFields, cfg);
     }
 
     const hasMonthlyColumns = input.monthly_premiums !== undefined ||
@@ -1084,7 +1119,7 @@ class Form8962Node extends TaxNode<typeof inputSchema> {
         );
       }
     }
-    const applicableFigure = applicableContributionPct(incomePct);
+    const applicableFigure = applicableContributionPct(incomePct, cfg);
     const annualContribution = applicableFigure === Infinity
       ? undefined
       : Math.round(income * applicableFigure);
@@ -1160,6 +1195,7 @@ class Form8962Node extends TaxNode<typeof inputSchema> {
             tentativeCredit,
             income,
             qsehraFacts?.[index] ?? null,
+            cfg.ptcRequiredContributionPercentage,
           ),
           aptc: monthAptc,
         };
@@ -1174,7 +1210,12 @@ class Form8962Node extends TaxNode<typeof inputSchema> {
     const allowed = monthlyRows
       ? monthlyRows.reduce((sum, row) => sum + row.allowed_credit, 0)
       : qsehraFacts
-      ? qsehraAnnualCredit(annualTentativeCredit, income, qsehraFacts)
+      ? qsehraAnnualCredit(
+        annualTentativeCredit,
+        income,
+        qsehraFacts,
+        cfg.ptcRequiredContributionPercentage,
+      )
       : annualTentativeCredit;
     const line24 = Math.round(allowed);
     if (
@@ -1204,9 +1245,17 @@ class Form8962Node extends TaxNode<typeof inputSchema> {
     }
     const line26 = alternativeMarriage ? 0 : Math.max(0, line24 - line25);
     const line27 = Math.max(0, line25 - line24);
+    if (
+      pub974?.worksheet_x_repayment_limit !== undefined &&
+      cfg.ptcRepaymentCaps.length === 0
+    ) {
+      throw new Error(
+        `Form 8962 has no repayment limitation for ${ctx.taxYear}`,
+      );
+    }
     const cap = line27 > 0
       ? pub974?.worksheet_x_repayment_limit ??
-        repaymentCap(incomePct, input.filing_status)
+        repaymentCap(incomePct, input.filing_status, cfg)
       : null;
     const line29 = cap === null ? line27 : Math.min(line27, cap);
 

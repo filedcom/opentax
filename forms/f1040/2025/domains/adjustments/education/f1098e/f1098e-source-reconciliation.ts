@@ -1,6 +1,6 @@
 import { type FilerIdentity, FilingStatus } from "../../../../../mef/header.ts";
 import { inputSchema } from "../../../../../nodes/inputs/adjustments/education/f1098e/index.ts";
-import { expectedTy2025StudentLoanDeduction } from "../../../../../nodes/intermediate/aggregation/general/return-assembly/agi_aggregator/index.ts";
+import { expectedStudentLoanDeduction } from "../../../../../nodes/intermediate/aggregation/general/return-assembly/agi_aggregator/index.ts";
 
 type StudentLoanPending = {
   f1098e?: unknown;
@@ -46,6 +46,7 @@ function borrowerOwner(
 export function assert1098EInterestSource(
   pending: StudentLoanPending,
   filer: FilerIdentity,
+  taxYear = 2025,
 ): void {
   const printed = amount(pending.schedule1, "line21_student_loan_interest");
   if (pending.f1098e === undefined) {
@@ -172,7 +173,10 @@ export function assert1098EInterestSource(
       "Schedule 1 student loan interest exceeds retained source interest",
     );
   }
-  if (printed !== expectedTy2025StudentLoanDeduction(pending.agi_aggregator)) {
+  if (
+    printed !==
+      expectedStudentLoanDeduction(pending.agi_aggregator, taxYear)
+  ) {
     throw new Error(
       "Schedule 1 student loan interest differs from its retained phaseout calculation",
     );

@@ -2,6 +2,7 @@ import { element, elements } from "../../../../../mef/xml.ts";
 import { inputSchema, type W2GItem } from "../../../../../nodes/inputs/income/gambling/w2g/index.ts";
 import { type FilerIdentity, FilingStatus } from "../../../../../mef/header.ts";
 import type { MefBuildContext, MefFormDescriptor } from "../../../form-descriptor.ts";
+import { mefTaxYear } from "../../../support/year-config.ts";
 
 function digits(value: string): string {
   return value.replace(/\D/g, "");
@@ -65,10 +66,11 @@ function assertRecipient(
   }
 }
 
-/** Source every positive W-2G amount to TY2025 and this return's owner. */
+/** Source every positive W-2G amount to the tax year and this return's owner. */
 export function assertPositiveW2GRecipient(
   source: unknown,
   filer: FilerIdentity | undefined,
+  taxYear: number,
 ): void {
   if (source === undefined) return;
   const parsed = inputSchema.parse(source);
@@ -77,8 +79,8 @@ export function assertPositiveW2GRecipient(
       (item.box1_winnings ?? 0) > 0 ||
       (item.box4_federal_withheld ?? 0) > 0
     ) {
-      if (item.calendar_year !== 2025) {
-        throw new Error("Positive W-2G needs an issued 2025 tax year");
+      if (item.calendar_year !== taxYear) {
+        throw new Error(`Positive W-2G needs an issued ${taxYear} tax year`);
       }
       assertRecipient(item, filer);
     }
@@ -88,11 +90,12 @@ export function assertPositiveW2GRecipient(
 export function assertWithheldW2GSource(
   item: W2GItem,
   filer: FilerIdentity | undefined,
+  taxYear: number,
 ): asserts item is
   & W2GItem
   & Required<Pick<W2GItem, "payer_us_address" | "payer_ein">> {
   if (
-    item.calendar_year !== 2025 || !item.source_document_reference ||
+    item.calendar_year !== taxYear || !item.source_document_reference ||
     !item.payer_name?.trim() || !item.payer_name_control ||
     !item.payer_us_address || !item.payer_ein ||
     !/^\d{2}-?\d{7}$/.test(item.payer_ein) ||
@@ -103,7 +106,7 @@ export function assertWithheldW2GSource(
     (item.box4_federal_withheld ?? 0) <= 0
   ) {
     throw new Error(
-      "Withheld W-2G needs the issued 2025 form, structured payer identity, standard code, winnings, and withholding",
+      `Withheld W-2G needs the issued ${taxYear} form, structured payer identity, standard code, winnings, and withholding`,
     );
   }
   assertRecipient(item, filer);
@@ -113,7 +116,8 @@ function buildWithheldW2G(
   item: W2GItem,
   context: MefBuildContext | undefined,
 ): string {
-  assertWithheldW2GSource(item, context?.filer);
+  const taxYear = mefTaxYear(context);
+  assertWithheldW2GSource(item, context?.filer, taxYear);
   const file = item.issued_copy_attachment_file_name;
   if (
     !file || !item.issued_copy_pdf_sha256 ||
@@ -125,7 +129,7 @@ function buildWithheldW2G(
     );
   }
   return elements("IRSW2G", [
-    element("CalendarYr", 2025),
+    element("CalendarYr", taxYear),
     element("PayerNameControlTxt", item.payer_name_control),
     elements("PayerName", [element("BusinessNameLine1Txt", item.payer_name)]),
     addressXml("PayerUSAddress", item.payer_us_address),

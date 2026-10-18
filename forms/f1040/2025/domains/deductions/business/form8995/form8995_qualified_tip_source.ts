@@ -12,6 +12,7 @@ import {
 export function assertQualifiedTipQbiSource(
   fields: Record<string, unknown>,
   raw?: Readonly<Record<string, unknown>>,
+  taxYear?: number,
 ) {
   const p = raw
     ? normalizeAllPending(raw as Record<string, unknown>)
@@ -28,7 +29,7 @@ export function assertQualifiedTipQbiSource(
         "QBI income cap needs the actual source Schedule1A deduction",
       );
     }
-    const xml = schedule1a.build(p.schedule1a, { pending: p });
+    const xml = schedule1a.build(p.schedule1a, { pending: p, taxYear });
     if (
       ((actual?.tips_deduction ?? 0) > 0 ||
         Number(p.f1040?.line13b_additional_deductions ?? 0) > 0) &&

@@ -107,7 +107,7 @@ test("signed MFS joint payment uses current spouse identity without former-spous
     },
     f1040es: agreedMfsJointPayment,
   };
-  assertEquals(estimatedPaymentTotal(agreedMfsJointPayment), 300);
+  assertEquals(estimatedPaymentTotal(agreedMfsJointPayment, 2025), 300);
   const xml = irs1040.build(mfsFiled, { pending: mfsPending });
   assertStringIncludes(
     xml,
@@ -137,7 +137,7 @@ test("signed MFS joint payment uses current spouse identity without former-spous
 });
 
 test("2025 sourced quarterly payments reach filed line 26", () => {
-  assertEquals(estimatedPaymentTotal(source), 1_000);
+  assertEquals(estimatedPaymentTotal(source, 2025), 1_000);
   assertStringIncludes(
     irs1040.build(filed, { pending }),
     "<EstimatedTaxPaymentsAmt>1000</EstimatedTaxPaymentsAmt>",
@@ -184,7 +184,7 @@ test("prior-year applied credit stays guarded without accepted filing and accoun
   const attached = {
     f1040es: { ...source, applied_from_prior_year: 250 },
   };
-  assertEquals(estimatedPaymentTotal(attached.f1040es), 1_250);
+  assertEquals(estimatedPaymentTotal(attached.f1040es, 2025), 1_250);
   const claim = { ...filed, line26_estimated_tax: 1_250 };
   for (
     const exportReturn of [

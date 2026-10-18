@@ -10,6 +10,7 @@ import { f1040 } from "../../../../outputs/general/return-assembly/f1040/index.t
 import { filingStatusSchema } from "../../../../types.ts";
 import type { NodeContext } from "../../../../../../../core/types/node-context.ts";
 import { CONFIG_BY_YEAR } from "../../../../config/index.ts";
+import type { F1040Config } from "../../../../config/index.ts";
 
 export const earnedIncomeWorksheetSchema = z.object({
   form1040_line1z_wages: z.number().nonnegative(),
@@ -227,20 +228,22 @@ export function calculatePartIIBLines(
   return { line21, line22, line23, line24, line25, line26 };
 }
 
-/** IRS TY2025 Schedule 8812 Credit Limit Worksheet B, lines 1 through 14. */
+/** Schedule 8812 Credit Limit Worksheet B, lines 1 through 14. */
 export function calculateCreditLimitWorksheetBLines(
   line12: number,
   qualifyingChildren: number,
   earnedIncomeWorksheet: EarnedIncomeWorksheet,
   bonaFidePrResident: boolean,
-  payrollAndCredits?: PartIIBDetails,
+  payrollAndCredits: PartIIBDetails | undefined,
+  cfg: Pick<F1040Config, "actcMaxPerChild" | "actcEarnedIncomeFloor">,
 ) {
   const line1 = line12;
-  const line2 = qualifyingChildren * 1_700;
+  const line2 = qualifyingChildren * cfg.actcMaxPerChild;
   const line3 = calculateEarnedIncomeWorksheet(earnedIncomeWorksheet).line7;
-  const line4 = Math.max(0, line3 - 2_500);
+  const line4 = Math.max(0, line3 - cfg.actcEarnedIncomeFloor);
   const line5 = line4 * ACTC_EARNED_INCOME_RATE;
-  const usesPayrollBranch = line2 < 5_100
+  // Line 6 asks whether line 2 reaches three children's ACTC maximum.
+  const usesPayrollBranch = line2 < 3 * cfg.actcMaxPerChild
     ? bonaFidePrResident && line5 < line1
     : line5 < line1;
   if (usesPayrollBranch && !payrollAndCredits) {
@@ -280,6 +283,20 @@ export function calculateCreditLimitWorksheetBLines(
     line13,
     line14,
   };
+}
+
+// Draft 2026 Schedule 3 reserves line 5b (the §25C credit ended after 2025,
+// P.L. 119-21 §70505), and the draft 2026 Schedule 8812 instructions drop it
+// from Credit Limit Worksheet A line 2.
+function assertWorksheetALine2ForYear(
+  taxYear: number,
+  worksheet: CreditLimitWorksheet,
+): void {
+  if (taxYear >= 2026 && worksheet.schedule3_line5b !== 0) {
+    throw new Error(
+      `Schedule 3 line 5b is reserved for ${taxYear}; Credit Limit Worksheet A has no line 5b amount`,
+    );
+  }
 }
 
 export function calculateCreditLimitWorksheetALine5(
@@ -492,6 +509,7 @@ export function calculateSchedule8812Lines(
       "Schedule 8812 needs complete Credit Limit Worksheet A and B answers",
     );
   }
+  assertWorksheetALine2ForYear(taxYear, creditWorksheet);
   if (
     creditWorksheet.worksheet_b_applies &&
     (line4 === 0 || hasFEIE)
@@ -531,6 +549,7 @@ export function calculateSchedule8812Lines(
       worksheetInput!,
       isPrResident,
       input.part_iib,
+      cfg,
     )
     : null;
   const line13 = calculateCreditLimitWorksheetALine5(tax, creditWorksheet);

@@ -11,6 +11,7 @@ import {
 import { TS } from "../../../../../nodes/types.ts";
 import type { MefBuildContext, MefFormDescriptor } from "../../../form-descriptor.ts";
 import { assert1099RRecipientOwner } from "../../../../domains/income/retirement/f1099r/f1099r-recipient-owner.ts";
+import { mefTaxYear } from "../../../support/year-config.ts";
 
 type Item = z.infer<typeof itemSchema>;
 
@@ -204,7 +205,11 @@ export const f1099r: MefFormDescriptor<"f1099r", Fields, readonly string[]> = {
       );
     }
     assertDistinct1099RCopies(allSources);
-    assert1099RRecipientOwner({ f1099rs: allSources }, context?.filer);
+    assert1099RRecipientOwner(
+      { f1099rs: allSources },
+      context?.filer,
+      mefTaxYear(context),
+    );
     return allSources.map((item, index) =>
       build1099R(item, context ?? {}, index)
     );

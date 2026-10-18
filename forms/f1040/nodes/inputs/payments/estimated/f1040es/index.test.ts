@@ -20,10 +20,10 @@ function estimatedTax(result: ReturnType<typeof compute>) {
 }
 
 test("signed 2025 joint payment allocation routes only the taxpayer share", () => {
-  assertEquals(estimatedPaymentTotal(agreedJointPayment), 300);
+  assertEquals(estimatedPaymentTotal(agreedJointPayment, 2025), 300);
   assertEquals(estimatedTax(compute(agreedJointPayment)), 300);
   assertThrows(
-    () => estimatedPaymentTotal({ ...agreedJointPayment, payment_q1: 301 }),
+    () => estimatedPaymentTotal({ ...agreedJointPayment, payment_q1: 301 }, 2025),
     Error,
     "agreed allocation must equal",
   );
@@ -32,7 +32,7 @@ test("signed 2025 joint payment allocation routes only the taxpayer share", () =
       estimatedPaymentTotal({
         ...agreedJointPayment,
         applied_from_prior_year: 1,
-      }),
+      }, 2025),
     Error,
     "cannot include a prior-year applied payment",
   );
@@ -41,7 +41,7 @@ test("signed 2025 joint payment allocation routes only the taxpayer share", () =
       estimatedPaymentTotal({
         ...agreedJointPayment,
         payment_q1_date: "2025-04-16",
-      }),
+      }, 2025),
     Error,
     "joint payment date",
   );
@@ -79,7 +79,7 @@ test("signed 2025 joint payment allocation routes only the taxpayer share", () =
 
 test("signed joint allocations bind retained agreement PDF bytes", () => {
   for (const source of [agreedJointPayment, agreedMfsJointPayment]) {
-    assertEquals(estimatedPaymentTotal(source), 300);
+    assertEquals(estimatedPaymentTotal(source, 2025), 300);
     assertThrows(
       () =>
         estimatedPaymentTotal({
@@ -88,7 +88,7 @@ test("signed joint allocations bind retained agreement PDF bytes", () => {
             ...source.joint_estimated_payment_allocation,
             signed_agreement_pdf_sha256: "0".repeat(64),
           },
-        }),
+        }, 2025),
       Error,
       "PDF differs from its retained digest",
     );
@@ -100,7 +100,7 @@ test("signed joint allocations bind retained agreement PDF bytes", () => {
             ...source.joint_estimated_payment_allocation,
             signed_agreement_pdf_base64: "JVBERi0xLjQKJSVFT0YK",
           },
-        }),
+        }, 2025),
       Error,
       "PDF differs from its retained digest",
     );

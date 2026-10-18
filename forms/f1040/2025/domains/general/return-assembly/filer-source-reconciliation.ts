@@ -416,6 +416,7 @@ export function assertF1040SourceIdentity(
 export function assertEitcChildSources(
   pending: Record<string, unknown>,
   filer: FilerIdentity,
+  taxYear: number,
 ): void {
   const eitc = pending.eitc as Record<string, unknown> | undefined;
   const credit = eitc?.credit_amount;
@@ -434,7 +435,10 @@ export function assertEitcChildSources(
   ) {
     throw new Error("Schedule EIC child source differs from the filed credit");
   }
-  const projected = eicChildSourceProjection(generalInputSchema.parse(general));
+  const projected = eicChildSourceProjection(
+    generalInputSchema.parse(general),
+    taxYear,
+  );
   if (
     count !== projected.count ||
     rows.some((value, index) =>
@@ -1741,11 +1745,12 @@ export function assertDigitalAssetDispositionAnswer(
 /** Detect a changed or omitted dependent row after general input projection. */
 export function assertGeneral1040DependentSource(
   pending: Record<string, unknown>,
+  taxYear: number,
 ): void {
   if (pending.general === undefined || pending.f1040 === undefined) return;
   const source = generalInputSchema.parse(pending.general);
   const filed = pending.f1040 as Record<string, unknown>;
-  const expected = filedDependentsFromGeneral(source);
+  const expected = filedDependentsFromGeneral(source, taxYear);
   const actual = dependentFilingSchema.array().parse(
     filed.dependent_details ?? [],
   );

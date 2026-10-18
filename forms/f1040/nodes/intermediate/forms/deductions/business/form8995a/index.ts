@@ -2122,6 +2122,13 @@ class Form8995ANode extends TaxNode<typeof inputSchema> {
     const cfg = CONFIG_BY_YEAR[ctx.taxYear];
     if (!cfg) throw new Error(`No f1040 config for year ${ctx.taxYear}`);
     const input = inputSchema.parse(rawInput);
+    // Its threshold, phase-in and SE-wage helpers still read the TY2025
+    // config, and it has no 2026 §199A(i) minimum deduction.
+    if (ctx.taxYear !== 2025 && hasQbiActivity(input)) {
+      throw new Error(
+        `Form 8995-A above the QBI threshold is not yet supported for TY${ctx.taxYear}`,
+      );
+    }
 
     if (input.sstb_filing_details && ctx.taxYear !== 2025) {
       throw new Error(

@@ -14,10 +14,11 @@ import {
   inputSchema as divSchema,
 } from "../../../../../../nodes/inputs/income/investments/f1099div/index.ts";
 import type { Form8995Input } from "../../../../../../nodes/intermediate/forms/deductions/business/form8995/index.ts";
+import { qualifiedDividendTax } from "../../../../../../nodes/intermediate/worksheets/taxes/calculation/tax_table_2025.ts";
 import {
-  ordinaryTax2025,
-  qualifiedDividendTax2025,
-} from "../../../../../../nodes/intermediate/worksheets/taxes/calculation/tax_table_2025.ts";
+  ordinaryTaxForYear,
+  preferentialRateSchedule,
+} from "../../../../../../nodes/intermediate/worksheets/taxes/calculation/year_schedule.ts";
 import { FilingStatus } from "../../../../../../nodes/types.ts";
 import { SCHEDULE_B_DIVIDEND_THRESHOLD } from "../../../../../../nodes/config/2025.ts";
 
@@ -341,19 +342,21 @@ export function assertMultiBusinessInvestmentSources(
 export function assertMultiBusinessInvestmentTax(
   pending: Record<string, Record<string, unknown>>,
   totals: { qualified: number; capital: number; capitalGain?: number },
+  taxYear: number,
   filingStatus: FilingStatus = FilingStatus.Single,
 ) {
   const f1040 = pending.f1040;
   const taxable = f1040.line15_taxable_income as number;
   const capital = totals.capitalGain ?? totals.capital;
   const expected = totals.qualified > 0 || capital > 0
-    ? qualifiedDividendTax2025(
+    ? qualifiedDividendTax(
       taxable,
       totals.qualified,
       capital,
       filingStatus,
+      preferentialRateSchedule(taxYear),
     )
-    : ordinaryTax2025(taxable, filingStatus);
+    : ordinaryTaxForYear(taxable, filingStatus, taxYear);
   const worksheet = pending.income_tax_calculation;
   const sum = (value: unknown): number =>
     value === undefined

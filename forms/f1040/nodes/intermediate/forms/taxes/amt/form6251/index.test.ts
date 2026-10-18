@@ -2794,3 +2794,76 @@ test("form6251: routes AMT to Schedule 2 and its filed form", () => {
   assertEquals(result.outputs[1].fields.exemption, 88_100);
   assertEquals(result.outputs[1].fields.taxable_excess, 161_900);
 });
+
+// ── TY2026 ───────────────────────────────────────────────────────────────────
+// Draft 2026 Form 6251 (irs/corpus/ty2026/draft/f6251.pdf) lines 4, 5 and 7:
+// exemptions $90,100/$140,200/$70,100 phasing out above $500,000/$1,000,000/
+// $500,000; 26% through $244,500 ($122,250 MFS), then 28% less $4,890
+// ($2,445). Rev. Proc. 2025-32 §4.10. The exemption falls by 50% of the
+// excess, IRC §55(d)(4)(A)(ii)(IV) (P.L. 119-21 §70107(b)).
+
+function compute2026(input: Record<string, unknown>) {
+  return form6251.compute(
+    { taxYear: 2026, formType: "f1040" },
+    inputSchema.parse(input),
+  );
+}
+
+function filed2026(input: Record<string, unknown>) {
+  return compute2026(input).outputs.find((output) =>
+    output.nodeType === "form6251"
+  )?.fields;
+}
+
+test("form6251 2026: exemption phases out at 50% above $500,000", () => {
+  const fields = filed2026({
+    filing_status: "single",
+    regular_tax_income: 600_000,
+    regular_tax: 10_000,
+  });
+  // $90,100 − 50% × $100,000 = $40,100; line 6 $559,900 × 28% − $4,890.
+  assertEquals(fields?.exemption, 40_100);
+  assertEquals(fields?.tentative_tax, 151_882);
+  assertEquals(fields?.line11_amt, 141_882);
+});
+
+test("form6251 2026: 26% rate applies through $244,500", () => {
+  const fields = filed2026({
+    filing_status: "single",
+    regular_tax_income: 200_000,
+    regular_tax: 10_000,
+  });
+  assertEquals(fields?.exemption, 90_100);
+  assertEquals(fields?.tentative_tax, 28_574);
+});
+
+test("form6251 2026: joint exemption is fully phased out at $1,280,400", () => {
+  const fields = filed2026({
+    filing_status: "mfj",
+    regular_tax_income: 1_280_400,
+    regular_tax: 10_000,
+  });
+  assertEquals(fields?.exemption, 0);
+  assertEquals(fields?.tentative_tax, 353_622);
+});
+
+test("form6251 2026: separate filer line 4 addition above $640,200 waits for the instructions", () => {
+  const fields = filed2026({
+    filing_status: "mfs",
+    regular_tax_income: 640_000,
+    regular_tax: 10_000,
+  });
+  assertEquals(fields?.amti, 640_000);
+  assertEquals(fields?.exemption, 100);
+  assertEquals(fields?.tentative_tax, 176_727);
+  assertThrows(
+    () =>
+      compute2026({
+        filing_status: "mfs",
+        regular_tax_income: 640_201,
+        regular_tax: 10_000,
+      }),
+    Error,
+    "$640,200",
+  );
+});

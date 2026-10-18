@@ -8,7 +8,7 @@ import { OutputNodes } from "../../../../../../../core/types/output-nodes.ts";
 import { agi_aggregator } from "../../../../intermediate/aggregation/general/return-assembly/agi_aggregator/index.ts";
 import type { NodeContext } from "../../../../../../../core/types/node-context.ts";
 
-// TY2025 — Form 1098-E copies and reviewed sub-threshold payment ledgers.
+// Form 1098-E copies and reviewed sub-threshold payment ledgers.
 // Deduction flows to Schedule 1 Part II line 21 through the AGI aggregator.
 // IRC §221: student loan interest deduction, capped at $2,500.
 // The AGI aggregator applies the MAGI phaseout and sends the final amount to

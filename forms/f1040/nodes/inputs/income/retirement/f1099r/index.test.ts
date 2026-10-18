@@ -1312,7 +1312,7 @@ test("f1099r.compute: code G IRA payment to plan reports gross and zero taxable"
   assertEquals(input.line4b_ira_taxable, 0);
   assertEquals(input.line4c_ira_rollover, true);
   assertStringIncludes(
-    iraDistributionExplanation([item]) ?? "",
+    iraDistributionExplanation([item], 2025) ?? "",
     "IRA custodian paid 5000 directly to Example 401(k) qualified plan",
   );
   for (
@@ -1613,7 +1613,7 @@ test("f1099r.compute: IRA rollover needs dated destination evidence", () => {
   };
   assertEquals(f1040Input(compute([nextYear])).line4c_ira_rollover, true);
   assertEquals(
-    iraDistributionExplanation([nextYear]),
+    iraDistributionExplanation([nextYear], 2025),
     "Distribution 1: Taxpayer received 10000 from an IRA on 2025-12-01; 10000 was rolled into another IRA on 2026-01-15.",
   );
   const qualified = {
@@ -1670,11 +1670,11 @@ test("f1099r.compute: IRA rollover needs dated destination evidence", () => {
     "completion within 60 days",
   );
   assertEquals(
-    iraDistributionExplanation([qualified]),
+    iraDistributionExplanation([qualified], 2025),
     "Distribution 1: Taxpayer received 10000 from an IRA on 2025-12-01; 10000 was rolled into Example 401(k) qualified plan on 2025-12-15.",
   );
   assertStringIncludes(
-    iraDistributionExplanation([nextYear, { ...qualified, ts: TS.S }]) ?? "",
+    iraDistributionExplanation([nextYear, { ...qualified, ts: TS.S }], 2025) ?? "",
     "Distribution 2: Spouse received 10000 from an IRA",
   );
 });
@@ -1710,11 +1710,11 @@ test("f1099r.compute: institution-error automatic waiver retains late IRA rollov
   assertEquals(input.line4b_ira_taxable, 0);
   assertEquals(input.line4c_ira_rollover, true);
   assertStringIncludes(
-    iraDistributionExplanation([item]) ?? "",
+    iraDistributionExplanation([item], 2025) ?? "",
     "automatic 60-day waiver applies",
   );
   assertEquals(
-    iraDistributionExplanation([item])?.includes("custodian-error-1"),
+    iraDistributionExplanation([item], 2025)?.includes("custodian-error-1"),
     false,
   );
 
@@ -1730,7 +1730,7 @@ test("f1099r.compute: institution-error automatic waiver retains late IRA rollov
   };
   assertEquals(f1040Input(compute([planItem])).line4c_ira_rollover, true);
   assertEquals(
-    iraDistributionExplanation([planItem])?.includes("plan-acceptance-1"),
+    iraDistributionExplanation([planItem], 2025)?.includes("plan-acceptance-1"),
     false,
   );
   assertThrows(
@@ -1837,7 +1837,7 @@ test("f1099r.compute: Pub. 590-A frozen deposit extends the IRA rollover deadlin
   assertEquals(input.line4a_ira_gross, 10_000);
   assertEquals(input.line4b_ira_taxable, 0);
   assertEquals(input.line4c_ira_rollover, true);
-  const statement = iraDistributionExplanation([item]) ?? "";
+  const statement = iraDistributionExplanation([item], 2025) ?? "";
   assertStringIncludes(statement, "frozen-deposit extension");
   assertStringIncludes(statement, "extended rollover deadline was 2025-09-30");
   assertEquals(statement.includes("insolvency-order-1"), false);
@@ -1858,7 +1858,7 @@ test("f1099r.compute: Pub. 590-A frozen deposit extends the IRA rollover deadlin
     },
   };
   assertStringIncludes(
-    iraDistributionExplanation([tenDayFloor]) ?? "",
+    iraDistributionExplanation([tenDayFloor], 2025) ?? "",
     "extended rollover deadline was 2025-08-11",
   );
   const planItem = {
@@ -2017,11 +2017,11 @@ test("f1099r.compute: signed self-certification keeps a late rollover within the
   assertEquals(input.line4b_ira_taxable, 0);
   assertEquals(input.line4c_ira_rollover, true);
   assertStringIncludes(
-    iraDistributionExplanation([item]) ?? "",
+    iraDistributionExplanation([item], 2025) ?? "",
     "Rev. Proc. 2020-46 self-certification",
   );
   assertEquals(
-    iraDistributionExplanation([item])?.includes("signed-letter-1"),
+    iraDistributionExplanation([item], 2025)?.includes("signed-letter-1"),
     false,
   );
   const rollover = item.ira_rollover!;
@@ -2114,7 +2114,7 @@ test("f1099r.compute: favorable IRS ruling links a late distribution and deposit
   assertEquals(input.line4b_ira_taxable, 0);
   assertEquals(input.line4c_ira_rollover, true);
   assertStringIncludes(
-    iraDistributionExplanation([item]) ?? "",
+    iraDistributionExplanation([item], 2025) ?? "",
     "private letter ruling PLR-2025-EXAMPLE",
   );
   const rollover = item.ira_rollover!;
@@ -2630,4 +2630,53 @@ test("f1099r.compute: smoke test — IRA + pension + withholding + QCD + PSO + c
   const f5329Fields =
     (form5329!.fields.owner_entries as Array<Record<string, unknown>>)[0]!;
   assertEquals(f5329Fields.early_distribution, 15000);
+});
+
+// ---------------------------------------------------------------------------
+// TY2026
+// ---------------------------------------------------------------------------
+
+function directPlanRollover(distributedOn: string, completedOn: string) {
+  return minimalIraItem({
+    box1_gross_distribution: 5000,
+    box2a_taxable_amount: 0,
+    box7_distribution_code: DistributionCode.CodeG,
+    rollover_code: RolloverCode.G,
+    ira_rollover: {
+      not_inherited_ira_confirmed: true as const,
+      not_required_minimum_distribution_confirmed: true as const,
+      rollover_eligibility_review_reference: "rollover-eligibility-review",
+      source_ira_type: "traditional",
+      destination: "qualified_plan",
+      destination_name: "Example 401(k)",
+      qualified_plan_acceptance_reference: "plan-acceptance-2026",
+      distributed_on: distributedOn,
+      completed_on: completedOn,
+      last_ira_to_ira_rollover_on: null,
+    },
+  });
+}
+
+test("f1099r.compute: a TY2026 rollover needs a 2026 distribution", () => {
+  // IRC §408(d)(3): the distribution is income of the year it is made; the
+  // 60-day deposit may complete in the following year.
+  const ctx = { taxYear: 2026, formType: "f1040" };
+  const item = directPlanRollover("2026-06-01", "2026-06-02");
+  const result = f1099r.compute(ctx, { f1099rs: [item] });
+  const input = f1040Input(result);
+  assertEquals(input.line4a_ira_gross, 5000);
+  assertEquals(input.line4b_ira_taxable, 0);
+  assertEquals(input.line4c_ira_rollover, true);
+  assertStringIncludes(
+    iraDistributionExplanation([item], 2026) ?? "",
+    "Example 401(k)",
+  );
+  assertThrows(
+    () =>
+      f1099r.compute(ctx, {
+        f1099rs: [directPlanRollover("2025-06-01", "2025-06-02")],
+      }),
+    Error,
+    "needs a 2026 distribution",
+  );
 });

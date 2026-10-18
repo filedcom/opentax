@@ -1,4 +1,5 @@
 import type { PdfFieldEntry, PdfFormDescriptor } from "../../../review-support/form-descriptor.ts";
+import { CONFIG_BY_YEAR } from "../../../../../nodes/config/index.ts";
 import {
   calculateForm2441,
   filingDetailsSchema,
@@ -93,7 +94,7 @@ export const form2441Pdf: PdfFormDescriptor = {
     if (typeof agi !== "number" || (raw.agi !== undefined && raw.agi !== agi)) {
       throw new Error("Form 2441 PDF needs final Form 1040 AGI");
     }
-    const lines = calculateForm2441(details, agi, 0);
+    const lines = calculateForm2441(details, agi, 0, CONFIG_BY_YEAR[2025]);
     if (allPending.schedule3?.line2_childcare_credit !== lines.line11) {
       throw new Error("Form 2441 PDF credit differs from Schedule 3 line 2");
     }

@@ -86,7 +86,7 @@ class ScheduleSENode extends TaxNode<typeof inputSchema> {
         identity: input.owner_identity,
         businesses: input.owner_business_sources,
         wages: input.owner_wage_sources ?? [],
-      }, cfg.ssWageBase);
+      }, cfg.ssWageBase, cfg);
       const sole = owned.instances.length === 1
         ? owned.instances[0]
         : undefined;
@@ -136,7 +136,7 @@ class ScheduleSENode extends TaxNode<typeof inputSchema> {
         ],
       };
     }
-    const lines = scheduleSELines(input, cfg.ssWageBase);
+    const lines = scheduleSELines(input, cfg.ssWageBase, cfg);
     const source = (line13Deduction: number) =>
       this.outputNodes.output(form7206, {
         schedule_se_source: {

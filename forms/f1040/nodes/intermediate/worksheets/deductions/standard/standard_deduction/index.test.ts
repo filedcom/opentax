@@ -517,3 +517,90 @@ test("taxable income subtracts rounded Form 1040 line operands", () => {
     458371,
   );
 });
+
+// ─── TY2026 (P.L. 119-21) ────────────────────────────────────────────────────
+
+const ctx2026: NodeContext = { taxYear: 2026, formType: "f1040" };
+
+function f1040Fields(result: ReturnType<typeof compute>): Record<string, number> {
+  return Object.assign(
+    {},
+    ...result.outputs.filter((o) => o.nodeType === "f1040").map((o) =>
+      o.fields
+    ),
+  );
+}
+
+test("TY2026 MFJ non-itemizer charity is capped at $2,000 on line 12f (IRC §170(p))", () => {
+  const result = standard_deduction.compute(ctx2026, {
+    filing_status: FilingStatus.MFJ,
+    agi: 100_000,
+    nonitemizer_charitable_cash: 2_500,
+  });
+  const f = f1040Fields(result);
+  // Rev. Proc. 2025-32 §4.14(1): $32,200.
+  assertEquals(f.line12a_standard_deduction, 32_200);
+  assertEquals(f.line12f_nonitemizer_charitable, 2_000);
+  assertEquals(f.line15_taxable_income, 65_800);
+});
+
+test("TY2026 line 12f needs the donor-advised fund split", () => {
+  assertThrows(
+    () =>
+      standard_deduction.compute(ctx2026, {
+        filing_status: FilingStatus.Single,
+        agi: 50_000,
+        nonitemizer_charitable_cash_unclassified: true,
+      }),
+    Error,
+    "donor-advised",
+  );
+});
+
+test("TY2026 standard plus line 12f beats slightly larger itemized deductions", () => {
+  const result = standard_deduction.compute(ctx2026, {
+    filing_status: FilingStatus.Single,
+    agi: 80_000,
+    itemized_deductions: 16_500,
+    itemized_taxes: 10_000,
+    nonitemizer_charitable_cash: 1_000,
+  });
+  const f = f1040Fields(result);
+  assertEquals(f.line12a_standard_deduction, 16_100);
+  assertEquals(f.line12f_nonitemizer_charitable, 1_000);
+  assertEquals(f.line15_taxable_income, 62_900);
+});
+
+test("TY2026 itemized deductions above the 37% bracket lose 2/37 (IRC §68)", () => {
+  // Single top bracket starts at $640,600 (Rev. Proc. 2025-32 §4.01 Table 3);
+  // AGI less the $10,000 QBI and $0 Schedule 1-A deductions is $690,000, so
+  // the reduction is 2/37 x min($30,000, $49,400) = $1,622.
+  const result = standard_deduction.compute(ctx2026, {
+    filing_status: FilingStatus.Single,
+    agi: 700_000,
+    itemized_deductions: 30_000,
+    itemized_taxes: 10_000,
+    qbi_deduction: 10_000,
+  });
+  const f = f1040Fields(result);
+  assertEquals(f.line12e_itemized_deductions, 28_378);
+  assertEquals(f.line15_taxable_income, 661_622);
+  assertEquals(
+    result.finalizations?.[0].fields.overall_itemized_limit_reduction,
+    1_622,
+  );
+});
+
+test("TY2025 has no §68 reduction or line 12f", () => {
+  const result = compute({
+    filing_status: FilingStatus.Single,
+    agi: 700_000,
+    itemized_deductions: 30_000,
+    itemized_taxes: 10_000,
+    nonitemizer_charitable_cash: 1_000,
+  });
+  const f = f1040Fields(result);
+  assertEquals(f.line12e_itemized_deductions, 30_000);
+  assertEquals("line12f_nonitemizer_charitable" in f, false);
+  assertEquals(result.finalizations, []);
+});

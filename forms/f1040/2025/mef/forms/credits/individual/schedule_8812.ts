@@ -8,6 +8,7 @@ import {
   inputSchema,
 } from "../../../../../nodes/inputs/credits/child/f8812/index.ts";
 import type { MefBuildContext, MefFormDescriptor } from "../../../form-descriptor.ts";
+import { mefTaxYear } from "../../../support/year-config.ts";
 
 const HEADER_STATUS: Readonly<Record<NodeFilingStatus, HeaderFilingStatus>> = {
   [NodeFilingStatus.Single]: HeaderFilingStatus.Single,
@@ -70,7 +71,7 @@ export const schedule8812: MefFormDescriptor<"f8812", F8812Input> = {
   build(rawFields, context) {
     if (Object.keys(rawFields).length === 0) return "";
     const fields = inputSchema.parse(rawFields);
-    const lines = calculateSchedule8812Lines(2025, fields);
+    const lines = calculateSchedule8812Lines(mefTaxYear(context), fields);
     // A tax-limited $0 credit for claimed children still files the schedule.
     if (!lines) return "";
     reconcileReturn(lines, context);

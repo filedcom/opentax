@@ -2,11 +2,13 @@ import type { inputSchema } from "../../../../../../nodes/intermediate/forms/ded
 import type { MefFormDescriptor } from "../../../../form-descriptor.ts";
 import { element, elements } from "../../../../../../mef/xml.ts";
 import { assertNoUnfiled8995Loss, assertPositive8995 } from "./f8995-route.ts";
+import { mefTaxYear } from "../../../../support/year-config.ts";
 
 type Input = Partial<ReturnType<typeof inputSchema.parse>> & {
   qbi_deduction?: number | null;
   line1_qbi?: number;
   line1_business_reference?: string;
+  minimum_deduction?: number;
 };
 
 export const form8995: MefFormDescriptor<"form8995", Input> = {
@@ -14,6 +16,13 @@ export const form8995: MefFormDescriptor<"form8995", Input> = {
   FIELD_MAP: [],
   pdfUrl: "https://www.irs.gov/pub/irs-prior/f8995--2025.pdf",
   build(fields, context) {
+    // 2026 Form 8995 adds line 16 (IRC §199A(i) minimum deduction); the
+    // 2026v1.0 IRS8995 schema keeps the TY2025 lines and has no element for it.
+    if (fields.minimum_deduction !== undefined) {
+      throw new Error(
+        "Form 8995 line 16 minimum deduction has no 2026v1.0 MeF element; export waits for a schema that carries it",
+      );
+    }
     const deduction = fields.qbi_deduction;
     if (
       (deduction === undefined || deduction === null || deduction === 0) &&
@@ -30,6 +39,7 @@ export const form8995: MefFormDescriptor<"form8995", Input> = {
       assertNoUnfiled8995Loss(
         fields as Record<string, unknown>,
         context?.pending,
+        mefTaxYear(context),
       );
       return "";
     }
@@ -42,6 +52,7 @@ export const form8995: MefFormDescriptor<"form8995", Input> = {
     const { businesses, lines } = assertPositive8995(
       fields as Record<string, unknown>,
       context?.pending,
+      mefTaxYear(context),
     );
     return elements("IRS8995", [
       ...businesses.map(({ businessName, tin, qbi }) =>

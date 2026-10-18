@@ -11,8 +11,7 @@ import { form6251 } from "../../../taxes/amt/form6251/index.ts";
 import { f1040 } from "../../../../../outputs/general/return-assembly/f1040/index.ts";
 import type { NodeContext } from "../../../../../../../../core/types/node-context.ts";
 import { FilingStatus } from "../../../../../types.ts";
-import { CONFIG_BY_YEAR } from "../../../../../config/index.ts";
-import { ordinaryTax2025 } from "../../../../worksheets/taxes/calculation/tax_table_2025.ts";
+import { preferentialRateSchedule } from "../../../../worksheets/taxes/calculation/year_schedule.ts";
 
 export enum IncomeCategory {
   Passive = "passive",
@@ -677,21 +676,22 @@ type ForeignTaxItem = z.infer<typeof foreignTaxItemSchema>;
 type Form1116Input = z.infer<typeof inputSchema>;
 type CarryoverReview = z.infer<typeof carryoverReviewSchema>;
 
-/** 2025 i1116 Worksheet for Line 18, QDCGT branch, with zero foreign preference. */
+/** i1116 Worksheet for Line 18, QDCGT branch, with zero foreign preference. */
 export function adjustedQualifiedDividendLine18(
   signedWorldwideIncome: number,
   facts: NonNullable<Form1116Input["regular_tax_preference_facts"]>,
+  taxYear: number,
 ): number {
   const line1 = signedWorldwideIncome;
   const taxable = Math.round(facts.taxable_income);
   const qualifiedDividends = Math.round(facts.qualified_dividends);
   const netCapitalGain = Math.round(facts.net_capital_gain);
-  const cfg = CONFIG_BY_YEAR[2025];
+  const schedule = preferentialRateSchedule(taxYear);
   const line4 = qualifiedDividends + netCapitalGain;
   const qdcgtLine5 = Math.max(0, taxable - line4);
   const qdcgtLine7 = Math.min(
     taxable,
-    cfg.qdcgtZeroCeiling[facts.filing_status],
+    schedule.zeroCeiling[facts.filing_status],
   );
   const qdcgtLine8 = Math.min(qdcgtLine5, qdcgtLine7);
   const qdcgtLine9 = qdcgtLine7 - qdcgtLine8;
@@ -699,16 +699,16 @@ export function adjustedQualifiedDividendLine18(
   const qdcgtLine12 = Math.max(0, qdcgtLine10 - qdcgtLine9);
   const qdcgtLine14 = Math.min(
     taxable,
-    cfg.qdcgtTwentyFloor[facts.filing_status],
+    schedule.twentyFloor[facts.filing_status],
   );
   const qdcgtLine16 = Math.max(0, qdcgtLine14 - (qdcgtLine5 + qdcgtLine9));
   const qdcgtLine17 = Math.min(qdcgtLine12, qdcgtLine16);
   const qdcgtLine20 = Math.max(0, qdcgtLine10 - (qdcgtLine9 + qdcgtLine17));
   const preferentialTax = Math.round(
     qdcgtLine17 * 0.15 + qdcgtLine20 * 0.20 +
-      ordinaryTax2025(qdcgtLine5, facts.filing_status),
+      schedule.ordinaryTax(qdcgtLine5, facts.filing_status),
   );
-  const ordinaryTax = ordinaryTax2025(taxable, facts.filing_status);
+  const ordinaryTax = schedule.ordinaryTax(taxable, facts.filing_status);
   if (qdcgtLine5 <= 0 || preferentialTax >= ordinaryTax) {
     return Math.max(0, line1);
   }
@@ -996,7 +996,7 @@ class Form1116Node extends TaxNode<typeof inputSchema> {
   readonly inputSchema = inputSchema;
   readonly outputNodes = new OutputNodes([schedule3, form6251, f1040]);
 
-  compute(_ctx: NodeContext, rawInput: Form1116Input): NodeResult {
+  compute(ctx: NodeContext, rawInput: Form1116Input): NodeResult {
     const input = inputSchema.parse(rawInput);
     if ((input.foreign_tax_redeterminations?.length ?? 0) > 0) {
       throw new Error(scheduleCFilingBlockReason(
@@ -1115,6 +1115,7 @@ class Form1116Node extends TaxNode<typeof inputSchema> {
       line18WorldwideTaxableIncome = adjustedQualifiedDividendLine18(
         signedLine18Base,
         rateFacts,
+        ctx.taxYear,
       );
     }
 

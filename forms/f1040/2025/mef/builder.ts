@@ -304,11 +304,11 @@ function buildReturnXml(
   }
   assertGeneral1040HeaderSource(pending);
   assertDigitalAssetDispositionAnswer(pending);
-  assertGeneral1040DependentSource(pending);
+  assertGeneral1040DependentSource(pending, year);
   assertGeneral1040DepositSource(pending, filer);
-  assert1098EInterestSource(pending, filer);
-  assert1099RRecipientOwner(pending.f1099r, filer);
-  assertPositiveW2GRecipient(pending.w2g, filer);
+  assert1098EInterestSource(pending, filer, year);
+  assert1099RRecipientOwner(pending.f1099r, filer, year);
+  assertPositiveW2GRecipient(pending.w2g, filer, year);
   assertNecWithholdingRecipient(pending.f1099nec, filer);
   assert1099BRecipientOwner(pending.f1099b, filer);
   assertNoRepeatedBrokerSaleSources(pending.f1099b, pending.f8949);
@@ -337,13 +337,13 @@ function buildReturnXml(
   assertSchedule2W2Line13Sources(pending);
   assertSchedule2W2Line17KSource(pending);
   assertSchedule2Line17HSources(pending, filer);
-  assertSchedule2Form4137Tax(pending);
-  assertLine1cForm4137Income(pending);
-  assertSchedule2Form8919Tax(pending);
-  assertLine1gForm8919Wages(pending);
-  assertSchedule2ScheduleHTax(pending);
+  assertSchedule2Form4137Tax(pending, year);
+  assertLine1cForm4137Income(pending, year);
+  assertSchedule2Form8919Tax(pending, year);
+  assertLine1gForm8919Wages(pending, year);
+  assertSchedule2ScheduleHTax(pending, year);
   assertSchedule2Form8960Tax(pending);
-  assertSchedule2ScheduleSETax(pending);
+  assertSchedule2ScheduleSETax(pending, year);
   assertSchedule2Form8828Tax(pending);
   assertSchedule2Form8936Repayment(pending);
   assertSchedule3Form8859Credit(pending);
@@ -359,7 +359,7 @@ function buildReturnXml(
   assertExtensionPaymentSource(pending, filer);
   assertForm8915FSourceLinks(pending);
   assertKIncomeClassification(pending);
-  assertEitcChildSources(pending, filer);
+  assertEitcChildSources(pending, filer, year);
   assertKReportedErrorSources(pending, filer);
   assertScheduleCReceiptSourceIdentity(pending, filer);
   assertScheduleCStatutoryW2Sources(pending, filer);
@@ -414,6 +414,7 @@ function buildReturnXml(
   );
   const initial = buildFragments(pending, {
     phase: "discovery",
+    taxYear: year,
     preparedForm8886,
     filer,
     binaryAttachmentFileNames,
@@ -449,6 +450,7 @@ function buildReturnXml(
   let form3800Parts: Form3800DocumentParts | undefined;
   const linked = buildFragments(pending, {
     phase: "final",
+    taxYear: year,
     preparedForm8886,
     filer,
     binaryAttachmentFileNames,
@@ -615,7 +617,7 @@ export async function buildMefBundle(
       );
     }
   }
-  await assertForm1098IssuerCopies(pending);
+  await assertForm1098IssuerCopies(pending, options.year ?? 2025);
   const retainedSourceDocuments = (options.retainedSourceDocuments ?? []).map((
     d,
   ) => ({

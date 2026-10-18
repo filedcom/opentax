@@ -562,3 +562,26 @@ test("smoke: multiple penalties across several parts", () => {
   assertEquals(sch2Out !== undefined, true);
   assertEquals(fieldsOf(result.outputs, schedule2)!.line8_form5329_tax, 2_910);
 });
+
+// ── TY2026 ───────────────────────────────────────────────────────────────────
+// Draft 2026 Form 5329 (irs/corpus/ty2026/draft/f5329.pdf): line 4 is 10% of
+// line 3 (IRC §72(t)(1)); line 25 is 6% of the smaller of line 24 or the
+// December 31, 2026 Roth IRA value (IRC §4973(a), (f)).
+
+test("2026: early distribution and excess Roth contribution taxes", () => {
+  const result = form5329.compute(
+    { taxYear: 2026, formType: "f1040" },
+    inputSchema.parse({
+      owner_entries: [{
+        owner: TS.T,
+        early_distribution: 10_000,
+        excess_roth_ira: 1_000,
+        roth_ira_value: 5_000,
+      }],
+    }),
+  );
+  assertEquals(
+    findOutput(result, "schedule2")?.fields.line8_form5329_tax,
+    1_060,
+  );
+});

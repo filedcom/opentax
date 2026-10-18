@@ -212,7 +212,12 @@ export function assertForm8995APatronReturn(
     true,
     joint ? spouse : undefined,
   );
-  assertMultiBusinessInvestmentTax(pending, investment, input.filing_status);
+  assertMultiBusinessInvestmentTax(
+    pending,
+    investment,
+    2025,
+    input.filing_status,
+  );
   const investmentIncome = investment.interest + investment.ordinary +
     investment.returnCapital;
   const expectedAgi = Math.round(

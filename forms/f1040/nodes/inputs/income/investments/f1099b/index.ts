@@ -182,7 +182,7 @@ function processItem(item: B99Item): NodeOutput[] {
       "1099-B market discount is already present in Form 8949 adjustment code D",
     );
   }
-  // 2025 Form 8949 accrued-market-discount worksheet, lines 3–5: only the
+  // Form 8949 accrued-market-discount worksheet, lines 3–5: only the
   // lesser of box 1f and positive proceeds less basis becomes ordinary interest.
   const taxableMarketDiscount = hasMarketDiscount
     ? Math.min(

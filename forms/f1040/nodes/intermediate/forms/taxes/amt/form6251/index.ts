@@ -9,7 +9,8 @@ import { TaxNode } from "../../../../../../../../core/types/tax-node.ts";
 import { FilingStatus } from "../../../../../types.ts";
 import { schedule2 } from "../../../../aggregation/taxes/other/schedule2/index.ts";
 import { f1040 } from "../../../../../outputs/general/return-assembly/f1040/index.ts";
-import { CONFIG_BY_YEAR } from "../../../../../config/index.ts";
+import { CONFIG_BY_YEAR, type F1040Config } from "../../../../../config/index.ts";
+import { bracketsForStatus } from "../../../../worksheets/taxes/calculation/tax_brackets.ts";
 import { normalizeArray } from "../../../../../utils.ts";
 import {
   assertPriorIsoSaleCalculation,
@@ -17,10 +18,6 @@ import {
 } from "../../../../../../2025/domains/taxes/amt/form6251/form6251_prior_iso_sale.ts";
 
 // Phase-out rate: 25% of excess above threshold (IRC §55(d); Form 6251 Line 5 Worksheet, Step 5)
-const PHASE_OUT_RATE = 0.25;
-// 2025 Form 6251 line 4, married filing separately addition.
-const MFS_LINE4_ADDITION_START = 900_350;
-const MFS_LINE4_ADDITION_CAP = 68_500;
 
 // ─── Schema ───────────────────────────────────────────────────────────────────
 
@@ -271,7 +268,10 @@ function knownLine2cThrough3Total(input: Form6251Input): number {
     (input.qsbs_adjustment ?? 0);
 }
 
-function amtiWithoutKnownLine2cThrough3(input: Form6251Input): number {
+function amtiWithoutKnownLine2cThrough3(
+  input: Form6251Input,
+  cfg: F1040Config,
+): number {
   return computeAmti({
     ...input,
     form4952_amt_line2c_difference: 0,
@@ -291,7 +291,7 @@ function amtiWithoutKnownLine2cThrough3(input: Form6251Input): number {
     private_activity_bond_interest: 0,
     line2g_pab_interest: 0,
     qsbs_adjustment: 0,
-  });
+  }, cfg);
 }
 
 // ─── Pure helpers ─────────────────────────────────────────────────────────────
@@ -329,32 +329,43 @@ function computeAmtiBeforeMfsAddition(input: Form6251Input): number {
   ].reduce((sum, amount) => sum + filed(amount), 0);
 }
 
-function computeAmti(input: Form6251Input): number {
+// Form 6251 line 4, married filing separately: IRC §55(d)(2) adds the lesser
+// of 25% of AMTI over the amount at which the exemption is fully phased out,
+// or the exemption ($900,350 and $68,500 on the 2025 form).
+function computeAmti(input: Form6251Input, cfg: F1040Config): number {
   const base = computeAmtiBeforeMfsAddition(input);
   if (input.filing_status !== FilingStatus.MFS) return base;
-  const addition = Math.min(
-    MFS_LINE4_ADDITION_CAP,
-    Math.max(0, Math.round((base - MFS_LINE4_ADDITION_START) * 0.25)),
-  );
-  return base + addition;
+  const cap = cfg.amtExemption[FilingStatus.MFS];
+  const start = cfg.amtPhaseOutStart[FilingStatus.MFS] +
+    cap / cfg.amtExemptionPhaseOutRate;
+  if (base <= start) return base;
+  // From 2026, §55(d)(4)(A)(ii)(IV) substitutes 50% for "25 percent" in
+  // §55(d)(2), which states that rate twice. The draft 2026 form gives only
+  // the $640,200 start, so the addition waits for the 2026 instructions.
+  if (cfg.amtExemptionPhaseOutRate !== 0.25) {
+    throw new Error(
+      `Form 6251 married filing separately AMTI over $${start.toLocaleString("en-US")} needs the published line 4 addition rate`,
+    );
+  }
+  return base + Math.min(cap, Math.round((base - start) * 0.25));
 }
 
-// Form 6251 Line 5 Worksheet: compute the exemption amount with phase-out
-// Full exemption phases out at 25¢ per dollar of AMTI above the threshold.
-// Exemption = max(0, full_exemption − 25% × max(0, AMTI − phase_out_start))
-// IRC §55(d); Form 6251 Instructions page 9
+// Form 6251 Line 5 Worksheet: compute the exemption amount with phase-out.
+// Exemption = max(0, full_exemption − rate × max(0, AMTI − phase_out_start)),
+// 25% through 2025 and 50% from 2026. IRC §55(d)(2), (4).
 function computeExemption(
   amti: number,
   status: FilingStatus,
   exemption: Record<FilingStatus, number>,
   phaseOutStart: Record<FilingStatus, number>,
+  phaseOutRate: number,
 ): number {
   const fullExemption = exemption[status];
   const start = phaseOutStart[status];
   const excess = Math.max(0, amti - start);
   // Retain the unpublished worksheet multiplication through subtraction;
   // settle only the resulting exemption entered on filed line5.
-  const reduction = excess * PHASE_OUT_RATE;
+  const reduction = excess * phaseOutRate;
   return Math.round(Math.max(0, fullExemption - reduction));
 }
 
@@ -443,6 +454,7 @@ function partThreeWorksheetInputs(
   unrecaptured1250: number,
   rate28Gain: number,
   status: FilingStatus,
+  cfg: F1040Config,
   form4952Election: number,
   electedCapitalGain: number,
 ): {
@@ -482,9 +494,10 @@ function partThreeWorksheetInputs(
   const scheduleDLine13 = worksheetLine10 - scheduleDLine12;
   const scheduleDLine14 = Math.max(0, regularTaxableIncome - scheduleDLine13);
   const scheduleDLine18 = Math.max(0, regularTaxableIncome - worksheetLine10);
-  const limit = status === FilingStatus.MFJ || status === FilingStatus.QSS
-    ? 394_600
-    : 197_300;
+  // Schedule D Tax Worksheet line 19: the top of the 24% bracket.
+  const limit = bracketsForStatus(status, cfg).find((bracket) =>
+    bracket.rate === 0.24
+  )!.upTo;
   const scheduleDLine19 = Math.min(regularTaxableIncome, limit);
   const scheduleDLine20 = Math.min(scheduleDLine14, scheduleDLine19);
   const scheduleDLine21 = Math.max(scheduleDLine18, scheduleDLine20);
@@ -854,7 +867,7 @@ class Form6251Node extends TaxNode<typeof inputSchema> {
     const line2k = line2kBasisDispositionAdjustment(input);
 
     // Part I — AMTI (Line 4)
-    const amti = computeAmti(input);
+    const amti = computeAmti(input, cfg);
 
     // Part II — Exemption (Line 5)
     const exemption = computeExemption(
@@ -862,6 +875,7 @@ class Form6251Node extends TaxNode<typeof inputSchema> {
       input.filing_status,
       cfg.amtExemption,
       cfg.amtPhaseOutStart,
+      cfg.amtExemptionPhaseOutRate,
     );
 
     // Line 6 — Taxable excess
@@ -1024,6 +1038,7 @@ class Form6251Node extends TaxNode<typeof inputSchema> {
           0,
           0,
           input.filing_status,
+          cfg,
           0,
           0,
         )
@@ -1038,6 +1053,7 @@ class Form6251Node extends TaxNode<typeof inputSchema> {
             0,
             0,
             input.filing_status,
+            cfg,
             amtElection,
             electedCapitalGain,
           )
@@ -1049,6 +1065,7 @@ class Form6251Node extends TaxNode<typeof inputSchema> {
             input.unrecaptured_1250_gain ?? 0,
             input.rate_28_gain ?? 0,
             input.filing_status,
+            cfg,
             0,
             0,
           )
@@ -1060,6 +1077,7 @@ class Form6251Node extends TaxNode<typeof inputSchema> {
               0,
               0,
               input.filing_status,
+              cfg,
               0,
               0,
             ),
@@ -1074,6 +1092,7 @@ class Form6251Node extends TaxNode<typeof inputSchema> {
             input.unrecaptured_1250_gain ?? 0,
             input.rate_28_gain ?? 0,
             input.filing_status,
+            cfg,
             input.form4952_amt_election ?? 0,
             input.form4952_amt_elected_capital_gain ?? 0,
           ),
@@ -1196,7 +1215,7 @@ class Form6251Node extends TaxNode<typeof inputSchema> {
       (!hasPreferentialIncome || canRefigureForeignPreference ||
         canRefigureDomesticPreference);
     const counterfactualAmti = canComputeCounterfactual
-      ? amtiWithoutKnownLine2cThrough3(input)
+      ? amtiWithoutKnownLine2cThrough3(input, cfg)
       : 0;
     const counterfactualExemption = canComputeCounterfactual
       ? computeExemption(
@@ -1204,6 +1223,7 @@ class Form6251Node extends TaxNode<typeof inputSchema> {
         input.filing_status,
         cfg.amtExemption,
         cfg.amtPhaseOutStart,
+        cfg.amtExemptionPhaseOutRate,
       )
       : 0;
     const counterfactualTaxableExcess = canComputeCounterfactual
@@ -1247,6 +1267,7 @@ class Form6251Node extends TaxNode<typeof inputSchema> {
           0,
           0,
           input.filing_status,
+          cfg,
           0,
           0,
         )
@@ -1260,6 +1281,7 @@ class Form6251Node extends TaxNode<typeof inputSchema> {
             0,
             0,
             input.filing_status,
+            cfg,
             0,
             0,
           ),

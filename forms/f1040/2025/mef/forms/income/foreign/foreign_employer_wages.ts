@@ -19,6 +19,7 @@ import {
 } from "../../../../../nodes/inputs/income/wages/w2/index.ts";
 import type { MefBuildContext, MefFormDescriptor } from "../../../form-descriptor.ts";
 import type { z } from "zod";
+import { mefTaxYear } from "../../../support/year-config.ts";
 
 function filingDetails(
   context?: MefBuildContext,
@@ -121,7 +122,7 @@ function correctivePlanAmount(context?: MefBuildContext): number {
       "Corrective plan distributions need a separate line 1h source reconciliation from FEC or Form 2555 wages",
     );
   }
-  assert1099RRecipientOwner(raw, context?.filer);
+  assert1099RRecipientOwner(raw, context?.filer, mefTaxYear(context));
   const references = items.map((item) => item.source_document_reference);
   if (
     new Set(references).size !== items.length ||

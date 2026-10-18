@@ -7,6 +7,7 @@ import {
 import { FilingStatus as NodeFilingStatus } from "../../../../../nodes/types.ts";
 import { FilingStatus as HeaderFilingStatus } from "../../../../../mef/header.ts";
 import type { MefBuildContext, MefFormDescriptor } from "../../../form-descriptor.ts";
+import { mefYearConfig } from "../../../support/year-config.ts";
 
 export interface Fields {
   dep_care_benefits?: number | null;
@@ -143,6 +144,7 @@ function buildIRS2441(fields: Input, context?: MefBuildContext): string {
     details,
     agi,
     fields.dep_care_benefits ?? 0,
+    mefYearConfig(context),
   );
   const schedule3 = context?.pending?.schedule3;
   const schedule3Credit = schedule3 && typeof schedule3 === "object" &&

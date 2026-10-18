@@ -125,6 +125,7 @@ export const form4137Pdf: PdfFormDescriptor = {
     const calculated = calculateForm4137(
       input,
       CONFIG_BY_YEAR[2025].ssWageBase,
+      2025,
     );
     if (calculated.length > 0 && allPending?.f1040) {
       if (!allPending.w2) {

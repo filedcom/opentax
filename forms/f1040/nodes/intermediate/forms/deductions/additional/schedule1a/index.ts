@@ -7,6 +7,7 @@ import { f1040 } from "../../../../../outputs/general/return-assembly/f1040/inde
 import { standard_deduction } from "../../../../worksheets/deductions/standard/standard_deduction/index.ts";
 
 import {
+  assertVehicleLoanDatesInYear,
   inputSchema,
   qualifiedBusinessTipQbiSource,
   qualifiedOvertimeDeduction,
@@ -24,8 +25,19 @@ class Schedule1ANode extends TaxNode<typeof inputSchema> {
 
   compute(ctx: NodeContext, rawInput: Schedule1AInput): NodeResult {
     const input = inputSchema.parse(rawInput);
+    assertVehicleLoanDatesInYear(ctx, input);
+    // TY2026 tip sources enter through the income section's enablement.
+    if (
+      ctx.taxYear >= 2026 &&
+      (input.form4070_reports !== undefined ||
+        input.employer_tip_statements !== undefined)
+    ) {
+      throw new Error(
+        "TY2026 Schedule 1-A Form 4070 and employer tip statements are not yet supported",
+      );
+    }
     const enhancedSeniorDeduction = seniorDeduction(ctx, input);
-    const vehicleInterestDeduction = vehicleLoanInterestDeduction(input);
+    const vehicleInterestDeduction = vehicleLoanInterestDeduction(ctx, input);
     const deduction = qualifiedTipsDeduction(input) +
       qualifiedOvertimeDeduction(input) +
       vehicleInterestDeduction +

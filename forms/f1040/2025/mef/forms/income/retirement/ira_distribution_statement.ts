@@ -4,6 +4,7 @@ import {
   iraDistributionExplanation,
 } from "../../../../../nodes/inputs/income/retirement/f1099r/index.ts";
 import type { MefFormDescriptor } from "../../../form-descriptor.ts";
+import { mefTaxYear } from "../../../support/year-config.ts";
 
 /** TY2025 ReturnData1040 permits one statement linked from line 4c(1). */
 export const iraDistributionStatement: MefFormDescriptor<
@@ -18,7 +19,10 @@ export const iraDistributionStatement: MefFormDescriptor<
     const raw = context?.pending?.f1099r;
     if (raw === undefined) return "";
     const source = f1099rInputSchema.parse(raw);
-    const explanation = iraDistributionExplanation(source.f1099rs);
+    const explanation = iraDistributionExplanation(
+      source.f1099rs,
+      mefTaxYear(context),
+    );
     return explanation === undefined
       ? ""
       : elements("IRADistributionStatement", [

@@ -593,12 +593,12 @@ async function buildPdfBytesInternal(
     assertLine1hSupportedSource(normalized.f1040, normalized, filer);
   }
   assertGeneral1040HeaderSource(normalized);
-  assertGeneral1040DependentSource(normalized);
+  assertGeneral1040DependentSource(normalized, 2025);
   assertGeneral1040DepositSource(normalized, filer);
   if (filer) assert1098EInterestSource(normalized, filer);
   assertExtensionPaymentSource(normalized, filer);
-  assert1099RRecipientOwner(normalized.f1099r, filer);
-  assertPositiveW2GRecipient(normalized.w2g, filer);
+  assert1099RRecipientOwner(normalized.f1099r, filer, 2025);
+  assertPositiveW2GRecipient(normalized.w2g, filer, 2025);
   assertNecWithholdingRecipient(normalized.f1099nec, filer);
   assert1099BRecipientOwner(normalized.f1099b, filer);
   assertNoRepeatedBrokerSaleSources(normalized.f1099b, normalized.f8949);
@@ -636,13 +636,13 @@ async function buildPdfBytesInternal(
   assertSchedule2W2Line13Sources(normalized);
   assertSchedule2W2Line17KSource(normalized);
   assertSchedule2Line17HSources(normalized, filer);
-  assertSchedule2Form4137Tax(normalized);
-  assertLine1cForm4137Income(normalized);
-  assertSchedule2Form8919Tax(normalized);
-  assertLine1gForm8919Wages(normalized);
-  assertSchedule2ScheduleHTax(normalized);
+  assertSchedule2Form4137Tax(normalized, 2025);
+  assertLine1cForm4137Income(normalized, 2025);
+  assertSchedule2Form8919Tax(normalized, 2025);
+  assertLine1gForm8919Wages(normalized, 2025);
+  assertSchedule2ScheduleHTax(normalized, 2025);
   assertSchedule2Form8960Tax(normalized);
-  assertSchedule2ScheduleSETax(normalized);
+  assertSchedule2ScheduleSETax(normalized, 2025);
   assertSchedule2Form8828Tax(normalized);
   assertSchedule2Form8936Repayment(normalized);
   assertSchedule3Form8859Credit(normalized);
@@ -658,7 +658,7 @@ async function buildPdfBytesInternal(
   assertForm8915FSourceLinks(normalized);
   assertKIncomeClassification(normalized);
   if (filer) {
-    assertEitcChildSources(pending, filer);
+    assertEitcChildSources(pending, filer, 2025);
     assertKReportedErrorSources(normalized, filer);
     assertScheduleCReceiptSourceIdentity(normalized, filer);
     assertScheduleCStatutoryW2Sources(normalized, filer);

@@ -30,6 +30,7 @@ import { form4952 } from "../../../../intermediate/forms/deductions/investments/
 import { f1040 } from "../../../../outputs/general/return-assembly/f1040/index.ts";
 import type { NodeContext } from "../../../../../../../core/types/node-context.ts";
 import { CONFIG_BY_YEAR } from "../../../../config/index.ts";
+import { assertDatesInTaxYear, ISO_DATE } from "../../../../utils.ts";
 
 const nomineeDistributionSchema = z.object({
   box1a: z.number().nonnegative(),
@@ -74,7 +75,7 @@ export const itemSchema = z.object({
   // investment property and are excluded from Form 4952 manual "other" facts.
   investment_property_for_form4952: z.boolean().optional(),
   qualified_dividend_filing_review: z.object({
-    ex_dividend_date: z.string().regex(/^2025-\d{2}-\d{2}$/).refine(
+    ex_dividend_date: z.string().regex(ISO_DATE).refine(
       realCalendarDate,
       "Expected a real calendar date",
     ),
@@ -123,7 +124,7 @@ export const itemSchema = z.object({
   box16: z.number().nonnegative().optional(),
   holdingPeriodDays: z.number().nonnegative().optional(),
   foreign_tax_holding_review: z.object({
-    ex_dividend_date: z.string().regex(/^2025-\d{2}-\d{2}$/),
+    ex_dividend_date: z.string().regex(ISO_DATE),
     qualifying_held_days_in_31_day_window: z.number().int().min(16).max(31),
     diminished_risk_days_excluded: z.number().int().min(0).max(31),
     no_related_payment_obligation_confirmed: z.literal(true),
@@ -132,7 +133,7 @@ export const itemSchema = z.object({
     reviewed_on: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
   }).strict().optional(),
   section199a_holding_review: z.object({
-    ex_dividend_date: z.string().regex(/^2025-\d{2}-\d{2}$/),
+    ex_dividend_date: z.string().regex(ISO_DATE),
     qualified_held_days_in_91_day_window: z.number().int().min(0).max(91),
     diminished_risk_days_excluded: z.number().int().nonnegative(),
     no_related_payment_obligation_confirmed: z.literal(true),
@@ -433,6 +434,15 @@ class F1099divNode extends TaxNode<typeof inputSchema> {
 
     for (const item of div1099s) {
       validateDivItem(item);
+      assertDatesInTaxYear(
+        ctx.taxYear,
+        [
+          item.qualified_dividend_filing_review?.ex_dividend_date,
+          item.foreign_tax_holding_review?.ex_dividend_date,
+          item.section199a_holding_review?.ex_dividend_date,
+        ],
+        `1099-DIV holding reviews need a ${ctx.taxYear} ex-dividend date`,
+      );
     }
 
     const shouldRouteScheduleB = needsScheduleB(
