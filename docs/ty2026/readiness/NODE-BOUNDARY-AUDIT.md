@@ -1,6 +1,6 @@
 # TY2026 boundary audit for the remaining TY2025 graph nodes
 
-Snapshot: September 27, 2026. The generated [191-node inventory](../inventories/node-coverage.csv)
+Snapshot: September 27, 2026. The generated 191-node inventory
 is the exhaustive registry worklist. The [parity queue](./PARITY-QUEUE.md) and
 specialist contracts map forms with PDF/MeF serializers. The **85 nodes below**
 were not named individually in those plans. This document assigns each a
@@ -9,7 +9,7 @@ as evidence of a valid TY2026 filing route.
 
 ## Shared acceptance rule
 
-For each node, read the existing source module from `node-coverage.csv` and
+For each node, read its existing source module and
 pin the current 2026 authority before registering it. Trace every declared
 output to a registered TY2026 recipient and every amount to its 1040 line.
 If a tax form or statement must be filed, add its PDF and current MeF route;

@@ -1,8 +1,8 @@
 # TY2026 Form 8815 savings-bond education exclusion contract
 
-Source snapshot: [IRS draft Form 8815 (2026)](../corpus/draft/f8815.pdf),
+Source snapshot: [IRS draft Form 8815 (2026)](../../../irs/corpus/ty2026/draft/f8815.pdf),
 SHA-256 `c7e4cdb44c8b734b9c62a214755b41b21e189238283632e2ddd20c3d6b9eeaa7`,
-and [2026 draft instructions](../corpus/draft/i8815.pdf), SHA-256
+and [2026 draft instructions](../../../irs/corpus/ty2026/draft/i8815.pdf), SHA-256
 `931b0f01c17f81500124e8ad859ff03948cd788f936936ae6c3e9d02fd4c5257`.
 The form gives 2026 phaseout thresholds and routes its line 14 to Schedule B
 line 3. Recheck final PDFs and the selected 2026 MeF package before filing.
@@ -45,7 +45,7 @@ allocations before computing Form 8815.
   attachment, line details, student/school identity or continuation.
 - The TY2025 PDF descriptor maps `ee_bond_interest`, `bond_proceeds` and
   `qualified_expenses` into **line 1 student/institution text fields**. It
-  cannot be used for the 2026 attachment. The [2026 field inventory](../inventories/pdf-fields/pdf-fields-f8815.csv)
+  cannot be used for the 2026 attachment. The 2026 field inventory
   has **23 terminal text widgets**, including three line 1 pairs and split
   decimal fields for lines 7 and 12. TY2025 MeF emits only four aggregate
   amounts and needs current-year XSD/statement review. Form 8815 is absent

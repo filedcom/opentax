@@ -1,9 +1,9 @@
 # TY2026 Forms 1099-MISC/NEC source and Schedule 1-A graph
 
 Snapshot: September 27, 2026. The IRS final December 2026
-[Form 1099-MISC](../corpus/authorities/f1099msc--2026.pdf),
-[Form 1099-NEC](../corpus/authorities/f1099nec--2026.pdf) and
-[combined instructions](../corpus/authorities/i1099mec--2026.pdf) are pinned.
+[Form 1099-MISC](../../../irs/corpus/ty2026/authorities/f1099msc--2026.pdf),
+[Form 1099-NEC](../../../irs/corpus/ty2026/authorities/f1099nec--2026.pdf) and
+[combined instructions](../../../irs/corpus/ty2026/authorities/i1099mec--2026.pdf) are pinned.
 Their SHA-256 hashes are `38051fe1cdce8fac5183a7e7b182b1a0de590dcfec3e4f66a156eba3f98943fa`,
 `68a8f00078be6dd6a4912cc4209df317b31840d5fe19560222d39df9f2f7ff49`
 and `883fb800e5100ff74a37fb0427d0c16c14031a2421a058254f71c66f8c03087e`.
@@ -15,7 +15,7 @@ source-document rule separately.
 
 | Form | 2026 amount/detail boxes | TY2026 meaning and destination |
 | --- | --- | --- |
-| 1099-NEC | 1a nonemployee compensation; **1b cash tips**, **1c Treasury tipped occupation code**, **1d qualified overtime** | Boxes 1b and 1d are **included in 1a**. Reconcile 1a to one existing business/farm activity or, when worker-classification facts support it, Form 8919 wages. Use 1b/1c for the qualified-tip table and 1d for overtime in draft [Schedule 1-A](../corpus/draft/f1040s1a.pdf). Keep the payer TIN and business identity. Never add 1b/1d as separate gross income. |
+| 1099-NEC | 1a nonemployee compensation; **1b cash tips**, **1c Treasury tipped occupation code**, **1d qualified overtime** | Boxes 1b and 1d are **included in 1a**. Reconcile 1a to one existing business/farm activity or, when worker-classification facts support it, Form 8919 wages. Use 1b/1c for the qualified-tip table and 1d for overtime in draft [Schedule 1-A](../../../irs/corpus/ty2026/draft/f1040s1a.pdf). Keep the payer TIN and business identity. Never add 1b/1d as separate gross income. |
 | 1099-NEC | 2 direct-sales indicator; 3 excess golden parachute; 4 federal withholding | Preserve the direct-sales answer; reconcile box 3 with its underlying payment and 2026 Schedule 2 **line 13k** tax, and box 4 to 1040 line 25b. The box 3 amount may also be income, but is not necessarily a new Schedule 1 line 8z receipt. |
 | 1099-MISC | 1 rents; 2 royalties; 3 other income; 5 fishing-boat proceeds; 6 medical payments; 8 substitute payments; 9 crop insurance; 10 attorney proceeds; 11 fish purchased; 12 §409A deferrals; 15 nonqualified deferred compensation | Route each payment by property, business, farm, asset or other-income character, retaining payer and activity IDs. Reconcile crop insurance to the farm year/deferral election, royalties to property, and any 409A amount to the correct current income/additional-tax branch. Do not treat an attorney's gross proceeds as automatically all taxable to the recipient. |
 | 1099-MISC | **13a cash tips, 13b occupation code, 14 qualified overtime** | Tips and overtime are **included in box 3** per the 2026 instructions. Feed payer TIN, cash-tip amount/code and overtime amount to Schedule 1-A's separate qualified-tip and overtime tables after source/business eligibility checks. Do not add these detail boxes to box 3 income again. |

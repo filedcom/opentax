@@ -1,9 +1,9 @@
 # TY2026 Schedule J farm/fishing income-averaging graph
 
-Snapshot: September 27, 2026. The IRS [2026 Schedule J draft](../corpus/draft/f1040sj.pdf)
+Snapshot: September 27, 2026. The IRS [2026 Schedule J draft](../../../irs/corpus/ty2026/draft/f1040sj.pdf)
 is pinned at SHA-256 `3a98f9c8e1d3a936a28ddd60a4ba6c51ba5438c53a4699cf1137f106824545b4`;
-its [27 PDF widgets](../inventories/pdf-fields/pdf-fields-f1040sj.csv) cover both filed pages and
-lines 1–23. The currently available [Schedule J instructions](../corpus/authorities/i1040sj--2025.pdf)
+its 27 PDF widgets cover both filed pages and
+lines 1–23. The currently available [Schedule J instructions](../../../irs/corpus/ty2026/authorities/i1040sj--2025.pdf)
 are **TY2025 only**, pinned as a method comparator at SHA-256
 `c5152385331a2ed517245a89a1ba597f0493b240dfe57edec1416e16baa3f870`.
 The expected draft instruction URL still serves 2025. Obtain 2026

@@ -2,6 +2,7 @@ import { join } from "node:path";
 import { catalog } from "../../catalog.ts";
 import { buildEngineInputs, createReturn, loadReturn } from "../store/store.ts";
 import { singletonPublicInputKeys } from "../store/public-input-keys.ts";
+import { resolveSourceBytes } from "./return-source-files.ts";
 import { normalizeAllPending } from "../../forms/f1040/2025/return-processing/pending.ts";
 
 function getCatalogEntry(formType: string, year: number) {
@@ -169,7 +170,10 @@ export async function getReturnCommand(
   const { meta, inputs } = await loadReturn(returnPath);
 
   const def = getCatalogEntry(meta.formType ?? "f1040", meta.year);
-  const engineInputs = buildEngineInputs(inputs, singletonPublicInputKeys(def));
+  const engineInputs = await resolveSourceBytes(
+    returnPath,
+    buildEngineInputs(inputs, singletonPublicInputKeys(def)),
+  );
   const result = def.executeReturn(engineInputs);
   const pending = normalizeAllPending(result.pending);
 

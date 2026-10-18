@@ -1,41 +1,22 @@
 ---
 name: tax-status
-description: Human-readable status report for all tax forms. Shows benchmark accuracy, active root causes, and build/fix state for each form:year.
+description: Where the engine stands — benchmark pass rate per form:year, MeF readiness of the sample returns, and the TY2025 ATS scoreboard. Read-only.
 ---
 
 # Tax Status
 
-## Step 0 — Discover Forms
+Run these and summarize; change nothing.
 
-Glob `forms/f*/FORM.md` to enumerate all known forms.
-Read `.state/bench/state.json`. If it does not exist → print "Harness not initialized." and stop.
-Confirm `version === 2`. If `version === 1` → print "State schema outdated. Run migration." and stop.
+1. For each `benchmark/cases/<form>/<year>/` directory:
+   `bun run bench:cached --form <form> --year <year> --json`. Report pass/total
+   and the failing cases grouped by failing line.
+2. `bun run check:mef`: sample returns ready to file, the most common
+   findings, and any `NEW` or `FIXED` problem against
+   `scripts/testing/mef-baseline.json`.
+3. `bun run check:ats`: scenarios passing out of 8, packet values matched, and
+   any blocker, schema failure or unexplained value.
+4. `bun run check:irs`: which IRS packages in `irs/` are missing (XSD checks
+   are skipped without them).
 
-## Step 1 — Print Report
-
-For each entry in `state.forms`, print one section:
-
-```
-━━━ Tax Harness Status ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-{form}:{year} Fix
-  Status:    {fix.status}
-  Baseline:  {fix.benchmark_baseline.pass} pass / {fix.benchmark_baseline.fail} fail
-  Progress:  ████████░░ {pct}%
-  Root Causes:
-    ✓ {name}  (fixed)
-    ✗ {name}  (pending — cases {list})
-
-{form}:{year} Build
-  Status:    {build.status}
-  Phase:     {build.phase}
-  Cases:     {build.benchmark_cases_created} benchmark cases
-  Nodes:     {build.nodes_built.length} nodes built
-  Last run:  {last benchmark_runs entry}
-
-━━━ Recent Activity ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-{last 5 entries from .state/bench/progress.md}
-```
-
-Use color: green for done/fixed, red for pending/failed, yellow for running.
+End with the next step: `/tax-fix <form>:<year>` for benchmark failures,
+`/tax-fix mef` for MeF or ATS blockers.

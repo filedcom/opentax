@@ -91,7 +91,8 @@ Use `opentax node inspect --node_type <type> --json` to see what fields each for
 Add every document:
 
 ```bash
-opentax form add --returnId <id> --node_type general '{"filing_status": "mfj"}'
+# Filing status, identity and dependents: the `general` object of a start entry
+opentax form add --returnId <id> --node_type start '{"general": {"filing_status": "mfj", "dependents": [...]}}'
 opentax form add --returnId <id> --node_type w2 '{"box1_wages": 105000, "box2_fed_withheld": 15000}'
 # ... add all documents
 ```

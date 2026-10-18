@@ -1,12 +1,12 @@
 # TY2026 vehicle-loan interest source and Schedule 1-A graph
 
 Snapshot: September 27, 2026. The IRS [December 2026 Form
-1098-VLI](../corpus/authorities/f1098vli--2026.pdf), [instructions](../corpus/authorities/i1098vli--2026.pdf),
-and [2026-39 bulletin with final regulations](../corpus/authorities/irb26-39.pdf)
+1098-VLI](../../../irs/corpus/ty2026/authorities/f1098vli--2026.pdf), [instructions](../../../irs/corpus/ty2026/authorities/i1098vli--2026.pdf),
+and [2026-39 bulletin with final regulations](../../../irs/corpus/ty2026/authorities/irb26-39.pdf)
 are pinned at SHA-256 `5518ddcaac288ff567da4ce5e2267de9371d42d73f762939c46515e0d041e060`,
 `9b6499edf218b56b54711284d9bc7a249ef7524546feb0088e167125031e5ae4`,
 and `d7771a6ba17cb11242ac1dfeb23c71b5ac042b6d58666f16181b66b859a530a1`.
-The [2026 Schedule 1-A draft](../corpus/draft/f1040s1a.pdf) specifically names
+The [2026 Schedule 1-A draft](../../../irs/corpus/ty2026/draft/f1040s1a.pdf) specifically names
 1098-VLI box 1 at Part IV. A lender issues one statement per specified
 passenger vehicle loan with at least $600 of reportable interest; the
 issuance threshold is not a recipient deduction floor.

@@ -92,5 +92,5 @@ TY2025 v5.4 XSDs match the retained extracted tree with no extra, missing
 or changed XSDs. This independently rechecks current Drive bytes against
 the retained hashes; it does not provide an IRS-published digest/attestation.
 The nested TY2025 schema package contains no business-rule workbook/package.
-See the [current execution record](../readiness/ty2025-readiness-execution-2026-10-07.md)
+See the current execution record
 and private `imf-downloaded-package-audit.json` for exact scope.

@@ -9,22 +9,58 @@ import { buildPending } from "../2025/mef/execution/pending.ts";
 import type { MefFormsPending } from "../2025/mef/types.ts";
 import { assertF1040FinalHeader } from "../2025/domains/general/return-assembly/filer-source-reconciliation.ts";
 import { F1040_2026_CONFIG } from "./config.ts";
+import {
+  generalInputs,
+  generalTy2025OnlyGeneralFields,
+} from "./supported/general.ts";
+import {
+  incomeInputs,
+  incomeTy2025OnlyGeneralFields,
+} from "./supported/income.ts";
+import {
+  adjustmentsInputs,
+  adjustmentsTy2025OnlyGeneralFields,
+} from "./supported/adjustments.ts";
+import {
+  deductionsInputs,
+  deductionsTy2025OnlyGeneralFields,
+} from "./supported/deductions.ts";
+import {
+  creditsInputs,
+  creditsTy2025OnlyGeneralFields,
+} from "./supported/credits.ts";
+import {
+  taxesInputs,
+  taxesTy2025OnlyGeneralFields,
+} from "./supported/taxes.ts";
+import {
+  paymentsInputs,
+  paymentsTy2025OnlyGeneralFields,
+} from "./supported/payments.ts";
 
 // Public inputs whose whole calculation path reads the tax year from the
-// node context. Every other 2025 input still has TY2025 rules or literals in
-// its path, so a TY2026 return refuses it rather than computing 2025 law.
+// node context, one file per return section (see README.md). Every other 2025
+// input still has TY2025 rules or literals in its path, so a TY2026 return
+// refuses it rather than computing 2025 law.
 export const TY2026_SUPPORTED_INPUTS: ReadonlySet<string> = new Set([
-  "general",
-  "w2",
-  "f8888",
+  ...generalInputs,
+  ...incomeInputs,
+  ...adjustmentsInputs,
+  ...deductionsInputs,
+  ...creditsInputs,
+  ...taxesInputs,
+  ...paymentsInputs,
 ]);
 
 // General-input facts whose rules are still dated to TY2025.
-const TY2025_ONLY_GENERAL_FIELDS: readonly string[] = [
-  "dependents",
-  "dual_status_return_2025",
-  "ptc_residence_states_2025",
-  "ptc_residence_months_2025",
+export const TY2025_ONLY_GENERAL_FIELDS: readonly string[] = [
+  ...generalTy2025OnlyGeneralFields,
+  ...incomeTy2025OnlyGeneralFields,
+  ...adjustmentsTy2025OnlyGeneralFields,
+  ...deductionsTy2025OnlyGeneralFields,
+  ...creditsTy2025OnlyGeneralFields,
+  ...taxesTy2025OnlyGeneralFields,
+  ...paymentsTy2025OnlyGeneralFields,
 ];
 
 const context = { taxYear: F1040_2026_CONFIG.taxYear, formType: "f1040" };
@@ -43,14 +79,17 @@ export function assertTy2026Inputs(inputs: Record<string, unknown>): void {
   );
   if (unsupported.length > 0) {
     throw new Error(
-      `TY2026 does not yet support these inputs: ${unsupported.sort().join(", ")}`,
+      `TY2026 does not yet support these inputs: ${
+        unsupported.sort().join(", ")
+      }`,
     );
   }
   const general = inputs.general;
   if (general !== null && typeof general === "object") {
     const dated = TY2025_ONLY_GENERAL_FIELDS.filter((field) => {
       const value = (general as Record<string, unknown>)[field];
-      return value !== undefined && !(Array.isArray(value) && value.length === 0);
+      return value !== undefined &&
+        !(Array.isArray(value) && value.length === 0);
     });
     if (dated.length > 0) {
       throw new Error(

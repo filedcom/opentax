@@ -1,10 +1,8 @@
 # TY2026 draft Form 1040 PDF field map
 
-Source: pinned [`corpus/draft/f1040.pdf`](../corpus/draft/f1040.pdf), created
+Source: pinned [`irs/corpus/ty2026/draft/f1040.pdf`](../../../irs/corpus/ty2026/draft/f1040.pdf), created
 August 25 and modified September 17, 2026 according to its PDF metadata.
-`pdf-fields-f1040.csv` records all 207 AcroForm fields, their IRS tooltips,
-widget rectangles, and physical PDF pages. Regenerate it with
-`build_pdf_fields.py` using the bundled `pypdf` runtime. The draft PDF has an
+It has 207 AcroForm fields. The draft PDF has an
 unnumbered cover page: printed Form 1040 pages 1 and 2 are physical PDF pages
 2 and 3. Recheck every name against the final 2026 form before release.
 

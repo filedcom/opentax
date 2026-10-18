@@ -1,10 +1,10 @@
 # TY2026 HSA contribution, distribution, and testing-period contract
 
-Sources: pinned [2026 draft Form 8889](../corpus/draft/f8889.pdf), SHA-256
+Sources: pinned [2026 draft Form 8889](../../../irs/corpus/ty2026/draft/f8889.pdf), SHA-256
 `c94550b7d4b735b11e9901c5dbff5dab0aa6dcbbefab04864c61cd5275cafec8`,
-[2026 draft instructions](../corpus/draft/i8889.pdf), SHA-256
+[2026 draft instructions](../../../irs/corpus/ty2026/draft/i8889.pdf), SHA-256
 `c7f6165c62f63ee7eee9e59ea0c1bde038bc4f0a4d8bf6c3bebdc264c2e3c01c`,
-and final [Rev. Proc. 2025-19](../corpus/authorities/rp-25-19.pdf) for indexed
+and final [Rev. Proc. 2025-19](../../../irs/corpus/ty2026/authorities/rp-25-19.pdf) for indexed
 limits. Recheck the final form/instructions and current MeF package before
 filing. The form's **visible** line 3 says $4,400 self-only and $8,750 family;
 its `f1_4[0]` AcroForm tooltip incorrectly says 2025/$4,300/$8,550. Use
@@ -26,7 +26,7 @@ distribution requires Form 8889 even if it creates no taxable income.
 | Distributions | Form 1099-SA box 1 less valid HSA rollover and timely excess withdrawal/earnings; subtract unreimbursed qualified expenses incurred after HSA establishment. Track the taxable portion subject to a death, disability or age-65 exception separately. | Lines 14a–17b; line **16 → Schedule 1 line 8f**, line **17b → Schedule 2 line 13c**. A checked 17a does not excuse unrelated taxable distributions from 20% tax. |
 | Failure of testing period | If the last-month rule or a qualified funding distribution failed its subsequent testing period, calculate recapture from the contribution-year record. Death/disability exceptions require their own evidence. | Lines 18–21; line **20 → Schedule 1 line 8f**, line **21 → Schedule 2 line 13d**. Do not merge these with distribution tax. |
 
-The [2026 PDF inventory](../inventories/pdf-fields/pdf-fields-f8889.csv) has **27 fields**, all in the
+The 2026 PDF inventory has **27 fields**, all in the
 canonical field tree on the single printed form page (PDF page 2 after the
 draft coversheet). Fields `f1_3[0]`–`f1_24[0]` cover lines 2–21; `c1_1[0/1]`
 select coverage and `c1_2[0]` is the line 17a exception box. Use a separate

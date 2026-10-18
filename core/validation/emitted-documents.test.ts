@@ -5,7 +5,6 @@ import { createReturnContext } from "./context.ts";
 import { evaluateRules } from "./engine.ts";
 import {
   all,
-  alwaysPass,
   amount,
   attachmentDescStartsWith,
   documentCntMatches,
@@ -16,7 +15,6 @@ import {
   hasNonZero,
   hasValue,
   ifThen,
-  irsSide,
   noValue,
   rule,
   sumOfAll,
@@ -62,15 +60,34 @@ test("a repeated document is checked once per copy and sums across copies", () =
   assertEquals(report.entries.map((entry) => entry.ruleNumber), ["SC-T-2"]);
 });
 
-test("an unimplemented rule is not checked rather than passed", () => {
+test("database and duplicate rules are evaluated like any other", () => {
   const report = evaluateRules([
-    rule("IND-T-1", "reject", "missing_data", alwaysPass),
-    rule("IND-T-2", "reject", "missing_data", null),
-    rule("IND-T-4", "reject", "missing_data", irsSide),
-    rule("IND-T-3", "reject", "missing_data", hasValue("NameLine1Txt")),
+    rule("IND-T-1", "reject", "database", hasValue("NameLine1Txt")),
+    rule("IND-T-2", "reject_and_stop", "duplicate", hasValue("NotEmittedAmt")),
   ], context());
   assertEquals(report.summary.passed, 1);
-  assertEquals(report.summary.skipped, 3);
+  assertEquals(report.entries.map((entry) => entry.ruleNumber), ["IND-T-2"]);
+});
+
+test("a schedule of another form is scoped to that form's schedule", () => {
+  const withSchedule = createReturnContext(
+    {},
+    { primarySSN: "111223333", filingStatus: 1 },
+    new Map(),
+    new Map([["f1040", 1]]),
+    parseEmittedReturn(
+      `<Return><ReturnData><IRS1040 documentId="a"></IRS1040>` +
+        `<IRS8936ScheduleA documentId="b"><VIN>X</VIN></IRS8936ScheduleA></ReturnData></Return>`,
+    ),
+  );
+  const report = evaluateRules(
+    [rule("SA-F8936-T", "reject", "incorrect_data", noValue("VIN"))],
+    withSchedule,
+    new Set(["F1040", "F8936ScheduleA"]),
+  );
+  assertEquals(report.entries.map((e) => [e.ruleNumber, e.formRef]), [
+    ["SA-F8936-T", "Schedule A (Form 8936)"],
+  ]);
 });
 
 const grouped = `<Return><ReturnHeader><TaxYr>2025</TaxYr></ReturnHeader><ReturnData documentCnt="3">` +

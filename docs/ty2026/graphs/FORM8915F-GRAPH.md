@@ -1,9 +1,9 @@
 # TY2026 Form 8915-F disaster retirement distribution contract
 
-Source snapshot: [IRS draft Form 8915-F (Rev. December 2026)](../corpus/draft/f8915f.pdf),
+Source snapshot: [IRS draft Form 8915-F (Rev. December 2026)](../../../irs/corpus/ty2026/draft/f8915f.pdf),
 SHA-256 `fc0b5061b2f868a766b681f70953eea888085dd5301a8489d79fa4b949a7f556`.
 The expected draft instruction URL still serves December 2025; pin the
-[December 2025 instructions](../corpus/authorities/i8915f--2025.pdf), SHA-256
+[December 2025 instructions](../../../irs/corpus/ty2026/authorities/i8915f--2025.pdf), SHA-256
 `01720eac68072a62e76b8ef55df4740cefde28aa9623ccc73d3f4fd0d7af654a`,
 only as a comparator. Obtain 2026 instructions, final form and current MeF
 XSD/rules before filing. The form has a 2026 tax-year checkbox and covers
@@ -47,7 +47,7 @@ instructions before applying them to a 2026 calculation.
   negative current Schedule 1 income. `is_roth_ira` treats every Roth
   distribution as tax-free without calculating its taxable portion.
 - TY2025 registers the source node, but there is no TY2025 Form 8915-F PDF
-  or MeF descriptor to extend. The [2026 draft field inventory](../inventories/pdf-fields/pdf-fields-f8915f.csv)
+  or MeF descriptor to extend. The 2026 draft field inventory
   has **102 terminal widgets** across the four form pages, including year,
   FEMA, disaster table, election, amount and Part IV fields. There is no
   TY2026 registry, PDF or MeF route for this attachment.

@@ -1,10 +1,10 @@
 # TY2026 ATS Form 1040 scenario 5 fixture contract
 
-Source: pinned [five-page IRS draft scenario 5 packet](../corpus/ats/1040-scenario-05.pdf),
+Source: pinned [five-page IRS draft scenario 5 packet](../../../irs/corpus/ty2026/ats/1040-scenario-05.pdf),
 SHA-256 `fb94f6a34c6419243e2ca55a94e060a6664bc2730ebfc20cbaef1a893031b30b`.
 The packet embeds a **December 2026** Form 8888 revision, while the separately
-pinned public [draft Form 8888](../corpus/draft/f8888.pdf) and
-[instructions](../corpus/draft/i8888.pdf) are **November 2026** revisions
+pinned public [draft Form 8888](../../../irs/corpus/ty2026/draft/f8888.pdf) and
+[instructions](../../../irs/corpus/ty2026/draft/i8888.pdf) are **November 2026** revisions
 (SHA-256 `035ddccf75b0cef5cc065bca6beded3babd4395fd3df5f3dcc8b90e08f81e437`
 and `2dba8a99cd4d9498dd2d1d7d28050033ace5e338c05b6ce79dd17ab383bac735`).
 Do not assume their final widget or MeF mappings are identical. Keep printed
@@ -39,7 +39,7 @@ reject the split if the refund is less than $1,000.
    and sum of allocations exactly equal to line 35a.
    The instruction “remainder to checking” is resolved from the final refund,
    then the final amounts are frozen for both XML and PDF.
-3. Map the pinned [20-widget Form 8888 draft inventory](../inventories/pdf-fields/pdf-fields-f8888.csv):
+3. Map the pinned 20-widget Form 8888 draft inventory:
    year/header, rows 1–3 amounts, routing/account fields, checking/savings
    buttons, and line 5. The public draft has a cover plus one form page;
    inspect the rendered form and 1040 together, including the 1040 line 35a

@@ -2,15 +2,20 @@
 
 Snapshot: 2026-09-27. This is the coding order for the full TY2025 Form 1040
 product surface in TY2026. It sits beside the [detailed implementation
-plan](./IMPLEMENTATION.md), [191-node ledger](../inventories/node-coverage.csv), [56-PDF
-ledger](../inventories/pdf-coverage.csv), [84-MeF-module ledger](../inventories/mef-coverage.csv), and
-[85-descriptor runtime ledger](../inventories/mef-descriptor-coverage.csv). Do not
+plan](./IMPLEMENTATION.md), 191-node ledger, 56-PDF
+ledger, 84-MeF-module ledger, and
+85-descriptor runtime ledger. Do not
 interpret a TY2025 module or a TY2026 registry entry as a completed 2026
 filing route.
 
-The current `forms/f1040/2026/registry.ts` has **35** registered node keys.
-The current `forms/f1040/2026/pdf/builder.ts` passes **18** attachment slots
-to its renderer. There is **no** `forms/f1040/2026/mef` directory. The
+> Current TY2026 status: `forms/f1040/2026/README.md`. This document is a
+> research snapshot; the 2026-only modules it names (`2026/registry.ts`,
+> `2026/inputs.ts`, `2026/pdf/`, `2026/validation.ts`,
+> `config/2026-indexed.ts`, `nodes/f1040.ts`, `itemized-deductions.ts`,
+> `schedule-a.ts`, `form2441/year-rules.ts`) are not in the current code.
+
+At the 2026-09-27 snapshot a separate 2026 registry had 35 node keys and a
+2026 PDF builder passed 18 attachment slots; neither exists now. The
 [route-gap inventory](../graphs/GRAPH-ROUTES.md) records **33** declared edges from
 registered nodes to absent targets. The 2025 inventories are broader than
 these counts: one tax form can need multiple graph nodes, and some 2026 forms
@@ -18,7 +23,7 @@ have no 2025 counterpart. Recompute these observations after implementation
 changes; they are a snapshot, not a completion score.
 The [boundary audit](./NODE-BOUNDARY-AUDIT.md) maps the other 85 TY2025
 registry nodes to route owners; it does not certify those routes for 2026.
-Every row in the generated [node ledger](../inventories/node-coverage.csv) now has a
+Every row in the generated node ledger now has a
 concrete next action or linked specialist plan. All rows remain
 `audit-required` until their source, graph, PDF, MeF and return tests pass.
 The [Forms 5884/6765/8994 plan](../graphs/FORM5884-6765-8994-GRAPH.md) gives the
@@ -60,7 +65,7 @@ from RRB-1099-R pensions before their combined 1040/withholding handoffs.
 | 1. Finish the return spine | `general`/W-2/AGI → Schedule 1 → deduction choice and QBI → taxable income/tax/AMT → Schedule 2 and credit resolver → Schedules 3/3-A and 8812 → 1040 settlement. | Every filed line and checkbox in the [1040 PDF map](../pdf/PDF-F1040-MAP.md) has one producer. Close the [33 current target gaps](../graphs/GRAPH-ROUTES.md), including values deposited into absent nodes. Validate work authorization, dependent answers, 12f, 13a/13b, 24a–c, 27b/27c, 30 and 32a–c. [Schedule 1](../graphs/SCHEDULE1-GRAPH.md), [Schedule 2/8812](./SCHEDULE2-8812.md), [Schedule 3](../pdf/PDF-SCHEDULE3-MAP.md), [deductions](../graphs/DEDUCTION-GRAPH.md), and [constant sources](./CONSTANTS.md) give line order. |
 | 2. Complete all seven linked 1040 ATS graphs | [ATS index](../ats/ATS.md) scenarios 1–6 and 12, each from source documents through filed attachments. | Bring Schedule H/5695/1062, statutory W-2/8283/8888, farm/rent/SE/QBI, dependent care/education/EIC/8862, W-2G/K-1/overtime, and 7207/3800/7205/7220/4562-B into the 2026 graph. Each [scenario plan](../ats/ATS.md) separates printed, calculated, and application amounts and records its missing facts or source contradictions. |
 | 3. Restore the remaining 2025 return surface | The groups below, including source forms and statements absent from ATS. | For each supported 2025 branch, select a 2026 form/instruction, update input → calculation → cross-form pending keys, build PDF and MeF, then add a source-backed TY2026 case and TY2025 regression. A missing 2026 draft can mean a continuous-use form; determine its current authority before dropping the branch. |
-| 4. Build the filed output product | `forms/f1040/2026/{index,mef,pdf,validation}`, `catalog.ts`, CLI summary and submission ZIP. | One return definition selects the 2026 registry, validation rules, current MeF version/namespace, PDF bundle and attachment list. Follow the [product assembly handoff](./PRODUCT-ASSEMBLY.md) through CLI and archive output. Check complete returns, not just isolated nodes. Reconcile every retained row of [PDF coverage](../inventories/pdf-coverage.csv) and [MeF coverage](../inventories/mef-coverage.csv), plus the new 2026 forms listed below. |
+| 4. Build the filed output product | `forms/f1040/2026/{index,mef,pdf,validation}`, `catalog.ts`, CLI summary and submission ZIP. | One return definition selects the 2026 registry, validation rules, current MeF version/namespace, PDF bundle and attachment list. Follow the [product assembly handoff](./PRODUCT-ASSEMBLY.md) through CLI and archive output. Check complete returns, not just isolated nodes. Reconcile every retained row of PDF coverage and MeF coverage, plus the new 2026 forms listed below. |
 | 5. Release evidence | Final forms/instructions, current XSD and active rules, all ATS cases, target-specific boundary cases, full TY2025 regressions. | Record actual XML validation, reject-rule results, rendered PDF inspection and scenario arithmetic. Local XSD validation alone does not establish IRS ATS acceptance. See the [end-to-end gates](./IMPLEMENTATION.md). |
 
 ## Remaining form groups outside the seven ATS packets
@@ -100,9 +105,9 @@ mixed-use debt from business interest, maps the line-4g tax-rate election
 and routes allowed interest among Schedule A, Form 6198 and source schedules.
 
 These are **work assignments**, not blanket approvals to reuse TY2025 code.
-The pinned draft/authority files and `instruction-coverage.csv` are the
+The pinned draft/authority files are the
 source-status starting points. A row's form list includes the related PDF
-and MeF components where present; use the inventories for exact filenames.
+and MeF components where present.
 
 | Group | TY2025 forms and source nodes to audit | Calculation and filed-output handoff |
 | --- | --- | --- |
@@ -133,7 +138,7 @@ The 2025 serializer and PDF inventories cannot reveal these by themselves:
   no filed PDF/MeF serializer in the inventories.
 - Current Form 8995-A Schedules A–D and any 2026 QBI minimum/ordering changes
   in the [QBI contract](../graphs/QBI-COOPERATIVE-GRAPH.md).
-- The remaining older-year draft URL in [PDF coverage](../inventories/pdf-coverage.csv) is
+- The remaining older-year draft URL in PDF coverage is
   `f4136sa`. The 2026 main Form 4136 is pinned; the current Schedule A URL
   still serves 2025. Its 2025 form and combined instructions are pinned as
   comparators in the [Form 4136 contract](../graphs/FORM4136-GRAPH.md). Recheck the

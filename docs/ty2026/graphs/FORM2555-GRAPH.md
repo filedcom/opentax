@@ -1,9 +1,9 @@
 # TY2026 Form 2555 foreign earned income and housing contract
 
-Sources: pinned [2026 draft Form 2555](../corpus/draft/f2555.pdf), SHA-256
+Sources: pinned [2026 draft Form 2555](../../../irs/corpus/ty2026/draft/f2555.pdf), SHA-256
 `4057a14f7d9ed31a328c6a7ccb4e17d127addd4d3b0be05cf85a78320eb7e775`,
-[2026 draft instructions](../corpus/draft/i2555.pdf), and final [Notice
-2026-25](../corpus/authorities/n-26-25.pdf) for location-specific foreign
+[2026 draft instructions](../../../irs/corpus/ty2026/draft/i2555.pdf), and final [Notice
+2026-25](../../../irs/corpus/ty2026/authorities/n-26-25.pdf) for location-specific foreign
 housing limits. The form and instructions are drafts; refresh them before
 release. Form 2555 is outside the seven linked 1040 ATS packets, so it needs
 independent full-return fixtures.
@@ -19,7 +19,7 @@ independent full-return fixtures.
 | Part VIII, lines 43–45 | Line 43 combines housing and earned-income exclusions; line 44 removes AGI deductions allocable to excluded income; line 45 is the remaining exclusion. | **Schedule 1 line 8d** (negative additional income), then 1040 line 8/AGI. Supply the Foreign Earned Income Tax Worksheet input so excluded income is stacked for tax on remaining income. |
 | Part IX, lines 46–50 | Self-employed share of housing amount after the line 36/43 restrictions and any allowed **2025-origin** housing deduction carryover. | **Schedule 1 line 24j** adjustment → 1040 line 10/AGI. Carry the origin year and unused amount forward; do not place this deduction on Schedule 1 line 8d. |
 
-The [PDF field inventory](../inventories/pdf-fields/pdf-fields-f2555.csv) has **160** widgets, all in
+The PDF field inventory has **160** widgets, all in
 the field tree. The draft PDF has a coversheet and three form pages. On form
 page 3 (PDF page 4), line 29b is `Page3.f3_4[0]`, line 32 is `f3_7[0]`,
 line 37 is `f3_13[0]`, line 45 is `f3_22[0]`, and line 50 is `f3_27[0]`.

@@ -108,8 +108,10 @@ Once confirmed, add all forms to the return using the CLI.
 Use `opentax node inspect --node_type <type> --json` to see what fields each form expects before adding it.
 
 ```bash
-# Filing status and dependents
-opentax form add --returnId <id> --node_type general '{"filing_status": "single"}'
+# Filing status, taxpayer identity and dependents go in the `general` object of a start entry
+# (`opentax node inspect --node_type start` lists its fields)
+opentax form add --returnId <id> --node_type start \
+  '{"general": {"filing_status": "single", "taxpayer_first_name": "Riley", "taxpayer_last_name": "Chen", "taxpayer_dob": "1985-04-12"}}'
 
 # W-2
 opentax form add --returnId <id> --node_type w2 \
@@ -117,10 +119,10 @@ opentax form add --returnId <id> --node_type w2 \
 
 # 1099-INT
 opentax form add --returnId <id> --node_type f1099int \
-  '{"payer_name": "Chase Bank", "box1_interest": 420}'
+  '{"payer_name": "Chase Bank", "box1": 420}'
 ```
 
-Common node types: `general`, `w2`, `f1099int`, `f1099div`, `f1099nec`, `f1099r`, `f1099b`, `f1099g`, `ssa1099`, `schedule_c`, `schedule_a`, `f1098`, `f1098e`, `f8949`.
+Common node types: `start`, `w2`, `f1099int`, `f1099div`, `f1099nec`, `f1099r`, `f1099b`, `f1099g`, `ssa1099`, `schedule_c`, `schedule_a`, `f1098`, `f1098e`, `f8949`.
 
 Run `opentax node list` to see all supported forms.
 
@@ -180,9 +182,22 @@ opentax return validate --returnId <id>
 # This does not transmit a return or prove IRS acceptance.
 opentax return export --returnId <id> --type mef > return.xml
 
-# Export as filled PDF
+# Export as filled PDF (written to the return's folder unless --output is given)
 opentax return export --returnId <id> --type pdf
 ```
+
+Export refuses an incomplete return and names what is missing (taxpayer SSN, signature PIN, the digital-assets answer, ...); add it to the start entry and export again.
+
+```bash
+# Add a PDF that MeF files with the return, or record a retained source copy
+opentax return attach --returnId <id> --file statement.pdf --description "Explanation statement"
+opentax return attach --returnId <id> --reference <document reference>
+
+# Build the MeF submission ZIP a transmitter sends
+opentax return export --returnId <id> --type mef-submission [--efin <efin> --software-id <id>]
+```
+
+`opentax mef login-check | send | status | acks` transmits through IRS MeF A2A. It needs the user's own IRS e-file enrollment and strong-authentication certificate, defaults to the IRS ATS test system (which takes only IRS test returns), and refuses production until it is enabled in the MeF configuration. Run `opentax mef --help` before using it.
 
 ## Managing entries
 

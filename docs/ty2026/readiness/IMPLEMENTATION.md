@@ -8,15 +8,18 @@ TY2025 ATS approval or that the May 2026 MeF v1 package is the final target.
 
 ## Current state
 
-The TY2026 calculation registry and local calculation validation are
-executable, and a growing set of source routes has a reconciled draft-PDF
-bundle. They are not registered as a filing product in `catalog.ts`. The
+> Current TY2026 status: `forms/f1040/2026/README.md`. This document is a
+> research snapshot; the 2026-only modules it names (`2026/registry.ts`,
+> `2026/inputs.ts`, `2026/pdf/`, `2026/validation.ts`,
+> `config/2026-indexed.ts`, `nodes/f1040.ts`, `itemized-deductions.ts`,
+> `schedule-a.ts`, `form2441/year-rules.ts`) are not in the current code.
+
+The
 remaining TY2025-supported form surface, current TY2026 MeF XML and rules,
 and ATS/XSD checks are open. The May v1 package cannot validate the September
 draft Form 1040; the IRS September 24 v4 package must be obtained through
 an authorized e-Services/SOR mailbox. Use the current
-[implementation entry point](./ENTRY-POINT.md),
-[`node-coverage.csv`](../inventories/node-coverage.csv), and generated
+[implementation entry point](./ENTRY-POINT.md) and
 [`GRAPH-ROUTES.md`](../graphs/GRAPH-ROUTES.md) for active route status. The progress
 notes below record the order in which work landed and may describe an earlier
 state of a node.
@@ -326,7 +329,7 @@ The shared Form 8962 node now selects TY2025 or TY2026 applicable percentage,
 repayment cap, and QSEHRA affordability rules explicitly; 2026 FPL figures
 are sourced from the 2025 HHS guideline PDF. The final Form 8962 instruction
 table remains outstanding.
-`forms/f1040/nodes/config/2026-indexed.ts` now holds all 111 source-backed 2026
+`forms/f1040/nodes/config/2026.ts` now holds the source-backed 2026
 config members, including tax brackets, standard deduction, AMT, capital-gain,
 HSA, IRA, QBI, EITC, and other amounts. The QBI config distinguishes the TY2026
 MFS threshold from other nonjoint statuses and shares one threshold selector
@@ -443,8 +446,7 @@ passing each an empty array. This resolved the Form 8283 parser failure;
 three builder fixtures were updated to give Form 1116 the matching Schedule 3
 foreign-tax-credit field. Its 130 tests pass. The complete TY2025 regression
 suite still needs a separate run before that release gate is green.
-The draft 2026 Form 1040's 207 AcroForm fields are inventoried with tooltips,
-widget coordinates, and physical pages in `pdf-fields-f1040.csv`. The
+The draft 2026 Form 1040 has 207 AcroForm fields. The
 [Form 1040 PDF map](../pdf/PDF-F1040-MAP.md) identifies changed 2026 line fields and
 the new authorization/dependent checkbox groups. The dedicated main-form
 descriptor and filler produce a two-page draft 1040 from a wages-only graph
@@ -491,7 +493,7 @@ two printed pages each, verify calculation and 1040 totals, and merge with
 the 1040 into a six-page sample that passed visual QA. Public ISO input,
 other AMT adjustment detail, credit-limit feedback, and MeF still need to be
 completed.
-The August 2026 [Schedule B instructions](../corpus/draft/i1040sb.pdf) are now
+The August 2026 [Schedule B instructions](../../../irs/corpus/ty2026/draft/i1040sb.pdf) are now
 hash-pinned. The [interest graph contract](../graphs/INTEREST-GRAPH.md) records every
 1099-INT branch, filing trigger, disclosure, and outstanding attachment path.
 The shared 1099-INT node now sends box 2 early-withdrawal penalties to AGI as
@@ -587,17 +589,16 @@ source routes before their Part I fields can print.
 1. Record the current branch commit, TY2025 benchmark/test results, and
    `catalog.ts`/`FormDefinition` public interface. Keep TY2025 results as a
    regression baseline.
-2. Use `corpus/manifest.json` to pin all public inputs. Retrieve the latest
+2. Use `docs/ty2026/corpus/manifest.json` to pin all public inputs. Retrieve the latest
    2026 IMF release from the registered IRS e-Services SOR and log its release
    date and hash in a private research record. The user's Drive folder holds
    2026v1.0; the IRS public version page lists v4.0 on this snapshot date.
    Diff 2026v1→current and TY2025v5.4→current by XSD element, form namespace,
    document order, required attachment, and active rule ID. Keep raw packages
    in ignored `.state/research/docs/` because this repository is public.
-3. Use `node-coverage.csv` (191 registered TY2025 nodes),
-   `pdf-coverage.csv` (56 descriptors: 51 current drafts, five older-year
-   URLs), `mef-coverage.csv` (84 serializers), `year-literals.csv` (237 non-test
-   occurrences), and the current MeF accepted-form XLSX. Give each existing
+3. Inventory the registered TY2025 nodes (191), PDF descriptors (56: 51
+   current drafts, five older-year URLs), MeF serializers (84), non-test
+   2025 literals (237) and the current MeF accepted-form XLSX. Give each existing
    component one disposition: **2026 updated**, **2026 verified unchanged**,
    **replaced**, or **unsupported with explicit diagnostic**. Add Schedule 3-A
    and Form 1062 as new rows. Do not silently omit a 2025 supported form.
@@ -611,7 +612,7 @@ source routes before their Part I fields can print.
    member of `forms/f1040/nodes/config/types.ts`; `CONSTANTS.md` records the
    sources and boundary cases. Registration alone does not validate every
    shared node's 2026 behavior.
-2. Review every occurrence in `year-literals.csv`. Split behavior by
+2. Review every non-test 2025 literal. Split behavior by
    `ctx.taxYear` or a dedicated year implementation where the law/form changed.
    Audit adjacent tables and predicates without a year literal. In particular,
    review Form 8962's 400% FPL and repayment handling, SALT, Schedules 1-A and

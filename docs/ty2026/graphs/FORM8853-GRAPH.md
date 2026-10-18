@@ -1,10 +1,10 @@
 # TY2026 Archer MSA, Medicare Advantage MSA, and LTC contract
 
-Sources: pinned [2026 draft Form 8853](../corpus/draft/f8853.pdf), SHA-256
+Sources: pinned [2026 draft Form 8853](../../../irs/corpus/ty2026/draft/f8853.pdf), SHA-256
 `9a5755097d1aa1ba5cf6ed91d6ae020cbe5b5e672f3d565af6d2c903174034d3`,
-[2026 draft instructions](../corpus/draft/i8853.pdf), SHA-256
+[2026 draft instructions](../../../irs/corpus/ty2026/draft/i8853.pdf), SHA-256
 `b8cf14a2282edd869ba389c423a93d7dc57efc9791e4d10b500531135259ae57`,
-and [Rev. Proc. 2025-32](../corpus/authorities/rp-25-32.pdf) §4.62 for the
+and [Rev. Proc. 2025-32](../../../irs/corpus/ty2026/authorities/rp-25-32.pdf) §4.62 for the
 2026 **$430 daily LTC** amount. Recheck final revisions and current MeF
 schema/rules before filing.
 
@@ -17,7 +17,7 @@ schema/rules before filing.
 | B, Medicare Advantage MSA | By beneficiary, gross 1099-SA distribution less qualified expenses gives line 12 taxable. Death/disability exceptions apply to the 50% tax. If a Medicare Advantage MSA existed on **December 31, 2025**, use the instructions' Additional 50% Tax Worksheet: compare its year-end value with 60% of the January 1, 2026 HDHP deductible before taxing the residual. Age 65 alone is not an exception here. | **Line 12 → Schedule 1 line 8e**; line 13b → **Schedule 2 line 13f**. Preserve prior-year MSA value and January deductible. |
 | C, LTC and accelerated death benefits | One insured/policyholder record per Section C, with 1099-LTC per-diem payments, qualified contract status, terminal/chronically ill certification, period days, qualified costs and reimbursements. For each LTC period, line 21 = $430 × days; line 25 = max(line 21, costs) − reimbursements; line 26 is taxable payments after the limitation. Terminal-only accelerated benefits may take the printed zero shortcut. Multiple payees require an aggregate statement and insured-first/pro-rata allocation of the shared limit. | **Line 26 → Schedule 1 line 8e** for 1040 filers. If more than one Section C is attached, mark its checkbox and include each statement. Nonqualified-contract taxable benefits follow the instructions' separate income route. |
 
-The draft has a coversheet and two printed form pages. The [PDF inventory](../inventories/pdf-fields/pdf-fields-f8853.csv)
+The draft has a coversheet and two printed form pages. The PDF inventory
 has **38 widgets**, all in the canonical field tree, including Section A/B
 exception boxes, Section C insured/policyholder IDs and yes/no answers, and
 the additional-Section-C checkbox. Produce repeated attachments and LTC

@@ -110,7 +110,7 @@ export interface RuleDef {
   readonly ruleText: string;
   readonly severity: Severity;
   readonly category: ErrorCategory;
-  readonly check: RuleCheck | null; // null = stub (not yet implemented)
+  readonly check: RuleCheck;
 }
 
 /** A single diagnostic finding (rule violation or alert). */

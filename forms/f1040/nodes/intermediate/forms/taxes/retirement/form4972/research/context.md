@@ -4,7 +4,7 @@
 > and Schedule 2 routing below are superseded and must not be used as TY2025
 > implementation guidance. See the official
 > [2025 Form 4972 and instructions](https://www.irs.gov/pub/irs-prior/f4972--2025.pdf),
-> the current node and MeF builder, and `product_board.md` GAP-4972. The 2025
+> and the current node and MeF builder. The 2025
 > Form 4972 tax belongs on Form 1040 line 16, not Schedule 2.
 
 ## Overview

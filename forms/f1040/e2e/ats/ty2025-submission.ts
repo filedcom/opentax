@@ -36,6 +36,12 @@ export const TY2025_ATS_SUBMISSION_ASSUMPTIONS: readonly AtsAssumption[] = [
     why:
       "Packets file Form 1040 with U.S. addresses and no dual-status or nonresident facts; the export guard needs a reviewed status.",
   },
+  {
+    field: "residency review (Scenario 2 spouse)",
+    value: "full_year_resident_by_joint_election",
+    why:
+      "Scenario 2 page 2 says Judy Jones is treated as a U.S. resident by the joint section 6013(g) choice statement; the statement reference stands in for the signed election.",
+  },
 ];
 
 function digits(value: unknown): string {
@@ -47,18 +53,29 @@ export function atsResidencyReview(
   inputs: Record<string, unknown>,
 ): FilingResidencyReview {
   const general = (inputs.general ?? {}) as Record<string, unknown>;
-  const person = (tin: string) => ({
+  // A section 6013(g) election (Scenario 2) makes the elected spouse resident.
+  const election = general.eic_tax_residency_review as
+    | { status?: string; elected_person?: string; status_record_reference?: string }
+    | undefined;
+  const person = (tin: string, role: "taxpayer" | "spouse") => ({
     tin,
-    tax_status: "full_year_us_citizen" as const,
     status_source_reference: "ats-packet-form-1040-page-1",
     reviewer_reference: "ats-submission-assumption",
     reviewed_on: "2026-10-01",
+    ...(election?.status === "joint_new_election" &&
+        election.elected_person === role
+      ? {
+        tax_status: "full_year_resident_by_joint_election" as const,
+        signed_joint_election_reference: election.status_record_reference ??
+          "ats-packet-joint-election",
+      }
+      : { tax_status: "full_year_us_citizen" as const }),
   });
   return {
     tax_year: 2025,
-    taxpayer: person(digits(general.taxpayer_ssn)),
+    taxpayer: person(digits(general.taxpayer_ssn), "taxpayer"),
     ...(general.filing_status === FilingStatus.MFJ
-      ? { spouse: person(digits(general.spouse_ssn)) }
+      ? { spouse: person(digits(general.spouse_ssn), "spouse") }
       : {}),
   };
 }

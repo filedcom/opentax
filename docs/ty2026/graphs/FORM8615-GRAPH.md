@@ -1,8 +1,8 @@
 # TY2026 Form 8615 child and parent tax contract
 
-Source snapshot: pinned [2026 draft Form 8615](../corpus/draft/f8615.pdf),
+Source snapshot: pinned [2026 draft Form 8615](../../../irs/corpus/ty2026/draft/f8615.pdf),
 SHA-256 `11db7889385b13ea63d2f05cd0bbb4e92afe34523917a7b9f9fc4ddecd7996d7`,
-and [2026 draft instructions](../corpus/draft/i8615.pdf), SHA-256
+and [2026 draft instructions](../../../irs/corpus/ty2026/draft/i8615.pdf), SHA-256
 `ac1ec51a5367dfa8187ea9fef43fb6cbf87b4ca1324bf3084c5557407a03160f`.
 They are research sources until final release. Reconcile final 1040, Schedule D,
 Schedule J, Form 2555, Form 8814 and current MeF rules before filing.
@@ -66,7 +66,7 @@ post that child's elected income or Form 8814 tax to the child return.
   graph therefore remains incomplete.
 - The TY2025 PDF descriptor maps numeric fields and parent filing status,
   but it omits the printed worksheet checkboxes on lines 9/10/15/17. The
-  [2026 draft inventory](../inventories/pdf-fields/pdf-fields-f8615.csv) has **32 terminal widgets**,
+  2026 draft inventory has **32 terminal widgets**,
   all in the field tree: 23 text and nine buttons. The TY2025 MeF serializer
   has numeric lines and parent fields, but no proven current 2026 XSD/rules.
   Neither the calculator nor form/PDF/MeF serializers are registered in the

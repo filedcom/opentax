@@ -2,16 +2,23 @@
 
 Snapshot audit: 2026-09-27. This records whether the **research and coding
 handoff** cover the current TY2025 Form 1040 architecture and identified
-TY2026 additions. It is not a claim that `f1040:2026` is registered, that a
-TY2026 return can be filed, or that IRS ATS has accepted an XML submission.
+TY2026 additions. It is not a claim that a TY2026 return can be filed or that
+IRS ATS has accepted an XML submission.
+
+> Current TY2026 status: `forms/f1040/2026/README.md`. This document is a
+> research snapshot; the 2026-only modules it names (`2026/registry.ts`,
+> `2026/inputs.ts`, `2026/pdf/`, `2026/validation.ts`,
+> `config/2026-indexed.ts`, `nodes/f1040.ts`, `itemized-deductions.ts`,
+> `schedule-a.ts`, `form2441/year-rules.ts`) are not in the current code.
+
 
 | Surface | Audit result | Coding entry point |
 | --- | --- | --- |
 | Source corpus | 256 manifest records: 250 downloaded files exist and match their recorded length and SHA-256; six draft URLs served the wrong tax year and are marked `wrong-year`. | [Manifest](../corpus/manifest.json), [sources and gates](./SOURCES.md) |
-| TY2025 graph baseline | All 191 registry node types have a disposition and next action; 33 declared 2026 route gaps are inventoried. | [Node ledger](../inventories/node-coverage.csv), [boundary audit](./NODE-BOUNDARY-AUDIT.md), [route gaps](../graphs/GRAPH-ROUTES.md) |
-| TY2025 printable baseline | All 56 PDF descriptors have a 2026 snapshot classification; pinned form field inventories and specialist contracts cover the filed routes. | [PDF ledger](../inventories/pdf-coverage.csv), [parity queue](./PARITY-QUEUE.md) |
-| TY2025 MeF baseline | All 84 serializer modules and 85 runtime descriptors are inventoried; the public 2026 accepted-form crosswalk classifies each module. Four generated PDF binary routes and the caller-supplied binary path have a separate handoff. | [Module ledger](../inventories/mef-coverage.csv), [descriptor ledger](../inventories/mef-descriptor-coverage.csv), [crosswalk](../mef/MEF-PUBLIC-CROSSWALK.md), [binary handoff](../mef/MEF-BINARY-ATTACHMENTS.md) |
-| Form instructions | All 96 form/source rows name an instruction owner, publication status and next action. Drafts, combined booklets, embedded instructions and continuous-use forms are distinguished. | [Instruction ledger](../inventories/instruction-coverage.csv), [availability notes](./INSTRUCTION-COVERAGE.md) |
+| TY2025 graph baseline | All 191 registry node types have a disposition and next action; 33 declared 2026 route gaps are inventoried. | Node ledger, [boundary audit](./NODE-BOUNDARY-AUDIT.md), [route gaps](../graphs/GRAPH-ROUTES.md) |
+| TY2025 printable baseline | All 56 PDF descriptors have a 2026 snapshot classification; pinned form field inventories and specialist contracts cover the filed routes. | PDF ledger, [parity queue](./PARITY-QUEUE.md) |
+| TY2025 MeF baseline | All 84 serializer modules and 85 runtime descriptors are inventoried; the public 2026 accepted-form crosswalk classifies each module. Four generated PDF binary routes and the caller-supplied binary path have a separate handoff. | Module ledger, descriptor ledger, [crosswalk](../mef/MEF-PUBLIC-CROSSWALK.md), [binary handoff](../mef/MEF-BINARY-ATTACHMENTS.md) |
+| Form instructions | All 96 form/source rows name an instruction owner, publication status and next action. Drafts, combined booklets, embedded instructions and continuous-use forms are distinguished. | Instruction ledger, [availability notes](./INSTRUCTION-COVERAGE.md) |
 | New TY2026 surfaces | Schedule 1-A, Schedule 3-A, Form 1062, Form 4562-B and other identified additions have explicit routes or research gates outside the TY2025 inventories. | [Parity queue](./PARITY-QUEUE.md), [form delta](./FORM-DELTA.md), [implementation plan](./IMPLEMENTATION.md) |
 | Product assembly | Year-specific catalog, CLI summary, local/MeF validation, PDF selection, XML document order, binary references, submission ZIP and ATS acceptance steps are assigned. | [Product assembly](./PRODUCT-ASSEMBLY.md), [2026 entry point](./ENTRY-POINT.md) |
 | Research navigation | The 110 Markdown files in this directory have no broken local links. | [Corpus index](../README.md) |

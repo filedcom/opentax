@@ -4,16 +4,12 @@ forms/**/research/docs/
 engine/
 testcases/
 
-# Runtime state (generated artifacts)
-.state/returns/
-.state/pdf-cache/
+# Runtime and skill state
+.state/
 .pdf-cache/
-.state/research/
+.observer.lock
 
 # Benchmarking results
 benchmark/returns
-
-# Tracked state (committed)
-# .state/bench/       ← state.json + progress.md are tracked
-# .state/field-dumps/ ← IRS field extracts are tracked
+benchmark/cases/**/output.json
 .worktrees
