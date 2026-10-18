@@ -52,6 +52,12 @@ listed by section in `forms/f1040/2026/README.md`.
 | `fplBaseAlaska`, `fplBaseHawaii` and increments | Alaska $19,550 + $6,880; Hawaii $17,990 + $6,330 (2025 guidelines for 2026 coverage) | HHS 2025 poverty guidelines |
 | `ptcApplicablePercentages`, `ptcIncomeLimitFplPct`, `ptcRequiredContributionPercentage`, `ptcRepaymentCaps`, `ptcLawfullyPresentBelow100Fpl` | 2.10%-9.96% bands; no PTC above 400% FPL; 9.96%; no repayment limitation; no lawfully present below-100% exception | Rev. Proc. 2025-25 §§3.01-3.02; OBBBA §§71302, 71305, IRC §36B(c)(1)(B), (f)(2)(B); draft Form 8962 lines 6, 27-29 |
 | Statutory, not indexed                                                              | `mda*`, `deathBenefitMax`, `qpri*`, `f2106PerformingArtistAgiLimit`, `mccMaxCreditHighRate`, `scheduleBDividendThreshold`, `psoExclusionLimit`, `sepContributionRate`, `simpleEmployerMatchRate`                    | Code sections cited beside each value in `2026.ts`                                                              |
+| `renewableProductionRates` | Before 2022: 3.1¢ (wind, closed-loop biomass, geothermal), 1.5¢; after 2021: 0.6¢, 0.3¢ per kWh | [FR Doc. 2026-10906](https://www.federalregister.gov/d/2026-10906) (inflation adjustment factor 2.0570) |
+| `paidLeaveCompensationLimit` | $96,000 prior-year (2025) compensation | Instructions for Form 8994 (Rev. December 2024), Compensation Limit Per Year; [Notice 2024-80](https://www.irs.gov/pub/irs-drop/n-24-80.pdf) ($160,000 × 60%) |
+| `employerProvidedChildcare` | 40% facility credit (50% eligible small business), 10% referral; $500,000 limit ($600,000) | OBBBA §70401; [draft Form 8882 (Rev. December 2026)](https://www.irs.gov/pub/irs-dft/f8882--dft.pdf) item A, lines 2, 5, 8 |
+| `retirementContributionCreditWageLimit` | $110,000 | [Draft Instructions for Form 8881 (Rev. December 2026)](https://www.irs.gov/pub/irs-dft/i8881--dft.pdf), line 6b |
+| `cleanElectricityMaterialAssistanceAfter` | Construction begun after 2025-12-31 needs a material assistance cost ratio | [Draft Instructions for Form 3468 (2026)](https://www.irs.gov/pub/irs-dft/i3468--dft.pdf), Part V; Notice 2026-15 |
+| `form2210fPenaltyRate` | Not yet published (`null`) | [Draft 2026 Form 2210-F](https://www.irs.gov/pub/irs-dft/f2210f--dft.pdf) line 16 prints `x.xx` |
 
 ## Law changes that need year modules, not config
 
