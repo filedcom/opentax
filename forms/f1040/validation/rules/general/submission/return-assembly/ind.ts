@@ -67,6 +67,7 @@ import {
   validFiveDigitPins,
   validIpPins,
 } from "../../../../../../../core/validation/predicates.ts";
+import { manifestText, submissionEnvelope } from "../envelope.ts";
 
 const tin = (v: unknown): string => String(v ?? "").replace(/\D/g, "");
 
@@ -161,7 +162,10 @@ export const IND_RULES: readonly RuleDef[] = [
     "IND-005-01",
     "reject",
     "incorrect_data",
-    ifThen(hasValue("PaymentAmt"), eqField("PaymentAmt", "PaymentAmt")),
+    ifThen(
+      all(formPresent("form9465"), hasValue("Payment/PaymentAmt")),
+      eqField("9465/PaymentAmt", "Payment/PaymentAmt"),
+    ),
     "If Form 9465 and IRS Payment Record are present in the return, then Form 9465, 'PaymentAmt' must be equal to 'PaymentAmt' in IRS Payment Record.",
   ),
   rule(
@@ -450,7 +454,11 @@ export const IND_RULES: readonly RuleDef[] = [
     "IND-052",
     "reject_and_stop",
     "data_mismatch",
-    ifThen(hasValue("ManifestTIN"), eqField("ManifestTIN", "PrimarySSN")),
+    (ctx) => {
+      const envelope = submissionEnvelope(ctx);
+      return envelope === undefined ||
+        manifestText(envelope, "TIN") === String(ctx.field("PrimarySSN") ?? "");
+    },
     "The TIN present in the IRS Submission Manifest must be equal to the Primary SSN in the Return Header.",
   ),
   rule(

@@ -10,7 +10,7 @@
 
 Built and maintained by AI agents using official IRS publications as the sole source of truth.
 
-> Covers Form 1040 (TY2025) today. Additional forms and state returns coming.
+> Covers Form 1040 for TY2025, with TY2026 Form 1040 and Form 4868 started. Additional forms and state returns coming.
 
 ---
 
@@ -114,102 +114,121 @@ $ opentax return get --returnId a1b2c3
     "line9_total_income": 55000,
     "line11_agi": 55000,
     "line15_taxable_income": 39250,
-    "line24_total_tax": 4471.5,
+    "line24_total_tax": 4475,
     "line33_total_payments": 5200,
-    "line35a_refund": 728.5
+    "line35a_refund": 725
   },
   "lines": {
     "filing_status": "single",
     "line1a_wages": 55000,
     "line12a_standard_deduction": 15750,
     "line15_taxable_income": 39250,
-    "line16_income_tax": 4471.5,
-    "line24_total_tax": 4471.5,
+    "line16_income_tax": 4475,
+    "line24_total_tax": 4475,
     "line25a_w2_withheld": 5200,
     "line33_total_payments": 5200,
-    "line34_overpayment": 728.5,
-    "line35a_refund": 728.5
-  }
+    "line34_overpayment": 725,
+    "line35a_refund": 725
+  },
+  "warnings": []
 }
 ```
 
-$55,000 in wages, $15,750 standard deduction, $39,250 taxable income, $4,471.50 tax, $728.50 refund. Every line traces back to the IRS instructions.
+$55,000 in wages, $15,750 standard deduction, $39,250 taxable income, $4,475 tax
+from the Tax Table, $725 refund. The output is abridged; it also lists the forms
+computed and any carryforwards. Returns are stored under `./.state/returns`.
 
 ---
-
-## Calculation, review, export and filing are different stages
-
-The catalog currently exposes federal Form 1040 for TY2025. Registered nodes do
-not prove complete coverage of every tax situation, other tax years or states.
-`return get` is useful for partial calculations and diagnostics; inspect its
-warnings before relying on amounts. `return validate` checks implemented MeF
-business rules, not all tax law or IRS acceptance criteria.
-
-Normal PDF/MeF export blocks on every executor diagnostic, even with `--force`.
-`--force` overrides only reject-severity business rules. It is not a calculation
-repair or evidence that a return is ready to file. Existing callers that used
-`--force` to export incomplete calculations must now opt into `--draft`.
-
-For diagnostic review, use `--draft` (and `--force` separately if business rules
-reject). Every draft XML includes a DRAFT/INCOMPLETE comment; every draft PDF is
-watermarked on each page. Draft mode does not guarantee that malformed data can
-be rendered. Successful non-draft API return types remain XML text or a PDF path.
-The new `ExportExecutionError` exposes executor entries separately from
-`ExportRejectedError`. Shell redirection may create an empty file on failure;
-check the command exit status, not just file existence.
-
-CLI export does not perform XSD validation. Optional developer XSD tests need
-the separate IRS schema bundle and skip when it is absent. The CLI has no
-transmission or acknowledgement retrieval command. Signatures, authorized
-transmission, applicable IRS testing/identifiers, state coverage and acceptance
-handling must be established separately. Export is neither filing nor acceptance;
-these facts do not establish any commercial product's IRS authorization.
-
-Export offers MeF preparation the files a return names: PDFs from the return's
-`attachments/` folder, matched by the file name its inputs use, and retained
-copies from `retained/`, matched by reference. A source copy whose bytes an
-input needs is stored as `"bytes": {"sha256": "<digest>"}` (or
-`{"retained": "<file name>"}`) and read from `retained/`. A missing file is
-reported with the path it belongs at.
-
-The CLI stores returns locally. Uploading source documents into a hosted
-assistant is a separate disclosure to that provider, not local-only processing.
 
 ## More commands
 
 ```bash
-# Validate against IRS MeF business rules
-opentax return validate --returnId a1b2c3
+# Inspect what fields a node expects, or list every registered node
+opentax node inspect --node_type w2
+opentax node list
 
-# Export as IRS MeF XML for downstream validation or transmitter workflows.
-# This does not transmit a return or prove IRS acceptance.
-opentax return export --returnId a1b2c3 --type mef > return.xml
-
-# Package it as a Pub 4164 submission ZIP (manifest/, xml/, attachment/) named
-# by its Submission ID. Needs the originator EFIN, the IRS-assigned Software ID
-# and a reviewed residency JSON (default returns/<id>/residency-review.json).
-opentax return export --returnId a1b2c3 --type mef-submission --efin 123456 --software-id 25000000
-
-# Add a PDF filed with the return, under the file name its inputs use;
-# --description when the form needs a specific MeF attachment description
-opentax return attach --returnId a1b2c3 --file ./policy.pdf --name 2025-leave-policy.pdf
-
-# Add a retained source copy (kept, not transmitted) under the reference its inputs use
-opentax return attach --returnId a1b2c3 --file ./notice.pdf --reference "2023 CTC notice copy"
-
-# List entries in a return
+# List, update or delete form entries
 opentax form list --returnId a1b2c3
-
-# Update or delete a form entry
 opentax form update --returnId a1b2c3 --entryId w2_01 '{"box1_wages": 60000, "box2_fed_withheld": 5800}'
 opentax form delete --returnId a1b2c3 --entryId w2_01
 
-# Inspect what fields a node expects
-opentax node inspect --node_type w2
+# Run the IRS MeF business rules offline
+opentax return validate --returnId a1b2c3
 
-# List all registered nodes
-opentax node list
+# Add a PDF filed with the return, under the file name its inputs use
+# (--description when the form needs a specific MeF attachment description)
+opentax return attach --returnId a1b2c3 --file ./policy.pdf --name 2025-leave-policy.pdf
+# Add a retained source copy (kept, not transmitted) under the reference its inputs use
+opentax return attach --returnId a1b2c3 --file ./notice.pdf --reference "2023 CTC notice copy"
+
+# Export as MeF XML, a filled IRS PDF, or a Pub 4164 submission ZIP
+opentax return export --returnId a1b2c3 --type mef > return.xml
+opentax return export --returnId a1b2c3 --type pdf --output return.pdf
+opentax return export --returnId a1b2c3 --type mef-submission --efin 123456 --software-id 25000000
+
+# Form 4868 extension (TY2026)
+opentax return create --year 2026 --form f4868
 ```
+
+The submission ZIP (`manifest/`, `xml/`, `attachment/`, named by its Submission
+ID) needs the originator EFIN, the IRS-assigned Software ID and a reviewed
+residency JSON (default `returns/<id>/residency-review.json`). It includes the
+PDFs from the return's `attachments/` folder and the retained copies from
+`retained/` that its inputs name; a missing file is reported with the path it
+belongs at.
+
+Run `opentax <command> --help` for every flag.
+
+---
+
+## Export, validation and filing
+
+- `return get` works on partial returns; check its `warnings` before relying on
+  amounts. Export also needs the filer's identity (SSN and name).
+- `return validate` and export run the IRS MeF business rules offline. A clean
+  run is not IRS acceptance.
+- Export blocks on every calculation diagnostic. `--force` overrides only
+  reject-level business rules; `--draft` produces visibly labeled diagnostic
+  output (a DRAFT comment in XML, a watermark on each PDF page). In the API,
+  `ExportExecutionError` carries calculation diagnostics and
+  `ExportRejectedError` carries rule rejects.
+- Shell redirection can leave an empty file on failure; check the exit status.
+- The CLI does not validate against the IRS XSDs; the harness does when the
+  schemas are installed in [`irs/`](./irs/README.md).
+- Returns stay local. Uploading source documents to a hosted assistant
+  discloses them to that provider.
+
+### Transmitting with MeF A2A
+
+`opentax mef` sends a return's submission ZIP to the IRS over MeF
+Application-to-Application (WSDL 10.9) and stores the acknowledgements under the
+return. ATS (the IRS test system) is the default; production needs separate
+opt-ins.
+
+```bash
+opentax mef login-check                     # log in and out with the A2A certificate
+opentax mef send --returnId a1b2c3          # build the submission ZIP and send it
+opentax mef status --submissionId <id>      # IRS status record
+opentax mef acks --submissionId <id>        # or --new for every pending ack
+opentax mef ats-run                         # send every ATS test return in the store and poll for acks
+```
+
+It needs an ETIN, EFIN, Software ID, Application System ID and an IRS-approved
+strong-authentication certificate. Setup, commands and the assumptions the
+first live run must confirm are in
+[docs/mef/transmission.md](./docs/mef/transmission.md).
+
+### MeF readiness
+
+|                      | State                                                                                                                                                      |
+| -------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| TY2025 ATS scenarios | 8 of 8 Form 1040 scenarios pass the offline check (`bun run check:ats`): no reject-level findings, packet values matched or documented as packet conflicts |
+| TY2025 XML           | Built on the 2025v5.4 schema; validated against `Return1040.xsd` when `irs/` has the schemas                                                               |
+| Submission ZIP       | Pub 4164 layout, manifest checked against the submission and transmission rules before it is written                                                       |
+| A2A client           | Built and tested against a local mock IRS server; not yet run against the live IRS, which needs the credentials above                                      |
+| TY2026               | Form 1040 on the 2026v1.0 schema, which ATS does not accept; only `general`, `w2` and `f8888` inputs so far. Form 4868 on 2026v1.0                         |
+
+None of this is IRS acceptance or authorization of any product.
 
 ---
 
@@ -224,52 +243,34 @@ $ opentax return get --returnId abc-123
 Update available: 0.1.0 → 0.2.0. Run `opentax update` to upgrade.
 ```
 
-To update:
-
-```bash
-opentax update
-```
-
-That's it. The binary replaces itself with the latest release.
-
-Check your current version anytime:
-
-```bash
-opentax version
-```
+`opentax update` replaces the binary with the latest release; `opentax version`
+shows the current one.
 
 ---
 
-## Supported forms (TY2025)
+## Supported forms
 
-131 input nodes covering the full range of 1040 source documents: W-2s, 1099s, all major schedules, credits, capital transactions, and more.
+| Form      | Year | Inputs                                                                           |
+| --------- | ---- | -------------------------------------------------------------------------------- |
+| Form 1040 | 2025 | 195 input nodes: W-2s, 1099s, schedules, credits, capital transactions and more  |
+| Form 1040 | 2026 | `general`, `w2`, `f8888`; other inputs are refused until their TY2026 rules land |
+| Form 4868 | 2026 | Extension request                                                                |
 
-See [`catalog.ts`](./catalog.ts) for the complete list of supported nodes and their schemas. Or from the CLI:
-
-```bash
-opentax node list
-```
+[`catalog.ts`](./catalog.ts) lists the form definitions; `opentax node list` and
+`opentax node inspect` show every node and its schema.
 
 ---
 
 ## How it's built
 
-The engine is a directed graph of **nodes**. Each node is a pure function: validated input in, typed output out. No state, no side effects.
+The engine is a directed graph of **nodes**. Each node is a pure function:
+validated input in, typed output out. Schemas are Zod, with types inferred;
+routing between nodes is type-checked. 137 TY2025 benchmark cases check it
+against values from cited IRS publications.
 
-- Schemas defined with Zod, types inferred (never duplicated)
-- Immutable data throughout, no mutation anywhere
-- Type-safe output routing between nodes enforced at compile time
-- 133 real-world benchmark scenarios
-
-AI agents maintain the codebase:
-
-- Read IRS instructions
-- Write node implementations
-- Generate test cases from official IRS exercises
-- Fix regressions
-- Prove each change with the harness before it ships
-
-All traced back to the authoritative IRS source.
+AI agents maintain the codebase: they read IRS instructions, write nodes, source
+test cases from IRS exercises, fix regressions, and prove each change with the
+harness before it ships.
 
 ---
 
@@ -277,28 +278,42 @@ All traced back to the authoritative IRS source.
 
 Requires [Bun](https://bun.sh) 1.4. Run `bun install` once after cloning.
 
-Two CLIs, kept apart: `cli/main.ts` is the product, and the harness is what you
-use while building it. The harness is dev-only and documented in
-[scripts/testing/README.md](scripts/testing/README.md); agent instructions live
-in [AGENTS.md](AGENTS.md).
+`cli/main.ts` is the product; the harness is dev-only and documented in
+[scripts/testing/README.md](./scripts/testing/README.md). Agent instructions are
+in [AGENTS.md](./AGENTS.md), and the folder layout and the check that enforces
+each rule are in [STRUCTURE.md](./docs/architecture/STRUCTURE.md).
 
 ```bash
-# Prove a change before a pull request (what CI runs)
+# Gates a pull request must pass
 bun run check:structure   # nodes placed, registered, reachable
 bun run check:cases       # benchmark cases fit their node schemas and cite a source
 bun run check:oracle      # expected values changed only with a cited ledger entry
 bun run check:sandbox     # the binary reaches the network only through restricted fetch
 bun run test:unit         # module graph, type check and typed tests
-bun run test:forms        # node, export and return-processing tests
+bun run test:forms        # node, MeF, validation and return-processing tests
+bun run check:mef         # sample returns build MeF XML and pass the IRS rules
+bun run check:cli         # sample returns work end to end through the CLI
+bun run bench --form f1040 --year 2025   # engine output against IRS ground truth
 
-# Run the full test suite and the accuracy benchmark
-bun run test
-bun run bench
+# Reports and helpers
+bun run check:irs         # which IRS files in irs/ are present, against irs/manifest.json
+bun run check:ats         # TY2025 ATS scenario readiness
+bun run verify:changed    # only the gates a change since origin/main can reach
+bun run ats:stage         # write the ATS scenarios into ./.state/returns for `opentax mef ats-run`
+bun run test              # full suite
 
-# Run the CLI in dev mode, or build the single-file binary
+# Run the CLI from source, or build the single-file binary
 bun run tax return create --year 2025
 bun run compile
 ```
+
+### IRS files
+
+The IRS MeF schemas, business rules and A2A WSDL are released only to registered
+software developers, so they are not in Git. Install them into the gitignored
+[`irs/`](./irs/README.md) folder; checks that need them skip or report "n/a"
+without them, as in CI. `bun run check:irs` verifies each file against
+[`irs/manifest.json`](./irs/manifest.json).
 
 ### TY2026 research sources
 
@@ -309,65 +324,26 @@ and check them with `bun run check:irs` (see [`irs/README.md`](./irs/README.md))
 
 ### Contributing with Claude Code
 
-The repo includes four skills that automate the full development lifecycle. Open the project in [Claude Code](https://claude.ai/code) and invoke them with `/skill-name`.
+Open the repo in [Claude Code](https://claude.ai/code); these skills under `.claude/skills/` run the harness for you:
 
-#### `/tax-status`
+- `/tax-status`: benchmark pass rate per form:year, MeF readiness of the sample returns and the TY2025 ATS scoreboard.
+- `/tax-fix [form:year | mef]`: clusters benchmark (or MeF and ATS) failures by root cause, fixes the engine in parallel, gates each round with `bun run verify:changed`, and commits only net-positive engine fixes; cases are never edited to pass.
+- `/tax-cases [form:year] [vita | pub17 | instructions | "scenario"]`: adds benchmark cases whose expected values come from an IRS publication, checked with `check:cases` and `check:oracle`.
+- `/tax-build <form-number> [year]`: researches a new form product, sources its cases, builds its nodes and hands off to `/tax-fix`.
 
-Run this first. Shows pass/fail counts, pending root causes, and build phase for every form.
-
-```
-/tax-status
-```
-
-#### `/tax-fix [form:year]`
-
-Autonomous bug-fixing loop. Reads failing benchmark cases, clusters them by root cause, spawns parallel fixer agents, validates with the harness, and commits net-positive engine fixes only; benchmark cases are never edited to pass. Loops until all cases pass or progress stalls.
+Typical workflows:
 
 ```
-/tax-fix f1040:2025
+/tax-status                       # where things stand
+/tax-fix f1040:2025               # fix benchmark failures
+
+/tax-cases pub17                  # add IRS examples
+/tax-fix f1040:2025               # fix what they expose
+
+/tax-fix mef                      # clear MeF and ATS blockers
 ```
 
-#### `/tax-cases [source]`
-
-Sources test cases from IRS publications (VITA exercises, Pub 17, MeF test packages) and validates what it writes with `bun run check:cases`. Run `/tax-fix` after to see how the engine performs on the new cases.
-
-```
-/tax-cases vita                            # VITA Pub 4491 training exercises
-/tax-cases pub17                           # Publication 17 worked examples
-/tax-cases "senior with SSA and 1099-R"    # free-form scenario
-```
-
-#### `/tax-build [form-number]`
-
-End-to-end form builder. Researches IRS instructions, extracts ground truth, builds all nodes section by section, then runs a validate + fix loop until >= 95% of benchmark cases pass. Resumes if interrupted.
-
-```
-/tax-build 1120
-```
-
-#### Typical workflows
-
-**Adding a new form:**
-
-```
-/tax-cases f1120:2025 vita    # source benchmark cases first
-/tax-build 1120               # build nodes, iterate until >= 95% pass
-/tax-status                   # confirm it's green
-```
-
-**Fixing a regression:**
-
-```
-/tax-status                   # find what's failing and why
-/tax-fix f1040:2025           # autonomous fix loop
-```
-
-**Expanding test coverage:**
-
-```
-/tax-cases pub17              # pull new IRS examples
-/tax-fix f1040:2025           # fix loop against expanded case set
-```
+Before a pull request, run the proof list in [AGENTS.md](AGENTS.md).
 
 ---
 

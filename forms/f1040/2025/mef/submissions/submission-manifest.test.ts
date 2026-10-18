@@ -23,6 +23,7 @@ const filer: FilerIdentity = {
   primarySSN: "123456789",
   nameLine1: "TAXPAYER TEST",
   nameControl: "TAXP",
+  firstName: "Test",
   firstNameWithInitial: "Test",
   lastName: "Taxpayer",
   address: { line1: "1 Test Way", city: "Austin", state: "TX", zip: "78701" },
@@ -42,19 +43,27 @@ const residencyReview = {
   },
 };
 
+/** Pub 1436 ATS returns use SSNs whose 4th and 5th digits are 00 (R0000-129-01). */
+const ATS_SSN = "123006789";
+
 async function archive(ats: boolean, sequence = "abc0001") {
+  const tin = ats ? ATS_SSN : filer.primarySSN;
+  const identity = { ...filer, primarySSN: tin };
   const bundle = await buildMefBundle({
     f1040: {
       filing_status: "single",
       digital_assets: false,
       ...(ats ? { ats_test_submission: true } : {}),
     },
-  }, { filer, attachments: [] });
+  }, { filer: identity, attachments: [] });
   return await buildMefSubmissionArchive(bundle, {
-    filer,
+    filer: identity,
     submissionId: mefSubmissionId("123456", processingDate, sequence),
     processingDate,
-    residencyReview,
+    residencyReview: {
+      ...residencyReview,
+      taxpayer: { ...residencyReview.taxpayer, tin },
+    },
   });
 }
 
@@ -93,7 +102,7 @@ test("manifest rules compare the TIN with the Return Header Primary SSN and EFIN
     .toEqual([]);
   const rules = (manifest: string, xml = bundle.xml, date = processingDate) =>
     submissionManifestFindings(manifest, xml, date).map((f) => f.ruleNumber);
-  expect(rules(manifestXml.replace("<TIN>123456789<", "<TIN>987654321<")))
+  expect(rules(manifestXml.replace(`<TIN>${ATS_SSN}<`, "<TIN>987654321<")))
     .toEqual(["IND-052"]);
   expect(
     rules(manifestXml, bundle.xml.replace("<EFIN>123456<", "<EFIN>654321<")),
@@ -136,7 +145,7 @@ test("the A2A evidence join reads PrimarySSN from a generated Return Header (ite
       "12345202629000000001",
       {
         submissionId: submission.submissionId,
-        taxpayerSsn: "123456789",
+        taxpayerSsn: ATS_SSN,
         submissionXmlSha256: await sha256(submission),
       },
     );

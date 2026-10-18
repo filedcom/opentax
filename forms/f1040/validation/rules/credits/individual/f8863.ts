@@ -26,7 +26,7 @@ import {
   validSSN,
 } from "../../../../../../core/validation/mod.ts";
 import {
-  everyIssuableTin,
+  issuableTins,
   personNameControlAgrees,
 } from "../../../../../../core/validation/predicates.ts";
 
@@ -155,7 +155,7 @@ export const F8863_RULES: readonly RuleDef[] = [
       eachGroup(
         "StudentAndEducationalInstnGrp",
         all(
-          everyIssuableTin("StudentSSN"),
+          issuableTins("StudentSSN"),
           personNameControlAgrees("StudentNameControlTxt", "StudentSSN"),
         ),
         "StudentSSN",
@@ -177,7 +177,7 @@ export const F8863_RULES: readonly RuleDef[] = [
     "reject_and_stop",
     "database",
     // Offline: a TIN the SSA or IRS can issue; its lock is IRS data.
-    inOwnDocument(everyIssuableTin("StudentSSN")),
+    inOwnDocument(issuableTins("StudentSSN")),
     "The Student SSN that has a value on Form 8863, Line 21 has been locked because Social Security Administration records indicate the number belongs to a deceased individual.",
   ),
   rule(
@@ -185,7 +185,7 @@ export const F8863_RULES: readonly RuleDef[] = [
     "reject_and_stop",
     "database",
     // Offline: a TIN the SSA or IRS can issue; its lock is IRS data.
-    inOwnDocument(everyIssuableTin("StudentSSN")),
+    inOwnDocument(issuableTins("StudentSSN")),
     "The Student SSN that has a value on Form 8863, Line 21 has been locked. The account was locked per the taxpayer's request.",
   ),
   rule(
@@ -193,7 +193,7 @@ export const F8863_RULES: readonly RuleDef[] = [
     "reject_and_stop",
     "database",
     // Offline: a TIN the SSA or IRS can issue; its lock is IRS data.
-    inOwnDocument(everyIssuableTin("StudentSSN")),
+    inOwnDocument(issuableTins("StudentSSN")),
     "The Student SSN that has a value on Form 8863, Line 21 has been locked. The account was locked per the request of the student's parent or guardian.",
   ),
 ];

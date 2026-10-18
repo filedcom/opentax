@@ -84,10 +84,9 @@ const rules: readonly RuleDef[] = [
   ...STATE_RULES,
 ];
 
-/** Rule checks run directly, so database and duplicate rules are judged too. */
 function failing(xml: string, facts: Facts): string[] {
   const ctx = context(xml, facts);
-  return rules.filter((r) => r.check !== null && !r.check(ctx))
+  return rules.filter((r) => !r.check(ctx))
     .map((r) => r.ruleNumber);
 }
 

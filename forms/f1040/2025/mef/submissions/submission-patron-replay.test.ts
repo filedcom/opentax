@@ -96,7 +96,8 @@ test("Patron saved returns preserve all 58 source packets in mixed submission ar
   const observations = [];
   let sourceRejected = 0, archiveRejected = 0;
   for (const [i, c] of cases.entries()) {
-    const primary = String(211220000 + i), spouse = String(544550000 + i);
+    // Serial 0000 is never issued (R0000-500-01), so numbering starts at 0001.
+    const primary = String(211220001 + i), spouse = String(544550001 + i);
     const input: Row = remap(c.input, primary, spouse);
     const result = f1040_2025.executeReturn(input);
     assertEquals(result.diagnostics, [], c.name);

@@ -58,7 +58,7 @@ export function formatDiagnosticsText(
   );
   lines.push(`  Warnings:       ${padNum(report.summary.alerts)}`);
   lines.push(
-    `  Not checked:    ${padNum(report.summary.skipped)}    (not applicable, IRS-side or not implemented)`,
+    `  Not checked:    ${padNum(report.summary.skipped)}    (not applicable to this return)`,
   );
   lines.push(`  ${sep}`);
 

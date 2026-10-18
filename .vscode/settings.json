@@ -1,16 +1,6 @@
 {
-  "editor.formatOnSave": true,
   "editor.codeActionsOnSave": {
     "source.organizeImports": "always"
   },
-  "typescript.tsdk": "node_modules/typescript/lib",
-  "typescript.format.enable": false,
-  "[typescript]": {
-    "editor.defaultFormatter": "dprint.dprint"
-  },
-  "[typescriptreact]": {
-    "editor.defaultFormatter": "dprint.dprint"
-  },
-
-  "biome.enabled": false
+  "typescript.tsdk": "node_modules/typescript/lib"
 }

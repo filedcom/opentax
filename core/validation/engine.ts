@@ -6,7 +6,6 @@
  */
 
 import { formRefFromPrefix, ruleFormPrefix } from "./rule-builder.ts";
-import { alwaysPass, irsSide } from "./predicates.ts";
 import type {
   DiagnosticEntry,
   DiagnosticsReport,
@@ -14,9 +13,6 @@ import type {
   ReturnContext,
   RuleDef,
 } from "./types.ts";
-
-/** Categories that require server-side validation (can't check client-side). */
-const SERVER_SIDE_CATEGORIES = new Set(["database", "duplicate"]);
 
 /**
  * Evaluate all rules against a return context.
@@ -43,30 +39,6 @@ export function evaluateRules(
 
     const prefix = ruleFormPrefix(rule.ruleNumber);
     if (applicableFormPrefixes && !applicableFormPrefixes.has(prefix)) {
-      skipped++;
-      continue;
-    }
-
-    // "SA-F8992-…" is a schedule of Form 8992, not Schedule A of Form 1040.
-    const parentForm = /^S[A-Z0-9]*-F([0-9A-Z]+)-/.exec(rule.ruleNumber)?.[1];
-    if (
-      applicableFormPrefixes && parentForm && parentForm !== "1040" &&
-      !applicableFormPrefixes.has(`F${parentForm}`)
-    ) {
-      skipped++;
-      continue;
-    }
-
-    // Skip server-side-only rules
-    if (SERVER_SIDE_CATEGORIES.has(rule.category)) {
-      skipped++;
-      continue;
-    }
-
-    // An unimplemented or IRS-side rule is not checked, never counted as passed.
-    if (
-      rule.check === null || rule.check === alwaysPass || rule.check === irsSide
-    ) {
       skipped++;
       continue;
     }

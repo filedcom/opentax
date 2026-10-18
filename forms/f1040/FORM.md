@@ -9,25 +9,26 @@ determines refund or amount owed. Most other IRS forms feed into it as inputs.
 
 ## Node Categories
 
-- `nodes/inputs/`          → 131 nodes — one per IRS input document (W-2, 1099s, Schedule C, A, …)
-- `nodes/intermediate/forms/`       → ~35 nodes — computed forms (8959, 8960, EITC, 8889, …)
-- `nodes/intermediate/worksheets/`  → ~10 nodes — computation worksheets (brackets, Sch D, QBI, …)
-- `nodes/intermediate/aggregation/` → ~8 nodes  — AGI, Schedule B/D/2/3 aggregators
-- `nodes/outputs/`          → 2 nodes  — final line aggregators (f1040, schedule1)
+- `nodes/inputs/`                   → 158 nodes — one per IRS input document (W-2, 1099s, Schedule C, A, …)
+- `nodes/intermediate/forms/`       → 49 nodes — computed forms (8959, 8960, EITC, 8889, …)
+- `nodes/intermediate/worksheets/`  → 7 nodes — computation worksheets (brackets, Sch D, QBI, …)
+- `nodes/intermediate/aggregation/` → 7 nodes — AGI, Schedule B/D/2/3 aggregators
+- `nodes/outputs/`                  → 2 nodes — final line aggregators (f1040, schedule1)
 
 ## Conventions
 
-- **Config-injected nodes** import year constants via `CONFIG_BY_YEAR[ctx.taxYear]` from
-  `nodes/config/index.ts`. Adding a new year = add entry to that barrel + a new `config.ts`.
-- **Year-specific structural overrides** (rare, ~2–5 per year) live in `{year}/nodes/`.
-  A year's `registry.ts` imports the override instead of the shared node.
+- **Config-injected nodes** read year constants via `CONFIG_BY_YEAR[ctx.taxYear]` from
+  `nodes/config/index.ts`; each year's constants are in `nodes/config/{year}.ts`.
+- **Nodes are shared per form.** A year owns only config and wiring (`{year}/index.ts`,
+  `{year}/config.ts`); a node whose rules change by year branches on `ctx.taxYear`.
+  The node registry is `2025/registry.ts`, which later years reuse
+  (see [STRUCTURE.md](../../docs/architecture/STRUCTURE.md)).
 - All nodes follow the file shape in `AGENTS.md`: imports → enums → schemas → helpers → class → singleton.
 - Node discovery: `glob forms/f1040/nodes/**/ ` — no master list needed.
 
 ## IRS Specs
 
 - MeF schemas and business rules: `irs/` (not committed; [irs/README.md](../../irs/README.md) lists every file and how to install it)
-- PDF field dumps: `.state/field-dumps/`
 - Instructions PDF: https://www.irs.gov/pub/irs-pdf/i1040.pdf
 - IRS Pub 17: https://www.irs.gov/publications/p17
 - VITA exercises (benchmark ground truth): https://www.irs.gov/pub/irs-pdf/p4491.pdf
@@ -36,7 +37,7 @@ determines refund or amount owed. Most other IRS forms feed into it as inputs.
 
 Cases: `benchmark/cases/f1040/{year}/`
 Runner: `bun run bench --form f1040 --year {year}`
-Pass threshold: 95% (≥ 93 of 97 for the current case set)
+Pass threshold: 95% (≥ 131 of 137 for the current case set)
 
 ## Known Failure Modes (TY2025)
 
@@ -46,13 +47,11 @@ Pass threshold: 95% (≥ 93 of 97 for the current case set)
 
 ## Adding a New Tax Year
 
-1. Copy `forms/f1040/2025/` → `forms/f1040/{year}/`
-2. Update `{year}/config.ts` with new IRS Rev. Proc. constants
-3. Add `{year}` entry to `nodes/config/index.ts`: `import { config{year} } from "../../{year}/config.ts"`
-4. Run `bun run bench --form f1040 --year {year}` — most nodes pass unchanged
-5. Any failure → that node has structural changes → create override at `{year}/nodes/{path}/index.ts`
-6. Update `{year}/registry.ts` to import override instead of shared node
-7. Update this FORM.md: bump "Known Failure Modes" section
+1. Add `forms/f1040/{year}/index.ts` and `config.ts`, following `forms/f1040/2026/`
+2. Add `nodes/config/{year}.ts` with the new IRS Rev. Proc. constants and register it in `nodes/config/index.ts`
+3. Run `bun run bench --form f1040 --year {year}` — most nodes pass unchanged
+4. Any failure → branch that shared node on `ctx.taxYear`; never copy it into `{year}/`
+5. Update this FORM.md: bump "Known Failure Modes" section
 
 ## Adding a New Form
 

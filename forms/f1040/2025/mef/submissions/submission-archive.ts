@@ -24,6 +24,13 @@ import {
   submissionManifestFindings,
 } from "./submission-manifest.ts";
 import { crc32, unzipEntries, zipEntries } from "./zip.ts";
+import { EnvelopeFact } from "../../../../../core/validation/predicates.ts";
+import {
+  type EnvelopeFacts,
+  processingDateFact,
+  type RulePrefixTally,
+  submissionEnvelopeReport,
+} from "../../../validation/business-rule-report.ts";
 
 const XML_DECLARATION = '<?xml version="1.0" encoding="UTF-8"?>\n';
 const encoder = new TextEncoder();
@@ -35,7 +42,7 @@ export interface MefSubmissionArchiveOptions {
   readonly residencyReview: FilingResidencyReview;
 }
 
-export interface MefSubmissionArchive {
+interface MefSubmissionArchiveContents {
   readonly submissionId: string;
   readonly fileName: string;
   readonly processingDate: Date;
@@ -46,6 +53,49 @@ export interface MefSubmissionArchive {
   readonly residencyReview: FilingResidencyReview;
   /** ATS returns (`general.ats_test_submission`) go to the IRS test environment. */
   readonly testCd: MefTestCd;
+}
+
+export interface MefSubmissionArchive extends MefSubmissionArchiveContents {
+  /** The R0000, X0000, T0000 and STATE rules run on these bytes, by prefix. */
+  readonly envelopeRules: RulePrefixTally;
+}
+
+/** The transmitter's A2A identity for the T0000 Message ID rules. */
+export interface MefTransmitter {
+  readonly etin: string;
+  readonly messageId: string;
+}
+
+/** Reject the archive when MeF's submission, XML or transmission rules would. */
+function assertEnvelopeRules(
+  archive: MefSubmissionArchiveContents,
+  facts: EnvelopeFacts,
+): RulePrefixTally {
+  // The envelope rules read the emitted XML; pending supplies only the
+  // Form 1040 filing status and ATS flag.
+  const { report, byPrefix } = submissionEnvelopeReport(
+    { f1040: archive.bundle.pending.f1040 ?? {} },
+    archive.filer,
+    archive.bundle.xml,
+    {
+      [EnvelopeFact.SubmissionZip]: archive.bytes,
+      [EnvelopeFact.ProcessingDate]: processingDateFact(
+        archive.processingDate,
+      ),
+      ...facts,
+    },
+  );
+  const rejects = report.entries.filter((entry) =>
+    entry.severity === "reject" || entry.severity === "reject_and_stop"
+  );
+  if (rejects.length > 0) {
+    throw new Error(
+      `MeF submission fails ${
+        rejects.map((entry) => entry.ruleNumber).join(", ")
+      }: ${rejects[0].message}`,
+    );
+  }
+  return byPrefix;
 }
 
 export interface MefTransmissionSubmission {
@@ -196,7 +246,7 @@ export function zipDirectoryEntryCount(
   return undefined;
 }
 
-function assertPreparedBundleDigests(archive: MefSubmissionArchive): void {
+function assertPreparedBundleDigests(archive: MefSubmissionArchiveContents): void {
   const { bundle } = archive;
   const attachmentNames = bundle.attachments.map((item) => item.fileName);
   const digestNames = Object.keys(bundle.attachmentSha256ByFileName);
@@ -220,7 +270,9 @@ function assertPreparedBundleDigests(archive: MefSubmissionArchive): void {
   }
 }
 
-function assertPreparedArchiveContents(archive: MefSubmissionArchive): void {
+function assertPreparedArchiveContents(
+  archive: MefSubmissionArchiveContents,
+): void {
   validateSubmissionIdentity(archive);
   assertPreparedBundleDigests(archive);
   archive.bundle.attachments.forEach(assertMefPdfEnvelope);
@@ -403,7 +455,7 @@ export async function buildMefSubmissionArchive(
   for (const attachment of bundle.attachments) {
     files[`attachment/${attachment.fileName}`] = attachment.bytes;
   }
-  const archive: MefSubmissionArchive = {
+  const archive: MefSubmissionArchiveContents = {
     submissionId: options.submissionId,
     fileName: `${options.submissionId}.zip`,
     processingDate: options.processingDate,
@@ -415,12 +467,13 @@ export async function buildMefSubmissionArchive(
     testCd: submissionTestCd(bundle),
   };
   assertPreparedArchiveContents(archive);
-  return archive;
+  return { ...archive, envelopeRules: assertEnvelopeRules(archive, {}) };
 }
 
 /** Build the A2A SOAP body element and its uncompressed ZIP attachment. */
 export function buildMefTransmissionPackage(
   submissions: ReadonlyArray<MefTransmissionSubmission>,
+  transmitter?: MefTransmitter,
 ): MefTransmissionPackage {
   if (submissions.length < 1 || submissions.length > 100) {
     throw new Error("MeF transmission needs 1 to 100 submissions");
@@ -466,9 +519,21 @@ export function buildMefTransmissionPackage(
   const list = elements("SubmissionDataList", requestEntries);
   const sendSubmissionsRequestXml = XML_DECLARATION +
     `<SendSubmissionsRequest xmlns="http://www.irs.gov/a2a/mef/MeFTransmitterService.xsd">${list}</SendSubmissionsRequest>`;
-  return {
-    sendSubmissionsRequestXml,
-    containerZipBytes: zipEntries(files, false),
-    testCd,
+  const containerZipBytes = zipEntries(files, false);
+  const transmissionFacts: EnvelopeFacts = {
+    [EnvelopeFact.TransmissionZip]: containerZipBytes,
+    [EnvelopeFact.TransmissionSubmissionIds]: submissions.map(({ archive }) =>
+      archive.submissionId
+    ),
+    ...(transmitter
+      ? {
+        [EnvelopeFact.MessageId]: transmitter.messageId,
+        [EnvelopeFact.TransmitterEtin]: transmitter.etin,
+      }
+      : {}),
   };
+  for (const { archive } of submissions) {
+    assertEnvelopeRules(archive, transmissionFacts);
+  }
+  return { sendSubmissionsRequestXml, containerZipBytes, testCd };
 }

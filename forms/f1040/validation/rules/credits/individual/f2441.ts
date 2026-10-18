@@ -33,9 +33,9 @@ import {
   validSSN,
 } from "../../../../../../core/validation/mod.ts";
 import {
-  everyIssuableTin,
+  issuableTins,
   personNameControlAgrees,
-  wellFormedIpPins,
+  validIpPins,
 } from "../../../../../../core/validation/predicates.ts";
 
 export const F2441_RULES: readonly RuleDef[] = [
@@ -212,7 +212,7 @@ export const F2441_RULES: readonly RuleDef[] = [
       eachGroup(
         "QualifyingPersonGrp",
         all(
-          everyIssuableTin("QualifyingPersonSSN"),
+          issuableTins("QualifyingPersonSSN"),
           personNameControlAgrees("QualifyingPersonNameControlTxt", "QualifyingPersonSSN"),
         ),
         "QualifyingPersonSSN",
@@ -234,7 +234,7 @@ export const F2441_RULES: readonly RuleDef[] = [
     "reject_and_stop",
     "database",
     // Offline: a TIN the SSA or IRS can issue; its lock is IRS data.
-    inOwnDocument(everyIssuableTin("QualifyingPersonSSN")),
+    inOwnDocument(issuableTins("QualifyingPersonSSN")),
     "The Qualifying Person SSN that has a value on Form 2441, Line 2(b) has been locked because Social Security Administration records indicate the number belongs to a deceased individual.",
   ),
   rule(
@@ -242,7 +242,7 @@ export const F2441_RULES: readonly RuleDef[] = [
     "reject_and_stop",
     "database",
     // Offline: a TIN the SSA or IRS can issue; its lock is IRS data.
-    inOwnDocument(everyIssuableTin("QualifyingPersonSSN")),
+    inOwnDocument(issuableTins("QualifyingPersonSSN")),
     "The Qualifying Person SSN that has a value on Form 2441, Line 2(b) has been locked. The account was locked per the taxpayer's request.",
   ),
   rule(
@@ -250,21 +250,21 @@ export const F2441_RULES: readonly RuleDef[] = [
     "reject_and_stop",
     "database",
     // Offline: a TIN the SSA or IRS can issue; its lock is IRS data.
-    inOwnDocument(everyIssuableTin("QualifyingPersonSSN")),
+    inOwnDocument(issuableTins("QualifyingPersonSSN")),
     "The Qualifying Person SSN that has a value on Form 2441, Line 2(b) has been locked. The account was locked per the request of the qualifying person's parent or guardian.",
   ),
   rule(
     "F2441-995",
     "reject_and_stop",
     "incorrect_data",
-    inOwnDocument(wellFormedIpPins("QualifyingPersonGrp/IdentityProtectionPIN")),
+    inOwnDocument(validIpPins("QualifyingPersonGrp/IdentityProtectionPIN")),
     "The Dependent/Qualifying Person's Identity Protection Personal Identification Number (IP PIN) on Form 2441 must match the e-File database. Please double check your entry and resubmit your return with the correct number.",
   ),
   rule(
     "F2441-996",
     "reject_and_stop",
     "incorrect_data",
-    inOwnDocument(wellFormedIpPins("QualifyingPersonGrp/IdentityProtectionPIN")),
+    inOwnDocument(validIpPins("QualifyingPersonGrp/IdentityProtectionPIN")),
     "The Dependent/Qualifying Person's Identity Protection Personal Identification Number (IP PIN) provided on Form 2441 is not valid. Please visit www.irs.gov/getanippin for further information and resubmit your return with the correct number.",
   ),
 ];

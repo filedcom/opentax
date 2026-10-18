@@ -14,6 +14,7 @@ const filer: FilerIdentity = {
   primarySSN: "123456789",
   nameLine1: "TAXPAYER TEST",
   nameControl: "TAXP",
+  firstName: "Test",
   firstNameWithInitial: "Test",
   lastName: "Taxpayer",
   address: {
