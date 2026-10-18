@@ -32,9 +32,9 @@ test("the catalog serves f1040:2026 with the 2026v1.0 MeF version", () => {
 
 test("a TY2026 return refuses inputs whose path still applies TY2025 law", () => {
   assertThrows(
-    () => assertTy2026Inputs({ general: {}, schedule_h: {} }),
+    () => assertTy2026Inputs({ general: {}, schedule_j: {} }),
     Error,
-    "schedule_h",
+    "schedule_j",
   );
   assertThrows(
     () =>

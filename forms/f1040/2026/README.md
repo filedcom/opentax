@@ -81,10 +81,18 @@ grouped by the return section of the node each input key enters
 
 `f1095a`, `f2441`, `f3468`, `f3800`, `f4136`, `f5695`, `f5884`, `f6478`, `f6765`, `f7207`, `f8609`, `f8801`, `f8812`, `f8812_credit_limit_worksheet`, `f8812_earned_income_worksheet`, `f8820`, `f8826`, `f8834`, `f8835`, `f8844`, `f8859`, `f8862`, `f8863`, `f8863_claimant_review`, `f8863_credit_limit_worksheet`, `f8864`, `f8874`, `f8874_recapture`, `f8881`, `f8882`, `f8896`, `f8908`, `f8911`, `f8912`, `f8936`, `f8941`, `f8994`, `form1116_carryover_review`, `form1116_prior_carryover`, `form1116_review`, `form1116_schedule_c_source`, `form2441`, `form3800_current_orphan_allocation`, `form3800_current_production_allocation`, `form8396`, `form8582cr`, `form8839`, `qsehra`, `schedule_r`
 
-### taxes (23)
+### taxes (15)
 
-`ct2`, `f2210`, `f2210f`, `f4255`, `f453a_interest`, `f4970`, `f5405`, `f8611`, `f8615`, `f8697`, `f8828`, `f8866`, `f8965`, `f8978`, `f965`, `form4137`, `form4972`, `form5329`, `form6251_prior_iso_sale`, `form8919`, `form8960_additional_modifications`, `schedule_h`, `schedule_j`
+Enabled: `ct2`, `f8611`, `f8965`, `form4137`, `form5329`, `form8919`,
+`form8960_additional_modifications`, `schedule_h` (FICA-only payroll; FUTA,
+family and minor payroll refuse until 2026 credit-reduction states and dated
+attestations exist).
 
-### payments (10)
+`f2210`, `f2210f`, `f4255`, `f453a_interest`, `f4970`, `f5405`, `f8615`, `f8697`, `f8828`, `f8866`, `f8978`, `f965`, `form4972`, `form6251_prior_iso_sale`, `schedule_j`
 
-`ext`, `f1040es`, `f2439`, `f8288`, `f8379`, `f843`, `f8805`, `f8857`, `f9465`, `payment_request`
+### payments (2)
+
+Enabled: `ext`, `f1040es`, `f8288`, `f8379`, `f843`, `f8805`, `f8857`,
+`f8888`, `payment_request`.
+
+`f2439`, `f9465`
