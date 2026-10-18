@@ -1825,36 +1825,6 @@
     "count": 1
   },
   {
-    "path": "forms/f1040/nodes/inputs/income/other/education_income/dependent-scholarship-review.ts",
-    "pattern": "year-comparison",
-    "count": 3
-  },
-  {
-    "path": "forms/f1040/nodes/inputs/income/other/education_income/dependent-scholarship-review.ts",
-    "pattern": "year-identifier",
-    "count": 1
-  },
-  {
-    "path": "forms/f1040/nodes/inputs/income/other/education_income/dependent-scholarship-review.ts",
-    "pattern": "z-literal",
-    "count": 3
-  },
-  {
-    "path": "forms/f1040/nodes/inputs/income/other/education_income/index.ts",
-    "pattern": "year-value",
-    "count": 1
-  },
-  {
-    "path": "forms/f1040/nodes/inputs/income/other/education_income/required-service-scholarship.ts",
-    "pattern": "z-literal",
-    "count": 1
-  },
-  {
-    "path": "forms/f1040/nodes/inputs/income/other/education_income/sources.ts",
-    "pattern": "z-literal",
-    "count": 1
-  },
-  {
     "path": "forms/f1040/nodes/inputs/income/rental-passthrough/k1_partnership/box11_line10.ts",
     "pattern": "z-literal",
     "count": 1
@@ -2052,7 +2022,7 @@
   {
     "path": "forms/f1040/nodes/inputs/taxes/investments/f8615/dependent-source-review.ts",
     "pattern": "year-identifier",
-    "count": 7
+    "count": 5
   },
   {
     "path": "forms/f1040/nodes/inputs/taxes/other/f5405/index.ts",

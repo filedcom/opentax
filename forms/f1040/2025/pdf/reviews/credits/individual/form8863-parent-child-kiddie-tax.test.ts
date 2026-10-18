@@ -168,7 +168,7 @@ test("dependent child and parent exports reject detached kiddie tax eligibility,
         .other_children_requiring_form8615 = ["777889999"],
     (p) =>
       p.general.dependent_education_income_review.kiddie_tax_review
-        .parent_alive_on_2025_12_31 = false,
+        .parent_alive_at_year_end = false,
     (p) =>
       p.general.dependent_education_income_review.student_dob = "2001-06-15",
     (p) =>

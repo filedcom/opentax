@@ -8,7 +8,7 @@ import { z } from "zod";
 const common = {
   student_ssn: z.string().regex(/^\d{3}-?\d{2}-?\d{4}$/),
   source_document_reference: z.string().trim().min(1),
-  tax_year: z.literal(2025),
+  tax_year: z.number().int(),
   taxable_amount: z.number().int().positive(),
 };
 export const itemSchema = z.discriminatedUnion("kind", [
@@ -35,7 +35,7 @@ export const itemSchema = z.discriminatedUnion("kind", [
         grant_source_reference: z.string().trim().min(1),
         student_ssn: common.student_ssn,
         payer_name: z.string().trim().min(1),
-        payment_date: z.string().date().refine((v) => v.startsWith("2025-")),
+        payment_date: z.string().date(),
         amount: z.number().int().positive(),
       }).strict(),
     ).min(1).optional(),
@@ -45,7 +45,7 @@ export const itemSchema = z.discriminatedUnion("kind", [
         student_ssn: common.student_ssn,
         payee_name: z.string().trim().min(1),
         category: z.literal("room_board"),
-        payment_date: z.string().date().refine((v) => v.startsWith("2025-")),
+        payment_date: z.string().date(),
         amount: z.number().int().positive(),
       }).strict(),
     ).min(1).optional(),
@@ -53,6 +53,42 @@ export const itemSchema = z.discriminatedUnion("kind", [
 ]);
 const inputSchema = z.object({ education_incomes: z.array(itemSchema) });
 export type EducationIncome = z.infer<typeof itemSchema>;
+
+function rowDates(row: EducationIncome): string[] {
+  if (row.kind === "scholarship_for_required_services") {
+    return [
+      ...row.payment_sources.map((p) => p.payment_date),
+      ...row.required_service_sources.flatMap((s) => [
+        s.performed_start_date,
+        s.performed_end_date,
+      ]),
+    ];
+  }
+  if (row.kind === "scholarship_not_on_w2") {
+    return [
+      ...(row.scholarship_disbursement_sources ?? []),
+      ...(row.nonqualified_expense_payment_sources ?? []),
+    ].map((p) => p.payment_date);
+  }
+  return [];
+}
+
+/** Each source names the return's tax year, and its payments and service fall in it. */
+export function assertEducationIncomeYear(
+  rows: readonly EducationIncome[],
+  taxYear: number,
+): void {
+  if (
+    rows.some((row) =>
+      row.tax_year !== taxYear ||
+      rowDates(row).some((date) => !date.startsWith(`${taxYear}-`))
+    )
+  ) {
+    throw new Error(
+      `Taxable education income sources and their dates must be for ${taxYear}`,
+    );
+  }
+}
 export function educationIncomeSources(raw: unknown): EducationIncome[] {
   if (raw === undefined) return [];
   const rows = inputSchema.parse(raw).education_incomes;

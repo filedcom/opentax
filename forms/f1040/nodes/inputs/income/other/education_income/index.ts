@@ -19,6 +19,7 @@ export {
   scholarshipIncomeTotal,
 } from "./sources.ts";
 import {
+  assertEducationIncomeYear,
   type EducationIncome,
   educationIncomeSources,
   itemSchema,
@@ -32,6 +33,7 @@ export function assertEducationIncomeSource(
   filedScholarship?: unknown,
 ): EducationIncome[] {
   const rows = educationIncomeSources(pending?.education_income);
+  if (rows.length > 0) assertEducationIncomeYear(rows, rows[0].tax_year);
   const ownerSet = new Set(owners.map((ssn) => ssn.replaceAll("-", "")));
   if (rows.some((row) => !ownerSet.has(row.student_ssn.replaceAll("-", "")))) {
     throw new Error(
@@ -124,7 +126,7 @@ export function assertEducationIncomeSource(
     }
     if (schedule) {
       const rebuilt = schedule1.compute(
-        { taxYear: 2025, formType: "f1040" },
+        { taxYear: rows[0].tax_year, formType: "f1040" },
         schedule1.inputSchema.parse(schedule),
       ).outputs[0].fields;
       if (
@@ -154,7 +156,11 @@ class EducationIncomeNode extends TaxNode<typeof inputSchema> {
   readonly nodeType = "education_income";
   readonly inputSchema = inputSchema;
   readonly outputNodes = new OutputNodes([schedule1, agi_aggregator]);
-  compute(_ctx: NodeContext, input: z.infer<typeof inputSchema>): NodeResult {
+  compute(ctx: NodeContext, input: z.infer<typeof inputSchema>): NodeResult {
+    assertEducationIncomeYear(
+      educationIncomeSources({ education_incomes: input.education_incomes }),
+      ctx.taxYear,
+    );
     const amount = scholarshipIncomeTotal(input);
     return {
       outputs: amount

@@ -3,10 +3,10 @@ import { z } from "zod";
 const reference = z.string().trim().min(1);
 const ssn = z.string().regex(/^\d{3}-?\d{2}-?\d{4}$/);
 const ein = z.string().regex(/^\d{2}-?\d{7}$/);
-const date = z.string().date().refine((v) => v.startsWith("2025-"));
+const date = z.string().date();
 export const requiredServiceScholarshipSchema = z.object({
   kind: z.literal("scholarship_for_required_services"),
-  tax_year: z.literal(2025),
+  tax_year: z.number().int(),
   student_ssn: ssn,
   source_document_reference: reference,
   taxable_amount: educationMoney.refine(

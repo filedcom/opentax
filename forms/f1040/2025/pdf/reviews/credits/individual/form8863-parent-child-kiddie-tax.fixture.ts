@@ -29,7 +29,7 @@ export function taxablePair(issued: boolean, exactHalf = false): any {
       "2025-Taylor-required-kiddie-tax-family-source-review",
     tax_year: 2025,
     parent_alive_record_reference: "2025-parent-year-end-life-record",
-    parent_alive_on_2025_12_31: true,
+    parent_alive_at_year_end: true,
     parent_selection: {
       kind: "divorced_custodial_unremarried",
       divorce_decree_record_reference: "2022-parent-final-divorce-decree",

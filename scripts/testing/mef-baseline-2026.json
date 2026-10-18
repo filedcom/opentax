@@ -391,9 +391,7 @@
       "calculation form8995a"
     ],
     "single-form8863-missing-tuition-form-taxable-scholarship-phaseout": [
-      "calculation form8960",
-      "calculation standard_deduction",
-      "calculation start"
+      "xml Form 8863 filing needs source MAGI, Credit Limit Worksheet, and finalized Form 1040/Schedule 3 credit lines to reconcile"
     ],
     "single-source-qef-1294-election": [
       "calculation form8960",
@@ -782,7 +780,7 @@
     "joint-spouse-owned-form8995a-patron-c-health": "Sample amount: the reviewed health plan carries its TY2025 Schedule 1 line 15 SE deduction; Schedule SE recomputes it with the 2026 social security wage base, and amounts are not shifted",
     "joint-spouse-owned-form8995a-patron-income-cap": "MeF schema gap: 2026v1.0 IRS8995A/IRS8995AScheduleA enumerate only the TY2025 FilingStatusThresholdCd values (197300, 394600); Rev. Proc. 2025-32 \u00a74.26 sets 201750/201775/403500 for 2026",
     "single-form8995a-two-business-aggregation": "Sample amount: the reviewed Form 8995-A Schedule B members carry QBI computed with the 2025 self-employment tax deduction; amounts are not shifted",
-    "single-form8863-missing-tuition-form-taxable-scholarship-phaseout": "Open TY2026 work: the dependent scholarship review pins tax_year 2025",
+    "single-form8863-missing-tuition-form-taxable-scholarship-phaseout": "Sample fixture input: its Form 8863 filer MAGI and Credit Limit Worksheet operands are TY2025 amounts",
     "single-source-qef-1294-election": "Open TY2026 work: Form 8621 pins the 2025 PFIC year, acquisition flags and country codes",
     "single-retained-4852-ordinary-roth": "Open TY2026 work: the Roth/IRA basis sources pin 2024/2025 years and the April 15, 2026 contribution deadline",
     "single-passive-partnership-new-markets": "Sample amount: the reviewed Form 8582-CR line 6 worksheet carries tax computed under the 2025 rate schedule; amounts are not shifted",

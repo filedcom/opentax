@@ -104,9 +104,9 @@ const parentSelectionSchema = z.discriminatedUnion("kind", [
 ]);
 export const dependentKiddieTaxReviewSchema = z.object({
   source_document_reference: reference,
-  tax_year: z.literal(2025),
+  tax_year: z.number().int(),
   parent_alive_record_reference: reference,
-  parent_alive_on_2025_12_31: z.boolean(),
+  parent_alive_at_year_end: z.boolean(),
   parent_selection: parentSelectionSchema,
   family_children_record_reference: reference,
   other_children_requiring_form8615: z.array(ssn),
@@ -120,7 +120,7 @@ export const dependentKiddieTaxReviewSchema = z.object({
   settled_parent_return: settledParentTaxReturnSchema,
 }).strict();
 export const dependentScholarshipReviewSchema = z.object({
-  tax_year: z.literal(2025),
+  tax_year: z.number().int(),
   source_document_reference: reference,
   student_ssn: ssn,
   student_dob: z.string().date(),
@@ -156,7 +156,7 @@ export const dependentScholarshipReviewSchema = z.object({
   ).min(1),
 }).strict();
 export const dependentKiddieTaxFamilyReviewSchema = z.object({
-  tax_year: z.literal(2025),
+  tax_year: z.number().int(),
   source_document_reference: reference,
   parent_returns: z.array(settledParentTaxReturnSchema).min(1),
   child_returns: z.array(
@@ -279,7 +279,7 @@ export function dependentScholarshipEarned(
       tin(issued.student_ssn) !== owner ||
       issued.institution_name !== school.name ||
       tin(issued.institution_ein) !== tin(school.ein) ||
-      issued.tax_year !== 2025 ||
+      issued.tax_year !== review.tax_year ||
       issued.document_id !== w.form1098t_document_id ||
       issued.box1_payments !== w.form1098t_box1_payments ||
       issued.box5_scholarships !== w.form1098t_box5_scholarships ||
@@ -294,7 +294,7 @@ export function dependentScholarshipEarned(
     for (const p of payments) {
       if (
         tin(p.student_ssn) !== owner || p.institution_name !== school.name ||
-        p.tax_year !== 2025 || p.category !== "tuition_required_fees" ||
+        p.tax_year !== review.tax_year || p.category !== "tuition_required_fees" ||
         !ssn.safeParse(p.payer_ssn).success ||
         !review.support_sources.some((s) =>
           s.source_document_reference === p.payment_record_id &&
@@ -302,12 +302,12 @@ export function dependentScholarshipEarned(
           s.kind === "ordinary_support" && s.amount === p.amount
         ) ||
         typeof p.payment_date !== "string" ||
-        !p.payment_date.startsWith("2025-") ||
+        !p.payment_date.startsWith(`${review.tax_year}-`) ||
         !p.payment_account_record_reference ||
         qualifiedPayments.has(String(p.payment_record_id))
       ) {
         throw new Error(
-          "Dependent tuition payments must join the actual payer, student, school, support ledger and 2025 payment account record",
+          "Dependent tuition payments must join the actual payer, student, school, support ledger and tax-year payment account record",
         );
       }
       qualifiedPayments.add(String(p.payment_record_id));
@@ -331,7 +331,7 @@ export function dependentScholarshipEarned(
       aidRefs.add(String(a.source_document_reference));
       if (
         tin(a.student_ssn) !== owner || a.institution_name !== school.name ||
-        a.tax_year !== 2025
+        a.tax_year !== review.tax_year
       ) {
         throw new Error(
           "Dependent school aid recipient and institution must match the issued source",
@@ -485,5 +485,10 @@ export function assertDependentScholarshipReturn(
     (pending!.general as Record<string, unknown>)
       .dependent_education_income_review,
   );
+  if (rows.some((row) => row.tax_year !== review.tax_year)) {
+    throw new Error(
+      "Dependent scholarship review must be for the education income's tax year",
+    );
+  }
   assertDependentKiddieTaxReturn(pending!, review, earned);
 }

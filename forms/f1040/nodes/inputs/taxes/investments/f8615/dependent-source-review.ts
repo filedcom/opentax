@@ -532,7 +532,7 @@ export function dependentKiddieTaxFacts(
     const siblingFacts = childIncomeFacts(child, earned, true);
     if (
       siblingFacts.unearned <= 2700 || !siblingFacts.requiredToFile ||
-      !siblingFacts.ageApplies || !r.parent_alive_on_2025_12_31
+      !siblingFacts.ageApplies || !r.parent_alive_at_year_end
     ) {
       throw new Error(
         "Form 8615 sibling inventory must derive actual required filing eligibility",
@@ -809,7 +809,7 @@ export function dependentKiddieTaxFacts(
     }
   }
   const required = facts.unearned > 2700 && facts.requiredToFile &&
-    facts.ageApplies && r.parent_alive_on_2025_12_31;
+    facts.ageApplies && r.parent_alive_at_year_end;
   const source = required
     ? parentTaxSource(
       parent,
