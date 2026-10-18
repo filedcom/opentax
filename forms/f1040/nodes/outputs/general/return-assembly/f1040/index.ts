@@ -996,16 +996,17 @@ function assembleReturn(
     result.line20_nonrefundable_credits = computed_line20;
   }
   if (computed_line25c > 0) result.line25c_total = computed_line25c;
-  if ((input.form8978_schedule2_line17z_reduction ?? 0) > 0) {
-    // The finalized return line replaces the unadjusted Schedule 2 deposit.
+  if (
+    input.line23_other_taxes !== undefined ||
+    (input.form8978_schedule2_line17z_reduction ?? 0) > 0
+  ) {
+    // The finalized whole-dollar line (after any Form 8978 worksheet
+    // reduction) replaces the Schedule 2 deposit, which can carry cents.
     result.line23_other_taxes = Math.max(0, computed_line23);
   }
 
-  // line20_nonrefundable_credits and the unadjusted line23_other_taxes are
-  // deposited by upstream nodes before this node runs. Only re-emit line 23
-  // when the Form 8978 worksheet changes its filed value; otherwise the
-  // executor would merge-accumulate the same amount twice.
-  // They are used above for line21/line22/line24 computation — no re-emission needed.
+  // line20_nonrefundable_credits is deposited by upstream nodes before this
+  // node runs and used above for line21/line22/line24 — no re-emission needed.
   if (input.line26_estimated_tax !== undefined) {
     result.line26_estimated_tax = input.line26_estimated_tax;
   }

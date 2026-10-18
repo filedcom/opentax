@@ -2050,10 +2050,10 @@ class Form8995Node extends TaxNode<typeof inputSchema> {
         ? multipleLines ?? twoSmallScheduleCLines(input, cfg) ??
           oneScheduleCLines(input, cfg)
         : reitOnlyLines(input, cfg));
-    // The bounded filed routes carry whole-dollar line 15 exactly
-    // into Form 1040. Other QBI routes retain their existing calculation.
+    // The bounded filed routes carry whole-dollar line 15 exactly into Form
+    // 1040; the general calculation rounds its line 15 the same way.
     const beforeMinimum = simplifiedLines === undefined
-      ? qbiDeduction(input, cfg)
+      ? Math.round(qbiDeduction(input, cfg))
       : simplifiedLines.line15;
     const deduction = withMinimumDeduction(beforeMinimum, {
       businesses: (input.schedule_c_qbi_businesses ?? []).map((business) => ({

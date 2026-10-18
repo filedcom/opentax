@@ -40,9 +40,14 @@ export function assertSchedule2Line23(
     );
   }
   const line23 = filed.line23_other_taxes;
+  // Form 1040 line 23 is filed in whole dollars (2025 i1040, Rounding Off to
+  // Whole Dollars) while Schedule 2 lines can carry cents.
+  const filedLine23 = Math.max(0, Math.round(gross) - Math.round(reduction));
+  const matchesLine23 = (value: unknown): boolean =>
+    matches(value) || value === filedLine23;
   if (
-    (expected > 0.01 && !matches(line23)) ||
-    (line23 !== undefined && !matches(line23))
+    (expected > 0.01 && !matchesLine23(line23)) ||
+    (line23 !== undefined && !matchesLine23(line23))
   ) {
     throw new Error(
       "Form 1040 line 23 differs from adjusted Schedule 2 line 21",

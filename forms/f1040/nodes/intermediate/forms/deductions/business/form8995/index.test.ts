@@ -224,6 +224,21 @@ test("calc: line6_sec199a_dividends only — 20% applied", () => {
   assertEquals(out?.fields.line13_qbi_deduction, 1000);
 });
 
+// 2025 Form 8995 line 15 is a whole-dollar amount (Rounding Off to Whole
+// Dollars); 20% × 3,917 = 783.40 files as 783 on Form 1040 line 13.
+test("calc: QBI deduction is rounded to whole dollars", () => {
+  const result = compute({
+    line6_sec199a_dividends: 3917,
+    taxable_income: 50000,
+  });
+  const out = findOutput(result, "f1040");
+  assertEquals(out?.fields.line13_qbi_deduction, 783);
+  assertEquals(
+    findOutput(result, "standard_deduction")?.fields.qbi_deduction,
+    783,
+  );
+});
+
 test("calc: both QBI and REIT dividends — components summed on Line 10", () => {
   // Line 5 = 2000 (QBI), Line 9 = 1000 (REIT) → Line 10 = 3000; limit = 20% × 100000 = 20000
   const result = compute({
@@ -476,14 +491,15 @@ test("edge: net_capital_gain exceeds taxable_income — income limit base clampe
   assertEquals(findOutput(result, "f1040"), undefined);
 });
 
-test("edge: fractional cents — deduction computed to full precision (no premature rounding)", () => {
-  // QBI = 10001, 20% = 2000.2; taxable_income = 100000, limit = 20000 → deduction = 2000.2
+test("edge: fractional cents — only the filed line 15 is rounded", () => {
+  // QBI = 10001, 20% = 2000.2; taxable_income = 100000, limit = 20000 →
+  // line 15 = 2000.2, filed in whole dollars as 2000.
   const result = compute({
     qbi_from_schedule_c: 10001,
     taxable_income: 100000,
   });
   const out = findOutput(result, "f1040");
-  assertEquals(out?.fields.line13_qbi_deduction, 2000.2);
+  assertEquals(out?.fields.line13_qbi_deduction, 2000);
 });
 
 // ── Smoke test ────────────────────────────────────────────────────────────────
