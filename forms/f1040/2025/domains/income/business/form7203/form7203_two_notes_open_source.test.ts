@@ -258,7 +258,7 @@ test("two written notes and open account reject incomplete/cross-owned/duplicate
     ],
     [
       "second repayment flag",
-      (n) => n.second_formal_note.no_2025_repayments_confirmed = true,
+      (n) => n.second_formal_note.no_current_year_repayments_confirmed = true,
     ],
     [
       "second repayment scalar",

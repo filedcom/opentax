@@ -1019,6 +1019,7 @@ class K1SCorpNode extends TaxNode<typeof inputSchema> {
         const { note } = reconcileNewFormalNotes(
           item.form7203_debt_evidence,
           item,
+          ctx.taxYear,
         );
         const ledger = item.form7203_stock_loss_ledger;
         if (
@@ -1036,7 +1037,7 @@ class K1SCorpNode extends TaxNode<typeof inputSchema> {
           );
         }
         if (ledger.cash_capital_contribution) {
-          reconcileCashCapitalAndNewNote(ledger, note);
+          reconcileCashCapitalAndNewNote(ledger, note, ctx.taxYear);
           if (
             note.current_box1_ordinary_loss <=
               ledger.beginning_stock_basis +

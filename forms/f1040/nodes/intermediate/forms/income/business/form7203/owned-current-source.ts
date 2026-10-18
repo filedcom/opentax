@@ -389,7 +389,7 @@ export function reconcileOwnedCurrentDebt(raw: unknown, note: NewNote) {
       "missing complete prior stock-basis records; prior nonzero basis activity needs its separate proved history",
     );
   }
-  if (note.kind === "owned_2025_open_account") {
+  if (note.kind === "owned_current_year_open_account") {
     const record = s.complete_current_shareholder_debt_inventory[0];
     const r = replayOpenAccount(record);
     const allRefs = [
@@ -463,7 +463,7 @@ export function reconcileOwnedCurrentDebt(raw: unknown, note: NewNote) {
       openAccount: r,
     };
   }
-  const mixed = note.kind === "owned_2025_formal_and_open_account"
+  const mixed = note.kind === "owned_current_year_formal_and_open_account"
     ? ownedMixedDebtRecordsSchema.parse(s)
     : undefined;
   if (mixed) assertMixedCorporateCashSource(mixed);

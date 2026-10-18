@@ -350,7 +350,7 @@ test("owned basis-limited QBI loss rejects detached native/PDF carry, basis, sou
 
 test("provided owned records cannot be ignored by downgrading the legacy source kind", () => {
   const s = ownedDebtSource([400]);
-  s.form7203_debt_evidence.kind = "new_2025_formal_notes";
+  s.form7203_debt_evidence.kind = "new_current_year_formal_notes";
   const r = filedReturn(s);
   assertEquals(r.diagnostics, []);
   assertEquals(r.carryforwards.qbi_loss_carryforward, 2100);

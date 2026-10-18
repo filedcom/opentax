@@ -9,7 +9,7 @@ export function projectOverflowDebtInventory(
 ) {
   if (
     !note?.additional_formal_notes ||
-    note.kind !== "owned_2025_formal_and_open_account"
+    note.kind !== "owned_current_year_formal_and_open_account"
   ) return undefined;
   const formal = [
     {

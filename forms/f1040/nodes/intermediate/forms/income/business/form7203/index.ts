@@ -138,11 +138,11 @@ function tentativeStockBasis(
 // A fully based principal repayment reduces the new note before the loss.
 function tentativeDebtBasis(input: Form7203Input): number {
   const note =
-    (input.reviewed_debt_evidence?.kind === "new_2025_formal_notes" ||
-        input.reviewed_debt_evidence?.kind === "owned_2025_formal_notes" ||
-        input.reviewed_debt_evidence?.kind === "owned_2025_open_account" ||
+    (input.reviewed_debt_evidence?.kind === "new_current_year_formal_notes" ||
+        input.reviewed_debt_evidence?.kind === "owned_current_year_formal_notes" ||
+        input.reviewed_debt_evidence?.kind === "owned_current_year_open_account" ||
         input.reviewed_debt_evidence?.kind ===
-          "owned_2025_formal_and_open_account")
+          "owned_current_year_formal_and_open_account")
       ? input.reviewed_debt_evidence
       : undefined;
   return (input.debt_basis_beginning ?? 0) + (input.new_loans ?? 0) -
@@ -180,7 +180,7 @@ class Form7203Node extends TaxNode<typeof inputSchema> {
   // to the extent it exceeds the shareholder's adjusted stock + debt basis.
   readonly outputNodes = new OutputNodes([schedule1, agi_aggregator]);
 
-  compute(_ctx: NodeContext, rawInput: Form7203Input): NodeResult {
+  compute(ctx: NodeContext, rawInput: Form7203Input): NodeResult {
     const input = inputSchema.parse(rawInput);
     if (input.current_passive_s_corp_loss) {
       if (
@@ -264,16 +264,16 @@ class Form7203Node extends TaxNode<typeof inputSchema> {
 
     const note = input.reviewed_debt_evidence;
     if (
-      (note?.kind === "new_2025_formal_notes" ||
-        note?.kind === "owned_2025_formal_notes" ||
-        note?.kind === "owned_2025_open_account" ||
-        note?.kind === "owned_2025_formal_and_open_account") &&
+      (note?.kind === "new_current_year_formal_notes" ||
+        note?.kind === "owned_current_year_formal_notes" ||
+        note?.kind === "owned_current_year_open_account" ||
+        note?.kind === "owned_current_year_formal_and_open_account") &&
       (input.additional_contributions ?? 0) > 0
     ) {
       const ledger = input.reviewed_stock_loss_ledger;
       if (
         !ledger ||
-        reconcileCashCapitalAndNewNote(ledger, note) !==
+        reconcileCashCapitalAndNewNote(ledger, note, ctx.taxYear) !==
           input.additional_contributions ||
         ledger.no_shareholder_debt_or_repayments ||
         (input.ordinary_loss ?? 0) <=
@@ -309,7 +309,7 @@ class Form7203Node extends TaxNode<typeof inputSchema> {
     }
     if (
       note?.second_formal_note &&
-      note.kind !== "owned_2025_formal_and_open_account"
+      note.kind !== "owned_current_year_formal_and_open_account"
     ) {
       const stock = input.stock_basis_beginning ?? 0;
       const firstDebtBasis = note.cash_advance_amount -

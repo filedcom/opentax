@@ -107,7 +107,7 @@ const stockLossInputs = {
       all_shares_one_stock_block: true,
       no_current_year_stock_transactions: true,
       no_section_1367_1_g_election: true,
-      no_other_2025_stock_basis_changes: true,
+      no_other_current_year_stock_basis_changes: true,
       no_other_schedule_e_activity: true,
       materially_participated_in_s_corporation: true,
       material_participation_workpaper_reference:

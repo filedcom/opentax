@@ -68,7 +68,7 @@ export const reviewedPriorReducedNoteSchema = z.object({
   no_other_shareholder_debt_confirmed: z.literal(true),
   no_2025_advances_confirmed: z.literal(true),
   no_2025_basis_restoration_confirmed: z.literal(true),
-  no_other_2025_basis_changes_confirmed: z.literal(true),
+  no_other_current_year_basis_changes_confirmed: z.literal(true),
   no_prior_suspended_losses_confirmed: z.literal(true),
 }).strict().superRefine((source, ctx) => {
   const references = [

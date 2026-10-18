@@ -12,7 +12,7 @@ and [Treasury's promulgated examples](https://www.irs.gov/irb/2008-47_IRB)
 provide the annual netting/transition rule. Treatment as separately tracked debt
 does not create a signed written instrument.
 
-The new public contract is `owned_2025_open_account`. It requires the existing
+The new public contract is `owned_current_year_open_account`. It requires the existing
 owned original stock/payment/zero prior annual activity, current capital,
 corporate ordinary receipts/paid costs, participation, and issued K1/QBI records,
 plus a complete direct owner/corporation open principal/bank timeline. The

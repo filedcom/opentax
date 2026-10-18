@@ -193,9 +193,9 @@ export function assertEicSource(
     }
     const filer = extractFilerIdentity(filed ?? {});
     if (basisFields.owned_debt_loss_sources !== undefined) {
-      projectOwned7203Family(basisFields, pending!, filer);
+      projectOwned7203Family(basisFields, pending!, filer, taxYear);
     } else {
-      projectReviewedStockLoss7203(basisFields, pending!, filer);
+      projectReviewedStockLoss7203(basisFields, pending!, filer, taxYear);
     }
   }
   // A replayed materially participated S-corporation loss affects AGI, not

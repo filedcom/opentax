@@ -156,7 +156,7 @@ export function toOpenAccount(k: any, events?: readonly number[]) {
     opening_basis: 0,
     transactions,
   };
-  n.kind = "owned_2025_open_account";
+  n.kind = "owned_current_year_open_account";
   for (
     const key of [
       "formal_note_id",
@@ -165,7 +165,7 @@ export function toOpenAccount(k: any, events?: readonly number[]) {
       "bank_transfer_reference",
       "shareholder_lender_ssn",
       "corporate_borrower_ein",
-      "no_2025_repayments_confirmed",
+      "no_current_year_repayments_confirmed",
       "principal_repayments",
       "second_formal_note",
     ]
