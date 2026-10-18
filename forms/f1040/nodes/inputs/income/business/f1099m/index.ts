@@ -451,7 +451,7 @@ function scheduleEOutput(items: M99Item[]): NodeOutput | null {
 }
 
 function niitIncomeTotal(items: M99Item[]): number {
-  return items
+  return totalOf(items, "box8_substitute_payments") + items
     .filter((i) =>
       i.box3_niit_applicable === true &&
       i.box3_other_income_routing !== "form_8919"

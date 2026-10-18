@@ -10,6 +10,7 @@ import { agi_aggregator } from "../../../../intermediate/aggregation/general/ret
 import { scheduleC } from "../schedule_c/index.ts";
 import { schedule_f } from "../../../../intermediate/forms/income/business/schedule_f/index.ts";
 import { form8919 } from "../../../../intermediate/forms/taxes/employment/form8919/index.ts";
+import { form8960 } from "../../../../intermediate/forms/taxes/investments/form8960/index.ts";
 import {
   form4952,
   inputSchema as form4952InputSchema,
@@ -688,6 +689,28 @@ test("f1099m.compute: two box 8 payers retain separate source rows", () => {
   assertEquals(
     fieldsOf(result.outputs, agi_aggregator)!.line8z_substitute_payments,
     750,
+  );
+});
+
+test("f1099m.compute: box8_substitute_payments reach form8960 line 7", () => {
+  const result = compute([minimalItem({ box8_substitute_payments: 1_000 })]);
+  assertEquals(
+    fieldsOf(result.outputs, form8960)!.line7_other_modifications,
+    1_000,
+  );
+});
+
+test("f1099m.compute: form8960 line 7 sums box 8 and NIIT box 3", () => {
+  const result = compute([minimalItem({
+    box3_other_income: 2_000,
+    box3_other_income_routing: "other_income",
+    box3_other_income_description: "Investment income",
+    box3_niit_applicable: true,
+    box8_substitute_payments: 1_000,
+  })]);
+  assertEquals(
+    fieldsOf(result.outputs, form8960)!.line7_other_modifications,
+    3_000,
   );
 });
 
