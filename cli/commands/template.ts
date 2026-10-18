@@ -7,6 +7,7 @@ export type SourceDocument = {
   readonly document: string;
   readonly nodeType: string;
   readonly form: string;
+  readonly note?: string;
 };
 
 export const SOURCE_DOCUMENTS: readonly SourceDocument[] = [
@@ -14,7 +15,14 @@ export const SOURCE_DOCUMENTS: readonly SourceDocument[] = [
   { document: "1099-int", nodeType: "f1099int", form: "Form 1099-INT" },
   { document: "1099-div", nodeType: "f1099div", form: "Form 1099-DIV" },
   { document: "1099-b", nodeType: "f1099b", form: "Form 1099-B" },
-  { document: "1099-r", nodeType: "f1099r", form: "Form 1099-R" },
+  {
+    document: "1099-r",
+    nodeType: "f1099r",
+    form: "Form 1099-R",
+    // 2025 Schedule R, Part I boxes 2, 4, 5, 6 and 9; Form 1040 line 1h.
+    note:
+      "Box 7 code 3 is a disability distribution. Paid before the plan's minimum retirement age, it is disability_flag with disability_as_wages (Form 1040 line 1h), and a recipient under 65 may also claim the credit for the elderly or the disabled: add schedule_r ('opentax node template schedule_r --full').",
+  },
   { document: "1099-nec", nodeType: "f1099nec", form: "Form 1099-NEC" },
   { document: "1099-misc", nodeType: "f1099m", form: "Form 1099-MISC" },
   { document: "1099-g", nodeType: "f1099g", form: "Form 1099-G" },
@@ -42,6 +50,7 @@ export type NodeTemplate = {
   readonly node_type: string;
   readonly year: number;
   readonly document?: string;
+  readonly note?: string;
   readonly repeatable: boolean;
   readonly command: string;
   readonly data: JsonValue;
@@ -101,6 +110,7 @@ export function nodeTemplateCommand(args: NodeTemplateArgs): NodeTemplate {
     node_type: nodeType,
     year: args.year,
     ...(document ? { document: document.document } : {}),
+    ...(document?.note ? { note: document.note } : {}),
     repeatable: entry?.isArray ?? false,
     command:
       `opentax form add --returnId <id> --node_type ${nodeType} '<data>'`,

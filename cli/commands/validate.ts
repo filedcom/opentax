@@ -32,6 +32,7 @@ import {
   resolveSourceBytes,
   withMissingSourceFiles,
 } from "./return-source-files.ts";
+import { returnHints } from "./return-hints.ts";
 
 function getCatalogEntry(formType: string, year: number) {
   const key = `${formType}:${year}`;
@@ -149,18 +150,31 @@ export async function validateReturnCommand(
     }),
   );
 
+  // Claims the facts point to but the return does not make; they never block filing.
+  const hintEntries: DiagnosticEntry[] = returnHints(pending).map((
+    message,
+  ) => ({
+    ruleNumber: "OPENTAX_HINT",
+    severity: "alert" as const,
+    category: "information" as ErrorCategory,
+    message,
+    formRef: "Return",
+  }));
+
   const hasExecutorFailures = executorEntries.length > 0;
   const mergedEntries = [
     ...executorEntries,
     ...(assemblyError ? [assemblyError] : []),
     ...report.entries,
+    ...hintEntries,
   ];
   const mergedSummary = {
     ...report.summary,
     total: report.summary.total + executorEntries.length +
-      (assemblyError ? 1 : 0),
+      (assemblyError ? 1 : 0) + hintEntries.length,
     rejected: report.summary.rejected + executorEntries.length +
       (assemblyError ? 1 : 0),
+    alerts: report.summary.alerts + hintEntries.length,
   };
   const mergedReport: DiagnosticsReport = {
     entries: mergedEntries,

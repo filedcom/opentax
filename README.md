@@ -191,7 +191,9 @@ Run `opentax <command> --help` for every flag.
 - `return get` works on partial returns; check its `warnings` before relying on
   amounts. Export also needs the filer's identity (SSN and name).
 - `return validate` and export run the IRS MeF business rules offline. A clean
-  run is not IRS acceptance.
+  run is not IRS acceptance. It also lists, as `OPENTAX_HINT` alerts, claims the
+  entered facts point to but the return does not make (the same hints
+  `return get` puts in `warnings`); they never block filing.
 - Export blocks on every calculation diagnostic. `--force` overrides only
   reject-level business rules; `--draft` produces visibly labeled diagnostic
   output (a DRAFT comment in XML, a watermark on each PDF page). In the API,
