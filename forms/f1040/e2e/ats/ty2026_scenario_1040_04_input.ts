@@ -201,7 +201,7 @@ export const SCENARIO_1040_04_TY2026_RECONCILIATION = {
   conflicts: [],
   notes: [
     "The cover lists Schedule 1 and gives $1,325 of moving expenses, but Schedule 1 line 14 is blank and the cover lists no Form 3903. For 2026 the moving-expense deduction is limited to Armed Forces members on active duty and intelligence-community employees moving under orders (IRC §217(g), (k) as amended by P.L. 119-21 §70113); the packet gives neither status, so the return deducts nothing and files no Schedule 1.",
-    "Form 2441 page 9 checks line B (student deemed income), but Dani's actual earned income ($35,545) exceeds any deemed amount; line B does not change the credit.",
+    "Form 2441 page 9 checks line B (student deemed income) and the return files it, but Dani's actual earned income ($35,545) exceeds any deemed amount, so line B does not change the credit.",
     "Form 8862 page 11 line 6 (Schedule EIC shows a qualifying child) has neither box marked; Schedule EIC page 16 lists two children.",
   ],
 } as const;
@@ -222,6 +222,7 @@ const child = (index: number, element: string, expected: number | string) =>
 
 /** Every amount the packet prints, by the MeF element that carries it; null has no 2026v1.0 element. */
 export const SCENARIO_1040_04_TY2026_TARGETS: readonly Ty2026PacketTarget[] = [
+  value(9, "Form 2441 line B", "IRS2441/StudentOrDisabledInd", "X"),
   ...F.form2441.providers.flatMap((p, i) => [
     value(9, `Form 2441 line 1c provider ${i + 1}`, `IRS2441/CareProviderGrp[${i}]/EIN`, p.ein),
     value(9, `Form 2441 line 1e provider ${i + 1}`, `IRS2441/CareProviderGrp[${i}]/PaidAmt`, p.amountPaid),
@@ -408,6 +409,7 @@ export async function ty2026Scenario104004Input(): Promise<
     form2441: {
       filing_details: {
         filing_status: FilingStatus.HOH,
+        student_or_disabled_deemed_income_used: form2441.lineBDeemedIncome,
         care_providers: form2441.providers.map((p) => ({
           kind: "business" as const,
           name: p.name,
