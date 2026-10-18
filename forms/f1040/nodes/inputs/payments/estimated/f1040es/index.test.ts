@@ -60,7 +60,7 @@ test("signed 2025 joint payment allocation routes only the taxpayer share", () =
       ...agreedJointPayment,
       joint_estimated_payment_allocation: {
         ...agreedJointPayment.joint_estimated_payment_allocation,
-        not_remarried_in_2025_verified: false,
+        not_remarried_in_tax_year_verified: false,
       },
     }).success,
     false,
@@ -209,4 +209,35 @@ test("f1040es.compute: smoke — full year payments aggregate to line26", () => 
   });
   assertEquals(estimatedTax(result), 12000);
   assertEquals(result.outputs.length, 1);
+});
+
+// Pub. 505, Divorced taxpayers: joint estimated payments made in the year of
+// the divorce are divided by agreement on each separate return for that year.
+test("a divorced joint-payment allocation names a divorce in the return year", () => {
+  const allocation = agreedJointPayment.joint_estimated_payment_allocation;
+  const in2026 = {
+    ...agreedJointPayment,
+    joint_estimated_payment_allocation: {
+      ...allocation,
+      divorce_date: "2026-08-01",
+      payments: [{
+        ...allocation.payments[0],
+        tax_year: 2026,
+        payment_date: "2026-04-15",
+      }],
+    },
+  };
+  assertEquals(estimatedPaymentTotal(in2026, 2026), 300);
+  assertThrows(
+    () =>
+      estimatedPaymentTotal({
+        ...in2026,
+        joint_estimated_payment_allocation: {
+          ...in2026.joint_estimated_payment_allocation,
+          divorce_date: "2025-08-01",
+        },
+      }, 2026),
+    Error,
+    "needs a 2026 divorce",
+  );
 });

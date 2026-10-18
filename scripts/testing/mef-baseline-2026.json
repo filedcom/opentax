@@ -419,11 +419,6 @@
       "calculation standard_deduction",
       "calculation start"
     ],
-    "single-divorced-agreed-joint-estimated-payment": [
-      "calculation form8960",
-      "calculation standard_deduction",
-      "calculation start"
-    ],
     "single-w2-three-eic-children-with-reviewed-birth": [
       "calculation form8959",
       "calculation form8960",
@@ -561,7 +556,8 @@
       "calculation form8815"
     ],
     "single-form8915f-disaster-and-ordinary-plan-distributions": [
-      "calculation threw [ { \"code\": \"custom\", \"path\": [ \"f8915fs\", 0, \"distribution_date\" ], \"message\": \"Form 8915-F distribution must be within this 2025 disaster's qualified period\" "
+      "rule F8915F-001",
+      "rule F8915F-002"
     ],
     "single-form7203-capital-and-debt-basis-loss": [
       "calculation form8960",
@@ -791,9 +787,8 @@
     "single-retained-4852-ordinary-roth": "Open TY2026 work: the Roth/IRA basis sources pin 2024/2025 years and the April 15, 2026 contribution deadline",
     "single-passive-partnership-new-markets": "Sample amount: the reviewed Form 8582-CR line 6 worksheet carries tax computed under the 2025 rate schedule; amounts are not shifted",
     "single-mixed-passive-new-markets": "Sample amount: the reviewed Form 8582-CR line 6 worksheet carries tax computed under the 2025 rate schedule; amounts are not shifted",
-    "single-reviewed-adoption-credit": "Open TY2026 work: a staged source (Form 8839 or Form 8915-F) pins a 2025 date and throws before calculation",
+    "single-reviewed-adoption-credit": "Open TY2026 work: the staged Form 8839 route requires a 2025 decree (childSchema finalization_date) and carries TY2025 amounts through prepare/settle ($17,280 maximum, $259,190 phase-out start, $5,000 refundable), its carryforward (origin 2025) and MeF; the Rev. Proc. 2025-32 \u00a74.04 2026 amounts are in config but not threaded through that route",
     "single-agri-biodiesel-producer-credit": "Open TY2026 work: Form 8864 accepts only 2025 small agri-biodiesel sales",
-    "single-divorced-agreed-joint-estimated-payment": "Open TY2026 work: the joint estimated-payment allocation names 2025 in its field (divorce_date_2025)",
     "single-w2-three-eic-children-with-reviewed-birth": "Named TY2025-only route: the node refuses TY2026 until that year's law is implemented",
     "single-unreported-refinance-points": "Open TY2026 work: refinance-points ledger names its prior years in field names (prior_year_2023/2024)",
     "single-2023-refinance-points-ledger": "Open TY2026 work: refinance-points ledger names its prior years in field names (prior_year_2023/2024)",
@@ -833,9 +828,9 @@
     "single-form8863-lifetime-learning-scholarship": "Sample fixture input: its Form 8863 filer MAGI and Credit Limit Worksheet operands are TY2025 amounts",
     "single-form8606-post-year-contribution-and-distribution": "Open TY2026 work: the Roth/IRA basis sources pin 2024/2025 years and the April 15, 2026 contribution deadline",
     "single-form8815-series-ee-bond-exclusion": "Named TY2025-only route: the node refuses TY2026 until that year's law is implemented",
-    "single-form8915f-disaster-and-ordinary-plan-distributions": "Open TY2026 work: a staged source (Form 8839 or Form 8915-F) pins a 2025 date and throws before calculation",
+    "single-form8915f-disaster-and-ordinary-plan-distributions": "MeF rules gap: the 2026v1.0 package words F8915F-001-01 and F8915F-002-01 for a return filed for Tax Year 2025 (rejecting CalendarYrDisasterCd and TaxYearFilingFormCd 2026); until a package states the TY2026 check, the engine keeps the coded TY2025 rule, which rejects this 2026 disaster and filing year",
     "single-form7203-capital-and-debt-basis-loss": "Open TY2026 work: Form 7203 debt and stock ledgers pin 2025 dates",
-    "single-form982-qpri-exclusion": "Open TY2026 work: Form 982 QPRI discharge date is pinned to 2025",
+    "single-form982-qpri-exclusion": "TY2026 law: shifted a year, the QPRI discharge falls in 2026; IRC \u00a7108(a)(1)(E) excludes qualified principal residence indebtedness discharged before January 1, 2026 unless under an arrangement entered into and evidenced in writing before then (Instructions for Form 982, line 1e), and the sample has no such arrangement",
     "single-form5695-door-and-air-conditioner": "TY2026 law: P.L. 119-21 \u00a7\u00a770505-70506 end the \u00a725C and \u00a725D credits for property placed in service after 2025",
     "single-form461-schedule-c-excess-business-loss": "Same finding in the TY2025 baseline: not a TY2026 difference",
     "single-form8396-certified-loan-interest-credit": "Open TY2026 work: Form 8396 names its 2024 carryforward and 2025 interest in field names",

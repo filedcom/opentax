@@ -38,12 +38,10 @@ const mfsJointPaymentRowSchema = jointPaymentRowSchema.omit({
 
 const divorcedJointAllocationSchema = z.object({
   allocation_method: z.literal("signed_mutual_agreement"),
-  divorce_date_2025: z.string().date().refine((value) =>
-    value.startsWith("2025-")
-  ),
+  divorce_date: z.string().date(),
   taxpayer_ssn: ssn,
   former_spouse_ssn: ssn,
-  not_remarried_in_2025_verified: z.literal(true),
+  not_remarried_in_tax_year_verified: z.literal(true),
   no_name_change_since_payment_verified: z.literal(true),
   agreement_signed_by_both_verified: z.literal(true),
   signed_agreement_reference: reference,
@@ -149,15 +147,20 @@ function assertPaymentYear(
     );
   }
   if (
-    year !== 2025 && (
-      (allocation !== undefined && "divorce_date_2025" in allocation) ||
-      (input.prior_year_applied_credit_review !== undefined &&
-        "accepted_2024_return_reference" in
-          input.prior_year_applied_credit_review)
-    )
+    allocation !== undefined && "divorce_date" in allocation &&
+    !allocation.divorce_date.startsWith(`${year}-`)
   ) {
     throw new Error(
-      `Form 1040 line 26 TY2025 divorce or 2024-return facts do not apply to ${year}`,
+      `Form 1040 line 26 divorced joint-payment allocation needs a ${year} divorce`,
+    );
+  }
+  if (
+    year !== 2025 &&
+    input.prior_year_applied_credit_review !== undefined &&
+    "accepted_2024_return_reference" in input.prior_year_applied_credit_review
+  ) {
+    throw new Error(
+      `Form 1040 line 26 2024-return facts do not apply to ${year}`,
     );
   }
 }
@@ -223,8 +226,8 @@ export function reviewedJointAllocation(
     const row = byQuarter.get(quarter);
     if (
       row !== undefined &&
-      (("divorce_date_2025" in review &&
-        row.payment_date > review.divorce_date_2025) ||
+      (("divorce_date" in review &&
+        row.payment_date > review.divorce_date) ||
         (input[`payment_${quarter}_date`] !== undefined &&
           input[`payment_${quarter}_date`] !== row.payment_date))
     ) {

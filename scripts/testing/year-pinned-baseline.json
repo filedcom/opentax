@@ -1927,22 +1927,17 @@
   {
     "path": "forms/f1040/nodes/inputs/income/retirement/f1099r/index.ts",
     "pattern": "year-comparison",
-    "count": 3
+    "count": 2
   },
   {
     "path": "forms/f1040/nodes/inputs/income/retirement/f1099r/index.ts",
     "pattern": "year-identifier",
-    "count": 6
+    "count": 5
   },
   {
     "path": "forms/f1040/nodes/inputs/income/retirement/f8915d/index.ts",
     "pattern": "year-identifier",
     "count": 2
-  },
-  {
-    "path": "forms/f1040/nodes/inputs/income/retirement/f8915f/index.ts",
-    "pattern": "date-pinned",
-    "count": 3
   },
   {
     "path": "forms/f1040/nodes/inputs/income/wages/clergy/index.ts",
@@ -1987,7 +1982,7 @@
   {
     "path": "forms/f1040/nodes/inputs/payments/estimated/f1040es/index.ts",
     "pattern": "year-identifier",
-    "count": 11
+    "count": 5
   },
   {
     "path": "forms/f1040/nodes/inputs/payments/installments/f9465/index.ts",
