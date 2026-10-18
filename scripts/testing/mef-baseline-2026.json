@@ -551,9 +551,6 @@
     "single-k-business-refund-and-fee": [
       "calculation f1099k"
     ],
-    "single-k-reported-error": [
-      "rule F1040-065-05"
-    ],
     "single-k-mixed-business-personal": [
       "xml Form 8995 line 16 minimum deduction has no 2026v1.0 MeF element; export waits for a schema that carries it"
     ],
@@ -681,32 +678,8 @@
       "calculation standard_deduction",
       "calculation start"
     ],
-    "tip-health-mfj-fully-phased-out": [
-      "calculation form7206",
-      "calculation schedule1a"
-    ],
-    "tip-health-mfj-owned-cap-phaseout": [
-      "calculation form7206",
-      "calculation schedule1a"
-    ],
     "tip-health-mfj-primary-health-limited": [
-      "calculation form7206",
-      "calculation schedule1a"
-    ],
-    "tip-health-single-fully-phased-out": [
-      "xml Health plan needs its issued policy record and 12 issued monthly premium records"
-    ],
-    "tip-health-single-health-income-limited": [
-      "xml Health plan needs its issued policy record and 12 issued monthly premium records"
-    ],
-    "tip-health-single-positive-health": [
-      "xml Health plan needs its issued policy record and 12 issued monthly premium records"
-    ],
-    "tip-health-single-tip-netincome-limited": [
-      "xml Health plan needs its issued policy record and 12 issued monthly premium records"
-    ],
-    "tip-health-single-w2-qbi-binding": [
-      "xml Health plan needs its issued policy record and 12 issued monthly premium records"
+      "xml Form 8995 line 16 minimum deduction has no 2026v1.0 MeF element; export waits for a schema that carries it"
     ],
     "mixed-cf-tip-above-zero-wotc": [
       "calculation form8960",
@@ -912,7 +885,6 @@
     "joint-mixed-schedule1a": "TY2026 law: the sample reports overtime on a box 14 or employer statement, the TY2025 reporting route; 2026 W-2s report it in box 12 code TT (2026 W-2 instructions, irs/corpus/ty2026/authorities/iw2w3--2026.pdf)",
     "single-k-business-refund": "Named TY2025-only route: the node refuses TY2026 1099-K customer refund reviews",
     "single-k-business-refund-and-fee": "Named TY2025-only route: the node refuses TY2026 1099-K customer refund reviews",
-    "single-k-reported-error": "Same finding in the TY2025 baseline: not a TY2026 difference",
     "single-k-mixed-business-personal": "MeF schema gap: 2026v1.0 has no element for the IRC \u00a7199A(i) minimum deduction (P.L. 119-21 \u00a770105; draft 2026 Form 8995 line 16)",
     "single-k-mixed-duplicate-personal": "MeF schema gap: 2026v1.0 has no element for the IRC \u00a7199A(i) minimum deduction (P.L. 119-21 \u00a770105; draft 2026 Form 8995 line 16)",
     "single-k-mixed-error-duplicate-personal": "MeF schema gap: 2026v1.0 has no element for the IRC \u00a7199A(i) minimum deduction (P.L. 119-21 \u00a770105; draft 2026 Form 8995 line 16)",
@@ -948,14 +920,7 @@
     "single-form8863-two-school-aoc": "Sample fixture input: its Form 8863 filer MAGI and Credit Limit Worksheet operands are TY2025 amounts",
     "qualified-tip-qbi-advanced-event-wotc-tip-exclusion": "TY2026 law: shifted a year, the sample hires its WOTC employee in 2026; IRC \u00a751(c)(4) ends the work opportunity credit for individuals who begin work after December 31, 2025, so the 2026 return correctly cannot claim it",
     "tip-health-advanced-wotc-fully-phased-out": "TY2026 law: shifted a year, the sample hires its WOTC employee in 2026; IRC \u00a751(c)(4) ends the work opportunity credit for individuals who begin work after December 31, 2025, so the 2026 return correctly cannot claim it",
-    "tip-health-mfj-fully-phased-out": "Same finding in the TY2025 baseline: the sample has no issued premium records",
-    "tip-health-mfj-owned-cap-phaseout": "Same finding in the TY2025 baseline: the sample has no issued premium records",
-    "tip-health-mfj-primary-health-limited": "Same finding in the TY2025 baseline: the sample has no issued premium records",
-    "tip-health-single-fully-phased-out": "Same finding in the TY2025 baseline: the sample has no issued premium records",
-    "tip-health-single-health-income-limited": "Same finding in the TY2025 baseline: the sample has no issued premium records",
-    "tip-health-single-positive-health": "Same finding in the TY2025 baseline: the sample has no issued premium records",
-    "tip-health-single-tip-netincome-limited": "Same finding in the TY2025 baseline: the sample has no issued premium records",
-    "tip-health-single-w2-qbi-binding": "Same finding in the TY2025 baseline: the sample has no issued premium records",
+    "tip-health-mfj-primary-health-limited": "Schema gap: TY2026 applies the IRC 199A(i) $400 minimum deduction (draft 2026 Form 8995 line 16), but the 2026v1.0 IRS8995 schema has no element for it, so export refuses with a named error until a later 2026 schema carries it.",
     "mixed-cf-tip-above-zero-wotc": "TY2026 law: shifted a year, the sample hires its WOTC employee in 2026; IRC \u00a751(c)(4) ends the work opportunity credit for individuals who begin work after December 31, 2025, so the 2026 return correctly cannot claim it",
     "mixed-cf-tip-health-income-limited": "TY2026 law: shifted a year, the sample hires its WOTC employee in 2026; IRC \u00a751(c)(4) ends the work opportunity credit for individuals who begin work after December 31, 2025, so the 2026 return correctly cannot claim it",
     "mixed-cf-tip-health-netincome-limited": "TY2026 law: shifted a year, the sample hires its WOTC employee in 2026; IRC \u00a751(c)(4) ends the work opportunity credit for individuals who begin work after December 31, 2025, so the 2026 return correctly cannot claim it",
