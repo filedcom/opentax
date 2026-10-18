@@ -35,7 +35,8 @@ export const TY2025_ATS_SUBMISSION_ASSUMPTIONS: readonly AtsAssumption[] = [
     value: "full_year_us_citizen",
     why:
       "Packets file Form 1040 with U.S. addresses and no dual-status or nonresident facts; the export guard needs a reviewed status.",
-  },  {
+  },
+  {
     field: "residency review (Scenario 2 spouse)",
     value: "full_year_resident_by_joint_election",
     why:
