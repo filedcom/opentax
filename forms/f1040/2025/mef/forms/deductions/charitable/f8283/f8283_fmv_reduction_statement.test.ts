@@ -278,14 +278,26 @@ test("Form 8283 Section B election rejects missing reduction PDF and divergent s
 });
 
 test("Form 8283 Section B election needs an actual 2025 contribution date", () => {
-  for (const date_contributed of ["2024-06-01", "2025-02-30"]) {
-    assertEquals(
-      inputSchema.safeParse({
-        section_b_items: [{ ...electedSectionBLand, date_contributed }],
-      }).success,
-      false,
-    );
-  }
+  assertEquals(
+    inputSchema.safeParse({
+      section_b_items: [{
+        ...electedSectionBLand,
+        date_contributed: "2025-02-30",
+      }],
+    }).success,
+    false,
+  );
+  assertThrows(
+    () =>
+      f8283.compute({ taxYear: 2025, formType: "f1040" }, {
+        section_b_items: [{
+          ...electedSectionBLand,
+          date_contributed: "2024-06-01",
+        }],
+      } as Parameters<typeof f8283.compute>[1]),
+    Error,
+    "value reduction needs a contribution made in 2025",
+  );
 });
 
 function electedReturn() {
@@ -950,15 +962,17 @@ test("Form 8283 purchased short-term reduction needs complete Section A source",
     Error,
     "reduction differs from the pending source used by its statement",
   );
-  assertEquals(
-    inputSchema.safeParse({
-      section_a_items: [{
-        ...item,
-        date_acquired: "2024-01-01",
-        date_contributed: "2024-06-01",
-      }],
-    }).success,
-    false,
+  assertThrows(
+    () =>
+      f8283.compute({ taxYear: 2025, formType: "f1040" }, {
+        section_a_items: [{
+          ...item,
+          date_acquired: "2024-01-01",
+          date_contributed: "2024-06-01",
+        }],
+      } as Parameters<typeof f8283.compute>[1]),
+    Error,
+    "value reduction needs a contribution made in 2025",
   );
   for (
     const incomplete of [
@@ -1107,7 +1121,6 @@ test("Form 8283 capital-gain election rejects short holding, unmatched basis, an
     const item of [
       { ...electedCapitalGift, date_acquired: "2025-01-01" },
       { ...electedCapitalGift, date_acquired: "2024-06-01" },
-      { ...electedCapitalGift, date_contributed: "2026-06-01" },
       { ...electedCapitalGift, cost_or_adjusted_basis: 2_900 },
       { ...electedCapitalGift, charitable_limit_category: "capital_gain_30" },
       { ...electedCapitalGift, is_vehicle: true },
@@ -1119,6 +1132,17 @@ test("Form 8283 capital-gain election rejects short holding, unmatched basis, an
       "capital-gain election reduction needs nonvehicle purchased capital property held more than one year",
     );
   }
+  assertThrows(
+    () =>
+      f8283.compute({ taxYear: 2025, formType: "f1040" }, {
+        section_a_items: [{
+          ...electedCapitalGift,
+          date_contributed: "2026-06-01",
+        }],
+      } as Parameters<typeof f8283.compute>[1]),
+    Error,
+    "value reduction needs a contribution made in 2025",
+  );
 });
 
 test("Form 8283 capital-gain election cannot claim an unchanged or missing reduction", () => {

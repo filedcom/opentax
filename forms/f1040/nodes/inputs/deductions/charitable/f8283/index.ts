@@ -616,8 +616,7 @@ const sectionAItemSchema = z.object({
         )
         : NaN;
       const datesValid = item.date_acquired && item.date_contributed &&
-        item.date_contributed.startsWith("2025-") &&
-        Number.isFinite(contributed) &&
+                Number.isFinite(contributed) &&
         acquiredDate?.toISOString().slice(0, 10) === item.date_acquired &&
         new Date(contributed).toISOString().slice(0, 10) ===
           item.date_contributed &&
@@ -663,8 +662,7 @@ const sectionAItemSchema = z.object({
         )
         : NaN;
       const datesValid = item.date_acquired && item.date_contributed &&
-        item.date_contributed.startsWith("2025-") &&
-        Number.isFinite(contributed) &&
+                Number.isFinite(contributed) &&
         acquiredDate?.toISOString().slice(0, 10) === item.date_acquired &&
         new Date(contributed).toISOString().slice(0, 10) ===
           item.date_contributed &&
@@ -702,7 +700,7 @@ const sectionAItemSchema = z.object({
         new Date(acquired).toISOString().slice(0, 10) !== item.date_acquired ||
         new Date(contributed).toISOString().slice(0, 10) !==
           item.date_contributed ||
-        !item.date_contributed?.startsWith("2025-") || acquired > contributed ||
+        !item.date_contributed || acquired > contributed ||
         item.donor_acquisition_description?.trim().toLowerCase() !==
           "purchase" ||
         item.is_vehicle === true || item.is_capital_gain_property !== false ||
@@ -736,7 +734,7 @@ const sectionAItemSchema = z.object({
         new Date(completed).toISOString().slice(0, 10) !== item.date_acquired ||
         new Date(contributed).toISOString().slice(0, 10) !==
           item.date_contributed ||
-        !item.date_contributed?.startsWith("2025-") ||
+        !item.date_contributed ||
         completed > contributed ||
         item.donor_acquisition_description?.trim().toLowerCase() !==
           "created" ||
@@ -771,7 +769,7 @@ const sectionAItemSchema = z.object({
         new Date(completed).toISOString().slice(0, 10) !== item.date_acquired ||
         new Date(contributed).toISOString().slice(0, 10) !==
           item.date_contributed ||
-        !item.date_contributed?.startsWith("2025-") ||
+        !item.date_contributed ||
         completed > contributed ||
         item.donor_acquisition_description?.trim().toLowerCase() !==
           "created" ||
@@ -811,7 +809,7 @@ const sectionAItemSchema = z.object({
         )
         : NaN;
       if (
-        !item.date_contributed?.startsWith("2025-") ||
+        !item.date_contributed ||
         acquiredDate?.toISOString().slice(0, 10) !== item.date_acquired ||
         !Number.isFinite(contributed) ||
         new Date(contributed).toISOString().slice(0, 10) !==
@@ -857,13 +855,14 @@ const sectionAItemSchema = z.object({
         !Number.isFinite(contribution) ||
         !Number.isFinite(acquired.getTime()) ||
         acquired.toISOString().slice(0, 10) !== item.date_acquired ||
-        !item.date_contributed?.startsWith("2025-") ||
+        !item.date_contributed ||
         new Date(contribution).toISOString().slice(0, 10) !==
           item.date_contributed ||
         contribution <= anniversary ||
         !Number.isFinite(disposed.getTime()) ||
         disposed.toISOString().slice(0, 10) !== review.disposition_date ||
-        !review.disposition_date.startsWith("2025-") ||
+        review.disposition_date.slice(0, 4) !==
+          item.date_contributed.slice(0, 4) ||
         disposed.getTime() < contribution ||
         !Number.isFinite(notice.getTime()) ||
         notice.toISOString().slice(0, 10) !==
@@ -930,7 +929,7 @@ const sectionAItemSchema = z.object({
         )
         : NaN;
       if (
-        !item.date_contributed?.startsWith("2025-") ||
+        !item.date_contributed ||
         acquiredDate?.toISOString().slice(0, 10) !== item.date_acquired ||
         !Number.isFinite(contributed) ||
         new Date(contributed).toISOString().slice(0, 10) !==
@@ -993,7 +992,7 @@ const sectionAItemSchema = z.object({
       const costs = item.taxidermy_capital_gain_reduction!
         .eligible_preparation_stuffing_mounting_costs;
       if (
-        !item.date_contributed?.startsWith("2025-") ||
+        !item.date_contributed ||
         completedDate?.toISOString().slice(0, 10) !== item.date_acquired ||
         !Number.isFinite(contributed) ||
         new Date(contributed).toISOString().slice(0, 10) !==
@@ -1041,7 +1040,7 @@ const sectionAItemSchema = z.object({
       const basis = item.intellectual_property_capital_gain_reduction!
         .unamortized_adjusted_basis;
       if (
-        !item.date_contributed?.startsWith("2025-") ||
+        !item.date_contributed ||
         acquiredDate?.toISOString().slice(0, 10) !== item.date_acquired ||
         !Number.isFinite(contributed) ||
         new Date(contributed).toISOString().slice(0, 10) !==
@@ -1716,7 +1715,7 @@ const sectionBItemSchema = z.object({
       new Date(contributed).toISOString().slice(0, 10) !==
         item.date_contributed ||
       contributed <= anniversary ||
-      !item.date_contributed?.startsWith("2025-") ||
+      !item.date_contributed ||
       item.is_capital_gain_property !== true ||
       item.charitable_limit_category !== "noncash_50" ||
       item.donee_acknowledgment?.unrelated_use !== true ||
@@ -1789,7 +1788,7 @@ const sectionBItemSchema = z.object({
       !Number.isFinite(anniversary) || contributed <= acquired ||
       (ordinaryReduction.reason === "purchased_short_term_capital_asset" &&
         contributed > anniversary) ||
-      !item.date_contributed?.startsWith("2025-") ||
+      !item.date_contributed ||
       new Date(acquired).toISOString().slice(0, 10) !== item.date_acquired ||
       new Date(contributed).toISOString().slice(0, 10) !==
         item.date_contributed ||
@@ -1850,7 +1849,7 @@ const sectionBItemSchema = z.object({
       new Date(acquired).toISOString().slice(0, 10) !== item.date_acquired ||
       new Date(contributed).toISOString().slice(0, 10) !==
         item.date_contributed ||
-      !item.date_contributed?.startsWith("2025-") ||
+      !item.date_contributed ||
       contributed <= anniversary ||
       item.is_capital_gain_property !== true ||
       item.charitable_limit_category !== "noncash_50" ||
@@ -2492,13 +2491,58 @@ function scheduleAOutput(input: F8283Input): NodeOutput[] {
   return [output(schedule_a, { noncash_contribution_items: items })];
 }
 
+// A value-reduction route values a gift made in the return year.
+const SECTION_A_REDUCTIONS = [
+  "capital_gain_reduction_election_confirmed",
+  "short_term_ordinary_income_reduction_confirmed",
+  "inventory_ordinary_income_reduction",
+  "creator_ordinary_income_reduction",
+  "manuscript_ordinary_income_reduction",
+  "unrelated_use_capital_gain_reduction",
+  "contribution_year_disposition_reduction",
+  "private_foundation_capital_gain_reduction",
+  "taxidermy_capital_gain_reduction",
+  "intellectual_property_capital_gain_reduction",
+] as const satisfies readonly (keyof SectionAItem)[];
+const SECTION_B_REDUCTIONS = [
+  "capital_gain_reduction_election_confirmed",
+  "unrelated_use_capital_gain_reduction",
+  "ordinary_income_reduction",
+] as const satisfies readonly (keyof SectionBItem)[];
+
+function contributedIn(date: string | undefined, taxYear: number): boolean {
+  return date?.startsWith(`${taxYear}-`) === true;
+}
+
+function assertReductionsInReturnYear(
+  input: z.infer<typeof inputSchema>,
+  taxYear: number,
+): void {
+  const reducedA = (input.section_a_items ?? []).filter((item) =>
+    SECTION_A_REDUCTIONS.some((route) => item[route] !== undefined)
+  );
+  const reducedB = (input.section_b_items ?? []).filter((item) =>
+    SECTION_B_REDUCTIONS.some((route) => item[route] !== undefined)
+  );
+  if (
+    [...reducedA, ...reducedB].some((item) =>
+      !contributedIn(item.date_contributed, taxYear)
+    )
+  ) {
+    throw new Error(
+      `Form 8283 value reduction needs a contribution made in ${taxYear}`,
+    );
+  }
+}
+
 class F8283Node extends TaxNode<typeof inputSchema> {
   readonly nodeType = "f8283";
   readonly inputSchema = inputSchema;
   readonly outputNodes = new OutputNodes([schedule_a]);
 
-  compute(_ctx: NodeContext, input: z.infer<typeof inputSchema>): NodeResult {
+  compute(ctx: NodeContext, input: z.infer<typeof inputSchema>): NodeResult {
     const parsed = inputSchema.parse(input);
+    assertReductionsInReturnYear(parsed, ctx.taxYear);
     const outputs: NodeOutput[] = [
       ...scheduleAOutput(parsed),
     ];

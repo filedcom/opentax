@@ -1336,3 +1336,42 @@ test("f8283.compute: smoke test — section A and section B items combined", () 
     [250, 75, 12000],
   );
 });
+
+// IRC §170(e)(1)(A): ordinary-income property held one year or less is
+// deducted at basis; the reduction is figured on the return for the year of
+// the gift (Form 8283 lists the year's noncash contributions).
+test("f8283.compute: value reductions follow the return year", () => {
+  const gift = (year: number) => ({
+    section_a_items: [{
+      fmv: 1_200,
+      deduction_claimed: 700,
+      date_acquired: `${year}-01-01`,
+      date_contributed: `${year}-06-01`,
+      donor_acquisition_description: "Purchase",
+      cost_or_adjusted_basis: 700,
+      short_term_ordinary_income_reduction_confirmed: true,
+      charitable_limit_category: "noncash_50",
+      is_capital_gain_property: false,
+    }],
+  });
+  const run = (taxYear: number, year: number) =>
+    f8283.compute(
+      { taxYear, formType: "f1040" },
+      gift(year) as Parameters<typeof f8283.compute>[1],
+    );
+  assertEquals(
+    fieldsOf(run(2026, 2026).outputs, schedule_a)?.noncash_contribution_items
+      ?.[0]?.amount,
+    700,
+  );
+  assertThrows(
+    () => run(2026, 2025),
+    Error,
+    "value reduction needs a contribution made in 2026",
+  );
+  assertThrows(
+    () => run(2025, 2026),
+    Error,
+    "value reduction needs a contribution made in 2025",
+  );
+});
