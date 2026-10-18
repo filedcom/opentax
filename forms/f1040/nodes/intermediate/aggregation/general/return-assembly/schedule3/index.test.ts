@@ -294,7 +294,25 @@ test("routing: Part I → line20, Part II → line31, both present in same outpu
     fieldsOf(result.outputs, f1040)!.line31_additional_payments,
     600,
   );
-  assertEquals(result.outputs.length, 2);
+  // f1040, the printed Schedule 3 fields and the Schedule 8812 Credit Limit
+  // Worksheet A line 2 amounts.
+  assertEquals(result.outputs.length, 3);
+  assertEquals(
+    result.outputs.find((o) => o.nodeType === "f8812")?.fields
+      .schedule3_credit_limit_worksheet,
+    {
+      schedule3_line1: 400,
+      schedule3_line2: 0,
+      schedule3_line3: 0,
+      schedule3_line4: 0,
+      schedule3_line5b: 0,
+      schedule3_line6d: 0,
+      schedule3_line6f: 0,
+      schedule3_line6l: 0,
+      schedule3_line6m: 0,
+      worksheet_b_applies: false,
+    },
+  );
 });
 
 test("routing: line20 and its credit detail emitted when Part II is zero", () => {

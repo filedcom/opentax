@@ -133,6 +133,8 @@ export const inputSchema = z.object({
   qbi_from_schedule_f: accumulable(z.number()).optional(),
   // QBI from pass-through rentals/partnerships (Schedule E)
   qbi: accumulable(z.number()).optional(),
+  // Form 8582 suspended part of a current Schedule E loss included in qbi.
+  qbi_suspended_passive_loss: accumulable(z.number().nonnegative()).optional(),
   current_passive_farm_qbi_sources: z.array(currentFarmRentalQbiSourceSchema)
     .min(1).optional(),
   current_passive_k1_income_sources: z.array(
@@ -248,7 +250,8 @@ function businessDeductions(input: Form8995Input): number {
 function totalQbi(input: Form8995Input): number {
   return sumField(input.qbi_from_schedule_c) +
     sumField(input.qbi_from_schedule_f) +
-    sumField(input.qbi) + sumField(input.sstb_qbi) -
+    sumField(input.qbi) + sumField(input.qbi_suspended_passive_loss) +
+    sumField(input.sstb_qbi) -
     businessDeductions(input) -
     reviewedQualifiedTipExclusions(input.qualified_tip_qbi_source).total;
 }
@@ -656,7 +659,8 @@ function advancedFormOutput(
     });
   }
   const nonSstbQbi = sumField(input.qbi_from_schedule_c) +
-    sumField(input.qbi_from_schedule_f) + sumField(input.qbi) -
+    sumField(input.qbi_from_schedule_f) + sumField(input.qbi) +
+    sumField(input.qbi_suspended_passive_loss) -
     reviewedQualifiedTipExclusions(input.qualified_tip_qbi_source).total;
   const sstbQbi = sumField(input.sstb_qbi);
   if (input.schedule_c_qbi_businesses?.some((business) => business.qbi < 0)) {

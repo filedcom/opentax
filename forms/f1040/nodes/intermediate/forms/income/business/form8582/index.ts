@@ -11,6 +11,7 @@ import { FilingStatus, filingStatusSchema } from "../../../../../types.ts";
 import { schedule1 } from "../../../../../outputs/general/return-assembly/schedule1/index.ts";
 import { schedule_d_final } from "../../../../aggregation/income/investments/schedule_d_final/index.ts";
 import { agi_final } from "../../../../aggregation/general/return-assembly/agi_final/index.ts";
+import { form8995 } from "../../../deductions/business/form8995/index.ts";
 import type { NodeContext } from "../../../../../../../../core/types/node-context.ts";
 
 // ─── Constants — mathematical rates, unchanged across years ──────────────────
@@ -114,6 +115,8 @@ export const inputSchema = z.object({
     prior_active_participation: z.boolean().optional(),
     prior_unallowed_4797_part1: z.number().nonnegative(),
     prior_unallowed_4797_part2: z.number().nonnegative(),
+    // The activity's current net is non-SSTB QBI already sent to Form 8995.
+    qbi_trade_or_business: z.boolean().optional(),
   })).optional(),
   current_loss_forms: currentPassiveFormsSchema.optional(),
   // Positive, activity-linked Form 4797 gains. Keep Parts I and II separate
@@ -916,6 +919,41 @@ function schedule1Output(allowedLoss: number): NodeOutput[] {
   return [output(schedule1, { line5_schedule_e: -allowedLoss })];
 }
 
+/** Suspended current-year losses are not QBI until allowed. Instructions for
+ * Form 8995 (2025), Determining Your Qualified Business Income: losses
+ * suspended under section 469 are not included in QBI for the year. */
+function qbiSuspendedLosses(
+  activities: NonNullable<Form8582Input["activities"]>,
+  suspended: readonly number[],
+): ReadonlyArray<readonly [string, number]> {
+  return activities.flatMap((activity, index) =>
+    activity.qbi_trade_or_business === true && suspended[index] > 0 &&
+      activity.current_net < 0 &&
+      activity.prior_unallowed_operating === 0 &&
+      activity.prior_unallowed_4797_part1 === 0 &&
+      activity.prior_unallowed_4797_part2 === 0
+      ? [[activity.activity_id, suspended[index]] as const]
+      : []
+  );
+}
+
+function qbiSuspendedOutputs(
+  rows: ReadonlyArray<readonly [string, number]>,
+): NodeOutput[] {
+  const total = rows.reduce((sum, [, amount]) => sum + amount, 0);
+  return total > 0
+    ? [output(form8995, { qbi_suspended_passive_loss: total })]
+    : [];
+}
+
+function qbiSuspendedCarryforwards(
+  rows: ReadonlyArray<readonly [string, number]>,
+): Record<string, number> {
+  return Object.fromEntries(
+    rows.map(([id, amount]) => [`qualified_passive_loss_199a:${id}`, amount]),
+  );
+}
+
 function activityCarryforwards(
   activities: NonNullable<Form8582Input["activities"]>,
   suspended: readonly number[],
@@ -1010,6 +1048,7 @@ class Form8582Node extends TaxNode<typeof inputSchema> {
     schedule1,
     schedule_d_final,
     agi_final,
+    form8995,
   ]);
 
   compute(_ctx: NodeContext, rawInput: Form8582Input): NodeResult {
@@ -1184,19 +1223,26 @@ class Form8582Node extends TaxNode<typeof inputSchema> {
     }
 
     const { allowed, suspended } = passiveLossLimit(passiveActivity(input));
+    const byActivity = suspended > 0 && input.activities
+      ? allocatedSuspensions(input, allowed)
+      : undefined;
+    const qbiSuspended = input.activities && byActivity
+      ? qbiSuspendedLosses(input.activities, byActivity)
+      : [];
 
     return {
-      outputs: schedule1Output(allowed),
+      outputs: [
+        ...schedule1Output(allowed),
+        ...qbiSuspendedOutputs(qbiSuspended),
+      ],
       ...(suspended > 0
         ? {
           carryforwards: {
             suspended_pal_8582: suspended,
-            ...(input.activities
-              ? activityCarryforwards(
-                input.activities,
-                allocatedSuspensions(input, allowed),
-              )
+            ...(input.activities && byActivity
+              ? activityCarryforwards(input.activities, byActivity)
               : {}),
+            ...qbiSuspendedCarryforwards(qbiSuspended),
           },
         }
         : {}),
