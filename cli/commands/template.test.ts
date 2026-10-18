@@ -200,17 +200,22 @@ test("node template: TY2026 refuses inputs it does not support", () => {
     nodeTemplateCommand({ nodeType: "w2", year: 2026, full: false }).year,
     2026,
   );
+  assertEquals(
+    nodeTemplateCommand({ document: "1099-int", year: 2026, full: false })
+      .node_type,
+    "f1099int",
+  );
   assertThrows(
     () =>
-      nodeTemplateCommand({ document: "1099-int", year: 2026, full: false }),
+      nodeTemplateCommand({ document: "1098-t", year: 2026, full: false }),
     Error,
-    "TY2026 does not yet support input f1099int",
+    "TY2026 does not yet support input f8863",
   );
-  assertEquals(
-    listDocumentsCommand(2026).find((row) => row.document === "1099-int")
-      ?.supported,
-    false,
-  );
+  const supported2026 = (document: string) =>
+    listDocumentsCommand(2026).find((row) => row.document === document)
+      ?.supported;
+  assertEquals(supported2026("1099-int"), true);
+  assertEquals(supported2026("1098-t"), false);
 });
 
 test("node template: unknown inputs and documents are named", () => {
