@@ -7,7 +7,7 @@ const incomeSourceSchema = z.object({
   net_passive_income: z.number().int().positive().safe(),
 }).strict();
 const taxSides = {
-  tax_year: z.literal(2025),
+  tax_year: z.number().int(),
   tax_method: z.literal("ordinary"),
   net_passive_income: z.number().int().positive().safe(),
   taxable_income_including_passive: z.number().int().nonnegative(),

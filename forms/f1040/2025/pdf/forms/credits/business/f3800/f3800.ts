@@ -949,7 +949,7 @@ export const form3800Pdf: PdfFormDescriptor = {
       const filed = f8874InputSchema.parse(all.f8874);
       const credits = calculateForm8874(filed);
       const { lines: passive, nonpassiveForm8874Credit } =
-        reconcileFiledForm8582CROrdinary(all.form8582cr, all);
+        reconcileFiledForm8582CROrdinary(all.form8582cr, all, 2025);
       const rawSource = f3800InputSchema.parse(raw);
       const rows = prepared.currentRows.filter((row) => row.line === "1i");
       const amounts = prepared.currentAmounts.filter((row) =>
@@ -1035,6 +1035,7 @@ export const form3800Pdf: PdfFormDescriptor = {
       const { lines: passive, ledger } = reconcileFiledForm8582CROrdinary(
         all.form8582cr,
         all,
+        2025,
       );
       const rawSource = f3800InputSchema.parse(raw);
       const rows = prepared.currentRows.filter((row) => row.line === "1i");
@@ -1127,6 +1128,7 @@ export const form3800Pdf: PdfFormDescriptor = {
       const { lines: passive, ledger } = reconcileFiledForm8582CROrdinary(
         all.form8582cr,
         all,
+        2025,
       );
       const rawSource = f3800InputSchema.parse(raw);
       const rows = prepared.currentRows.filter((row) => row.line === "1i");
@@ -1231,6 +1233,7 @@ export const form3800Pdf: PdfFormDescriptor = {
       const { lines: passive, ledger } = reconcileFiledForm8582CROrdinary(
         all.form8582cr,
         all,
+        2025,
       );
       const selfRows = ledger.rows.filter((row) =>
         row.source.source_origin.kind === "self"

@@ -8,6 +8,7 @@ import {
   sharedPolicyAllocationSchema,
 } from "../../../../intermediate/forms/credits/health/form8962/index.ts";
 import type { NodeContext } from "../../../../../../../core/types/node-context.ts";
+import { assertSourceTaxYears } from "../../../../utils.ts";
 import { roundForm8962Amounts } from "../../../../../2025/domains/credits/health/form8962/form8962-money.ts";
 
 import {
@@ -75,7 +76,7 @@ const sharedPolicySchema = z.discriminatedUnion("basis", [
       covered_individual_ssn: z.string().regex(/^\d{3}-?\d{2}-?\d{4}$/),
       other_taxpayer_ssn: z.string().regex(/^\d{3}-?\d{2}-?\d{4}$/),
       policy_number: z.string().trim().min(1),
-      tax_year: z.literal(2025),
+      tax_year: z.number().int(),
       other_taxpayer_claims_covered_individual: z.literal(true),
       marketplace_enrollment_reference: z.string().trim().min(1),
       tax_family_review_reference: z.string().trim().min(1),
@@ -87,7 +88,7 @@ const sharedPolicySchema = z.discriminatedUnion("basis", [
     // Reviewed period-specific agreement when a policy's Situation 4
     // percentage changes during the year.
     agreement_review: z.object({
-      tax_year: z.literal(2025),
+      tax_year: z.number().int(),
       policy_number: z.string().trim().min(1),
       filer_ssn: z.string().regex(/^\d{3}-?\d{2}-?\d{4}$/),
       other_taxpayer_ssn: z.string().regex(/^\d{3}-?\d{2}-?\d{4}$/),
@@ -119,7 +120,7 @@ const sharedPolicySchema = z.discriminatedUnion("basis", [
     allocated_enrollees_in_tax_family: z.number().int().min(0),
     total_enrollees: z.number().int().positive(),
     nonagreement_review: z.object({
-      tax_year: z.literal(2025),
+      tax_year: z.number().int(),
       policy_number: z.string().trim().min(1),
       filer_ssn: z.string().regex(/^\d{3}-?\d{2}-?\d{4}$/),
       other_taxpayer_ssn: z.string().regex(/^\d{3}-?\d{2}-?\d{4}$/),
@@ -436,12 +437,29 @@ class F1095ANode extends TaxNode<typeof inputSchema> {
   readonly inputSchema = inputSchema;
   readonly outputNodes = new OutputNodes([form8962]);
 
-  compute(_ctx: NodeContext, input: z.infer<typeof inputSchema>): NodeResult {
+  compute(ctx: NodeContext, input: z.infer<typeof inputSchema>): NodeResult {
     const {
       f1095as: sourceStatements,
       alternative_marriage_month: marriageMonth,
     } = inputSchema
       .parse(input);
+    assertSourceTaxYears(
+      ctx.taxYear,
+      sourceStatements.flatMap((item) =>
+        (item.shared_policy_periods ?? []).flatMap((period) => [
+          "other_family_claim_review" in period
+            ? period.other_family_claim_review?.tax_year
+            : undefined,
+          "agreement_review" in period
+            ? period.agreement_review?.tax_year
+            : undefined,
+          "nonagreement_review" in period
+            ? period.nonagreement_review?.tax_year
+            : undefined,
+        ])
+      ),
+      `Form 1095-A shared-policy reviews must be for tax year ${ctx.taxYear}`,
+    );
     const f1095as = current1095AStatements(sourceStatements);
     verifyPolicyCoverageIdentities(f1095as);
     for (const policy of f1095as) assertForm8962PolicyEligibility(policy);
@@ -675,13 +693,15 @@ class F1095ANode extends TaxNode<typeof inputSchema> {
         const payment = proof.premium_payment;
         if (payment.status === "paid_in_full") continue;
         const reportedPremium = item.monthly_premiums[proof.month - 1];
-        const monthStart = `2025-${String(proof.month).padStart(2, "0")}-01`;
-        const monthEnd = new Date(Date.UTC(2025, proof.month, 0))
+        const monthStart = `${ctx.taxYear}-${
+          String(proof.month).padStart(2, "0")
+        }-01`;
+        const monthEnd = new Date(Date.UTC(ctx.taxYear, proof.month, 0))
           .toISOString().slice(0, 10);
         if (
           reportedPremium <= 0 || payment.amount >= reportedPremium ||
           !validIsoDate(payment.paid_on) ||
-          payment.paid_on > "2026-04-15" ||
+          payment.paid_on > `${ctx.taxYear + 1}-04-15` ||
           (payment.status === "protected_partial" &&
             payment.amount < payment.minimum_payment_to_avoid_termination) ||
           (payment.status === "emergency_order_partial" &&

@@ -5,7 +5,7 @@ import {
 } from "../../../../../inputs/income/rental-passthrough/schedule_e/index.ts";
 import { inputSchema as form1099IntInputSchema } from "../../../../../inputs/income/investments/f1099int/index.ts";
 import { FilingStatus, filingStatusSchema } from "../../../../../types.ts";
-import { ordinaryTax2025 } from "../../../../worksheets/taxes/calculation/tax_table_2025.ts";
+import { ordinaryTaxForYear } from "../../../../worksheets/taxes/calculation/year_schedule.ts";
 import { inputSchema as form8582crInputSchema } from "./index.ts";
 import { reviewedLine6K1Income } from "./line6_k1_income.ts";
 import { line6OrdinaryWorksheetSchema } from "./line6_source.ts";
@@ -21,10 +21,16 @@ export function calculateForm8582CRLine6OrdinaryWorksheet(
   rawSchedule1: unknown,
   rawGeneral: unknown,
   rawForm1099Int: unknown,
+  taxYear: number,
   rawPartnershipK1?: unknown,
   rawSCorpK1?: unknown,
 ) {
   const worksheet = line6OrdinaryWorksheetSchema.parse(rawWorksheet);
+  if (worksheet.tax_year !== taxYear) {
+    throw new Error(
+      `Form 8582-CR line 6 ordinary worksheet must be for tax year ${taxYear}`,
+    );
+  }
   const scheduleE = scheduleEInputSchema.parse(rawScheduleE ?? {});
   const form8582cr = form8582crInputSchema.parse(rawForm8582cr);
   const form1040 = z.object({
@@ -215,13 +221,15 @@ export function calculateForm8582CRLine6OrdinaryWorksheet(
     0,
     form1040.line15_taxable_income - netPassive,
   );
-  const taxAll = ordinaryTax2025(
+  const taxAll = ordinaryTaxForYear(
     form1040.line15_taxable_income,
     general.filing_status,
+    taxYear,
   );
-  const taxWithout = ordinaryTax2025(
+  const taxWithout = ordinaryTaxForYear(
     taxableWithoutPassive,
     general.filing_status,
+    taxYear,
   );
   if (
     worksheet.taxable_income_including_passive !==

@@ -20,6 +20,17 @@ export function assertDatesInTaxYear(
   }
 }
 
+/** Throws unless every given source tax year is the return's tax year. */
+export function assertSourceTaxYears(
+  taxYear: number,
+  years: ReadonlyArray<number | undefined>,
+  message: string,
+): void {
+  if (years.some((year) => year !== undefined && year !== taxYear)) {
+    throw new Error(message);
+  }
+}
+
 export function taxYearStart(taxYear: number): string {
   return `${taxYear}-01-01`;
 }

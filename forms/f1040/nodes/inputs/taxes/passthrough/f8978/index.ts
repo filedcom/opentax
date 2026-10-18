@@ -95,12 +95,12 @@ const documentSchema = z.object({
 }).strict();
 export const reviewedSourceSchema = z.object({
   partner_ssn: z.string().regex(/^\d{9}$/),
-  reporting_year: z.literal(2025),
+  reporting_year: z.number().int(),
   non_passthrough_calendar_year_partner_confirmed: z.literal(true),
   filings: z.array(
     z.object({
       issuer_ein: z.string().regex(/^\d{9}$/),
-      furnished_date: z.string().regex(/^2025-\d{2}-\d{2}$/).refine((d) =>
+      furnished_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).refine((d) =>
         !Number.isNaN(Date.parse(d)) &&
         new Date(d).toISOString().slice(0, 10) === d
       ),
@@ -199,6 +199,19 @@ class F8978Node extends TaxNode<typeof inputSchema> {
 
   compute(ctx: NodeContext, rawInput: Form8978Input): NodeResult {
     const input = inputSchema.parse(rawInput);
+    const review = input.reviewed_source;
+    // A partner reports Form 8986 adjustments in the year they are furnished.
+    if (
+      review &&
+      (review.reporting_year !== ctx.taxYear ||
+        review.filings.some((filing) =>
+          !filing.furnished_date.startsWith(`${ctx.taxYear}-`)
+        ))
+    ) {
+      throw new Error(
+        `Form 8978 reviewed source must report Forms 8986 furnished in ${ctx.taxYear}`,
+      );
+    }
     const firstAudit = input.filings.findIndex((filing) =>
       filing.source === Form8978Source.BbaAudit
     );

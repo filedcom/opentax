@@ -1,5 +1,5 @@
 import { test } from "bun:test";
-import { assertEquals } from "@std/assert";
+import { assertEquals, assertThrows } from "@std/assert";
 import { f3800 } from "../f3800/index.ts";
 import { calculateForm8874, f8874 } from "./index.ts";
 import { withReviewedForm8874A } from "./issuance_fixture.ts";
@@ -140,7 +140,6 @@ test("Form 8874 CDE identity fits the native MeF name and street limits", () => 
 test("Form 8874 requires allowance-date and qualification evidence", () => {
   for (
     const source of [
-      { ...investment, credit_allowance_date: "2024-04-15" },
       { ...investment, credit_allowance_date: "2025-04-16" },
       { ...investment, initial_investment_date: "2018-04-15" },
       { ...investment, qualified_on_credit_allowance_date: false },
@@ -155,6 +154,17 @@ test("Form 8874 requires allowance-date and qualification evidence", () => {
       false,
     );
   }
+});
+
+test("Form 8874 claims only an allowance date in the return year", () => {
+  assertThrows(
+    () =>
+      f8874.compute({ taxYear: 2025, formType: "f1040" }, {
+        investments: [{ ...investment, credit_allowance_date: "2024-04-15" }],
+      }),
+    Error,
+    "Form 8874 needs a 2025 initial or anniversary allowance date",
+  );
 });
 
 test("Form 8874 rejects a duplicated investment notice", () => {

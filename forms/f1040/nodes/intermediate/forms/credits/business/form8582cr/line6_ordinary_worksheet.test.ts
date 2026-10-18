@@ -79,6 +79,7 @@ test("Form 8582-CR candidate line 6 recomputes both ordinary-tax sides from sour
     schedule1,
     general,
     undefined,
+    2025,
   );
   assertEquals(result.line6, taxAll - taxWithout);
   assertEquals(result.activity_id, "rental-1");
@@ -101,6 +102,7 @@ test("Form 8582-CR line 6 candidate rejects source and final-tax tampering", () 
         schedule1,
         general,
         undefined,
+        2025,
       ),
     Error,
     "a complete sourced passive Schedule E income inventory",
@@ -115,6 +117,7 @@ test("Form 8582-CR line 6 candidate rejects source and final-tax tampering", () 
         schedule1,
         general,
         undefined,
+        2025,
       ),
     Error,
     "finalized Form 1040 ordinary-tax method",
@@ -129,6 +132,7 @@ test("Form 8582-CR line 6 candidate rejects source and final-tax tampering", () 
         schedule1,
         general,
         undefined,
+        2025,
       ),
     Error,
     "finalized Form 1040 ordinary-tax method",
@@ -171,6 +175,7 @@ test("Form 8582-CR line 6 binds every rental amount and owner independent of ord
       schedule1,
       general,
       undefined,
+      2025,
     );
   assertEquals(run(review, rentals).line6, 4412);
   assertEquals(run(review, rentals.toReversed()).line6, 4412);

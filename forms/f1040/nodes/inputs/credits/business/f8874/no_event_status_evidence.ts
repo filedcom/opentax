@@ -10,7 +10,7 @@ const date = z.string().regex(/^\d{4}-\d{2}-\d{2}$/).refine((value) => {
     parsed.toISOString().slice(0, 10) === value;
 });
 
-/** Reviewed CDE statement affirmatively covering one QEI through TY2025. */
+/** Reviewed CDE statement affirmatively covering one QEI through the return year. */
 export const form8874NoEventStatusSchema = z.object({
   status_statement_document_reference: reference,
   status_statement_sha256: sha256,
@@ -23,7 +23,7 @@ export const form8874NoEventStatusSchema = z.object({
   initial_investment_date: date,
   qualified_equity_investment_amount: z.number().finite().positive(),
   coverage_start_date: date,
-  coverage_end_date: z.literal("2025-12-31"),
+  coverage_end_date: date,
   cde_internal_status_records_reference: reference,
   complete_notice_history_reviewed: z.literal(true),
   reviewed_form8874b_notice_references: z.array(reference),
@@ -50,7 +50,7 @@ export const form8874NoEventStatusSchema = z.object({
       code: "custom",
       path: ["status_statement_document_reference"],
       message:
-        "CDE year-end statement needs distinct source bytes and signed coverage through 2025",
+        "CDE year-end statement needs distinct source bytes and signed coverage through year end",
     });
   }
   if (
@@ -152,7 +152,7 @@ export async function reconcileForm8874NoEventStatus(
       notice.initial_investment_date !== issuance.initial_investment_date ||
       notice.qualified_equity_investment_amount !==
         issuance.qualified_equity_investment_amount ||
-      notice.recapture_event_date <= "2025-12-31"
+      notice.recapture_event_date <= status.coverage_end_date
     )
   ) {
     throw new Error(

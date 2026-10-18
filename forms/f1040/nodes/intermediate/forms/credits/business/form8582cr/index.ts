@@ -858,8 +858,16 @@ class Form8582CRNode extends TaxNode<typeof inputSchema> {
   readonly inputSchema = inputSchema;
   readonly outputNodes = new OutputNodes([f3800]);
 
-  compute(_ctx: NodeContext, rawInput: Form8582CRInput): NodeResult {
+  compute(ctx: NodeContext, rawInput: Form8582CRInput): NodeResult {
     const input = inputSchema.parse(rawInput);
+    if (
+      input.line6_ordinary_worksheet !== undefined &&
+      input.line6_ordinary_worksheet.tax_year !== ctx.taxYear
+    ) {
+      throw new Error(
+        `Form 8582-CR line 6 ordinary worksheet must be for tax year ${ctx.taxYear}`,
+      );
+    }
 
     const lines = calculateForm8582CR(input);
     if (lines.partI.line5 === 0) return { outputs: [] };

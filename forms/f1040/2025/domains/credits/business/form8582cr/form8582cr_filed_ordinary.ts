@@ -166,6 +166,7 @@ function reconcileSCorpK1Credits(
 export function reconcileFiledForm8582CROrdinary(
   raw: unknown,
   pending: Pending,
+  taxYear: number,
 ) {
   const input = form8582crInputSchema.parse(raw);
   const source = input.credit_sources[0];
@@ -227,6 +228,7 @@ export function reconcileFiledForm8582CROrdinary(
     pending.schedule1,
     pending.general,
     pending.f1099int,
+    taxYear,
     pending.k1_partnership,
     pending.k1_s_corp,
   );

@@ -64,6 +64,7 @@ export const form8582crPdf: PdfFormDescriptor = {
     const { lines, ledger, tax } = reconcileFiledForm8582CROrdinary(
       raw,
       allPending,
+      2025,
     );
     const xml = nativeForm8582cr.build(raw, { pending: allPending });
     if (
