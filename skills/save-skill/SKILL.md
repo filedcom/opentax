@@ -32,7 +32,7 @@ Claude on the web supports Projects with custom instructions:
 1. Go to claude.ai and create a new Project (or open an existing one)
 2. In the Project's knowledge section, upload the skill file:
    ```bash
-   curl -fsSL https://raw.githubusercontent.com/filedcom/opentax/main/skills/SKILL.md -o opentax-skill.md
+   curl -fsSL https://raw.githubusercontent.com/filedcom/opentax/main/skills/opentax/SKILL.md -o opentax-skill.md
    ```
 3. Upload `opentax-skill.md` as a Project knowledge file
 4. Every conversation in that Project will have the OpenTax skill available
@@ -45,7 +45,7 @@ ChatGPT supports Custom GPTs and custom instructions:
 1. Go to Settings > Personalization > Custom Instructions
 2. Download the skill file:
    ```bash
-   curl -fsSL https://raw.githubusercontent.com/filedcom/opentax/main/skills/SKILL.md -o opentax-skill.md
+   curl -fsSL https://raw.githubusercontent.com/filedcom/opentax/main/skills/opentax/SKILL.md -o opentax-skill.md
    ```
 3. Copy the contents of `opentax-skill.md` into the "How would you like ChatGPT to respond?" section
 
@@ -63,7 +63,7 @@ Gemini supports Gems (custom agents):
 2. Create a new Gem
 3. Download the skill file:
    ```bash
-   curl -fsSL https://raw.githubusercontent.com/filedcom/opentax/main/skills/SKILL.md -o opentax-skill.md
+   curl -fsSL https://raw.githubusercontent.com/filedcom/opentax/main/skills/opentax/SKILL.md -o opentax-skill.md
    ```
 4. Paste the contents of `opentax-skill.md` into the Gem's instructions
 5. Name it "OpenTax" and save
@@ -83,7 +83,7 @@ For any other AI assistant that supports system prompts or custom instructions:
 
 1. Download the skill file:
    ```bash
-   curl -fsSL https://raw.githubusercontent.com/filedcom/opentax/main/skills/SKILL.md -o opentax-skill.md
+   curl -fsSL https://raw.githubusercontent.com/filedcom/opentax/main/skills/opentax/SKILL.md -o opentax-skill.md
    ```
 2. Paste the contents into whatever "system prompt", "custom instructions", or "knowledge base" feature the platform provides
 3. Save it so it persists across conversations
