@@ -258,7 +258,7 @@
   {
     "module": "forms/f1040/2025/return-processing/calculated_return_replay.test.ts",
     "name": "calculated Form 1040 and Schedule 1-3 amounts cannot change native XML without source replay",
-    "reason": "Eight tip-health review fixtures are frozen copies of retained original packets (their inputs must equal the retained source), recorded before #71 required issued health-policy and premium records, so they cannot export under current rules. Guard them in the replay or regenerate them from new packets.",
+    "reason": "The eight frozen tip-health fixtures are now guarded in the replay; the audit then finds single-1098-purchase-points accepting a changed Form 1040 line 12e into XML (Schedule A total itemized deductions is not replayed from the source).",
     "expires": "2027-01-31",
     "approvedBy": "pending-review"
   },

@@ -75,24 +75,17 @@ const directNewMarketsReviewIds = new Set([
 ]);
 
 for (const fixture of pdfReviewFixtures) {
-  test.skipIf(!xsdAvailable)(fixture.id === "single-form461-schedule-c-excess-business-loss"
-      ? `filled-PDF source ${fixture.id} keeps the sourced loss and blocks unsupported QBI carryforward export`
-      : directNewMarketsReviewIds.has(fixture.id)
-      ? `filled-PDF source ${fixture.id} blocks unauthenticated direct Form 8874 export`
+  test.skipIf(!xsdAvailable)(directNewMarketsReviewIds.has(fixture.id)
+      ? `filled-PDF source ${fixture.id} exports direct Form 8874 only with retained CDE status`
       : `filled-PDF source ${fixture.id} also exports TY2025 v5.4 XML`, async () => {
       const result = f1040_2025.executeReturn({ ...fixture.inputs });
       if (fixture.id === "single-form461-schedule-c-excess-business-loss") {
-        assertEquals(result.diagnostics.length, 1);
-        assertStringIncludes(
-          result.diagnostics[0].message,
-          "Form 8995 net QBI loss needs a sourced carryforward filing route",
-        );
-        assertEquals(
-          (result.pending.form461 as Record<string, unknown>)
-            .line16_excess_business_loss,
-          -87_000,
-        );
-        return;
+        // Form 8995 instructions: losses disallowed by section 461(l) are not
+        // QBI until allowed, so line 1 is -400,000 + 87,000.
+        const qbi = result.pending.form8995 as Record<string, unknown>;
+        assertEquals(qbi.line2, -313_000);
+        assertEquals(qbi.line15, 0);
+        assertEquals(qbi.line16, 313_000);
       }
       assertEquals(result.diagnostics, []);
       if (fixture.id === "single-8862-ctc-reinstatement") {

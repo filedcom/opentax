@@ -25,9 +25,10 @@ const filer = {
   address: { line1: "1 Main St", city: "Austin", state: "TX", zip: "78701" },
 };
 
-function preparedReturn() {
+function preparedReturn(general: Record<string, unknown> = {}) {
   return f1040_2025.executeReturn({
     general: {
+      ...general,
       filing_status: "single",
       taxpayer_first_name: "Alex",
       taxpayer_last_name: "Owner",
@@ -118,4 +119,24 @@ test("Form 461 full return rejects changed review, filed business line, and stat
       form461Pdf.instances?.(pending.form461!, filer, altered)
     );
   }
+});
+
+test("Form 8995 excludes the Form 461 disallowed loss from QBI and carries the rest", () => {
+  // Form 8995 instructions (2025): losses disallowed under section 461(l)
+  // are not QBI until allowed, so line 1 is -400,000 + 87,000 and line 16
+  // carries the 313,000 net loss.
+  const result = preparedReturn({
+    qbi_no_prior_loss_or_suspended_loss_confirmed: true,
+    qbi_not_patron_of_specified_cooperative_confirmed: true,
+  });
+  assertEquals(result.diagnostics, []);
+  const qbi = normalizeAllPending(result.pending).form8995 as Record<
+    string,
+    unknown
+  >;
+  assertEquals(
+    (qbi.excess_business_loss_filing_row as Record<string, unknown>).qbi,
+    -313_000,
+  );
+  assertEquals([qbi.line2, qbi.line15, qbi.line16], [-313_000, 0, 313_000]);
 });

@@ -431,7 +431,7 @@
       "calculation form5695"
     ],
     "single-form461-schedule-c-excess-business-loss": [
-      "calculation form8995"
+      "rule F461-002-05"
     ],
     "single-schedule-j-farm-income-averaging": [
       "calculation income_tax_calculation"
@@ -661,7 +661,7 @@
     "single-form8915f-disaster-and-ordinary-plan-distributions": "Named TY2025-only route: the node refuses TY2026 until that year's law is implemented",
     "single-form8829-rented-home-office": "Named TY2025-only route: the node refuses TY2026 until that year's law is implemented",
     "single-form5695-door-and-air-conditioner": "Named TY2025-only route: the node refuses TY2026 until that year's law is implemented",
-    "single-form461-schedule-c-excess-business-loss": "Open TY2026 work: QBI route replays TY2025 amounts from the sample's reviewed sources",
+    "single-form461-schedule-c-excess-business-loss": "Correct block: F461-002-05 in the 2026v1.0 rules still enumerates the TY2025 313000 threshold, while Form 461 line 15 carries the TY2026 256,000 threshold (Rev. Proc. 2025-32); export waits for rules that carry the return year's amount.",
     "single-schedule-j-farm-income-averaging": "Named TY2025-only route: the node refuses TY2026 until that year's law is implemented",
     "mfj-form2210f-first-joint-filing": "Open TY2026 work: Form 2210-F replays TY2025 tax",
     "single-new-clean-vehicle-personal-credit": "Dated 2025 fact: a source document or date in the sample belongs to TY2025 (vehicle placed in service in 2025, rules SA-F8936-001/048)",

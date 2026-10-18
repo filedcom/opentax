@@ -8154,6 +8154,8 @@ const sourcePdfReviewFixtures: readonly PdfReviewFixture[] = [
     inputs: {
       general: {
         ...singleGeneral,
+        qbi_no_prior_loss_or_suspended_loss_confirmed: true,
+        qbi_not_patron_of_specified_cooperative_confirmed: true,
         form461_scope_review: {
           only_schedule_c_and_f_business_items: true,
           other_part_i_lines_zero: true,
@@ -8172,17 +8174,28 @@ const sourcePdfReviewFixtures: readonly PdfReviewFixture[] = [
         business_reference: "south-2025",
         line_f_accounting_method: "cash",
         line_g_material_participation: true,
+        line_i_made_1099_payments: false,
         line_32_at_risk: "a",
         line_1_gross_receipts: 0,
-        line_27b_other_expenses: 400_000,
+        part_v_other_expenses: [{
+          description: "Synthetic shop operating expenses",
+          amount: 400_000,
+        }],
       }],
     },
     filer: singleFiler,
-    expectedPdfForms: ["f1040", "schedule_c", "schedule1", "form461"],
+    expectedPdfForms: [
+      "f1040",
+      "schedule_c",
+      "schedule1",
+      "form461",
+      "form8995",
+    ],
     reviewFocus: [
       "Form 461 reports the 400,000 Schedule C loss and 87,000 excess business loss",
       "The 87,000 addback reaches Schedule 1 while the business loss stays on Schedule C",
       "Form 1040 AGI and the separate next-year loss workpaper trace the same source review",
+      "Form 8995 line 1 excludes the 87,000 disallowed loss: -313,000 QBI and a 313,000 line 16 carryforward",
     ],
   },
   {

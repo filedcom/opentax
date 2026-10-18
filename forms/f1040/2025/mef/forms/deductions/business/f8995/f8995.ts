@@ -28,6 +28,7 @@ export const form8995: MefFormDescriptor<"form8995", Input> = {
       (deduction === undefined || deduction === null || deduction === 0) &&
       fields.multi_business_filing_rows === undefined &&
       fields.joint_owner_filing_rows === undefined &&
+      fields.excess_business_loss_filing_row === undefined &&
       fields.current_k1_qbi_sources === undefined &&
       fields.current_passive_s_corp_loss === undefined &&
       fields.current_passive_property_sources === undefined &&
