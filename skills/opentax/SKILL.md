@@ -35,3 +35,5 @@ Once they share documents:
   `https://raw.githubusercontent.com/filedcom/opentax/main/skills/tax-reviewer/SKILL.md`
 
 Follow the loaded skill's instructions from the beginning.
+
+For each source document, `opentax node template --document <kind>` prints the JSON `opentax form add` takes (`--list-documents` lists the kinds).

@@ -35,6 +35,9 @@ export type ParsedArgs = {
   readonly ats?: boolean;
   readonly production?: boolean;
   readonly new?: boolean;
+  readonly document?: string;
+  readonly full?: boolean;
+  readonly "list-documents"?: boolean;
   readonly json?: boolean;
   readonly help?: boolean;
 };

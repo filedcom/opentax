@@ -20,6 +20,10 @@ import { graphViewCommand } from "./commands/graph.ts";
 import { nodeInspectCommand, nodeListCommand } from "./commands/node.ts";
 import { createReturnCommand, getReturnCommand } from "./commands/return.ts";
 import {
+  listDocumentsCommand,
+  nodeTemplateCommand,
+} from "./commands/template.ts";
+import {
   exportForm4972PaperCommand,
   exportMefCommand,
   exportMefSubmissionCommand,
@@ -161,6 +165,40 @@ const COMMANDS: readonly CommandDef[] = [
         Promise.resolve(
           nodeInspectCommand({ nodeType, json: args.json === true }),
         )
+      );
+    },
+  },
+  {
+    cmd: "node",
+    sub: "template",
+    description:
+      "Print the JSON form add takes for an input or source document",
+    usage:
+      "opentax node template <type> | --document <kind> | --list-documents [--year <year>] [--full]",
+    options: [
+      { flag: "--document", description: "Source document (e.g. w2, 1099-int)" },
+      {
+        flag: "--list-documents",
+        description: "List source documents and their node types",
+      },
+      { flag: "--year", description: "Tax year (default: 2025)" },
+      { flag: "--full", description: "Include optional fields" },
+    ],
+    handler: async (args) => {
+      const year = args.year === undefined ? 2025 : Number(args.year);
+      if (flag(args["list-documents"])) {
+        await run(() => Promise.resolve(listDocumentsCommand(year)));
+        return;
+      }
+      const positional = args._[2];
+      await run(() =>
+        Promise.resolve(nodeTemplateCommand({
+          nodeType: args.node_type ??
+            (positional === undefined ? undefined : String(positional)),
+          document: args.document,
+          year,
+          full: flag(args.full),
+        }))
       );
     },
   },
@@ -771,8 +809,18 @@ async function main(): Promise<void> {
       "submissionId",
       "poll-seconds",
       "max-polls",
+      "document",
     ],
-    boolean: ["json", "help", "draft", "ats", "production", "new"],
+    boolean: [
+      "json",
+      "help",
+      "draft",
+      "ats",
+      "production",
+      "new",
+      "full",
+      "list-documents",
+    ],
     alias: { h: "help" },
   }) as unknown as ParsedArgs;
 

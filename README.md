@@ -147,6 +147,11 @@ computed and any carryforwards. Returns are stored under `./.state/returns`.
 opentax node inspect --node_type w2
 opentax node list
 
+# Print the JSON form add takes for a source document or input (--full adds optional fields)
+opentax node template --document 1099-int
+opentax node template w2 --full
+opentax node template --list-documents
+
 # List, update or delete form entries
 opentax form list --returnId a1b2c3
 opentax form update --returnId a1b2c3 --entryId w2_01 '{"box1_wages": 60000, "box2_fed_withheld": 5800}'

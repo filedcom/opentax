@@ -105,7 +105,7 @@ Wait for the user to confirm or correct before proceeding.
 
 Once confirmed, add all forms to the return using the CLI.
 
-Use `opentax node inspect --node_type <type> --json` to see what fields each form expects before adding it.
+Run `opentax node template --document <kind>` (e.g. `w2`, `1099-int`; `--list-documents` lists them) for the JSON a document's `form add` takes; `--full` adds optional fields. `opentax node inspect --node_type <type>` shows the full schema.
 
 ```bash
 # Filing status, taxpayer identity and dependents go in the `general` object of a start entry
