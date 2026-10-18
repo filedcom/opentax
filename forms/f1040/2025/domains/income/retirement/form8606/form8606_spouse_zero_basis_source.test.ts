@@ -31,7 +31,7 @@ const general = {
 };
 const filingDetails = {
   owner: IraOwner.Spouse,
-  prior_basis_documented_from_2024_form8606: true as const,
+  prior_basis_documented_from_prior_year_form8606: true as const,
   no_ira_distributions_or_conversions_confirmed: true,
   other_spouse_form8606_not_required_confirmed: true as const,
 };

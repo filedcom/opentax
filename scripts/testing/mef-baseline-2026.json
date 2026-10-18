@@ -504,11 +504,6 @@
     "single-form8863-lifetime-learning-scholarship": [
       "xml Form 8863 filing needs source MAGI, Credit Limit Worksheet, and finalized Form 1040/Schedule 3 credit lines to reconcile"
     ],
-    "single-form8606-post-year-contribution-and-distribution": [
-      "calculation form8960",
-      "calculation standard_deduction",
-      "calculation start"
-    ],
     "single-form8915f-disaster-and-ordinary-plan-distributions": [
       "rule F8915F-001",
       "rule F8915F-002"
@@ -724,7 +719,7 @@
     "joint-spouse-owned-form8995a-patron-income-cap": "MeF schema gap: 2026v1.0 IRS8995A/IRS8995AScheduleA enumerate only the TY2025 FilingStatusThresholdCd values (197300, 394600); Rev. Proc. 2025-32 \u00a74.26 sets 201750/201775/403500 for 2026",
     "single-form8995a-two-business-aggregation": "Sample amount: the reviewed Form 8995-A Schedule B members carry QBI computed with the 2025 self-employment tax deduction; amounts are not shifted",
     "single-form8863-missing-tuition-form-taxable-scholarship-phaseout": "Sample fixture input: its Form 8863 filer MAGI and Credit Limit Worksheet operands are TY2025 amounts",
-    "single-retained-4852-ordinary-roth": "Open TY2026 work: the Roth/IRA basis sources pin 2024/2025 years and the April 15, 2026 contribution deadline",
+    "single-retained-4852-ordinary-roth": "Open TY2026 work: the Form 4852 substitute pins form_year 2025 and its Roth activity review caps contribution years at 2025 (the Form 4852 retained-evidence replays have no return year yet)",
     "single-passive-partnership-new-markets": "Sample amount: the reviewed Form 8582-CR line 6 worksheet carries tax computed under the 2025 rate schedule; amounts are not shifted",
     "single-mixed-passive-new-markets": "Sample amount: the reviewed Form 8582-CR line 6 worksheet carries tax computed under the 2025 rate schedule; amounts are not shifted",
     "single-reviewed-adoption-credit": "Open TY2026 work: the staged Form 8839 route requires a 2025 decree (childSchema finalization_date) and carries TY2025 amounts through prepare/settle ($17,280 maximum, $259,190 phase-out start, $5,000 refundable), its carryforward (origin 2025) and MeF; the Rev. Proc. 2025-32 \u00a74.04 2026 amounts are in config but not threaded through that route",
@@ -758,7 +753,6 @@
     "single-five-sequential-corrected-slcsp-policies": "TY2026 law: the shifted household is above 400% FPL, which IRC \u00a736B(c)(1)(A) again excludes after 2025 (Rev. Proc. 2025-25); the MeF reconciliation has no APTC-only above-limit route yet (open TY2026 work)",
     "single-form4562-section179-w2-income-limit": "MeF schema gap: the 2026v1.0 rules cap Form 4562 line 3 at $4,000,000 (F4562-003-12) while Rev. Proc. 2025-32 sets the 2026 section 179 phase-out threshold at $4,090,000",
     "single-form8863-lifetime-learning-scholarship": "Sample fixture input: its Form 8863 filer MAGI and Credit Limit Worksheet operands are TY2025 amounts",
-    "single-form8606-post-year-contribution-and-distribution": "Open TY2026 work: the Roth/IRA basis sources pin 2024/2025 years and the April 15, 2026 contribution deadline",
     "single-form8915f-disaster-and-ordinary-plan-distributions": "MeF rules gap: the 2026v1.0 package words F8915F-001-01 and F8915F-002-01 for a return filed for Tax Year 2025 (rejecting CalendarYrDisasterCd and TaxYearFilingFormCd 2026); until a package states the TY2026 check, the engine keeps the coded TY2025 rule, which rejects this 2026 disaster and filing year",
     "single-form982-qpri-exclusion": "TY2026 law: shifted a year, the QPRI discharge falls in 2026; IRC \u00a7108(a)(1)(E) excludes qualified principal residence indebtedness discharged before January 1, 2026 unless under an arrangement entered into and evidenced in writing before then (Instructions for Form 982, line 1e), and the sample has no such arrangement",
     "single-form5695-door-and-air-conditioner": "TY2026 law: P.L. 119-21 \u00a7\u00a770505-70506 end the \u00a725C and \u00a725D credits for property placed in service after 2025",

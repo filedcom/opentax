@@ -1,3 +1,4 @@
+import { mefTaxYear } from "../../../support/year-config.ts";
 import { formatForm8606BasisRatio } from "../../../../../nodes/intermediate/forms/income/retirement/form8606/roth-current-conversion.ts";
 import { reconcileForm8606RothInventories } from "../../../../domains/income/retirement/form8606/form8606_roth_inventory_reconciliation.ts";
 import { element, elements } from "../../../../../mef/xml.ts";
@@ -7,6 +8,7 @@ import {
   personNameLine1,
 } from "../../../../../mef/header.ts";
 import {
+  assertForm8606SourceYears,
   IraOwner,
   printSchema,
 } from "../../../../../nodes/intermediate/forms/income/retirement/form8606/index.ts";
@@ -208,6 +210,7 @@ function buildIRS8606(rawFields: Input, context?: MefBuildContext): string {
     fields,
     context?.pending,
     context?.filer,
+    mefTaxYear(context),
   );
   if (reviewedDistribution) {
     return elements("IRS8606", [
@@ -335,6 +338,12 @@ function buildIRS8606(rawFields: Input, context?: MefBuildContext): string {
   }
   if (line2 === 0) {
     const evidence = fields.zero_basis_source;
+    if (evidence) {
+      assertForm8606SourceYears(
+        { zero_basis_source: evidence },
+        mefTaxYear(context),
+      );
+    }
     const worksheet = iraWorksheetSchema.safeParse(
       context?.pending?.ira_deduction_worksheet,
     );
@@ -369,7 +378,7 @@ function buildIRS8606(rawFields: Input, context?: MefBuildContext): string {
       (f1040.line4b_ira_taxable ?? 0) !== 0
     ) {
       throw new Error(
-        "Form 8606 zero-opening-basis claim needs matching 2024 Form 8606, 2025 Form 5498, IRA worksheet, and finalized Form 1040 sources",
+        "Form 8606 zero-opening-basis claim needs matching prior-year Form 8606, Form 5498, IRA worksheet, and finalized Form 1040 sources",
       );
     }
   }

@@ -1391,7 +1391,7 @@ function form8606PartIInput(item: R1099Item) {
     distribution_evidence: evidence,
     filing_details: {
       owner: item.ts === "S" ? IraOwner.Spouse : IraOwner.Taxpayer,
-      prior_basis_documented_from_2024_form8606: true as const,
+      prior_basis_documented_from_prior_year_form8606: true as const,
       no_ira_distributions_or_conversions_confirmed: false,
     },
   };
@@ -1561,7 +1561,7 @@ function form8606RothInput(item: R1099Item) {
 // Form 5329 outputs: code 1 ordinarily routes early distributions here.
 // A reviewed, source-matched Form 8915-F qualified disaster distribution is
 // exempt and the exporter requires its actual Form 8915-F document.
-function form5329Outputs(items: R1099Items): NodeOutput[] {
+function form5329Outputs(items: R1099Items, taxYear: number): NodeOutput[] {
   const inventories = reconcileRothOwnerInventoryCopies(activeItems(items));
   const earlyItems = activeItems(items).filter(
     (item) =>
@@ -1589,7 +1589,7 @@ function form5329Outputs(items: R1099Items): NodeOutput[] {
       ? taxableTraditionalDistribution({
         ...form8606PartIInput(item),
         nondeductible_contributions: 0,
-      })
+      }, taxYear)
       // Form 5329 line 1 uses the early distribution included in income.
       // A confirmed IRA rollover removes its rolled portion from that amount.
       : isIraRollover(item)
@@ -2216,7 +2216,7 @@ class F1099rNode extends TaxNode<typeof inputSchema> {
     }
 
     // Secondary form outputs
-    outputs.push(...form5329Outputs(r1099s));
+    outputs.push(...form5329Outputs(r1099s, ctx.taxYear));
     outputs.push(...form4972Outputs(r1099s));
     outputs.push(...form8606Outputs(r1099s));
 
