@@ -1,8 +1,8 @@
 # TY2026 Schedule F implementation contract
 
-Sources: pinned [2026 draft Schedule F](../corpus/draft/f1040sf.pdf), SHA-256
+Sources: pinned [2026 draft Schedule F](../../../irs/corpus/ty2026/draft/f1040sf.pdf), SHA-256
 `a8e1d7845b56c8aab175a5b721993569b74f9e850c24874ff6a739174d94bcc7`,
-and [September 17 draft instructions](../corpus/draft/i1040sf.pdf), SHA-256
+and [September 17 draft instructions](../../../irs/corpus/ty2026/draft/i1040sf.pdf), SHA-256
 `f36a2d5dcc15560c9570531d3af7c6e7101c224a1b2b5c4bf9d34f656c823e0d`.
 The [ATS scenario inventory](../ats/ATS.md) includes a populated Schedule F in
 scenario 3. These are draft authorities; refresh on final publication and
@@ -71,7 +71,7 @@ auto expense, asset/debt records, MeF attachments, and carryforwards.
   two-page PDF, and TY2026 MeF XSD/business rules together; run a TY2025
   regression to detect year leakage.
 
-The [node coverage ledger](../inventories/node-coverage.csv) remains `audit-required` until
+The node coverage ledger remains `audit-required` until
 those gates pass. The [Form 172/NOL contract](./FORM172-NOL-GRAPH.md) pins its
 current December 2024 form/instructions and maps the farm carryback and
 2027 carryforward gates. Form 4562-B is pinned, but its 2026 instruction

@@ -1,11 +1,11 @@
 # TY2026 Form 1099-G government-payment source graph
 
 Snapshot: September 27, 2026. The IRS final December 2026
-[Form 1099-G](../corpus/authorities/f1099g--2026.pdf) and
-[instructions](../corpus/authorities/i1099g--2026.pdf) are pinned at SHA-256
+[Form 1099-G](../../../irs/corpus/ty2026/authorities/f1099g--2026.pdf) and
+[instructions](../../../irs/corpus/ty2026/authorities/i1099g--2026.pdf) are pinned at SHA-256
 `65a416c52508d8a3d77ee1734194767d1e1c8a607c778fd1914dd1a62da569a2`
 and `e89dac8a60ad285af82a668aeb63e551481f2811b4633b49e09ec1d171031928`.
-The [Revenue Ruling 2025-4 bulletin](../corpus/authorities/irb25-07.pdf),
+The [Revenue Ruling 2025-4 bulletin](../../../irs/corpus/ty2026/authorities/irb25-07.pdf),
 SHA-256 `844470ed0f3172a774c20bdd661d30c6113778c0fb3a5bc1e8ab5a489541ae79`,
 supplies the family/medical-leave tax distinction. This recipient form
 is source evidence, not automatically a Form 1040 attachment.
@@ -14,7 +14,7 @@ is source evidence, not automatically a Form 1040 attachment.
 
 | Form 1099-G source | Required calculation and 2026 handoff |
 | --- | --- |
-| Box 1 unemployment; separately documented repayments | Reconcile each state's box 1 with taxpayer benefits and any same-year repayment. The pinned [Schedule 1 draft](../corpus/draft/f1040s1.pdf) has line 7 unemployment plus its repayment checkbox/amount. Prior-year repayment is a different claim-of-right/deduction question; do not net it against current box 1 without source authority. An identity-theft/incorrect form is a correction case, not taxable compensation. |
+| Box 1 unemployment; separately documented repayments | Reconcile each state's box 1 with taxpayer benefits and any same-year repayment. The pinned [Schedule 1 draft](../../../irs/corpus/ty2026/draft/f1040s1.pdf) has line 7 unemployment plus its repayment checkbox/amount. Prior-year repayment is a different claim-of-right/deduction question; do not net it against current box 1 without source authority. An identity-theft/incorrect form is a correction case, not taxable compensation. |
 | Boxes 2/3 state or local income-tax refund and original tax year | Recover **only the prior-year federal tax benefit**, using the specified prior-year return's actual state-tax deduction, SALT limit, standard/itemized choice and any other recovery facts. Print taxable part on Schedule 1 line 1 and 1040 AGI. A refund can be received by offset or carryforward; cash receipt is not required. Track interest separately through 1099-INT. |
 | Box 8 business-income-tax marker on box 2 | Distinguish a tax applying exclusively to business income from a general state income tax. Reconcile the original activity's tax expense and recovery, then route the taxable amount to its Schedule C/F/other business owner rather than automatically to Schedule 1 line 1. |
 | Box 4 federal withholding | Preserve the payer source and reconcile once to 1040 line 25b, even if a benefit is reduced, excluded or later corrected. |

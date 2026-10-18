@@ -1,10 +1,10 @@
 # TY2026 Form 1099-R route contract
 
-Sources: pinned final [2026 Form 1099-R](../corpus/authorities/f1099r--2026.pdf)
+Sources: pinned final [2026 Form 1099-R](../../../irs/corpus/ty2026/authorities/f1099r--2026.pdf)
 (SHA-256 `d3de9319bed344f02621f97760a50bd19093de22f7d1e3352bd8ff10f61a4c44`)
-and [2026 instructions](../corpus/authorities/i1099r--2026.pdf)
+and [2026 instructions](../../../irs/corpus/ty2026/authorities/i1099r--2026.pdf)
 (SHA-256 `0bb009120b7793c15445c0e4be2cd525bc37b19c215f2478b6df627dcf23db14`).
-The draft [2026 Form 1040](../corpus/draft/f1040.pdf) supplies the destination
+The draft [2026 Form 1040](../../../irs/corpus/ty2026/draft/f1040.pdf) supplies the destination
 line labels. The current TY2025 `f1099r` node, its Form 8606/5329/4972
 dependencies, and the TY2025 MeF serializer are audit inputs, not a 2026
 input contract. A dedicated TY2026 node now handles normal, fully taxable
@@ -65,7 +65,7 @@ input contract. A dedicated TY2026 node now handles normal, fully taxable
   Roth details, and other rollover codes remain to map.
 - Code 1 with the full amount subject to 10% now routes directly to 2026
   Schedule 2 line 5, then Form 1040 line 23 and the PDF, as allowed by the
-  pinned [2026 draft Form 5329 instructions](../corpus/draft/i5329.pdf). The
+  pinned [2026 draft Form 5329 instructions](../../../irs/corpus/ty2026/draft/i5329.pdf). The
   source requires explicit full-tax and SIMPLE IRA first-two-years facts.
   An early SIMPLE IRA distribution within its first two years now takes the
   25% Part I route through Form 5329, Schedule 2 line 5, and a three-page

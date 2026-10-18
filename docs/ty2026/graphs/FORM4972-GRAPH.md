@@ -1,6 +1,6 @@
 # TY2026 Form 4972 lump-sum distribution contract
 
-Source snapshot: [IRS draft Form 4972 (2026)](../corpus/draft/f4972.pdf),
+Source snapshot: [IRS draft Form 4972 (2026)](../../../irs/corpus/ty2026/draft/f4972.pdf),
 SHA-256 `8eb90177af67e7c22a59f0a8ae0c2806808d3bccee45a65ea5bfedc4b95830ec`.
 Its five PDF pages contain a draft cover, the form, and printed instructions
 on pages 3–5. There is no need for a separate `i4972` draft to read the 2026
@@ -57,7 +57,7 @@ and III. Record the worksheet amounts and required `NUA`/`MRD` notation.
 - TY2025 MeF has an `IRS4972` serializer and a 1040 line 16 document link,
   but its element names/rules are tied to `2025v5.4`. TY2025 PDF maps only
   three numeric fields and does not represent the full printed form.
-  The [2026 draft inventory](../inventories/pdf-fields/pdf-fields-f4972.csv) has **58 terminal
+  The 2026 draft inventory has **58 terminal
   widgets**: Part I yes/no answers, form lines, split line 20 decimal, and
   editable instruction worksheets. It is a field baseline, not a complete
   renderer. Form 4972 is absent from the TY2026 registry and PDF/MeF routes.

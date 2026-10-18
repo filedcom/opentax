@@ -1,12 +1,12 @@
 # TY2026 Form 461 excess-business-loss contract
 
-Source snapshot: pinned [2026 draft Form 461](../corpus/draft/f461.pdf),
+Source snapshot: pinned [2026 draft Form 461](../../../irs/corpus/ty2026/draft/f461.pdf),
 SHA-256 `0acb9c3dd8b016a3458f60097733f3da0b5b460853d3e867fc2aa27c1bc8780b`.
 The [2026 draft instruction URL](https://www.irs.gov/pub/irs-dft/i461--dft.pdf)
-still serves 2025. Pinned [2025 instructions](../corpus/authorities/i461--2025.pdf),
+still serves 2025. Pinned [2025 instructions](../../../irs/corpus/ty2026/authorities/i461--2025.pdf),
 SHA-256 `b809a8aafd955b9e4ba81c6fc9b81d2dc975c3896add21410b590f8a91d3a31e`,
 are a **prior-year comparator** for classification, ordering and carryovers;
-they are not a 2026 filing-trigger table. [Rev. Proc. 2025-32](../corpus/authorities/rp-25-32.pdf)
+they are not a 2026 filing-trigger table. [Rev. Proc. 2025-32](../../../irs/corpus/ty2026/authorities/rp-25-32.pdf)
 §4.31 and the draft line 15 agree on **$256,000** for nonjoint returns and
 **$512,000** for MFJ. Recheck final form/instructions, current MeF and any
 intervening legislation before filing.
@@ -39,7 +39,7 @@ preserving the origin year and any farming carryback treatment.
 | 10–12 | Line 10 removes nonbusiness income/gain within Part I. Line 11 is a **positive** amount for nonbusiness losses/deductions within Part I, including removed capital losses. Line 12 = line 10 − line 11. Preserve the classification/reconciliation behind both adjustment lines; they cannot be inferred from a net Schedule 1 amount. |
 | 13–16 | Line 13 = negative of line 12; line 14 = line 9 + line 13; line 15 = $256,000 or $512,000 MFJ; line 16 = line 14 + line 15. If line 16 is negative, report its absolute value as **Schedule 1 line 8p** with ELA annotation and create an origin-year NOL carryover. If nonnegative, no 8p adjustment; still resolve any filing/attachment requirement from final instructions. |
 
-The one-page draft has [18 terminal AcroForm widgets](../inventories/pdf-fields/pdf-fields-f461.csv),
+The one-page draft has 18 terminal AcroForm widgets,
 all in the field tree on PDF page 2. The header is `f1_1`/`f1_2`;
 line 16 is `f1_18`. Check PDF appearance, signed values and any ELA notation.
 The TY2025 PDF descriptor incorrectly maps `excess_business_loss` to

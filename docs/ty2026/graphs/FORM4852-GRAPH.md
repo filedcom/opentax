@@ -1,11 +1,11 @@
 # TY2026 Form 4852 substitute wage and pension statements
 
 Snapshot: September 27, 2026. The currently published [September 2020
-continuous-use Form 4852](../corpus/authorities/f4852--2020.pdf), including its
+continuous-use Form 4852](../../../irs/corpus/ty2026/authorities/f4852--2020.pdf), including its
 printed instructions, is pinned at SHA-256
 `810e5e4df3022cf5421094b1d19dcf47eee020c751c47585b72d3249309cd066`.
-The expected draft URL still serves that 2020 revision. The [PDF field
-inventory](../inventories/pdf-fields/pdf-fields-f4852.csv) has **34 widgets**, all on the form's first
+The expected draft URL still serves that 2020 revision. The PDF field
+inventory has **34 widgets**, all on the form's first
 page and in its field tree; the second page contains printed instructions.
 Check for a superseding form and the selected MeF release before filing.
 The [public TY2026 accepted-forms and attachments inventories](../mef/MEF-V1-DRIFT.md#what-the-public-september-24-inventory-already-establishes)

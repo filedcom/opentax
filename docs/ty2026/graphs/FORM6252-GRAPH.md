@@ -1,9 +1,9 @@
 # TY2026 Form 6252 installment-sale contract
 
 Source snapshot: [draft 2026 Form 6252 **and its instructions on pages
-2–4**](../corpus/draft/f6252.pdf), SHA-256
+2–4**](../../../irs/corpus/ty2026/draft/f6252.pdf), SHA-256
 `021eb4aa9512a3291e2ab5429470c0b1afff697f5ac8b5a9f087215fe0b1a62f`.
-[Publication 537 (2025)](../corpus/authorities/p537--2025.pdf),
+[Publication 537 (2025)](../../../irs/corpus/ty2026/authorities/p537--2025.pdf),
 SHA-256 `2bca1db38d6d34e814bfd7e11bde7530be34d481f23a6583fc2d7ee26ebfce88`,
 is a prior-year comparator for contingent price, multi-asset sales,
 repossession and obligation dispositions. **Correction to the source
@@ -35,7 +35,7 @@ out. Interest, original-issue discount, unstated interest and carrying
 charges are separate income sources, not Form 6252 payments or gross profit.
 For a contingent selling price, obligation disposition, repossession,
 pledge-rule deemed payment or §453A deferred-tax interest, retain the
-underlying facts and apply the final instructions/[Publication 537](../corpus/authorities/p537--2025.pdf)
+underlying facts and apply the final instructions/[Publication 537](../../../irs/corpus/ty2026/authorities/p537--2025.pdf)
 rules rather than entering a guessed contract price.
 
 ## Printed lines and destinations
@@ -71,7 +71,7 @@ deemed payments, recapture not yet reported and obligation basis into 2027.
   property classification and a source-specific Schedule D value.
 - TY2025 MeF emits only an unrelated-party, determinable-price sale and
   checks its Form 4797 line 4/limited Schedule D sources. TY2025 PDF maps
-  only five aggregate inputs. The [2026 draft inventory](../inventories/pdf-fields/pdf-fields-f6252.csv)
+  only five aggregate inputs. The 2026 draft inventory
   has **49 terminal widgets**, all in the field tree, on the printed form
   page; pages 2–4 contain instructions and the draft cover is separate.
   `form6252` is absent from the TY2026 registry/PDF builder and has no

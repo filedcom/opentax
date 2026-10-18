@@ -1,9 +1,9 @@
 # TY2026 Form 8949 PDF map
 
-Source: hash-pinned [2026 draft Form 8949](../corpus/draft/f8949.pdf), SHA-256
+Source: hash-pinned [2026 draft Form 8949](../../../irs/corpus/ty2026/draft/f8949.pdf), SHA-256
 `891d869c87ffe9c6d7f79079d19ebf4ac0afa7257f6374cd95936e44a7079ffe`.
 Physical page 1 is the IRS draft cover. Physical pages 2 and 3 are printed
-Parts I and II. The [field inventory](../inventories/pdf-fields/pdf-fields-f8949.csv) records all 202
+Parts I and II. The field inventory records all 202
 widgets; all are in the AcroForm tree, split 101 per printed page.
 
 | Section | Draft fields | Use |

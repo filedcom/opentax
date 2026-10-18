@@ -1,14 +1,13 @@
 # TY2026 draft Schedule 2 and Form 6251 PDF map
 
-Sources: pinned `corpus/draft/f1040s2.pdf` (SHA-256
+Sources: pinned `irs/corpus/ty2026/draft/f1040s2.pdf` (SHA-256
 `0e3d4faa4b96f692bc31119d2c86189c3d8b9263e8f3aaaf7c3da371887ebc56`)
-and `corpus/draft/f6251.pdf` (SHA-256
+and `irs/corpus/ty2026/draft/f6251.pdf` (SHA-256
 `a547fc9d629e1f04bdc30e088214c716667b88cb1b45447c580c0ae33095b5cc`).
 Both PDFs start with a draft cover. The two printed pages are physical PDF
-pages 2 and 3. `pdf-fields-f1040s2.csv` inventories 68 widgets and
-`pdf-fields-f6251.csv` inventories 62; all are in their AcroForm trees.
-Regenerate both inventories with `build_pdf_fields.py` and recheck against
-the final 2026 forms.
+pages 2 and 3. Schedule 2 has 68 widgets and
+Form 6251 has 62; all are in their AcroForm trees.
+Recheck against the final 2026 forms.
 
 ## Schedule 2
 

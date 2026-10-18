@@ -1,11 +1,11 @@
 # TY2026 Schedule C implementation contract
 
-Sources: pinned [2026 draft Schedule C](../corpus/draft/f1040sc.pdf) (hash in the
-[manifest](../corpus/manifest.json)), final [2026 Publication 15-A](../corpus/authorities/p15a--2026.pdf),
-[draft 2026 Schedule SE instructions](../corpus/draft/i1040sse.pdf),
+Sources: pinned [2026 draft Schedule C](../../../irs/corpus/ty2026/draft/f1040sc.pdf) (hash in the
+[manifest](../corpus/manifest.json)), final [2026 Publication 15-A](../../../irs/corpus/ty2026/authorities/p15a--2026.pdf),
+[draft 2026 Schedule SE instructions](../../../irs/corpus/ty2026/draft/i1040sse.pdf),
 the [2026 mileage authorities](../readiness/CONSTANTS.md), and the
 [13-page ATS scenario 2](../ats/ATS-SCENARIO-02.md). The IRS draft Schedule C PDF
-has a cover plus two printed pages. The [109-widget inventory](../inventories/pdf-fields/pdf-fields-f1040sc.csv)
+has a cover plus two printed pages. The 109-widget inventory
 records each AcroForm field, tooltip, physical page, and button on-state.
 Final Schedule C instructions are not yet available for 2026 in the pinned
 instruction ledger; recheck them before filing acceptance.

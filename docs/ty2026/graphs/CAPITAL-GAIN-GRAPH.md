@@ -1,9 +1,9 @@
 # TY2026 capital-gain path and Schedule D work order
 
-Source baseline: the pinned [2026 draft Schedule D](../corpus/draft/f1040sd.pdf)
+Source baseline: the pinned [2026 draft Schedule D](../../../irs/corpus/ty2026/draft/f1040sd.pdf)
 (SHA-256 `0df9af0711964b3198ea04bb0037b29d6afa85578a671553daed46251630b5f1`),
-the pinned [2026 draft Form 1040](../corpus/draft/f1040.pdf), and the
-[2025 Form 1040 instructions](../corpus/authorities/i1040gi--2025.pdf) as a
+the pinned [2026 draft Form 1040](../../../irs/corpus/ty2026/draft/f1040.pdf), and the
+[2025 Form 1040 instructions](../../../irs/corpus/ty2026/authorities/i1040gi--2025.pdf) as a
 **prior-year comparator** for the direct box 2a exception. The draft 2026
 1040 retains line 7a and the line 7b “Schedule D not required” checkbox;
 the draft Schedule D retains capital gain distributions on line 13. Obtain
@@ -45,7 +45,7 @@ line 7a and retains special-rate gain character for the tax worksheets.
 The shared Schedule D calculator already distinguishes the direct
 distribution case from a filed schedule and routes net capital gain into the
 preferential-rate tax calculation. Its full TY2026 transaction, carryover,
-and worksheet behavior remains `audit-required` in `node-coverage.csv`.
+and worksheet behavior remains `audit-required`.
 Registering it exposed a shared line 14 sign error: a positive long-term loss
 carryover must reduce the long-term net gain. The existing Schedule D tests
 cover this correction, and the TY2025 Schedule D MeF and PDF tests pass.

@@ -1,9 +1,8 @@
 # TY2026 Schedule 1 graph and print contract
 
-Source: pinned `corpus/draft/f1040s1.pdf`, SHA-256
+Source: pinned `irs/corpus/ty2026/draft/f1040s1.pdf`, SHA-256
 `a017a1b717d1c70ff8d831ef8b73c730e5b24f147c394c37f792035a9df22fad`.
-The PDF contains a draft cover followed by two printed pages. The
-`pdf-fields-f1040s1.csv` inventory records 73 widgets, all in the AcroForm
+The PDF contains a draft cover followed by two printed pages. It has 73 widgets, all in the AcroForm
 tree. Recheck this mapping against the final 2026 form.
 
 The TY2025 `schedule1` output node is a sink. Income sources independently

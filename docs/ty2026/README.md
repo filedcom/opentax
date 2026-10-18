@@ -10,74 +10,61 @@ remaining IRS publication, MeF and ATS gates.
 
 ## Working with the pinned PDFs
 
-All 248 checked-in PDFs under `docs/ty2026` are tracked by Git LFS through
-the repository's `.gitattributes`. Install Git LFS before working with this
-corpus. After cloning or switching to a checkout that already has pointer
-files, fetch the PDF content with:
+The 250 IRS files this corpus cites (248 PDFs and two MeF workbooks) are not in
+Git. They live in the gitignored `irs/corpus/ty2026/`, listed with their SHA-256
+in [`irs/manifest.json`](../../irs/manifest.json) as package `ty2026-corpus`.
+Fetch or refresh them from the repository root, then check them:
 
 ```bash
-git lfs install
-git lfs pull
+python3 docs/ty2026/corpus/download.py
+bun run check:irs
 ```
 
 The [manifest](./corpus/manifest.json) records each downloaded source's URL,
-byte length and SHA-256. To refresh the snapshot, run
-`python3 docs/ty2026/corpus/download.py` from the repository root, review
-the source and manifest changes, then verify that each new or changed PDF is
-listed by `git lfs ls-files` before pushing. Keep the LFS rule in
-`.gitattributes`; adding it after an ordinary PDF commit does not remove that
-PDF from Git history. The MeF inventory spreadsheets and text ledgers remain
-regular Git files.
+byte length, SHA-256 and retrieval time. After a refresh, review the hash
+changes and copy the new SHA-256s into `irs/manifest.json`.
 
 ## What is in this snapshot
 
-- [`PDF-F1040-MAP.md`](./pdf/PDF-F1040-MAP.md) and `pdf-fields-f1040.csv`: the
+- [`PDF-F1040-MAP.md`](./pdf/PDF-F1040-MAP.md): the
   draft 2026 Form 1040 AcroForm inventory and changed-line mapping for the
   future year-specific PDF builder.
-- [`PDF-SCHEDULE3A-MAP.md`](./pdf/PDF-SCHEDULE3A-MAP.md) and
-  `pdf-fields-f1040s3a.csv`: the new schedule's line/widget map and its
+- [`PDF-SCHEDULE3A-MAP.md`](./pdf/PDF-SCHEDULE3A-MAP.md): the new schedule's line/widget map and its
   orphaned-field issue.
-- [`PDF-SCHEDULEB-MAP.md`](./pdf/PDF-SCHEDULEB-MAP.md) and
-  `pdf-fields-f1040sb.csv`: the 2026 Schedule B field map, including Part III
+- [`PDF-SCHEDULEB-MAP.md`](./pdf/PDF-SCHEDULEB-MAP.md): the 2026 Schedule B field map, including Part III
   disclosures and supplemental statement requirements.
-- [`PDF-SCHEDULE2-6251-MAP.md`](./pdf/PDF-SCHEDULE2-6251-MAP.md),
-  `pdf-fields-f1040s2.csv`, and `pdf-fields-f6251.csv`: the 2026 additional-tax
+- [`PDF-SCHEDULE2-6251-MAP.md`](./pdf/PDF-SCHEDULE2-6251-MAP.md): the 2026 additional-tax
   and AMT attachment field maps and remaining print-detail gaps.
 - [`PDF-DEPENDENTS-8812-MAP.md`](./pdf/PDF-DEPENDENTS-8812-MAP.md): the revised
   dependent table, continuation, Schedule 8812 AcroForm fields, and checks.
 - [`PDF-SCHEDULE3-MAP.md`](./pdf/PDF-SCHEDULE3-MAP.md): the revised Schedule 3 lines,
   Form 1040 and Schedule 8812 routes, and draft PDF fields.
-- [`SCHEDULE1-GRAPH.md`](./graphs/SCHEDULE1-GRAPH.md) and
-  `pdf-fields-f1040s1.csv`: the 2026 Schedule 1 source/AGI contract, changed
+- [`SCHEDULE1-GRAPH.md`](./graphs/SCHEDULE1-GRAPH.md): the 2026 Schedule 1 source/AGI contract, changed
   line meanings, and 73 draft PDF widgets.
-- [`SCHEDULEC-GRAPH.md`](./graphs/SCHEDULEC-GRAPH.md) and
-  `pdf-fields-f1040sc.csv`: the statutory W-2/activity route, new interest
+- [`SCHEDULEC-GRAPH.md`](./graphs/SCHEDULEC-GRAPH.md): the statutory W-2/activity route, new interest
   and vehicle-mileage labels, all 109 draft Schedule C widgets, and PDF/MeF
   acceptance order.
 - [`MEF-V1-DRIFT.md`](./mef/MEF-V1-DRIFT.md): why the downloaded May v1 1040 XSD
   cannot describe the September draft form, and the exact refresh/diff gate.
-- [`MEF-PUBLIC-CROSSWALK.md`](./mef/MEF-PUBLIC-CROSSWALK.md),
-  `mef-descriptor-coverage.csv`, and
-  [`MEF-BINARY-ATTACHMENTS.md`](./mef/MEF-BINARY-ATTACHMENTS.md): the public TY2026
+- [`MEF-PUBLIC-CROSSWALK.md`](./mef/MEF-PUBLIC-CROSSWALK.md) and [`MEF-BINARY-ATTACHMENTS.md`](./mef/MEF-BINARY-ATTACHMENTS.md): the public TY2026
   inventory against 85 existing runtime descriptors, and the four generated
   PDF binary routes plus caller-supplied statements.
 - [`FORM4136-GRAPH.md`](./graphs/FORM4136-GRAPH.md): fuel-tax claim and per-business
   Schedule A route, with the missing 2026 Schedule A release gate and
   485/482-widget main-form/prior-year comparator inventories.
-- [`FORM8960-GRAPH.md`](./graphs/FORM8960-GRAPH.md) and `pdf-fields-f8960.csv`:
+- [`FORM8960-GRAPH.md`](./graphs/FORM8960-GRAPH.md):
   NIIT source ownership, 2026 Schedule 2 line 6, the missing MAGI/election
   and PDF/MeF lines, and all 38 draft widgets.
-- [`FORM4137-8919-GRAPH.md`](./graphs/FORM4137-8919-GRAPH.md),
-  `pdf-fields-f4137.csv`, and `pdf-fields-f8919.csv`: embedded 2026
+- [`FORM4137-8919-GRAPH.md`](./graphs/FORM4137-8919-GRAPH.md): embedded 2026
   instructions, owner-keyed FICA/wage-base sequence, printed reason codes,
   Schedule 2 source conflict, and 34/40 draft widgets.
-- [`FORM8839-GRAPH.md`](./graphs/FORM8839-GRAPH.md) and `pdf-fields-f8839.csv`:
+- [`FORM8839-GRAPH.md`](./graphs/FORM8839-GRAPH.md):
   per-child refundable/nonrefundable adoption credit, employer-benefit
   exclusion, 2027 carryforward and all 101 draft widgets.
 - [`FORM8396-8859-8880-GRAPH.md`](./graphs/FORM8396-8859-8880-GRAPH.md) and the
   three matching PDF field inventories: mortgage-interest credit and
   deduction, DC carryforward, 2026 saver-credit limits, and 26/9/23 widgets.
-- [`FORM7217-GRAPH.md`](./graphs/FORM7217-GRAPH.md) and `pdf-fields-f7217.csv`:
+- [`FORM7217-GRAPH.md`](./graphs/FORM7217-GRAPH.md):
   continuous-use partnership-property basis report, April 2026 K-1 box 19
   correction, per-date filing and all 306 current form widgets.
 - [`FORM8826-8835-STATEMENTS.md`](./readiness/FORM8826-8835-STATEMENTS.md) and the two
@@ -93,20 +80,18 @@ regular Git files.
 - [`FORM5884-6765-8994-GRAPH.md`](./graphs/FORM5884-6765-8994-GRAPH.md) and three
   PDF field inventories: work opportunity hire cutoff, required research
   Section G, and expanded paid-leave credit/Notice 2026-28.
-- [`FORM3468-GRAPH.md`](./graphs/FORM3468-GRAPH.md) and `pdf-fields-f3468.csv`:
+- [`FORM3468-GRAPH.md`](./graphs/FORM3468-GRAPH.md):
   seven-part investment-credit facility ledger, Form 3800/4255 links,
   Notice 2026-15 and 321 comparator widgets.
-- [`FORM4255-GRAPH.md`](./graphs/FORM4255-GRAPH.md) and `pdf-fields-f4255.csv`:
+- [`FORM4255-GRAPH.md`](./graphs/FORM4255-GRAPH.md):
   property-credit recapture, EPE/transfer/PWA/emissions branches, revised
   Schedule 2 destinations and 646 current form widgets.
-- [`FORM965A-GRAPH.md`](./graphs/FORM965A-GRAPH.md) and `pdf-fields-f965a.csv`:
+- [`FORM965A-GRAPH.md`](./graphs/FORM965A-GRAPH.md):
   continuing section 965 liability/payment ledger, 2026 Schedule 2 line
   12/15 draft conflict and 413 current form widgets.
-- [`SCHEDULER-GRAPH.md`](./graphs/SCHEDULER-GRAPH.md) and
-  `pdf-fields-f1040sr.csv`: 2026 elderly/disabled eligibility, box-specific
+- [`SCHEDULER-GRAPH.md`](./graphs/SCHEDULER-GRAPH.md): 2026 elderly/disabled eligibility, box-specific
   amount and tax-limit worksheet, Schedule 3 line 6d and 27 PDF widgets.
-- [`SCHEDULEJ-GRAPH.md`](./graphs/SCHEDULEJ-GRAPH.md) and
-  `pdf-fields-f1040sj.csv`: elected farm/fishing income across the
+- [`SCHEDULEJ-GRAPH.md`](./graphs/SCHEDULEJ-GRAPH.md): elected farm/fishing income across the
   2023–2025 base years, prior Schedule J state, 1040 line 16 and 27 widgets.
 - [`FORM1099K-GRAPH.md`](./graphs/FORM1099K-GRAPH.md): final 2026 recipient source,
   transaction-level income reconciliation, Schedule 1 header, cash-tip
@@ -124,10 +109,10 @@ regular Git files.
 - [`FORM3903-EDUCATOR-GRAPH.md`](./graphs/FORM3903-EDUCATOR-GRAPH.md): pinned 2026
   moving form/instructions, military and intelligence moves, reimbursement
   and storage routes, and the new educator Schedule A line 17k handoff.
-- [`FORM8938-GRAPH.md`](./graphs/FORM8938-GRAPH.md) and `pdf-fields-f8938.csv`:
+- [`FORM8938-GRAPH.md`](./graphs/FORM8938-GRAPH.md):
   December 2026 foreign-asset disclosure draft, continuous-use instructions,
   threshold/exception ledger, Part III income reconciliation and 131 widgets.
-- [`FORM4852-GRAPH.md`](./graphs/FORM4852-GRAPH.md) and `pdf-fields-f4852.csv`:
+- [`FORM4852-GRAPH.md`](./graphs/FORM4852-GRAPH.md):
   current substitute W-2/1099-R authority, correct 7e/8f withholding lines,
   original-versus-substitute reconciliation and 34 PDF widgets.
 - [`PARITY-QUEUE.md`](./readiness/PARITY-QUEUE.md): dependency-ordered full 1040 coding
@@ -135,10 +120,9 @@ regular Git files.
 - [`PRODUCT-ASSEMBLY.md`](./readiness/PRODUCT-ASSEMBLY.md): repository handoff from the
   form routes into catalog registration, CLI summary/validation/export,
   submission ZIP and end-to-end ATS evidence.
-- [`INSTRUCTION-COVERAGE.md`](./readiness/INSTRUCTION-COVERAGE.md) and
-  `instruction-coverage.csv`: available 2026 instructions, URLs still serving
+- [`INSTRUCTION-COVERAGE.md`](./readiness/INSTRUCTION-COVERAGE.md): available 2026 instructions, URLs still serving
   2025, and source refresh gates for the full form inventory.
-- [`GRAPH-ROUTES.md`](./graphs/GRAPH-ROUTES.md) and `graph-route-gaps.csv`: generated
+- [`GRAPH-ROUTES.md`](./graphs/GRAPH-ROUTES.md): generated
   inventory of declared 2026 edges whose downstream target is not registered.
 - [`INTEREST-GRAPH.md`](./graphs/INTEREST-GRAPH.md): source-backed 1099-INT, Schedule B,
   AGI, NIIT, PDF, and MeF wiring and attachment contract.
@@ -155,121 +139,115 @@ regular Git files.
   attachment route, with the remaining additional-tax work.
 - [`FORM8606-GRAPH.md`](./graphs/FORM8606-GRAPH.md): 2026 IRA basis, conversion,
   Roth-distribution, spouse-form, and carryforward implementation contract.
-- [`FORM8889-GRAPH.md`](./graphs/FORM8889-GRAPH.md) and `pdf-fields-f8889.csv`:
+- [`FORM8889-GRAPH.md`](./graphs/FORM8889-GRAPH.md):
   owner-keyed HSA eligibility and contributions, distributions, testing-period
   tax, 2026 Schedule 1/2 routes, and the full PDF field map.
-- [`FORM8959-GRAPH.md`](./graphs/FORM8959-GRAPH.md) and `pdf-fields-f8959.csv`:
+- [`FORM8959-GRAPH.md`](./graphs/FORM8959-GRAPH.md):
   2026 wage/RRTA/SE Additional Medicare Tax split, withholding reconciliation,
   changed PDF line positions, and MeF/graph build order.
-- [`FORM7206-GRAPH.md`](./graphs/FORM7206-GRAPH.md) and `pdf-fields-f7206.csv`:
+- [`FORM7206-GRAPH.md`](./graphs/FORM7206-GRAPH.md):
   per-business health-insurance earnings limits, LTC age caps, Form 2555 and
   Marketplace PTC dependencies, and full 2026 PDF field inventory.
-- [`FORM8853-GRAPH.md`](./graphs/FORM8853-GRAPH.md) and `pdf-fields-f8853.csv`:
+- [`FORM8853-GRAPH.md`](./graphs/FORM8853-GRAPH.md):
   Archer/Medicare Advantage MSA and LTC source routes, 2026 Schedule 1/2
   handoffs, repeated sections/statements, and all 38 PDF fields.
-- [`FORM8829-GRAPH.md`](./graphs/FORM8829-GRAPH.md) and `pdf-fields-f8829.csv`:
+- [`FORM8829-GRAPH.md`](./graphs/FORM8829-GRAPH.md):
   per-home Schedule C deduction, 2026 SALT/casualty/depreciation ordering,
   2027 carryforwards, QPP election gate, and 58 PDF fields.
-- [`FORM4562-GRAPH.md`](./graphs/FORM4562-GRAPH.md) and `pdf-fields-f4562.csv`:
+- [`FORM4562-GRAPH.md`](./graphs/FORM4562-GRAPH.md):
   asset/activity §179, bonus, MACRS/ADS, listed-property and vehicle ledger;
   correct 2026 destination, Form 4562-B split, and all 271 PDF widgets.
-- [`FORM461-GRAPH.md`](./graphs/FORM461-GRAPH.md) and `pdf-fields-f461.csv`:
+- [`FORM461-GRAPH.md`](./graphs/FORM461-GRAPH.md):
   return-wide business-loss limit, source classification, Schedule 1 line 8p,
   NOL carryover, and all 18 draft PDF widgets.
-- [`FORM172-NOL-GRAPH.md`](./graphs/FORM172-NOL-GRAPH.md) and `pdf-fields-f172.csv`:
+- [`FORM172-NOL-GRAPH.md`](./graphs/FORM172-NOL-GRAPH.md):
   current Form 172 and instructions, per-origin NOL ledger, Schedule 1 line
   8a/statement, MeF attachment, and 109 current-form PDF widgets.
-- [`FORM8582-GRAPH.md`](./graphs/FORM8582-GRAPH.md) and `pdf-fields-f8582.csv`:
+- [`FORM8582-GRAPH.md`](./graphs/FORM8582-GRAPH.md):
   active-rental and other passive activities, modified AGI, Parts IV–IX
   allocation, activity carryforwards, and all 205 draft PDF widgets.
-- [`FORM6198-GRAPH.md`](./graphs/FORM6198-GRAPH.md) and `pdf-fields-f6198.csv`:
+- [`FORM6198-GRAPH.md`](./graphs/FORM6198-GRAPH.md):
   continuous-use at-risk form, basis and debt evidence, activity/source
   allocations, recapture, and all 34 PDF widgets.
-- [`FORM4684-GRAPH.md`](./graphs/FORM4684-GRAPH.md) and `pdf-fields-f4684.csv`:
+- [`FORM4684-GRAPH.md`](./graphs/FORM4684-GRAPH.md):
   per-event casualty/theft, disaster classification, Schedule A/4797,
   Ponzi/election routes, and all 162 draft PDF widgets.
-- [`FORM4797-GRAPH.md`](./graphs/FORM4797-GRAPH.md) and `pdf-fields-f4797.csv`:
+- [`FORM4797-GRAPH.md`](./graphs/FORM4797-GRAPH.md):
   per-asset dispositions, §1231 gain/loss and recapture, Form 4684 cycle,
   new QPP use-change question, and all 188 draft PDF widgets.
-- [`FORM6252-GRAPH.md`](./graphs/FORM6252-GRAPH.md) and `pdf-fields-f6252.csv`:
+- [`FORM6252-GRAPH.md`](./graphs/FORM6252-GRAPH.md):
   persistent installment-sale obligation, related-party disposition and
   recapture routes, draft cross-reference conflict, and all 49 PDF widgets.
-- [`FORM8824-GRAPH.md`](./graphs/FORM8824-GRAPH.md) and `pdf-fields-f8824.csv`:
+- [`FORM8824-GRAPH.md`](./graphs/FORM8824-GRAPH.md):
   multi-property §1031 exchange, two-year related-party state, deferred
   basis and §1043 sale, plus all 68 draft PDF widgets.
-- [`FORM8990-GRAPH.md`](./graphs/FORM8990-GRAPH.md) and `pdf-fields-f8990.csv`:
+- [`FORM8990-GRAPH.md`](./graphs/FORM8990-GRAPH.md):
   §163(j) business-interest limit, 2026 $32 million gross-receipts test,
   source/activity carryforwards and all 138 draft PDF widgets.
-- [`FORM4952-GRAPH.md`](./graphs/FORM4952-GRAPH.md) and `pdf-fields-f4952.csv`:
+- [`FORM4952-GRAPH.md`](./graphs/FORM4952-GRAPH.md):
   investment-interest limit, qualified-dividend/capital-gain election,
   Schedule A/6198/E and AMT routes, plus all 17 draft PDF widgets.
-- [`FORM6781-GRAPH.md`](./graphs/FORM6781-GRAPH.md) and `pdf-fields-f6781.csv`:
+- [`FORM6781-GRAPH.md`](./graphs/FORM6781-GRAPH.md):
   section 1256 contracts, straddle loss deferral, elections/carryback,
   Schedule D/8949 routes, and all 71 draft PDF widgets.
-- [`FORM8615-GRAPH.md`](./graphs/FORM8615-GRAPH.md) and `pdf-fields-f8615.csv`:
+- [`FORM8615-GRAPH.md`](./graphs/FORM8615-GRAPH.md):
   child eligibility and unearned income, parent/sibling tax worksheets,
   child Form 1040 line 16, and all 32 draft PDF widgets.
-- [`FORM8814-GRAPH.md`](./graphs/FORM8814-GRAPH.md) and `pdf-fields-f8814.csv`:
+- [`FORM8814-GRAPH.md`](./graphs/FORM8814-GRAPH.md):
   parent election per child, allocated dividend/capital income and tax,
   cross-form effects, and all 26 draft PDF widgets.
-- [`FORM8997-GRAPH.md`](./graphs/FORM8997-GRAPH.md) and `pdf-fields-f8997.csv`:
+- [`FORM8997-GRAPH.md`](./graphs/FORM8997-GRAPH.md):
   legacy QOF deferral recognition in 2026, revised Parts III–V, Form 8949
   and future basis, with all 461 draft PDF widgets.
-- [`FORM8621-GRAPH.md`](./graphs/FORM8621-GRAPH.md) and `pdf-fields-f8621.csv`:
+- [`FORM8621-GRAPH.md`](./graphs/FORM8621-GRAPH.md):
   current-revision PFIC/QEF form, elections and historical tax/interest,
   2026 Schedule 2 lines 19a/b, and all 151 current PDF widgets.
-- [`FORM4972-GRAPH.md`](./graphs/FORM4972-GRAPH.md) and `pdf-fields-f4972.csv`:
+- [`FORM4972-GRAPH.md`](./graphs/FORM4972-GRAPH.md):
   lump-sum election eligibility, 1099-R income split, line 16 box 2,
   embedded 2026 instructions, and all 58 draft PDF widgets.
-- [`FORM8815-GRAPH.md`](./graphs/FORM8815-GRAPH.md) and `pdf-fields-f8815.csv`:
+- [`FORM8815-GRAPH.md`](./graphs/FORM8815-GRAPH.md):
   savings-bond education exclusion, QSS phaseout, Schedule B line 3,
   and all 23 draft PDF widgets.
-- [`FORM8915F-GRAPH.md`](./graphs/FORM8915F-GRAPH.md) and `pdf-fields-f8915f.csv`:
+- [`FORM8915F-GRAPH.md`](./graphs/FORM8915F-GRAPH.md):
   2026 disaster distribution/repayment ledger, account-specific 1040 routes,
   2025 instruction comparator, and all 102 draft PDF widgets.
 - [`FORM8915D-STATUS.md`](./readiness/FORM8915D-STATUS.md): latest 2024 source and
   expired 2019-disaster repayment period; preserve older-year amendments
   without emitting a 2026 attachment.
-- [`FORM8912-GRAPH.md`](./graphs/FORM8912-GRAPH.md) and `pdf-fields-f8912.csv`:
+- [`FORM8912-GRAPH.md`](./graphs/FORM8912-GRAPH.md):
   continuous-use bond-credit form, 2026 Schedule 3 line 6k, carryforward
   and credit-order work, and all 218 current PDF widgets.
-- [`FORM982-GRAPH.md`](./graphs/FORM982-GRAPH.md) and `pdf-fields-f982.csv`:
+- [`FORM982-GRAPH.md`](./graphs/FORM982-GRAPH.md):
   current cancellation-of-debt exclusion form, 2026 QPRI written-agreement
   gate, tax-attribute ledger, and all 27 current PDF widgets.
-- [`FORM8834-GRAPH.md`](./graphs/FORM8834-GRAPH.md) and `pdf-fields-f8834.csv`:
+- [`FORM8834-GRAPH.md`](./graphs/FORM8834-GRAPH.md):
   current 2024+ legacy passive vehicle-credit form, Form 8582-CR source,
   2026 Schedule 3 line 6i, and all 11 current PDF widgets.
-- [`FORM8962-GRAPH.md`](./graphs/FORM8962-GRAPH.md) and `pdf-fields-f8962.csv`:
+- [`FORM8962-GRAPH.md`](./graphs/FORM8962-GRAPH.md):
   2026 premium tax credit line 27, 400% FPL boundary, Form 1095-A/allocations,
   143 PDF widgets, and MeF/graph acceptance order.
-- [`FORM1116-GRAPH.md`](./graphs/FORM1116-GRAPH.md), `pdf-fields-f1116.csv`,
-  `pdf-fields-f1116sb.csv`, and `pdf-fields-f1116sc.csv`: category credit,
+- [`FORM1116-GRAPH.md`](./graphs/FORM1116-GRAPH.md): category credit,
   2026 line 18/20 tax bases, carryovers and redeterminations, full PDF
   inventories, and MeF/graph acceptance order.
-- [`FORM2555-GRAPH.md`](./graphs/FORM2555-GRAPH.md) and `pdf-fields-f2555.csv`:
+- [`FORM2555-GRAPH.md`](./graphs/FORM2555-GRAPH.md):
   2026 foreign earned income and housing exclusions/deduction, Notice
   2026-25 limits, 160 PDF widgets, and Schedule 1/SE/1116/MeF handoffs.
-- [`FORM8936-GRAPH.md`](./graphs/FORM8936-GRAPH.md), `pdf-fields-f8936.csv`, and
-  `pdf-fields-f8936sa.csv`: clean vehicle acquisition and 2026 service
+- [`FORM8936-GRAPH.md`](./graphs/FORM8936-GRAPH.md): clean vehicle acquisition and 2026 service
   eligibility, dealer transfers, personal/business routes, and PDF fields.
 - [`FORM2441-GRAPH.md`](./graphs/FORM2441-GRAPH.md): dependent-care benefits before
   AGI, 2026 credit phaseout and limit, provider detail, PDF, and MeF order.
-- [`FORM8862-8863-EIC-GRAPH.md`](./graphs/FORM8862-8863-EIC-GRAPH.md),
-  `pdf-fields-f8862.csv`, `pdf-fields-f8863.csv`, and
-  `pdf-fields-f1040sei.csv`: credit
+- [`FORM8862-8863-EIC-GRAPH.md`](./graphs/FORM8862-8863-EIC-GRAPH.md): credit
   recertification, education-credit, and EIC source/graph/attachment order.
-- [`PDF-FORM2441-MAP.md`](./pdf/PDF-FORM2441-MAP.md) and
-  `pdf-fields-f2441.csv`: all 72 draft Form 2441 terminal widgets, the two
+- [`PDF-FORM2441-MAP.md`](./pdf/PDF-FORM2441-MAP.md): all 72 draft Form 2441 terminal widgets, the two
   printed-page map, the missing benefits-question widget, and continuation
   requirements.
 - [`CAPITAL-GAIN-GRAPH.md`](./graphs/CAPITAL-GAIN-GRAPH.md): direct 1099-DIV box 2a
   decision, Schedule D/8949 dependencies, and PDF/MeF work order.
-- [`PDF-SCHEDULED-MAP.md`](./pdf/PDF-SCHEDULED-MAP.md) and
-  `pdf-fields-f1040sd.csv`: all 55 draft Schedule D widgets, the six Form 8949
+- [`PDF-SCHEDULED-MAP.md`](./pdf/PDF-SCHEDULED-MAP.md): all 55 draft Schedule D widgets, the six Form 8949
   summary rows, and the reconciliation work required for a filed attachment.
 - [`TRANSACTION-GRAPH.md`](./graphs/TRANSACTION-GRAPH.md): the 2026 1099-B/1099-DA box
   meanings, Form 8949 classification, Schedule D totals, and MeF/ATS gates.
-- [`PDF-FORM8949-MAP.md`](./pdf/PDF-FORM8949-MAP.md) and `pdf-fields-f8949.csv`:
+- [`PDF-FORM8949-MAP.md`](./pdf/PDF-FORM8949-MAP.md):
   all 202 draft Form 8949 widgets and the eleven-row pagination contract.
 - [`FORM5695-CREDIT-GRAPH.md`](./graphs/FORM5695-CREDIT-GRAPH.md): the carryforward-only
   2026 form, its pinned draft instructions, and the Schedule 8812 credit order.
@@ -307,7 +285,7 @@ regular Git files.
 - [`ATS-SCENARIO-06.md`](./ats/ATS-SCENARIO-06.md): page-level W-2, W-2G, partnership,
   dependent, and overtime facts with the Schedule 1/1040 income bridge and
   unresolved source gates.
-- [`ATS-SCENARIO-05.md`](./ats/ATS-SCENARIO-05.md) and `pdf-fields-f8888.csv`:
+- [`ATS-SCENARIO-05.md`](./ats/ATS-SCENARIO-05.md):
   refund allocation after settlement, account validation,
   1040/Form 8888 indicator, and the draft-versus-ATS revision difference.
 - [`ATS-SCENARIO-12.md`](./ats/ATS-SCENARIO-12.md): the 37-page business return,
@@ -330,23 +308,6 @@ regular Git files.
   are source artifacts, not filing-ready forms. Run `python3
   docs/ty2026/corpus/download.py` to refresh the snapshot; review all hash
   changes before using new values or layouts.
-- [`pdf-coverage.csv`](./inventories/pdf-coverage.csv): each current TY2025 PDF descriptor,
-  its IRS source URL, and whether a matching TY2026 draft is in the snapshot.
-  Current result: 51 of 56 descriptors have a 2026 draft; five IRS draft
-  URLs still serve older years and are recorded as `wrong-year` in the manifest.
-- [`mef-coverage.csv`](./inventories/mef-coverage.csv): each TY2025 MeF serializer module.
-- [`mef-descriptor-coverage.csv`](./inventories/mef-descriptor-coverage.csv): all 85
-  runtime MeF descriptors in XSD emission order, including the two foreign
-  employer wage documents exported by one module.
-- [`node-coverage.csv`](./inventories/node-coverage.csv): all 191 registered TY2025 graph
-  nodes, their source modules, 2025 year mentions, tax-year dispatch, matching
-  MeF/PDF surface, available 2026 draft, and review priority. Every row remains
-  `audit-required` until its TY2026 behavior and output route are proved;
-  progress notes do not mean a node is ready for the 2026 registry.
-- [`year-literals.csv`](./inventories/year-literals.csv): all `2025` occurrences in non-test
-  calculation node source, including comments. These are review leads, not
-  proof of a bug. Regenerate the four CSVs with `python3
-  docs/ty2026/tooling/build_inventory.py` after a source or code change.
 - [`FORM-DELTA.md`](./readiness/FORM-DELTA.md): concrete changes visible in IRS draft forms.
 - [`DEDUCTION-GRAPH.md`](./graphs/DEDUCTION-GRAPH.md): source-backed Schedule A,
   Schedule 1-A, and QBI dependency contract and implementation sequence.

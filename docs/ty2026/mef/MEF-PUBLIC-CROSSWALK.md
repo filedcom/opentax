@@ -1,17 +1,15 @@
 # TY2026 public MeF inventory crosswalk
 
-The [crosswalk](../inventories/mef-public-crosswalk.csv) joins all 84 TY2025 Form 1040 MeF
-serializer modules in [`mef-coverage.csv`](../inventories/mef-coverage.csv) to the IRS
-September 24, 2026 [accepted-forms](../corpus/mef/accepted-forms.xlsx) and
-[forms/attachments](../corpus/mef/forms-attachments.xlsx) workbooks. Workbook
+The crosswalk joins all 84 TY2025 Form 1040 MeF
+serializer modules to the IRS
+September 24, 2026 [accepted-forms](../../../irs/corpus/ty2026/mef/accepted-forms.xlsx) and
+[forms/attachments](../../../irs/corpus/ty2026/mef/forms-attachments.xlsx) workbooks. Workbook
 row numbers are one-based Excel row numbers. `form_1040_max` is the published
 **1040 column** value, including the literal `unbounded` where printed.
 `attachment_workbook_rows` lists every exact XML-document-name occurrence
 in the forms/attachments workbook; an occurrence can be under a different
 parent or dependency route and must be checked in context before coding.
-The runtime `ALL_MEF_FORMS` array contains **85 descriptors**;
-[`mef-descriptor-coverage.csv`](../inventories/mef-descriptor-coverage.csv) records their
-order, symbols, pending keys and source modules. The extra descriptor is
+The runtime `ALL_MEF_FORMS` array contains **85 descriptors**. The extra descriptor is
 in `foreign_employer_wages.ts`, which emits both `FECRecord` and
 `WagesNotShownSchedule`.
 Four of these descriptors also generate PDF `BinaryAttachment` documents.

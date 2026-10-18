@@ -1,15 +1,15 @@
 # TY2026 Form 4797 business-property disposition contract
 
-Source snapshot: [draft 2026 Form 4797](../corpus/draft/f4797.pdf), SHA-256
+Source snapshot: [draft 2026 Form 4797](../../../irs/corpus/ty2026/draft/f4797.pdf), SHA-256
 `2261752a7ef65fbdf253532637a244f919bcbdc894030a1c810d2a29fa6e9f57`,
-and [2025 instructions](../corpus/authorities/i4797--2025.pdf), SHA-256
+and [2025 instructions](../../../irs/corpus/ty2026/authorities/i4797--2025.pdf), SHA-256
 `cddf741b95ec1689712aba82936346bd7b7c13dfe593fc66102a31e333b8fae9`,
 as a **prior-year comparator**. The draft `i4797--dft.pdf` URL still serves
 2025. The printed form has a material line renumbering and a new Part III
 qualified-production-property (QPP) use-change checkbox. Confirm the final
 2026 instructions, the current MeF XSD/rules and any QPP guidance before
 filing; do not treat old line numbers as current authority.
-The [2026 Form 6252 draft's embedded instructions](../corpus/draft/f6252.pdf)
+The [2026 Form 6252 draft's embedded instructions](../../../irs/corpus/ty2026/draft/f6252.pdf)
 still refer to old Form 4797 lines (for example, its line-12 recapture
 paragraph names Form 4797 lines 31/13/32, while the 2026 Form 4797 draft
 uses 33/14/34). Its installment-sale line-25/26 destinations similarly
@@ -44,7 +44,7 @@ loss before allowing it into the return-wide ordinary or §1231 result.
 | Part / lines | Calculation and reconciliation |
 | --- | --- |
 | Header, 1a–1c | Reconcile 1099-B/S reported **gross** proceeds included in lines 2, 11 or 22; partial MACRS disposition gain included in lines 2, 11 or 26; and partial-disposition loss in lines 2 or 11. These are informational controls over the detailed rows, not extra gains to add. |
-| I, 2–8 | Part I holds qualifying business-property sales and noncasualty involuntary conversions, generally held **more than one year**. Each line-2 row computes gross sales price + depreciation allowed/allowable − cost/basis/improvements/selling expenses. Add [Form 4684 line 39](./FORM4684-GRAPH.md) gain (3), [Form 6252](../corpus/draft/f6252.pdf) §1231 installment gain (4), [Form 8824](../corpus/draft/f8824.pdf) exchange gain/loss (5), **noncasualty** Part III line 34 remainder (6), and livestock (7). Line 8 is the §1231 net. The supplied `section_1231_gain` aggregate cannot print or independently verify these sources. |
+| I, 2–8 | Part I holds qualifying business-property sales and noncasualty involuntary conversions, generally held **more than one year**. Each line-2 row computes gross sales price + depreciation allowed/allowable − cost/basis/improvements/selling expenses. Add [Form 4684 line 39](./FORM4684-GRAPH.md) gain (3), [Form 6252](../../../irs/corpus/ty2026/draft/f6252.pdf) §1231 installment gain (4), [Form 8824](../../../irs/corpus/ty2026/draft/f8824.pdf) exchange gain/loss (5), **noncasualty** Part III line 34 remainder (6), and livestock (7). Line 8 is the §1231 net. The supplied `section_1231_gain` aggregate cannot print or independently verify these sources. |
 | I, 9–10 and II, 12–13 | If line 8 is a loss, it goes to line 12 as ordinary loss. If it is gain, use the prior-five-year nonrecaptured §1231 loss at line 9: line 10 is the remaining long-term capital gain to Schedule D, while the recaptured portion enters Part II line 13. A §1231 net gain without prior-loss balance goes to Schedule D directly. Preserve any resulting prior-loss balance for 2027. |
 | II, 11–20b | Line 11 holds ordinary property rows including assets held one year or less; lines 12–18 add the Part I loss/recaptured gain, Part III recapture **line 33 → line 14**, Form 4684 lines 31/38a **→ line 15**, Form 6252 ordinary gain (16), Form 8824 (17) and livestock (18). Line 19 nets the entries. For individuals, line 20a separates the specified income-producing loss from Form 4684 line 35 column (b)(ii) for **Schedule A line 16**; line 20b excludes it and goes to **Schedule 1 line 4**. Do not send line 19 to Schedule 1 without this split. |
 | III, 21–34 | Four printed property columns compute gross price (22), cost plus selling expenses (23), accumulated depreciation/depletion (24), adjusted basis (25), total gain (26), and class-specific ordinary recapture: §1245 (27a–b), §1250 (28a–g), §1252 (29a–c), §1254 (30a–b), §1255 (31a–b). Line 27 now asks whether a §1245 disposition changes use of **QPP**; resolve the 2026 instruction treatment instead of mapping it as ordinary generic §1245. Line 32 totals gains, line 33 totals recapture to Part II line 14, and line 34 divides residual gain between **casualty/theft to Form 4684 line 33** and noncasualty to Part I line 6. Retain unrecaptured §1250 gain separately for the Schedule D tax worksheet; it is not identical to ordinary §1250 recapture. |
@@ -73,7 +73,7 @@ prevent separate Form 2439 transactions from colliding with it.
   aggregate ordinary/recapture amounts without detail, and emits only a
   narrow §1231/casualty surface. Its 2025 XSD element names and cardinality
   need a current 2026 release check. TY2025 PDF descriptor maps only five
-  aggregate fields. The [2026 draft inventory](../inventories/pdf-fields/pdf-fields-f4797.csv) has
+  aggregate fields. The 2026 draft inventory has
   **188 terminal widgets**, all in the field tree, on two printed pages plus
   draft cover; line-to-widget mapping and appearance must be reviewed.
 - `form4797` is absent from the TY2026 registry/PDF builder and has no

@@ -1,8 +1,8 @@
 # TY2026 Schedule 2 and Schedule 8812 dependency map
 
-Source snapshot: the committed draft `corpus/draft/f1040s2.pdf` (created
-April 27, 2026), `corpus/draft/f1040s8.pdf` (created April 24, 2026), and
-`corpus/draft/i1040s8.pdf` (2026 instructions posted August 21, 2026).
+Source snapshot: the pinned draft `irs/corpus/ty2026/draft/f1040s2.pdf` (created
+April 27, 2026), `irs/corpus/ty2026/draft/f1040s8.pdf` (created April 24, 2026), and
+`irs/corpus/ty2026/draft/i1040s8.pdf` (2026 instructions posted August 21, 2026).
 Recheck line numbers against final forms and instructions before MeF/PDF
 mapping. The pure 2026 Schedule 2 arithmetic is in
 `forms/f1040/2026/schedule2.ts`; `nodes/schedule2.ts` now publishes those

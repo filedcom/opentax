@@ -289,18 +289,9 @@ bun run compile
 ### TY2026 research sources
 
 The [TY2026 research corpus](./docs/ty2026/README.md) contains the implementation
-plans, source manifest, and pinned IRS PDFs. These PDFs use Git LFS so they do
-not become ordinary Git blobs. Install Git LFS before working with the corpus:
-
-```bash
-git lfs install
-git lfs pull
-```
-
-When refreshing IRS sources, follow the [corpus instructions](./docs/ty2026/README.md#working-with-the-pinned-pdfs).
-Verify that new or changed PDFs appear in `git lfs ls-files` before pushing.
-Adding LFS tracking after a regular PDF commit does not remove that PDF from
-Git history.
+plans and the source manifest. The IRS PDFs it cites are not in Git: fetch them
+into the gitignored `irs/corpus/ty2026/` with `python3 docs/ty2026/corpus/download.py`
+and check them with `bun run check:irs` (see [`irs/README.md`](./irs/README.md)).
 
 ### Contributing with Claude Code
 

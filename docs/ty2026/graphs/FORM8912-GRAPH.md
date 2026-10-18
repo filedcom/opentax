@@ -1,11 +1,11 @@
 # TY2026 Form 8912 tax-credit bond contract
 
-Current continuous-use authority: [Form 8912 (Rev. December 2024)](../corpus/authorities/f8912--2024.pdf),
+Current continuous-use authority: [Form 8912 (Rev. December 2024)](../../../irs/corpus/ty2026/authorities/f8912--2024.pdf),
 SHA-256 `0c083a7452a2d973a2a9d7fcecacbb1c0db1157bfcc30968b0b1b97c3430d912`,
-and [instructions (Rev. December 2024)](../corpus/authorities/i8912--2024.pdf),
+and [instructions (Rev. December 2024)](../../../irs/corpus/ty2026/authorities/i8912--2024.pdf),
 SHA-256 `8d4a48b71c4c1d3873b6488b5a4684d87d510d584d9f30a2beb353d0896343bd`.
 The instructions explicitly designate this as a continuous-use form.
-The pinned [2026 Schedule 3 draft](../corpus/draft/f1040s3.pdf) still has
+The pinned [2026 Schedule 3 draft](../../../irs/corpus/ty2026/draft/f1040s3.pdf) still has
 Form 8912 on line 6k. Recheck the current IRS product, final Schedule 3
 and 2026 MeF XSD/rules before filing.
 
@@ -38,7 +38,7 @@ credit sequence and current Form 3800 amount are explicit dependencies.
   reconciles Form 1097-BTC monthly amounts, derives Part III/IV tentative
   credit and deemed interest, and sends pending credit plus Form 6251 work.
   TY2025 has a 3-page PDF descriptor and `IRS8912` serializer with a
-  finalized-return reconciliation. The [current PDF inventory](../inventories/pdf-fields/pdf-fields-f8912.csv)
+  finalized-return reconciliation. The current PDF inventory
   has **218 terminal widgets** across three pages. These are strong reuse
   baselines, not a TY2026 registration or current XML proof.
 - The input schema limits carryforward `origin_tax_year` to **2024**;

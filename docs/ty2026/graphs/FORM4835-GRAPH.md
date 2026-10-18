@@ -1,8 +1,8 @@
 # TY2026 Form 4835 farm-rent contract
 
-Sources: pinned [2026 draft Form 4835](../corpus/draft/f4835.pdf), SHA-256
+Sources: pinned [2026 draft Form 4835](../../../irs/corpus/ty2026/draft/f4835.pdf), SHA-256
 `5429b781b4f26ae981022e00accb2ce40bbe3db0017f6c004a70441d8b49ce37`,
-and [September 21 draft instructions](../corpus/draft/i4835.pdf), SHA-256
+and [September 21 draft instructions](../../../irs/corpus/ty2026/draft/i4835.pdf), SHA-256
 `37d68265aae539290c8187bb80252ec7baef0a61995e7e8126581d9fceffeeeb`.
 The form is a one-page attachment. The draft separates its instructions from
 the form and adds vehicle-loan interest line 19b.

@@ -1,10 +1,10 @@
 # TY2026 Form 8997 QOF deferral and inclusion contract
 
-Source snapshot: pinned [2026 draft Form 8997](../corpus/draft/f8997.pdf),
+Source snapshot: pinned [2026 draft Form 8997](../../../irs/corpus/ty2026/draft/f8997.pdf),
 SHA-256 `3b773741f45044061bcdc3a02f319b02e6c2ce10890a061be513f7e4c581163f`;
-[Notice 2026-40](../corpus/authorities/n-26-40.pdf), SHA-256
+[Notice 2026-40](../../../irs/corpus/ty2026/authorities/n-26-40.pdf), SHA-256
 `4df687daf79373c8c9ed96913ebe77ad49bbcc8fea122964dc6c7efc97b8d148`;
-and the [2025 final Form 8997 with embedded instructions](../corpus/authorities/f8997--2025.pdf),
+and the [2025 final Form 8997 with embedded instructions](../../../irs/corpus/ty2026/authorities/f8997--2025.pdf),
 SHA-256 `97589000d39b67737c516763bc4b89a167a3c18b47163517e98490144f4f5a4b`,
 as a **prior-year comparator only**. The expected 2026 `i8997--dft.pdf`
 returns 404 in this snapshot. Obtain final 2026 instructions and current
@@ -62,7 +62,7 @@ Schedule D filing decision and qualified-dividend/capital-gain tax worksheet.
   node shapes must be resolved into one source-keyed contract before 2026
   registration; neither can be reused unchanged.
 - There is no TY2025 Form 8997 PDF or MeF serializer in the inventories.
-  The [2026 draft field inventory](../inventories/pdf-fields/pdf-fields-f8997.csv) contains **461
+  The 2026 draft field inventory contains **461
   terminal widgets**, all in the field tree: 456 text and five buttons over
   four printed pages after the draft cover. Rows, continuation totals,
   foreign taxpayer/waiver answers and 1099-B disposition checkbox need a
