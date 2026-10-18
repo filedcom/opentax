@@ -519,7 +519,7 @@ export const inputSchema = z.object({
         code: z.ZodIssueCode.custom,
         path: [line],
         message: line === "line_13_contribution_carryover"
-          ? "Schedule A line 13 is computed; enter each prior-year carryover in prior_charitable_carryovers with contribution_year, category, amount, source_document_reference and ordinary_carryover_rules_confirmed (see 'opentax node template schedule_a --full')"
+          ? "Schedule A line 13 is computed; enter each prior-year carryover in prior_charitable_carryovers with contribution_year, category, amount, source_document_reference and ordinary_carryover_rules_confirmed, plus original_gift_500_or_less_confirmed for a noncash category (see 'opentax node template schedule_a --full')"
           : "Unclassified charitable deduction cannot be filed directly; provide categorized current-year source contributions",
       });
     }
