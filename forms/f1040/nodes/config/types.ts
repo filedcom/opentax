@@ -350,4 +350,6 @@ export interface F1040Config {
   employerProvidedChildcare: EmployerProvidedChildcareTerms;
   /** Form 8881 line 6b: employees paid more than this get no contribution credit. */
   retirementContributionCreditWageLimit: number;
+  /** IRC §48E: construction begun after this ISO date needs a material assistance cost ratio; null when none. */
+  cleanElectricityMaterialAssistanceAfter: string | null;
 }

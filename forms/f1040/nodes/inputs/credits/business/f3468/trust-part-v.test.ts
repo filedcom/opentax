@@ -7,6 +7,7 @@ import {
   trustK1PartVFixture,
   trustPartVStatementFixture,
 } from "./trust-part-v.fixture.ts";
+import { assertTrustPartVReturnYear } from "./trust-part-v-source.ts";
 
 const context = { taxYear: 2025, formType: "f1040" };
 
@@ -96,5 +97,30 @@ test("K-1 box 13 code M cannot be relabeled as clean electricity", () => {
         }],
       }),
     )
+  );
+});
+
+// Instructions for Form 3468 (2026), Part V: construction begun after 2025
+// needs a material assistance cost ratio (Notice 2026-15).
+test("trust Part V reads the return year's service and construction dates", () => {
+  const in2026 = {
+    ...trustPartVStatementFixture,
+    construction_started_on: "2025-06-01",
+    placed_in_service_on: "2026-03-01",
+  };
+  assertTrustPartVReturnYear(in2026, 2026);
+  assertThrows(
+    () => assertTrustPartVReturnYear(trustPartVStatementFixture, 2026),
+    Error,
+    "needs a 2026 service date",
+  );
+  assertThrows(
+    () =>
+      assertTrustPartVReturnYear(
+        { ...in2026, construction_started_on: "2026-01-15" },
+        2026,
+      ),
+    Error,
+    "material assistance cost ratio",
   );
 });

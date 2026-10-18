@@ -393,4 +393,8 @@ export const config2026: F1040Config = {
   },
   // Draft Instructions for Form 8881 (Rev. December 2026), line 6b: $110,000.
   retirementContributionCreditWageLimit: 110_000,
+  // Instructions for Form 3468 (2026), Part V: no credit where construction
+  // begun after 2025 includes material assistance from a prohibited foreign
+  // entity (P.L. 119-21; Notice 2026-15).
+  cleanElectricityMaterialAssistanceAfter: "2025-12-31",
 };

@@ -860,4 +860,7 @@ export const config2025: F1040Config = {
   // Form 8881 (Rev. December 2025) line 6b: wages over $105,000 exclude an
   // employee from the IRC §45E(f) contribution credit.
   retirementContributionCreditWageLimit: 105_000,
+  // IRC §48E material-assistance rules apply to construction begun after
+  // 2025 (P.L. 119-21); none for TY2025.
+  cleanElectricityMaterialAssistanceAfter: null,
 };

@@ -468,11 +468,6 @@
       "calculation standard_deduction",
       "calculation start"
     ],
-    "single-trust-clean-electricity-investment-credit": [
-      "calculation form8960",
-      "calculation standard_deduction",
-      "calculation start"
-    ],
     "single-partnership-code-k-and-w2g": [
       "xml Withheld W-2G needs the issued 2025 form, structured payer identity, standard code, winnings, and withholding"
     ],
@@ -810,7 +805,6 @@
     "single-schedule-h-three-state-futa": "Named TY2025-only route: Schedule H FUTA credit-reduction states for 2026 are not yet published",
     "single-form8814-child-dividends-adjustments": "Named TY2025-only route: TY2026 Form 8814 and Schedule J tax worksheets are not supported yet",
     "single-form8814-child-gain-with-schedule-d": "Named TY2025-only route: TY2026 Form 8814 and Schedule J tax worksheets are not supported yet",
-    "single-trust-clean-electricity-investment-credit": "Open TY2026 work: Form 3468 Part V pins a 2025 service date",
     "single-partnership-code-k-and-w2g": "Named TY2025-only route: W-2G payer Copy B verification reads the 2025 Form W-2G template; the 2026 template (irs/corpus/ty2026/authorities/fw2g--2026.pdf) is not mapped yet",
     "single-two-w2-flsa-overtime-schedule1a": "TY2026 law: the sample reports overtime on a box 14 or employer statement, the TY2025 reporting route; 2026 W-2s report it in box 12 code TT (2026 W-2 instructions, irs/corpus/ty2026/authorities/iw2w3--2026.pdf)",
     "single-employer-statement-flsa-overtime-schedule1a": "TY2026 law: the sample reports overtime on a box 14 or employer statement, the TY2025 reporting route; 2026 W-2s report it in box 12 code TT (2026 W-2 instructions, irs/corpus/ty2026/authorities/iw2w3--2026.pdf)",

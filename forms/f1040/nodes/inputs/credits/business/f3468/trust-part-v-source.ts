@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { configForYear } from "../../../../config/index.ts";
 
 // The fiduciary's reviewed property statement supplies facts that K-1 box 14
 // code M cannot carry. This record does not, by itself, authorize a credit.
@@ -34,14 +35,11 @@ export const trustPartVStatementSchema = z.object({
   no_cooperative_credit: z.literal(true),
   not_section48d_lessee_confirmed: z.literal(true),
 }).strict().superRefine((statement, ctx) => {
-  if (
-    statement.construction_started_on > statement.placed_in_service_on ||
-    !statement.placed_in_service_on.startsWith("2025-")
-  ) {
+  if (statement.construction_started_on > statement.placed_in_service_on) {
     ctx.addIssue({
       code: "custom",
       path: ["placed_in_service_on"],
-      message: "Form 3468 Part V needs a 2025 service date after construction",
+      message: "Form 3468 Part V needs a service date after construction",
     });
   }
   const credit = Math.round(
@@ -58,6 +56,29 @@ export const trustPartVStatementSchema = z.object({
 });
 
 export type TrustPartVStatement = z.infer<typeof trustPartVStatementSchema>;
+
+/**
+ * The facility is placed in service in the return year. Construction begun
+ * after the year's material-assistance cutoff needs a material assistance cost
+ * ratio this statement does not carry (Instructions for Form 3468 (2026), Part
+ * V; Notice 2026-15).
+ */
+export function assertTrustPartVReturnYear(
+  statement: TrustPartVStatement,
+  taxYear: number,
+): void {
+  if (!statement.placed_in_service_on.startsWith(`${taxYear}-`)) {
+    throw new Error(
+      `Form 3468 Part V needs a ${taxYear} service date after construction`,
+    );
+  }
+  const cutoff = configForYear(taxYear).cleanElectricityMaterialAssistanceAfter;
+  if (cutoff !== null && statement.construction_started_on > cutoff) {
+    throw new Error(
+      "Form 3468 Part V construction begun after 2025 needs a prohibited-foreign-entity material assistance cost ratio",
+    );
+  }
+}
 
 export function reconcileTrustPartVStatement(
   statement: TrustPartVStatement,

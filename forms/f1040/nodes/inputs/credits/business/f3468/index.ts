@@ -8,7 +8,10 @@ import { OutputNodes } from "../../../../../../../core/types/output-nodes.ts";
 import { schedule3 } from "../../../../intermediate/aggregation/general/return-assembly/schedule3/index.ts";
 import { f3800 } from "../f3800/index.ts";
 import type { NodeContext } from "../../../../../../../core/types/node-context.ts";
-import { trustPartVStatementSchema } from "./trust-part-v-source.ts";
+import {
+  assertTrustPartVReturnYear,
+  trustPartVStatementSchema,
+} from "./trust-part-v-source.ts";
 
 // Form 3468 — Investment Credit (IRC §§47, 48, 48C, 48E)
 // All credit components aggregate to Schedule 3, Line 6z (General Business Credit).
@@ -168,8 +171,11 @@ class F3468Node extends TaxNode<typeof inputSchema> {
   readonly outputNodes = new OutputNodes([schedule3, f3800]);
   readonly pdfUrl = "https://www.irs.gov/pub/irs-pdf/f3468.pdf";
 
-  compute(_ctx: NodeContext, rawInput: F3468Input): NodeResult {
+  compute(ctx: NodeContext, rawInput: F3468Input): NodeResult {
     const input = inputSchema.parse(rawInput);
+    for (const claim of input.trust_part_v_claims ?? []) {
+      assertTrustPartVReturnYear(claim.statement, ctx.taxYear);
+    }
     if (input.trust_part_v_claims?.length) {
       const reviews = input.trust_part_v_source_reviews ?? [];
       if (
