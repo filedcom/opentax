@@ -14,6 +14,7 @@ const filedChildSchema = z.object({
 export function assertHohQualifyingChildSource(
   fields: Readonly<Record<string, unknown>>,
   pending: Readonly<Record<string, unknown>>,
+  taxYear: number,
 ): void {
   const filed = fields.hoh_qualifying_child;
   const raw = pending.general;
@@ -27,7 +28,7 @@ export function assertHohQualifyingChildSource(
     );
   }
   const source = generalInputSchema.parse(raw);
-  const expected = hohQualifyingChildFromGeneral(source);
+  const expected = hohQualifyingChildFromGeneral(source, taxYear);
   if (expected === undefined && filed === undefined) return;
   const parsed = filedChildSchema.safeParse(filed);
   if (

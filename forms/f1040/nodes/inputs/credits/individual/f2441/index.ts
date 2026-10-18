@@ -9,29 +9,21 @@ import { f1040 } from "../../../../outputs/general/return-assembly/f1040/index.t
 import { schedule3 } from "../../../../intermediate/aggregation/general/return-assembly/schedule3/index.ts";
 import {
   calculateForm2441,
+  dependentCareCreditRate,
+  type DependentCareConfig,
+  dependentCareExclusionLimit,
+  dependentCareExpenseLimit,
   filingDetailsSchema,
 } from "../../../../intermediate/forms/credits/individual/form2441/calculation.ts";
-import { filingStatusSchema } from "../../../../types.ts";
+import { FilingStatus, filingStatusSchema } from "../../../../types.ts";
 import type { NodeContext } from "../../../../../../../core/types/node-context.ts";
-
-// TY2025 constants — IRC §21(c), IRC §129(a)(2)
-const EXPENSE_CAP_ONE_PERSON = 3000;
-const EXPENSE_CAP_TWO_PLUS = 6000;
-const EMPLOYER_EXCLUSION_LIMIT = 5000; // MFJ / single / HOH / QSS
-const EMPLOYER_EXCLUSION_MFS = 2500;
+import { CONFIG_BY_YEAR } from "../../../../config/index.ts";
 
 // IRC §21(d)(2) — deemed earned income for full-time students and disabled individuals.
 // Treated as earning $250/month (one qualifying person) or $500/month (two or more).
 // Applied for each month the condition held; we assume 12 months = annual amount.
 const DEEMED_INCOME_ONE_PERSON = 250 * 12; // $3,000
 const DEEMED_INCOME_TWO_PLUS = 500 * 12; // $6,000
-
-// Credit rate table — AGI $0–$15,000: 35%; decreases 1% per $2,000 above $15,000;
-// floor at 20% for AGI above $43,000. IRC §21(a)(2); Form 2441 Instructions, Line 8.
-const CREDIT_RATE_AGI_THRESHOLD = 15000;
-const CREDIT_RATE_BRACKET_SIZE = 2000;
-const CREDIT_RATE_MAX = 0.35;
-const CREDIT_RATE_FLOOR = 0.20;
 
 export const itemSchema = z.object({
   qualifying_person_count: z.number().int().min(1).optional(),
@@ -74,32 +66,6 @@ export const inputSchema = z.object({
 
 type F2441Item = z.infer<typeof itemSchema>;
 
-// Returns the credit rate as a decimal for the given AGI.
-// Rate decreases 1% per $2,000 over $15,000 (exclusive); floored at 20%.
-// Integer arithmetic avoids floating-point rounding errors.
-function creditRate(agi: number): number {
-  if (agi <= CREDIT_RATE_AGI_THRESHOLD) return CREDIT_RATE_MAX;
-  const steps = Math.ceil(
-    (agi - CREDIT_RATE_AGI_THRESHOLD) / CREDIT_RATE_BRACKET_SIZE,
-  );
-  // Work in basis points (1 bp = 0.0001) to avoid FP arithmetic on decimals
-  const rateBps = Math.round(CREDIT_RATE_MAX * 10000) - steps * 100;
-  const floorBps = Math.round(CREDIT_RATE_FLOOR * 10000);
-  return Math.max(floorBps, rateBps) / 10000;
-}
-
-// Returns the statutory exclusion cap for the given filing status.
-function exclusionLimit(filingStatus: string): number {
-  return filingStatus === "mfs"
-    ? EMPLOYER_EXCLUSION_MFS
-    : EMPLOYER_EXCLUSION_LIMIT;
-}
-
-// Returns the qualifying expense cap for the given number of qualifying persons.
-function expenseCap(personCount: number): number {
-  return personCount >= 2 ? EXPENSE_CAP_TWO_PLUS : EXPENSE_CAP_ONE_PERSON;
-}
-
 // Returns the IRC §21(d)(2) deemed earned income amount for a person who is a
 // full-time student or disabled. The monthly deemed amount depends on person count.
 function deemedEarnedIncome(personCount: number): number {
@@ -122,8 +88,12 @@ function effectiveEarnedIncome(
 }
 
 // Computes outputs for a single f2441 item (one filing unit's data).
-function itemOutputs(item: F2441Item, fallbackAgi?: number): NodeOutput[] {
-  const filingStatus = item.filing_status ?? "single";
+function itemOutputs(
+  item: F2441Item,
+  cfg: DependentCareConfig,
+  fallbackAgi?: number,
+): NodeOutput[] {
+  const filingStatus = item.filing_status ?? FilingStatus.Single;
   const personCount = item.qualifying_person_count ?? 1;
   const expensesPaid = item.qualifying_expenses_paid ?? 0;
   const employerBenefits = item.employer_dep_care_benefits ?? 0;
@@ -131,13 +101,13 @@ function itemOutputs(item: F2441Item, fallbackAgi?: number): NodeOutput[] {
   const agi = item.agi ?? fallbackAgi ?? 0;
 
   // --- Part III: Employer-Provided Dependent Care Benefits ---
-  const limit = exclusionLimit(filingStatus);
+  const limit = dependentCareExclusionLimit(filingStatus, cfg);
   const excludedBenefits = Math.min(employerBenefits, limit);
   const taxableBenefits = Math.max(0, employerBenefits - limit);
 
   // --- Part II: Credit Computation ---
   // Step P2-1: apply expense cap; then reduce by excluded employer benefits
-  const cap = expenseCap(personCount);
+  const cap = dependentCareExpenseLimit(personCount, cfg);
   const residualCap = Math.max(0, cap - excludedBenefits);
   const cappedExpenses = Math.min(expensesPaid, residualCap);
 
@@ -160,7 +130,7 @@ function itemOutputs(item: F2441Item, fallbackAgi?: number): NodeOutput[] {
     spouseStudentOrDisabled,
     personCount,
   );
-  const minEarnedIncome = filingStatus === "mfj"
+  const minEarnedIncome = filingStatus === FilingStatus.MFJ
     ? Math.min(earnedIncomeTaxpayer, earnedIncomeSpouse)
     : earnedIncomeTaxpayer;
 
@@ -169,7 +139,8 @@ function itemOutputs(item: F2441Item, fallbackAgi?: number): NodeOutput[] {
     : cappedExpenses;
 
   // Step P2-4: apply credit percentage
-  const credit = netQualifyingExpenses * creditRate(agi);
+  const credit = netQualifyingExpenses *
+    dependentCareCreditRate(agi, filingStatus, cfg);
 
   const outputs: NodeOutput[] = [];
 
@@ -189,7 +160,9 @@ class F2441Node extends TaxNode<typeof inputSchema> {
   readonly inputSchema = inputSchema;
   readonly outputNodes = new OutputNodes([f1040, schedule3]);
 
-  compute(_ctx: NodeContext, input: z.infer<typeof inputSchema>): NodeResult {
+  compute(ctx: NodeContext, input: z.infer<typeof inputSchema>): NodeResult {
+    const cfg = CONFIG_BY_YEAR[ctx.taxYear];
+    if (!cfg) throw new Error(`No f1040 config for year ${ctx.taxYear}`);
     const parsed = inputSchema.parse(input);
     if (parsed.filing_details) {
       if (parsed.f2441s !== undefined) {
@@ -204,6 +177,7 @@ class F2441Node extends TaxNode<typeof inputSchema> {
         parsed.filing_details,
         parsed.agi,
         parsed.dep_care_benefits ?? 0,
+        cfg,
       );
       return {
         outputs: lines.line11 > 0
@@ -214,7 +188,9 @@ class F2441Node extends TaxNode<typeof inputSchema> {
     if (parsed.f2441s === undefined) return { outputs: [] };
     const fallbackAgi = parsed.agi;
     return {
-      outputs: parsed.f2441s.flatMap((item) => itemOutputs(item, fallbackAgi)),
+      outputs: parsed.f2441s.flatMap((item) =>
+        itemOutputs(item, cfg, fallbackAgi)
+      ),
     };
   }
 }

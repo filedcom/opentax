@@ -158,7 +158,7 @@ test("HOH nondependent child rejects missing custody, home cost, and mismatched 
   ];
   for (const variant of variants) {
     assertThrows(
-      () => hohQualifyingChildFromGeneral(generalInputSchema.parse(variant)),
+      () => hohQualifyingChildFromGeneral(generalInputSchema.parse(variant), 2025),
       Error,
       "HOH nondependent child needs matching reviewed custody",
     );

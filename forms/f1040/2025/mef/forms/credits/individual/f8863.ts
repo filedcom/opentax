@@ -292,7 +292,11 @@ export function assertForm8863FinalizedReturn(
     fields,
     pending,
     filer.primarySSN,
-    (source) => educationDependentSourceEligible(dependentSchema.parse(source)),
+    (source) =>
+      educationDependentSourceEligible(
+        dependentSchema.parse(source),
+        context?.taxYear ?? 2025,
+      ),
     filer.spouse?.ssn,
   );
 }

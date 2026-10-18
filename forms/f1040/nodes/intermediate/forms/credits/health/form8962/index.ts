@@ -13,6 +13,11 @@ import type { NodeContext } from "../../../../../../../../core/types/node-contex
 import { CONFIG_BY_YEAR } from "../../../../../config/index.ts";
 import type { F1040Config } from "../../../../../config/index.ts";
 import { attributableSpecifiedPtc } from "../../../adjustments/health/form7206/pub974_attribution.ts";
+import {
+  applicableFigure2026,
+  REGIONAL_FPL_2026,
+  REQUIRED_CONTRIBUTION_RATE_2026,
+} from "./ptc-2026.ts";
 
 // 2025 Form 8962 instructions, Table 2: line 5 is an integer percentage.
 // Through 150% FPL the applicable figure is zero; it rises by 0.0004 per
@@ -271,18 +276,31 @@ export const inputSchema = z.object({
 
 type Form8962Input = z.infer<typeof inputSchema>;
 
+interface PtcYearRules {
+  readonly applicableFigure: (line5: number) => number;
+  readonly repaymentCap: (
+    incomePct: number,
+    status: FilingStatus | undefined,
+  ) => number | null;
+  readonly regionalFpl: Readonly<
+    Record<"alaska" | "hawaii", readonly [number, number]>
+  >;
+  // Pub. 974 Worksheet N affordability: the required contribution percentage.
+  readonly requiredContributionRate: number;
+  readonly lawfullyPresentBelow100Fpl: boolean;
+}
+
 // ─── Pure Helpers ─────────────────────────────────────────────────────────────
 
 function federalPovertyLevel(
   householdSize: number,
   region: NonNullable<Form8962Input["fpl_region"]>,
   cfg: F1040Config,
+  rules: PtcYearRules,
 ): number {
-  const [base, increment] = region === "alaska"
-    ? [18_810, 6_730]
-    : region === "hawaii"
-    ? [17_310, 6_190]
-    : [cfg.fplBase, cfg.fplIncrement];
+  const [base, increment] = region === "contiguous"
+    ? [cfg.fplBase, cfg.fplIncrement]
+    : rules.regionalFpl[region];
   return base + increment * (householdSize - 1);
 }
 
@@ -332,10 +350,12 @@ function qsehraMonthlyCredit(
   tentativeCredit: number,
   householdIncome: number,
   facts: NonNullable<Form8962Input["qsehra_monthly_facts"]>[number],
+  requiredContributionRate: number,
 ): number {
   if (facts === null) return tentativeCredit;
   // Pub. 974 Worksheet N, lines 4 and 8. Equality is affordable.
-  const affordabilityThreshold = householdIncome * 0.0902 / 12;
+  const affordabilityThreshold = householdIncome * requiredContributionRate /
+    12;
   const employeeCost = facts.self_only_slcsp -
     facts.self_only_permitted_benefit;
   if (affordabilityThreshold >= employeeCost) return 0;
@@ -351,10 +371,11 @@ function qsehraAnnualCredit(
   annualTentativeCredit: number,
   householdIncome: number,
   facts: NonNullable<Form8962Input["qsehra_monthly_facts"]>,
+  requiredContributionRate: number,
 ): number {
   const provided = facts.filter((month) => month !== null);
   const monthlyTentative = annualTentativeCredit / 12;
-  const threshold = householdIncome * 0.0902 / 12;
+  const threshold = householdIncome * requiredContributionRate / 12;
   const isAffordable = (month: NonNullable<(typeof facts)[number]>) =>
     threshold >= month.self_only_slcsp - month.self_only_permitted_benefit;
 
@@ -375,7 +396,13 @@ function qsehraAnnualCredit(
   // line 26 adds back the annual line-11 share for the other months.
   return provided.reduce(
     (sum, month) =>
-      sum + qsehraMonthlyCredit(monthlyTentative, householdIncome, month),
+      sum +
+      qsehraMonthlyCredit(
+        monthlyTentative,
+        householdIncome,
+        month,
+        requiredContributionRate,
+      ),
     annualTentativeCredit - monthlyTentative * provided.length,
   );
 }
@@ -395,6 +422,27 @@ function repaymentCap(
   return null; // ≥ 400% FPL — no cap
 }
 
+const PTC_RULES_2025: PtcYearRules = {
+  applicableFigure: applicableContributionPct,
+  repaymentCap,
+  // 2024 HHS poverty guidelines for 2025 coverage.
+  regionalFpl: { alaska: [18_810, 6_730], hawaii: [17_310, 6_190] },
+  requiredContributionRate: 0.0902,
+  lawfullyPresentBelow100Fpl: true,
+};
+
+const PTC_RULES_2026: PtcYearRules = {
+  applicableFigure: applicableFigure2026,
+  repaymentCap: () => null,
+  regionalFpl: REGIONAL_FPL_2026,
+  requiredContributionRate: REQUIRED_CONTRIBUTION_RATE_2026,
+  lawfullyPresentBelow100Fpl: false,
+};
+
+function ptcRulesForYear(taxYear: number): PtcYearRules {
+  return taxYear >= 2026 ? PTC_RULES_2026 : PTC_RULES_2025;
+}
+
 interface AlternativeMarriageGroup {
   family_size: number;
   monthly_contribution: number;
@@ -406,6 +454,7 @@ function alternativeMarriageCalculation(
   input: Form8962Input,
   income: number,
   cfg: F1040Config,
+  rules: PtcYearRules,
 ): {
   primary?: AlternativeMarriageGroup;
   spouse?: AlternativeMarriageGroup;
@@ -557,13 +606,14 @@ function alternativeMarriageCalculation(
       coverage.family_size,
       input.fpl_region!,
       cfg,
+      rules,
     );
     const alternativePct = halfIncome > 4 * alternativeFpl
       ? 401
       : Math.floor(halfIncome / alternativeFpl * 100);
     const contribution = Math.round(
       Math.round(
-        halfIncome * applicableContributionPct(alternativePct),
+        halfIncome * rules.applicableFigure(alternativePct),
       ) / 12,
     );
     result[role] = {
@@ -659,6 +709,7 @@ function aptcOnlyRepayment(
   input: Form8962Input,
   aptc: number,
   baseFields: Form8962BaseFields,
+  rules: PtcYearRules,
 ): NodeResult {
   if (aptc === 0) return noForm8962Required();
   const monthlyAptc = input.monthly_aptcs;
@@ -670,7 +721,10 @@ function aptcOnlyRepayment(
     );
   }
   const line25 = Math.round(aptc);
-  const cap = repaymentCap(baseFields.federal_poverty_pct, input.filing_status);
+  const cap = rules.repaymentCap(
+    baseFields.federal_poverty_pct,
+    input.filing_status,
+  );
   const line29 = cap === null ? line25 : Math.min(line25, cap);
   return {
     outputs: buildOutputs(0, line29, {
@@ -706,7 +760,16 @@ class Form8962Node extends TaxNode<typeof inputSchema> {
   compute(ctx: NodeContext, rawInput: Form8962Input): NodeResult {
     const cfg = CONFIG_BY_YEAR[ctx.taxYear];
     if (!cfg) throw new Error(`No f1040 config for year ${ctx.taxYear}`);
+    const rules = ptcRulesForYear(ctx.taxYear);
     const input = inputSchema.parse(rawInput);
+    if (
+      !rules.lawfullyPresentBelow100Fpl &&
+      input.below_100_fpl_status?.basis === "lawfully_present"
+    ) {
+      throw new Error(
+        `TY${ctx.taxYear} Form 8962 has no lawfully present below-100% FPL exception (P.L. 119-21 §71302)`,
+      );
+    }
 
     if (
       input.alternative_marriage &&
@@ -881,6 +944,7 @@ class Form8962Node extends TaxNode<typeof inputSchema> {
       input.household_size,
       input.fpl_region,
       cfg,
+      rules,
     );
     const incomePct = income > 4 * fpl ? 401 : Math.floor(income / fpl * 100);
     const baseFields = {
@@ -975,7 +1039,7 @@ class Form8962Node extends TaxNode<typeof inputSchema> {
       throw new Error("Form 8962 shared policy must use monthly calculation");
     }
     if (mfsStatus?.basis === "no_exception") {
-      return aptcOnlyRepayment(input, aptc, baseFields);
+      return aptcOnlyRepayment(input, aptc, baseFields, rules);
     }
     if (incomePct < 100) {
       const status = input.below_100_fpl_status;
@@ -990,7 +1054,7 @@ class Form8962Node extends TaxNode<typeof inputSchema> {
         );
       }
       if (status.basis === "not_applicable") {
-        return aptcOnlyRepayment(input, aptc, baseFields);
+        return aptcOnlyRepayment(input, aptc, baseFields, rules);
       }
     }
 
@@ -1084,7 +1148,7 @@ class Form8962Node extends TaxNode<typeof inputSchema> {
         );
       }
     }
-    const applicableFigure = applicableContributionPct(incomePct);
+    const applicableFigure = rules.applicableFigure(incomePct);
     const annualContribution = applicableFigure === Infinity
       ? undefined
       : Math.round(income * applicableFigure);
@@ -1095,6 +1159,7 @@ class Form8962Node extends TaxNode<typeof inputSchema> {
       input,
       income,
       cfg,
+      rules,
     );
     if (alternativeMarriage) {
       const regularCredit = input.monthly_premiums!.reduce(
@@ -1160,6 +1225,7 @@ class Form8962Node extends TaxNode<typeof inputSchema> {
             tentativeCredit,
             income,
             qsehraFacts?.[index] ?? null,
+            rules.requiredContributionRate,
           ),
           aptc: monthAptc,
         };
@@ -1174,7 +1240,12 @@ class Form8962Node extends TaxNode<typeof inputSchema> {
     const allowed = monthlyRows
       ? monthlyRows.reduce((sum, row) => sum + row.allowed_credit, 0)
       : qsehraFacts
-      ? qsehraAnnualCredit(annualTentativeCredit, income, qsehraFacts)
+      ? qsehraAnnualCredit(
+        annualTentativeCredit,
+        income,
+        qsehraFacts,
+        rules.requiredContributionRate,
+      )
       : annualTentativeCredit;
     const line24 = Math.round(allowed);
     if (
@@ -1206,7 +1277,7 @@ class Form8962Node extends TaxNode<typeof inputSchema> {
     const line27 = Math.max(0, line25 - line24);
     const cap = line27 > 0
       ? pub974?.worksheet_x_repayment_limit ??
-        repaymentCap(incomePct, input.filing_status)
+        rules.repaymentCap(incomePct, input.filing_status)
       : null;
     const line29 = cap === null ? line27 : Math.min(line27, cap);
 

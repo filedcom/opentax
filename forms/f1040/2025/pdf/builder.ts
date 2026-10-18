@@ -593,7 +593,7 @@ async function buildPdfBytesInternal(
     assertLine1hSupportedSource(normalized.f1040, normalized, filer);
   }
   assertGeneral1040HeaderSource(normalized);
-  assertGeneral1040DependentSource(normalized);
+  assertGeneral1040DependentSource(normalized, 2025);
   assertGeneral1040DepositSource(normalized, filer);
   if (filer) assert1098EInterestSource(normalized, filer);
   assertExtensionPaymentSource(normalized, filer);
@@ -658,7 +658,7 @@ async function buildPdfBytesInternal(
   assertForm8915FSourceLinks(normalized);
   assertKIncomeClassification(normalized);
   if (filer) {
-    assertEitcChildSources(pending, filer);
+    assertEitcChildSources(pending, filer, 2025);
     assertKReportedErrorSources(normalized, filer);
     assertScheduleCReceiptSourceIdentity(normalized, filer);
     assertScheduleCStatutoryW2Sources(normalized, filer);

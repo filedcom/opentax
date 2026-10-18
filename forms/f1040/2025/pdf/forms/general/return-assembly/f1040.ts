@@ -800,7 +800,7 @@ export const irs1040Pdf: PdfFormDescriptor = {
   // season; this module is the 2025 form and must always fetch the 2025 PDF.
   pdfUrl: "https://www.irs.gov/pub/irs-prior/f1040--2025.pdf",
   projectFields(fields, allPending) {
-    assertHohQualifyingChildSource(fields, allPending);
+    assertHohQualifyingChildSource(fields, allPending, 2025);
     assertQssNonclaimedChildSource(fields, allPending);
     const hasForm8888 = allPending.f8888 !== undefined;
     if (

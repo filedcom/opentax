@@ -589,17 +589,16 @@ test("computed EIC routes to Form 1040 line 27a", () => {
   assertEquals(out?.fields.line27_eitc, 4_328);
 });
 
-test("TY2026 EIC is zero at the completed phaseout and refused below it", () => {
+test("TY2026 EIC is zero at the completed phaseout and figured below it", () => {
   const claim = { qualifying_children: 0, filing_status: FilingStatus.Single };
   // Rev. Proc. 2025-32 §4.06(1): no-child completed phaseout $19,540.
   const fields = compute({ ...claim, earned_income: 19_540 }, 2026).outputs
     .find((o) => o.nodeType === "eitc")?.fields;
   assertEquals(fields?.credit_amount, 0);
-  assertThrows(
-    () => compute({ ...claim, earned_income: 12_000 }, 2026),
-    Error,
-    "2026 EIC Table",
-  );
+  // $664 maximum less 7.65% of the $12,025 row midpoint over $10,860.
+  const credit = compute({ ...claim, earned_income: 12_000 }, 2026).outputs
+    .find((o) => o.nodeType === "eitc")?.fields;
+  assertEquals(credit?.credit_amount, 575);
 });
 
 // Pub. 596 (2025) ch. 5: EIC denied or reduced for any year after 1996, other

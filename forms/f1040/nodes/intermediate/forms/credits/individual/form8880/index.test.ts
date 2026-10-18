@@ -1217,3 +1217,56 @@ test("form8880 smoke test: MFJ both contributing, 50% rate → $2,000 credit", (
 
   assertEquals(findOutput(result, "f1040"), undefined);
 });
+
+// TY2026: Notice 2025-67 sets the §25B(b) AGI limits ($24,250 single 50%
+// rate); Form 8880 line A (IRC §25B(c)(1)) asks for age 18 by year end.
+function compute2026(input: Record<string, unknown>) {
+  return calculateForm8880(
+    { taxYear: 2026, formType: "f1040" },
+    inputSchema.parse({
+      taxpayer_student_five_months: false,
+      taxpayer_claimed_as_dependent: false,
+      ...input,
+    }),
+    1_000_000,
+  );
+}
+
+test("form8880 TY2026: 2026 AGI limits and the year's age-18 birth date", () => {
+  const claim = {
+    filing_status: FilingStatus.Single,
+    agi: 24_000,
+    elective_deferrals_taxpayer: 1_000,
+  };
+  // Born January 1, 2009: 18 at the end of 2026, but not of 2025.
+  assertEquals(
+    compute2026({ ...claim, taxpayer_dob: "2009-01-01" }).credit,
+    500,
+  );
+  assertThrows(
+    () => compute2026({ ...claim, taxpayer_dob: "2009-01-02" }),
+    Error,
+    "not eligible for the 2026 credit",
+  );
+  assertThrows(
+    () =>
+      compute({ ...claim, taxpayer_dob: "2009-01-01", agi: 23_000 }),
+    Error,
+    "not eligible for the 2025 credit",
+  );
+});
+
+test("form8880 TY2026: refuses the testing-period reviews dated to TY2025", () => {
+  assertThrows(
+    () =>
+      compute2026({
+        filing_status: FilingStatus.MFJ,
+        agi: 40_000,
+        taxpayer_dob: "1980-01-01",
+        elective_deferrals_taxpayer: 1_000,
+        joint_distribution_review: noJointDistributions,
+      }),
+    Error,
+    "joint_distribution_review",
+  );
+});

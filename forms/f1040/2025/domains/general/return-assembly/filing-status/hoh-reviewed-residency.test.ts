@@ -105,7 +105,7 @@ for (const kind of ["ordinary", "birth", "death"] as const) {
       } else if (mutation === "name") {
         g.hoh_qualifying_person_name = "Different Child";
       } else g.hoh_paid_more_than_half_home_costs = false;
-      assertThrows(() => hohQualifyingChildFromGeneral(inputSchema.parse(g)));
+      assertThrows(() => hohQualifyingChildFromGeneral(inputSchema.parse(g), 2025));
     }
   });
 }

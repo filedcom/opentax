@@ -1,4 +1,5 @@
 import { test } from "bun:test";
+import { CONFIG_BY_YEAR } from "../../../../config/index.ts";
 import { assertEquals, assertThrows } from "@std/assert";
 import {
   calculateCreditLimitWorksheetALine5,
@@ -1284,6 +1285,7 @@ test("Schedule 8812 Worksheet B calculates payroll branch and adoption/EIC subtr
     earned,
     false,
     payroll,
+    CONFIG_BY_YEAR[2025],
   );
   assertEquals(lines.line5, 1_125);
   assertEquals(lines.usesPayrollBranch, true);
@@ -1291,20 +1293,48 @@ test("Schedule 8812 Worksheet B calculates payroll branch and adoption/EIC subtr
   assertEquals(lines.line13, 1_500);
   assertEquals(lines.line14, 5_100);
   assertThrows(
-    () => calculateCreditLimitWorksheetBLines(6_600, 3, earned, false),
+    () => calculateCreditLimitWorksheetBLines(
+        6_600,
+        3,
+        earned,
+        false,
+        undefined,
+        CONFIG_BY_YEAR[2025],
+      ),
     Error,
     "lines 7-10 need",
   );
   assertEquals(
-    calculateCreditLimitWorksheetBLines(2_200, 1, earned, false).line14,
+    calculateCreditLimitWorksheetBLines(
+      2_200,
+      1,
+      earned,
+      false,
+      undefined,
+      CONFIG_BY_YEAR[2025],
+    ).line14,
     1_075,
   );
   assertEquals(
-    calculateCreditLimitWorksheetBLines(500, 1, earned, false).line14,
+    calculateCreditLimitWorksheetBLines(
+      500,
+      1,
+      earned,
+      false,
+      undefined,
+      CONFIG_BY_YEAR[2025],
+    ).line14,
     0,
   );
   assertEquals(
-    calculateCreditLimitWorksheetBLines(2_200, 1, earned, true, payroll)
+    calculateCreditLimitWorksheetBLines(
+      2_200,
+      1,
+      earned,
+      true,
+      payroll,
+      CONFIG_BY_YEAR[2025],
+    )
       .usesPayrollBranch,
     true,
   );
@@ -1641,4 +1671,67 @@ test("a supplied Credit Limit Worksheet A must agree with Schedule 3", () => {
     Error,
     "differs from the return's Schedule 3 credits",
   );
+});
+
+// Draft 2026 Schedule 8812 instructions: $2,200 CTC and $1,700 ACTC per
+// child; Credit Limit Worksheet A line 2 omits Schedule 3 line 5b, which the
+// draft 2026 Schedule 3 reserves.
+test("Schedule 8812 TY2026 uses the 2026 amounts and drops line 5b", () => {
+  const worksheet = {
+    schedule3_line1: 0,
+    schedule3_line2: 0,
+    schedule3_line3: 0,
+    schedule3_line4: 0,
+    schedule3_line5b: 0,
+    schedule3_line6d: 0,
+    schedule3_line6f: 0,
+    schedule3_line6l: 0,
+    schedule3_line6m: 0,
+    worksheet_b_applies: false,
+  };
+  const claim = {
+    f8812s: [minimalItem({
+      qualifying_children_count: 2,
+      income_tax_liability: 1_000,
+    })],
+    line18a_earned_income: 30_000,
+  };
+  const result = f8812.compute({ taxYear: 2026, formType: "f1040" }, {
+    ...claim,
+    credit_limit_worksheet: worksheet,
+  });
+  const fields = fieldsOf(result.outputs, f1040);
+  assertEquals(fields?.line19_child_tax_credit, 1_000);
+  // Line 16b is 2 x $1,700; line 20 is 15% of $27,500.
+  assertEquals(fields?.line28_actc, 3_400);
+  assertThrows(
+    () =>
+      f8812.compute({ taxYear: 2026, formType: "f1040" }, {
+        ...claim,
+        credit_limit_worksheet: { ...worksheet, schedule3_line5b: 100 },
+      }),
+    Error,
+    "line 5b is reserved",
+  );
+  const lines = calculateCreditLimitWorksheetBLines(
+    6_600,
+    3,
+    {
+      form1040_line1z_wages: 60_000,
+      nontaxable_combat_pay: 0,
+      schedule_c_statutory_employee_income: 0,
+      nonfarm_schedule_c_and_k1_net: 0,
+      farm_schedule_f_and_k1_net: 0,
+      farm_optional_method_used: false,
+      excluded_medicaid_waiver_payments: 0,
+      schedule1_line15_se_deduction: 0,
+    },
+    false,
+    undefined,
+    CONFIG_BY_YEAR[2026],
+  );
+  assertEquals(lines.line2, 5_100);
+  assertEquals(lines.line4, 57_500);
+  assertEquals(lines.usesPayrollBranch, false);
+  assertEquals(lines.line14, 1_500);
 });

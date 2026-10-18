@@ -340,7 +340,7 @@ function validateFinalizedCreditClaims(
     ) {
       const form8812 = form8812InputSchema.safeParse(pending?.f8812);
       const lines = form8812.success
-        ? calculateSchedule8812Lines(2025, form8812.data)
+        ? calculateSchedule8812Lines(context?.taxYear ?? 2025, form8812.data)
         : undefined;
       const person = fields.other_dependents![0];
       const name = `${person.first_name} ${person.last_name}`.trim()
@@ -472,7 +472,7 @@ function validateFinalizedCreditClaims(
               "Form 8862 shared ODC and AOTC amounts need Schedule 8812 and Form 8863 source",
             );
           }
-          const odcLines = calculateSchedule8812Lines(2025, form8812.data);
+          const odcLines = calculateSchedule8812Lines(context?.taxYear ?? 2025, form8812.data);
           if (
             !odcLines || form8812.data.form8862_filed !== true ||
             form8863.data.form8862_filed !== true ||

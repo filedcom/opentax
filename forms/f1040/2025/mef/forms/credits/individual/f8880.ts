@@ -200,6 +200,7 @@ function buildIRS8880(fields: Input, context?: MefBuildContext): string {
       source.taxpayer_dob,
       source.taxpayer_student_five_months,
       source.taxpayer_claimed_as_dependent,
+      context?.taxYear ?? 2025,
     );
   }
   if ((fields.print_line6b_eligible ?? 0) > 0) {
@@ -208,6 +209,7 @@ function buildIRS8880(fields: Input, context?: MefBuildContext): string {
       source.spouse_dob,
       source.spouse_student_five_months,
       source.spouse_claimed_as_dependent,
+      context?.taxYear ?? 2025,
     );
   }
   assertForm8880TaxLimit(
