@@ -1905,11 +1905,6 @@
     "count": 2
   },
   {
-    "path": "forms/f1040/nodes/inputs/income/investments/f3921/index.ts",
-    "pattern": "year-value",
-    "count": 2
-  },
-  {
     "path": "forms/f1040/nodes/inputs/income/investments/f8814/index.ts",
     "pattern": "z-literal",
     "count": 1
@@ -2113,16 +2108,6 @@
     "path": "forms/f1040/nodes/inputs/taxes/credit-recapture/f4255/index.ts",
     "pattern": "z-literal",
     "count": 1
-  },
-  {
-    "path": "forms/f1040/nodes/inputs/taxes/credit-recapture/f8611/partnership-source.ts",
-    "pattern": "date-pinned",
-    "count": 1
-  },
-  {
-    "path": "forms/f1040/nodes/inputs/taxes/credit-recapture/f8611/partnership-source.ts",
-    "pattern": "z-literal",
-    "count": 2
   },
   {
     "path": "forms/f1040/nodes/inputs/taxes/income-averaging/schedule_j/base_years.ts",
@@ -2465,26 +2450,6 @@
     "count": 1
   },
   {
-    "path": "forms/f1040/nodes/intermediate/forms/deductions/business/form_8829/index.ts",
-    "pattern": "year-comparison",
-    "count": 1
-  },
-  {
-    "path": "forms/f1040/nodes/intermediate/forms/deductions/business/form_8829/index.ts",
-    "pattern": "year-identifier",
-    "count": 1
-  },
-  {
-    "path": "forms/f1040/nodes/intermediate/forms/deductions/business/form_8829/source.ts",
-    "pattern": "date-pinned",
-    "count": 5
-  },
-  {
-    "path": "forms/f1040/nodes/intermediate/forms/deductions/business/form_8829/source.ts",
-    "pattern": "z-literal",
-    "count": 1
-  },
-  {
     "path": "forms/f1040/nodes/intermediate/forms/deductions/business/form4562/bonus.ts",
     "pattern": "date-pinned",
     "count": 3
@@ -2501,13 +2466,8 @@
   },
   {
     "path": "forms/f1040/nodes/intermediate/forms/deductions/business/form4562/index.ts",
-    "pattern": "date-pinned",
-    "count": 1
-  },
-  {
-    "path": "forms/f1040/nodes/intermediate/forms/deductions/business/form4562/index.ts",
     "pattern": "year-comparison",
-    "count": 4
+    "count": 3
   },
   {
     "path": "forms/f1040/nodes/intermediate/forms/deductions/business/form4562/index.ts",
@@ -2788,11 +2748,6 @@
     "path": "forms/f1040/nodes/intermediate/forms/income/foreign/form2555/housing_limits_2025.ts",
     "pattern": "year-identifier",
     "count": 6
-  },
-  {
-    "path": "forms/f1040/nodes/intermediate/forms/income/investments/form6252/index.ts",
-    "pattern": "date-pinned",
-    "count": 2
   },
   {
     "path": "forms/f1040/nodes/intermediate/forms/income/investments/form8815/education_contributions.ts",
