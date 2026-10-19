@@ -9,7 +9,10 @@ import {
 } from "../../../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../../../core/types/output-nodes.ts";
 import type { NodeContext } from "../../../../../../../core/types/node-context.ts";
-import { computeRegularMethodPenalty } from "../../../../inputs/taxes/underpayment/f2210/calculation.ts";
+import {
+  computeRegularMethodPenalty,
+  estimatedTaxPaymentSchema,
+} from "../../../../inputs/taxes/underpayment/f2210/calculation.ts";
 import {
   calculateForm2210FBoxB,
   type Form2210FBoxBInput,
@@ -34,6 +37,7 @@ import {
   form8396SourceSchema,
 } from "../../../../intermediate/forms/credits/individual/form8396/calculation.ts";
 import { FilingStatus } from "../../../../types.ts";
+import { configForYear } from "../../../../config/index.ts";
 import {
   calculateForm8880,
   inputSchema as form8880SourceSchema,
@@ -309,6 +313,13 @@ const inputSchema = z.object({
   f2210_q4_estimated_payment: z.number().nonnegative().optional(),
   f2210_prior_year_tax: z.number().nonnegative().optional(),
   f2210_prior_year_agi: z.number().nonnegative().optional(),
+  // Form 1040-ES payments by date for Form 2210 Part III.
+  f2210_estimated_payments: z.array(estimatedTaxPaymentSchema).optional(),
+  // Schedule 3 line 31 parts that are not Form 2210 line 3 refundable
+  // credits: the extension payment (line 10) and excess social security
+  // withholding (line 11), which Form 2210 line 6 counts as withholding.
+  schedule3_line10_extension_payment: z.number().nonnegative().optional(),
+  schedule3_line11_excess_ss: z.number().nonnegative().optional(),
 });
 
 type F1040Input = z.infer<typeof inputSchema>;
@@ -806,6 +817,39 @@ function totalPayments(input: F1040Input): number {
   );
 }
 
+/** Form 2210 line 3: refundable credits, without Schedule 3 lines 10-11. */
+function form2210RefundableCredits(input: F1040Input): number {
+  return refundableCreditsTotal(input) -
+    Math.round(input.schedule3_line10_extension_payment ?? 0) -
+    Math.round(input.schedule3_line11_excess_ss ?? 0);
+}
+
+/** Form 2210 regular-method penalty from the finalized tax and payments. */
+function form2210Penalty(
+  input: F1040Input,
+  taxYear: number,
+  line24: number,
+  line25d: number,
+): number {
+  return computeRegularMethodPenalty(
+    {
+      current_year_tax: line24 - form2210RefundableCredits(input),
+      required_annual_payment: input.f2210_required_annual_payment,
+      withholding: input.f2210_withholding ??
+        line25d + Math.round(input.schedule3_line11_excess_ss ?? 0),
+      q1_estimated_payment: input.f2210_q1_estimated_payment,
+      q2_estimated_payment: input.f2210_q2_estimated_payment,
+      q3_estimated_payment: input.f2210_q3_estimated_payment,
+      q4_estimated_payment: input.f2210_q4_estimated_payment,
+      estimated_payments: input.f2210_estimated_payments,
+      prior_year_tax: input.f2210_prior_year_tax,
+      prior_year_agi: input.f2210_prior_year_agi,
+      filing_status: input.filing_status,
+    },
+    configForYear(taxYear).form2210RegularMethod,
+  );
+}
+
 function reconciledForm2210FBoxB(
   input: F1040Input,
   line22: number,
@@ -859,6 +903,7 @@ function reconciledForm2210FBoxB(
 }
 
 function assembleReturn(
+  taxYear: number,
   input: F1040Input,
   cleanVehicles: CleanVehicleAllowance | undefined,
   mortgage: MortgageAllowance | undefined,
@@ -938,17 +983,7 @@ function assembleReturn(
   const computed_line38 = form2210f?.line16 ??
     input.line38_underpayment_penalty ??
     (input.f2210_active === true
-      ? computeRegularMethodPenalty({
-        current_year_tax: computed_line24,
-        required_annual_payment: input.f2210_required_annual_payment,
-        withholding: input.f2210_withholding ?? computed_line25d,
-        q1_estimated_payment: input.f2210_q1_estimated_payment,
-        q2_estimated_payment: input.f2210_q2_estimated_payment,
-        q3_estimated_payment: input.f2210_q3_estimated_payment,
-        q4_estimated_payment: input.f2210_q4_estimated_payment,
-        prior_year_tax: input.f2210_prior_year_tax,
-        prior_year_agi: input.f2210_prior_year_agi,
-      })
+      ? form2210Penalty(input, taxYear, computed_line24, computed_line25d)
       : 0);
   // Lines 34/37 are the difference of two *filed* (whole-dollar) lines, so they
   // must be computed from the rounded operands. Rounding the cents-level
@@ -1372,6 +1407,7 @@ class F1040Node extends TaxNode<typeof inputSchema> {
       businessCredit,
     );
     const numericLines = assembleReturn(
+      ctx.taxYear,
       effectiveInput,
       cleanVehicles,
       mortgage,

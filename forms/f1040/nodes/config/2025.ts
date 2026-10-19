@@ -865,4 +865,23 @@ export const config2025: F1040Config = {
   cleanElectricityMaterialAssistanceAfter: null,
   // 2025 Form 2210-F line 16: underpayment x days / 365 x 0.07.
   form2210fPenaltyRate: 0.07,
+  // 2025 Instructions for Form 2210, Part III Section B, Table 2 and the
+  // penalty worksheet: columns dated 4/15/25, 6/15/25, 9/15/25 and 1/15/26;
+  // 7% for each rate period through 4/15/26. June 15, 2025 is a Sunday, so a
+  // payment on Monday, June 16 is timely (Section A, line 11 note).
+  form2210RegularMethod: {
+    installmentDueDates: [
+      "2025-04-15",
+      "2025-06-15",
+      "2025-09-15",
+      "2026-01-15",
+    ],
+    timelyThrough: ["2025-04-15", "2025-06-16", "2025-09-15", "2026-01-15"],
+    ratePeriods: [
+      { through: "2025-06-30", rate: 0.07 },
+      { through: "2025-09-30", rate: 0.07 },
+      { through: "2025-12-31", rate: 0.07 },
+      { through: "2026-04-15", rate: 0.07 },
+    ],
+  },
 };

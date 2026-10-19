@@ -329,6 +329,7 @@ test("routing: line31 and empty credit detail emitted when Part I is zero", () =
   const keys = Object.keys(fieldsOf(result.outputs, f1040)!);
   assertEquals(keys, [
     "line31_additional_payments",
+    "schedule3_line10_extension_payment",
     "credit_limit_schedule3_lines",
   ]);
 });
