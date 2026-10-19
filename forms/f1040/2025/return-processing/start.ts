@@ -91,7 +91,23 @@ export function buildStartNode(entries: readonly InputNodeEntry[]): TaxNode {
           fields: { owner_identity: ownerIdentity },
         });
       }
+      // Each filer's birth date sets the W-2 elective deferral catch-up.
+      const ownerBirthDates = [
+        [general?.taxpayer_ssn, general?.taxpayer_dob],
+        [general?.spouse_ssn, general?.spouse_dob],
+      ].flatMap(([ssn, dob]) => {
+        const digits = String(ssn ?? "").replace(/\D/g, "");
+        return digits.length === 9 && typeof dob === "string"
+          ? [{ ssn: digits, date_of_birth: dob }]
+          : [];
+      });
       const ownerContext = (nodeType: string): Record<string, unknown> => {
+        if (nodeType === "w2" && ownerBirthDates.length > 0) {
+          return {
+            owner_birth_dates: ownerBirthDates,
+            ...(ownerIdentity ? { owner_identity: ownerIdentity } : {}),
+          };
+        }
         if (!ownerIdentity) return {};
         if (
           nodeType === "w2" || nodeType === "f4852" ||

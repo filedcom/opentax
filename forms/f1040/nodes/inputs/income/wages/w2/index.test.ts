@@ -2020,3 +2020,27 @@ test("W-2 code D within the 2025 limit has no line 1h excess and needs no review
     { amount: 0, owners: [] },
   );
 });
+
+// IRC §414(v); 2025 limits: 23,500 plus a 7,500 catch-up at 50 or older
+// (31,000) and an 11,250 catch-up at 60-63 (34,750). Deferrals at the
+// owner's limit have no line 1h excess and need no review.
+test("W-2 code D at the age-50 catch-up limit has no line 1h excess", () => {
+  const item = (amount: number, owner_birth_date: string) =>
+    minimalItem({
+      employee_ssn: "123456789",
+      employer_ein: "123456789",
+      box13_retirement_plan: true,
+      box1_wages: 46_386,
+      box12_entries: [{ code: Box12Code.D, amount }],
+      owner_birth_date,
+    });
+  assertEquals(codeDExcessDeferral([item(31_000, "1971-03-01")], 2025), {
+    amount: 0,
+    owners: [],
+  });
+  assertEquals(codeDExcessDeferral([item(34_750, "1963-03-01")], 2025), {
+    amount: 0,
+    owners: [],
+  });
+  assertThrows(() => codeDExcessDeferral([item(31_000, "1980-03-01")], 2025));
+});

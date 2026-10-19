@@ -255,6 +255,9 @@ export const w2ItemSchema = z.object({
   taxpayer_age: z.number().nonnegative().optional().describe(
     "Taxpayer age — used for retirement contribution limit (catch-up)",
   ),
+  // The employee's date of birth from the return's general information;
+  // sets the IRC §414(v) catch-up added to the elective deferral limit.
+  owner_birth_date: z.string().date().optional(),
 }).superRefine((item, ctx) => {
   const review = item.nonstandard_document_review;
   if (
@@ -277,15 +280,37 @@ export const inputSchema = z.object({
   f8958_allocation: form8958InputSchema.optional(),
   patron_filing_review: patronReviewSchema.optional(),
   owner_identity: ownerIdentitySchema.optional(),
-}).transform(({ substitute_w2s, ...input }, ctx) => {
-  const w2s = [...input.w2s, ...(substitute_w2s ?? [])];
+  owner_birth_dates: z.array(
+    z.object({
+      ssn: z.string().regex(/^\d{9}$/),
+      date_of_birth: z.string().date(),
+    }).strict(),
+  ).optional(),
+}).transform(({ substitute_w2s, owner_birth_dates, ...input }, ctx) => {
+  const birthDate = (item: z.infer<typeof w2ItemSchema>) => {
+    const ssn = item.employee_ssn?.replace(/\D/g, "");
+    return item.owner_birth_date ??
+      (ssn
+        ? owner_birth_dates?.find((owner) => owner.ssn === ssn)
+        : owner_birth_dates?.length === 1
+        ? owner_birth_dates[0]
+        : undefined)?.date_of_birth;
+  };
+  const withBirthDate = (item: z.infer<typeof w2ItemSchema>) => {
+    const date = birthDate(item);
+    return date === undefined ? item : { ...item, owner_birth_date: date };
+  };
+  const w2s = [...input.w2s, ...(substitute_w2s ?? [])].map(withBirthDate);
   if (w2s.length === 0) {
     ctx.addIssue({
       code: z.ZodIssueCode.custom,
       message: "At least one source is required",
     });
   }
-  return { ...input, w2s } as Omit<typeof input, "substitute_w2s"> & {
+  return { ...input, owner_birth_dates, w2s } as
+    & Omit<typeof input, "substitute_w2s">
+    & { owner_birth_dates?: typeof owner_birth_dates }
+    & {
     substitute_w2s?: z.infer<typeof w2ItemSchema>[];
   };
 });
@@ -379,6 +404,20 @@ export function codeDExcessDeferral(w2s: W2Items, taxYear: number): {
       0,
     );
     if (codeD <= baseLimit) continue;
+    // IRC §414(v) catch-up: 7,500 at 50 or older, 11,250 at 60-63 for 2025,
+    // by age at the end of the year (Form 1040 instructions, line 1h).
+    const ownerBirthDates = new Set(
+      items.map((item) => item.owner_birth_date).filter(Boolean),
+    );
+    if (ownerBirthDates.size === 1) {
+      const age = taxYear - Number([...ownerBirthDates][0]!.slice(0, 4));
+      const ownerLimit = age >= 60 && age <= 63
+        ? limits[63]
+        : age >= 50
+        ? limits[59]
+        : baseLimit;
+      if (codeD <= ownerLimit) continue;
+    }
     const sourceItems = items.filter((item) =>
       (item.box12_entries ?? []).some((entry) =>
         entry.code === Box12Code.D && entry.amount > 0
@@ -1352,6 +1391,7 @@ class W2Node extends TaxNode<typeof inputSchema> {
         JSON.stringify(
           inputSchema.parse({
             w2s: patronW2Sources(input.patron_filing_review),
+            owner_birth_dates: input.owner_birth_dates,
           }).w2s,
         )
     ) {
