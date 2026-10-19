@@ -159,6 +159,28 @@ test("Form 8829 line 36 reduces the same Schedule C profit used by Schedule SE a
   );
 });
 
+test("Form 8829 line 36 applies beside line 15 business insurance and Part V expenses", () => {
+  // Form 8829 instructions, line 8: line 29 already counts every business
+  // expense that is not an expense of the home, such as liability insurance.
+  const result = scheduleC.compute({ taxYear: 2025, formType: "f1040" }, {
+    schedule_cs: [minimalItem({
+      business_reference: "C-1",
+      proprietor_recipient: TS.T,
+      line_1_gross_receipts: 10_000,
+      line_15_insurance: 600,
+      part_v_other_expenses: [{ description: "Software", amount: 400 }],
+    })],
+    form8829_line30: {
+      business_reference: "C-1",
+      home_identifier: "HOME-1",
+      recipient: TS.T,
+      schedule_c_line29_tentative_profit: 9_000,
+      line36: 1_500,
+    },
+  });
+  assertEquals(findOutput(result, "schedule1")?.fields.line3_schedule_c, 7_500);
+});
+
 test("Form 8829 rejects a second home-office deduction or mismatched line 29", () => {
   const claim = {
     business_reference: "C-1",

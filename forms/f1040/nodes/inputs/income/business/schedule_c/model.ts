@@ -717,12 +717,14 @@ export function projectForm8829ScheduleCItems(
     item.home_office_method === "simplified" ||
     item.home_office_sq_ft !== undefined ||
     item.home_total_sq_ft !== undefined ||
-    (item.line_15_insurance ?? 0) > 0 ||
+    // Line 15 business insurance and Part V other expenses are not expenses
+    // of the home, so they stay on Schedule C beside Form 8829 (Form 8829
+    // instructions, lines 8 and 18-22: the home's insurance and other
+    // expenses are entered there; Schedule C instructions, lines 15 and 27a).
     (item.line_20b_rent_other ?? 0) > 0 ||
     (item.line_21_repairs ?? 0) > 0 ||
     (item.line_25_utilities ?? 0) > 0 ||
     (item.line_27b_other_expenses ?? 0) > 0 ||
-    (item.part_v_other_expenses?.length ?? 0) > 0 ||
     computeGrossIncome(item) - computeTotalExpenses(item) !==
       claim.schedule_c_line29_tentative_profit
   ) {
