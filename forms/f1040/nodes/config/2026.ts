@@ -136,6 +136,9 @@ export const config2026: F1040Config = {
   ctcPhaseOutThresholdMfj: 400_000,
   ctcPhaseOutThresholdOther: 200_000,
   actcEarnedIncomeFloor: 2_500,
+  // IRC §904(j)(2)(B): not indexed for inflation.
+  foreignTaxCreditElectionLimitMfj: 600,
+  foreignTaxCreditElectionLimitOther: 300,
   // N 25-67 (§25B(b) AGI limits); $2,000 cap IRC §25B(a).
   saversCreditContributionCap: 2_000,
   saversCreditAgiSingle: { rate50: 24_250, rate20: 26_250, rate10: 40_250 },

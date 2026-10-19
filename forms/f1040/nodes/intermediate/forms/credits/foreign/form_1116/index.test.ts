@@ -1,6 +1,11 @@
 import { test } from "bun:test";
 import { assertEquals, assertThrows } from "@std/assert";
-import { form1116, IncomeCategory, priorYearCarryoverSchema } from "./index.ts";
+import {
+  form1116,
+  IncomeCategory,
+  priorYearCarryoverSchema,
+  QualifiedPayeeStatement,
+} from "./index.ts";
 import { fieldsOf } from "../../../../../../../../core/test-utils/output.ts";
 import { schedule3 } from "../../../../aggregation/general/return-assembly/schedule3/index.ts";
 import { form6251 } from "../../../taxes/amt/form6251/index.ts";
@@ -1107,5 +1112,83 @@ test("form1116: unsupported category cannot ride alongside a supported basket", 
       }),
     Error,
     "needs category-specific source facts and calculation",
+  );
+});
+
+// Form 1116 instructions (2025), Election To Claim the Foreign Tax Credit
+// Without Filing Form 1116: passive income and tax on qualified payee
+// statements, total foreign tax at most $600 married filing jointly.
+function electionInput(
+  amounts: number[],
+  filingStatus: FilingStatus,
+  regularTax = 5_000,
+) {
+  return {
+    election_foreign_tax_items: amounts.map((foreign_tax_paid) => ({
+      foreign_tax_paid,
+      payee_statement: QualifiedPayeeStatement.Form1099Div,
+    })),
+    us_tax_before_credits: regularTax,
+    regular_tax_preference_facts: {
+      taxable_income: 60_000,
+      qualified_dividends: 0,
+      net_capital_gain: 0,
+      filing_status: filingStatus,
+      special_rate_gain: 0,
+      form4952_election: 0,
+      foreign_earned_income_exclusion: 0,
+      form8615_applies: false,
+      regular_tax_before_additional_items: regularTax,
+    },
+  };
+}
+
+test("Form 1116 election: MFJ 1099-DIV foreign tax of $220 goes to Schedule 3 line 1", () => {
+  const result = form1116.compute(
+    ctx,
+    electionInput([212, 8], FilingStatus.MFJ),
+  );
+  assertEquals(fieldsOf(result.outputs, schedule3), {
+    line1_foreign_tax_1099: 220,
+  });
+  assertEquals(
+    fieldsOf(result.outputs, form6251)?.schedule3_line1_foreign_tax_credit,
+    220,
+  );
+});
+
+test("Form 1116 election: credit is the smaller of foreign tax or regular tax", () => {
+  const result = form1116.compute(
+    ctx,
+    electionInput([212, 8], FilingStatus.MFJ, 150),
+  );
+  assertEquals(fieldsOf(result.outputs, schedule3), {
+    line1_foreign_tax_1099: 150,
+  });
+});
+
+test("Form 1116 election: over $300 single or mixed with Form 1116 taxes rejects", () => {
+  assertThrows(
+    () => form1116.compute(ctx, electionInput([212, 100], FilingStatus.Single)),
+    Error,
+    "exceeds the 300 limit",
+  );
+  assertThrows(
+    () => form1116.compute(ctx, electionInput([601], FilingStatus.MFJ)),
+    Error,
+    "exceeds the 600 limit",
+  );
+  assertThrows(
+    () =>
+      form1116.compute(ctx, {
+        ...electionInput([100], FilingStatus.MFJ),
+        foreign_tax_items: [{
+          foreign_tax_paid: 50,
+          foreign_gross_income: 500,
+          income_category: IncomeCategory.Passive,
+        }],
+      }),
+    Error,
+    "every foreign tax on a qualified payee statement",
   );
 });

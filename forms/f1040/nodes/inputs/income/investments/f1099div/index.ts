@@ -19,6 +19,7 @@ import {
   ForeignTaxKind,
   form_1116,
   IncomeCategory,
+  QualifiedPayeeStatement,
 } from "../../../../intermediate/forms/credits/foreign/form_1116/index.ts";
 import { rate_28_gain_worksheet } from "../../../../intermediate/worksheets/taxes/calculation/rate_28_gain_worksheet/index.ts";
 import { agi_aggregator } from "../../../../intermediate/aggregation/general/return-assembly/agi_aggregator/index.ts";
@@ -106,6 +107,9 @@ export const itemSchema = z.object({
   foreign_source_dividends_usd: z.number().nonnegative().optional(),
   foreign_source_qualified_dividends_usd: z.number().nonnegative().optional(),
   foreign_tax_irs_country_code: ty2025IrsCountryCodeSchema.optional(),
+  // Election to claim the box 7 foreign tax directly on Schedule 3 line 1
+  // without Form 1116 (Form 1116 instructions, 2025).
+  foreign_tax_without_form1116: z.literal(true).optional(),
   box9: z.number().nonnegative().optional(),
   box10: z.number().nonnegative().optional(),
   box12: z.number().nonnegative().optional(),
@@ -703,9 +707,23 @@ class F1099divNode extends TaxNode<typeof inputSchema> {
         throw new Error("1099-DIV foreign tax needs the holding period");
       }
     }
-    const eligibleItems = taxedItems.filter((item) =>
+    const creditableItems = taxedItems.filter((item) =>
       item.holdingPeriodDays! >= HOLDING_PERIOD_FOREIGN_DAYS
     );
+    const electedItems = creditableItems.filter((item) =>
+      item.foreign_tax_without_form1116 === true
+    );
+    const eligibleItems = creditableItems.filter((item) =>
+      item.foreign_tax_without_form1116 !== true
+    );
+    if (electedItems.length > 0) {
+      outputs.push(this.outputNodes.output(form_1116, {
+        election_foreign_tax_items: electedItems.map((item) => ({
+          foreign_tax_paid: item.box7!,
+          payee_statement: QualifiedPayeeStatement.Form1099Div,
+        })),
+      }));
+    }
     for (const item of eligibleItems) {
       const review = item.foreign_tax_holding_review;
       if (
