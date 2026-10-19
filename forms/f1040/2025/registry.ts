@@ -2,6 +2,7 @@ import { currentProductionAllocationNode } from "../nodes/inputs/credits/busines
 import { currentOrphanAllocationNode } from "../nodes/inputs/credits/business/f3800/current-allocation-node.ts";
 import { f8886 } from "../nodes/inputs/general/filing/f8886/index.ts";
 import { qbiPatron } from "../nodes/inputs/deductions/business/qbi_patron/index.ts";
+import { qbi_loss_carryforward } from "../nodes/inputs/deductions/business/qbi_loss_carryforward/index.ts";
 import { education_income } from "../nodes/inputs/income/other/education_income/index.ts";
 import type { NodeRegistry } from "../../../core/types/node-registry.ts";
 import { buildStartNode, inputNodes } from "./return-processing/start.ts";
@@ -374,6 +375,7 @@ export const registry: NodeRegistry = {
   lump_sum_ss,
   qbi_aggregation: qbiAggregation,
   qbi_patron: qbiPatron,
+  qbi_loss_carryforward,
   f114,
   schedule_b_part_iii,
   f8594,

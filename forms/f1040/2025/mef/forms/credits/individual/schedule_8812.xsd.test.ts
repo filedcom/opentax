@@ -252,6 +252,7 @@ test("Schedule 8812 XML rejects missing worksheet facts", () => {
       schedule8812.build({
         ...basicFields,
         credit_limit_worksheet: undefined,
+        schedule3_credit_limit_pending: true,
       }),
     Error,
     "needs complete Credit Limit Worksheet",
