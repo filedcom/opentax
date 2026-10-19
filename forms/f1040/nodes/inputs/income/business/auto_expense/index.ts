@@ -40,6 +40,9 @@ export const itemSchema = z.object({
   placed_in_service_date: z.string().min(1),
   // Business miles driven during 2025
   business_miles: z.number().int().nonnegative(),
+  // Business miles in each of the year's standard mileage rate periods, in order
+  business_miles_by_rate_period: z.array(z.number().int().nonnegative()).min(1)
+    .optional(),
   // Total miles driven during 2025 (used for business-use percentage — actual method)
   total_miles: z.number().int().nonnegative(),
   // Calculation method
@@ -93,24 +96,39 @@ function totalActualExpenses(
     (expenses.other ?? 0);
 }
 
-// Miles carry no driving dates, so a year whose rate changes mid-year
-// (TY2026: Announcement 2026-11) cannot be priced from them.
-function businessMileageRate(taxYear: number): number {
-  const periods = configForYear(taxYear).standardMileageRates;
-  if (periods.length !== 1) {
+type MileagePeriods = ReturnType<typeof configForYear>["standardMileageRates"];
+
+// A year whose rate changes mid-year (TY2026: Notice 2026-10, Announcement
+// 2026-11) needs business miles split across its rate periods.
+function standardMileageDeduction(
+  item: AutoExpenseItem,
+  periods: MileagePeriods,
+): number {
+  const byPeriod = item.business_miles_by_rate_period ??
+    (periods.length === 1 ? [item.business_miles] : undefined);
+  if (
+    !byPeriod || byPeriod.length !== periods.length ||
+    byPeriod.reduce((sum, m) => sum + m, 0) !== item.business_miles
+  ) {
     throw new Error(
-      `auto_expense standard mileage needs miles by rate period for ${taxYear}`,
+      `auto_expense standard mileage needs miles by rate period: split ${item.business_miles} business miles across ${periods.length} periods for vehicle "${item.vehicle_description}"`,
     );
   }
-  return periods[0].business;
+  if (periods.length === 1) return item.business_miles * periods[0].business;
+  return Math.round(
+    byPeriod.reduce((sum, m, i) => sum + m * periods[i].business, 0) * 100,
+  ) / 100;
 }
 
 // Compute deductible expense for a single vehicle
-function deductibleExpense(item: AutoExpenseItem, rate: number): number {
+function deductibleExpense(
+  item: AutoExpenseItem,
+  periods: MileagePeriods,
+): number {
   if (item.business_miles === 0) return 0;
 
   if (item.method === AutoMethod.Standard) {
-    return item.business_miles * rate;
+    return standardMileageDeduction(item, periods);
   }
 
   // Actual method: total actual × business percentage
@@ -126,7 +144,7 @@ function deductibleExpense(item: AutoExpenseItem, rate: number): number {
 // Aggregate deductible amounts by purpose
 function aggregateByPurpose(
   items: AutoExpenseItems,
-  rate: number,
+  periods: MileagePeriods,
 ): Record<AutoPurpose, number> {
   const totals: Record<AutoPurpose, number> = {
     [AutoPurpose.SCHEDULE_C]: 0,
@@ -134,7 +152,7 @@ function aggregateByPurpose(
     [AutoPurpose.SCHEDULE_F]: 0,
   };
   for (const item of items) {
-    totals[item.purpose] += deductibleExpense(item, rate);
+    totals[item.purpose] += deductibleExpense(item, periods);
   }
   return totals;
 }
@@ -142,7 +160,7 @@ function aggregateByPurpose(
 function buildOutputs(
   totals: Record<AutoPurpose, number>,
   items: AutoExpenseItems,
-  rate: number,
+  periods: MileagePeriods,
 ): NodeOutput[] {
   const outputs: NodeOutput[] = [];
   if (totals[AutoPurpose.SCHEDULE_C] > 0) {
@@ -161,7 +179,7 @@ function buildOutputs(
   }
   const farmSources = items.flatMap((item) => {
     if (item.purpose !== AutoPurpose.SCHEDULE_F) return [];
-    const amount = deductibleExpense(item, rate);
+    const amount = deductibleExpense(item, periods);
     if (amount === 0) return [];
     if (!item.farm_id) {
       throw new Error(
@@ -189,13 +207,9 @@ class AutoExpenseNode extends TaxNode<typeof inputSchema> {
       validateItem(item);
     }
 
-    const rate = parsed.auto_expenses.some((item) =>
-        item.method === AutoMethod.Standard && item.business_miles > 0
-      )
-      ? businessMileageRate(ctx.taxYear)
-      : 0;
-    const totals = aggregateByPurpose(parsed.auto_expenses, rate);
-    return { outputs: buildOutputs(totals, parsed.auto_expenses, rate) };
+    const periods = configForYear(ctx.taxYear).standardMileageRates;
+    const totals = aggregateByPurpose(parsed.auto_expenses, periods);
+    return { outputs: buildOutputs(totals, parsed.auto_expenses, periods) };
   }
 }
 

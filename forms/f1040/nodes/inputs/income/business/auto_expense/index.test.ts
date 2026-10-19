@@ -379,3 +379,52 @@ test("auto_expense: TY2026 standard miles need the rate period they were driven 
     "miles by rate period",
   );
 });
+
+test("auto_expense: TY2026 standard miles split by rate period sum each period", () => {
+  const result = auto_expense.compute({ taxYear: 2026, formType: "f1040" }, {
+    auto_expenses: [
+      minimalItem({ business_miles: 1000, business_miles_by_rate_period: [400, 600] }),
+      minimalItem({
+        business_miles: 1000,
+        business_miles_by_rate_period: [1000, 0],
+        purpose: AutoPurpose.SCHEDULE_F,
+      }),
+    ],
+  });
+  // 400 × $0.725 + 600 × $0.76 (Notice 2026-10; Announcement 2026-11)
+  assertEquals(fieldsOf(result.outputs, scheduleC)!.line_9_car_truck_expenses, 746);
+  assertEquals(fieldsOf(result.outputs, schedule_f)!.farm_sources, [
+    { farm_id: "farm-1", kind: "auto_expense", amount: 725 },
+  ]);
+});
+
+test("auto_expense: TY2026 split must match business miles and period count", () => {
+  for (const split of [[400, 500], [1000]]) {
+    assertThrows(
+      () =>
+        auto_expense.compute({ taxYear: 2026, formType: "f1040" }, {
+          auto_expenses: [
+            minimalItem({ business_miles: 1000, business_miles_by_rate_period: split }),
+          ],
+        }),
+      Error,
+      "miles by rate period",
+    );
+  }
+});
+
+test("auto_expense: TY2025 standard mileage unchanged with or without split", () => {
+  assertEquals(
+    fieldsOf(compute([minimalItem({ business_miles: 1000 })]).outputs, scheduleC)!
+      .line_9_car_truck_expenses,
+    700,
+  );
+  assertEquals(
+    fieldsOf(
+      compute([minimalItem({ business_miles: 1000, business_miles_by_rate_period: [1000] })])
+        .outputs,
+      scheduleC,
+    )!.line_9_car_truck_expenses,
+    700,
+  );
+});
