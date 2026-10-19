@@ -4,8 +4,9 @@ Individual and business credits and their limitations.
 
 | Area | Contents |
 | --- | --- |
+| [form5695](form5695) | 2 files |
 | [form8839](form8839) | 2 files |
-| [form8863](form8863) | 1 files |
+| [form8863](form8863) | 2 files |
 | [form8880](form8880) | 3 files |
 | [form8936](form8936) | 1 files |
 | [schedule2-form8936-reconciliation.ts](schedule2-form8936-reconciliation.ts) | 1 files |
