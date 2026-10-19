@@ -379,6 +379,7 @@ function buildIRS1040ScheduleA(
   const line16Rows = scheduleALine16AllRows(
     context?.pending,
     fields.line_16_other_deductions,
+    { taxYear: mefTaxYear(context), formType: "f1040" },
   );
   const line16Reference = line16Statement(context, line16Rows.length);
   const line16 = typeof fields.line_16_other_deductions === "number" ||

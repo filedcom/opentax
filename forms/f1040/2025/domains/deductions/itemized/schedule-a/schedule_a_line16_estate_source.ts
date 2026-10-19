@@ -1,3 +1,4 @@
+import type { NodeContext } from "../../../../../../../core/types/node-context.ts";
 import {
   EmployeeType,
   inputSchema as employeeExpenseSchema,
@@ -13,6 +14,7 @@ import { reconcileForm4972EstatePartII } from "../../../taxes/retirement/form497
 export function scheduleALine16EstateTax(
   pending: Readonly<Record<string, unknown>> | undefined,
   filedLine16: unknown,
+  context: NodeContext,
 ): number {
   const scheduleA = pending?.schedule_a;
   const sourceLine16 = scheduleA && typeof scheduleA === "object" &&
@@ -49,11 +51,8 @@ export function scheduleALine16EstateTax(
       "Schedule A positive line 16 needs a supported Part-II federal estate-tax source",
     );
   }
-  reconcileForm4972EstatePartII(rawFields, pending);
-  const calculated = form4972.compute(
-    { taxYear: 2025, formType: "f1040" },
-    fields,
-  ).outputs;
+  reconcileForm4972EstatePartII(rawFields, pending, context);
+  const calculated = form4972.compute(context, fields).outputs;
   const estateTax = calculated.find((output) =>
     output.nodeType === "schedule_a"
   )
@@ -85,6 +84,7 @@ export function scheduleALine16EstateTax(
 export function scheduleALine16Rows(
   pending: Readonly<Record<string, unknown>> | undefined,
   filedLine16: unknown,
+  context: NodeContext,
 ) {
   const employeeExpenses = pending?.f2106 === undefined
     ? undefined
@@ -106,7 +106,7 @@ export function scheduleALine16Rows(
       amount: result.scheduleATotal,
     }];
   }
-  const estateTax = scheduleALine16EstateTax(pending, filedLine16);
+  const estateTax = scheduleALine16EstateTax(pending, filedLine16, context);
   return estateTax > 0
     ? [{
       description: "FEDERAL ESTATE TAX",

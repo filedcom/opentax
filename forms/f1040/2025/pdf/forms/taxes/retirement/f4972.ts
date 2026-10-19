@@ -12,6 +12,7 @@ import { reconcileForm4972FullShare } from "../../../../domains/taxes/retirement
 import { reconcileForm4972Collection } from "../../../../domains/taxes/retirement/form4972/form4972_collection_reconciliation.ts";
 import { assertForm4972AmtJoin } from "../../../../domains/taxes/retirement/form4972/form4972_amt_reconciliation.ts";
 import { inputSchema as f1099rSchema } from "../../../../../nodes/inputs/income/retirement/f1099r/index.ts";
+import { mefTaxYear } from "../../../../mef/support/year-config.ts";
 
 // Field positions checked against the 2025 IRS AcroForm. Only page 1 is filed;
 // the NUA and death-benefit worksheets on later pages are kept for records.
@@ -107,18 +108,20 @@ export function projectedFields(
     }
     return {};
   }
+  const nodeContext = { taxYear: mefTaxYear(), formType: "f1040" } as const;
   const multipleRecipients = reconcileForm4972MultipleRecipients(
     fields,
     allPending,
+    nodeContext,
   );
   const recipient = recipientIdentity(fields, allPending);
   assertElectedPdfShape(fields, allPending, multipleRecipients);
-  reconcileForm4972Nua(fields, allPending);
-  reconcileForm4972EstatePartII(fields, allPending);
+  reconcileForm4972Nua(fields, allPending, nodeContext);
+  reconcileForm4972EstatePartII(fields, allPending, nodeContext);
   reconcileForm4972FullShare(fields, allPending, {
     name: recipient.recipient_name,
     ssn: recipient.recipient_ssn,
-  });
+  }, nodeContext);
   const printedFields = { ...fields };
   if (fields.beneficiary_distribution === true) {
     delete printedFields.prior_election_after_1986;
@@ -321,16 +324,19 @@ function collectionInstances(
       "Form 4972 PDF collection needs the final pending return",
     );
   }
+  const nodeContext = { taxYear: mefTaxYear(), formType: "f1040" } as const;
   const scoped = reconcileForm4972Collection(
     raw,
     allPending,
     filer,
+    nodeContext,
     filingChannel,
   );
   if (allPending.form6251 !== undefined) {
     assertForm4972AmtJoin(
       scoped.reduce((sum, entry) => sum + entry.tax, 0),
       allPending,
+      nodeContext,
     );
   }
   return scoped.map(({ fields: form, pending }) =>

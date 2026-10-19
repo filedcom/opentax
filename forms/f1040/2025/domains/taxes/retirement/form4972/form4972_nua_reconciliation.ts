@@ -1,3 +1,4 @@
+import type { NodeContext } from "../../../../../../../core/types/node-context.ts";
 import {
   isSourceMoney,
   sameSourceMoney,
@@ -19,6 +20,7 @@ import {
 export function reconcileForm4972Nua(
   fields: Readonly<Record<string, unknown>>,
   pending: Readonly<Record<string, unknown>> | undefined,
+  context: NodeContext,
 ): void {
   if (
     fields.elect_include_nua !== true &&
@@ -149,7 +151,7 @@ export function reconcileForm4972Nua(
   }
   if (sharePct < 100) {
     const computed = form4972.compute(
-      { taxYear: 2025, formType: "f1040" },
+      context,
       form4972Schema.parse(fields),
     ).outputs;
     const expected = computed.find((output) => output.nodeType === "form4972")
@@ -212,7 +214,7 @@ export function reconcileForm4972Nua(
       );
     }
     const computed = form4972.compute(
-      { taxYear: 2025, formType: "f1040" },
+      context,
       form4972Schema.parse(fields),
     ).outputs;
     const calculatedForm = computed.find((output) =>
@@ -287,7 +289,7 @@ export function reconcileForm4972Nua(
       throw new Error("Form 4972 NUA and annuity needs exact source cents");
     }
     const computed = form4972.compute(
-      { taxYear: 2025, formType: "f1040" },
+      context,
       form4972Schema.parse(fields),
     );
     const calculatedForm = computed.outputs.find((output) =>

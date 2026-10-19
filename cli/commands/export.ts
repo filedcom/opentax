@@ -309,6 +309,7 @@ export async function exportForm4972PaperCommand(
     pending.form4972,
     pending,
     filer,
+    { taxYear: def.taxYear, formType: "f1040" },
     "paper",
   );
   const outPath = args.outputPath ??

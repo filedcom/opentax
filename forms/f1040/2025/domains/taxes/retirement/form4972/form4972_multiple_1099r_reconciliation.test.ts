@@ -59,7 +59,7 @@ test("Form 4972 two-source lines and Form 1040 tax reconcile", () => {
     f1040: { form4972_tax: tax },
   };
   const owner = { name: "Ada Taxpayer", ssn: "123456789" };
-  reconcileForm4972FullShare(fields, pending, owner);
+  reconcileForm4972FullShare(fields, pending, owner, { taxYear: 2025, formType: "f1040" });
   const filer: FilerIdentity = {
     primarySSN: "123456789",
     fullName: "Ada Taxpayer",
@@ -89,12 +89,12 @@ test("Form 4972 two-source lines and Form 1040 tax reconcile", () => {
             box2a_taxable_amount: 39_999,
           }],
         },
-      }, owner),
+      }, owner, { taxYear: 2025, formType: "f1040" }),
     Error,
     "summed boxes 2a",
   );
   assertThrows(
-    () => reconcileForm4972FullShare({ ...fields, line30: 1 }, pending, owner),
+    () => reconcileForm4972FullShare({ ...fields, line30: 1 }, pending, owner, { taxYear: 2025, formType: "f1040" }),
     Error,
     "calculated lines",
   );
@@ -103,7 +103,7 @@ test("Form 4972 two-source lines and Form 1040 tax reconcile", () => {
       reconcileForm4972FullShare(fields, pending, {
         ...owner,
         ssn: "987654321",
-      }),
+      }, { taxYear: 2025, formType: "f1040" }),
     Error,
     "matching owner",
   );
@@ -133,7 +133,7 @@ test("Form 4972 combines two box 3 gains under Part II and Part III", () => {
     f1040: { form4972_tax: tax },
   };
   const owner = { name: "Ada Taxpayer", ssn: "123456789" };
-  reconcileForm4972FullShare(fields, pending, owner);
+  reconcileForm4972FullShare(fields, pending, owner, { taxYear: 2025, formType: "f1040" });
   assertEquals(fields.line6, 12_000);
   assertEquals(fields.line7, 2_400);
   assertEquals(fields.line8, 58_000);
@@ -170,12 +170,12 @@ test("Form 4972 combines two box 3 gains under Part II and Part III", () => {
             box3_capital_gain: 6_999,
           }],
         },
-      }, owner),
+      }, owner, { taxYear: 2025, formType: "f1040" }),
     Error,
     "summed boxes 2a, 3, and 6",
   );
   assertThrows(
-    () => reconcileForm4972FullShare({ ...fields, line7: 1 }, pending, owner),
+    () => reconcileForm4972FullShare({ ...fields, line7: 1 }, pending, owner, { taxYear: 2025, formType: "f1040" }),
     Error,
     "calculated lines",
   );

@@ -1,3 +1,4 @@
+import type { NodeContext } from "../../../../../../../core/types/node-context.ts";
 import {
   form4972 as calculateParticipant,
   inputSchema as participantSchema,
@@ -62,6 +63,7 @@ export function reconcileForm4972Collection(
   raw: Record<string, unknown>,
   allPending: Readonly<Record<string, unknown>>,
   filer: FilerIdentity | undefined,
+  context: NodeContext,
   filingChannel: "mef" | "paper" = "mef",
 ) {
   const { forms, elections, source_forms } = collectionSchema.parse(raw);
@@ -201,10 +203,10 @@ export function reconcileForm4972Collection(
       spouse: filer.spouse?.ssn,
     });
     const ordinary = forms.reduce((sum, form) => {
-      const result = calculateParticipant.compute({
-        taxYear: 2025,
-        formType: "f1040",
-      }, participantSchema.parse(form));
+      const result = calculateParticipant.compute(
+        context,
+        participantSchema.parse(form),
+      );
       return sum +
         Number(
           result.outputs.find((output) => output.nodeType === "f1040")?.fields

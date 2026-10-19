@@ -2,12 +2,10 @@ import {
   scheduleJCurrentYearTax,
   scheduleJTaxSourceSchema,
 } from "../../../../../nodes/intermediate/forms/taxes/income-averaging/schedule_j/tax-source.ts";
-import {
-  AMT_EXEMPTION_2025,
-  AMT_PHASE_OUT_START_2025,
-} from "../../../../../nodes/config/2025.ts";
+import type { NodeContext } from "../../../../../../../core/types/node-context.ts";
+import { CONFIG_BY_YEAR } from "../../../../../nodes/config/index.ts";
 import { scheduleJLinesSchema } from "../../../../../nodes/intermediate/forms/taxes/income-averaging/schedule_j/calculation.ts";
-import { ordinaryTax2025 } from "../../../../../nodes/intermediate/worksheets/taxes/calculation/tax_table_2025.ts";
+import { ordinaryTaxForYear } from "../../../../../nodes/intermediate/worksheets/taxes/calculation/year_schedule.ts";
 import { filingStatusSchema } from "../../../../../nodes/types.ts";
 import { scheduleJChildElectionTax } from "../../income-averaging/schedule-j/schedule_j_child_tax_join.ts";
 
@@ -30,14 +28,17 @@ function optionalDollars(value: unknown, label: string): number {
 }
 
 /**
- * Form 6251 (2025) line 10 removes the Form 4972 special tax from Form 1040
+ * Form 6251 line 10 removes the Form 4972 special tax from Form 1040
  * line 16. With Schedule J, line 10 uses tax refigured without that election;
  * the Form 4972 special tax is excluded from that refigured tax too.
  */
 export function assertForm4972AmtJoin(
   specialTax: number,
   pending: Readonly<Record<string, unknown>>,
+  context: NodeContext,
 ): void {
+  const cfg = CONFIG_BY_YEAR[context.taxYear];
+  if (!cfg) throw new Error(`No f1040 config for year ${context.taxYear}`);
   if (!Number.isInteger(specialTax) || specialTax <= 0) {
     throw new Error("Form 4972 AMT join needs positive computed special tax");
   }
@@ -63,15 +64,18 @@ export function assertForm4972AmtJoin(
   }
   const exemption = Math.max(
     0,
-    AMT_EXEMPTION_2025[status] -
-      Math.floor(Math.max(0, amti - AMT_PHASE_OUT_START_2025[status]) * 0.25),
+    cfg.amtExemption[status] -
+      Math.floor(
+        Math.max(0, amti - cfg.amtPhaseOutStart[status]) *
+          cfg.amtExemptionPhaseOutRate,
+      ),
   );
   if (
     form6251.exemption !== exemption ||
     form6251.taxable_excess !== Math.max(0, amti - exemption)
   ) {
     throw new Error(
-      "Form 6251 exemption and taxable excess differ from calculated 2025 lines 4–6",
+      "Form 6251 exemption and taxable excess differ from calculated lines 4–6",
     );
   }
   const line10 = dollars(form6251.regular_tax, "Form 6251 line 10");
@@ -102,13 +106,12 @@ export function assertForm4972AmtJoin(
       (pending.schedule_j_calculation as Record<string, unknown> | undefined)
         ?.current_year_tax_source;
     baseTax = source === undefined
-      ? ordinaryTax2025(taxableIncome, status)
+      ? ordinaryTaxForYear(taxableIncome, status, context.taxYear)
       : scheduleJCurrentYearTax(
         taxableIncome,
         status,
         scheduleJTaxSourceSchema.parse(source),
-        // This join checks TY2025 lines, like its AMT constants above.
-        2025,
+        context.taxYear,
       );
     baseTax += childTax;
   }

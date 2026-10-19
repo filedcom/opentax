@@ -1,6 +1,7 @@
 import { element, elements } from "../../../../../mef/xml.ts";
 import { TS } from "../../../../../nodes/types.ts";
 import type { MefBuildContext, MefFormDescriptor } from "../../../form-descriptor.ts";
+import { mefTaxYear } from "../../../support/year-config.ts";
 import { reconcileForm4972Nua } from "../../../../domains/taxes/retirement/form4972/form4972_nua_reconciliation.ts";
 import { reconcileForm4972MultipleRecipients } from "../../../../domains/taxes/retirement/form4972/form4972_multiple_recipient_reconciliation.ts";
 import { reconcileForm4972EstatePartII } from "../../../../domains/taxes/retirement/form4972/form4972_estate_part2_reconciliation.ts";
@@ -133,12 +134,17 @@ export function buildIRS4972(fields: Input, context?: MefBuildContext): string {
   ) {
     throw new Error("Form 4972 ordinary NUA needs line 8");
   }
-  reconcileForm4972Nua(fields, context?.pending);
-  reconcileForm4972EstatePartII(fields, context?.pending);
-  reconcileForm4972FullShare(fields, context?.pending, recipient);
+  const nodeContext = {
+    taxYear: mefTaxYear(context),
+    formType: "f1040",
+  } as const;
+  reconcileForm4972Nua(fields, context?.pending, nodeContext);
+  reconcileForm4972EstatePartII(fields, context?.pending, nodeContext);
+  reconcileForm4972FullShare(fields, context?.pending, recipient, nodeContext);
   const multipleRecipients = reconcileForm4972MultipleRecipients(
     fields,
     context?.pending,
+    nodeContext,
   );
   return elements("IRS4972", [
     element("PersonNm", recipient.name),
@@ -205,15 +211,21 @@ export const form4972: MefFormDescriptor<
     if (!context?.pending) {
       throw new Error("Form 4972 collection needs the final pending return");
     }
+    const nodeContext = {
+      taxYear: mefTaxYear(context),
+      formType: "f1040",
+    } as const;
     const scoped = reconcileForm4972Collection(
       fields,
       context.pending,
       context.filer,
+      nodeContext,
     );
     if (context.pending.form6251 !== undefined) {
       assertForm4972AmtJoin(
         scoped.reduce((sum, entry) => sum + entry.tax, 0),
         context.pending,
+        nodeContext,
       );
     }
     return scoped.map(({ fields: form, pending }) =>

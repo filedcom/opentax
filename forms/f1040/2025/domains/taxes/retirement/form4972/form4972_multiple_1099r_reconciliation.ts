@@ -1,3 +1,4 @@
+import type { NodeContext } from "../../../../../../../core/types/node-context.ts";
 import { sumSourceMoney } from "../../../../../nodes/intermediate/forms/taxes/retirement/form4972/source-rounding.ts";
 import {
   allocatedSourceCents,
@@ -17,6 +18,7 @@ export function reconcileForm4972Multiple1099R(
   fields: Readonly<Record<string, unknown>>,
   pending: Readonly<Record<string, unknown>> | undefined,
   owner: { name: string; ssn: string } | undefined,
+  context: NodeContext,
 ): void {
   const form = form4972Schema.parse(fields);
   const plan = form.multiple_1099r;
@@ -157,7 +159,7 @@ export function reconcileForm4972Multiple1099R(
   }
 
   const computed = form4972.compute(
-    { taxYear: 2025, formType: "f1040" },
+    context,
     form,
   ).outputs;
   const calculated = computed.find((output) => output.nodeType === "form4972")

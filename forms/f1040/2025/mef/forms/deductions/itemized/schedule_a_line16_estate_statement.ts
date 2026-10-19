@@ -1,5 +1,6 @@
 import { element, elements } from "../../../../../mef/xml.ts";
 import type { MefFormDescriptor } from "../../../form-descriptor.ts";
+import { mefTaxYear } from "../../../support/year-config.ts";
 import {
   scheduleADisasterLine16,
   scheduleALine16AllRows,
@@ -28,6 +29,7 @@ export const scheduleALine16EstateStatement: MefFormDescriptor<
     const rows = scheduleALine16AllRows(
       pending,
       (source as Record<string, unknown>).line_16_other_deductions,
+      { taxYear: mefTaxYear(context), formType: "f1040" },
     );
     if (rows.length === 0) return "";
     return elements("OtherMiscDeductionsStmt", [

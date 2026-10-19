@@ -405,6 +405,7 @@ export const scheduleAPdf: PdfFormDescriptor = {
     const line16Rows = scheduleALine16AllRows(
       all,
       input.line_16_other_deductions,
+      { taxYear: mefTaxYear(), formType: "f1040" },
     );
     const line16 = input.line_16_other_deductions === undefined &&
         input.net_qualified_disaster_loss === undefined
