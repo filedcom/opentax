@@ -9,7 +9,10 @@ import {
 } from "../../../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../../../core/types/output-nodes.ts";
 import type { NodeContext } from "../../../../../../../core/types/node-context.ts";
-import { computeRegularMethodPenalty } from "../../../../inputs/taxes/underpayment/f2210/calculation.ts";
+import {
+  computeRegularMethodPenalty,
+  estimatedTaxPaymentSchema,
+} from "../../../../inputs/taxes/underpayment/f2210/calculation.ts";
 import {
   calculateForm2210FBoxB,
   type Form2210FBoxBInput,
@@ -34,6 +37,7 @@ import {
   form8396SourceSchema,
 } from "../../../../intermediate/forms/credits/individual/form8396/calculation.ts";
 import { FilingStatus } from "../../../../types.ts";
+import { configForYear } from "../../../../config/index.ts";
 import {
   calculateForm8880,
   inputSchema as form8880SourceSchema,
@@ -309,6 +313,16 @@ const inputSchema = z.object({
   f2210_q4_estimated_payment: z.number().nonnegative().optional(),
   f2210_prior_year_tax: z.number().nonnegative().optional(),
   f2210_prior_year_agi: z.number().nonnegative().optional(),
+  // Form 1040-ES payments by date for Form 2210 Part III.
+  f2210_estimated_payments: z.array(estimatedTaxPaymentSchema).optional(),
+  // Schedule 3 line 31 parts that are not Form 2210 line 3 refundable
+  // credits: the extension payment (line 10) and excess social security
+  // withholding (line 11), which Form 2210 line 6 counts as withholding.
+  schedule3_line10_extension_payment: z.number().nonnegative().optional(),
+  schedule3_line11_excess_ss: z.number().nonnegative().optional(),
+  // 2025 Form 8801 line 21 when it is the 2024 line 26 carryforward alone;
+  // Part II (lines 22-25) is finished here from the final tax and credits.
+  form8801_line21_credit_available: z.number().nonnegative().optional(),
 });
 
 type F1040Input = z.infer<typeof inputSchema>;
@@ -775,6 +789,78 @@ function bondCreditAllowance(
   };
 }
 
+type PriorMinimumTaxAllowance = {
+  readonly line21: number;
+  readonly line22: number;
+  readonly line23: number;
+  readonly line24: number;
+  readonly line25: number;
+  readonly line26: number;
+  readonly schedule3Line7: number;
+  readonly schedule3Credits: number;
+};
+
+/**
+ * 2025 Form 8801 Part II: line 22 is Form 1040 line 16 plus Schedule 2 line
+ * 1z, less line 19 and Schedule 3 lines 1-6z other than 6b and 6k; line 23 is
+ * Form 6251 line 9; the credit (line 25) is the smaller of line 21 and line
+ * 22 less line 23, and line 26 carries the rest to 2026.
+ */
+function priorMinimumTaxAllowance(
+  input: F1040Input,
+  cleanVehicles: CleanVehicleAllowance | undefined,
+  mortgage: MortgageAllowance | undefined,
+  homebuyer: HomebuyerAllowance | undefined,
+  electric: QualifiedElectricAllowance | undefined,
+  businessCredit: BusinessCreditAllowance | undefined,
+): PriorMinimumTaxAllowance | undefined {
+  const line21 = input.form8801_line21_credit_available;
+  if (line21 === undefined || line21 <= 0) return undefined;
+  const schedule3 = input.credit_limit_schedule3_lines;
+  if (
+    input.line16_income_tax === undefined ||
+    input.credit_limit_form6251_line9 === undefined
+  ) {
+    throw new Error(
+      "Form 8801 credit needs finalized Form 1040 line 16 and Form 6251 line 9",
+    );
+  }
+  if (
+    businessCredit !== undefined || electric !== undefined ||
+    input.form8912_source_lines !== undefined ||
+    (schedule3?.line6aGbc ?? 0) > 0 ||
+    (schedule3?.line6bPriorMinimumTax ?? 0) > 0
+  ) {
+    throw new Error(
+      "Form 8801 carryforward with Form 3800, 8834 or 8912 credits or a prefilled Schedule 3 line 6b needs a joint credit-ordering calculation",
+    );
+  }
+  const priorCredits = homebuyer?.schedule3Credits ??
+    mortgage?.schedule3Credits ?? cleanVehicles?.schedule3Credits ??
+    (input.line20_nonrefundable_credits ?? 0);
+  const priorLine7 = homebuyer?.schedule3Line7 ?? mortgage?.schedule3Line7 ??
+    cleanVehicles?.schedule3Line7 ?? schedule3?.line7 ?? 0;
+  const line22 = Math.max(
+    0,
+    input.line16_income_tax + (input.credit_limit_schedule2_line1z ?? 0) -
+      (input.line19_child_tax_credit ?? 0) -
+      (priorCredits - (schedule3?.line6kBondCredit ?? 0)),
+  );
+  const line23 = input.credit_limit_form6251_line9;
+  const line24 = Math.max(0, line22 - line23);
+  const line25 = Math.round(Math.min(line21, line24));
+  return {
+    line21,
+    line22,
+    line23,
+    line24,
+    line25,
+    line26: line21 - line25,
+    schedule3Line7: priorLine7 + line25,
+    schedule3Credits: priorCredits + line25,
+  };
+}
+
 function totalWithholding(input: F1040Input): number {
   return (
     Math.round(input.line25a_w2_withheld ?? 0) +
@@ -803,6 +889,39 @@ function totalPayments(input: F1040Input): number {
     totalWithholding(input) +
     Math.round(input.line26_estimated_tax ?? 0) +
     refundableCreditsTotal(input)
+  );
+}
+
+/** Form 2210 line 3: refundable credits, without Schedule 3 lines 10-11. */
+function form2210RefundableCredits(input: F1040Input): number {
+  return refundableCreditsTotal(input) -
+    Math.round(input.schedule3_line10_extension_payment ?? 0) -
+    Math.round(input.schedule3_line11_excess_ss ?? 0);
+}
+
+/** Form 2210 regular-method penalty from the finalized tax and payments. */
+function form2210Penalty(
+  input: F1040Input,
+  taxYear: number,
+  line24: number,
+  line25d: number,
+): number {
+  return computeRegularMethodPenalty(
+    {
+      current_year_tax: line24 - form2210RefundableCredits(input),
+      required_annual_payment: input.f2210_required_annual_payment,
+      withholding: input.f2210_withholding ??
+        line25d + Math.round(input.schedule3_line11_excess_ss ?? 0),
+      q1_estimated_payment: input.f2210_q1_estimated_payment,
+      q2_estimated_payment: input.f2210_q2_estimated_payment,
+      q3_estimated_payment: input.f2210_q3_estimated_payment,
+      q4_estimated_payment: input.f2210_q4_estimated_payment,
+      estimated_payments: input.f2210_estimated_payments,
+      prior_year_tax: input.f2210_prior_year_tax,
+      prior_year_agi: input.f2210_prior_year_agi,
+      filing_status: input.filing_status,
+    },
+    configForYear(taxYear).form2210RegularMethod,
   );
 }
 
@@ -859,6 +978,7 @@ function reconciledForm2210FBoxB(
 }
 
 function assembleReturn(
+  taxYear: number,
   input: F1040Input,
   cleanVehicles: CleanVehicleAllowance | undefined,
   mortgage: MortgageAllowance | undefined,
@@ -866,6 +986,7 @@ function assembleReturn(
   electric: QualifiedElectricAllowance | undefined,
   businessCredit: BusinessCreditAllowance | undefined,
   bondCredit: BondCreditAllowance | undefined,
+  priorMinimumTax: PriorMinimumTaxAllowance | undefined,
 ): Record<string, number> {
   const computed_line1z = Math.round(
     input.line1z_total_wages ?? totalWages(input),
@@ -881,7 +1002,8 @@ function assembleReturn(
     (input.line13b_additional_deductions ?? 0);
   const computed_line15 = taxableIncome(input);
   const computed_line18 = totalTaxBeforeCredits(input);
-  const computed_line20 = bondCredit?.schedule3Credits ??
+  const computed_line20 = priorMinimumTax?.schedule3Credits ??
+    bondCredit?.schedule3Credits ??
     businessCredit?.schedule3Credits ??
     homebuyer?.schedule3Credits ??
     mortgage?.schedule3Credits ?? cleanVehicles?.schedule3Credits ??
@@ -938,17 +1060,7 @@ function assembleReturn(
   const computed_line38 = form2210f?.line16 ??
     input.line38_underpayment_penalty ??
     (input.f2210_active === true
-      ? computeRegularMethodPenalty({
-        current_year_tax: computed_line24,
-        required_annual_payment: input.f2210_required_annual_payment,
-        withholding: input.f2210_withholding ?? computed_line25d,
-        q1_estimated_payment: input.f2210_q1_estimated_payment,
-        q2_estimated_payment: input.f2210_q2_estimated_payment,
-        q3_estimated_payment: input.f2210_q3_estimated_payment,
-        q4_estimated_payment: input.f2210_q4_estimated_payment,
-        prior_year_tax: input.f2210_prior_year_tax,
-        prior_year_agi: input.f2210_prior_year_agi,
-      })
+      ? form2210Penalty(input, taxYear, computed_line24, computed_line25d)
       : 0);
   // Lines 34/37 are the difference of two *filed* (whole-dollar) lines, so they
   // must be computed from the rounded operands. Rounding the cents-level
@@ -991,21 +1103,28 @@ function assembleReturn(
     mortgage !== undefined ||
     electric !== undefined ||
     businessCredit !== undefined ||
-    bondCredit !== undefined
+    bondCredit !== undefined || priorMinimumTax !== undefined
   ) {
     result.line20_nonrefundable_credits = computed_line20;
   }
+  if (priorMinimumTax !== undefined) {
+    result.form8801_line22_regular_tax = priorMinimumTax.line22;
+    result.form8801_line23_tentative_minimum_tax = priorMinimumTax.line23;
+    result.form8801_line25_credit_allowed = priorMinimumTax.line25;
+    result.form8801_line26_carryforward = priorMinimumTax.line26;
+  }
   if (computed_line25c > 0) result.line25c_total = computed_line25c;
-  if ((input.form8978_schedule2_line17z_reduction ?? 0) > 0) {
-    // The finalized return line replaces the unadjusted Schedule 2 deposit.
+  if (
+    input.line23_other_taxes !== undefined ||
+    (input.form8978_schedule2_line17z_reduction ?? 0) > 0
+  ) {
+    // The finalized whole-dollar line (after any Form 8978 worksheet
+    // reduction) replaces the Schedule 2 deposit, which can carry cents.
     result.line23_other_taxes = Math.max(0, computed_line23);
   }
 
-  // line20_nonrefundable_credits and the unadjusted line23_other_taxes are
-  // deposited by upstream nodes before this node runs. Only re-emit line 23
-  // when the Form 8978 worksheet changes its filed value; otherwise the
-  // executor would merge-accumulate the same amount twice.
-  // They are used above for line21/line22/line24 computation — no re-emission needed.
+  // line20_nonrefundable_credits is deposited by upstream nodes before this
+  // node runs and used above for line21/line22/line24 — no re-emission needed.
   if (input.line26_estimated_tax !== undefined) {
     result.line26_estimated_tax = input.line26_estimated_tax;
   }
@@ -1370,7 +1489,16 @@ class F1040Node extends TaxNode<typeof inputSchema> {
       electric,
       businessCredit,
     );
+    const priorMinimumTax = priorMinimumTaxAllowance(
+      effectiveInput,
+      cleanVehicles,
+      mortgage,
+      homebuyer,
+      electric,
+      businessCredit,
+    );
     const numericLines = assembleReturn(
+      ctx.taxYear,
       effectiveInput,
       cleanVehicles,
       mortgage,
@@ -1378,6 +1506,7 @@ class F1040Node extends TaxNode<typeof inputSchema> {
       electric,
       businessCredit,
       bondCredit,
+      priorMinimumTax,
     );
     verifyForm1116Limitation(effectiveInput, numericLines);
     const assembled = {
@@ -1427,7 +1556,8 @@ class F1040Node extends TaxNode<typeof inputSchema> {
         homebuyer === undefined &&
         electric === undefined && retirementCredit === 0 &&
         input.schedule_r_source === undefined &&
-        businessCredit === undefined && bondCredit === undefined
+        businessCredit === undefined && bondCredit === undefined &&
+        priorMinimumTax === undefined
       ? undefined
       : {
         nodeType: "schedule3",
@@ -1464,29 +1594,41 @@ class F1040Node extends TaxNode<typeof inputSchema> {
               electric.line7 > 0
             ? electric.line7
             : undefined,
+          ...(priorMinimumTax
+            ? {
+              line6b_prior_year_min_tax_credit: priorMinimumTax.line25 > 0
+                ? priorMinimumTax.line25
+                : undefined,
+            }
+            : {}),
           line6k_tax_credit_bonds: bondCredit && bondCredit.lines.line12 > 0
             ? bondCredit.lines.line12
             : undefined,
           line7_total:
-            (bondCredit?.schedule3Line7 ?? businessCredit?.schedule3Line7 ??
+            (priorMinimumTax?.schedule3Line7 ?? bondCredit?.schedule3Line7 ??
+                businessCredit?.schedule3Line7 ??
                 homebuyer?.schedule3Line7 ??
                 mortgage?.schedule3Line7 ??
                 electric?.schedule3Line7 ??
                 cleanVehicles?.schedule3Line7 ?? scheduleRLine7 ?? 0) > 0
-              ? bondCredit?.schedule3Line7 ?? businessCredit?.schedule3Line7 ??
+              ? priorMinimumTax?.schedule3Line7 ??
+                bondCredit?.schedule3Line7 ?? businessCredit?.schedule3Line7 ??
                 homebuyer?.schedule3Line7 ??
                 mortgage?.schedule3Line7 ??
                 electric?.schedule3Line7 ??
                 cleanVehicles?.schedule3Line7 ?? scheduleRLine7
               : undefined,
           line8_total:
-            (bondCredit?.schedule3Credits ?? businessCredit?.schedule3Credits ??
+            (priorMinimumTax?.schedule3Credits ??
+                bondCredit?.schedule3Credits ??
+                businessCredit?.schedule3Credits ??
                 homebuyer?.schedule3Credits ??
                 mortgage?.schedule3Credits ??
                 electric?.schedule3Credits ??
                 cleanVehicles?.schedule3Credits ??
                 (effectiveInput.line20_nonrefundable_credits ?? 0)) > 0
-              ? bondCredit?.schedule3Credits ??
+              ? priorMinimumTax?.schedule3Credits ??
+                bondCredit?.schedule3Credits ??
                 businessCredit?.schedule3Credits ??
                 homebuyer?.schedule3Credits ??
                 mortgage?.schedule3Credits ??

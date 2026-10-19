@@ -8,6 +8,7 @@ import {
   reconcileRolloverForm8889,
   reconcileSpouseOnlyForm8889,
 } from "../../../../domains/adjustments/health/form8889/form8889_spouse_reconciliation.ts";
+import { withReturnBeneficiaryNames } from "../../../../../nodes/intermediate/forms/adjustments/health/form8889/index.ts";
 import { reconcilePrimaryMixedMedicalForm8889 } from "../../../../domains/adjustments/health/form8889/form8889_mixed_medical_reconciliation.ts";
 
 // IRS Form 8889 (2025) AcroForm field names.
@@ -188,7 +189,9 @@ export function form8889PdfFor(taxYear: number): PdfFormDescriptor {
         beneficiary_name: z.string().trim().min(1),
         beneficiary_ssn: z.string().regex(/^\d{9}$/),
       }).passthrough(),
-    ).min(1).max(2).parse(pending.forms);
+    ).min(1).max(2).parse(
+      withReturnBeneficiaryNames({ forms: pending.forms }, filer).forms,
+    );
     if (
       (forms.length === 2 &&
         (forms[0]?.owner !== "primary" || forms[1]?.owner !== "spouse"))

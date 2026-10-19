@@ -135,6 +135,10 @@ function effectiveTaxableAmount(
 
   // Rollover codes G and S produce zero taxable (not C — that's a Roth conversion)
   if (item.rollover_code === "G" || item.rollover_code === "S") return 0;
+  // Code H is a direct rollover of a designated Roth account to a Roth IRA,
+  // which is not taxable (2025 Instructions for Forms 1099-R and 5498, box 7
+  // code H; 2025 Instructions for Form 1040, lines 5a and 5b).
+  if (code1 === DistributionCode.CodeH) return 0;
   // A code-G Form 1099-R can report a taxable Roth rollover in box 2a.
   // With no box 2a, retain the non-taxable direct-rollover treatment.
   if (code1 === "G" && item.box2a_taxable_amount === undefined) return 0;
@@ -614,9 +618,11 @@ export function assertDistinct1099RCopies(
 
 // Form 1040 line 5c(1) follows a payer-reported pension/plan direct rollover,
 // not an IRA distribution, an excluded Form 4972 distribution, or a disability
-// payment reported as wages. Code G can have a taxable Roth portion in box 2a.
+// payment reported as wages. Code G can have a taxable Roth portion in box 2a;
+// code H is a designated Roth account's direct rollover to a Roth IRA.
 export function isPensionDirectRollover(item: R1099Item): boolean {
-  return item.box7_distribution_code === DistributionCode.CodeG &&
+  return (item.box7_distribution_code === DistributionCode.CodeG ||
+    item.box7_distribution_code === DistributionCode.CodeH) &&
     item.direct_rollover_confirmed === true &&
     item.box7_ira_simple_indicator !== true &&
     item.box1_gross_distribution > 0 &&

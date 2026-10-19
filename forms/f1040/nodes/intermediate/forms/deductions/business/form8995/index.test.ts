@@ -224,6 +224,21 @@ test("calc: line6_sec199a_dividends only — 20% applied", () => {
   assertEquals(out?.fields.line13_qbi_deduction, 1000);
 });
 
+// 2025 Form 8995 line 15 is a whole-dollar amount (Rounding Off to Whole
+// Dollars); 20% × 3,917 = 783.40 files as 783 on Form 1040 line 13.
+test("calc: QBI deduction is rounded to whole dollars", () => {
+  const result = compute({
+    line6_sec199a_dividends: 3917,
+    taxable_income: 50000,
+  });
+  const out = findOutput(result, "f1040");
+  assertEquals(out?.fields.line13_qbi_deduction, 783);
+  assertEquals(
+    findOutput(result, "standard_deduction")?.fields.qbi_deduction,
+    783,
+  );
+});
+
 test("calc: both QBI and REIT dividends — components summed on Line 10", () => {
   // Line 5 = 2000 (QBI), Line 9 = 1000 (REIT) → Line 10 = 3000; limit = 20% × 100000 = 20000
   const result = compute({
@@ -258,18 +273,35 @@ test("calc: qbi_loss_carryforward reduces current QBI", () => {
   assertEquals(out?.fields.line13_qbi_deduction, 1400);
 });
 
-test("calc: prior loss larger than current QBI needs sourced remaining carryforward", () => {
-  // qbi = 5000, carryforward = -8000 → net = -3000; the remaining loss cannot disappear.
-  assertThrows(
-    () =>
-      compute({
-        qbi_from_schedule_c: 5000,
-        qbi_loss_carryforward: -8000,
-        taxable_income: 100000,
-      }),
-    Error,
-    "sourced carryforward filing route",
-  );
+test("calc: prior-year QBI loss carryforward nets on line 3 below the threshold", () => {
+  // i8995 Line 3: the prior-year Form 8995 line 16 loss. 150,000 - 58,738 =
+  // 91,262; 20% = 18,252.4. Taxable income 218,500 is under the MFJ threshold.
+  const result = compute({
+    qbi: 150_000,
+    qbi_loss_carryforward: -58_738,
+    filing_status: FilingStatus.MFJ,
+    taxable_income: 218_500,
+  });
+  const form = findOutput(result, "form8995");
+  assertEquals(findOutput(result, "f1040")?.fields.line13_qbi_deduction, 18_252);
+  assertEquals(form?.fields.line2, 150_000);
+  assertEquals(form?.fields.line3, -58_738);
+  assertEquals(form?.fields.line4, 91_262);
+  assertEquals(form?.fields.line16, 0);
+  assertEquals(result.carryforwards, {});
+});
+
+test("calc: prior loss larger than current QBI carries the rest to next year", () => {
+  // qbi = 5000, carryforward = -8000 → line 16 (3,000) carries forward.
+  const result = compute({
+    qbi_from_schedule_c: 5000,
+    qbi_loss_carryforward: -8000,
+    taxable_income: 100000,
+  });
+  assertEquals(findOutput(result, "f1040"), undefined);
+  assertEquals(findOutput(result, "form8995")?.fields.line4, 0);
+  assertEquals(findOutput(result, "form8995")?.fields.line16, 3_000);
+  assertEquals(result.carryforwards, { qbi_loss_carryforward: 3_000 });
 });
 
 test("calc: positive qbi_loss_carryforward throws (must be zero or negative)", () => {
@@ -295,27 +327,21 @@ test("calc: reit_loss_carryforward reduces current REIT dividends", () => {
   assertEquals(out?.fields.line13_qbi_deduction, 1600);
 });
 
-test("calc: negative REIT/PTP line 8 rejects until line 17 can be filed", () => {
+test("calc: negative REIT/PTP line 8 carries line 17 to next year", () => {
   // Line 6 $3,000 less a $5,000 prior loss leaves $2,000 for next year.
-  assertThrows(
-    () =>
-      compute({
-        line6_sec199a_dividends: 3_000,
-        reit_loss_carryforward: -5_000,
-        taxable_income: 100_000,
-      }),
-    Error,
-    "sourced line 17 carryforward",
-  );
-  assertThrows(
-    () =>
-      compute({
-        reit_loss_carryforward: -2_000,
-        taxable_income: 100_000,
-      }),
-    Error,
-    "sourced line 17 carryforward",
-  );
+  const partial = compute({
+    line6_sec199a_dividends: 3_000,
+    reit_loss_carryforward: -5_000,
+    taxable_income: 100_000,
+  });
+  assertEquals(findOutput(partial, "form8995")?.fields.line8, 0);
+  assertEquals(findOutput(partial, "form8995")?.fields.line17, 2_000);
+  assertEquals(partial.carryforwards, { reit_ptp_loss_carryforward: 2_000 });
+  const unused = compute({
+    reit_loss_carryforward: -2_000,
+    taxable_income: 100_000,
+  });
+  assertEquals(unused.carryforwards, { reit_ptp_loss_carryforward: 2_000 });
 });
 
 // ── Income limitation (Lines 11–13) ──────────────────────────────────────────
@@ -476,14 +502,15 @@ test("edge: net_capital_gain exceeds taxable_income — income limit base clampe
   assertEquals(findOutput(result, "f1040"), undefined);
 });
 
-test("edge: fractional cents — deduction computed to full precision (no premature rounding)", () => {
-  // QBI = 10001, 20% = 2000.2; taxable_income = 100000, limit = 20000 → deduction = 2000.2
+test("edge: fractional cents — only the filed line 15 is rounded", () => {
+  // QBI = 10001, 20% = 2000.2; taxable_income = 100000, limit = 20000 →
+  // line 15 = 2000.2, filed in whole dollars as 2000.
   const result = compute({
     qbi_from_schedule_c: 10001,
     taxable_income: 100000,
   });
   const out = findOutput(result, "f1040");
-  assertEquals(out?.fields.line13_qbi_deduction, 2000.2);
+  assertEquals(out?.fields.line13_qbi_deduction, 2000);
 });
 
 // ── Smoke test ────────────────────────────────────────────────────────────────

@@ -1,6 +1,5 @@
 import { test } from "bun:test";
 import { assertEquals, assertThrows } from "@std/assert";
-import { scheduleC } from "../../../../../inputs/income/business/schedule_c/index.ts";
 import { publicInputSchema } from "./index.ts";
 import { stageScheduleCInterest } from "./schedule-c-source.ts";
 
@@ -79,14 +78,6 @@ test("2025 Form 8990 source stage rejects unlinked, unidentified, and multi-busi
 
 test("2025 Form 8990 staged Schedule C interest does not activate asserted ATI filing", () => {
   const staged = stageScheduleCInterest({ schedule_cs: [business] });
-  assertThrows(
-    () =>
-      scheduleC.compute({ taxYear: 2025, formType: "f1040" }, {
-        schedule_cs: [business],
-      }),
-    Error,
-    "documented section 163(j) exemption",
-  );
   assertEquals(
     publicInputSchema.safeParse({
       direct_schedule_c: {

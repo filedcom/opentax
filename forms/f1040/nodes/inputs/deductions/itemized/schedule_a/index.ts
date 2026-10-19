@@ -177,17 +177,41 @@ export const inputSchema = z.object({
   // Line 5a: State and local income taxes — mutually exclusive with line_5a_sales_tax
   // per IRC §164(b)(5) election. Provide one or the other, never both.
   line_5a_state_income_tax: z.number().nonnegative().optional(),
+  // State and local income taxes paid other than W-2 withholding: estimated
+  // payments and prior-year balances paid in the tax year. Added to the W-2
+  // withholding; use instead of an entered full line 5a, never with one.
+  line_5a_other_state_income_tax: z.number().nonnegative().optional(),
+  // From the w2 node: boxes 17 and 19 (and SDI/PFML). Kept apart from the
+  // entered fields so neither replaces the other; compute() retains line 5a.
+  w2_state_local_income_tax: z.number().nonnegative().optional(),
   // Separate issued retirement withholding contribution; preserve wage/other taxes.
   retirement_state_local_withholding: z.number().nonnegative().optional(),
   // Line 5a (alternative): General sales tax deduction in lieu of income taxes
   // IRC §164(b)(5)(A) — taxpayer elects sales tax OR income tax, not both.
   line_5a_sales_tax: z.number().nonnegative().optional(),
-  line_5b_real_estate_tax: z.number().nonnegative().optional(),
+  line_5b_real_estate_tax: z.union([
+    z.number().nonnegative(),
+    z.array(z.number().nonnegative()),
+  ]).transform((value) =>
+    Array.isArray(value)
+      ? value.reduce((sum, amount) => sum + amount, 0)
+      : value
+  ).optional(),
   line_5c_personal_property_tax: z.number().nonnegative().optional(),
   line_6_other_taxes: z.number().nonnegative().optional(),
   line_6_other_tax_items: z.array(otherTaxItemSchema).min(1).max(2)
     .optional(),
-  line_8a_mortgage_interest_1098: z.number().nonnegative().optional(),
+  line_8a_mortgage_interest_1098: z.union([
+    z.number().nonnegative(),
+    z.array(z.number().nonnegative()),
+  ]).transform((value) =>
+    Array.isArray(value)
+      ? value.reduce((sum, amount) => sum + amount, 0)
+      : value
+  ).optional(),
+  // Pub. 936 Table 1 line 12 when Form 1098 interest was limited without a
+  // reviewed amount; the node applied the non-MFS debt limits.
+  form1098_table1_average_balance: z.number().nonnegative().optional(),
   line_8b_mortgage_interest_no_1098: z.number().nonnegative().optional(),
   line_8b_seller_financed: sellerFinancedLine8bSchema.optional(),
   home_mortgage_nonqualifying_use_review:
@@ -277,6 +301,17 @@ export const inputSchema = z.object({
         message: "Schedule A line 6 reviewed taxes must equal the filed total",
       });
     }
+  }
+  if (
+    data.filing_status === FilingStatus.MFS &&
+    (data.form1098_table1_average_balance ?? 0) > 375_000
+  ) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ["form1098_table1_average_balance"],
+      message:
+        "MFS Form 1098 mortgages over $375,000 need reviewed Pub. 936 deductible interest",
+    });
   }
   if (
     data.home_mortgage_nonqualifying_use_review !== undefined &&
@@ -529,6 +564,8 @@ export const inputSchema = z.object({
   // deduct both. Reject when both are provided with nonzero values.
   const hasSalesTax = (data.line_5a_sales_tax ?? 0) > 0;
   const hasIncomeTax = ((data.line_5a_state_income_tax ?? 0) +
+    (data.line_5a_other_state_income_tax ?? 0) +
+    (data.w2_state_local_income_tax ?? 0) +
     (data.retirement_state_local_withholding ?? 0)) > 0;
   if (hasSalesTax && hasIncomeTax) {
     ctx.addIssue({
@@ -542,6 +579,33 @@ export const inputSchema = z.object({
 });
 
 type ScheduleAInput = z.infer<typeof inputSchema>;
+
+// Schedule A line 5a: an entered full line 5a, or W-2 withholding plus the
+// other state and local income taxes paid (2025 i1040sca, line 5a).
+function withW2StateTax(input: ScheduleAInput): ScheduleAInput {
+  const withheld = input.w2_state_local_income_tax ?? 0;
+  const other = input.line_5a_other_state_income_tax;
+  if (input.w2_state_local_income_tax === undefined && other === undefined) {
+    return input;
+  }
+  const entered = input.line_5a_state_income_tax;
+  if (entered !== undefined && other !== undefined) {
+    throw new Error(
+      "Schedule A line 5a is either the full amount or the taxes beyond W-2 withholding, not both",
+    );
+  }
+  if (entered !== undefined && entered + 0.005 < withheld) {
+    throw new Error(
+      "Schedule A line 5a is less than its W-2 state and local withholding; enter other payments as line_5a_other_state_income_tax",
+    );
+  }
+  return {
+    ...input,
+    line_5a_state_income_tax: entered ?? withheld + (other ?? 0),
+    line_5a_other_state_income_tax: undefined,
+    w2_state_local_income_tax: 0,
+  };
+}
 
 function computeMedicalDeduction(input: ScheduleAInput, agi: number): number {
   return Math.max(
@@ -971,8 +1035,8 @@ class ScheduleANode extends TaxNode<typeof inputSchema> {
     form6251,
   ]);
 
-  compute(ctx: NodeContext, input: ScheduleAInput): NodeResult {
-    inputSchema.parse(input);
+  compute(ctx: NodeContext, rawInput: ScheduleAInput): NodeResult {
+    const input = withW2StateTax(inputSchema.parse(rawInput));
     const cfg = CONFIG_BY_YEAR[ctx.taxYear];
     if (!cfg) throw new Error(`No f1040 config for year ${ctx.taxYear}`);
     const agi = input.agi ?? 0;
@@ -1070,6 +1134,7 @@ class ScheduleANode extends TaxNode<typeof inputSchema> {
       this.outputNodes.output(standard_deduction, {
         itemized_deductions: totalItemized,
         force_itemized: input.force_itemized,
+        ...(input.force_standard === true && { force_standard: true }),
         itemized_taxes: taxesTotal,
         itemized_investment_interest: input.line_9_investment_interest ?? 0,
         niit_allocable_state_local_tax: niitAllocatedTax,
@@ -1079,6 +1144,7 @@ class ScheduleANode extends TaxNode<typeof inputSchema> {
         ? [this.outputNodes.output(form8995, {
           itemized_deductions: totalItemized,
           force_itemized: input.force_itemized,
+          ...(input.force_standard === true && { force_standard: true }),
         })]
         : []),
     ];
@@ -1087,6 +1153,14 @@ class ScheduleANode extends TaxNode<typeof inputSchema> {
       finalizations: [{
         nodeType: this.nodeType,
         fields: {
+          ...(rawInput.w2_state_local_income_tax === undefined &&
+              rawInput.line_5a_other_state_income_tax === undefined
+            ? {}
+            : {
+              line_5a_state_income_tax: input.line_5a_state_income_tax,
+              line_5a_other_state_income_tax: 0,
+              w2_state_local_income_tax: 0,
+            }),
           line_11_cash_contributions: contributions.cash,
           line_12_noncash_contributions: contributions.noncash,
           line_13_contribution_carryover: line13Carryover,

@@ -296,6 +296,12 @@ export const CTC_PHASE_OUT_THRESHOLD_OTHER_2025 = 200_000;
 /** ACTC earned income floor (minimum earned income for ACTC). */
 export const ACTC_EARNED_INCOME_FLOOR_2025 = 2_500;
 
+/** Form 1116 instructions (2025), Election To Claim the Foreign Tax Credit
+ * Without Filing Form 1116: total creditable foreign taxes of $300 or less
+ * ($600 if married filing jointly). IRC §904(j)(2)(B). */
+export const FTC_ELECTION_LIMIT_MFJ_2025 = 600;
+export const FTC_ELECTION_LIMIT_OTHER_2025 = 300;
+
 // ─── Saver's Credit (Form 8880) ───────────────────────────────────────────────
 // Notice 2024-80 (§25B(b) limits); IRC §25B
 
@@ -662,6 +668,8 @@ export const config2025: F1040Config = {
   ctcPhaseOutThresholdMfj: CTC_PHASE_OUT_THRESHOLD_MFJ_2025,
   ctcPhaseOutThresholdOther: CTC_PHASE_OUT_THRESHOLD_OTHER_2025,
   actcEarnedIncomeFloor: ACTC_EARNED_INCOME_FLOOR_2025,
+  foreignTaxCreditElectionLimitMfj: FTC_ELECTION_LIMIT_MFJ_2025,
+  foreignTaxCreditElectionLimitOther: FTC_ELECTION_LIMIT_OTHER_2025,
   saversCreditContributionCap: SAVERS_CREDIT_CONTRIBUTION_CAP_2025,
   saversCreditAgiSingle: SAVERS_CREDIT_AGI_SINGLE_2025,
   saversCreditAgiHoh: SAVERS_CREDIT_AGI_HOH_2025,
@@ -886,4 +894,23 @@ export const config2025: F1040Config = {
   cleanElectricityMaterialAssistanceAfter: null,
   // 2025 Form 2210-F line 16: underpayment x days / 365 x 0.07.
   form2210fPenaltyRate: 0.07,
+  // 2025 Instructions for Form 2210, Part III Section B, Table 2 and the
+  // penalty worksheet: columns dated 4/15/25, 6/15/25, 9/15/25 and 1/15/26;
+  // 7% for each rate period through 4/15/26. June 15, 2025 is a Sunday, so a
+  // payment on Monday, June 16 is timely (Section A, line 11 note).
+  form2210RegularMethod: {
+    installmentDueDates: [
+      "2025-04-15",
+      "2025-06-15",
+      "2025-09-15",
+      "2026-01-15",
+    ],
+    timelyThrough: ["2025-04-15", "2025-06-16", "2025-09-15", "2026-01-15"],
+    ratePeriods: [
+      { through: "2025-06-30", rate: 0.07 },
+      { through: "2025-09-30", rate: 0.07 },
+      { through: "2025-12-31", rate: 0.07 },
+      { through: "2026-04-15", rate: 0.07 },
+    ],
+  },
 };

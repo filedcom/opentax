@@ -53,6 +53,22 @@ export type EmployerProvidedChildcareTerms = {
   readonly smallBusinessCreditLimit: number;
 };
 
+/**
+ * Form 2210 Part III, Section B penalty worksheet terms. Due dates are the
+ * dates printed over columns (a)-(d); a payment made on or before
+ * `timelyThrough` for that column (the next business day after a weekend or
+ * holiday due date) counts as made on the due date. Each rate period runs
+ * from the day after the previous period's `through` date; the last ends on
+ * the return due date.
+ */
+export type Form2210RegularMethodTerms = {
+  readonly installmentDueDates: readonly [string, string, string, string];
+  readonly timelyThrough: readonly [string, string, string, string];
+  readonly ratePeriods: ReadonlyArray<
+    { readonly through: string; readonly rate: number }
+  >;
+};
+
 /** IRC §36B(b)(3)(A) applicable percentage band, in hundredths of a percent. */
 export type PtcApplicablePercentageBand = {
   /** Household income as a percentage of the FPL: at least this. */
@@ -163,6 +179,10 @@ export interface F1040Config {
   ctcPhaseOutThresholdMfj: number;
   ctcPhaseOutThresholdOther: number;
   actcEarnedIncomeFloor: number;
+
+  // ── Foreign tax credit without Form 1116 (IRC §904(j)) ──────────────────
+  foreignTaxCreditElectionLimitMfj: number;
+  foreignTaxCreditElectionLimitOther: number;
 
   // ── Saver's Credit ────────────────────────────────────────────────────────
   saversCreditContributionCap: number;
@@ -378,4 +398,6 @@ export interface F1040Config {
   cleanElectricityMaterialAssistanceAfter: string | null;
   /** Form 2210-F line 16 annual rate; null until the IRS publishes it. */
   form2210fPenaltyRate: number | null;
+  /** Form 2210 regular-method worksheet; null until the IRS publishes it. */
+  form2210RegularMethod: Form2210RegularMethodTerms | null;
 }

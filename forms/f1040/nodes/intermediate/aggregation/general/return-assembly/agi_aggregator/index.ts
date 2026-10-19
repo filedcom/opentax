@@ -35,6 +35,11 @@ import { schedule_j_calculation } from "../../../../forms/taxes/income-averaging
 import { box11CodeJSourceSchema } from "../../../../../inputs/income/rental-passthrough/k1_partnership/box11_code_j.ts";
 import { box11CodeESourceSchema } from "../../../../../inputs/income/rental-passthrough/k1_partnership/box11_code_e.ts";
 import { box11CodeKSourceSchema } from "../../../../../inputs/income/rental-passthrough/k1_partnership/box11_code_k.ts";
+import { f8863 } from "../../../../../inputs/credits/individual/f8863/index.ts";
+import {
+  calculateNolDeduction,
+  itemSchema as nolItemSchema,
+} from "../../../../../inputs/income/business/nol_carryforward/calculation.ts";
 
 // Fields that may arrive from multiple upstream nodes accumulate as arrays in the
 // executor pending dict. Declaring them accumulable prevents Zod parse failure.
@@ -117,6 +122,10 @@ export const inputSchema = z.object({
   // ── Schedule 1 Part I — Additional income ─────────────────────────────────
   // Internal sourced NOL projection; public carry intake remains guarded.
   line8a_nol_deduction: z.number().int().nonnegative().optional(),
+  // Prior-year NOL carryforwards (nol_carryforward); line 8a is figured here.
+  nol_carryforwards: z.array(nolItemSchema).min(1).optional(),
+  // Keyed taxable income before the NOL and QBI deductions.
+  nol_taxable_income_override: z.number().optional(),
   // Line 1 — State and local income tax refunds (Form 1099-G)
   line1_state_refund: z.number().optional(),
   // Line 3 — Net profit or (loss) from business (Schedule C)
@@ -140,7 +149,15 @@ export const inputSchema = z.object({
   // Schedule E holds its passive loss back and sends the figures here, because only
   // this node knows modified AGI — the number Form 8582 Part II sizes the allowance by.
   // Current-year passive loss withheld from line5_schedule_e (positive amount)
-  pal_current_loss: z.number().nonnegative().optional(),
+  // Schedule E and passive K-1 losses each send their own total.
+  pal_current_loss: z.union([
+    z.number().nonnegative(),
+    z.array(z.number().nonnegative()),
+  ]).transform((value) =>
+    Array.isArray(value)
+      ? value.reduce((sum, amount) => sum + amount, 0)
+      : value
+  ).optional(),
   // Current-year net income from passive activities
   pal_current_income: z.union([
     z.number().nonnegative(),
@@ -376,6 +393,23 @@ function computeSsaTaxable(
 
 // ─── Pure helpers ─────────────────────────────────────────────────────────────
 
+// Earned income for the 2025 Form 1040 Standard Deduction Worksheet for
+// Dependents: line 1z plus Schedule 1 lines 3, 6 and 8r, minus Schedule 1
+// line 15 (the deductible part of self-employment tax).
+function dependentWorksheetEarnedIncome(input: AgiInput): number {
+  return Math.round(sumField(input.line1a_wages)) +
+    Math.round(sumField(input.line1b_household_wages)) +
+    Math.round(sumField(input.line1h_other_earned)) +
+    Math.round(input.line1c_unreported_tips ?? 0) +
+    Math.round(input.line1e_taxable_dep_care ?? 0) +
+    Math.round(input.line1f_taxable_adoption_benefits ?? 0) +
+    Math.round(input.line1g_wages_8919 ?? 0) +
+    Math.round(input.line3_schedule_c ?? 0) +
+    Math.round(input.line6_schedule_f ?? 0) +
+    (input.line8r_taxable_scholarships ?? 0) -
+    Math.round(input.line15_se_deduction ?? 0);
+}
+
 // Sum all non-SSA income items before the IRC §469 limit is applied.
 function nonSsaIncomeBeforePal(input: AgiInput): number {
   return (
@@ -461,22 +495,6 @@ function resolveSsaTaxable(
   const ssaGross = Math.round(input.line6a_ss_gross ?? 0);
   if (ssaGross === 0) return 0;
 
-  if (
-    input.filing_status === "mfs" &&
-    input.mfs_lived_with_spouse === undefined
-  ) {
-    throw new Error(
-      "MFS Social Security taxability requires whether the filer lived with their spouse during the year",
-    );
-  }
-
-  // IRC §86(c)(2): MFS filer who lived with spouse at any time during the year —
-  // 85% of benefits are always taxable; no threshold applies.
-  if (input.filing_status === "mfs" && input.mfs_lived_with_spouse === true) {
-    return Math.round(0.85 * ssaGross);
-  }
-
-  const isMfj = input.filing_status === "mfj";
   const taxExemptInterest = input.tax_exempt_interest ?? 0;
   // IRS SSA Worksheet (Form 1040 instructions, Lines 6a–6b):
   // Line 7 = Line 5 − Line 6.  Line 5 = 50% benefits + income items + tax-exempt interest.
@@ -486,6 +504,23 @@ function resolveSsaTaxable(
     0,
     nonSsaIncome(input) - exclusions(input) - aboveLineDeductions(input, cfg),
   );
+
+  // IRC §86(c)(1)(C)(ii): an MFS filer who lived with their spouse at any
+  // time in the year has no base amount. The worksheet skips lines 8-15:
+  // line 16 is 85% of line 7, and line 18 is the smaller of line 16 and 85%
+  // of benefits. Unless the filer says they lived apart all year, this rule
+  // applies (return-hints reports the assumption).
+  if (
+    input.filing_status === "mfs" && input.mfs_lived_with_spouse !== false
+  ) {
+    const line7 = Math.max(
+      0,
+      ssaGross / 2 + otherAgi + Math.round(taxExemptInterest),
+    );
+    return Math.round(Math.min(0.85 * line7, 0.85 * ssaGross));
+  }
+
+  const isMfj = input.filing_status === "mfj";
   return Math.round(
     computeSsaTaxable(ssaGross, otherAgi, Math.round(taxExemptInterest), isMfj),
   );
@@ -502,6 +537,34 @@ function grossIncome(
     nonSsaIncome(input) +
     ssaTaxable
   );
+}
+
+// 2025 Schedule 8812 Earned Income Worksheet for a return whose earned income
+// is Form 1040 line 1z alone: no Schedule C or F, no self-employment tax
+// deduction. Line 1a is line 1z; lines 2a-2e and 4-5 are zero. Nontaxable
+// combat pay (line 1b) is added by Schedule 8812 from the W-2s.
+function wageOnlyEarnedIncomeWorksheet(input: AgiInput) {
+  if (
+    (input.line3_schedule_c ?? 0) !== 0 ||
+    (input.line6_schedule_f ?? 0) !== 0 ||
+    (input.line15_se_deduction ?? 0) !== 0
+  ) return undefined;
+  const line1z = Math.round(sumField(input.line1a_wages)) +
+    Math.round(sumField(input.line1b_household_wages)) +
+    Math.round(sumField(input.line1h_other_earned)) +
+    Math.round(input.line1c_unreported_tips ?? 0) +
+    Math.round(input.line1e_taxable_dep_care ?? 0) +
+    Math.round(input.line1f_taxable_adoption_benefits ?? 0) +
+    Math.round(input.line1g_wages_8919 ?? 0);
+  return {
+    form1040_line1z_wages: Math.max(0, line1z),
+    schedule_c_statutory_employee_income: 0,
+    nonfarm_schedule_c_and_k1_net: 0,
+    farm_schedule_f_and_k1_net: 0,
+    farm_optional_method_used: false,
+    excluded_medicaid_waiver_payments: 0,
+    schedule1_line15_se_deduction: 0,
+  };
 }
 
 // Sum IRC §911 exclusions. Form 8815 savings-bond interest is excluded
@@ -716,6 +779,47 @@ function computeAgi(
     aboveLineDeductions(input, cfg);
 }
 
+// Schedule 1 line 8a from the NOL carryforwards. The 80% limit base is
+// taxable income without the NOL and QBI deductions (IRC §172(a)(2)): AGI
+// figured without line 8a less the standard deduction for the filing status,
+// unless a taxable income override is keyed. standard_deduction rejects the
+// return when its actual deduction differs from that assumption.
+function withNolDeduction(
+  input: AgiInput,
+  cfg: import("../../../../../config/index.ts").F1040Config,
+  taxYear: number,
+) {
+  if (!input.nol_carryforwards) return { input, nol: undefined };
+  if (input.line8a_nol_deduction !== undefined) {
+    throw new Error(
+      "NOL carryforwards cannot combine with a keyed Schedule 1 line 8a deduction",
+    );
+  }
+  if (input.pal_pending_active_4797 === true) {
+    throw new Error(
+      "NOL carryforward with a pending active-rental Form 4797 PAL release is not supported",
+    );
+  }
+  const override = input.nol_taxable_income_override;
+  const standard = override === undefined
+    ? cfg.standardDeductionBase[input.filing_status as FilingStatus]
+    : undefined;
+  if (override === undefined && standard === undefined) {
+    throw new Error("NOL deduction needs the return's filing status");
+  }
+  const agiBeforeNol = computeAgi({ ...input, line8a_nol_deduction: 0 }, cfg);
+  const taxableIncome = override ?? agiBeforeNol - standard!;
+  const nol = calculateNolDeduction(
+    input.nol_carryforwards,
+    taxableIncome,
+    taxYear,
+  );
+  return {
+    input: { ...input, line8a_nol_deduction: nol.deduction },
+    nol: { ...nol, assumedStandardDeduction: standard },
+  };
+}
+
 // ─── Node class ───────────────────────────────────────────────────────────────
 
 class AgiAggregatorNode extends TaxNode<typeof inputSchema> {
@@ -730,6 +834,7 @@ class AgiAggregatorNode extends TaxNode<typeof inputSchema> {
       eitc,
       schedule_r,
       f8812,
+      f8863,
       f2441,
       form8995,
       form8960,
@@ -755,7 +860,11 @@ class AgiAggregatorNode extends TaxNode<typeof inputSchema> {
         "Form 2555 line 50 housing deduction is unsupported in the AGI aggregator",
       );
     }
-    const input = inputSchema.parse(rawInput);
+    const { input, nol } = withNolDeduction(
+      inputSchema.parse(rawInput),
+      cfg,
+      ctx.taxYear,
+    );
     if (input.pal_pending_active_4797 === true) {
       return {
         outputs: [
@@ -822,6 +931,10 @@ class AgiAggregatorNode extends TaxNode<typeof inputSchema> {
       ),
       this.outputNodes.output(standard_deduction, {
         agi,
+        ...(nol?.assumedStandardDeduction !== undefined && {
+          nol_limit_standard_deduction: nol.assumedStandardDeduction,
+        }),
+        return_earned_income: dependentWorksheetEarnedIncome(input),
         form8615_total_income: totalIncome,
         form8615_early_withdrawal_penalty: Math.max(
           0,
@@ -854,7 +967,16 @@ class AgiAggregatorNode extends TaxNode<typeof inputSchema> {
       // Schedule R line 14 is Form 1040 line 11.
       this.outputNodes.output(schedule_r, { auto_agi: agi }),
       // Pass AGI to f8812 for CTC/ACTC phase-out computation
-      this.outputNodes.output(f8812, { auto_agi: agi }),
+      this.outputNodes.output(f8812, {
+        auto_agi: agi,
+        ...(wageOnlyEarnedIncomeWorksheet(input) && {
+          auto_earned_income_worksheet: wageOnlyEarnedIncomeWorksheet(input),
+        }),
+      }),
+      // Form 8863 lines 3 and 14: AGI plus the Form 2555 exclusion.
+      this.outputNodes.output(f8863, {
+        auto_magi: agi + (input.line8d_foreign_earned_income_exclusion ?? 0),
+      }),
       // Pass AGI to f2441 for dependent care credit rate calculation
       this.outputNodes.output(f2441, { agi }),
       // Pass AGI to form8995 so it can apply the 20%-of-taxable-income income limit
@@ -939,7 +1061,23 @@ class AgiAggregatorNode extends TaxNode<typeof inputSchema> {
       }));
     }
 
-    return { outputs };
+    if (nol && nol.deduction > 0) {
+      outputs.push(this.outputNodes.output(schedule1, {
+        line8a_nol_deduction: nol.deduction,
+      }));
+    }
+
+    return {
+      outputs,
+      ...(nol && {
+        carryforwards: {
+          ...(nol.pre2018Carryforward > 0 &&
+            { nol_carryforward_pre2018: nol.pre2018Carryforward }),
+          ...(nol.post2017Carryforward > 0 &&
+            { nol_carryforward_post2017: nol.post2017Carryforward }),
+        },
+      }),
+    };
   }
 }
 

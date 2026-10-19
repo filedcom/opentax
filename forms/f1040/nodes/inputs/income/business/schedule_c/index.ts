@@ -1,3 +1,4 @@
+import { priorYearDepreciationTotal } from "../../../../intermediate/forms/deductions/business/form4562/prior-year.ts";
 import { filedOwnedScheduleC } from "../../../../owned-business-filing.ts";
 import { patronFiledBusinessLines } from "../../../deductions/business/qbi_patron/calculation.ts";
 import { assertPatrScheduleCIncome } from "../f1099patr/schedule-c-source.ts";
@@ -176,6 +177,32 @@ class ScheduleCNode extends TaxNode<typeof inputSchema> {
   ]);
 
   compute(ctx: NodeContext, input: z.infer<typeof inputSchema>): NodeResult {
+    // Prior-year assets become this activity's depreciation (Pub. 946,
+    // Appendix A); the finalized rows carry the deduction to every reader.
+    if (!input.schedule_cs?.some((item) => item.prior_year_assets)) {
+      return this.computeRows(ctx, input);
+    }
+    const schedule_cs = input.schedule_cs.map((item) => {
+      if (!item.prior_year_assets) return item;
+      const { prior_year_assets: assets, ...rest } = item;
+      const { rows, total } = priorYearDepreciationTotal(assets, ctx.taxYear);
+      return {
+        ...rest,
+        line_13_depreciation: (item.line_13_depreciation ?? 0) + total,
+        prior_year_depreciation_rows: rows,
+      };
+    });
+    const result = this.computeRows(ctx, { ...input, schedule_cs });
+    return {
+      ...result,
+      outputs: [
+        ...result.outputs,
+        { nodeType: this.nodeType, fields: { schedule_cs } },
+      ],
+    };
+  }
+
+  private computeRows(ctx: NodeContext, input: z.infer<typeof inputSchema>): NodeResult {
     const cfg = CONFIG_BY_YEAR[ctx.taxYear];
     if (!cfg) throw new Error(`No f1040 config for year ${ctx.taxYear}`);
     // Validate schema — throws on invalid data (negative amounts, bad enums)

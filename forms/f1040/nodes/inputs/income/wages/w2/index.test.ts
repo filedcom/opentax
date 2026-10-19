@@ -1,6 +1,6 @@
 import { test } from "bun:test";
 import { assertEquals, assertThrows } from "@std/assert";
-import { Box12Code, w2 } from "./index.ts";
+import { Box12Code, codeDExcessDeferral, w2 } from "./index.ts";
 import { fieldsOf } from "../../../../../../../core/test-utils/output.ts";
 import { f1040 } from "../../../../outputs/general/return-assembly/f1040/index.ts";
 import { form8839 } from "../../../../intermediate/forms/credits/individual/form8839/index.ts";
@@ -812,7 +812,7 @@ test("statutory_employee_state_withholding_stays_on_schedule_a_line_5a", () => {
     minimalItem({ box1_wages: 8_513, box17_state_withheld: 101 }),
   ]);
   assertEquals(
-    fieldsOf(result.outputs, scheduleA)!.line_5a_state_income_tax,
+    fieldsOf(result.outputs, scheduleA)!.w2_state_local_income_tax,
     1_028,
   );
 });
@@ -913,7 +913,7 @@ test("W-2 Form 8880 deferral cannot lose employee identity", () => {
         box12_entries: [{ code: Box12Code.D, amount: 1_000 }],
       })]),
     Error,
-    "W-2 code D excess review needs the employee SSN",
+    "W-2 saver-credit box 12 deferrals need the employee's nine-digit SSN for Form 8880",
   );
 });
 
@@ -1172,7 +1172,7 @@ test("box14_sdi_pfml_routes_to_schedule_a: $600 SDI → line_5a_state_income_tax
     }],
   })]);
   assertEquals(
-    fieldsOf(result.outputs, scheduleA)!.line_5a_state_income_tax,
+    fieldsOf(result.outputs, scheduleA)!.w2_state_local_income_tax,
     600,
   );
 });
@@ -1188,7 +1188,7 @@ test("box14_sdi_plus_state_withheld_combined_to_schedule_a: SDI $500 + box17 $3,
     box17_state_withheld: 3000,
   })]);
   assertEquals(
-    fieldsOf(result.outputs, scheduleA)!.line_5a_state_income_tax,
+    fieldsOf(result.outputs, scheduleA)!.w2_state_local_income_tax,
     3500,
   );
 });
@@ -1198,7 +1198,7 @@ test("box17_state_withheld_routes_to_schedule_a: $4,000 state withholding → li
     minimalItem({ box1_wages: 80000, box17_state_withheld: 4000 }),
   ]);
   assertEquals(
-    fieldsOf(result.outputs, scheduleA)!.line_5a_state_income_tax,
+    fieldsOf(result.outputs, scheduleA)!.w2_state_local_income_tax,
     4000,
   );
 });
@@ -1208,7 +1208,7 @@ test("box19_local_withheld_routes_to_schedule_a: $1,200 local → line_5a_state_
     minimalItem({ box1_wages: 80000, box19_local_withheld: 1200 }),
   ]);
   assertEquals(
-    fieldsOf(result.outputs, scheduleA)!.line_5a_state_income_tax,
+    fieldsOf(result.outputs, scheduleA)!.w2_state_local_income_tax,
     1200,
   );
 });
@@ -1427,7 +1427,7 @@ test("two_w2s_state_withheld_aggregate_to_schedule_a: $2k + $3k = $5,000 line_5a
     minimalItem({ box1_wages: 50000, box17_state_withheld: 3000 }),
   ]);
   assertEquals(
-    fieldsOf(result.outputs, scheduleA)!.line_5a_state_income_tax,
+    fieldsOf(result.outputs, scheduleA)!.w2_state_local_income_tax,
     5000,
   );
 });
@@ -1466,6 +1466,52 @@ test("two_employers_at_max_ss_round_excess_on_schedule3: 2 × $10,918.20 → fil
     }),
   ]);
   assertEquals(fieldsOf(result.outputs, schedule3)!.line11_excess_ss, 10918);
+});
+
+// 2025 Instructions for Schedule 3, line 11: on a joint return figure each
+// spouse's excess separately; one spouse's withholding never offsets the
+// other's wage base, even when an employer EIN is missing.
+test("joint_spouses_each_at_max_ss_without_ein_have_no_excess", () => {
+  const result = compute([
+    minimalItem({
+      employee_ssn: "111223333",
+      box1_wages: 176100,
+      box3_ss_wages: 176100,
+      box4_ss_withheld: 10918.20,
+    }),
+    minimalItem({
+      employee_ssn: "444556666",
+      employer_ein: "223456789",
+      box1_wages: 176100,
+      box3_ss_wages: 176100,
+      box4_ss_withheld: 10918.20,
+    }),
+  ]);
+  assertEquals(findOutput(result, "schedule3"), undefined);
+});
+
+test("one_spouse_two_employers_without_ein_keeps_only_their_excess", () => {
+  const result = compute([
+    minimalItem({
+      employee_ssn: "111223333",
+      box1_wages: 176100,
+      box3_ss_wages: 176100,
+      box4_ss_withheld: 10918.20,
+    }),
+    minimalItem({
+      employee_ssn: "111223333",
+      box1_wages: 50000,
+      box3_ss_wages: 50000,
+      box4_ss_withheld: 3100,
+    }),
+    minimalItem({
+      employee_ssn: "444556666",
+      box1_wages: 100000,
+      box3_ss_wages: 100000,
+      box4_ss_withheld: 6200,
+    }),
+  ]);
+  assertEquals(fieldsOf(result.outputs, schedule3)!.line11_excess_ss, 3100);
 });
 
 test("single_employer_at_max_ss_no_excess_schedule3: single employer does not produce schedule3", () => {
@@ -1842,7 +1888,7 @@ test("comprehensive_w2_full_workflow: two W-2s with all major boxes populate all
   );
   // schedule_a: SDI $400 + state $5,000
   assertEquals(
-    fieldsOf(result.outputs, scheduleA)!.line_5a_state_income_tax,
+    fieldsOf(result.outputs, scheduleA)!.w2_state_local_income_tax,
     5400,
   );
 });
@@ -1958,5 +2004,19 @@ test("2026 W-2 box 12 code TP tips route to Schedule 1-A line 4", () => {
       schedule1a,
     )?.qualified_employee_tips,
     undefined,
+  );
+});
+
+// 2025 Form 1040 instructions, line 1h: only elective deferrals over the
+// 23,500 limit are income, so code D within it needs no owner or plan review.
+test("W-2 code D within the 2025 limit has no line 1h excess and needs no review", () => {
+  assertEquals(
+    codeDExcessDeferral([
+      minimalItem({
+        box1_wages: 46_386,
+        box12_entries: [{ code: Box12Code.D, amount: 18_000 }],
+      }),
+    ], 2025),
+    { amount: 0, owners: [] },
   );
 });

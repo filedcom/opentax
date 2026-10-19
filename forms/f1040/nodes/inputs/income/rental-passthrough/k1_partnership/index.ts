@@ -6,6 +6,8 @@ import { form8582 } from "../../../../intermediate/forms/income/business/form858
 import {
   k1PassiveIncomeSourceSchema,
   passiveK1Activities,
+  passiveK1LossActivities,
+  passiveK1LossTotal,
 } from "../k1_passive_source.ts";
 import { f8611 } from "../../../taxes/credit-recapture/f8611/index.ts";
 import {
@@ -25,6 +27,7 @@ import { schedule1 } from "../../../../outputs/general/return-assembly/schedule1
 import { schedule_b } from "../../../../intermediate/aggregation/income/investments/schedule_b/index.ts";
 import { schedule_d } from "../../../../intermediate/aggregation/income/investments/schedule_d/index.ts";
 import { schedule_se } from "../../../../intermediate/forms/taxes/self-employment/schedule_se/index.ts";
+import { ownerIdentitySchema } from "../../../../intermediate/forms/taxes/self-employment/schedule_se/owner-calculation.ts";
 import { form8995 } from "../../../../intermediate/forms/deductions/business/form8995/index.ts";
 import {
   ForeignTaxCreditMethod,
@@ -563,6 +566,9 @@ export const inputSchema = z.object({
       seen.add(key);
     }
   }),
+  // Joint-return owners, supplied by the start node when a K-1 carries SE
+  // earnings, so each spouse's box 14a reaches their own Schedule SE.
+  owner_identity: ownerIdentitySchema.optional(),
 });
 
 type K1PartnershipItem = z.infer<typeof itemSchema>;
@@ -570,12 +576,16 @@ type K1PartnershipItems = K1PartnershipItem[];
 
 // Aggregate Schedule E income → schedule1 line5_schedule_e
 // Includes: Box 1 + 2 + 3 + 4a + 4b. Box 7 goes through Schedule E Part I.
+// A passive box 1-3 loss is held back for Form 8582, which posts the allowed
+// part (2025 Instructions for Form 8582, Worksheet 3).
 function schedule1Output(items: K1PartnershipItems): NodeOutput[] {
   const activities = passiveK1Activities(items, "k1_partnership");
+  const lossActivities = passiveK1LossActivities(items, "k1_partnership");
   const passiveIncome = activities.reduce(
     (sum, row) => sum + row.current_net,
     0,
   );
+  const passiveLoss = passiveK1LossTotal(lossActivities);
   const total = items.reduce(
     (sum, item) =>
       sum +
@@ -585,23 +595,25 @@ function schedule1Output(items: K1PartnershipItems): NodeOutput[] {
       (item.box4a_guaranteed_services ?? 0) +
       (item.box4b_guaranteed_capital ?? 0),
     0,
-  );
-  if (total === 0) return [];
+  ) + passiveLoss;
+  if (total === 0 && passiveLoss === 0) return [];
   return [
-    output(schedule1, { line5_schedule_e: total }),
+    ...(total !== 0 ? [output(schedule1, { line5_schedule_e: total })] : []),
     output(agi_aggregator, {
       line5_schedule_e: total,
       eic_passive_k1_income: reviewedK1PassiveIncome(items),
       ...(passiveIncome > 0
         ? { pal_current_income: passiveIncome, pal_rental_income: 0 }
         : {}),
+      ...(passiveLoss > 0 ? { pal_current_loss: passiveLoss } : {}),
     }),
-    ...(activities.length
+    ...(activities.length || lossActivities.length
       ? [output(form8582, {
         current_income: passiveIncome,
         rental_current_income: 0,
+        ...(passiveLoss > 0 ? { current_loss: passiveLoss } : {}),
         has_other_passive: true,
-        activities,
+        activities: [...activities, ...lossActivities],
       })]
       : []),
   ];
@@ -764,21 +776,82 @@ function form8960Output(items: K1PartnershipItems): NodeOutput[] {
   return outputs;
 }
 
-// SE tax routing: aggregate all SE earnings across K-1s into a single output.
 // Box 14a (net SE earnings) takes priority per item; Box 4a used as fallback.
-// Aggregating prevents array accumulation in schedule_se when multiple K-1s are present.
-function scheduleSEOutputs(items: K1PartnershipItems): NodeOutput[] {
-  const total = items.reduce((sum, item) => {
-    if ((item.box14a_se_earnings ?? 0) !== 0) {
-      return sum + item.box14a_se_earnings!;
+function partnershipSeEarnings(item: K1PartnershipItem): number {
+  if ((item.box14a_se_earnings ?? 0) !== 0) return item.box14a_se_earnings!;
+  if ((item.box4a_guaranteed_services ?? 0) > 0) {
+    return item.box4a_guaranteed_services!;
+  }
+  return 0;
+}
+
+/** True when any partnership K-1 carries earnings for Schedule SE line 2. */
+export function hasPartnershipSeEarnings(items: readonly unknown[]): boolean {
+  return items.some((raw) => {
+    const item = itemSchema.safeParse(raw);
+    return item.success && partnershipSeEarnings(item.data) !== 0;
+  });
+}
+
+type OwnerIdentity = z.infer<typeof ownerIdentitySchema>;
+
+/**
+ * Each K-1 with SE earnings as its partner's Schedule SE line 2 source. On a
+ * joint return each spouse files their own Schedule SE (i1040sse, "Who Must
+ * Pay SE Tax"), so the K-1 recipient TIN decides whose it is.
+ */
+export function partnershipOwnerSeSources(
+  items: K1PartnershipItems,
+  identity: OwnerIdentity,
+) {
+  return items.flatMap((item, index) => {
+    const earnings = partnershipSeEarnings(item);
+    if (earnings === 0) return [];
+    const recipient = item.recipient_tin === identity.primary_ssn
+      ? "T" as const
+      : item.recipient_tin === identity.spouse_ssn
+      ? "S" as const
+      : undefined;
+    if (!recipient) {
+      throw new Error(
+        "Joint Schedule SE needs each partnership K-1 recipient TIN to match a spouse",
+      );
     }
-    if ((item.box4a_guaranteed_services ?? 0) > 0) {
-      return sum + item.box4a_guaranteed_services!;
-    }
-    return sum;
-  }, 0);
-  if (total === 0) return [];
-  return [output(schedule_se, { net_profit_schedule_c: total })];
+    return [{
+      recipient,
+      source_reference: `k1_partnership:${index}:${
+        item.partnership_ein ?? item.partnership_name
+      }`,
+      kind: "partnership" as const,
+      net_profit: earnings,
+      business_name: item.partnership_name,
+      ...(item.partnership_ein ? { ein: item.partnership_ein } : {}),
+    }];
+  });
+}
+
+// SE tax routing: aggregate all SE earnings across K-1s into a single output.
+// On a joint return the owner sources carry the per-spouse split as well.
+function scheduleSEOutputs(
+  items: K1PartnershipItems,
+  identity: OwnerIdentity | undefined,
+): NodeOutput[] {
+  const total = items.reduce(
+    (sum, item) => sum + partnershipSeEarnings(item),
+    0,
+  );
+  const ownerSources = identity
+    ? partnershipOwnerSeSources(items, identity)
+    : [];
+  // Different spouses file separate Schedules SE. Their K-1 earnings cannot
+  // cancel before the owner split, even when the joint scalar total is zero.
+  if (total === 0 && ownerSources.length === 0) return [];
+  return [output(schedule_se, {
+    net_profit_schedule_c: total,
+    ...(ownerSources.length
+      ? { owner_business_sources: ownerSources }
+      : {}),
+  })];
 }
 
 // QBI routing: Box 20Z → form8995
@@ -1071,7 +1144,7 @@ class K1PartnershipNode extends TaxNode<typeof inputSchema> {
   ]);
 
   compute(_ctx: NodeContext, input: z.infer<typeof inputSchema>): NodeResult {
-    const { k1_partnerships } = inputSchema.parse(input);
+    const { k1_partnerships, owner_identity } = inputSchema.parse(input);
 
     const recaptures = issuedPartnershipRecaptures(k1_partnerships);
     const outputs: NodeOutput[] = [
@@ -1083,7 +1156,7 @@ class K1PartnershipNode extends TaxNode<typeof inputSchema> {
       ...f1040QualDivOutput(k1_partnerships),
       ...scheduleDOutput(k1_partnerships),
       ...box9bCollectiblesOutputs(k1_partnerships),
-      ...scheduleSEOutputs(k1_partnerships),
+      ...scheduleSEOutputs(k1_partnerships, owner_identity),
       ...form8995Output(k1_partnerships),
       ...form1116Outputs(k1_partnerships),
       // box9c_unrecaptured_1250 (and legacy box9b_unrecaptured_1250) routed here

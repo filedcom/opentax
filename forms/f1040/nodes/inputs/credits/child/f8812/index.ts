@@ -120,6 +120,9 @@ export const inputSchema = z.object({
   credit_limit_worksheet: creditLimitWorksheetSchema.optional(),
   // Credit Limit Worksheet A line 2 from the computed Schedule 3 (schedule3).
   schedule3_credit_limit_worksheet: creditLimitWorksheetSchema.optional(),
+  // Schedule 3 has a credit (Worksheet B or another late-settled line) that
+  // the computed Schedule 3 cannot yet total for Worksheet A line 2.
+  schedule3_credit_limit_pending: z.literal(true).optional(),
   part_iib: z.object({
     line21_w2_withheld_social_security_medicare: z.number().nonnegative(),
     schedule1_line15: z.number().nonnegative(),
@@ -149,6 +152,13 @@ export const inputSchema = z.object({
   auto_disability_pension_earned_income: z.number().nonnegative().optional(),
   // Number of other qualifying dependents for ODC (from general node)
   auto_other_dependents: z.number().int().nonnegative().optional(),
+  // Earned Income Worksheet lines for a wage-only return (agi_aggregator),
+  // less line 1b, and W-2 box 12 code Q nontaxable combat pay (w2).
+  auto_earned_income_worksheet: earnedIncomeWorksheetSchema.innerType().omit({
+    nontaxable_combat_pay: true,
+    schedule_se_line15: true,
+  }).optional(),
+  auto_nontaxable_combat_pay: z.number().nonnegative().optional(),
 });
 
 /** One Form 1040 line 28 election applies to the whole return. */
@@ -322,6 +332,22 @@ export function calculateCreditLimitWorksheetALine5(
   }
   return Math.max(0, form1040Line18Tax - line2 - line4);
 }
+
+// A return without Schedule 3 credits enters zero for every Schedule 3 line
+// on Credit Limit Worksheet A line 2 and has no Worksheet B credit (2025
+// Schedule 8812 instructions, Credit Limit Worksheets A and B).
+const NO_SCHEDULE3_CREDITS: CreditLimitWorksheet = {
+  schedule3_line1: 0,
+  schedule3_line2: 0,
+  schedule3_line3: 0,
+  schedule3_line4: 0,
+  schedule3_line5b: 0,
+  schedule3_line6d: 0,
+  schedule3_line6f: 0,
+  schedule3_line6l: 0,
+  schedule3_line6m: 0,
+  worksheet_b_applies: false,
+};
 
 function returnValue<K extends keyof F8812Item>(
   items: F8812Item[],
@@ -506,7 +532,8 @@ export function calculateSchedule8812Lines(
   }
   const suppliedWorksheet = input.credit_limit_worksheet ??
     itemCreditWorksheets[0];
-  const derivedWorksheet = input.schedule3_credit_limit_worksheet;
+  const derivedWorksheet = input.schedule3_credit_limit_worksheet ??
+    (input.schedule3_credit_limit_pending ? undefined : NO_SCHEDULE3_CREDITS);
   const creditWorksheet = suppliedWorksheet ?? derivedWorksheet;
   if (!creditWorksheet) {
     throw new Error(
@@ -540,7 +567,18 @@ export function calculateSchedule8812Lines(
       "Schedule 8812 earned-income worksheet cannot be supplied both on an item and at the root",
     );
   }
-  const worksheetInput = input.earned_income_worksheet ?? itemWorksheets[0];
+  // Line 18a falls back to the return's own wage-only Earned Income
+  // Worksheet; a keyed worksheet or line 18a overrides it.
+  const derivedEarnedIncome = input.auto_earned_income_worksheet &&
+      input.line18a_earned_income === undefined &&
+      returnValue(items, "line18a_earned_income") === undefined
+    ? {
+      ...input.auto_earned_income_worksheet,
+      nontaxable_combat_pay: input.auto_nontaxable_combat_pay ?? 0,
+    }
+    : undefined;
+  const worksheetInput = input.earned_income_worksheet ?? itemWorksheets[0] ??
+    derivedEarnedIncome;
   if (creditWorksheet.worksheet_b_applies && !worksheetInput) {
     throw new Error(
       "Schedule 8812 Worksheet B needs its earned-income worksheet line 7 sources",
@@ -558,9 +596,13 @@ export function calculateSchedule8812Lines(
     : null;
   const line13 = calculateCreditLimitWorksheetALine5(tax, creditWorksheet);
   if (
-    suppliedWorksheet && derivedWorksheet &&
+    suppliedWorksheet && input.schedule3_credit_limit_worksheet &&
     !suppliedWorksheet.worksheet_b_applies &&
-    line13 !== calculateCreditLimitWorksheetALine5(tax, derivedWorksheet)
+    line13 !==
+      calculateCreditLimitWorksheetALine5(
+        tax,
+        input.schedule3_credit_limit_worksheet,
+      )
   ) {
     throw new Error(
       "Schedule 8812 Credit Limit Worksheet A differs from the return's Schedule 3 credits",

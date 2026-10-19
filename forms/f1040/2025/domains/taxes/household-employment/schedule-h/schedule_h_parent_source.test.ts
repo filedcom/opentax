@@ -422,7 +422,7 @@ test("Schedule H parent source derives actual FICA exception by services quarter
     }
     const changed = structuredClone(payroll),
       workers = (changed.fica_only_payroll ?? changed.federal_unemployment)!
-        .employee_wages;
+        .employee_wages!;
     const parentWorker = workers.at(-1)!;
     if (parentWorker.relationship !== "parent") {
       throw new Error("Expected retained parent payroll worker");

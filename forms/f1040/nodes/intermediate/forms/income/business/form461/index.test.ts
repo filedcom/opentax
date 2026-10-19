@@ -110,10 +110,13 @@ test("Form 461 omits the form at the exact per-line and net thresholds", () => {
 test("Form 461 rejects C/F source data without a sourced scope review", () => {
   assertThrows(() =>
     compute({
-      filing_status: "single",
-      line2_schedule_c: -400_000,
+      filing_status: "mfj",
+      line2_schedule_c: -700_000,
     })
   );
+});
+
+test("Form 461 rejects an entered scope review that differs from the return", () => {
   assertThrows(() =>
     compute({
       filing_status: "single",

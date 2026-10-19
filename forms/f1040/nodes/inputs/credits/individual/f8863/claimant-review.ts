@@ -11,9 +11,11 @@ import {
   supportMoney,
 } from "./business-review.ts";
 import { z } from "zod";
-import { dependentScholarshipReviewSchema } from "../../../income/other/education_income/dependent-scholarship-review.ts";
+import { dependentScholarshipReviewSchema } from "../../../income/other/education_income/dependent-scholarship-schema.ts";
 import type { F8863Input, F8863Item } from "./index.ts";
-import { inputSchema as w2Schema } from "../../../income/wages/w2/index.ts";
+import type { inputSchema as w2Schema } from "../../../income/wages/w2/index.ts";
+
+type W2Copy = z.infer<typeof w2Schema>["w2s"][number];
 
 const ssnSchema = z.string().regex(/^\d{3}-?\d{2}-?\d{4}$/);
 const reference = z.string().trim().min(1);
@@ -200,6 +202,9 @@ export function assertEducationClaimantSources(
   pending: Readonly<Record<string, unknown>> | undefined,
   primarySsn: string,
   dependentEligible: (source: Record<string, unknown>) => boolean,
+  // Retained W-2 copies, parsed by the caller: importing the W-2 node here
+  // would cycle back through the AGI aggregator, which feeds Form 8863.
+  w2Copies: readonly W2Copy[],
   spouseSsn?: string,
 ): void {
   const general = pending?.general as Record<string, unknown> | undefined;
@@ -294,9 +299,7 @@ export function assertEducationClaimantSources(
     }
   }
   if (review.kind === "under_24") {
-    const wages = pending?.w2 === undefined
-      ? []
-      : w2Schema.parse(pending.w2).w2s;
+    const wages = w2Copies;
     if (wages.length !== review.earned_income_w2_sources.length) {
       throw new Error(
         "Form 8863 young claimant review must inventory the retained earned-income W-2 copies",

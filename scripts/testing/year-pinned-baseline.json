@@ -1545,11 +1545,6 @@
     "count": 2
   },
   {
-    "path": "forms/f1040/nodes/inputs/taxes/underpayment/f2210/calculation.ts",
-    "pattern": "date-pinned",
-    "count": 5
-  },
-  {
     "path": "forms/f1040/nodes/intermediate/aggregation/general/return-assembly/agi_aggregator/index.ts",
     "pattern": "year-value",
     "count": 1
@@ -1747,7 +1742,7 @@
   {
     "path": "forms/f1040/nodes/intermediate/forms/credits/individual/form8880/calculation.ts",
     "pattern": "year-comparison",
-    "count": 2
+    "count": 1
   },
   {
     "path": "forms/f1040/nodes/intermediate/forms/credits/individual/form8880/calculation.ts",

@@ -1,3 +1,7 @@
+import {
+  priorYearAssetSchema,
+  priorYearDepreciationRowSchema,
+} from "../../../../intermediate/forms/deductions/business/form4562/prior-year.ts";
 import { sstbServiceClassificationSchema } from "./sstb-classification.ts";
 import {
   calculateCharitableNaturalResource,
@@ -92,8 +96,8 @@ export const itemSchema = z.object({
   disposed_of_business: z.boolean().optional(),
   multi_form_code: z.string().optional(),
   llc_number: z.number().int().min(1).max(999).optional(),
-  // A positive interest deduction needs an affirmative section 163(j)
-  // determination. An absent flag is not evidence of an exemption.
+  // Prior-year receipts for the section 163(j) small-business exemption.
+  // Without them, line 1 receipts at or under the threshold are exempt.
   subject_to_163j: z.never().optional(),
   section163j_small_business_exemption: z.object({
     prior_three_year_gross_receipts: z.tuple([
@@ -269,6 +273,11 @@ export const itemSchema = z.object({
     ).min(1),
   }).strict().optional(),
   line_13_depreciation: z.number().nonnegative().optional(),
+  // Assets placed in service before the return year (Pub. 946 tables);
+  // their deduction is added to this depreciation line.
+  prior_year_assets: z.array(priorYearAssetSchema).min(1).optional(),
+  prior_year_depreciation_rows: z.array(priorYearDepreciationRowSchema)
+    .optional(),
   donated_natural_resource_property_source:
     charitableNaturalResourceSourceSchema.optional(),
   donated_depreciable_property_source: charitableDepreciationSourceSchema
@@ -733,10 +742,17 @@ export function assertScheduleCInterestExempt(
     (item.line_16b_interest_other ?? 0);
   if (interest === 0) return;
   const exemption = item.section163j_small_business_exemption;
+  // Form 8990 instructions, Who Must File: a taxpayer meeting the section
+  // 448(c) gross-receipts test is exempt and files no Form 8990. Without
+  // prior-year receipts, a sole proprietor's line 1 receipts stand for the
+  // average; receipts over the threshold still need the reviewed history.
   if (!exemption) {
-    throw new Error(
-      "Schedule C interest needs documented section 163(j) exemption; Form 8990 ATI is not yet reconciled",
-    );
+    if (item.line_1_gross_receipts > threshold) {
+      throw new Error(
+        "Schedule C interest needs documented section 163(j) exemption; Form 8990 ATI is not yet reconciled",
+      );
+    }
+    return;
   }
   const receipts = exemption.prior_three_year_gross_receipts;
   const average = (receipts[0] + receipts[1] + receipts[2]) / 3;

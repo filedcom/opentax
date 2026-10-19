@@ -36,7 +36,12 @@ export const inputSchema = z.object({
   spouse_age_65_or_older: z.boolean().optional(),
   spouse_blind: z.boolean().optional(),
   taxpayer_can_be_claimed_as_dependent: z.boolean().optional(),
+  // A reviewed figure from the general node (scholarship and MFJ dependent
+  // worksheets); otherwise the worksheet uses return_earned_income.
   dependent_earned_income: z.number().nonnegative().optional(),
+  // From agi_aggregator: Form 1040 line 1z plus Schedule 1 lines 3, 6 and 8r,
+  // minus Schedule 1 line 15 (Standard Deduction Worksheet for Dependents).
+  return_earned_income: z.number().optional(),
   form8615_total_income: z.number().optional(),
   form8615_reviewed_unearned_income: z.number().nonnegative().optional(),
   form8615_reviewed_source: form8615SourceSchema.optional(),
@@ -48,6 +53,9 @@ export const inputSchema = z.object({
   // From schedule_a — total itemized deductions (Schedule A line 17)
   itemized_deductions: z.number().nonnegative().optional(),
   force_itemized: z.boolean().optional(),
+  // Election to take the standard deduction even when itemized deductions are
+  // larger (IRC §63(e); Form 1040 instructions, line 12e).
+  force_standard: z.boolean().optional(),
   // From schedule_a: cash gifts eligible for the non-itemizer deduction
   // (1040 line 12f, IRC §170(p)). `unclassified` marks 50%-organization cash
   // gifts whose donor-advised-fund or supporting-organization share is unknown.
@@ -77,6 +85,8 @@ export const inputSchema = z.object({
   // From nol_carryforward — NOL deduction (IRC §172) applied after standard/itemized deduction
   // Post-2017 NOLs limited to 80% of pre-NOL taxable income; pre-2018 NOLs limited to 100%.
   nol_deduction: z.number().nonnegative().optional(),
+  // The standard deduction the AGI aggregator assumed for the NOL 80% limit.
+  nol_limit_standard_deduction: z.number().nonnegative().optional(),
 
   // Finalized by this node for TY2026; never supplied by another node.
   standard_amount: z.number().nonnegative().optional(),
@@ -95,6 +105,13 @@ const SPOUSE_STATUSES = new Set<FilingStatus>([
 ]);
 
 // ─── Standard Deduction helpers ───────────────────────────────────────────────
+
+// Earned income on the Standard Deduction Worksheet for Dependents.
+function dependentEarnedIncome(
+  input: StandardDeductionInput,
+): number | undefined {
+  return input.dependent_earned_income ?? input.return_earned_income;
+}
 
 // Count the total number of additional-deduction factors for age/blindness.
 function additionalFactorCount(input: StandardDeductionInput): number {
@@ -117,15 +134,15 @@ function computeStandardAmount(
   const additionalPerFactor =
     cfg.standardDeductionAdditional[input.filing_status];
   if (input.taxpayer_can_be_claimed_as_dependent === true) {
-    if (input.dependent_earned_income === undefined) {
+    const earned = dependentEarnedIncome(input);
+    if (earned === undefined) {
       throw new Error("Dependent standard deduction needs earned income");
     }
     const dependentBase = Math.min(
       base,
       Math.max(
         cfg.dependentStandardDeductionFloor,
-        input.dependent_earned_income +
-          cfg.dependentStandardDeductionEarnedIncomeAddOn,
+        earned + cfg.dependentStandardDeductionEarnedIncomeAddOn,
       ),
     );
     return dependentBase + additionalFactorCount(input) * additionalPerFactor;
@@ -185,8 +202,24 @@ function resolveDeduction(
   };
 
   // IRC §63(c)(6)(A): MFS taxpayer whose spouse itemizes must also itemize.
-  if (input.mfs_spouse_itemizing === true) return itemizing;
+  if (input.mfs_spouse_itemizing === true) {
+    if (input.force_standard === true) {
+      throw new Error(
+        "A married-filing-separately return whose spouse itemizes cannot elect the standard deduction",
+      );
+    }
+    return itemizing;
+  }
   if (input.force_itemized === true) return itemizing;
+  if (input.force_standard === true) {
+    return {
+      deduction: increasedStandard,
+      takingStandard: true,
+      standardAmount,
+      nonitemizerCharitable,
+      overallLimitReduction: 0,
+    };
+  }
   if (itemized > increasedStandard + nonitemizerCharitable) return itemizing;
 
   return {
@@ -237,6 +270,18 @@ class StandardDeductionNode extends TaxNode<typeof inputSchema> {
 
     const resolved = resolveDeduction(input, cfg);
     const { deduction, takingStandard, nonitemizerCharitable } = resolved;
+    // IRC §172(a)(2): the NOL limit uses taxable income without the NOL and
+    // QBI deductions. The AGI aggregator assumed the filing-status standard
+    // deduction; any other deduction needs the keyed taxable income.
+    if (
+      input.nol_limit_standard_deduction !== undefined &&
+      (!takingStandard || deduction !== input.nol_limit_standard_deduction ||
+        nonitemizerCharitable > 0 || (input.additional_deductions ?? 0) > 0)
+    ) {
+      throw new Error(
+        "NOL 80% limit assumed the base standard deduction; enter nol_carryforward current_year_taxable_income for this return",
+      );
+    }
     if (
       takingStandard && cfg.nonitemizerCharitableLimit > 0 &&
       input.nonitemizer_charitable_cash_unclassified === true
@@ -337,13 +382,13 @@ class StandardDeductionNode extends TaxNode<typeof inputSchema> {
         form8615_child_agi: input.agi,
         form8615_child_deduction: deduction,
         ...(input.taxpayer_can_be_claimed_as_dependent === true &&
-            input.dependent_earned_income !== undefined &&
+            dependentEarnedIncome(input) !== undefined &&
             input.form8615_total_income !== undefined
           ? {
             form8615_computed_unearned_income:
               input.form8615_reviewed_unearned_income ?? Math.max(
                 0,
-                input.form8615_total_income - input.dependent_earned_income -
+                input.form8615_total_income - dependentEarnedIncome(input)! -
                   (input.form8615_early_withdrawal_penalty ?? 0),
               ),
           }

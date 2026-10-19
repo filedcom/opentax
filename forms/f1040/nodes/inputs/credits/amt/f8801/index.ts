@@ -7,6 +7,7 @@ import { TaxNode } from "../../../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../../../core/types/output-nodes.ts";
 import { schedule3 } from "../../../../intermediate/aggregation/general/return-assembly/schedule3/index.ts";
 import { form6251 } from "../../../../intermediate/forms/taxes/amt/form6251/index.ts";
+import { f1040 } from "../../../../outputs/general/return-assembly/f1040/index.ts";
 import type { NodeContext } from "../../../../../../../core/types/node-context.ts";
 
 // ─── Schema ───────────────────────────────────────────────────────────────────
@@ -43,7 +44,8 @@ export const inputSchema = z.object({
   // the deferral-item credit computed on 2025 Form 8801 line 21.
   prior_year_amt_paid: z.number().nonnegative().optional(),
 
-  // Reviewed prior Form 8801 line 26; actual filed-copy acceptance remains open.
+  // 2024 Form 8801 line 26, entered on 2025 Form 8801 line 19. Alone it
+  // needs no prior Form 6251; reviewed evidence, when given, must match.
   prior_year_carryforward: z.number().nonnegative().optional(),
 
   // Regular tax before credits — f1040 line 16 / Schedule 2
@@ -69,11 +71,11 @@ export const inputSchema = z.object({
   const carryforward = input.prior_year_carryforward ?? 0;
   if (amt <= 0 && carryforward <= 0) return;
   const evidence = input.prior_year_evidence;
+  if (amt <= 0 && evidence === undefined) return;
   if (
     !evidence ||
     (amt > 0 &&
       (!evidence.form6251 || !evidence.exclusion_part1_reconciliation)) ||
-    (carryforward > 0 && !evidence.form8801) ||
     evidence.form6251?.filed_taxpayer_ssn !== undefined &&
       evidence.form6251.filed_taxpayer_ssn !== evidence.taxpayer_ssn ||
     evidence.form8801?.filed_taxpayer_ssn !== undefined &&
@@ -85,8 +87,8 @@ export const inputSchema = z.object({
             evidence.form6251.filed_line2e_amt ||
         evidence.exclusion_part1_reconciliation?.form8801_line14_amt !==
           evidence.form6251.filed_line10_amt) ||
-    (evidence.form8801?.filed_line26_credit_carryforward ?? 0) !==
-      carryforward ||
+    evidence.form8801 !== undefined &&
+      evidence.form8801.filed_line26_credit_carryforward !== carryforward ||
     evidence.form6251?.filed_document_reference !== undefined &&
       evidence.form6251.filed_document_reference ===
         evidence.form8801?.filed_document_reference
@@ -124,12 +126,21 @@ function creditAllowed(input: F8801Input): number {
   return Math.min(availableCredit(input), excessRegularOverTmt(input));
 }
 
+// 2025 Form 8801 line 21 is line 19 alone when there is no 2024 AMT (lines
+// 1-18) and no unallowed qualified electric vehicle credit (line 20).
+function isCarryforwardOnly(input: F8801Input): boolean {
+  return (input.prior_year_carryforward ?? 0) > 0 &&
+    (input.prior_year_amt_paid ?? 0) === 0 &&
+    input.current_year_regular_tax === undefined &&
+    input.current_year_tmt === undefined;
+}
+
 // ─── Node class ───────────────────────────────────────────────────────────────
 
 class F8801Node extends TaxNode<typeof inputSchema> {
   readonly nodeType = "f8801";
   readonly inputSchema = inputSchema;
-  readonly outputNodes = new OutputNodes([schedule3, form6251]);
+  readonly outputNodes = new OutputNodes([schedule3, form6251, f1040]);
 
   compute(_ctx: NodeContext, rawInput: F8801Input): NodeResult {
     const input = inputSchema.parse(rawInput);
@@ -138,6 +149,23 @@ class F8801Node extends TaxNode<typeof inputSchema> {
       return {
         outputs: [
           this.outputNodes.output(form6251, { must_file_for_credit: true }),
+        ],
+      };
+    }
+
+    if (isCarryforwardOnly(input)) {
+      // Form 1040 finishes Part II from its own tax, credits and Form 6251
+      // line 9, so Form 6251 is completed for the credit. Schedule 3 line 6b
+      // opens at zero for Form 1040 to finalize with the allowed credit.
+      return {
+        outputs: [
+          this.outputNodes.output(form6251, { must_file_for_credit: true }),
+          this.outputNodes.output(schedule3, {
+            line6b_prior_year_min_tax_credit: 0,
+          }),
+          this.outputNodes.output(f1040, {
+            form8801_line21_credit_available: input.prior_year_carryforward ?? 0,
+          }),
         ],
       };
     }

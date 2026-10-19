@@ -175,18 +175,48 @@ test("Schedule H native FUTA-only student minor keeps Part I wages at zero", () 
 });
 
 test("Schedule H reports Additional Medicare wage excess and withholding on lines 5 and 6", () => {
-  assertThrows(
-    () =>
-      scheduleH.build({
-        employer_ein: "123456789",
-        cash_wages_over_2025_limit: true,
-        cash_wages_over_quarter_limit: false,
-        ss_wages: 176_100,
-        medicare_wages: 220_000,
-        additional_medicare_wages: 20_000,
-      }, { filer }),
-    Error,
-    "needs employee payroll source",
+  const xml = scheduleH.build({
+    employer_ein: "123456789",
+    cash_wages_over_2025_limit: true,
+    cash_wages_over_quarter_limit: false,
+    ss_wages: 176_100,
+    medicare_wages: 220_000,
+    additional_medicare_wages: 20_000,
+  }, { filer });
+  assertStringIncludes(
+    xml,
+    "<TotMedcrTaxCashWagesAddnlWhAmt>20000</TotMedcrTaxCashWagesAddnlWhAmt>",
+  );
+});
+
+// 2025 Schedule H instructions: Part I lines 1a, 3 and 7 and Part II Section A
+// lines 13-16 are filed as employer totals; no per-employee schedule is filed.
+test("Schedule H files Part I and Section A totals without employee payroll rows", () => {
+  const xml = scheduleH.build({
+    employer_ein: "123456789",
+    cash_wages_over_2025_limit: true,
+    cash_wages_over_quarter_limit: true,
+    ss_wages: 4_259,
+    medicare_wages: 4_259,
+    federal_income_tax_withheld: 169,
+    federal_unemployment: {
+      paid_only_one_state: true,
+      all_contributions_paid_on_time: true,
+      all_futa_wages_state_taxable: true,
+      state: "OH",
+      contributions_paid: 71,
+      taxable_wages: 4_259,
+      all_household_employees_included: true,
+      prior_year_quarter_threshold_met: false,
+    },
+  }, { filer });
+  assertStringIncludes(
+    xml,
+    "<SocialSecurityTaxCashWagesAmt>4259</SocialSecurityTaxCashWagesAmt>",
+  );
+  assertStringIncludes(
+    xml,
+    "<FederalIncomeTaxWithheldAmt>169</FederalIncomeTaxWithheldAmt>",
   );
 });
 
@@ -454,7 +484,7 @@ test("Schedule H does not infer required employer or unemployment facts", () => 
         filer,
       }),
     Error,
-    "employee payroll source",
+    "needs Part II unemployment details",
   );
   assertThrows(
     () =>

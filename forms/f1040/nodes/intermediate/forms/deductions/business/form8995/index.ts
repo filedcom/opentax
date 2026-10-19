@@ -235,6 +235,7 @@ export const inputSchema = z.object({
   additional_deductions: z.number().nonnegative().optional(),
   itemized_deductions: z.number().nonnegative().optional(),
   force_itemized: z.boolean().optional(),
+  force_standard: z.boolean().optional(),
   mfs_spouse_itemizing: z.boolean().optional(),
   qualified_tip_qbi_source: qualifiedTipQbiSourceSchema.optional(),
   // Filing status — used to look up the standard deduction base for income limit
@@ -292,6 +293,38 @@ function reitComponent(input: Form8995Input): number {
   return net * QBI_RATE;
 }
 
+// Prior-year carryforward lines and the carryforward to next year. i8995,
+// Lines 3, 4, 7, 8, 16 and 17: line 16 is "line 2 combined with line 3" and
+// line 17 is "line 6 combined with line 7"; if either is greater than zero,
+// enter -0-. Losses are shown here as positive carryforward amounts.
+function priorCarryforwardLines(input: Form8995Input) {
+  const line3 = input.qbi_loss_carryforward ?? 0;
+  const line7 = input.reit_loss_carryforward ?? 0;
+  if (line3 === 0 && line7 === 0) return undefined;
+  const line2 = Math.round(totalQbi(input));
+  const line6 = sumField(input.line6_sec199a_dividends);
+  return {
+    line2,
+    line3,
+    line4: Math.max(0, line2 + line3),
+    line6,
+    line7,
+    line8: Math.max(0, line6 + line7),
+    line16: Math.max(0, -(line2 + line3)),
+    line17: Math.max(0, -(line6 + line7)),
+  };
+}
+
+function priorCarryforwards(
+  lines: ReturnType<typeof priorCarryforwardLines>,
+): Record<string, number> {
+  if (lines === undefined) return {};
+  return {
+    ...(lines.line16 > 0 && { qbi_loss_carryforward: lines.line16 }),
+    ...(lines.line17 > 0 && { reit_ptp_loss_carryforward: lines.line17 }),
+  };
+}
+
 function totalBeforeLimit(input: Form8995Input): number {
   return qbiComponent(input) + reitComponent(input);
 }
@@ -326,8 +359,11 @@ function standardDeductionAmount(
 
 function sourceDeductionAmount(input: Form8995Input, cfg: F1040Config): number {
   const itemized = input.itemized_deductions ?? 0;
-  return input.force_itemized === true || input.mfs_spouse_itemizing === true
-    ? itemized
+  if (input.force_itemized === true || input.mfs_spouse_itemizing === true) {
+    return itemized;
+  }
+  return input.force_standard === true
+    ? standardDeductionAmount(input, cfg)
     : Math.max(itemized, standardDeductionAmount(input, cfg));
 }
 
@@ -1787,11 +1823,6 @@ class Form8995Node extends TaxNode<typeof inputSchema> {
       return { outputs: [] };
     }
 
-    if (netReit(input) < 0) {
-      throw new Error(
-        "Form 8995 negative REIT/PTP line 8 needs a sourced line 17 carryforward filing route",
-      );
-    }
 
     if (
       input.agi === undefined && (input.schedule_c_qbi_businesses?.some(
@@ -1945,7 +1976,7 @@ class Form8995Node extends TaxNode<typeof inputSchema> {
     const multipleLines = ownedSCorp ?? ownedLines ?? mixedLines ??
       excessLossLines ?? multipleScheduleCLines(input, cfg);
     if (
-      netQbi(input) < 0 && multipleLines === undefined &&
+      totalQbi(input) < 0 && multipleLines === undefined &&
       input.current_passive_property_sources === undefined
     ) {
       throw new Error(
@@ -2050,10 +2081,10 @@ class Form8995Node extends TaxNode<typeof inputSchema> {
         ? multipleLines ?? twoSmallScheduleCLines(input, cfg) ??
           oneScheduleCLines(input, cfg)
         : reitOnlyLines(input, cfg));
-    // The bounded filed routes carry whole-dollar line 15 exactly
-    // into Form 1040. Other QBI routes retain their existing calculation.
+    // The bounded filed routes carry whole-dollar line 15 exactly into Form
+    // 1040; the general calculation rounds its line 15 the same way.
     const beforeMinimum = simplifiedLines === undefined
-      ? qbiDeduction(input, cfg)
+      ? Math.round(qbiDeduction(input, cfg))
       : simplifiedLines.line15;
     const deduction = withMinimumDeduction(beforeMinimum, {
       businesses: (input.schedule_c_qbi_businesses ?? []).map((business) => ({
@@ -2066,6 +2097,9 @@ class Form8995Node extends TaxNode<typeof inputSchema> {
         sumField(input.qbi) !== 0 ||
         (input.schedule_f_qbi_businesses?.length ?? 0) > 0,
     }, cfg);
+    const priorLines = simplifiedLines === undefined
+      ? priorCarryforwardLines(input)
+      : undefined;
     if (
       deduction <= 0 && multipleLines === undefined &&
       currentK1Lines === undefined && currentPropertyLines === undefined &&
@@ -2074,12 +2108,16 @@ class Form8995Node extends TaxNode<typeof inputSchema> {
         simplifiedLines.line1_qbi > 0)
     ) {
       return {
-        outputs: qbiCapitalTotal(input) > 0
+        outputs: qbiCapitalTotal(input) > 0 || priorLines
           ? [{
             nodeType: this.nodeType,
-            fields: { net_capital_gain: qbiCapitalTotal(input) },
+            fields: {
+              net_capital_gain: qbiCapitalTotal(input),
+              ...priorLines,
+            },
           }]
           : [],
+        ...(priorLines && { carryforwards: priorCarryforwards(priorLines) }),
       };
     }
 
@@ -2094,6 +2132,7 @@ class Form8995Node extends TaxNode<typeof inputSchema> {
           qbi_deduction: deduction,
           net_capital_gain: qbiCapitalTotal(input),
           ...simplifiedLines,
+          ...priorLines,
           ...(deduction > beforeMinimum
             ? { minimum_deduction: deduction }
             : {}),
@@ -2101,6 +2140,9 @@ class Form8995Node extends TaxNode<typeof inputSchema> {
       },
     ];
 
+    if (priorLines) {
+      return { outputs, carryforwards: priorCarryforwards(priorLines) };
+    }
     return {
       outputs,
       ...((currentK1Lines ?? ownedSCorp ?? ownedLines)?.line16 ||

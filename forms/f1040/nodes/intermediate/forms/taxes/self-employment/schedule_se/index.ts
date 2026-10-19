@@ -30,7 +30,8 @@ export const inputSchema = z.object({
   owner_business_sources: z.array(ownerBusinessSchema).optional(),
   owner_wage_sources: z.array(ownerWageSchema).optional(),
   owner_instances: z.array(z.record(z.string(), z.unknown())).optional(),
-  // Net profit from Schedule C, line 31 (Sch SE Line 2)
+  // Schedule SE line 2: Schedule C line 31 plus K-1 (Form 1065) box 14 code
+  // A (i1040sse, Line 2). The node retains the combined amount.
   net_profit_schedule_c: z.number().optional(),
   // Net farm profit from Schedule F, line 34 (Sch SE Line 1a)
   net_profit_schedule_f: z.number().optional(),
@@ -49,13 +50,27 @@ export const inputSchema = z.object({
   w2_ss_wages: z.number().nonnegative().optional(),
 });
 
-type ScheduleSEInput = z.infer<typeof inputSchema>;
+// Schedule C and partnership K-1s each send their own line 2 total; the
+// executor merges them into an array, which compute() adds back together.
+const nodeInputSchema = inputSchema.extend({
+  net_profit_schedule_c: z.union([z.number(), z.array(z.number())])
+    .optional(),
+});
+
+type ScheduleSEInput = z.infer<typeof nodeInputSchema>;
+
+// ─── Pure helpers ─────────────────────────────────────────────────────────────
+
+function sumAmounts(value: number | number[] | undefined): number | undefined {
+  if (!Array.isArray(value)) return value;
+  return value.reduce((sum, item) => sum + item, 0);
+}
 
 // ─── Node class ───────────────────────────────────────────────────────────────
 
-class ScheduleSENode extends TaxNode<typeof inputSchema> {
+class ScheduleSENode extends TaxNode<typeof nodeInputSchema> {
   readonly nodeType = "schedule_se";
-  readonly inputSchema = inputSchema;
+  readonly inputSchema = nodeInputSchema;
   get outputNodes() {
     return new OutputNodes([
       schedule2,
@@ -72,7 +87,20 @@ class ScheduleSENode extends TaxNode<typeof inputSchema> {
   compute(ctx: NodeContext, rawInput: ScheduleSEInput): NodeResult {
     const cfg = CONFIG_BY_YEAR[ctx.taxYear];
     if (!cfg) throw new Error(`No schedule_se config for year ${ctx.taxYear}`);
-    const input = inputSchema.parse(rawInput);
+    const parsed = nodeInputSchema.parse(rawInput);
+    const input = {
+      ...parsed,
+      net_profit_schedule_c: sumAmounts(parsed.net_profit_schedule_c),
+    };
+    // Retain the combined line 2 amount, not one entry per producer.
+    const combinedLine2 = Array.isArray(parsed.net_profit_schedule_c)
+      ? [output(schedule_se, {
+        net_profit_schedule_c: parsed.net_profit_schedule_c.reduce(
+          (sum, item) => sum + item,
+          0,
+        ),
+      })]
+      : [];
 
     if (input.owner_identity && input.owner_business_sources?.length) {
       if (
@@ -80,6 +108,20 @@ class ScheduleSENode extends TaxNode<typeof inputSchema> {
       ) {
         throw new Error(
           "Owned Schedule SE needs separate owner sources for Forms 4137/8919",
+        );
+      }
+      const ownedLine2 = input.owner_business_sources.reduce(
+        (sum, row) => row.kind === "schedule_f" ? sum : sum + row.net_profit,
+        0,
+      );
+      // Every line 2 producer also sends its total; a total the owner
+      // sources do not account for is earnings no spouse owns.
+      if (
+        input.net_profit_schedule_c !== undefined &&
+        Math.abs(input.net_profit_schedule_c - ownedLine2) > 0.005
+      ) {
+        throw new Error(
+          "Joint Schedule SE line 2 has earnings without an owning spouse",
         );
       }
       const owned = ownedScheduleSE({
@@ -93,6 +135,9 @@ class ScheduleSENode extends TaxNode<typeof inputSchema> {
       return {
         outputs: [
           output(schedule_se, {
+            ...(input.net_profit_schedule_c === undefined
+              ? {}
+              : { net_profit_schedule_c: input.net_profit_schedule_c }),
             owner_instances: owned.instances,
             ...(sole ? { w2_ss_wages: sole.w2_ss_wages || undefined } : {}),
           }),
@@ -149,11 +194,12 @@ class ScheduleSENode extends TaxNode<typeof inputSchema> {
         },
       });
     if (!lines) {
-      return { outputs: [source(0)] };
+      return { outputs: [...combinedLine2, source(0)] };
     }
     const { line6, line12, line13 } = lines;
 
     const outputs: NodeOutput[] = [
+      ...combinedLine2,
       source(line13),
       this.outputNodes.output(schedule1a, {
         qualified_tips_se_deduction: line13,

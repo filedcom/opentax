@@ -5,6 +5,10 @@ import { TaxNode } from "../../../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../../../core/types/output-nodes.ts";
 import { f1040 } from "../../../../outputs/general/return-assembly/f1040/index.ts";
 import type { NodeContext } from "../../../../../../../core/types/node-context.ts";
+import {
+  type EstimatedTaxPayment,
+  EstimatedTaxQuarter,
+} from "../../../../inputs/taxes/underpayment/f2210/calculation.ts";
 
 // Form 1040-ES — Estimated Tax for Individuals
 // Captures quarterly estimated tax payments made during the year.
@@ -92,19 +96,19 @@ export const inputSchema = z.object({
   quarter_payment_records: z.array(quarterPaymentSchema).optional(),
   // Actual payment dates — used to determine whether each quarterly payment was
   // timely for underpayment penalty purposes (IRC §6654); ISO 8601 date strings
-  payment_q1_date: z.string().optional()
+  payment_q1_date: z.string().date().optional()
     .describe(
       "Date Q1 estimated payment was made (ISO 8601, e.g. '2025-04-15')",
     ),
-  payment_q2_date: z.string().optional()
+  payment_q2_date: z.string().date().optional()
     .describe(
       "Date Q2 estimated payment was made (ISO 8601, e.g. '2025-06-16')",
     ),
-  payment_q3_date: z.string().optional()
+  payment_q3_date: z.string().date().optional()
     .describe(
       "Date Q3 estimated payment was made (ISO 8601, e.g. '2025-09-15')",
     ),
-  payment_q4_date: z.string().optional()
+  payment_q4_date: z.string().date().optional()
     .describe(
       "Date Q4 estimated payment was made (ISO 8601, e.g. '2026-01-15')",
     ),
@@ -296,6 +300,52 @@ export function estimatedPaymentTotal(raw: unknown, year: number): number {
     (input.applied_from_prior_year ?? 0);
 }
 
+const FORM2210_QUARTER = {
+  q1: EstimatedTaxQuarter.Q1,
+  q2: EstimatedTaxQuarter.Q2,
+  q3: EstimatedTaxQuarter.Q3,
+  q4: EstimatedTaxQuarter.Q4,
+} as const;
+
+/** Form 2210 Part III payments: each quarter's records by payment date. */
+export function datedEstimatedPayments(
+  input: z.infer<typeof inputSchema>,
+): EstimatedTaxPayment[] {
+  const records = input.quarter_payment_records ??
+    input.joint_estimated_payment_allocation?.payments.map((row) => ({
+      quarter: row.quarter,
+      amount: row.taxpayer_allocated_amount,
+      payment_date: row.payment_date,
+    }));
+  const quarters = ["q1", "q2", "q3", "q4"] as const;
+  const quarterly = quarters.flatMap((quarter): EstimatedTaxPayment[] => {
+    const amount = input[`payment_${quarter}`] ?? 0;
+    if (amount <= 0) return [];
+    const rows = (records ?? []).filter((row) =>
+      row.quarter === quarter && row.amount > 0
+    );
+    if (rows.length > 0) {
+      return rows.map((row) => ({
+        quarter: FORM2210_QUARTER[quarter],
+        amount: row.amount,
+        date: row.payment_date,
+      }));
+    }
+    const date = input[`payment_${quarter}_date`];
+    return [{
+      quarter: FORM2210_QUARTER[quarter],
+      amount,
+      ...(date !== undefined ? { date } : {}),
+    }];
+  });
+  // A prior-year overpayment applied to this year is generally treated as
+  // paid on the first installment due date (Form 2210 instructions).
+  const applied = input.applied_from_prior_year ?? 0;
+  return applied > 0
+    ? [{ quarter: EstimatedTaxQuarter.Q1, amount: applied }, ...quarterly]
+    : quarterly;
+}
+
 class F1040esNode extends TaxNode<typeof inputSchema> {
   readonly nodeType = "f1040es";
   readonly inputSchema = inputSchema;
@@ -307,7 +357,10 @@ class F1040esNode extends TaxNode<typeof inputSchema> {
     return {
       outputs: [{
         nodeType: f1040.nodeType,
-        fields: { line26_estimated_tax: total },
+        fields: {
+          line26_estimated_tax: total,
+          f2210_estimated_payments: datedEstimatedPayments(input),
+        },
       }],
     };
   }

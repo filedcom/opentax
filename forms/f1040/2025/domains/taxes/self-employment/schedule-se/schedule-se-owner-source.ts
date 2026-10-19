@@ -18,6 +18,10 @@ import {
   inputSchema as fSchema,
   wotcReductionsByFarm,
 } from "../../../../../nodes/intermediate/forms/income/business/schedule_f/model.ts";
+import {
+  inputSchema as k1PartnershipSchema,
+  partnershipOwnerSeSources,
+} from "../../../../../nodes/inputs/income/rental-passthrough/k1_partnership/index.ts";
 import { inputSchema as w2Schema } from "../../../../../nodes/inputs/income/wages/w2/index.ts";
 import {
   ownedScheduleSE,
@@ -167,6 +171,14 @@ export function assertOwnedScheduleSE(
           : {}),
       });
     }
+  }
+  if (pending.k1_partnership) {
+    source.businesses.push(
+      ...partnershipOwnerSeSources(
+        k1PartnershipSchema.parse(pending.k1_partnership).k1_partnerships,
+        source.identity,
+      ),
+    );
   }
   if (pending.w2) {
     for (const row of w2Schema.parse(pending.w2).w2s) {

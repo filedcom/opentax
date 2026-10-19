@@ -61,7 +61,7 @@ if prior_year_agi > $150,000:
 else:
     thresholdB = prior_year_tax × 1.00   (100% rule)
 ```
-MFS filers use $75,000 instead of $150,000 — not yet modeled (no `filing_status` field in schema).
+MFS filers use $75,000 instead of $150,000 (taken from the Form 1040 filing status on the computed route).
 
 **Required Annual Payment:**
 ```
@@ -86,12 +86,12 @@ else → no outputs
 
 ### Full Per-Quarter Penalty (Form 2210 Part III)
 
-Form 2210 Part III computes the penalty period-by-period. The 2025 worksheet uses 7% for all four rate periods. Estimated payments are treated as paid on their quarterly due dates, and withholding is treated as paid evenly unless the taxpayer supplies a pre-computed result.
+Form 2210 Part III computes the penalty period-by-period. The 2025 worksheet uses 7% for all four rate periods; the due dates and rate periods live in `CONFIG_BY_YEAR[year].form2210RegularMethod`. Withholding is treated as paid one-fourth on each due date (box D, actual dates, stays blocked). Form 1040-ES payments reach Form 1040 as `f2210_estimated_payments` and are applied by date: each payment goes first to the earliest unpaid installment, any excess carries to the next column with the same date, and each underpaid amount accrues from its due date until paid or April 15, 2026. Quarterly `qN_estimated_payment` entries on this node, when given, replace the 1040-ES records and count as paid on the due dates. Line 4 is Form 1040 line 24 less refundable credits (lines 27-30 and Schedule 3 line 31 without lines 10 and 11); excess social security (Schedule 3 line 11) is added to withholding (line 6).
 
 ```
 required_installment_per_period = required_annual_payment × 25%
 underpayment_per_period = required_installment - (allocated_withholding + est_payment)
-penalty_per_period = max(0, underpayment_per_period) × 8% × (days_underpaid / 365)
+penalty_per_period = max(0, underpayment_per_period) × 7% × (days_underpaid / 365)
 total_penalty = sum of penalty_per_period across all four installment periods
 ```
 
@@ -117,11 +117,11 @@ The Short Method (Part II) is a simplified version valid when (a) withholding eq
 | High-income AGI threshold (single/MFJ/HOH/QSS) | $150,000 | IRC §6654(d)(1)(B)(ii) | https://www.irs.gov/pub/irs-pdf/i2210.pdf |
 | High-income AGI threshold (MFS) | $75,000 | IRC §6654(d)(1)(B)(ii) | https://www.irs.gov/pub/irs-pdf/i2210.pdf |
 | De minimis penalty exception | Tax after withholding < $1,000 | IRC §6654(e)(1) | https://www.irs.gov/pub/irs-pdf/i2210.pdf |
-| Penalty rate (TY2025, all quarters) | 8% per annum (federal short-term rate + 3pp) | IRC §6621; Rev Proc 2024-40 | https://www.irs.gov/pub/irs-drop/rp-24-40.pdf |
-| Daily penalty rate | 8% ÷ 365 ≈ 0.021918% per day | IRC §6654(a) | https://www.irs.gov/pub/irs-pdf/i2210.pdf |
+| Penalty rate (TY2025, all four rate periods through 4/15/26) | 7% per annum | 2025 Instructions for Form 2210, Part III Section B | https://www.irs.gov/pub/irs-pdf/i2210.pdf |
+| Daily penalty rate | 7% ÷ 365 per day | 2025 Instructions for Form 2210, penalty worksheet | https://www.irs.gov/pub/irs-pdf/i2210.pdf |
 | Farmer/fisherman exception | 2/3 of current year tax (≈66.67%) | IRC §6654(i) | https://www.irs.gov/pub/irs-pdf/i2210.pdf |
 | Q1 installment due date | April 15, 2025 | IRC §6654(c)(1) | https://www.irs.gov/pub/irs-pdf/i2210.pdf |
-| Q2 installment due date | June 15, 2025 | IRC §6654(c)(1) | https://www.irs.gov/pub/irs-pdf/i2210.pdf |
+| Q2 installment due date | June 15, 2025 (a Sunday: a payment on Monday, June 16 is timely; days late still count from 6/15) | IRC §6654(c)(1); 2025 Instructions for Form 2210, Section A line 11 note | https://www.irs.gov/pub/irs-pdf/i2210.pdf |
 | Q3 installment due date | September 15, 2025 | IRC §6654(c)(1) | https://www.irs.gov/pub/irs-pdf/i2210.pdf |
 | Q4 installment due date | January 15, 2026 | IRC §6654(c)(1) | https://www.irs.gov/pub/irs-pdf/i2210.pdf |
 

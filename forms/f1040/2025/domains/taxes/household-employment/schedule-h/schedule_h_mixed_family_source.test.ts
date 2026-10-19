@@ -424,7 +424,7 @@ test("Schedule H mixed family payroll retains actual relationships through sourc
     if (source.fica_only_payroll || source.federal_unemployment) {
       const changed = structuredClone(source);
       (changed.fica_only_payroll ?? changed.federal_unemployment)!
-        .employee_wages.at(-1)!.payroll_source_reference =
+        .employee_wages!.at(-1)!.payroll_source_reference =
           "substituted-family-payroll";
       assertThrows(() => scheduleH.build(changed, { filer, pending }));
       assertThrows(() =>

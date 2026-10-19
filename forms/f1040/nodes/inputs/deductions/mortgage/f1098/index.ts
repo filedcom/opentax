@@ -156,8 +156,14 @@ export const itemSchema = z.object({
     bytes: z.instanceof(Uint8Array),
   }).strict().optional(),
   box2_outstanding_principal: z.number().nonnegative().optional(),
+  // Pub. 936 average of first and last balance: the principal on the last
+  // day the loan secured the home this year (Dec. 31, or just before payoff).
+  // Without it the box 2 balance stands for the whole year.
+  last_day_secured_principal: z.number().nonnegative().optional(),
   box3_origination_date: z.string().optional(),
   // Reviewed Pub. 936 amount before any separate Form 8396 credit reduction.
+  // Without it, box 1 interest is limited by Pub. 936 Table 1 from box 2,
+  // the last-day principal, and the box 3 origination date.
   box1_current_year_deductible_interest: z.number().nonnegative().optional(),
   box1_deduction_workpaper_reference: z.string().trim().min(1).optional(),
   // A regular-tax second-home houseboat deduction is added back on AMT line 3.
@@ -229,9 +235,16 @@ export const itemSchema = z.object({
     });
   }
   if (reportedInterest > 0 && personalRoute) {
-    if (
-      deductibleInterest === undefined || deductibleInterest > reportedInterest
-    ) {
+    if (deductibleInterest === undefined) {
+      if ((item.box2_outstanding_principal ?? 0) <= 0) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ["box2_outstanding_principal"],
+          message:
+            "Form 1098 box 1 without reviewed deductible interest needs box 2 principal for the Pub. 936 Table 1 average balance",
+        });
+      }
+    } else if (deductibleInterest > reportedInterest) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         path: ["box1_current_year_deductible_interest"],
@@ -239,7 +252,10 @@ export const itemSchema = z.object({
           "Form 1098 box 1 needs reviewed TY2025 Schedule A deductible interest from zero through reported interest",
       });
     }
-    if (!item.box1_deduction_workpaper_reference) {
+    if (
+      deductibleInterest !== undefined &&
+      !item.box1_deduction_workpaper_reference
+    ) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         path: ["box1_deduction_workpaper_reference"],
@@ -428,6 +444,31 @@ export const inputSchema = z.object({
     },
     ctx,
   ) => {
+    const unreviewed = f1098s.filter((item) =>
+      claimsPersonalInterest(item) &&
+      item.box1_current_year_deductible_interest === undefined
+    );
+    if (
+      unreviewed.length > 0 &&
+      (mortgage_limit_review || purchase_points_cross_loan_review ||
+        cashout_refinance_review ||
+        unreviewed.length !== f1098s.filter(claimsPersonalInterest).length)
+    ) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["f1098s"],
+        message:
+          "Form 1098 reviewed deductible interest applies to every Schedule A mortgage or none; a whole-return mortgage review needs it on each",
+      });
+    }
+    if (unreviewed.length > 0 && table1Line14(f1098s) === "undated") {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["f1098s"],
+        message:
+          "Form 1098 mortgages over the $750,000 limit need each box 3 origination date to apply Pub. 936 Table 1",
+      });
+    }
     const sources = new Set<string>();
     f1098s.forEach((item, index) => {
       const reference = item.source_document_reference?.trim();
@@ -739,6 +780,93 @@ export const inputSchema = z.object({
 type F1098Item = z.infer<typeof itemSchema>;
 type F1098Items = F1098Item[];
 
+// Statutory Pub. 936 Table 1 limits (IRC 163(h)(3)(B)(ii) and (F)(i)(II)).
+const GRANDFATHERED_ACQUISITION_DEBT_LIMIT = 1_000_000;
+const POST_2017_ACQUISITION_DEBT_LIMIT = 750_000;
+
+enum Table1Line {
+  Grandfathered = "line1",
+  Pre2018Acquisition = "line2",
+  Post2017Acquisition = "line7",
+}
+
+function claimsPersonalInterest(item: F1098Item): boolean {
+  return (item.for_routing ?? ForRouting.A) === ForRouting.A &&
+    item.box1_mortgage_interest > 0;
+}
+
+function originationDate(item: F1098Item): Date | undefined {
+  const parts = /^([0-9]{2})\/([0-9]{2})\/([0-9]{4})$/.exec(
+    item.box3_origination_date ?? "",
+  );
+  if (!parts) return undefined;
+  const [month, day, year] = [parts[1], parts[2], parts[3]].map(Number);
+  const date = new Date(Date.UTC(year, month - 1, day));
+  return date.getUTCFullYear() === year && date.getUTCMonth() === month - 1 &&
+      date.getUTCDate() === day
+    ? date
+    : undefined;
+}
+
+// Pub. 936 Table 1 lines 1, 2 and 7 by the date the debt was taken out.
+function table1Line(item: F1098Item): Table1Line | undefined {
+  const date = originationDate(item);
+  if (!date) return undefined;
+  if (date < new Date("1987-10-14T00:00:00Z")) return Table1Line.Grandfathered;
+  return date < new Date("2017-12-16T00:00:00Z") ||
+      item.binding_contract_exception === true
+    ? Table1Line.Pre2018Acquisition
+    : Table1Line.Post2017Acquisition;
+}
+
+// Pub. 936 average of first and last balance over the months secured.
+function averageBalance(item: F1098Item): number {
+  const first = item.box2_outstanding_principal ?? 0;
+  const last = item.last_day_secured_principal ?? first;
+  return (first + last) / 2;
+}
+
+function averageOn(items: F1098Items, line: Table1Line): number {
+  return items.filter((item) => table1Line(item) === line)
+    .reduce((sum, item) => sum + averageBalance(item), 0);
+}
+
+/** Pub. 936 Table 1 line 14, or "undated" when a needed box 3 is missing. */
+function table1Line14(items: F1098Items): number | "undated" {
+  const mortgages = items.filter(claimsPersonalInterest);
+  const line12 = mortgages.reduce((sum, item) => sum + averageBalance(item), 0);
+  if (line12 <= POST_2017_ACQUISITION_DEBT_LIMIT) return 1;
+  if (mortgages.some((item) => table1Line(item) === undefined)) {
+    return "undated";
+  }
+  const line1 = averageOn(mortgages, Table1Line.Grandfathered);
+  const line2 = averageOn(mortgages, Table1Line.Pre2018Acquisition);
+  const line6 = Math.min(
+    Math.max(line1, GRANDFATHERED_ACQUISITION_DEBT_LIMIT),
+    line1 + line2,
+  );
+  const line7 = averageOn(mortgages, Table1Line.Post2017Acquisition);
+  const line11 = Math.min(
+    Math.max(line6, POST_2017_ACQUISITION_DEBT_LIMIT),
+    line6 + line7,
+  );
+  return line11 >= line12 ? 1 : Math.round(line11 / line12 * 1_000) / 1_000;
+}
+
+/** Pub. 936 Table 1 line 12 when box 1 interest is limited without review. */
+export function computedTable1AverageBalance(
+  items: F1098Items,
+): number | undefined {
+  const mortgages = items.filter(claimsPersonalInterest);
+  if (
+    mortgages.length === 0 ||
+    mortgages.some((item) =>
+      item.box1_current_year_deductible_interest !== undefined
+    )
+  ) return undefined;
+  return mortgages.reduce((sum, item) => sum + averageBalance(item), 0);
+}
+
 function deductibleBox6Points(item: F1098Item): number {
   const review = item.box6_construction_refinance_review;
   if (!review) return item.box6_current_year_deductible_points ?? 0;
@@ -826,6 +954,18 @@ export function assertForm1098MortgageLimitSources(
 ): void {
   if (source === undefined) return;
   const parsed = inputSchema.parse(source);
+  const table1AverageBalance = computedTable1AverageBalance(parsed.f1098s);
+  if (table1AverageBalance !== undefined) {
+    if (
+      filingStatus === FilingStatus.MarriedFilingSeparately &&
+      table1AverageBalance > POST_2017_ACQUISITION_DEBT_LIMIT / 2
+    ) {
+      throw new Error(
+        "Schedule A MFS Form 1098 mortgages over $375,000 need reviewed Pub. 936 deductible interest",
+      );
+    }
+    return;
+  }
   const currentYearOrigination = (item: F1098Item) =>
     item.box3_origination_date?.endsWith(String(taxYear)) ?? false;
   if (
@@ -1035,7 +1175,8 @@ export function assertForm1098Box1Sources(
   const items = inputSchema.parse(source).f1098s;
   const claimed = items.filter((item) =>
     (item.for_routing ?? ForRouting.A) === ForRouting.A &&
-    (item.box1_current_year_deductible_interest ?? 0) > 0
+    (item.box1_current_year_deductible_interest ?? item.box1_mortgage_interest) >
+      0
   );
   if (claimed.length === 0) return;
   const allowed = new Set(recipientTins.map((tin) => tin.replaceAll("-", "")));
@@ -1094,16 +1235,28 @@ export function assertForm1098Box4Sources(
   }
 }
 
-// Interest routed to Schedule A from a single item
-function scheduleAInterestForItem(item: F1098Item): number {
-  return item.box1_current_year_deductible_interest ?? 0;
-}
-
-// Aggregate Schedule A mortgage interest across all for_routing=A items
+// Reviewed interest, or Pub. 936 Table 1 line 15 across all mortgages.
 function aggregateScheduleAInterest(items: F1098Items): number {
-  return items
-    .filter((item) => (item.for_routing ?? ForRouting.A) === ForRouting.A)
-    .reduce((sum, item) => sum + scheduleAInterestForItem(item), 0);
+  const personal = items.filter((item) =>
+    (item.for_routing ?? ForRouting.A) === ForRouting.A
+  );
+  if (computedTable1AverageBalance(personal) === undefined) {
+    return personal.reduce(
+      (sum, item) => sum + (item.box1_current_year_deductible_interest ?? 0),
+      0,
+    );
+  }
+  const line13 = personal.reduce(
+    (sum, item) => sum + item.box1_mortgage_interest,
+    0,
+  );
+  const line14 = table1Line14(personal);
+  if (line14 === "undated") {
+    throw new Error(
+      "Form 1098 mortgages over the $750,000 limit need each box 3 origination date to apply Pub. 936 Table 1",
+    );
+  }
+  return Math.round(line13 * line14);
 }
 
 // Aggregate current-year Schedule A points reported in box 6.
@@ -1129,10 +1282,14 @@ function scheduleAOutput(items: F1098Items): NodeOutput[] {
   const interest = aggregateScheduleAInterest(items);
   const points = aggregateScheduleAPoints(items);
   const reportedInterestAndPoints = interest + points;
+  const table1AverageBalance = computedTable1AverageBalance(items);
   return reportedInterestAndPoints > 0
     ? [
       output(schedule_a, {
         line_8a_mortgage_interest_1098: reportedInterestAndPoints,
+        ...(table1AverageBalance === undefined
+          ? {}
+          : { form1098_table1_average_balance: table1AverageBalance }),
       }),
     ]
     : [];

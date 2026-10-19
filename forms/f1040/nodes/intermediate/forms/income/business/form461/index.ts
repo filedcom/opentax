@@ -91,6 +91,10 @@ class Form461Node extends TaxNode<typeof inputSchema> {
       );
     }
     if (line2 >= 0 && line6 >= 0) return { outputs: [] };
+    // The graph has Schedule C and F, but Form 461 also includes lines 3-5
+    // and 8 plus the nonbusiness adjustments on lines 10-11. Until all of
+    // those sources are joined here, the bounded C/F path needs confirmation
+    // that the omitted lines are zero.
     if (!input.scope_review) {
       throw new Error(
         "Form 461 C/F-only calculation needs a sourced review of other Part I items and Part II adjustments",

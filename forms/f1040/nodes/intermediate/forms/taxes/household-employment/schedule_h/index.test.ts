@@ -819,3 +819,32 @@ test("2026: FUTA stays refused and a minor still needs its classification", () =
   );
   assertThrows(() => compute2026(studentMinorFuta), Error);
 });
+
+// 2025 Schedule H instructions: Part I lines 1a, 3 and 7 are employer totals,
+// and Part II Section A (one state, all contributions paid on time) needs only
+// the state, contributions paid (line 14) and total FUTA wages (line 15).
+test("schedule_h: Part I and Section A totals compute without employee rows", () => {
+  const result = compute({
+    employer_ein: "123456789",
+    cash_wages_over_2025_limit: true,
+    cash_wages_over_quarter_limit: true,
+    ss_wages: 4_259,
+    medicare_wages: 4_259,
+    federal_income_tax_withheld: 169,
+    federal_unemployment: {
+      paid_only_one_state: true,
+      all_contributions_paid_on_time: true,
+      all_futa_wages_state_taxable: true,
+      state: "OH",
+      contributions_paid: 71,
+      taxable_wages: 4_259,
+      all_household_employees_included: true,
+      prior_year_quarter_threshold_met: false,
+    },
+  });
+  // Line 8 = 4,259 x 15.3% (652) + 169 = 821; line 16 = 4,259 x 0.6% = 26.
+  assertEquals(
+    findOutput(result, "schedule2")?.fields.line9_household_employment,
+    847,
+  );
+});

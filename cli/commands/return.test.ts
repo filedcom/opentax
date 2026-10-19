@@ -306,3 +306,56 @@ test("getReturnCommand points disability income under 65 to Schedule R", async (
     await sys.remove(tmpDir, { recursive: true });
   }
 });
+
+// A failed node never sends its outputs on, so the lines after it read zero:
+// a general failure leaves no filing status for the tax, and total tax shows 0.
+test("getReturnCommand marks the summary incomplete when a node fails", async () => {
+  const tmpDir = await sys.makeTempDir();
+  try {
+    const returnId = await makeReturn(tmpDir);
+    const returnPath = `${tmpDir}/${returnId}`;
+    await appendInput(returnPath, "general", {
+      filing_status: "single",
+      taxpayer_ssn: "400-45-6789",
+      spouse_can_be_claimed_as_dependent: true,
+    });
+    await appendInput(returnPath, "w2", {
+      box1_wages: 85000,
+      box2_fed_withheld: 9000,
+    });
+    const result = await getReturnCommand({ returnId, baseDir: tmpDir });
+    assertEquals(result.complete, false);
+    assertEquals(result.failedNodes.includes("general"), true);
+    assertMatch(result.warnings[0], /^\[SUMMARY_INCOMPLETE\]/);
+    assertMatch(result.warnings[0], /general/);
+  } finally {
+    await sys.remove(tmpDir, { recursive: true });
+  }
+});
+
+test("getReturnCommand marks a return without node failures complete", async () => {
+  const tmpDir = await sys.makeTempDir();
+  try {
+    const returnId = await makeReturn(tmpDir);
+    const returnPath = `${tmpDir}/${returnId}`;
+    await appendInput(returnPath, "general", {
+      filing_status: "single",
+      taxpayer_ssn: "400-45-6789",
+      digital_assets: false,
+    });
+    await appendInput(returnPath, "w2", {
+      box1_wages: 85000,
+      box2_fed_withheld: 9000,
+      employee_ssn: "400456789",
+    });
+    const result = await getReturnCommand({ returnId, baseDir: tmpDir });
+    assertEquals(result.failedNodes, []);
+    assertEquals(result.complete, true);
+    assertEquals(
+      result.warnings.some((w) => w.startsWith("[SUMMARY_INCOMPLETE]")),
+      false,
+    );
+  } finally {
+    await sys.remove(tmpDir, { recursive: true });
+  }
+});

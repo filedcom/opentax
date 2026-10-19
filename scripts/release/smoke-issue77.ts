@@ -71,8 +71,7 @@ async function compute(
   if (
     expectedWarnings === null
       ? (result.warnings ?? []).some((warning: string) =>
-        warning !==
-          "Refund is more than double total withholding — verify refundable credits."
+        !isAdvisory(warning)
       )
       : JSON.stringify(result.warnings ?? []) !==
         JSON.stringify(expectedWarnings)
@@ -82,6 +81,15 @@ async function compute(
     );
   }
   return result;
+}
+// Informational warnings an archived case may carry: the refund advisory and
+// the K-1 default that a box with no stated passive status is nonpassive
+// (2025 Instructions for Form 8582; the totals already reflect the default).
+function isAdvisory(warning: string): boolean {
+  return warning ===
+      "Refund is more than double total withholding — verify refundable credits." ||
+    /^Schedule K-1 \(Form 10(65|20-S)\) .+ has no passive or nonpassive status, so it was treated as nonpassive/
+      .test(warning);
 }
 function equal(actual: unknown, expected: number, label: string) {
   if (actual !== expected) {
@@ -211,7 +219,7 @@ export async function smokeCompletedIssue77(invoke: Invoke): Promise<void> {
       ),
     );
     const expected = fixture.correct;
-    // Refund advisory is informational; every executor or other warning fails.
+    // Advisories are informational; every executor or other warning fails.
     const result = await compute(invoke, await source(name), null);
     for (const field of fields) {
       equal(result.summary[field] ?? 0, expected[field], `${name} ${field}`);

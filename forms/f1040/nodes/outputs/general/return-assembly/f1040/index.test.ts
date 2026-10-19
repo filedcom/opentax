@@ -972,6 +972,17 @@ test("f1040: credits reduce Part I tax before Part II tax is added", () => {
   assertEquals(f.line24_total_tax, 2_750);
 });
 
+// 2025 Instructions for Form 1040, Rounding Off to Whole Dollars: a filed line
+// is whole dollars, so Schedule 2 cents (Form 8960 line 17) round on line 23.
+test("f1040: line 23 is retained in whole dollars", () => {
+  const f = fields({
+    line16_income_tax: 16_000,
+    line23_other_taxes: 17_748.59,
+  });
+  assertEquals(f.line23_other_taxes, 17_749);
+  assertEquals(f.line24_total_tax, 33_749);
+});
+
 test("f1040: EITC included in total payments", () => {
   const f = fields({
     line16_income_tax: 500,

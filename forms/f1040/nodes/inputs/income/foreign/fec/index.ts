@@ -191,6 +191,16 @@ function wageOutputs(items: FecItems): NodeOutput[] {
 // at any amount. The compensation that bore the tax is the line 1a numerator of
 // the §904(a) limitation.
 function form1116Output(items: FecItems): NodeOutput[] {
+  const electionDisqualifiers = items.flatMap((item) => {
+    const foreignServices = item.foreign_service_compensation_usd ?? 0;
+    return foreignServices > 0
+      ? [{
+        income_category: IncomeCategory.General,
+        foreign_gross_income: foreignServices,
+        source_kind: "foreign_employer_compensation" as const,
+      }]
+      : [];
+  });
   const foreignTaxItems = items.flatMap((item) => {
     const tax = item.foreign_tax_paid_usd ?? 0;
     const foreignServices = item.foreign_service_compensation_usd ?? 0;
@@ -243,10 +253,19 @@ function form1116Output(items: FecItems): NodeOutput[] {
         : {}),
     }];
   });
-  if (foreignTaxItems.length === 0) return [];
+  if (foreignTaxItems.length === 0 && electionDisqualifiers.length === 0) {
+    return [];
+  }
   return [{
     nodeType: form_1116.nodeType,
-    fields: { foreign_tax_items: foreignTaxItems },
+    fields: {
+      ...(foreignTaxItems.length > 0
+        ? { foreign_tax_items: foreignTaxItems }
+        : {}),
+      ...(electionDisqualifiers.length > 0
+        ? { election_disqualifying_foreign_income: electionDisqualifiers }
+        : {}),
+    },
   }];
 }
 

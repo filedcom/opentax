@@ -171,17 +171,18 @@ test("form8880: joint distribution cannot be subtracted from only one spouse col
   );
 });
 
-test("form8880: positive joint credit requires a complete reviewed distribution ledger", () => {
-  assertThrows(
-    () =>
-      compute({
-        filing_status: FilingStatus.MFJ,
-        ira_contributions_taxpayer: 2_000,
-        agi: 40_000,
-      }),
-    Error,
-    "needs one reviewed 2023-through-prefiling-2026 distribution ledger",
-  );
+// Form 8880 line 4 (2025 Instructions for Form 8880): distributions received
+// in the testing period. A joint return with no distribution ledger entered
+// has none, so line 4 is zero rather than an error.
+test("form8880: a joint return without a distribution ledger has no line 4 distributions", () => {
+  const result = compute({
+    filing_status: FilingStatus.MFJ,
+    ira_contributions_taxpayer: 2_000,
+    agi: 40_000,
+  });
+  const lines = fieldsOf(result.outputs, form8880) as Record<string, unknown>;
+  assertEquals(lines.print_line4a_distributions, 0);
+  assertEquals(lines.print_line12_credit, 1_000);
 });
 
 test("form8880: reviewed 2025 spouse distribution reduces both joint columns", () => {

@@ -9,7 +9,7 @@ import { FilingStatus } from "../../../../../mef/header.ts";
 import {
   CoverageType,
   form8889,
-  inputSchema,
+  statedBeneficiarySourceSchema as inputSchema,
 } from "../../../../../nodes/intermediate/forms/adjustments/health/form8889/index.ts";
 import {
   Box12Code,
