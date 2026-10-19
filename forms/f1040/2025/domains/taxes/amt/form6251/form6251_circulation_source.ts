@@ -99,13 +99,14 @@ function assertRegularCirculationExpenses(
 export function assertForm6251CirculationSource(
   fields: Readonly<Record<string, unknown>>,
   pending: Readonly<Record<string, unknown>> | undefined,
+  taxYear: number,
 ): void {
   const amount = fields.line2o_circulation_costs;
   const parsed = form59eSourceSchema.safeParse(pending?.f59e);
   const items = parsed.success ? parsed.data.f59es : [];
   const circulation = items.filter((item) =>
     item.expenditure_type === ExpenditureType.Circulation
-  ).map((item) => ({ ...item, ...resolveCirculationDeductions(item, 2025) }));
+  ).map((item) => ({ ...item, ...resolveCirculationDeductions(item, taxYear) }));
   assertDistinctCirculationCosts(
     circulation.map((item) => item.circulation_cost_schedule),
   );

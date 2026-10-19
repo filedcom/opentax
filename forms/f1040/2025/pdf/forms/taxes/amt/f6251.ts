@@ -99,7 +99,7 @@ export function form6251PdfFor(taxYear: number): PdfFormDescriptor {
     textField("primarySSN", 1, 2),
   ],
   projectFields(fields, allPending) {
-    assertForm6251CharitableSource(fields, allPending);
+    assertForm6251CharitableSource(fields, allPending, taxYear);
     if (Object.keys(fields).length === 0) return {};
     if (
       typeof fields.nol_adjustment === "number" &&
@@ -118,10 +118,10 @@ export function form6251PdfFor(taxYear: number): PdfFormDescriptor {
       );
     }
     assertForm6251Line8(fields);
-    assertForm6251Form8949Source(fields, allPending);
+    assertForm6251Form8949Source(fields, allPending, taxYear);
     assertForm6251Form4952Line2c(fields, allPending);
     assertPriorIsoSaleRetention(fields, allPending);
-    assertForm6251CirculationSource(fields, allPending);
+    assertForm6251CirculationSource(fields, allPending, taxYear);
     assertForm6251MiningSource(fields, allPending);
     assertForm6251Form8864Source(fields, allPending, taxYear);
     assertForm6251HouseboatInterestSource(fields, allPending);
@@ -176,6 +176,7 @@ export function form6251PdfFor(taxYear: number): PdfFormDescriptor {
       allPending,
       filer?.primarySSN,
       filer?.filingStatus === FilingStatus.Single,
+      taxYear,
     );
     if ((Number(fields.iso_adjustment ?? 0)) > 0) {
       if (!filer) {

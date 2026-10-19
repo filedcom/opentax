@@ -62,6 +62,7 @@ export function executeF1040Return(
     inputs.w2,
     inputs.schedule_c,
     inputs.schedule_f,
+    context.taxYear,
   );
   assertPassiveSCorpLossCalculationInputs(inputs);
   const elected = Array.isArray(inputs.f8621) &&

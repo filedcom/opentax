@@ -56,6 +56,7 @@ function afterAnniversary(date: string, years: number, sale: string): boolean {
 export function assertPriorIsoSaleCalculation(
   rawReview: unknown,
   rawRows: BasisRow | readonly BasisRow[] | undefined,
+  taxYear: number,
 ): void {
   const review = priorIsoSaleReviewSchema.parse(rawReview);
   const rows: readonly BasisRow[] = rawRows === undefined
@@ -72,8 +73,8 @@ export function assertPriorIsoSaleCalculation(
     rows.length !== 1 || !row || !Number.isSafeInteger(regularBasis) ||
     !Number.isSafeInteger(amtBasis) || amtBasis <= regularBasis ||
     review.prior_2024_form6251_line2i !== amtBasis - regularBasis ||
-    !review.exercise_date.startsWith("2024-") ||
-    !review.sale_date.startsWith("2025-") ||
+    !review.exercise_date.startsWith(`${taxYear - 1}-`) ||
+    !review.sale_date.startsWith(`${taxYear}-`) ||
     review.option_grant_date >= review.exercise_date ||
     !afterAnniversary(review.option_grant_date, 2, review.sale_date) ||
     !afterAnniversary(review.exercise_date, 1, review.sale_date) ||
@@ -89,7 +90,7 @@ export function assertPriorIsoSaleCalculation(
     )
   ) {
     throw new Error(
-      "Form 6251 prior ISO sale needs one qualifying full-lot Form 8949 gain or loss with the exact 2024 Form 3921 and Form 6251 bases",
+      "Form 6251 prior ISO sale needs one qualifying full-lot Form 8949 gain or loss with the exact prior-year Form 3921 and Form 6251 bases",
     );
   }
 }
@@ -100,6 +101,7 @@ export function assertPriorIsoSaleExport(
   pending: Readonly<Record<string, unknown>> | undefined,
   primaryTin: string | undefined,
   isSingle: boolean,
+  taxYear: number,
 ): void {
   const parsed = assertPriorIsoSaleRetention(rawFields, pending);
   if (!parsed) return;
@@ -109,6 +111,7 @@ export function assertPriorIsoSaleExport(
       | BasisRow
       | BasisRow[]
       | undefined,
+    taxYear,
   );
   const rawSale = rawSaleSchema.parse(pending?.f8949).f8949s;
   const transaction = rawSale[0];
@@ -141,7 +144,7 @@ export function assertPriorIsoSaleExport(
       rawFields.line11_amt
   ) {
     throw new Error(
-      "Form 6251 prior ISO sale needs matching filer, raw 2025 broker/Form 8949 row, Schedule 2 and Form 1040 capital gain",
+      "Form 6251 prior ISO sale needs matching filer, raw current-year broker/Form 8949 row, Schedule 2 and Form 1040 capital gain",
     );
   }
 }

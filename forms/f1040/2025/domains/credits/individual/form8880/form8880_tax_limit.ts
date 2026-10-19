@@ -421,7 +421,7 @@ export function assertEmployeeContributionReturn(
   taxYear: number,
 ): void {
   assertAbleDistributionReturn(pending);
-  assertAbleSelfEmploymentReturn(pending);
+  assertAbleSelfEmploymentReturn(pending, taxYear);
   const fields = pending.form8880 ?? {};
   assertAbleDistributionLedger(
     form8880InputSchema.pick({

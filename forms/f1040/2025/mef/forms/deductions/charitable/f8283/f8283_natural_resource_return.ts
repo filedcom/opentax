@@ -97,6 +97,7 @@ export function assertCharitableNaturalResourceReturn(
   assertForm6251CharitableSource(
     (pending.form6251 ?? {}) as Record<string, unknown>,
     pending,
+    mefTaxYear(context),
   );
   if (!active) return;
   const ctx = { taxYear: mefTaxYear(context), formType: "f1040" };

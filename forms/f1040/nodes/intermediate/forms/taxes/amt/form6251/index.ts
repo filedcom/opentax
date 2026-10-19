@@ -652,6 +652,7 @@ class Form6251Node extends TaxNode<typeof inputSchema> {
       assertPriorIsoSaleCalculation(
         input.prior_iso_sale_review,
         basisRows,
+        ctx.taxYear,
       );
     }
     const basisIds = new Set<string>();

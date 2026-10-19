@@ -16,6 +16,9 @@ import { itemSchema as fSchema } from "../../../../../nodes/intermediate/forms/i
 import { w2ItemSchema } from "../../../../../nodes/inputs/income/wages/w2/index.ts";
 import { FilingStatus, TS } from "../../../../../nodes/types.ts";
 import { f1040_2025 } from "../../../../index.ts";
+import { assertAbleSelfEmploymentSources } from "./able_self_employment_sources.ts";
+import { scheduleSELines } from "../../../../../nodes/intermediate/forms/taxes/self-employment/schedule_se/calculation.ts";
+import { CONFIG_BY_YEAR } from "../../../../../nodes/config/index.ts";
 import { buildPending } from "../../../../mef/execution/pending.ts";
 import { buildMefBundle } from "../../../../mef/builder.ts";
 import { buildPdfBytes, type PdfPageOrigin } from "../../../../pdf/builder.ts";
@@ -610,4 +613,76 @@ test("ABLE compensation loss does not consume wages; unsupported and incomplete 
       })
     );
   }
+});
+
+test("ABLE self-employment SE tax uses the return year's wage base", () => {
+  const wages = 180_000, profit = 40_000;
+  const w2 = [w2ItemSchema.parse({
+    source_document_reference: "primary-w2-issued",
+    employee_ssn: "111-22-3333",
+    employer_ein: "12-3456789",
+    employer_name: "Reviewed Employer",
+    employer_address_line1: "1 Work St",
+    employer_address_city: "Austin",
+    employer_address_state: "TX",
+    employer_address_zip: "78701",
+    box2_fed_withheld: 0,
+    box1_wages: wages,
+    box3_ss_wages: wages,
+    box5_medicare_wages: wages,
+  })];
+  const schedule_c = [cSchema.parse({
+    business_reference: "base-c",
+    proprietor_recipient: TS.T,
+    line_a_principal_business: "Consulting",
+    line_b_business_code: "541990",
+    line_f_accounting_method: "cash",
+    line_g_material_participation: true,
+    line_i_made_1099_payments: false,
+    line_32_at_risk: "a",
+    qbi_no_other_adjustments_confirmed: true,
+    line_1_gross_receipts: profit,
+  })];
+  const deduction = (year: 2025 | 2026) =>
+    scheduleSELines(
+      { net_profit_schedule_c: profit, w2_ss_wages: wages },
+      CONFIG_BY_YEAR[year].ssWageBase,
+    )?.line13 ?? 0;
+  assertEquals(deduction(2026) > deduction(2025), true);
+  const review = (year: 2025 | 2026) =>
+    ableContributionReviewSchema.parse({
+      // The review schema is TY2025-only; the wage base is the return's.
+      tax_year: 2025,
+      reviewed_by: "ABLE Reviewer",
+      reviewed_on: "2026-04-10",
+      complete_able_account_inventory_confirmed: true,
+      accounts: [account(TS.T, [{
+        ref: "base-c",
+        kind: AbleBusinessKind.ScheduleC,
+        profit,
+        owner: TS.T,
+      }], deduction(year), 1_000, w2)],
+    });
+  const general = { taxpayer_ssn: "111-22-3333" };
+  assertAbleSelfEmploymentSources(
+    review(2026),
+    general,
+    w2,
+    schedule_c,
+    undefined,
+    2026,
+  );
+  assertThrows(
+    () =>
+      assertAbleSelfEmploymentSources(
+        review(2026),
+        general,
+        w2,
+        schedule_c,
+        undefined,
+        2025,
+      ),
+    Error,
+    "deductible SE tax differs",
+  );
 });

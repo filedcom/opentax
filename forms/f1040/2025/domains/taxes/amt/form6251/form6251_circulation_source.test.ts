@@ -52,7 +52,7 @@ function retained(items = [item]) {
 test("Form 6251 line 2o replays reviewed deductions and their regular expense", () => {
   const fields = { line2o_circulation_costs: -2_000 };
   const base = retained();
-  assertForm6251CirculationSource(fields, base);
+  assertForm6251CirculationSource(fields, base, 2025);
   for (
     const altered of [
       { ...item, amt_deduction: 9_000 },
@@ -64,11 +64,11 @@ test("Form 6251 line 2o replays reviewed deductions and their regular expense", 
       assertForm6251CirculationSource(fields, {
         ...base,
         f59e: { f59es: [altered] },
-      })
+      }, 2025)
     );
   }
-  assertThrows(() => assertForm6251CirculationSource(fields, undefined));
-  assertThrows(() => assertForm6251CirculationSource({}, base));
+  assertThrows(() => assertForm6251CirculationSource(fields, undefined, 2025));
+  assertThrows(() => assertForm6251CirculationSource({}, base, 2025));
 });
 test("Form 6251 circulation cannot claim an unjoined, reused or changed expense", () => {
   const base = retained(), fields = { line2o_circulation_costs: -2_000 };
@@ -142,7 +142,7 @@ test("Form 6251 circulation cannot claim an unjoined, reused or changed expense"
     ]
   ) {
     assertThrows(
-      () => assertForm6251CirculationSource(fields, changed),
+      () => assertForm6251CirculationSource(fields, changed, 2025),
       Error,
       "distinct owned Schedule C expenses",
     );
@@ -155,11 +155,11 @@ test("Form 6251 circulation cannot claim an unjoined, reused or changed expense"
     assertForm6251CirculationSource({ line2o_circulation_costs: -4000 }, {
       ...base,
       f59e: { f59es: [item, repeated] },
-    })
+    }, 2025)
   );
 });
 test("Form 6251 zero-net circulation still validates every regular expense", () => {
-  assertForm6251CirculationSource({}, undefined);
+  assertForm6251CirculationSource({}, undefined, 2025);
   const offsetting = {
     ...item,
     regular_tax_deduction: 10000,
@@ -172,7 +172,7 @@ test("Form 6251 zero-net circulation still validates every regular expense", () 
     },
   };
   const base = retained([item, offsetting]);
-  assertForm6251CirculationSource({}, base);
+  assertForm6251CirculationSource({}, base, 2025);
   for (
     const changed of [
       {
@@ -189,11 +189,11 @@ test("Form 6251 zero-net circulation still validates every regular expense", () 
       assertForm6251CirculationSource({}, {
         ...base,
         f59e: { f59es: [item, changed] },
-      })
+      }, 2025)
     );
   }
   assertThrows(() =>
-    assertForm6251CirculationSource({}, { f59e: { f59es: [] } })
+    assertForm6251CirculationSource({}, { f59e: { f59es: [] } }, 2025)
   );
 });
 
@@ -223,17 +223,44 @@ test("circulation expense follows the spouse proprietor on a joint return", () =
       }],
     },
   };
-  assertForm6251CirculationSource({ line2o_circulation_costs: -2000 }, joint);
+  assertForm6251CirculationSource({ line2o_circulation_costs: -2000 }, joint, 2025);
   assertThrows(() =>
     assertForm6251CirculationSource({ line2o_circulation_costs: -2000 }, {
       ...joint,
       general: { ...identity, filing_status: "mfs" },
-    })
+    }, 2025)
   );
   assertThrows(() =>
     assertForm6251CirculationSource({ line2o_circulation_costs: -2000 }, {
       ...joint,
       f1040: { ...identity, spouse_ssn: "999999999" },
-    })
+    }, 2025)
+  );
+});
+
+test("Form 6251 circulation schedule counts years from the return's year", () => {
+  const scheduled = itemSchema.parse({
+    ...item,
+    amortization_period_start: "2026-01-01",
+    original_amount: 30_000,
+    remaining_unamortized: 30_000,
+    regular_tax_deduction: 30_000,
+    amt_deduction: 10_000,
+    circulation_cost_schedule: {
+      owner_tin: "123456789",
+      calendar_year_taxpayer_confirmed: true,
+      section173_eligible_costs_confirmed: true,
+      no_section173_capitalization_election_confirmed: true,
+      costs_paid_or_incurred_year: 2026,
+      cost_records: [{ source_reference: "costs-2026", amount: 30_000 }],
+      prior_years: [],
+    },
+  });
+  const fields = { line2o_circulation_costs: 20_000 };
+  assertForm6251CirculationSource(fields, retained([scheduled]), 2026);
+  assertThrows(
+    () => assertForm6251CirculationSource(fields, retained([scheduled]), 2025),
+    Error,
+    "matching dated costs",
   );
 });

@@ -8,6 +8,7 @@ import {
 export function assertForm6251CharitableSource(
   fields: Record<string, unknown>,
   pending: Readonly<Record<string, unknown>> | undefined,
+  taxYear: number,
 ) {
   const combinedLine3 = Number(fields.line3_form8864_income_exclusion ?? 0) +
     Number(fields.line3_houseboat_interest_addback ?? 0) +
@@ -93,7 +94,7 @@ export function assertForm6251CharitableSource(
       );
     }
   }
-  const calc = reconcileProducingMiningCharitableAmt(regular, 2025)!;
+  const calc = reconcileProducingMiningCharitableAmt(regular, taxYear)!;
   if (
     source.line_11_cash_contributions !== calc.regular_current_cash_allowed ||
     source.line_12_noncash_contributions !==

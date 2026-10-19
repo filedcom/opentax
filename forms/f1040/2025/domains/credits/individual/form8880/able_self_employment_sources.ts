@@ -26,6 +26,7 @@ export function assertAbleSelfEmploymentSources(
   rawWages: unknown,
   rawBusinesses: unknown,
   rawFarms: unknown,
+  taxYear: number,
 ): void {
   if (
     !review.accounts.some((a) => a.employed_beneficiary_review?.self_employment)
@@ -126,7 +127,7 @@ export function assertAbleSelfEmploymentSources(
         (s, w) => s + ((w.box3_ss_wages ?? 0) + (w.box7_ss_tips ?? 0)),
         0,
       ),
-    }, CONFIG_BY_YEAR[2025].ssWageBase);
+    }, CONFIG_BY_YEAR[taxYear].ssWageBase);
     if (source.deductible_se_tax !== (lines?.line13 ?? 0)) {
       throw new Error(
         "ABLE compensation deductible SE tax differs from the owned business and wage sources",
@@ -137,6 +138,7 @@ export function assertAbleSelfEmploymentSources(
 
 export function assertAbleSelfEmploymentReturn(
   pending: Readonly<Record<string, unknown>>,
+  taxYear: number,
 ): void {
   const general = generalSchema.pick({
     form8880_able_contribution_review: true,
@@ -188,5 +190,6 @@ export function assertAbleSelfEmploymentReturn(
     w.w2s,
     c.schedule_cs,
     pending.schedule_f,
+    taxYear,
   );
 }

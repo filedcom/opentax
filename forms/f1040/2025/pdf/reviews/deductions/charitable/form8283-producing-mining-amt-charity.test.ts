@@ -1,11 +1,21 @@
 import { test } from "bun:test";
 import * as fs from "node:fs/promises";
 import * as sys from "../../../../../../../scripts/support/sys.ts";
-import { assertEquals, assertRejects, assertStringIncludes } from "@std/assert";
+import {
+  assertEquals,
+  assertRejects,
+  assertStringIncludes,
+  assertThrows,
+} from "@std/assert";
 import { f1040_2025 } from "../../../../index.ts";
 import { buildPending } from "../../../../mef/execution/pending.ts";
 import { buildMefBundle } from "../../../../mef/builder.ts";
 import { buildPdfBytes, type PdfPageOrigin } from "../../../builder.ts";
+import { assertForm6251CharitableSource } from "../../../../domains/taxes/amt/form6251/form6251_charitable_source.ts";
+import {
+  reconcileProducingMiningCharitableAmt,
+  scheduleA,
+} from "../../../../../nodes/inputs/deductions/itemized/schedule_a/index.ts";
 import {
   producingMiningAmtCharityCases,
   reviewedProducingMiningAmtCharityGift,
@@ -242,3 +252,34 @@ for (const kind of producingMiningAmtCharityCases) {
     }
   });
 }
+
+test("Producing617 AMT charity source replays against the return's year", async () => {
+  const source = await reviewedProducingMiningAmtCharityGift(
+    "partly_limited_amt",
+  );
+  const p = buildPending(f1040_2025.executeReturn(source.inputs).pending);
+  const fields = p.form6251 as Record<string, unknown>;
+  assertForm6251CharitableSource(fields, p, 2025);
+  const regular = scheduleA.inputSchema.parse({
+    ...p.schedule_a,
+    line_11_cash_contributions: undefined,
+    line_12_noncash_contributions: undefined,
+    line_13_contribution_carryover: undefined,
+  });
+  const ty2026 = {
+    ...p,
+    schedule_a: {
+      ...p.schedule_a,
+      charitable_amt_reconciliation: reconcileProducingMiningCharitableAmt(
+        regular,
+        2026,
+      ),
+    },
+  };
+  assertForm6251CharitableSource(fields, ty2026, 2026);
+  assertThrows(
+    () => assertForm6251CharitableSource(fields, ty2026, 2025),
+    Error,
+    "differs from owned source",
+  );
+});

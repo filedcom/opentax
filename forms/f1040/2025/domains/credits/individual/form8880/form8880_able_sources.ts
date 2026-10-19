@@ -68,7 +68,8 @@ export function assertPublicAbleContributionSources(
   rawGeneral: unknown,
   rawW2: unknown,
   rawBusinesses?: unknown,
-  rawFarms?: unknown,
+  rawFarms: unknown,
+  taxYear: number,
 ): void {
   // The return graph reports an invalid filing status; only a review needs it here.
   const reviews = generalSchema.pick({
@@ -97,6 +98,7 @@ export function assertPublicAbleContributionSources(
       rawW2,
       rawBusinesses,
       rawFarms,
+      taxYear,
     );
     assertAbleEmploymentW2Sources(
       general.form8880_able_contribution_review,
