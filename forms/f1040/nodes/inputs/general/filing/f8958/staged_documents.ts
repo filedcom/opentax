@@ -2,6 +2,7 @@ import { z } from "zod";
 import { execute } from "../../../../../../../core/runtime/executor.ts";
 import { buildExecutionPlan } from "../../../../../../../core/runtime/planner.ts";
 import { registry } from "../../../../../2025/registry.ts";
+import type { NodeContext } from "../../../../../../../core/types/node-context.ts";
 import {
   type FilerIdentity,
   FilingStatus as MefFilingStatus,
@@ -113,11 +114,11 @@ export const form8958StagedPdfFieldMap = {
 export function projectStagedForm8958Documents(
   rawStart: z.infer<typeof stagedStartSchema>,
   filer: FilerIdentity,
+  ctx: NodeContext,
 ) {
   const start = stagedStartSchema.parse(rawStart);
   const source = start.f8958;
   const prepared = prepareF8958Allocation(source);
-  const ctx = { taxYear: 2025, formType: "f1040" };
   const execution = execute(buildExecutionPlan(registry), registry, start, ctx);
   if (execution.diagnostics.length !== 0) {
     throw new Error("Form 8958 staged return has executor diagnostics");

@@ -729,6 +729,7 @@ function wageFields(w2s: W2Items): F1040Input {
 function communityW2Fields(
   w2s: W2Items,
   allocation: NonNullable<z.infer<typeof inputSchema>["f8958_allocation"]>,
+  taxYear: number,
 ): F1040Input {
   const item = w2s[0];
   const wages = allocation.rows.find((row) =>
@@ -740,8 +741,8 @@ function communityW2Fields(
   if (
     w2s.length !== 1 || !item || !wages || !withholding ||
     allocation.rows.length !== 2 ||
-    allocation.community_property_period.from !== "2025-01-01" ||
-    allocation.community_property_period.through !== "2025-12-31" ||
+    allocation.community_property_period.from !== `${taxYear}-01-01` ||
+    allocation.community_property_period.through !== `${taxYear}-12-31` ||
     wages.allocation_basis !== AllocationBasis.CommunityEqual ||
     withholding.allocation_basis !== AllocationBasis.CommunityEqual ||
     wages.source_document_id !== withholding.source_document_id ||
@@ -1341,7 +1342,7 @@ class W2Node extends TaxNode<typeof inputSchema> {
     const excessDeferral = codeDExcessDeferral(input.w2s, ctx.taxYear);
 
     const incomeTaxFields = input.f8958_allocation
-      ? communityW2Fields(input.w2s, input.f8958_allocation)
+      ? communityW2Fields(input.w2s, input.f8958_allocation, ctx.taxYear)
       : { ...withholdingFields(input.w2s), ...wageFields(input.w2s) };
     const f1040Fields: F1040Input = {
       ...incomeTaxFields,
