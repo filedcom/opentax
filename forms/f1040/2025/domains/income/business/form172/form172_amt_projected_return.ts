@@ -1,3 +1,4 @@
+import type { NodeContext } from "../../../../../../../core/types/node-context.ts";
 import { z } from "zod";
 import type { SourceDocumentBytes } from "../../../../../../../core/runtime/source-documents.ts";
 import { stageForm172ProjectedReturn } from "./form172_projected_return.ts";
@@ -29,6 +30,7 @@ export async function stageForm172AmtProjectedReturn(
   rawRegularDocuments: readonly SourceDocumentBytes[],
   rawAmtBinding: unknown,
   rawAmtDocuments: readonly SourceDocumentBytes[],
+  context: NodeContext,
 ) {
   // Own every input and source before either nested staging function can await.
   const inputs = structuredClone(rawInputs);
@@ -55,9 +57,10 @@ export async function stageForm172AmtProjectedReturn(
     inputs,
     regularBinding,
     regularDocuments,
+    context,
   );
   const amt = await stageForm172AmtReviewSource(amtBinding, amtDocuments);
-  if (amt.applicationYear !== 2025 || amt.originYear !== projected.originYear) {
+  if (amt.applicationYear !== context.taxYear || amt.originYear !== projected.originYear) {
     throw new Error("Current AMT review differs from the projected NOL years");
   }
   const annual = JSON.parse(

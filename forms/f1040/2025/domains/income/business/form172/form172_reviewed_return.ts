@@ -1,3 +1,5 @@
+import type { NodeContext } from "../../../../../../../core/types/node-context.ts";
+import { assertForm172ReviewYear } from "./form172_current_deduction.ts";
 import type { SourceDocumentBytes } from "../../../../../../../core/runtime/source-documents.ts";
 import { reconcileForm172ModifiedIncome } from "./form172_modified_income.ts";
 import type { ExecuteResult } from "../../../../../../../core/runtime/executor.ts";
@@ -29,9 +31,11 @@ export async function stageForm172ReviewedReturnCalculation(
   rawInputs: Readonly<Record<string, unknown>>,
   rawBinding: unknown,
   rawDocuments: readonly SourceDocumentBytes[],
+  context: NodeContext,
   executeStartingReturn: (inputs: Record<string, unknown>) => ExecuteResult =
     f1040_2025.executeReturn,
 ) {
+  assertForm172ReviewYear(context);
   const inputs = structuredClone(rawInputs);
   const documents = rawDocuments.map((d) => ({
     reference: d.reference,
@@ -52,7 +56,11 @@ export async function stageForm172ReviewedReturnCalculation(
       throw new Error(`NOL starting return rejects detached ${key} inputs`);
     }
   }
-  const staged = await stageForm172CurrentDeductionSource(binding, documents);
+  const staged = await stageForm172CurrentDeductionSource(
+    binding,
+    documents,
+    context,
+  );
   // The staging function already verifies exact canonical bytes and this claim.
   const claim =
     (binding as { current_review: { reference: string } }).current_review;
@@ -86,10 +94,7 @@ export async function stageForm172ReviewedReturnCalculation(
     );
   }
   const replayInput = f1040.inputSchema.parse(execution.replayInputs.f1040);
-  const replay = f1040.compute(
-    { taxYear: 2025, formType: "f1040" },
-    replayInput,
-  ).outputs.find((o) => o.nodeType === "f1040")?.fields;
+  const replay = f1040.compute(context, replayInput).outputs.find((o) => o.nodeType === "f1040")?.fields;
   if (!replay) throw new Error("NOL finalizer replay is missing");
   for (const key of Object.keys(replay).filter((k) => /^line\d/.test(k))) {
     if (JSON.stringify(replay[key]) !== JSON.stringify(before[key])) {
@@ -156,6 +161,7 @@ export async function stageForm172ReviewedReturnCalculation(
     annual,
     pending,
     staged.currentAnnualCalculation.modifiedAgi,
+    context,
   );
   return {
     ...staged,

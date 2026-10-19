@@ -1,10 +1,14 @@
+import type { NodeContext } from "../../../../../../../core/types/node-context.ts";
 import { z } from "zod";
 import {
   type SourceDocumentBytes,
   VerifiedSourceDocuments,
 } from "../../../../../../../core/runtime/source-documents.ts";
 import { parseReviewedNolOrigin } from "./form172_nol_origin.ts";
-import { calculateForm172CurrentDeduction } from "./form172_current_deduction.ts";
+import {
+  assertForm172ReviewYear,
+  calculateForm172CurrentDeduction,
+} from "./form172_current_deduction.ts";
 
 const claim = z.object({
   reference: z.string().trim().min(1),
@@ -46,7 +50,9 @@ function parsePackage(bytes: Uint8Array): Record<string, unknown> {
 export async function stageForm172CurrentDeductionSource(
   rawBinding: unknown,
   rawDocuments: readonly SourceDocumentBytes[],
+  context: NodeContext,
 ) {
+  assertForm172ReviewYear(context);
   const binding = bindingSchema.parse(rawBinding);
   const documents = rawDocuments.map((d) => ({
     reference: d.reference,
@@ -90,6 +96,7 @@ export async function stageForm172CurrentDeductionSource(
     origin,
     history,
     current,
+    context,
     farm,
   );
   return {

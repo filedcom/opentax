@@ -203,11 +203,12 @@ test("Form172 current workpaper matches public wages deduction and retained fina
       f.inputs,
       f.binding,
       f.documents,
+      { taxYear: 2025, formType: "f1040" },
     );
     assertEquals(r.current_form1040_before_nol.line11_agi, 50000);
     assertEquals(r.current_form1040_before_nol.line15_taxable_income, 34250);
     assertEquals(r.deduction, 27400);
-    assertEquals(r.carryTo2026, mixedKind ? 8600 : 16600);
+    assertEquals(r.carryToNextYear, mixedKind ? 8600 : 16600);
     assertEquals(r.currentReturnStartingAmountsReconciled, true);
     assertEquals(r.publicForm1040JoinVerified, false);
     assertEquals(r.currentAgiDependentRefiguresVerified, false);
@@ -233,6 +234,7 @@ test("Form172 current workpaper rejects public income identity status and detach
         { ...f.inputs, ...patch },
         f.binding,
         f.documents,
+        { taxYear: 2025, formType: "f1040" },
       )
     );
   }
@@ -267,7 +269,7 @@ test("Form172 current workpaper rejects internally valid source amounts differin
       }, [f.documents[0], f.documents[1], {
         reference: f.currentReview.reference,
         bytes,
-      }])
+      }], { taxYear: 2025, formType: "f1040" })
     );
   }
 });
@@ -277,6 +279,7 @@ test("Form172 current return owns public input and source bytes during digest aw
     f.inputs,
     f.binding,
     f.documents,
+    { taxYear: 2025, formType: "f1040" },
   );
   f.inputs.general = {};
   f.inputs.w2 = [];

@@ -179,10 +179,10 @@ async function source(mixedKind = false) {
 test("Form172 retained current packages reproduce regular and mixed deduction and closing", async () => {
   for (const mixedKind of [false, true]) {
     const { documents, binding } = await source(mixedKind);
-    const r = await stageForm172CurrentDeductionSource(binding, documents);
+    const r = await stageForm172CurrentDeductionSource(binding, documents, { taxYear: 2025, formType: "f1040" });
     assertEquals(r.historyOpeningLoss, mixedKind ? 36000 : 44000);
     assertEquals(r.deduction, mixedKind ? 24000 : 16000);
-    assertEquals(r.carryTo2026, mixedKind ? 12000 : 28000);
+    assertEquals(r.carryToNextYear, mixedKind ? 12000 : 28000);
     assertEquals(r.review_package_manifest.length, mixedKind ? 4 : 3);
     assertEquals(r.reviewPackageBytesVerified, true);
     for (
@@ -208,23 +208,24 @@ test("Form172 current source rejects every tampered missing duplicate and extra 
       }));
       changed[i].bytes[0] = 32;
       await assertRejects(() =>
-        stageForm172CurrentDeductionSource(binding, changed)
+        stageForm172CurrentDeductionSource(binding, changed, { taxYear: 2025, formType: "f1040" })
       );
       await assertRejects(() =>
         stageForm172CurrentDeductionSource(
           binding,
           documents.filter((_, n) => n !== i),
+          { taxYear: 2025, formType: "f1040" },
         )
       );
     }
     await assertRejects(() =>
-      stageForm172CurrentDeductionSource(binding, [...documents, documents[0]])
+      stageForm172CurrentDeductionSource(binding, [...documents, documents[0]], { taxYear: 2025, formType: "f1040" })
     );
     await assertRejects(() =>
       stageForm172CurrentDeductionSource(binding, [...documents, {
         ...documents[0],
         reference: "extra",
-      }])
+      }], { taxYear: 2025, formType: "f1040" })
     );
   }
 });
@@ -242,7 +243,7 @@ test("Form172 current source rejects owner year kind and asserted result substit
     ]
   ) {
     await assertRejects(() =>
-      stageForm172CurrentDeductionSource({ ...binding, ...patch }, documents)
+      stageForm172CurrentDeductionSource({ ...binding, ...patch }, documents, { taxYear: 2025, formType: "f1040" })
     );
   }
   const mixedSource = await source(true);
@@ -250,7 +251,7 @@ test("Form172 current source rejects owner year kind and asserted result substit
     stageForm172CurrentDeductionSource({
       ...mixedSource.binding,
       history_kind: "regular",
-    }, mixedSource.documents)
+    }, mixedSource.documents, { taxYear: 2025, formType: "f1040" })
   );
 });
 test("Form172 current source recomputes current and historical facts after replacement digest", async () => {
@@ -279,7 +280,7 @@ test("Form172 current source recomputes current and historical facts after repla
       }, [documents[0], documents[1], {
         reference: binding.current_review.reference,
         bytes,
-      }])
+      }], { taxYear: 2025, formType: "f1040" })
     );
   }
   const badHistory = JSON.parse(new TextDecoder().decode(documents[1].bytes));
@@ -293,7 +294,7 @@ test("Form172 current source recomputes current and historical facts after repla
       documents[0],
       { reference: binding.history.reference, bytes },
       documents[2],
-    ])
+    ], { taxYear: 2025, formType: "f1040" })
   );
 });
 test("Form172 current source rejects noncanonical duplicate keys and invalid UTF8", async () => {
@@ -320,13 +321,13 @@ test("Form172 current source rejects noncanonical duplicate keys and invalid UTF
       }, [documents[0], documents[1], {
         reference: binding.current_review.reference,
         bytes,
-      }])
+      }], { taxYear: 2025, formType: "f1040" })
     );
   }
 });
 test("Form172 current source owns bindings and every byte before first await", async () => {
   const { documents, binding } = await source(true);
-  const pending = stageForm172CurrentDeductionSource(binding, documents);
+  const pending = stageForm172CurrentDeductionSource(binding, documents, { taxYear: 2025, formType: "f1040" });
   binding.taxpayer_ssn = "999887777";
   binding.current_review.sha256 = "0".repeat(64);
   binding.farming_review!.reference = "changed";
@@ -336,5 +337,5 @@ test("Form172 current source owns bindings and every byte before first await", a
   }
   const r = await pending;
   assertEquals(r.deduction, 24000);
-  assertEquals(r.carryTo2026, 12000);
+  assertEquals(r.carryToNextYear, 12000);
 });
