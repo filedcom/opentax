@@ -188,6 +188,10 @@ export interface F1040Config {
   /** Form 2555 line 29b: the year's IRC 911(c)(2)(B) housing-limit notice. */
   foreignHousingLimits: HousingLimitTable;
 
+  // ── Controlled foreign corporations (5471, 8992) ───────────────────────
+  /** IRC §951A(b)(2): tested income is reduced by the net deemed tangible income return for CFC years beginning in the year. */
+  cfcNetDeemedTangibleIncomeReturn: boolean;
+
   // ── Expatriation (8854) ──────────────────────────────────────────────────
   /** IRC §877(a)(2)(A): covered above this average annual net income tax for an expatriation in the year. */
   expatriationAverageTaxThreshold: number;

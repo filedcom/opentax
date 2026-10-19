@@ -158,6 +158,9 @@ export const config2026: F1040Config = {
   // Notice 2026-25 sec. 3; standard $39,870 ($109.23 a day), draft 2026
   // Instructions for Form 2555, line 29b.
   foreignHousingLimits: noticeHousingLimits,
+  // P.L. 119-21 §70323 strikes the net deemed tangible income return
+  // (net CFC tested income) for CFC tax years beginning after 2025.
+  cfcNetDeemedTangibleIncomeReturn: false,
   // RP §4.37 ($211,000) and §4.38 ($910,000).
   expatriationAverageTaxThreshold: 211_000,
   expatriationMarkToMarketExclusion: 910_000,
