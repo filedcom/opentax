@@ -425,6 +425,7 @@ export function assertReturnScheduleJoins(
           "line8p_excess_business_loss",
           "line8q_able_taxable_earnings",
           "line8r_taxable_scholarships",
+          "line8t_nqdc_distribution",
         ) - line("line8d_foreign_earned_income_exclusion") +
         schedule1ActivityNotForProfitTotal(schedule1) +
         schedule1OtherIncomeTotal(schedule1);

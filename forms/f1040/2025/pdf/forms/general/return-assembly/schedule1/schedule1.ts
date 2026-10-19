@@ -54,6 +54,12 @@ const fields: ReadonlyArray<PdfFieldEntry> = [
     domainKey: "line8r_taxable_scholarships",
     pdfField: "topmostSubform[0].Page1[0].f1_30[0]",
   },
+  // Line 8t: f1_31 is 8s, f1_32 is 8t, f1_33 is 8u (2025 Schedule 1).
+  {
+    kind: "text",
+    domainKey: "line8t_nqdc_distribution",
+    pdfField: "topmostSubform[0].Page1[0].f1_32[0]",
+  },
   {
     kind: "text",
     domainKey: "form1099k_reported_error_or_loss",

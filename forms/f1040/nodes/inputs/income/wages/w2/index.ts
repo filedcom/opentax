@@ -172,6 +172,11 @@ export const w2ItemSchema = z.object({
   box11_nonqual_plans: z.number().nonnegative().optional().describe(
     "Nonqualified plans — included in box 1 wages",
   ),
+  // The part of box 1 (shown in box 11) that is a distribution from a
+  // nonqualified deferred compensation or nongovernmental section 457(b)
+  // plan: Schedule 1 line 8t, not Form 1040 line 1a (2025 Instructions for
+  // Form 1040, line 1a and Schedule 1 line 8t).
+  box11_nqdc_distribution: z.number().nonnegative().optional(),
   box12_entries: z.array(box12EntrySchema).optional().describe(
     "Coded benefit/deferral entries (up to 4 per W-2)",
   ),
@@ -669,6 +674,14 @@ function validateItem(
   ) {
     throw new Error("W-2 qualified tips need employer EIN and name");
   }
+  if (
+    (item.box11_nqdc_distribution ?? 0) > (item.box11_nonqual_plans ?? 0) ||
+    (item.box11_nqdc_distribution ?? 0) > item.box1_wages
+  ) {
+    throw new Error(
+      "W-2 box 11 NQDC distribution cannot exceed box 11 or box 1",
+    );
+  }
   const ssWages = (item.box3_ss_wages ?? 0) + (item.box7_ss_tips ?? 0);
   const rrtaCompensation = box14Amount(item, "RRTA compensation") ?? 0;
   const rrtaAdditionalTax = box14Amount(item, "Additional Medicare Tax") ?? 0;
@@ -762,9 +775,21 @@ function withholdingFields(w2s: W2Items): F1040Input {
   };
 }
 
+/** Box 1 wages less a box 11 NQDC or nongovernmental 457 distribution. */
+function lineOneWages(item: W2Item): number {
+  return item.box1_wages - (item.box11_nqdc_distribution ?? 0);
+}
+
+function nqdcDistributionTotal(w2s: W2Items): number {
+  return w2s.reduce(
+    (sum, item) => sum + (item.box11_nqdc_distribution ?? 0),
+    0,
+  );
+}
+
 function wageFields(w2s: W2Items): F1040Input {
   const total = regularItems(w2s).reduce(
-    (sum, item) => sum + item.box1_wages,
+    (sum, item) => sum + lineOneWages(item),
     0,
   );
   return total > 0 ? { line1a_wages: total } : {};
@@ -1496,6 +1521,13 @@ class W2Node extends TaxNode<typeof inputSchema> {
     if (excessDeferral.amount > 0) {
       agiWageFields.line1h_other_earned = excessDeferral.amount;
     }
+    const nqdc = nqdcDistributionTotal(input.w2s);
+    if (nqdc > 0) {
+      outputs.push(
+        this.outputNodes.output(schedule1, { line8t_nqdc_distribution: nqdc }),
+      );
+      agiWageFields.line8t_nqdc_distribution = nqdc;
+    }
     const entries = regularItems(input.w2s).flatMap((item) =>
       item.box12_entries ?? []
     );
@@ -1515,7 +1547,7 @@ class W2Node extends TaxNode<typeof inputSchema> {
 
     // Route earned income (regular wages) to EITC node and f8812 (for ACTC computation)
     const earnedIncome = regularItems(input.w2s).reduce(
-      (sum, item) => sum + item.box1_wages,
+      (sum, item) => sum + lineOneWages(item),
       0,
     );
     if (earnedIncome > 0) {

@@ -41,6 +41,7 @@ export interface Fields {
   line8n_section951a_inclusion?: number | null;
   line8o_section951aa_inclusion?: number | null;
   line8r_taxable_scholarships?: number | null;
+  line8t_nqdc_distribution?: number | null;
   line8p_excess_business_loss?: number | null;
   line8z_rtaa?: number | null;
   line8z_taxable_grants?: number | null;
@@ -109,6 +110,7 @@ export const FIELD_MAP: ReadonlyArray<readonly [keyof Fields, string]> = [
   ["line8p_excess_business_loss", "ExcessBusinessLossAmt"],
   ["line8q_able_taxable_earnings", "TaxableABLEDistributionsAmt"],
   ["line8r_taxable_scholarships", "GrantsOrScholarshipsAmt"],
+  ["line8t_nqdc_distribution", "NonqlfyDeferredCompensationAmt"],
   ["line8z_other", "OtherIncomeTotalAmt"],
   ["line9_total_other_income", "TotalOtherIncomeAmt"],
   ["line10_total_additional_income", "TotalAdditionalIncomeAmt"],
