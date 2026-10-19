@@ -597,14 +597,6 @@ export function calculateForm8880(
     return { credit: 0, calculatedZero: true };
   }
 
-  if (status === FilingStatus.MFJ && !parsed.joint_distribution_review) {
-    throw new Error(
-      ctx.taxYear === 2025
-        ? "Form 8880 positive joint credit needs one reviewed 2023-through-prefiling-2026 distribution ledger"
-        : `TY${ctx.taxYear} Form 8880 positive joint credit needs a reviewed testing-period distribution ledger, not yet supported`,
-    );
-  }
-
   if (tEligible > 0) {
     assertEligibleContributor(
       "taxpayer",
