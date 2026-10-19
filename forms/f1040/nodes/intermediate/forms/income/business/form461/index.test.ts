@@ -107,13 +107,26 @@ test("Form 461 omits the form at the exact per-line and net thresholds", () => {
   );
 });
 
-test("Form 461 rejects C/F source data without a sourced scope review", () => {
-  assertThrows(() =>
-    compute({
-      filing_status: "single",
-      line2_schedule_c: -400_000,
-    })
+// Synthetic MFJ return: Schedule C loss 700,000 against the 2025 joint
+// threshold of 626,000 (2025 Instructions for Form 461, line 15) leaves an
+// excess business loss of 74,000 on line 16, added back on Schedule 1 line
+// 8p and carried as an NOL. Wages are not business income for Form 461.
+test("Form 461 computes from Schedule C without a scope review", () => {
+  const result = compute({
+    filing_status: "mfj",
+    line2_schedule_c: -700_000,
+  });
+  assertEquals(fields(result)?.line16_excess_business_loss, -74_000);
+  assertEquals(
+    result.outputs.find((item) => item.nodeType === "schedule1")?.fields,
+    { line8p_excess_business_loss: 74_000 },
   );
+  assertEquals(result.carryforwards, {
+    excess_business_loss_nol_origin: 74_000,
+  });
+});
+
+test("Form 461 rejects an entered scope review that differs from the return", () => {
   assertThrows(() =>
     compute({
       filing_status: "single",
