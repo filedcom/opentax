@@ -85,6 +85,8 @@ export const inputSchema = z.object({
   // From nol_carryforward — NOL deduction (IRC §172) applied after standard/itemized deduction
   // Post-2017 NOLs limited to 80% of pre-NOL taxable income; pre-2018 NOLs limited to 100%.
   nol_deduction: z.number().nonnegative().optional(),
+  // The standard deduction the AGI aggregator assumed for the NOL 80% limit.
+  nol_limit_standard_deduction: z.number().nonnegative().optional(),
 
   // Finalized by this node for TY2026; never supplied by another node.
   standard_amount: z.number().nonnegative().optional(),
@@ -268,6 +270,18 @@ class StandardDeductionNode extends TaxNode<typeof inputSchema> {
 
     const resolved = resolveDeduction(input, cfg);
     const { deduction, takingStandard, nonitemizerCharitable } = resolved;
+    // IRC §172(a)(2): the NOL limit uses taxable income without the NOL and
+    // QBI deductions. The AGI aggregator assumed the filing-status standard
+    // deduction; any other deduction needs the keyed taxable income.
+    if (
+      input.nol_limit_standard_deduction !== undefined &&
+      (!takingStandard || deduction !== input.nol_limit_standard_deduction ||
+        nonitemizerCharitable > 0 || (input.additional_deductions ?? 0) > 0)
+    ) {
+      throw new Error(
+        "NOL 80% limit assumed the base standard deduction; enter nol_carryforward current_year_taxable_income for this return",
+      );
+    }
     if (
       takingStandard && cfg.nonitemizerCharitableLimit > 0 &&
       input.nonitemizer_charitable_cash_unclassified === true

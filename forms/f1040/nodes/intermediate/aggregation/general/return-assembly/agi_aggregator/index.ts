@@ -36,6 +36,10 @@ import { box11CodeJSourceSchema } from "../../../../../inputs/income/rental-pass
 import { box11CodeESourceSchema } from "../../../../../inputs/income/rental-passthrough/k1_partnership/box11_code_e.ts";
 import { box11CodeKSourceSchema } from "../../../../../inputs/income/rental-passthrough/k1_partnership/box11_code_k.ts";
 import { f8863 } from "../../../../../inputs/credits/individual/f8863/index.ts";
+import {
+  calculateNolDeduction,
+  itemSchema as nolItemSchema,
+} from "../../../../../inputs/income/business/nol_carryforward/calculation.ts";
 
 // Fields that may arrive from multiple upstream nodes accumulate as arrays in the
 // executor pending dict. Declaring them accumulable prevents Zod parse failure.
@@ -118,6 +122,10 @@ export const inputSchema = z.object({
   // ── Schedule 1 Part I — Additional income ─────────────────────────────────
   // Internal sourced NOL projection; public carry intake remains guarded.
   line8a_nol_deduction: z.number().int().nonnegative().optional(),
+  // Prior-year NOL carryforwards (nol_carryforward); line 8a is figured here.
+  nol_carryforwards: z.array(nolItemSchema).min(1).optional(),
+  // Keyed taxable income before the NOL and QBI deductions.
+  nol_taxable_income_override: z.number().optional(),
   // Line 1 — State and local income tax refunds (Form 1099-G)
   line1_state_refund: z.number().optional(),
   // Line 3 — Net profit or (loss) from business (Schedule C)
@@ -762,6 +770,47 @@ function computeAgi(
     aboveLineDeductions(input, cfg);
 }
 
+// Schedule 1 line 8a from the NOL carryforwards. The 80% limit base is
+// taxable income without the NOL and QBI deductions (IRC §172(a)(2)): AGI
+// figured without line 8a less the standard deduction for the filing status,
+// unless a taxable income override is keyed. standard_deduction rejects the
+// return when its actual deduction differs from that assumption.
+function withNolDeduction(
+  input: AgiInput,
+  cfg: import("../../../../../config/index.ts").F1040Config,
+  taxYear: number,
+) {
+  if (!input.nol_carryforwards) return { input, nol: undefined };
+  if (input.line8a_nol_deduction !== undefined) {
+    throw new Error(
+      "NOL carryforwards cannot combine with a keyed Schedule 1 line 8a deduction",
+    );
+  }
+  if (input.pal_pending_active_4797 === true) {
+    throw new Error(
+      "NOL carryforward with a pending active-rental Form 4797 PAL release is not supported",
+    );
+  }
+  const override = input.nol_taxable_income_override;
+  const standard = override === undefined
+    ? cfg.standardDeductionBase[input.filing_status as FilingStatus]
+    : undefined;
+  if (override === undefined && standard === undefined) {
+    throw new Error("NOL deduction needs the return's filing status");
+  }
+  const agiBeforeNol = computeAgi({ ...input, line8a_nol_deduction: 0 }, cfg);
+  const taxableIncome = override ?? agiBeforeNol - standard!;
+  const nol = calculateNolDeduction(
+    input.nol_carryforwards,
+    taxableIncome,
+    taxYear,
+  );
+  return {
+    input: { ...input, line8a_nol_deduction: nol.deduction },
+    nol: { ...nol, assumedStandardDeduction: standard },
+  };
+}
+
 // ─── Node class ───────────────────────────────────────────────────────────────
 
 class AgiAggregatorNode extends TaxNode<typeof inputSchema> {
@@ -802,7 +851,11 @@ class AgiAggregatorNode extends TaxNode<typeof inputSchema> {
         "Form 2555 line 50 housing deduction is unsupported in the AGI aggregator",
       );
     }
-    const input = inputSchema.parse(rawInput);
+    const { input, nol } = withNolDeduction(
+      inputSchema.parse(rawInput),
+      cfg,
+      ctx.taxYear,
+    );
     if (input.pal_pending_active_4797 === true) {
       return {
         outputs: [
@@ -869,6 +922,9 @@ class AgiAggregatorNode extends TaxNode<typeof inputSchema> {
       ),
       this.outputNodes.output(standard_deduction, {
         agi,
+        ...(nol?.assumedStandardDeduction !== undefined && {
+          nol_limit_standard_deduction: nol.assumedStandardDeduction,
+        }),
         return_earned_income: dependentWorksheetEarnedIncome(input),
         form8615_total_income: totalIncome,
         form8615_early_withdrawal_penalty: Math.max(
@@ -996,7 +1052,23 @@ class AgiAggregatorNode extends TaxNode<typeof inputSchema> {
       }));
     }
 
-    return { outputs };
+    if (nol && nol.deduction > 0) {
+      outputs.push(this.outputNodes.output(schedule1, {
+        line8a_nol_deduction: nol.deduction,
+      }));
+    }
+
+    return {
+      outputs,
+      ...(nol && {
+        carryforwards: {
+          ...(nol.pre2018Carryforward > 0 &&
+            { nol_carryforward_pre2018: nol.pre2018Carryforward }),
+          ...(nol.post2017Carryforward > 0 &&
+            { nol_carryforward_post2017: nol.post2017Carryforward }),
+        },
+      }),
+    };
   }
 }
 
