@@ -206,7 +206,8 @@ function hasActiveForm1116(fields: Record<string, unknown>): boolean {
     Boolean(fields.foreign_tax_paid);
 }
 
-export const form1116Pdf: PdfFormDescriptor = {
+export function form1116PdfFor(taxYear: number): PdfFormDescriptor {
+  return {
   pendingKey: "form_1116",
   pdfUrl: "https://www.irs.gov/pub/irs-prior/f1116--2025.pdf",
   projectFields(fields, allPending) {
@@ -276,9 +277,9 @@ export const form1116Pdf: PdfFormDescriptor = {
       summaries[0].items.length === 1 &&
       summaries[0].items[0].alternative_compensation_sourcing
     ) {
-      return projectGeneralWageForm1116Pdf(fields, allPending);
+      return projectGeneralWageForm1116Pdf(fields, allPending, taxYear);
     }
-    return projectSingleSourceForm1116Pdf(fields, allPending);
+    return projectSingleSourceForm1116Pdf(fields, allPending, taxYear);
   },
   // The §904 limitation inputs land here on every return; only a claimed credit
   // puts the form on the return.
@@ -306,4 +307,7 @@ export const form1116Pdf: PdfFormDescriptor = {
   },
   fields,
   appendSupplementalPages: appendAlternativeCompensationStatement,
-};
+  };
+}
+
+export const form1116Pdf: PdfFormDescriptor = form1116PdfFor(2025);

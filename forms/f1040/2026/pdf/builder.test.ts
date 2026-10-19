@@ -579,3 +579,25 @@ test("TY2026 PDF prints Form 4562 Part I on the 2026 draft", async () => {
   assertMatch(printed, /Carryover of disallowed deduction to 2027[^\n]* 13 0/);
   assertMatch(printed, /corporations—see instructions [. ]* 22 30000/);
 });
+
+test("TY2026 PDF prints Form 1116 Parts I-IV on the 2026 draft", async () => {
+  const inputs = fixture("single-foreign-interest-current-excess");
+  const [interest] = inputs.f1099int as Array<Record<string, unknown>>;
+  const printed = await text(
+    await render({ ...inputs, f1099int: [{ ...interest, box6: 1_000 }] }),
+  );
+  assertMatch(printed, /Form 1116 \(2026\)/);
+  assertMatch(printed, /c ✔ Passive category income/);
+  assertMatch(printed, /Enter the name of the foreign country Canada/);
+  assertMatch(printed, /\n 50000 1a 50000\n/);
+  assertMatch(printed, /Add lines 2, 3g, 4a, 4b, and 5 [. ]* 16100 6 16100/);
+  assertMatch(printed, /on page 2, line 15 [. ]* 7 33900/);
+  assertMatch(printed, /\(j\) ✔ Paid/);
+  assertMatch(printed, /\n A 1000 1000\n/);
+  assertMatch(printed, /column \(w\)\. Enter the total here and on Part III, line 9 [. ]* 8 1000/);
+  assertMatch(printed, /Schedule 1-A \(Form 1040\), line 43[\s\S]*? 18 33900/);
+  assertMatch(printed, /line 16, and Schedule 2[\s\S]*? 20 3823/);
+  assertMatch(printed, /smaller of line 14 or line 23[^\n]* 24 1000/);
+  assertMatch(printed, /passive category income [. ]* 27 1000/);
+  assertMatch(printed, /Part III, line 1a [. ]* 35 1000/);
+});

@@ -54,6 +54,7 @@ function ratio(numerator: number, denominator: number): number {
 export function projectSingleSourceForm1116Pdf(
   fields: Record<string, unknown>,
   pending: Pending,
+  taxYear: number,
 ): Record<string, unknown> {
   const raw = fields.category_summaries;
   if (!Array.isArray(raw) || raw.length !== 1) {
@@ -320,7 +321,7 @@ export function projectSingleSourceForm1116Pdf(
     (reportedOn1099
       ? currency !== undefined || item.tax_paid_or_accrued_date !== undefined
       : !item.tax_paid_or_accrued_date ||
-        !/^2025-\d{2}-\d{2}$/.test(item.tax_paid_or_accrued_date) ||
+        !new RegExp(`^${taxYear}-\\d{2}-\\d{2}$`).test(item.tax_paid_or_accrued_date) ||
         Number.isNaN(
           Date.parse(`${item.tax_paid_or_accrued_date}T00:00:00Z`),
         ) ||

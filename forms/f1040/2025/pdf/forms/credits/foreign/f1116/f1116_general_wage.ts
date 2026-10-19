@@ -33,6 +33,7 @@ function ratio(numerator: number, denominator: number): number {
 export function projectGeneralWageForm1116Pdf(
   fields: Record<string, unknown>,
   pending: Pending,
+  taxYear: number,
 ): Record<string, unknown> {
   const review = singleSourcePdfReviewSchema.safeParse(
     fields.single_source_pdf_review,
@@ -62,7 +63,7 @@ export function projectGeneralWageForm1116Pdf(
     !item.irs_country_code ||
     !item.tax_paid_or_accrued_date ||
     item.tax_paid_or_accrued_date !== currency.conversion_date ||
-    !/^2025-\d{2}-\d{2}$/.test(item.tax_paid_or_accrued_date) ||
+    !new RegExp(`^${taxYear}-\\d{2}-\\d{2}$`).test(item.tax_paid_or_accrued_date) ||
     Number.isNaN(Date.parse(`${item.tax_paid_or_accrued_date}T00:00:00Z`)) ||
     new Date(`${item.tax_paid_or_accrued_date}T00:00:00Z`)
         .toISOString().slice(0, 10) !== item.tax_paid_or_accrued_date ||
