@@ -8903,10 +8903,9 @@ test.skipIf(!xsdAvailable)("XSD: Form 8919 reason H combines same-firm 1099-MISC
   await validateXsd(xml, "Form 8919 mixed 1099-MISC and 1099-NEC wages");
 });
 
-test("ATS Scenario 1 Schedule H source slice needs employee payroll", () => {
+test("ATS Scenario 1 Schedule H source slice files Part I totals", () => {
   const source = SCENARIO_1040_01_FACTS.scheduleH;
-  assertThrows(
-    () =>
+  assertStringIncludes(
       buildMefXml(
         {
           f1040: { line23_other_taxes: 474 },
@@ -8927,8 +8926,7 @@ test("ATS Scenario 1 Schedule H source slice needs employee payroll", () => {
           taxpayer_ssn: SCENARIO_1040_01_FACTS.taxpayer.ssn,
         }),
       ),
-    Error,
-    "FICA-only export needs employee payroll source",
+    "<IRS1040ScheduleH",
   );
 });
 

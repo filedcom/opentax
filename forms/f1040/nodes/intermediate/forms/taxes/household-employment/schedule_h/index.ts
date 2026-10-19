@@ -1232,7 +1232,9 @@ export const inputSchema = z.object({
         z.number().nonnegative(),
         z.number().nonnegative(),
       ]).optional(),
-      employee_wages: z.array(payrollEmployeeSchema).min(1),
+      // Part II Section A asks only for totals (2025 Schedule H lines 13-16):
+      // without employee rows, the filed answers and FUTA wages stand.
+      employee_wages: z.array(payrollEmployeeSchema).min(1).optional(),
       // A source review verifies Section A's three Yes answers without
       // changing its filed Section A presentation to Section B.
       state_review_rows: z.array(
@@ -1938,7 +1940,7 @@ export function computeScheduleHAmounts(
       "Schedule H requires one complete household payroll inventory",
     );
   }
-  const familyWorkers = (unemployment ?? ficaOnly)?.employee_wages.filter(
+  const familyWorkers = (unemployment ?? ficaOnly)?.employee_wages?.filter(
     (employee) => employee.relationship !== "unrelated",
   ) ?? [];
   if (input.family_employer_ssn && familyWorkers.length === 0) {
@@ -2023,10 +2025,11 @@ export function computeScheduleHAmounts(
     );
   }
   const payroll = unemployment ?? ficaOnly;
-  if (payroll) {
+  const employeeWages = payroll?.employee_wages;
+  if (payroll && employeeWages) {
     if (
       unemployment &&
-      payroll.employee_wages.some((employee) =>
+      employeeWages.some((employee) =>
         employee.relationship === "child" &&
         employee.age_21_transition_review !== undefined
       ) && (!unemployment.prior_year_eligible_quarter_cash_wages ||
@@ -2038,17 +2041,17 @@ export function computeScheduleHAmounts(
         "Schedule H child transition prior-year FUTA test needs dated eligible-quarter cash wages",
       );
     }
-    const ids = payroll.employee_wages.map((employee) => employee.employee_id);
+    const ids = employeeWages.map((employee) => employee.employee_id);
     if (new Set(ids).size !== ids.length) {
       throw new Error("Schedule H FUTA employee payroll IDs must be unique");
     }
-    const payrollReferences = payroll.employee_wages.map(
+    const payrollReferences = employeeWages.map(
       (employee) => employee.payroll_source_reference,
     );
     if (new Set(payrollReferences).size !== payrollReferences.length) {
       throw new Error("Schedule H employee payroll sources must be unique");
     }
-    const w2References = payroll.employee_wages.flatMap((employee) =>
+    const w2References = employeeWages.flatMap((employee) =>
       employee.w2 ? [employee.w2.source_reference] : []
     );
     if (new Set(w2References).size !== w2References.length) {
@@ -2062,7 +2065,7 @@ export function computeScheduleHAmounts(
     let sourcedFederalWithholding = 0;
     let sourcedAdditionalMedicareWages = 0;
     let sourcedFicaThresholdMet = false;
-    for (const employee of payroll.employee_wages) {
+    for (const employee of employeeWages) {
       if (employee.relationship !== "unrelated") {
         const references = [
           employee.relationship_source_reference,
@@ -2343,7 +2346,7 @@ export function computeScheduleHAmounts(
       );
     }
     if (unemployment) {
-      const sourcedFutaWages = payroll.employee_wages.reduce(
+      const sourcedFutaWages = employeeWages.reduce(
         (total, employee) =>
           total +
           (employee.relationship === "unrelated"
@@ -2384,6 +2387,14 @@ export function computeScheduleHAmounts(
     ) {
       throw new Error(
         "Schedule H Section A state source needs both filed row reconciliation and complete payroll review",
+      );
+    }
+    if (
+      unemployment.state_payroll_review &&
+      unemployment.employee_wages === undefined
+    ) {
+      throw new Error(
+        "Schedule H Section A state payroll review needs the employee payroll rows",
       );
     }
     if (unemployment.state_review_rows && unemployment.state_payroll_review) {

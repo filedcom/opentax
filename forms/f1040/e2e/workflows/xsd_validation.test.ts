@@ -275,7 +275,7 @@ test.skipIf(!xsdAvailable)("XSD: age and blindness answers reach Form 1040 line 
   assertEquals(success, true, `xmllint errors:\n${stderr}`);
 });
 
-test("ATS 1040 Scenario 1 Schedule H stays blocked without employee payroll", () => {
+test("ATS 1040 Scenario 1 Schedule H files Part I totals without employee payroll", () => {
   const facts = SCENARIO_1040_01_FACTS;
   const result = runReturn({
     general: {
@@ -298,11 +298,7 @@ test("ATS 1040 Scenario 1 Schedule H stays blocked without employee payroll", ()
       federal_income_tax_withheld: facts.scheduleH.federalWithholding,
     },
   });
-  assertThrows(
-    () => buildXml(result),
-    Error,
-    "FICA-only export needs employee payroll source",
-  );
+  assertStringIncludes(buildXml(result), "<IRS1040ScheduleH");
 });
 
 test.skipIf(!xsdAvailable)("XSD: ATS 1040 Scenario 4 W-2 slice conforms to Return1040.xsd", async () => {

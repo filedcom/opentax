@@ -72,17 +72,6 @@ function buildIRS1040ScheduleH(
     );
   }
   const source = inputSchema.parse(fields);
-  if (
-    source.federal_unemployment === undefined &&
-    ((source.ss_wages ?? 0) > 0 || (source.medicare_wages ?? 0) > 0 ||
-      (source.federal_income_tax_withheld ?? 0) > 0) &&
-    source.fica_only_payroll === undefined &&
-    source.family_withholding_only_payroll === undefined
-  ) {
-    throw new Error(
-      "Schedule H FICA-only export needs employee payroll source",
-    );
-  }
   const amounts = computeScheduleHAmounts(source, mefTaxYear(context));
   if (source.fica_only_payroll) {
     const retained = inputSchema.parse(context.pending?.schedule_h ?? {});
@@ -154,7 +143,7 @@ function buildIRS1040ScheduleH(
     }
   }
   const payroll = source.federal_unemployment ?? source.fica_only_payroll;
-  const familyWorkers = payroll?.employee_wages.filter(
+  const familyWorkers = payroll?.employee_wages?.filter(
     (employee) => employee.relationship !== "unrelated",
   ) ?? [];
   if (familyWorkers.length) {
@@ -274,7 +263,7 @@ function buildIRS1040ScheduleH(
     }
   }
   if (
-    source.federal_unemployment?.employee_wages.some((employee) =>
+    source.federal_unemployment?.employee_wages?.some((employee) =>
       employee.relationship === "unrelated" &&
       employee.nonstudent_minor_fica_inclusion !== undefined
     ) &&
