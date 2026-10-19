@@ -498,10 +498,21 @@ test("TY2026 PDF prints Form 8863 on the 2026 draft", async () => {
 
 test("TY2026 PDF refuses, by name, a form with no TY2026 mapping", async () => {
   await assertRejects(
-    () => render(fixture("single-form5329-two-early-ira-distributions")),
+    () => render(fixture("single-form4835-farm-rental-profit")),
     Error,
-    "TY2026 PDF export needs form5329",
+    "TY2026 PDF export needs f4835",
   );
+});
+
+test("TY2026 PDF prints Form 5329 Part I on the 2026 draft", async () => {
+  const printed = await text(
+    await render(fixture("single-form5329-two-early-ira-distributions")),
+  );
+  assertMatch(printed, /Form 5329 \(2026\)/);
+  assertMatch(printed, /For Roth IRA distributions, see instructions \. 1 10000/);
+  assertMatch(printed, /Subtract line 2 from line 1 [. ]* 3 10000/);
+  assertMatch(printed, /Schedule 2 \(Form 1040\), line 5 \. \. 4 1000/);
+  assertMatch(printed, /If not required,\n check here [. ]* 5 1000/);
 });
 
 test("every TY2026 mapped field exists on its pinned 2026 template", async () => {
