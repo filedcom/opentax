@@ -677,6 +677,13 @@ export const config2025: F1040Config = {
   feieHousingBase: FEIE_HOUSING_BASE_2025,
   // Notice 2025-16.
   foreignHousingLimits: noticeHousingLimits,
+  // IRC §1400Z-2(b)(1)(B): deferral continues through December 31, 2026.
+  qofDeferralPeriodEnds: false,
+  // IRC §951A(b)(2) before P.L. 119-21.
+  cfcNetDeemedTangibleIncomeReturn: true,
+  // Rev. Proc. 2024-40 §§4.37, 4.38; 2025 Instructions for Form 8854.
+  expatriationAverageTaxThreshold: 206_000,
+  expatriationMarkToMarketExclusion: 890_000,
   // Instructions for Form 8864 (Rev. December 2025): P.L. 119-21 raises the
   // credit to $.20 a gallon for fuel sold or used after June 30, 2025, and
   // ends it for fuel sold or used after 2026.

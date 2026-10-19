@@ -1,7 +1,7 @@
 export const form8854InitialCash = {
   expatriation_date: "2025-06-15",
   expatriate_type: "CITIZEN",
-  tax_status_2025: "FULL_YEAR_US_CITIZEN_OR_RESIDENT",
+  tax_status: "FULL_YEAR_US_CITIZEN_OR_RESIDENT",
   part_i: {
     mailing_address: {
       kind: "US",
@@ -19,11 +19,11 @@ export const form8854InitialCash = {
     us_citizenship_acquisition: "BIRTH",
   },
   prior_year_us_income_tax_less_foreign_tax_credit: {
-    year_2024: 80,
-    year_2023: 0,
-    year_2022: 0,
-    year_2021: 0,
-    year_2020: 0,
+    first_year_before: 80,
+    second_year_before: 0,
+    third_year_before: 0,
+    fourth_year_before: 0,
+    fifth_year_before: 0,
   },
   prior_year_filed_return_sources: [2020, 2021, 2022, 2023, 2024].map(
     (year) => ({

@@ -12,6 +12,7 @@ import { OutputNodes } from "../../../../../../../core/types/output-nodes.ts";
 import type { NodeContext } from "../../../../../../../core/types/node-context.ts";
 import { schedule1 } from "../../../../outputs/general/return-assembly/schedule1/index.ts";
 import { agi_aggregator } from "../../../../intermediate/aggregation/general/return-assembly/agi_aggregator/index.ts";
+import { configForYear } from "../../../../config/index.ts";
 
 // One wholly owned Category 5a CFC, individual shareholder, no section 962
 // election. These are reported Schedule I / I-1 facts, not asserted inclusion.
@@ -213,8 +214,8 @@ export const scheduleHSchema = z.object({
 // income. Other Schedule E/E-1 columns require separate source histories.
 export const scheduleESchema = z.object({
   tax_country_code: z.literal("EI"),
-  foreign_tax_year_end: z.string().regex(/^2025-\d{2}-\d{2}$/),
-  us_tax_year_end: z.string().regex(/^2025-\d{2}-\d{2}$/),
+  foreign_tax_year_end: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+  us_tax_year_end: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
   taxable_income_local: dollars,
   local_currency: z.string().regex(/^[A-Z]{3}$/),
   tax_local: dollars,
@@ -404,10 +405,11 @@ const foreignAddressSchema = z.object({
 }).strict();
 
 export const form5471IdentitySchema = z.object({
-  cfc_tax_year_begin: z.string().regex(/^2025-\d{2}-\d{2}$/),
-  cfc_tax_year_end: z.string().regex(/^2025-\d{2}-\d{2}$/),
-  filer_tax_year_begin: z.string().regex(/^2025-\d{2}-\d{2}$/),
-  filer_tax_year_end: z.string().regex(/^2025-\d{2}-\d{2}$/),
+  // Compute checks each date is in the return year.
+  cfc_tax_year_begin: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+  cfc_tax_year_end: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+  filer_tax_year_begin: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+  filer_tax_year_end: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
   foreign_address: foreignAddressSchema,
   incorporation_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
   principal_business_country_code: z.literal("EI"),
@@ -732,6 +734,40 @@ export const inputSchema = z.object({
 
 export type F5471Item = z.infer<typeof itemSchema>;
 
+/** The bounded source is one calendar year, the return year, for CFC and filer alike. */
+export function assertForm5471ReturnYear(item: F5471Item, taxYear: number) {
+  const identity = item.form5471_identity;
+  const dates = [
+    identity.cfc_tax_year_begin,
+    identity.cfc_tax_year_end,
+    identity.filer_tax_year_begin,
+    identity.filer_tax_year_end,
+    item.schedule_e.foreign_tax_year_end,
+    item.schedule_e.us_tax_year_end,
+  ];
+  if (dates.some((date) => !date.startsWith(`${taxYear}-`))) {
+    throw new Error(
+      `Form 5471 CFC and filer tax years must be in tax year ${taxYear}`,
+    );
+  }
+  const worksheet = item.owned_worksheet_source;
+  if (
+    worksheet &&
+    worksheet.interest_apportionment_election_prerequisite
+        .statement_for_return_tax_year !== taxYear
+  ) {
+    throw new Error(
+      `Form 5471 owned CFC worksheet source has no tax year ${taxYear} version`,
+    );
+  }
+  const cfcYear = Number(identity.cfc_tax_year_begin.slice(0, 4));
+  if (!configForYear(cfcYear).cfcNetDeemedTangibleIncomeReturn) {
+    throw new Error(
+      `Form 5471 net CFC tested income (P.L. 119-21) for CFC years beginning in ${cfcYear} is not computed`,
+    );
+  }
+}
+
 export function calculateCategory5Inclusions(item: F5471Item) {
   const scheduleI = item.schedule_i;
   const section951a = scheduleI.line1a + scheduleI.line1b +
@@ -774,10 +810,11 @@ class F5471Node extends TaxNode<typeof inputSchema> {
   readonly outputNodes = new OutputNodes([schedule1, agi_aggregator]);
 
   compute(
-    _ctx: NodeContext,
+    ctx: NodeContext,
     rawInput: z.infer<typeof inputSchema>,
   ): NodeResult {
     const { f5471s: [item] } = inputSchema.parse(rawInput);
+    assertForm5471ReturnYear(item, ctx.taxYear);
     const { section951a, gilti } = calculateCategory5Inclusions(item);
     const fields = {
       ...(section951a > 0 ? { line8n_section951a_inclusion: section951a } : {}),

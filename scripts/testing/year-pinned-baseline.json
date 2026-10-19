@@ -690,21 +690,6 @@
     "count": 2
   },
   {
-    "path": "forms/f1040/2025/mef/forms/general/foreign/f8854/f8854_annual.ts",
-    "pattern": "year-identifier",
-    "count": 2
-  },
-  {
-    "path": "forms/f1040/2025/mef/forms/general/foreign/f8854/f8854_part_ii_a.ts",
-    "pattern": "year-identifier",
-    "count": 1
-  },
-  {
-    "path": "forms/f1040/2025/mef/forms/general/investments/f8997.staged.ts",
-    "pattern": "year-identifier",
-    "count": 1
-  },
-  {
     "path": "forms/f1040/2025/mef/forms/general/return-assembly/f1040.ts",
     "pattern": "year-identifier",
     "count": 2
@@ -883,16 +868,6 @@
     "path": "forms/f1040/2025/pdf/forms/deductions/itemized/schedule_a.ts",
     "pattern": "year-value",
     "count": 1
-  },
-  {
-    "path": "forms/f1040/2025/pdf/forms/general/foreign/f8854_annual.ts",
-    "pattern": "year-identifier",
-    "count": 1
-  },
-  {
-    "path": "forms/f1040/2025/pdf/forms/general/foreign/f8854_initial.ts",
-    "pattern": "year-identifier",
-    "count": 2
   },
   {
     "path": "forms/f1040/2025/pdf/forms/general/return-assembly/f1040.ts",
@@ -1395,26 +1370,6 @@
     "count": 2
   },
   {
-    "path": "forms/f1040/nodes/inputs/general/filing/f8958/source.ts",
-    "pattern": "date-pinned",
-    "count": 2
-  },
-  {
-    "path": "forms/f1040/nodes/inputs/general/filing/f8958/source.ts",
-    "pattern": "year-identifier",
-    "count": 1
-  },
-  {
-    "path": "forms/f1040/nodes/inputs/general/filing/f8958/source.ts",
-    "pattern": "z-literal",
-    "count": 1
-  },
-  {
-    "path": "forms/f1040/nodes/inputs/general/filing/f8958/staged_documents.ts",
-    "pattern": "date-pinned",
-    "count": 2
-  },
-  {
     "path": "forms/f1040/nodes/inputs/general/filing/f8958/staged_documents.ts",
     "pattern": "year-value",
     "count": 1
@@ -1423,11 +1378,6 @@
     "path": "forms/f1040/nodes/inputs/general/filing/general/index.ts",
     "pattern": "year-identifier",
     "count": 5
-  },
-  {
-    "path": "forms/f1040/nodes/inputs/general/foreign/f5471/index.ts",
-    "pattern": "date-pinned",
-    "count": 6
   },
   {
     "path": "forms/f1040/nodes/inputs/general/foreign/f5471/worksheet-source.ts",
@@ -1440,69 +1390,19 @@
     "count": 3
   },
   {
-    "path": "forms/f1040/nodes/inputs/general/foreign/f8854/annual_node.ts",
-    "pattern": "year-identifier",
-    "count": 2
-  },
-  {
-    "path": "forms/f1040/nodes/inputs/general/foreign/f8854/annual.ts",
-    "pattern": "date-pinned",
-    "count": 1
-  },
-  {
     "path": "forms/f1040/nodes/inputs/general/foreign/f8854/annual.ts",
     "pattern": "year-identifier",
-    "count": 11
-  },
-  {
-    "path": "forms/f1040/nodes/inputs/general/foreign/f8854/constants.ts",
-    "pattern": "year-identifier",
-    "count": 1
+    "count": 3
   },
   {
     "path": "forms/f1040/nodes/inputs/general/foreign/f8854/index.ts",
     "pattern": "year-identifier",
-    "count": 9
-  },
-  {
-    "path": "forms/f1040/nodes/inputs/general/foreign/f8854/mark-to-market.ts",
-    "pattern": "year-identifier",
     "count": 2
-  },
-  {
-    "path": "forms/f1040/nodes/inputs/general/foreign/f8854/reconcile-annual-capital.ts",
-    "pattern": "year-identifier",
-    "count": 2
-  },
-  {
-    "path": "forms/f1040/nodes/inputs/general/foreign/f8938/index.ts",
-    "pattern": "date-pinned",
-    "count": 8
-  },
-  {
-    "path": "forms/f1040/nodes/inputs/general/foreign/f8938/index.ts",
-    "pattern": "year-identifier",
-    "count": 5
-  },
-  {
-    "path": "forms/f1040/nodes/inputs/general/investments/f8997/holding_only_source.ts",
-    "pattern": "date-pinned",
-    "count": 1
   },
   {
     "path": "forms/f1040/nodes/inputs/general/investments/f8997/holding_only_source.ts",
     "pattern": "year-identifier",
-    "count": 5
-  },
-  {
-    "path": "forms/f1040/nodes/inputs/general/investments/f8997/ledger.ts",
-    "pattern": "date-pinned",
-    "count": 5
-  },
-  {
-    "path": "forms/f1040/nodes/inputs/general/investments/f8997/ledger.ts",
-    "pattern": "z-literal",
-    "count": 1
+    "count": 3
   },
   {
     "path": "forms/f1040/nodes/inputs/income/business/f1099k/index.ts",

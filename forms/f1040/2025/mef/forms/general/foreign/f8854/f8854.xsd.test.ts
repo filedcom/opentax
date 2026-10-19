@@ -68,14 +68,14 @@ const filer: FilerIdentity = {
 const noncoveredInput = initialSchema.parse({
   expatriation_date: "2025-06-15",
   expatriate_type: ExpatriateType.CITIZEN,
-  tax_status_2025: "FULL_YEAR_US_CITIZEN_OR_RESIDENT",
+  tax_status: "FULL_YEAR_US_CITIZEN_OR_RESIDENT",
   part_i: partI,
   prior_year_us_income_tax_less_foreign_tax_credit: {
-    year_2024: 0,
-    year_2023: 0,
-    year_2022: 0,
-    year_2021: 0,
-    year_2020: 0,
+    first_year_before: 0,
+    second_year_before: 0,
+    third_year_before: 0,
+    fourth_year_before: 0,
+    fifth_year_before: 0,
   },
   prior_year_filed_return_sources: [2020, 2021, 2022, 2023, 2024].map(
     (year) => ({
@@ -220,7 +220,7 @@ const annualNoActivityInput = annualInputSchema.parse({
       date: "2020-06-15",
     },
   },
-  tax_status_2025: "FULL_YEAR_US_CITIZEN_OR_RESIDENT",
+  tax_status: "FULL_YEAR_US_CITIZEN_OR_RESIDENT",
   prior_form8854_obligations_confirmed_complete: true,
   prior_form8854_obligation_ledger: {
     source_document_id: "DOC-PRIOR",
@@ -254,7 +254,7 @@ const annualNoActivityInput = annualInputSchema.parse({
     prior_form8854_document_id: "DOC-PRIOR",
     prior_mark_to_market_gain_or_loss_amount: 111_000,
     prior_deferred_tax_amount: 50_000,
-    disposition: { disposed_in_2025: false },
+    disposition: { disposed_in_tax_year: false },
   }],
   eligible_deferred_compensation_items: [{
     item_id: "plan",
@@ -278,7 +278,7 @@ const annualCapitalDispositionInput = annualInputSchema.parse({
   deferred_properties: [{
     ...annualNoActivityInput.deferred_properties[0],
     disposition: {
-      disposed_in_2025: true,
+      disposed_in_tax_year: true,
       entire_deferred_property_disposed_confirmed: true,
       disposition_date: "2025-05-20",
       reported_form_code: ReportedFormCode.Form8949,
@@ -585,14 +585,14 @@ test("Form 8854 MeF rejects initial and annual nonresident or dual-status filing
         f1040: { filing_status: "single" },
         f8854: {
           ...noncoveredInput,
-          tax_status_2025: "NONRESIDENT_OR_DUAL_STATUS",
+          tax_status: "NONRESIDENT_OR_DUAL_STATUS",
         },
       },
       {
         f1040: { filing_status: "single" },
         f8854_annual: {
           ...annualNoActivityInput,
-          tax_status_2025: "NONRESIDENT_OR_DUAL_STATUS",
+          tax_status: "NONRESIDENT_OR_DUAL_STATUS",
         },
       },
     ]
@@ -755,14 +755,14 @@ test.skipIf(!xsdAvailable)("XSD: initial Form 8854 with identified Form 8949 dee
   const input = initialSchema.parse({
     expatriation_date: "2025-06-15",
     expatriate_type: ExpatriateType.CITIZEN,
-    tax_status_2025: "FULL_YEAR_US_CITIZEN_OR_RESIDENT",
+    tax_status: "FULL_YEAR_US_CITIZEN_OR_RESIDENT",
     part_i: partI,
     prior_year_us_income_tax_less_foreign_tax_credit: {
-      year_2024: 0,
-      year_2023: 0,
-      year_2022: 0,
-      year_2021: 0,
-      year_2020: 0,
+      first_year_before: 0,
+      second_year_before: 0,
+      third_year_before: 0,
+      fourth_year_before: 0,
+      fifth_year_before: 0,
     },
     prior_year_filed_return_sources:
       noncoveredInput.prior_year_filed_return_sources,

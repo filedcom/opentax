@@ -48,6 +48,11 @@ function taxSummaryGroup(tag: string, rows: readonly TaxSummaryRow[]): string {
 type ProjectedAsset = ReturnType<
   typeof projectForm8938
 >["input"]["assets"][number];
+/** Acquired in the year whose last-day rate values the asset (the return year). */
+const acquiredInYear = (asset: ProjectedAsset): boolean =>
+  !!asset.opened_or_acquired_date?.startsWith(
+    asset.exchange_rate_date.slice(0, 5),
+  );
 const check = (tag: string, value: boolean) =>
   value ? element(tag, "true") : "";
 const businessName = (value: string) =>
@@ -100,7 +105,7 @@ function accountGroup(asset: ProjectedAsset): string {
     element("IdentifyingDesignationNum", asset.asset_identifier),
     check(
       "AccountOpenedDuringTaxYearInd",
-      !!asset.opened_or_acquired_date?.startsWith("2025-"),
+      acquiredInYear(asset),
     ),
     check("AccountClosedDuringTaxYearInd", !!asset.closed_or_disposed_date),
     check("JointlyOwnedWithSpouseInd", asset.owner === "joint_with_spouse"),
@@ -130,7 +135,7 @@ function otherGroup(asset: ProjectedAsset): string {
     element("IdentifyingDesignationNum", asset.asset_identifier),
     element(
       "AcquiredDt",
-      asset.opened_or_acquired_date?.startsWith("2025-")
+      acquiredInYear(asset)
         ? asset.opened_or_acquired_date
         : undefined,
     ),

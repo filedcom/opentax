@@ -487,3 +487,36 @@ test("Category 5a rejects multiple CFCs until multi-CFC Form 8992 is modeled", (
     )
   );
 });
+
+test("f5471 years follow the return year and TY2026 refuses net CFC tested income", () => {
+  const item2026: F5471Item = {
+    ...item,
+    schedule_e: {
+      ...item.schedule_e,
+      foreign_tax_year_end: "2026-12-31",
+      us_tax_year_end: "2026-12-31",
+    },
+    form5471_identity: {
+      ...item.form5471_identity,
+      cfc_tax_year_begin: "2026-01-01",
+      cfc_tax_year_end: "2026-12-31",
+      filer_tax_year_begin: "2026-01-01",
+      filer_tax_year_end: "2026-12-31",
+    },
+  };
+  assertThrows(
+    () => f5471.compute({ taxYear: 2026, formType: "f1040" }, { f5471s: [item2026] }),
+    Error,
+    "Form 5471 net CFC tested income (P.L. 119-21) for CFC years beginning in 2026 is not computed",
+  );
+  assertThrows(
+    () => f5471.compute({ taxYear: 2026, formType: "f1040" }, { f5471s: [item] }),
+    Error,
+    "Form 5471 CFC and filer tax years must be in tax year 2026",
+  );
+  assertThrows(
+    () => f5471.compute(ctx, { f5471s: [item2026] }),
+    Error,
+    "Form 5471 CFC and filer tax years must be in tax year 2025",
+  );
+});

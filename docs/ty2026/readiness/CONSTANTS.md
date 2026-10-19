@@ -57,6 +57,7 @@ listed by section in `forms/f1040/2026/README.md`.
 | `employerProvidedChildcare` | 40% facility credit (50% eligible small business), 10% referral; $500,000 limit ($600,000) | OBBBA §70401; [draft Form 8882 (Rev. December 2026)](https://www.irs.gov/pub/irs-dft/f8882--dft.pdf) item A, lines 2, 5, 8 |
 | `retirementContributionCreditWageLimit` | $110,000 | [Draft Instructions for Form 8881 (Rev. December 2026)](https://www.irs.gov/pub/irs-dft/i8881--dft.pdf), line 6b |
 | `cleanElectricityMaterialAssistanceAfter` | Construction begun after 2025-12-31 needs a material assistance cost ratio | [Draft Instructions for Form 3468 (2026)](https://www.irs.gov/pub/irs-dft/i3468--dft.pdf), Part V; Notice 2026-15 |
+| `expatriationAverageTaxThreshold`, `expatriationMarkToMarketExclusion` | $211,000; $910,000 | RP §§4.37, 4.38 (IRC §§877(a)(2)(A), 877A(a)(3)) |
 | `form2210fPenaltyRate` | Not yet published (`null`) | [Draft 2026 Form 2210-F](https://www.irs.gov/pub/irs-dft/f2210f--dft.pdf) line 16 prints `x.xx` |
 
 ## Law changes that need year modules, not config

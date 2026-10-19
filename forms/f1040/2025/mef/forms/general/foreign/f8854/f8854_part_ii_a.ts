@@ -33,11 +33,11 @@ export function buildForm8854PartIISectionA(
   const taxes = input.prior_year_us_income_tax_less_foreign_tax_credit;
   const answers = sectionAExceptionAnswers(input);
   return elements("ExpatriationInformationGrp", [
-    element("USIncomeTax1stYearBfrExptrtAmt", taxes.year_2024),
-    element("USIncomeTax2ndYearBfrExptrtAmt", taxes.year_2023),
-    element("USIncomeTax3rdYearBfrExptrtAmt", taxes.year_2022),
-    element("USIncomeTax4thYearBfrExptrtAmt", taxes.year_2021),
-    element("USIncomeTax5thYearBfrExptrtAmt", taxes.year_2020),
+    element("USIncomeTax1stYearBfrExptrtAmt", taxes.first_year_before),
+    element("USIncomeTax2ndYearBfrExptrtAmt", taxes.second_year_before),
+    element("USIncomeTax3rdYearBfrExptrtAmt", taxes.third_year_before),
+    element("USIncomeTax4thYearBfrExptrtAmt", taxes.fourth_year_before),
+    element("USIncomeTax5thYearBfrExptrtAmt", taxes.fifth_year_before),
     element(
       "NetWorthOnExptrtDateAmt",
       calculateBalanceSheet(input.balance_sheet).netWorth,

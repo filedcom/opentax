@@ -21,8 +21,13 @@ class F8958Node extends TaxNode<typeof inputSchema> {
   readonly inputSchema = inputSchema;
   readonly outputNodes = new OutputNodes([w2]);
 
-  compute(_ctx: NodeContext, rawInput: F8958Input): NodeResult {
+  compute(ctx: NodeContext, rawInput: F8958Input): NodeResult {
     const source = inputSchema.parse(rawInput);
+    if (source.reviewed_spouse_return.tax_year !== ctx.taxYear) {
+      throw new Error(
+        `Form 8958 reviewed spouse return must be for tax year ${ctx.taxYear}`,
+      );
+    }
     return {
       outputs: [this.outputNodes.output(w2, { f8958_allocation: source })],
     };
