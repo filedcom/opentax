@@ -1858,3 +1858,35 @@ test("TY2026 Schedule E refuses prior-year passive losses dated to TY2025", () =
     "not yet supported for TY2026",
   );
 });
+
+test("auto_expense rental car expense reaches the sole rental's line 6", () => {
+  // Schedule E instructions, line 6: 4,000 rental miles at the 2025
+  // 70-cent standard mileage rate is a 2,800 car expense.
+  const result = scheduleE.compute(
+    { taxYear: 2025, formType: "f1040" },
+    inputSchema.parse({
+      schedule_es: [minimalItem({ rent_income: 10_000, expense_taxes: 1_000 })],
+      expense_auto_travel: 2_800,
+    }),
+  );
+  assertEquals(findOutput(result, "schedule1")?.fields.line5_schedule_e, 6_200);
+  const rows = findOutput(result, "schedule_e")?.fields.schedule_es as {
+    expense_auto_travel?: number;
+  }[];
+  assertEquals(rows[0].expense_auto_travel, 2_800);
+  assertThrows(
+    () =>
+      scheduleE.compute(
+        { taxYear: 2025, formType: "f1040" },
+        inputSchema.parse({
+          schedule_es: [
+            minimalItem({ rent_income: 1 }),
+            minimalItem({ activity_id: "rental-2", rent_income: 1 }),
+          ],
+          expense_auto_travel: 2_800,
+        }),
+      ),
+    Error,
+    "exactly one rental property",
+  );
+});

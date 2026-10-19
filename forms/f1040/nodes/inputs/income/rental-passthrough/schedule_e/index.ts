@@ -1412,6 +1412,65 @@ function form8990Outputs(items: EItems): NodeOutput[] {
   );
 }
 
+// ─── Row finalization ─────────────────────────────────────────────────────────
+
+// Prior-year assets become this activity's depreciation (Pub. 946, Appendix A).
+function withPriorYearDepreciation(item: EItem, taxYear: number): EItem {
+  if (!item.prior_year_assets) return item;
+  const { prior_year_assets: assets, ...rest } = item;
+  const { rows, total } = priorYearDepreciationTotal(assets, taxYear);
+  return {
+    ...rest,
+    expense_depreciation: (item.expense_depreciation ?? 0) + total,
+    prior_year_depreciation_rows: rows,
+  };
+}
+
+// The auto_expense worksheet's rental car expense goes on line 6 of the
+// rental it was driven for (Schedule E instructions, line 6; Rev. Proc.
+// 2019-46 standard mileage). Royalty rows are not rentals.
+function withAutoTravel(
+  input: z.infer<typeof inputSchema>,
+): z.infer<typeof inputSchema> {
+  const travel = input.expense_auto_travel ?? 0;
+  if (travel === 0) return input;
+  const rentals = (input.schedule_es ?? []).filter((item) =>
+    item.property_type !== 6
+  );
+  if (rentals.length !== 1) {
+    throw new Error(
+      "auto_expense Schedule E car expense needs exactly one rental property",
+    );
+  }
+  return {
+    ...input,
+    expense_auto_travel: undefined,
+    schedule_es: input.schedule_es.map((item) =>
+      item === rentals[0]
+        ? {
+          ...item,
+          expense_auto_travel: (item.expense_auto_travel ?? 0) + travel,
+        }
+        : item
+    ),
+  };
+}
+
+export function finalizeScheduleEInput(
+  input: z.infer<typeof inputSchema>,
+  taxYear: number,
+): z.infer<typeof inputSchema> {
+  const withAssets = input.schedule_es?.some((item) => item.prior_year_assets)
+    ? {
+      ...input,
+      schedule_es: input.schedule_es.map((item) =>
+        withPriorYearDepreciation(item, taxYear)
+      ),
+    }
+    : input;
+  return withAutoTravel(withAssets);
+}
+
 // ─── Node class ───────────────────────────────────────────────────────────────
 
 class ScheduleENode extends TaxNode<typeof inputSchema> {
@@ -1431,27 +1490,23 @@ class ScheduleENode extends TaxNode<typeof inputSchema> {
   ]);
 
   compute(ctx: NodeContext, input: z.infer<typeof inputSchema>): NodeResult {
-    // Prior-year assets become this activity's depreciation (Pub. 946,
-    // Appendix A); the finalized rows carry the deduction to every reader.
-    if (!input.schedule_es?.some((item) => item.prior_year_assets)) {
-      return this.computeRows(ctx, input);
-    }
-    const schedule_es = input.schedule_es.map((item) => {
-      if (!item.prior_year_assets) return item;
-      const { prior_year_assets: assets, ...rest } = item;
-      const { rows, total } = priorYearDepreciationTotal(assets, ctx.taxYear);
-      return {
-        ...rest,
-        expense_depreciation: (item.expense_depreciation ?? 0) + total,
-        prior_year_depreciation_rows: rows,
-      };
-    });
-    const result = this.computeRows(ctx, { ...input, schedule_es });
+    const finalized = finalizeScheduleEInput(input, ctx.taxYear);
+    if (finalized === input) return this.computeRows(ctx, input);
+    // The finalized rows carry the projected expenses to every reader.
+    const result = this.computeRows(ctx, finalized);
     return {
       ...result,
       outputs: [
         ...result.outputs,
-        { nodeType: this.nodeType, fields: { schedule_es } },
+        {
+          nodeType: this.nodeType,
+          fields: {
+            schedule_es: finalized.schedule_es,
+            ...(finalized.expense_auto_travel !== input.expense_auto_travel
+              ? { expense_auto_travel: undefined }
+              : {}),
+          },
+        },
       ],
     };
   }
