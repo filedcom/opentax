@@ -1466,16 +1466,58 @@ test("part1: employer year worksheet cannot subtract more prior-year deposits th
   );
 });
 
-test("part1: W-2 code W requires year-allocation facts", () => {
+// 2025 Form 8889 instructions, line 9 and the Employer Contribution
+// Worksheet: with no contributions made in 2025 for 2024 or in 2026 for 2025,
+// line 9 is the W-2 box 12 code W amount. Line 3 family limit is $8,550.
+test("part1: W-2 code W without year facts is a 2025 employer contribution", () => {
+  const result = compute({
+    ...uniformFamily,
+    employer_contribution_years: undefined,
+    employer_hsa_contributions: 3_200,
+    taxpayer_hsa_contributions: 5_350,
+  });
+  assertEquals(firstForm(result)?.print_line9_employer, 3_200);
+  assertEquals(firstForm(result)?.print_line12, 5_350);
+  assertEquals(firstForm(result)?.print_line13_deduction, 5_350);
+  assertEquals(
+    fieldsOf(result.outputs, schedule1)?.line13_hsa_deduction,
+    5_350,
+  );
+});
+
+test("part1: the W-2 code W employee is the default HSA beneficiary", () => {
+  const { beneficiary_identity: _, ...facts } = {
+    ...uniformFamily,
+    employer_contribution_years: undefined,
+    beneficiary_identity: undefined,
+    taxpayer_hsa_contributions: 5_350,
+  };
+  const result = form8889.compute(
+    { taxYear: 2025, formType: "f1040" },
+    inputSchema.parse({
+      ...facts,
+      w2_code_w_entries: [{ employee_ssn: "123-45-6789", amount: 3_200 }],
+    }),
+  );
+  const form = firstForm(result);
+  assertEquals(form?.owner, "primary");
+  assertEquals(form?.beneficiary_ssn, "123456789");
+  assertEquals(form?.beneficiary_name, undefined);
+  assertEquals(form?.print_line13_deduction, 5_350);
   assertThrows(
     () =>
-      compute({
-        ...uniformSelfOnly,
-        employer_hsa_contributions: 1000,
-        employer_contribution_years: undefined,
-      }),
+      form8889.compute(
+        { taxYear: 2025, formType: "f1040" },
+        inputSchema.parse({
+          ...facts,
+          w2_code_w_entries: [
+            { employee_ssn: "123456789", amount: 1_600 },
+            { employee_ssn: "987654321", amount: 1_600 },
+          ],
+        }),
+      ),
     Error,
-    "Employer Contribution Worksheet year facts",
+    "needs the HSA beneficiary identity",
   );
 });
 

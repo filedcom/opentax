@@ -19,6 +19,7 @@ import { form5329 } from "../../../taxes/retirement/form5329/index.ts";
 import type { NodeContext } from "../../../../../../../../core/types/node-context.ts";
 import { CONFIG_BY_YEAR } from "../../../../../config/index.ts";
 import { TS } from "../../../../../types.ts";
+import type { FilerIdentity } from "../../../../../../mef/header.ts";
 
 // ─── Constants — mathematical/statutory rates, unchanged across years ─────────
 
@@ -34,12 +35,16 @@ export enum CoverageType {
 
 // ─── Schema ───────────────────────────────────────────────────────────────────
 
+// The printed beneficiary name; when omitted it is the return's name for the
+// owner (filled at export from the filer identity).
+const beneficiaryIdentitySchema = z.object({
+  owner: z.nativeEnum(TS),
+  name: z.string().trim().min(1).optional(),
+  ssn: z.string().regex(/^\d{3}-?\d{2}-?\d{4}$/),
+}).strict();
+
 const beneficiaryInputSchema = z.object({
-  beneficiary_identity: z.object({
-    owner: z.nativeEnum(TS),
-    name: z.string().trim().min(1),
-    ssn: z.string().regex(/^\d{3}-?\d{2}-?\d{4}$/),
-  }).strict(),
+  beneficiary_identity: beneficiaryIdentitySchema,
   allocated_family_limit: z.number().int().nonnegative().optional(),
   family_allocation_source_reference: z.string().trim().min(1).optional(),
   // ── Coverage (determines contribution limit) ─────────────────────────────
@@ -65,7 +70,8 @@ const beneficiaryInputSchema = z.object({
   // Line 2: Taxpayer's own HSA contributions (not through payroll)
   taxpayer_hsa_contributions: z.number().nonnegative().optional(),
   // 2025 W-2 box 12 code W amount. Form 8889 line 9 may differ after the
-  // Employer Contribution Worksheet's prior/next-year adjustments.
+  // Employer Contribution Worksheet's prior/next-year adjustments; without
+  // those year facts the whole code W amount is a 2025 contribution.
   employer_hsa_contributions: z.number().nonnegative().optional(),
   employer_contribution_years: z.object({
     made_in_2025_for_2024_in_w2: z.number().nonnegative(),
@@ -296,6 +302,8 @@ const beneficiaryInputSchema = z.object({
 }).strict();
 
 export const inputSchema = beneficiaryInputSchema.extend({
+  // Defaults to the employee when the only beneficiary evidence is W-2 code W.
+  beneficiary_identity: beneficiaryIdentitySchema.optional(),
   retained_employer_code2_evidence: employerCode2RetainedSourceSchema
     .optional(),
   retained_employer_return_evidence: employerReturnEvidenceSchema.optional(),
@@ -319,6 +327,32 @@ export const inputSchema = beneficiaryInputSchema.extend({
   ).optional(),
 });
 
+/** An unnamed owner form takes the return's name for that owner. */
+export function withReturnBeneficiaryNames(
+  raw: object,
+  filer?: FilerIdentity,
+): Record<string, unknown> {
+  const fields: Record<string, unknown> = { ...raw };
+  if (!Array.isArray(fields.forms)) return fields;
+  return {
+    ...fields,
+    forms: fields.forms.map((form: Record<string, unknown>) => {
+      if (form.beneficiary_name !== undefined) return form;
+      const name = form.owner === "primary"
+        ? filer?.fullName
+        : form.owner === "spouse" && filer?.spouse
+        ? `${filer.spouse.firstName} ${filer.spouse.lastName}`
+        : undefined;
+      return name === undefined ? form : { ...form, beneficiary_name: name };
+    }),
+  };
+}
+
+// Retained source for the reviewed export routes, which bind a stated owner.
+export const statedBeneficiarySourceSchema = inputSchema.extend({
+  beneficiary_identity: beneficiaryIdentitySchema,
+});
+
 type Form8889Input = z.infer<typeof beneficiaryInputSchema>;
 type Form8889ReturnInput = z.infer<typeof inputSchema>;
 type LastMonthEvidence = NonNullable<
@@ -326,6 +360,28 @@ type LastMonthEvidence = NonNullable<
     Form8889Input["testing_period_failure"]
   >["last_month_rule_evidence"]
 >;
+
+// Without a stated beneficiary, a single filer HSA funded through one
+// employee's W-2 code W belongs to that employee, taken as the taxpayer.
+function codeWBeneficiary(
+  entries: NonNullable<Form8889ReturnInput["w2_code_w_entries"]>,
+  hasSpouseHsa: boolean,
+): Form8889Input["beneficiary_identity"] {
+  const employees = new Set(
+    entries.map((entry) => entry.employee_ssn.replaceAll("-", "")),
+  );
+  if (hasSpouseHsa || employees.size !== 1) {
+    throw new Error(
+      "Form 8889 needs the HSA beneficiary identity unless one W-2 code W employee is the only owner",
+    );
+  }
+  return { owner: TS.T, ssn: [...employees][0] };
+}
+
+function beneficiaryName(owner: Form8889Input) {
+  const name = owner.beneficiary_identity.name;
+  return name === undefined ? {} : { beneficiary_name: name };
+}
 
 function verifyPriorYearSpouseFacts(
   evidence: LastMonthEvidence,
@@ -767,11 +823,6 @@ function deductibleContributions(
 function employerContributionsForTaxYear(input: Form8889Input): number {
   const codeW = input.employer_hsa_contributions ?? 0;
   const years = input.employer_contribution_years;
-  if (codeW > 0 && !years) {
-    throw new Error(
-      "Form 8889 employer contributions need the 2025 Employer Contribution Worksheet year facts",
-    );
-  }
   const priorYear = years?.made_in_2025_for_2024_in_w2 ?? 0;
   if (priorYear > codeW) {
     throw new Error(
@@ -1744,8 +1795,20 @@ class Form8889Node extends TaxNode<typeof inputSchema> {
       retained_employer_code2_evidence: _retainedEmployerCode2Evidence,
       retained_employer_return_evidence: _retainedEmployerReturnEvidence,
       retained_employer_postyear_evidence: _retainedEmployerPostyearEvidence,
-      ...primary
+      beneficiary_identity: statedIdentity,
+      ...rest
     } = input;
+    // No beneficiary, W-2 code W or other HSA fact: Form 8889 is not filed.
+    if (
+      statedIdentity === undefined && codeW.length === 0 &&
+      spouse === undefined && priorAllocation === undefined &&
+      Object.values(rest).every((value) => value === undefined)
+    ) return { outputs: [] };
+    const primary: Form8889Input = {
+      ...rest,
+      beneficiary_identity: statedIdentity ??
+        codeWBeneficiary(codeW, spouse !== undefined),
+    };
     if ((primary.spouse_has_separate_hsa === true) !== (spouse !== undefined)) {
       throw new Error(
         "Form 8889 separate spouse HSA answer must match the two beneficiary sources",
@@ -1811,7 +1874,7 @@ class Form8889Node extends TaxNode<typeof inputSchema> {
               fields: {
                 forms: [{
                   owner: owner === TS.T ? "primary" : "spouse",
-                  beneficiary_name: primary.beneficiary_identity.name,
+                  ...beneficiaryName(primary),
                   beneficiary_ssn: normalizeSsn(
                     primary.beneficiary_identity.ssn,
                   ),
@@ -2088,7 +2151,7 @@ class Form8889Node extends TaxNode<typeof inputSchema> {
       const owner = paired[index];
       return {
         owner: index === 0 ? "primary" : "spouse",
-        beneficiary_name: owner.beneficiary_identity.name,
+        ...beneficiaryName(owner),
         beneficiary_ssn: normalizeSsn(owner.beneficiary_identity.ssn),
         ...printed.fields,
       };

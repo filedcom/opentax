@@ -8,6 +8,7 @@ import {
   CoverageType,
   form8889 as form8889Node,
   inputSchema as form8889InputSchema,
+  withReturnBeneficiaryNames,
 } from "../../../../../nodes/intermediate/forms/adjustments/health/form8889/index.ts";
 import { form8889 } from "./f8889.ts";
 import { form8889Pdf } from "../../../../pdf/forms/adjustments/health/f8889.ts";
@@ -1022,4 +1023,17 @@ test("Form 8889 rejects invalid coverage, exception, and amounts", () => {
     Error,
     "nonnegative amount",
   );
+});
+
+test("Form 8889 unnamed code W beneficiary takes the return's name for the owner", () => {
+  const named = withReturnBeneficiaryNames({
+    forms: [{ owner: "primary", beneficiary_ssn: "123456789" }],
+  }, context.filer);
+  assertEquals(named, {
+    forms: [{
+      owner: "primary",
+      beneficiary_ssn: "123456789",
+      beneficiary_name: "Alex Taxpayer",
+    }],
+  });
 });

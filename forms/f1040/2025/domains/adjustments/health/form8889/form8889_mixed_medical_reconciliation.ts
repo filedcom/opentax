@@ -2,7 +2,7 @@ import type { FilerIdentity } from "../../../../../mef/header.ts";
 import { FilingStatus } from "../../../../../mef/header.ts";
 import {
   form8889,
-  inputSchema,
+  statedBeneficiarySourceSchema as inputSchema,
 } from "../../../../../nodes/intermediate/forms/adjustments/health/form8889/index.ts";
 import { inputSchema as generalSchema } from "../../../../../nodes/inputs/general/filing/general/index.ts";
 
