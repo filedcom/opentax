@@ -526,3 +526,17 @@ test("every TY2026 mapped field exists on its pinned 2026 template", async () =>
     assertEquals(missing, [], key);
   }
 });
+
+test("TY2026 PDF prints Form 8962 on the 2026 draft with line 27 uncapped", async () => {
+  const printed = await text(
+    await render(fixture("single-marketplace-aptc-repayment")),
+  );
+  assertMatch(printed, /Form 8962 \(2026\)/);
+  assertMatch(printed, /Other 48 states and DC 4 15650/);
+  assertMatch(printed, /federal poverty line \(see instructions\)[^\n]* 5 288 %/);
+  assertMatch(printed, /Did you enter 401% on line 5\?[^\n]*\n ✔ No\./);
+  assertMatch(printed, /11 Annual totals 9600 7200 4337 2863 2863 8400/);
+  assertMatch(printed, /enter the total here 24 2863/);
+  assertMatch(printed, /Schedule 2 \(Form 1040\), line 1a [. ]* 27 5537/);
+  assertMatch(printed, /28 Reserved for future use [. ]* 28\n/);
+});

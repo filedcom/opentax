@@ -13,6 +13,7 @@ import {
   form8962 as form8962Mef,
   onePersonTransitionOverlapMonth,
 } from "../../../../mef/forms/credits/health/f8962/f8962.ts";
+import { CONFIG_BY_YEAR } from "../../../../../nodes/config/index.ts";
 import { appendForm8962AllocationStatement } from "./f8962_allocation_statement.ts";
 import { reconcileDependentMagi } from "../../../../domains/credits/health/form8962/form8962-dependent-magi.ts";
 import { assertForm8962Pub974Return } from "../../../../domains/credits/health/form8962/form8962_pub974_return.ts";
@@ -216,6 +217,7 @@ const fields: ReadonlyArray<PdfFieldEntry> = [
 function projectFields(
   fields: Record<string, unknown>,
   allPending: Record<string, Record<string, unknown>>,
+  taxYear: number,
 ): Record<string, unknown> {
   assertForm8962Pub974Return(fields, allPending);
   const hasPolicy = fields.annual_premium !== undefined ||
@@ -307,6 +309,15 @@ function projectFields(
   projected.pdf_fpl_alaska = fields.fpl_region === "alaska";
   projected.pdf_fpl_hawaii = fields.fpl_region === "hawaii";
   projected.pdf_fpl_other = fields.fpl_region === "contiguous";
+  // Line 6 asks whether line 5 is 401%, which the graph enters only above the
+  // year's PTC income limit; 2025 has no limit and reserves the line.
+  if (
+    CONFIG_BY_YEAR[taxYear]?.ptcIncomeLimitFplPct != null &&
+    typeof fields.federal_poverty_pct === "number"
+  ) {
+    projected.pdf_line6_yes = fields.federal_poverty_pct === 401;
+    projected.pdf_line6_no = fields.federal_poverty_pct !== 401;
+  }
   if (typeof fields.applicable_figure === "number") {
     projected.pdf_applicable_figure = fields.applicable_figure.toFixed(4);
   }
@@ -449,7 +460,8 @@ function projectFields(
   return projected;
 }
 
-export const form8962Pdf: PdfFormDescriptor = {
+export function form8962PdfFor(taxYear: number): PdfFormDescriptor {
+  return {
   pendingKey: "form8962",
   pdfUrl: "https://www.irs.gov/pub/irs-prior/f8962--2025.pdf",
   fields,
@@ -457,7 +469,8 @@ export const form8962Pdf: PdfFormDescriptor = {
     { kind: "text", domainKey: "fullName", pdfField: `${PAGE1}.f1_1[0]` },
     { kind: "text", domainKey: "primarySSN", pdfField: `${PAGE1}.f1_2[0]` },
   ],
-  projectFields,
+  projectFields: (fields, allPending) =>
+    projectFields(fields, allPending, taxYear),
   instances(projected, filer, allPending) {
     const general = generalSchema.safeParse(allPending?.general);
     const source = allPending?.f1095a;
@@ -483,7 +496,7 @@ export const form8962Pdf: PdfFormDescriptor = {
       (typeof projected.federal_poverty_pct === "number" &&
         projected.federal_poverty_pct < 400)
     ) {
-      form8962Mef.build(projected, { filer, pending: allPending });
+      form8962Mef.build(projected, { filer, pending: allPending, taxYear });
     }
     if (source !== undefined) {
       const premiumMonths = policies.length === 1
@@ -500,7 +513,7 @@ export const form8962Pdf: PdfFormDescriptor = {
           Array.isArray(projected.monthly_ptc_rows)) &&
           coveredCount !== undefined && coveredCount > 0 && coveredCount < 12)
       ) {
-        form8962Mef.build(projected, { filer, pending: allPending });
+        form8962Mef.build(projected, { filer, pending: allPending, taxYear });
       }
     }
     return [projected];
@@ -524,4 +537,7 @@ export const form8962Pdf: PdfFormDescriptor = {
     fields.annual_aptc !== undefined ||
     fields.annual_slcsp !== undefined ||
     Array.isArray(fields.monthly_ptc_rows),
-};
+  };
+}
+
+export const form8962Pdf: PdfFormDescriptor = form8962PdfFor(2025);
