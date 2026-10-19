@@ -177,6 +177,10 @@ export const inputSchema = z.object({
   // Line 5a: State and local income taxes — mutually exclusive with line_5a_sales_tax
   // per IRC §164(b)(5) election. Provide one or the other, never both.
   line_5a_state_income_tax: z.number().nonnegative().optional(),
+  // From the w2 node: boxes 17 and 19 (and SDI/PFML). Kept apart from the
+  // entered line 5a (estimates, prior-year balances) so neither replaces the
+  // other; compute() adds them and retains the combined line 5a.
+  w2_state_local_income_tax: z.number().nonnegative().optional(),
   // Separate issued retirement withholding contribution; preserve wage/other taxes.
   retirement_state_local_withholding: z.number().nonnegative().optional(),
   // Line 5a (alternative): General sales tax deduction in lieu of income taxes
@@ -529,6 +533,7 @@ export const inputSchema = z.object({
   // deduct both. Reject when both are provided with nonzero values.
   const hasSalesTax = (data.line_5a_sales_tax ?? 0) > 0;
   const hasIncomeTax = ((data.line_5a_state_income_tax ?? 0) +
+    (data.w2_state_local_income_tax ?? 0) +
     (data.retirement_state_local_withholding ?? 0)) > 0;
   if (hasSalesTax && hasIncomeTax) {
     ctx.addIssue({
@@ -542,6 +547,17 @@ export const inputSchema = z.object({
 });
 
 type ScheduleAInput = z.infer<typeof inputSchema>;
+
+// Schedule A line 5a: entered state income taxes plus W-2 withholding.
+function withW2StateTax(input: ScheduleAInput): ScheduleAInput {
+  if (input.w2_state_local_income_tax === undefined) return input;
+  return {
+    ...input,
+    line_5a_state_income_tax: (input.line_5a_state_income_tax ?? 0) +
+      input.w2_state_local_income_tax,
+    w2_state_local_income_tax: 0,
+  };
+}
 
 function computeMedicalDeduction(input: ScheduleAInput, agi: number): number {
   return Math.max(
@@ -971,8 +987,8 @@ class ScheduleANode extends TaxNode<typeof inputSchema> {
     form6251,
   ]);
 
-  compute(ctx: NodeContext, input: ScheduleAInput): NodeResult {
-    inputSchema.parse(input);
+  compute(ctx: NodeContext, rawInput: ScheduleAInput): NodeResult {
+    const input = withW2StateTax(inputSchema.parse(rawInput));
     const cfg = CONFIG_BY_YEAR[ctx.taxYear];
     if (!cfg) throw new Error(`No f1040 config for year ${ctx.taxYear}`);
     const agi = input.agi ?? 0;
@@ -1087,6 +1103,10 @@ class ScheduleANode extends TaxNode<typeof inputSchema> {
       finalizations: [{
         nodeType: this.nodeType,
         fields: {
+          ...(rawInput.w2_state_local_income_tax === undefined ? {} : {
+            line_5a_state_income_tax: input.line_5a_state_income_tax,
+            w2_state_local_income_tax: 0,
+          }),
           line_11_cash_contributions: contributions.cash,
           line_12_noncash_contributions: contributions.noncash,
           line_13_contribution_carryover: line13Carryover,
