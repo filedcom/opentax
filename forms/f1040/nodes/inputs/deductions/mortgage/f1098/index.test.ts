@@ -876,11 +876,106 @@ test("f1098.compute: reviewed partial box1 deduction excludes prepaid or limited
   );
 });
 
-test("f1098.compute: positive personal box1 without Pub. 936 workpaper fails closed", () => {
+test("f1098.compute: unreviewed box1 without box 2 principal fails closed", () => {
   assertThrows(
     () => compute([minimalItem({ box1_mortgage_interest: 12_000 })]),
     Error,
-    "needs reviewed TY2025 Schedule A deductible interest",
+    "needs box 2 principal for the Pub. 936 Table 1 average balance",
+  );
+});
+
+// Pub. 936 (2025) Part II, Table 1 and "Average of first and last balance
+// method": the average balance is the first and last principal while the loan
+// secured the home, divided by 2. Debt taken out after 12/15/2017 is limited
+// to $750,000 (line 8); line 14 is rounded to three places.
+test("f1098.compute: unreviewed box1 is limited by Pub. 936 Table 1 across all mortgages", () => {
+  const result = compute([
+    minimalItem({
+      box1_mortgage_interest: 153_818,
+      box2_outstanding_principal: 2_300_000,
+      last_day_secured_principal: 2_260_000,
+      box3_origination_date: "05/14/2024",
+    }),
+    // Paid off during the year: the last balance is the payoff principal.
+    minimalItem({
+      box1_mortgage_interest: 8_908,
+      box2_outstanding_principal: 545_000,
+      last_day_secured_principal: 527_000,
+      box3_origination_date: "08/01/2022",
+    }),
+  ]);
+  // Line 12 = 2,280,000 + 536,000 = 2,816,000; line 11 = 750,000.
+  // Line 14 = 750,000 / 2,816,000 = 0.266; line 15 = 162,726 x 0.266.
+  const fields = fieldsOf(result.outputs, scheduleA)!;
+  assertEquals(fields.line_8a_mortgage_interest_1098, 43_285);
+  assertEquals(fields.form1098_table1_average_balance, 2_816_000);
+});
+
+test("f1098.compute: Pub. 936 Table 1 keeps the $1,000,000 limit for debt before 12/16/2017", () => {
+  const grandfathered = compute([
+    minimalItem({
+      box1_mortgage_interest: 36_000,
+      box2_outstanding_principal: 910_000,
+      last_day_secured_principal: 890_000,
+      box3_origination_date: "03/01/2015",
+    }),
+  ]);
+  assertEquals(
+    fieldsOf(grandfathered.outputs, scheduleA)!.line_8a_mortgage_interest_1098,
+    36_000,
+  );
+  // Line 6 = 600,000; line 11 = min(750,000, 1,000,000); line 14 = 0.75.
+  const mixed = compute([
+    minimalItem({
+      box1_mortgage_interest: 24_000,
+      box2_outstanding_principal: 600_000,
+      box3_origination_date: "03/01/2015",
+    }),
+    minimalItem({
+      box1_mortgage_interest: 16_000,
+      box2_outstanding_principal: 400_000,
+      box3_origination_date: "06/01/2020",
+    }),
+  ]);
+  assertEquals(
+    fieldsOf(mixed.outputs, scheduleA)!.line_8a_mortgage_interest_1098,
+    30_000,
+  );
+});
+
+test("f1098.compute: unreviewed mortgages within $750,000 are fully deductible and over it need box 3", () => {
+  const result = compute([
+    minimalItem({
+      box1_mortgage_interest: 12_000,
+      box2_outstanding_principal: 300_000,
+    }),
+  ]);
+  assertEquals(
+    fieldsOf(result.outputs, scheduleA)!.line_8a_mortgage_interest_1098,
+    12_000,
+  );
+  assertThrows(
+    () =>
+      compute([
+        minimalItem({
+          box1_mortgage_interest: 40_000,
+          box2_outstanding_principal: 900_000,
+        }),
+      ]),
+    Error,
+    "need each box 3 origination date",
+  );
+  assertThrows(
+    () =>
+      compute([
+        reviewedInterest(12_000),
+        minimalItem({
+          box1_mortgage_interest: 8_000,
+          box2_outstanding_principal: 200_000,
+        }),
+      ]),
+    Error,
+    "every Schedule A mortgage or none",
   );
 });
 
