@@ -10,6 +10,7 @@ import { schedule2Pdf2026 } from "./forms/taxes/other/schedule2.ts";
 import { scheduleSePdf2026 } from "./forms/taxes/self-employment/schedule_se.ts";
 import { scheduleCPdf2026 } from "./forms/income/business/schedule_c.ts";
 import { form8995Pdf2026 } from "./forms/deductions/business/f8995.ts";
+import { form2441Pdf2026 } from "./forms/credits/individual/f2441.ts";
 import { scheduleBPdf2026 } from "./forms/income/investments/schedule_b.ts";
 import { scheduleDPdf2026 } from "./forms/income/investments/schedule_d.ts";
 import { form8889Pdf2026 } from "./forms/adjustments/health/f8889.ts";
@@ -25,6 +26,7 @@ const MAPPED: ReadonlyMap<string, PdfFormDescriptor> = new Map(
     scheduleCPdf2026,
     scheduleDPdf2026,
     scheduleSePdf2026,
+    form2441Pdf2026,
     form8863Pdf2026,
     form8889Pdf2026,
     form8995Pdf2026,

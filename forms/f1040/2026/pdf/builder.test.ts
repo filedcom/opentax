@@ -206,11 +206,26 @@ test("TY2026 PDF prints Schedule D and Form 8889 on the 2026 drafts", async () =
   assertMatch(hsa, /13 HSA deduction[^\n]* 13 4000/);
 });
 
+test("TY2026 PDF prints Form 2441 Part I providers as columns", async () => {
+  const printed = await text(
+    await render(fixture("single-form2441-child-care-credit")),
+  );
+  assertMatch(printed, /Child and Dependent Care Expenses[\s\S]*2026/);
+  assertMatch(printed, /1a Care provider’s name Care Center/);
+  assertMatch(printed, /1b Address \(number and street\) 100 Main St/);
+  assertMatch(printed, /1c Identifying number \(SSN or EIN\) 123456789/);
+  assertMatch(printed, /1e Amount paid\. See instructions\. 3000/);
+  assertMatch(printed, /Ada Example 111223334 3000/);
+  assertMatch(printed, /line 11a 7 50000/);
+  assertMatch(printed, /9a Multiply line 6[^\n]* 9a 1050/);
+  assertMatch(printed, /on Schedule 3 \(Form 1040\), line 2[^\n]* 11 500/);
+});
+
 test("TY2026 PDF refuses, by name, a form with no TY2026 mapping", async () => {
   await assertRejects(
-    () => render(fixture("single-form2441-child-care-credit")),
+    () => render(fixture("single-child-unearned-income")),
     Error,
-    "TY2026 PDF export needs form2441",
+    "TY2026 PDF export needs form8615",
   );
 });
 
