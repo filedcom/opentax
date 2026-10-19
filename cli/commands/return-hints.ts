@@ -99,6 +99,20 @@ function k1ParticipationHints(pending: Pending): string[] {
   });
 }
 
+/** An MFS filer's benefits use the lived-with-spouse rule (no base amount,
+ * up to 85% taxable) unless they lived apart all year (2025 Form 1040
+ * instructions, Social Security Benefits Worksheet, lines 6a-6b). */
+function mfsSocialSecurityHints(pending: Pending): string[] {
+  const agi = pending["agi_aggregator"] ?? {};
+  if (
+    agi["filing_status"] !== "mfs" || num(agi["line6a_ss_gross"]) <= 0 ||
+    agi["mfs_lived_with_spouse"] !== undefined
+  ) return [];
+  return [
+    "Married filing separately with Social Security benefits: the return assumed you lived with your spouse at some time in 2025, so there is no base amount and up to 85% of benefits is taxable. If you lived apart all year, set mfs_spouse_lived_with_taxpayer to false on general.",
+  ];
+}
+
 /** Claims the entered facts point to but the return does not make. */
 export function returnHints(pending: Pending): string[] {
   return [
@@ -106,5 +120,6 @@ export function returnHints(pending: Pending): string[] {
     ...scheduleRDisabilityHints(pending),
     ...form4952Hints(pending),
     ...k1ParticipationHints(pending),
+    ...mfsSocialSecurityHints(pending),
   ];
 }
