@@ -48,7 +48,11 @@ function seniorDeductionSsnHints(pending: Pending): string[] {
  * investment expenses and no 2024 disallowed interest (2025 Instructions for
  * Schedule A, Line 9, Exception). */
 function form4952Hints(pending: Pending): string[] {
-  if (pending["form4952"] !== undefined) return [];
+  // 1099 interest and dividends reach Form 4952 as default sources on every
+  // return; only an entered Form 4952 means the expense is already there.
+  const form4952Entries = Object.keys(pending["form4952"] ?? {})
+    .filter((key) => !key.startsWith("default_1099_"));
+  if (form4952Entries.length > 0) return [];
   const expense = num(pending["schedule_a"]?.["line_9_investment_interest"]);
   if (expense <= 0) return [];
   const f1040 = pending["f1040"] ?? {};
