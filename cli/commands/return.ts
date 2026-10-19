@@ -208,6 +208,9 @@ export async function getReturnCommand(
   for (const d of result.diagnostics) {
     warnings.push(`[${d.code}] ${d.nodeType}: ${d.message}`);
   }
+  for (const w of result.warnings ?? []) {
+    warnings.push(`[NODE_WARNING] ${w.nodeType}: ${w.message}`);
+  }
 
   return {
     returnId: meta.returnId,

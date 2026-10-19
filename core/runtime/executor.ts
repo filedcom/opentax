@@ -15,9 +15,17 @@ export type ExecutorDiagnosticEntry = {
   readonly message: string;
 };
 
+/** A node's note about an incomplete source; the return still computed. */
+export type ExecutorWarningEntry = {
+  readonly nodeType: string;
+  readonly nodeId: string;
+  readonly message: string;
+};
+
 export type ExecuteResult = {
   readonly pending: Readonly<Record<string, Record<string, unknown>>>;
   readonly diagnostics: readonly ExecutorDiagnosticEntry[];
+  readonly warnings?: readonly ExecutorWarningEntry[];
   readonly carryforwards: Readonly<Record<string, number>>;
   readonly replayInputs?: Readonly<
     Record<string, Readonly<Record<string, unknown>>>
@@ -136,6 +144,7 @@ export function execute(
   pending["start"] = { ...inputs };
 
   const diagnostics: ExecutorDiagnosticEntry[] = [];
+  const warnings: ExecutorWarningEntry[] = [];
   const carryforwards: Record<string, number> = {};
   const replayInputs: Record<string, Record<string, unknown>> = {};
 
@@ -198,6 +207,9 @@ export function execute(
           true,
         );
       }
+      for (const message of result.warnings ?? []) {
+        warnings.push({ nodeType: step.nodeType, nodeId: step.id, message });
+      }
       if (result.carryforwards) {
         Object.assign(carryforwards, result.carryforwards);
       }
@@ -217,6 +229,7 @@ export function execute(
     pending: withoutContextOnlySlots(pending, registry),
     diagnostics,
     carryforwards,
+    ...(warnings.length > 0 ? { warnings } : {}),
     ...(Object.keys(replayInputs).length > 0 ? { replayInputs } : {}),
   };
 }

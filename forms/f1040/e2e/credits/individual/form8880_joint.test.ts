@@ -50,3 +50,28 @@ test("Form 8880: a joint return without a distribution ledger claims the credit"
   assertEquals(result.pending.schedule3?.line4_retirement_savings_credit, 800);
   assertEquals(form1040.line22_tax_after_credits, 853);
 });
+
+// An incomplete Form 8880 source (no student or dependent answers) must not
+// stop Form 1040: the credit is left unclaimed with a warning.
+test("Form 8880: missing eligibility answers leave the credit off with a warning", () => {
+  const result = execute(plan, registry, {
+    general: {
+      filing_status: FilingStatus.MFJ,
+      taxpayer_first_name: "Test",
+      taxpayer_last_name: "Payer",
+      taxpayer_ssn: "111-22-3333",
+      taxpayer_dob: "1985-01-01",
+      spouse_first_name: "Test",
+      spouse_last_name: "Spouse",
+      spouse_ssn: "111-22-4444",
+      spouse_dob: "1986-01-01",
+    },
+    w2: [w2("111-22-3333"), w2("111-22-4444")],
+  }, ctx);
+
+  assertEquals(result.diagnostics, []);
+  assertEquals(result.warnings?.length, 1);
+  const form1040 = result.pending.f1040 ?? {};
+  assertEquals(form1040.line11_agi, 48_000);
+  assertEquals(form1040.line22_tax_after_credits, 1_653);
+});

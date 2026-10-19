@@ -1449,9 +1449,22 @@ class F1040Node extends TaxNode<typeof inputSchema> {
         schedule3.line3 - (schedule3.line6dElderlyDisabled ?? 0) -
         (schedule3.line6lForm8978 ?? 0),
     );
-    const retirement = source === undefined
-      ? undefined
-      : calculateForm8880(ctx, source, capacity);
+    // An incomplete Form 8880 source leaves the saver's credit unclaimed with
+    // a warning; it never stops the rest of the return.
+    const form8880Warnings: string[] = [];
+    const retirement = (() => {
+      if (source === undefined) return undefined;
+      try {
+        return calculateForm8880(ctx, source, capacity);
+      } catch (error) {
+        form8880Warnings.push(
+          `Form 8880 saver's credit not claimed: ${
+            error instanceof Error ? error.message : String(error)
+          }`,
+        );
+        return undefined;
+      }
+    })();
     const retirementCredit = retirement?.credit ?? 0;
     const effectiveInput = retirementCredit === 0 ? input : {
       ...input,
@@ -1641,6 +1654,7 @@ class F1040Node extends TaxNode<typeof inputSchema> {
     return {
       outputs: [{ nodeType: this.nodeType, fields: assembled }],
       replayInput: structuredClone(replaySource),
+      ...(form8880Warnings.length > 0 ? { warnings: form8880Warnings } : {}),
       finalizations: [
         ...(retirement
           ? [{

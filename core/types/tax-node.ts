@@ -19,6 +19,8 @@ export type NodeResult = {
   readonly finalizations?: readonly NodeOutput[];
   // Carryforward amounts to next tax year (key = descriptive label, value = positive amount)
   readonly carryforwards?: Readonly<Record<string, number>>;
+  /** Review notes for an incomplete source that did not stop the return. */
+  readonly warnings?: readonly string[];
 };
 
 // Requires at least one key from T to be present
