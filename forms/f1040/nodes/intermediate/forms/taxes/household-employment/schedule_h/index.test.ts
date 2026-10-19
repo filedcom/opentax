@@ -801,7 +801,7 @@ test("2026: cash wages below $3,000 are not FICA wages", () => {
   );
 });
 
-test("2026: FUTA and minor classifications stay refused", () => {
+test("2026: FUTA stays refused and a minor still needs its classification", () => {
   assertThrows(
     () =>
       compute2026({
@@ -815,7 +815,7 @@ test("2026: FUTA and minor classifications stay refused", () => {
         },
       }),
     Error,
-    "minor FICA classifications are not supported for 2026",
+    "needs exactly one student or principal-occupation source classification",
   );
   assertThrows(() => compute2026(studentMinorFuta), Error);
 });
