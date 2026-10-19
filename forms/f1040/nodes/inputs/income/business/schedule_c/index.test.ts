@@ -181,6 +181,32 @@ test("Form 8829 line 36 applies beside line 15 business insurance and Part V exp
   assertEquals(findOutput(result, "schedule1")?.fields.line3_schedule_c, 7_500);
 });
 
+test("auto_expense line 9 amount reduces the sole business's profit", () => {
+  // Schedule C instructions, line 9: standard mileage (70 cents x 3,000 miles
+  // in 2025) is the car and truck expense on line 9.
+  const result = scheduleC.compute({ taxYear: 2025, formType: "f1040" }, {
+    schedule_cs: [minimalItem({
+      business_reference: "C-1",
+      line_1_gross_receipts: 10_000,
+      line_9_car_truck_expenses: 300,
+    })],
+    line_9_car_truck_expenses: 2_100,
+  });
+  assertEquals(findOutput(result, "schedule1")?.fields.line3_schedule_c, 7_600);
+  assertThrows(
+    () =>
+      scheduleC.compute({ taxYear: 2025, formType: "f1040" }, {
+        schedule_cs: [
+          minimalItem({ business_reference: "C-1", line_1_gross_receipts: 1 }),
+          minimalItem({ business_reference: "C-2", line_1_gross_receipts: 1 }),
+        ],
+        line_9_car_truck_expenses: 2_100,
+      }),
+    Error,
+    "exactly one Schedule C business",
+  );
+});
+
 test("Form 8829 rejects a second home-office deduction or mismatched line 29", () => {
   const claim = {
     business_reference: "C-1",

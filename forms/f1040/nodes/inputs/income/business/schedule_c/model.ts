@@ -591,9 +591,35 @@ export function projectSection481aScheduleCItems(
   });
 }
 
-export function projectScheduleCItems(
+/** Fold the auto_expense worksheet amount into the business's line 9.
+ * Schedule C instructions, line 9: the standard mileage rate or the
+ * business share of actual costs is the line 9 car and truck expense. */
+export function foldCarTruckWorksheet(
   input: z.infer<typeof inputSchema>,
+): z.infer<typeof inputSchema> {
+  const worksheet = input.line_9_car_truck_expenses ?? 0;
+  if (worksheet === 0) return input;
+  if (input.schedule_cs.length !== 1) {
+    throw new Error(
+      "auto_expense Schedule C car and truck expense needs exactly one Schedule C business",
+    );
+  }
+  const item = input.schedule_cs[0];
+  return {
+    ...input,
+    line_9_car_truck_expenses: undefined,
+    schedule_cs: [{
+      ...item,
+      line_9_car_truck_expenses: (item.line_9_car_truck_expenses ?? 0) +
+        worksheet,
+    }],
+  };
+}
+
+export function projectScheduleCItems(
+  rawInput: z.infer<typeof inputSchema>,
 ): ScheduleCItem[] {
+  const input = foldCarTruckWorksheet(rawInput);
   const rawItems = projectSection481aScheduleCItems(input).map((item) =>
     item.donated_natural_resource_property_source
       ? itemSchema.parse({
@@ -690,8 +716,9 @@ export function projectScheduleCItems(
 }
 
 export function projectForm8829ScheduleCItems(
-  input: z.infer<typeof inputSchema>,
+  rawInput: z.infer<typeof inputSchema>,
 ): ScheduleCItem[] {
+  const input = foldCarTruckWorksheet(rawInput);
   const claim = input.form8829_line30;
   if (!claim) return input.schedule_cs;
   if (
@@ -701,7 +728,6 @@ export function projectForm8829ScheduleCItems(
     (input.line1_gross_receipts ?? 0) > 0 ||
     (input.statutory_wages ?? 0) > 0 ||
     (input.line16a_interest_mortgage ?? 0) > 0 ||
-    (input.line_9_car_truck_expenses ?? 0) > 0 ||
     (input.line_12_depletion ?? 0) > 0
   ) {
     throw new Error(
