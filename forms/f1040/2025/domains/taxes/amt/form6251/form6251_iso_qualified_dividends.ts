@@ -68,14 +68,7 @@ export function assertForm6251QualifiedDividendSource(
       assertDirectCapitalGainDistributionSource(form1040!, pending);
     }
   }
-  // 1099 interest and dividends reach Form 4952 as default sources on every
-  // return; only the remaining fields are an entered Form 4952.
-  const form4952Entries = Object.entries(
-    (pending?.form4952 ?? {}) as Record<string, unknown>,
-  ).filter(([key]) => !key.startsWith("default_1099_"));
-  const form4952 = form4952Entries.length > 0
-    ? Object.fromEntries(form4952Entries)
-    : undefined;
+  const form4952 = pending?.form4952 as Record<string, unknown> | undefined;
   const childOnlyForm4952 = child !== undefined && form4952 !== undefined &&
     Object.keys(form4952).every((key) =>
       key === "form8814_line9_qualified_dividends" ||
@@ -210,7 +203,7 @@ export function assertForm6251QualifiedDividendSource(
       (pending?.schedule_d as Record<string, unknown> | undefined)
           ?.print_line16_combined !==
         issuedIsoCapital + childCapital + ordinarySaleGain ||
-    form4952 !== undefined && !childOnlyForm4952 &&
+    pending?.form4952 !== undefined && !childOnlyForm4952 &&
       electedForm4952 === 0 ||
     pending?.form2555 !== undefined ||
     iso && (fields.net_capital_gain ?? 0) !==
