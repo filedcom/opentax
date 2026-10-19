@@ -64,11 +64,47 @@ function form4952Hints(pending: Pending): string[] {
   ];
 }
 
+/** A K-1 box 1-3 amount with no stated passive status flows to Schedule E as
+ * nonpassive. Passive amounts go through Form 8582 instead (2025 Instructions
+ * for Form 8582, Who Must File; Instructions for Schedule E, Part II). */
+function k1ParticipationHints(pending: Pending): string[] {
+  const sources = [
+    ["k1_partnership", "k1_partnerships", "partnership_name", "Form 1065"],
+    ["k1_s_corp", "k1_s_corps", "corporation_name", "Form 1120-S"],
+  ] as const;
+  const boxes = [
+    ["box1", "box1_ordinary_business"],
+    ["box2", "box2_rental_re"],
+    ["box3", "box3_other_rental"],
+  ] as const;
+  return sources.flatMap(([node, key, nameKey, form]) => {
+    const items = pending[node]?.[key];
+    if (!Array.isArray(items)) return [];
+    return items.flatMap((item: Record<string, unknown>) => {
+      const review = item["eic_passive_activity_review"] as
+        | Record<string, unknown>
+        | undefined;
+      const unstated = boxes.filter(([box, amountKey]) =>
+        num(item[amountKey]) !== 0 && review?.[box] === undefined
+      ).map(([box]) => box);
+      if (unstated.length === 0) return [];
+      return [
+        `Schedule K-1 (${form}) ${String(item[nameKey] ?? "")} ${
+          unstated.join(", ")
+        } has no passive or nonpassive status, so it was treated as nonpassive and reported in full on Schedule E. If the activity is passive, set eic_passive_activity_review ${
+          unstated.map((box) => `${box}: "passive"`).join(", ")
+        } so Form 8582 limits it with the other passive activities.`,
+      ];
+    });
+  });
+}
+
 /** Claims the entered facts point to but the return does not make. */
 export function returnHints(pending: Pending): string[] {
   return [
     ...seniorDeductionSsnHints(pending),
     ...scheduleRDisabilityHints(pending),
     ...form4952Hints(pending),
+    ...k1ParticipationHints(pending),
   ];
 }

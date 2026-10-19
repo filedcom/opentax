@@ -140,7 +140,15 @@ export const inputSchema = z.object({
   // Schedule E holds its passive loss back and sends the figures here, because only
   // this node knows modified AGI — the number Form 8582 Part II sizes the allowance by.
   // Current-year passive loss withheld from line5_schedule_e (positive amount)
-  pal_current_loss: z.number().nonnegative().optional(),
+  // Schedule E and passive K-1 losses each send their own total.
+  pal_current_loss: z.union([
+    z.number().nonnegative(),
+    z.array(z.number().nonnegative()),
+  ]).transform((value) =>
+    Array.isArray(value)
+      ? value.reduce((sum, amount) => sum + amount, 0)
+      : value
+  ).optional(),
   // Current-year net income from passive activities
   pal_current_income: z.union([
     z.number().nonnegative(),
