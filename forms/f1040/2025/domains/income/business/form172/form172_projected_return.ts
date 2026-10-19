@@ -1,3 +1,4 @@
+import type { NodeContext } from "../../../../../../../core/types/node-context.ts";
 import type { SourceDocumentBytes } from "../../../../../../../core/runtime/source-documents.ts";
 import { execute } from "../../../../../../../core/runtime/executor.ts";
 import { buildExecutionPlan } from "../../../../../../../core/runtime/planner.ts";
@@ -20,13 +21,14 @@ export async function stageForm172ProjectedReturn(
   rawInputs: Readonly<Record<string, unknown>>,
   rawBinding: unknown,
   rawDocuments: readonly SourceDocumentBytes[],
+  nolContext: NodeContext,
 ) {
   const inputs = structuredClone(rawInputs);
-  const nolContext = { taxYear: 2025, formType: "f1040" } as const;
   const staged = await stageForm172ReviewedReturnCalculation(
     inputs,
     rawBinding,
     rawDocuments,
+    nolContext,
     inputs.form8990 !== undefined
       ? (source) => executeForm172Form8990Return(source, nolContext).execution
       : undefined,

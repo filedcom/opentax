@@ -1,3 +1,4 @@
+import type { NodeContext } from "../../../../../../../core/types/node-context.ts";
 import { projectPassiveSCorpLossCopies } from "../../business/passive-s-corp-loss-copies.ts";
 import { inputSchema as partnershipSchema } from "../../../../../nodes/inputs/income/rental-passthrough/k1_partnership/index.ts";
 import { inputSchema as sCorpSchema } from "../../../../../nodes/inputs/income/rental-passthrough/k1_s_corp/index.ts";
@@ -53,6 +54,7 @@ function classified(
 /** Source-backed positive Part II rows shared by native and PDF Schedule E. */
 export function scheduleEK1Part2Rows(
   pending: Readonly<Record<string, unknown>> | undefined,
+  context: NodeContext,
 ): ScheduleEK1Part2Row[] {
   const general = pending?.general as Record<string, unknown> | undefined;
   const digits = (value: unknown) =>
@@ -77,7 +79,7 @@ export function scheduleEK1Part2Rows(
     : sCorpSchema.parse(pending.k1_s_corp).k1_s_corps;
   const rows: ScheduleEK1Part2Row[] = [];
   const passiveLoss = pending
-    ? projectPassiveSCorpLossCopies(pending)
+    ? projectPassiveSCorpLossCopies(pending, context)
     : undefined;
   const ownerKeys: string[] = [];
   for (const item of partnerships) {

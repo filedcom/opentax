@@ -1,3 +1,4 @@
+import type { NodeContext } from "../../../../../../../core/types/node-context.ts";
 import { z } from "zod";
 import { calculateForm172CarryHistory } from "./form172_carry_history.ts";
 import { calculateForm172FarmingCarryHistory } from "./form172_farming_carry_history.ts";
@@ -10,7 +11,18 @@ const schema = z.object({
   annual_review: z.record(z.unknown()),
 }).strict();
 
-/** Origin -> complete history -> TY2025 deduction and carry closing workpaper.
+/** Instructions for Form 172 (Rev. December 2024) and IRC §172 are the
+ * newest sources; no TY2026 revision is in irs/corpus/ty2026, so a later
+ * year is refused rather than computed under the TY2025 review contract. */
+export function assertForm172ReviewYear(context: NodeContext): void {
+  if (context.taxYear >= 2026) {
+    throw new Error(
+      `Form 172 NOL workpaper for TY${context.taxYear} has no current-year Form 172 source; only the TY2025 review is supported`,
+    );
+  }
+}
+
+/** Origin -> complete history -> current-year deduction and carry closing workpaper.
  * Schedule1 line8a is a proposed arithmetic join only: source authenticity,
  * accepted carry, AGI-dependent refigures, AMT and filing admission remain open.
  */
@@ -18,15 +30,17 @@ export function calculateForm172CurrentDeduction(
   rawOrigin: unknown,
   rawHistory: unknown,
   rawCurrentReview: unknown,
+  context: NodeContext,
   rawFarmingReview?: unknown,
 ) {
+  assertForm172ReviewYear(context);
   const v = schema.parse(rawCurrentReview), annual = v.annual_review;
   if (
-    annual.tax_year !== 2025 ||
+    annual.tax_year !== context.taxYear ||
     Object.hasOwn(annual, "prior_absorption_records")
   ) {
     throw new Error(
-      "Current NOL review needs TY2025 and derives prior use from history",
+      "Current NOL review needs the return year and derives prior use from history",
     );
   }
   const sourceHistory = z.object({
@@ -95,10 +109,10 @@ export function calculateForm172CurrentDeduction(
   const deduction = nonfarmingDeduction + farmingDeduction;
   const closingLossBeforeExpiration = history.openingLoss - nonfarmingAbsorbed -
     farmingAbsorbed;
-  const expiresNow = history.expiresAfterTaxYear === 2025;
+  const expiresNow = history.expiresAfterTaxYear === context.taxYear;
   return {
     originYear: history.originYear,
-    taxYear: 2025 as const,
+    taxYear: context.taxYear,
     historyOpeningLoss: history.openingLoss,
     history,
     currentAnnualCalculation: current,
@@ -110,7 +124,7 @@ export function calculateForm172CurrentDeduction(
     farmingAbsorbed,
     closingLossBeforeExpiration,
     expiredLoss: expiresNow ? closingLossBeforeExpiration : 0,
-    carryTo2026: expiresNow ? 0 : closingLossBeforeExpiration,
+    carryToNextYear: expiresNow ? 0 : closingLossBeforeExpiration,
     currentDeductionWorkpaperArithmeticReconciled: true as const,
     publicForm1040JoinVerified: false as const,
     currentAgiDependentRefiguresVerified: false as const,

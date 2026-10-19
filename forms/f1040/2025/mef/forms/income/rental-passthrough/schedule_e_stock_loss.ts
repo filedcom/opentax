@@ -88,7 +88,10 @@ export const scheduleEStockLoss: MefFormDescriptor<
   pdfUrl: "https://www.irs.gov/pub/irs-prior/f1040se--2025.pdf",
   build(fields, context) {
     if (fields.current_passive_s_corp_loss !== undefined) {
-      projectPassiveSCorp7203Copy(fields, context?.pending, context?.filer);
+      projectPassiveSCorp7203Copy(fields, context?.pending, context?.filer, {
+        taxYear: mefTaxYear(context),
+        formType: "f1040",
+      });
       return "";
     }
     return buildReviewedStockLossScheduleE(fields, context);

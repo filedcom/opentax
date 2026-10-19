@@ -1,3 +1,4 @@
+import type { NodeContext } from "../../../../../../core/types/node-context.ts";
 import type { FilerIdentity } from "../../../../mef/header.ts";
 import { isDeepStrictEqual } from "node:util";
 import { inputSchema as sCorpSchema } from "../../../../nodes/inputs/income/rental-passthrough/k1_s_corp/index.ts";
@@ -25,6 +26,7 @@ const sum = (value: number | readonly number[] | undefined) =>
 /** Component source replay. The separate whole-return export guard stays closed. */
 export function projectPassiveSCorpLossCopies(
   pending: Readonly<Record<string, unknown>>,
+  context: NodeContext,
 ) {
   const items = pending.k1_s_corp === undefined
     ? []
@@ -116,10 +118,7 @@ export function projectPassiveSCorpLossCopies(
       "Passive S-corp actual Form8582 differs from its basis-limited source activity pool",
     );
   }
-  const calculated = form8582.compute(
-    { taxYear: 2025, formType: "f1040" },
-    pal,
-  );
+  const calculated = form8582.compute(context, pal);
   const allowed = -Number(
     calculated.outputs.find((row) => row.nodeType === "schedule1")?.fields
       .line5_schedule_e ?? 0,
@@ -139,7 +138,7 @@ export function projectPassiveSCorpLossCopies(
     );
   }
   const expected =
-    agi_aggregator.compute({ taxYear: 2025, formType: "f1040" }, agi).outputs
+    agi_aggregator.compute(context, agi).outputs
       .find((row) => row.nodeType === "f1040")!.fields;
   for (
     const key of ["line8_additional_income", "line10_adjustments", "line11_agi"]
@@ -190,13 +189,14 @@ export function projectPassiveSCorp7203Copy(
   raw: Record<string, unknown>,
   pending: Readonly<Record<string, unknown>> | undefined,
   filer: FilerIdentity | undefined,
+  context: NodeContext,
 ) {
   if (!pending || !isDeepStrictEqual(raw, pending.form7203)) {
     throw Error(
       "Passive Form7203 descriptor needs its exact actual basis source copy",
     );
   }
-  const copies = projectPassiveSCorpLossCopies(pending);
+  const copies = projectPassiveSCorpLossCopies(pending, context);
   if (!copies) {
     throw Error("Passive Form7203 descriptor lacks its original K1 source");
   }

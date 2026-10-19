@@ -1,3 +1,4 @@
+import type { NodeContext } from "../../../../../../../core/types/node-context.ts";
 import { sameSourceMoney } from "../../../../../nodes/intermediate/forms/taxes/retirement/form4972/source-rounding.ts";
 import { inputSchema as f1099rSchema } from "../../../../../nodes/inputs/income/retirement/f1099r/index.ts";
 import {
@@ -9,6 +10,7 @@ import {
 export function reconcileForm4972MultipleRecipients(
   fields: Readonly<Record<string, unknown>>,
   pending: Readonly<Record<string, unknown>> | undefined,
+  context: NodeContext,
 ): boolean {
   const source = f1099rSchema.safeParse(pending?.f1099r);
   const elected = source.success
@@ -83,7 +85,7 @@ export function reconcileForm4972MultipleRecipients(
   }
   const parsed = form4972Schema.parse(fields);
   const computed = form4972.compute(
-    { taxYear: 2025, formType: "f1040" },
+    context,
     parsed,
   );
   const form = computed.outputs.find((output) => output.nodeType === "form4972")

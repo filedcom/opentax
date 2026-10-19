@@ -1,3 +1,4 @@
+import type { NodeContext } from "../../../../../../../core/types/node-context.ts";
 import {
   filedStandardAmount,
   inputSchema as standardDeductionInputSchema,
@@ -73,11 +74,12 @@ export function scheduleADisasterLine16(
 export function scheduleALine16AllRows(
   pending: Readonly<Record<string, unknown>> | undefined,
   filedOtherLine16: unknown,
+  context: NodeContext,
 ): readonly ScheduleALine16Row[] {
   const disaster = scheduleADisasterLine16(pending);
   if (disaster?.increasedStandard) return disaster.rows;
   return [
-    ...scheduleALine16Rows(pending, filedOtherLine16),
+    ...scheduleALine16Rows(pending, filedOtherLine16, context),
     ...(disaster?.rows ?? []),
   ];
 }

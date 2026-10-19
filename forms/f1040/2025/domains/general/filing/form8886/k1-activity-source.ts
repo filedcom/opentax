@@ -1,3 +1,4 @@
+import { mefTaxYear } from "../../../../mef/support/year-config.ts";
 import { inputSchema as scheduleESchema } from "../../../../../nodes/inputs/income/rental-passthrough/schedule_e/index.ts";
 import { z } from "zod";
 import type { ExecuteResult } from "../../../../../../../core/runtime/executor.ts";
@@ -216,7 +217,10 @@ export function reconcileForm8886K1ActivityFacts(
   assertReturnScheduleJoins(pending.f1040, pending);
   const nativeRows = source.kind === ReturnSourceKind.TrustK1Activity
     ? []
-    : scheduleEK1Part2Rows(nativePending).filter((row) =>
+    : scheduleEK1Part2Rows(nativePending, {
+      taxYear: mefTaxYear(),
+      formType: "f1040",
+    }).filter((row) =>
       row.ein === facts.ein && row.name === facts.name &&
       row.code ===
         (source.kind === ReturnSourceKind.PartnershipK1Activity ? "P" : "S")

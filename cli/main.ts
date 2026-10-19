@@ -443,6 +443,7 @@ const COMMANDS: readonly CommandDef[] = [
             force,
             draft,
             outputPath,
+            notice: (message) => console.log(message),
           });
           console.log(`PDF written to ${writtenPath}`);
         });

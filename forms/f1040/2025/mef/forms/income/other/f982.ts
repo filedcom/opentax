@@ -6,6 +6,7 @@ import {
 import { inputSchema } from "../../../../../nodes/intermediate/forms/income/other/form982/index.ts";
 import { FilingStatus } from "../../../types.ts";
 import type { MefBuildContext, MefFormDescriptor } from "../../../form-descriptor.ts";
+import { mefTaxYear } from "../../../support/year-config.ts";
 
 type Input = Partial<typeof inputSchema._output> & Record<string, unknown>;
 
@@ -13,11 +14,17 @@ export const FIELD_MAP: ReadonlyArray<readonly [string, string]> = [];
 
 function buildIRS982(raw: Input, context?: MefBuildContext): string {
   if (Array.isArray(raw) && raw.length === 0) {
-    assertForm982AbsentSource(context?.pending);
+    assertForm982AbsentSource(context?.pending, {
+      taxYear: mefTaxYear(context),
+      formType: "f1040",
+    });
     return "";
   }
   if (Object.keys(raw).length === 0) {
-    assertForm982AbsentSource(context?.pending);
+    assertForm982AbsentSource(context?.pending, {
+      taxYear: mefTaxYear(context),
+      formType: "f1040",
+    });
     return "";
   }
   const input = inputSchema.parse(raw);
@@ -33,7 +40,10 @@ function buildIRS982(raw: Input, context?: MefBuildContext): string {
   if (!context?.pending) {
     throw new Error("Form 982 QPRI needs its original 1099-C source");
   }
-  const projected = projectQpriForm982(raw, context.pending);
+  const projected = projectQpriForm982(raw, context.pending, {
+    taxYear: mefTaxYear(context),
+    formType: "f1040",
+  });
   return elements("IRS982", [
     element("DischargeOfQualifiedPrinResInd", "X"),
     element("TotalDischargedIndebtednessAmt", projected.line2_excluded_cod),

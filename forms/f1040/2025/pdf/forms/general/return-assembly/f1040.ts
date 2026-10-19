@@ -703,6 +703,7 @@ const fields: ReadonlyArray<PdfFieldEntry> = [
 function line1hType(
   fields: Record<string, unknown>,
   allPending: Record<string, Record<string, unknown>>,
+  taxYear: number,
 ):
   | "FEC"
   | "EXCESS DEFERRALS"
@@ -738,7 +739,7 @@ function line1hType(
   if (allPending.w2 !== undefined) {
     const excess = codeDExcessDeferral(
       w2InputSchema.parse(allPending.w2).w2s,
-      mefTaxYear(),
+      taxYear,
     );
     if (excess.amount > 0) {
       sources.push({ type: "EXCESS DEFERRALS", amount: excess.amount });
@@ -763,7 +764,7 @@ function line1hType(
           items.length
       ) {
         throw new Error(
-          "Form 1040 PDF line 1h corrective distributions need identified 2025 Form 1099-R sources",
+          `Form 1040 PDF line 1h corrective distributions need identified ${taxYear} Form 1099-R sources`,
         );
       }
       sources.push({
@@ -775,7 +776,7 @@ function line1hType(
       });
     }
   }
-  const disability = retainedDisabilityPension(allPending, 2025);
+  const disability = retainedDisabilityPension(allPending, taxYear);
   if (disability > 0) {
     sources.push({ type: "DISABILITY PENSION", amount: disability });
   }
@@ -808,14 +809,16 @@ function line1hType(
   return mixedFecExcess ? "FEC + EXCESS DEFERRALS" : sources[0].type;
 }
 
-export const irs1040Pdf: PdfFormDescriptor = {
+/** Form 1040 projection and guards for the return year; the 2025 layout. */
+export function form1040PdfFor(taxYear: number): PdfFormDescriptor {
+  return {
   pendingKey: "f1040",
   // Year-pinned: /pub/irs-pdf/f1040.pdf silently changes revision each filing
   // season; this module is the 2025 form and must always fetch the 2025 PDF.
   pdfUrl: "https://www.irs.gov/pub/irs-prior/f1040--2025.pdf",
   projectFields(fields, allPending) {
-    assertHohQualifyingChildSource(fields, allPending, 2025);
-    assertQssNonclaimedChildSource(fields, allPending, 2025);
+    assertHohQualifyingChildSource(fields, allPending, taxYear);
+    assertQssNonclaimedChildSource(fields, allPending, taxYear);
     const hasForm8888 = allPending.f8888 !== undefined;
     if (
       hasForm8888 &&
@@ -832,7 +835,7 @@ export const irs1040Pdf: PdfFormDescriptor = {
     assertPositive1099MOwner(fields, allPending);
     assertPositive1099NecOwner(fields, allPending);
     assertPositive1099PatrOwner(fields, allPending);
-    assertJointDependentRefundSource(fields, allPending, 2025);
+    assertJointDependentRefundSource(fields, allPending, taxYear);
     assertNoUnsupportedDeceasedReturn(
       fields,
       allPending?.general as Record<string, unknown> | undefined,
@@ -840,8 +843,8 @@ export const irs1040Pdf: PdfFormDescriptor = {
     assertLine36EstimatedTaxSource(fields, allPending);
     assertPresidentialCampaignSource(fields, allPending);
     assertReturnWideArithmetic(fields);
-    const printLine1hType = line1hType(fields, allPending);
-    assertLine1hSupportedSource(fields, 2025, allPending);
+    const printLine1hType = line1hType(fields, allPending, taxYear);
+    assertLine1hSupportedSource(fields, taxYear, allPending);
     assertDirectCapitalGainDistributionSource(fields, allPending);
     const standard = fields.line12a_standard_deduction;
     const itemized = fields.line12e_itemized_deductions;
@@ -861,7 +864,7 @@ export const irs1040Pdf: PdfFormDescriptor = {
     const printFormerSpouseEstimatedTaxSsn = assertEstimatedPaymentLine26(
       fields,
       allPending,
-      2025,
+      taxYear,
     );
     assertOtherFormsWithholding(fields, allPending);
     assertReturnScheduleJoins(fields, allPending);
@@ -903,7 +906,7 @@ export const irs1040Pdf: PdfFormDescriptor = {
         (dep.ssn ?? dep.itin ?? dep.atin)?.replaceAll("-", "");
       printedDependents[`dependent_${i}_relationship`] = dep.relationship;
       printedDependents[`dependent_${i}_home`] =
-        dependentLivedWithFilerOverHalfYear(dep, mefTaxYear());
+        dependentLivedWithFilerOverHalfYear(dep, taxYear);
       printedDependents[`dependent_${i}_home_us`] =
         dep.lived_in_us_over_half_year;
       printedDependents[`dependent_${i}_full_time_student`] =
@@ -937,7 +940,7 @@ export const irs1040Pdf: PdfFormDescriptor = {
           "Form 1040 PDF line 5c needs valid Form 1099-R source facts",
         );
       }
-      assertIraRolloverEvidence(source.data.f1099rs, 2025);
+      assertIraRolloverEvidence(source.data.f1099rs, taxYear);
       if (rollover !== source.data.f1099rs.some(isPensionDirectRollover)) {
         throw new Error(
           "Form 1040 PDF line 5c rollover does not match the payer-reported Form 1099-R code G",
@@ -1297,4 +1300,7 @@ export const irs1040Pdf: PdfFormDescriptor = {
       pdfField: "topmostSubform[0].Page1[0].Address_ReadOrder[0].f1_27[0]",
     },
   ],
-};
+  };
+}
+
+export const irs1040Pdf: PdfFormDescriptor = form1040PdfFor(mefTaxYear());

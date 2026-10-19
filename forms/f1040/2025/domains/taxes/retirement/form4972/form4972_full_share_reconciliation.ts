@@ -1,3 +1,4 @@
+import type { NodeContext } from "../../../../../../../core/types/node-context.ts";
 import { reconcileParticipantCollection } from "../../../../../nodes/intermediate/forms/taxes/retirement/form4972/participant-collection.ts";
 import { inputSchema as f1099rSchema } from "../../../../../nodes/inputs/income/retirement/f1099r/index.ts";
 import {
@@ -10,7 +11,8 @@ import { reconcileForm4972Multiple1099R } from "./form4972_multiple_1099r_reconc
 export function reconcileForm4972FullShare(
   fields: Readonly<Record<string, unknown>>,
   pending: Readonly<Record<string, unknown>> | undefined,
-  owner?: { name: string; ssn: string },
+  owner: { name: string; ssn: string } | undefined,
+  context: NodeContext,
 ): void {
   if (fields.participant_collection_review !== undefined) {
     const all = f1099rSchema.parse(pending?.f1099r).f1099rs;
@@ -50,7 +52,7 @@ export function reconcileForm4972FullShare(
     });
   }
   if (fields.multiple_1099r !== undefined) {
-    reconcileForm4972Multiple1099R(fields, pending, owner);
+    reconcileForm4972Multiple1099R(fields, pending, owner, context);
     return;
   }
   if (
@@ -84,7 +86,7 @@ export function reconcileForm4972FullShare(
   }
 
   const computed = form4972.compute(
-    { taxYear: 2025, formType: "f1040" },
+    context,
     form4972Schema.parse(fields),
   ).outputs;
   const form = computed.find((output) => output.nodeType === "form4972")

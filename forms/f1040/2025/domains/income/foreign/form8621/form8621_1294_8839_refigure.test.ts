@@ -112,7 +112,7 @@ test("Form 8621 Election B composes the reviewed Form 8839 staged return in both
   const result = f1040_2025.executeReturn(input);
   assertEquals(result.diagnostics, []);
   const pending = buildPending(result.pending);
-  assertForm8621QefRefigureSource(pending);
+  assertForm8621QefRefigureSource(pending, { taxYear: 2025, formType: "f1040" });
   const filed = pending.f1040! as Record<string, number>;
   const without = f1040_2025.executeReturn({
     ...input,
@@ -174,7 +174,7 @@ test("Form 8621 Election B composes the reviewed Form 8839 staged return in both
   };
   marker.source_inputs.w2[0].box1_wages += 1;
   assertThrows(
-    () => assertForm8621QefRefigureSource(tampered),
+    () => assertForm8621QefRefigureSource(tampered, { taxYear: 2025, formType: "f1040" }),
     Error,
     "differs from full source",
   );
@@ -256,7 +256,7 @@ test("Form 8621 Election B keeps an actual fully used adoption credit when only 
   assertEquals(filed.form8621_1294_total_tax_before_deferral, 85);
   assertEquals(filed.form8621_1294_deferred_tax, 85);
   assertEquals(filed.line24_total_tax, 0);
-  assertForm8621QefRefigureSource(pending);
+  assertForm8621QefRefigureSource(pending, { taxYear: 2025, formType: "f1040" });
   const bundle = await buildMefBundle(pending, {
     filer: base.filer,
     attachments: base.attachments!,
@@ -307,7 +307,7 @@ test("Form 8621 Election B records zero deferred tax when the full-return tax is
   assertEquals(filed.form8621_1294_counterfactual_total_tax, 7_455);
   assertEquals(filed.form8621_1294_deferred_tax, 0);
   assertEquals(filed.line24_total_tax, 7_455);
-  assertForm8621QefRefigureSource(pending);
+  assertForm8621QefRefigureSource(pending, { taxYear: 2025, formType: "f1040" });
   const bundle = await buildMefBundle(pending, {
     filer: base.filer,
     attachments: base.attachments!,
@@ -360,7 +360,7 @@ test("two independent Election B holdings reconcile per-fund tax to the full ado
   const result = f1040_2025.executeReturn(inputs);
   assertEquals(result.diagnostics, []);
   const pending = buildPending(result.pending);
-  assertForm8621QefRefigureSource(pending);
+  assertForm8621QefRefigureSource(pending, { taxYear: 2025, formType: "f1040" });
   const filed = pending.f1040! as Record<string, number>;
   assertEquals(filed.form8621_1294_total_tax_before_deferral, 8_335);
   assertEquals(filed.form8621_1294_counterfactual_total_tax, 7_455);
@@ -524,7 +524,7 @@ test("three independent Election B holdings retain separate sourced copies", asy
   const result = f1040_2025.executeReturn(inputs);
   assertEquals(result.diagnostics, []);
   const pending = buildPending(result.pending);
-  assertForm8621QefRefigureSource(pending);
+  assertForm8621QefRefigureSource(pending, { taxYear: 2025, formType: "f1040" });
   const filed = pending.f1040! as Record<string, number>;
   assertEquals(filed.form8621_1294_total_tax_before_deferral, 8_775);
   assertEquals(filed.form8621_1294_counterfactual_total_tax, 7_455);

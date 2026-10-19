@@ -207,6 +207,7 @@ test("Form172 projection sends retained deduction through Schedule1 AGI and regu
       f.inputs,
       f.binding,
       f.documents,
+      { taxYear: 2025, formType: "f1040" },
     );
     assertEquals(r.deduction, 27400);
     assertEquals(r.projected_schedule1.line8a_nol_deduction, 27400);
@@ -253,6 +254,7 @@ test("Form172 projection rejects detached NOL shortcuts", async () => {
       },
       f.binding,
       f.documents,
+      { taxYear: 2025, formType: "f1040" },
     )
   );
   await assertRejects(() =>
@@ -260,6 +262,7 @@ test("Form172 projection rejects detached NOL shortcuts", async () => {
       { ...f.inputs, schedule1: { line8a_nol_deduction: 27400 } },
       f.binding,
       f.documents,
+      { taxYear: 2025, formType: "f1040" },
     )
   );
 });
@@ -294,7 +297,7 @@ async function seniorFixture(amount = 6000, seniorAmount = amount) {
 }
 test("Form172 retained senior Schedule1-A joins public deduction and lowers current NOL capacity", async () => {
   const f = await seniorFixture();
-  const r = await stageForm172ProjectedReturn(f.inputs, f.binding, f.documents);
+  const r = await stageForm172ProjectedReturn(f.inputs, f.binding, f.documents, { taxYear: 2025, formType: "f1040" });
   assertEquals(r.current_form1040_before_nol.line12c_deduction_total, 17750);
   assertEquals(
     r.current_form1040_before_nol.line13b_additional_deductions,
@@ -303,7 +306,7 @@ test("Form172 retained senior Schedule1-A joins public deduction and lowers curr
   assertEquals(r.current_form1040_before_nol.line15_taxable_income, 26250);
   assertEquals(r.deduction, 21000);
   assertEquals(r.currentAnnualCalculation.taxableWithoutNolQbi250, 26250);
-  assertEquals(r.carryTo2026, 17000);
+  assertEquals(r.carryToNextYear, 17000);
   assertEquals(r.currentAnnualCalculation.absorbed, 27000);
   assertEquals(
     r.currentAnnualCalculation.seniorDeductionAbsorptionAddback,
@@ -320,7 +323,7 @@ test("Form172 retained senior Schedule1-A joins public deduction and lowers curr
 test("Form172 current source rejects an internally consistent wrong senior deduction", async () => {
   for (const f of [await seniorFixture(5000), await seniorFixture(6000, 0)]) {
     await assertRejects(
-      () => stageForm172ProjectedReturn(f.inputs, f.binding, f.documents),
+      () => stageForm172ProjectedReturn(f.inputs, f.binding, f.documents, { taxYear: 2025, formType: "f1040" }),
       Error,
       "Schedule1-A",
     );
@@ -340,7 +343,7 @@ test("Form172 NOL projection reruns education MAGI and credit limitation through
   const bytes = new TextEncoder().encode(JSON.stringify(review));
   f.documents[2] = { reference: review.reference, bytes };
   f.binding.current_review.sha256 = await sha(bytes);
-  const r = await stageForm172ProjectedReturn(inputs, f.binding, f.documents);
+  const r = await stageForm172ProjectedReturn(inputs, f.binding, f.documents, { taxYear: 2025, formType: "f1040" });
   assertEquals(r.current_form1040_before_nol.line11_agi, 81000);
   assertEquals(r.deduction, 44000);
   assertEquals(r.projected_form1040.line11_agi, 37000);
@@ -481,7 +484,7 @@ test("Form172 NOL projection preserves source-dependent adoption finalizer and r
   const bytes = new TextEncoder().encode(JSON.stringify(review));
   f.documents[2] = { reference: review.reference, bytes };
   f.binding.current_review.sha256 = await sha(bytes);
-  const r = await stageForm172ProjectedReturn(inputs, f.binding, f.documents);
+  const r = await stageForm172ProjectedReturn(inputs, f.binding, f.documents, { taxYear: 2025, formType: "f1040" });
   assertEquals(r.deduction, 44000);
   assertEquals(r.projected_form1040.line11_agi, 76000);
   assertEquals(r.projected_form1040.line15_taxable_income, 60250);
@@ -591,6 +594,7 @@ test("Form172 retained independent AMT review matches ordinary mixed and senior 
       f.documents,
       a.binding,
       a.documents,
+      { taxYear: 2025, formType: "f1040" },
     );
     assertEquals(r.currentAmtTentativeGraphReconciled, true);
     assertEquals(r.independent_amt_review.originAmtNol, 80000);
@@ -624,6 +628,7 @@ test("Form172 AMT graph rejects offsetting component substitutions despite an un
         f.documents,
         a.binding,
         a.documents,
+        { taxYear: 2025, formType: "f1040" },
       ),
     Error,
     "line2g differs",
@@ -645,6 +650,7 @@ test("Form172 AMT graph rejects internally consistent Form1040 operands differin
         f.documents,
         a.binding,
         a.documents,
+        { taxYear: 2025, formType: "f1040" },
       ),
     Error,
     "AGI differs",
@@ -666,6 +672,7 @@ test("Form172 AMT graph requires the identical retained regular origin in both p
         f.documents,
         a.binding,
         a.documents,
+        { taxYear: 2025, formType: "f1040" },
       ),
     Error,
     "identical loss-year source",
@@ -680,6 +687,7 @@ test("Form172 AMT composition owns both bindings all source bytes and public inp
     f.documents,
     a.binding,
     a.documents,
+    { taxYear: 2025, formType: "f1040" },
   );
   f.inputs.w2 = [];
   f.binding.origin.sha256 = "0".repeat(64);
@@ -700,7 +708,7 @@ test("Form172 post-NOL senior phaseout reruns before the retained finalizer", as
   const bytes = new TextEncoder().encode(JSON.stringify(review));
   f.documents[2].bytes = bytes;
   f.binding.current_review.sha256 = await sha(bytes);
-  const r = await stageForm172ProjectedReturn(f.inputs, f.binding, f.documents);
+  const r = await stageForm172ProjectedReturn(f.inputs, f.binding, f.documents, { taxYear: 2025, formType: "f1040" });
   assertEquals(
     r.current_form1040_before_nol.schedule1a_line37_senior_deduction,
     1500,
@@ -730,7 +738,7 @@ test("Form172 full graph refigures source student-loan interest before finalized
   const bytes = new TextEncoder().encode(JSON.stringify(f.currentReview));
   f.documents[2].bytes = bytes;
   f.binding.current_review.sha256 = await sha(bytes);
-  const r = await stageForm172ProjectedReturn(f.inputs, f.binding, f.documents);
+  const r = await stageForm172ProjectedReturn(f.inputs, f.binding, f.documents, { taxYear: 2025, formType: "f1040" });
   assertEquals(
     r.public_pending_before_nol.schedule1?.line21_student_loan_interest,
     833,
@@ -754,7 +762,7 @@ test("Form172 ordinary NOL refigures QBI taxable-income limit without reducing c
   const bytes = new TextEncoder().encode(JSON.stringify(f.currentReview));
   f.documents[2].bytes = bytes;
   f.binding.current_review.sha256 = await sha(bytes);
-  const r = await stageForm172ProjectedReturn(f.inputs, f.binding, f.documents);
+  const r = await stageForm172ProjectedReturn(f.inputs, f.binding, f.documents, { taxYear: 2025, formType: "f1040" });
   assertEquals(r.current_form1040_before_nol.line11_agi, 50000);
   assertEquals(r.current_form1040_before_nol.line13_qbi_deduction, 6000);
   assertEquals(r.deduction, 27400);
@@ -861,7 +869,7 @@ async function interestFixture() {
 }
 test("Form172 retained NOL composes both sourced interest passes with ATI line9 restoration", async () => {
   const f = await interestFixture();
-  const r = await stageForm172ProjectedReturn(f.inputs, f.binding, f.documents);
+  const r = await stageForm172ProjectedReturn(f.inputs, f.binding, f.documents, { taxYear: 2025, formType: "f1040" });
   const composed = r.form8990_nol_composition!;
   assertEquals(r.deduction, 44000);
   assertEquals(composed.limit.line9, 44000);
@@ -936,7 +944,7 @@ test("Form172 interest composition rejects changed current workpaper and source 
   f.documents[2] = { reference: f.currentReview.reference, bytes };
   f.binding.current_review.sha256 = await sha(bytes);
   await assertRejects(() =>
-    stageForm172ProjectedReturn(f.inputs, f.binding, f.documents)
+    stageForm172ProjectedReturn(f.inputs, f.binding, f.documents, { taxYear: 2025, formType: "f1040" })
   );
   const valid = await interestFixture();
   const bad = structuredClone(interestSourceRecords);
@@ -946,6 +954,7 @@ test("Form172 interest composition rejects changed current workpaper and source 
       { ...valid.inputs, form8990: bad },
       valid.binding,
       valid.documents,
+      { taxYear: 2025, formType: "f1040" },
     )
   );
 });
@@ -973,6 +982,7 @@ test("Form172 sourced interest and retained AMT review reconcile raw tentative t
     f.documents,
     a.binding,
     a.documents,
+    { taxYear: 2025, formType: "f1040" },
   );
   assertEquals(r.form8990NolOrderingReconciled, true);
   assertEquals(r.currentAmtTentativeTotalReconciled, true);
@@ -1026,7 +1036,7 @@ test("Form172 modified carry income replays capital-loss and student-interest AG
     f.binding.current_review.sha256 = await sha(bytes);
   };
   await update();
-  const r = await stageForm172ProjectedReturn(f.inputs, f.binding, f.documents);
+  const r = await stageForm172ProjectedReturn(f.inputs, f.binding, f.documents, { taxYear: 2025, formType: "f1040" });
   assertEquals(r.currentModifiedIncomeGraphReconciled, true);
   assertEquals(r.currentAnnualCalculation.modifiedAgi, 94167);
   assertEquals(
@@ -1042,7 +1052,7 @@ test("Form172 modified carry income replays capital-loss and student-interest AG
   a.agi_refigures = [];
   await update();
   await assertRejects(() =>
-    stageForm172ProjectedReturn(f.inputs, f.binding, f.documents)
+    stageForm172ProjectedReturn(f.inputs, f.binding, f.documents, { taxYear: 2025, formType: "f1040" })
   );
 });
 
@@ -1084,7 +1094,7 @@ test("Form172 modified carry income refigures SSA independently of post-NOL tax"
     f.binding.current_review.sha256 = await sha(bytes);
   };
   await update();
-  const r = await stageForm172ProjectedReturn(f.inputs, f.binding, f.documents);
+  const r = await stageForm172ProjectedReturn(f.inputs, f.binding, f.documents, { taxYear: 2025, formType: "f1040" });
   assertEquals(r.currentAnnualCalculation.modifiedAgi, 23000);
   assertEquals(r.modified_income_pending.f1040.line6b_ss_taxable, 1000);
   assertEquals(r.current_form1040_before_nol.line6b_ss_taxable ?? 0, 0);
@@ -1096,7 +1106,7 @@ test("Form172 modified carry income refigures SSA independently of post-NOL tax"
   a.agi_refigures[0].after = 1100;
   await update();
   await assertRejects(
-    () => stageForm172ProjectedReturn(f.inputs, f.binding, f.documents),
+    () => stageForm172ProjectedReturn(f.inputs, f.binding, f.documents, { taxYear: 2025, formType: "f1040" }),
     Error,
     "source component",
   );
@@ -1105,7 +1115,7 @@ test("Form172 modified carry income refigures SSA independently of post-NOL tax"
   a.section1202_exclusion.amount = 100;
   await update();
   await assertRejects(
-    () => stageForm172ProjectedReturn(f.inputs, f.binding, f.documents),
+    () => stageForm172ProjectedReturn(f.inputs, f.binding, f.documents, { taxYear: 2025, formType: "f1040" }),
     Error,
     "section1202",
   );
@@ -1143,7 +1153,7 @@ test("Form172 carry-use medical deduction stays distinct from post-NOL itemized 
     f.binding.current_review.sha256 = await sha(bytes);
   };
   await update();
-  const r = await stageForm172ProjectedReturn(f.inputs, f.binding, f.documents);
+  const r = await stageForm172ProjectedReturn(f.inputs, f.binding, f.documents, { taxYear: 2025, formType: "f1040" });
   assertEquals(r.current_form1040_before_nol.line12c_deduction_total, 16475);
   assertEquals(r.currentAnnualCalculation.modifiedAgi, 50000);
   assertEquals(r.currentAnnualCalculation.refiguredDeduction, 16250);
@@ -1160,7 +1170,7 @@ test("Form172 carry-use medical deduction stays distinct from post-NOL itemized 
   a.refigured_itemized_deduction.amount = 16475;
   await update();
   await assertRejects(
-    () => stageForm172ProjectedReturn(f.inputs, f.binding, f.documents),
+    () => stageForm172ProjectedReturn(f.inputs, f.binding, f.documents, { taxYear: 2025, formType: "f1040" }),
     Error,
     "deductions",
   );

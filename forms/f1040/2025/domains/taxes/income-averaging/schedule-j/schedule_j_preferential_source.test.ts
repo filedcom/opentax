@@ -52,7 +52,7 @@ test("Schedule J derives preferential tax from issued dividend/farm sources and 
   assertEquals(p.form6251.regular_tax, 31214);
   assertEquals(p.form6251.line11_amt, 55517);
   assertScheduleJSourceReturn(actual.pending, replayScheduleJ);
-  assertForm4972AmtJoin(830, p);
+  assertForm4972AmtJoin(830, p, { taxYear: 2025, formType: "f1040" });
   const filer = extractFilerIdentity(p.f1040)!;
   const prepared = await f1040_2025.prepareReturn!(actual.pending, filer);
   const origins: PdfPageOrigin[] = [];

@@ -1420,7 +1420,10 @@ export function assertPositive8995(
         "Passive Form8995 descriptor needs its exact actual qualified-loss copy",
       );
     }
-    const copies = projectPassiveSCorpLossCopies(pending);
+    const copies = projectPassiveSCorpLossCopies(pending, {
+      taxYear,
+      formType: "f1040",
+    });
     if (!copies) {
       throw Error("Passive Form8995 descriptor lacks original K1/basis source");
     }

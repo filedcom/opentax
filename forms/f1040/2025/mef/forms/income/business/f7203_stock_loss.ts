@@ -222,6 +222,7 @@ export const form7203StockLoss: MefFormDescriptor<
         fields,
         context?.pending,
         context?.filer,
+        { taxYear: mefTaxYear(context), formType: "f1040" },
       );
       return buildFirstYearPassiveSCorp7203(
         p.source,

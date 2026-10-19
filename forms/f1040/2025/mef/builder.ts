@@ -332,7 +332,7 @@ function buildReturnXml(
   assertScheduleBPreparedProjection(pending);
   assertTaxExemptInterestSource(pending);
   assertBusinessSchedule1Amounts(pending);
-  assertOwned7203RequiredCopies(pending);
+  assertOwned7203RequiredCopies(pending, { taxYear: year, formType: "f1040" });
   assertHsaExcessRequiredCopy(pending);
   assertRequiredLtcSource({ pending, filer, taxYear: year });
   assertLine1iCombatPayElectionSource(pending);
@@ -400,7 +400,7 @@ function buildReturnXml(
   ) {
     throw new Error("Form 8949 needs its reconciled Schedule D");
   }
-  assertAttachmentCoverage(pending, "mef", preparedForm8886);
+  assertAttachmentCoverage(pending, "mef", preparedForm8886, year);
   if (
     pending.schedule_e?.schedule_es?.some((item) =>
       item.property_type === 8 &&

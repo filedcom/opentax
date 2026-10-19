@@ -29,6 +29,8 @@ export interface FormDefinition {
   readonly formType: string; // e.g. "f1040"
   readonly taxYear: number; // e.g. 2025
   readonly mefSchemaVersion: string; // e.g. "2025v3.0"
+  /** Shown with every PDF export, e.g. that it prints on IRS draft forms. */
+  readonly pdfNotice?: string;
   readonly inputNodes: readonly InputNodeEntry[];
   readonly registry: Record<string, TaxNode>;
   /** Single form-owned execution entrypoint for validated source inputs. */

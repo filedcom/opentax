@@ -72,7 +72,7 @@ test("Schedule 1 Form 8621 source replay retains QEF, MTM, and section 1291 tota
     "line8z_form8621_section1291",
   ] as const;
   for (const [index, pending] of holdings.entries()) {
-    assertSchedule1Form8621Source(pending);
+    assertSchedule1Form8621Source(pending, { taxYear: 2025, formType: "f1040" });
     const key = keys[index];
     const schedule1 = pending.schedule1 as Record<string, number>;
     assertThrows(
@@ -80,7 +80,7 @@ test("Schedule 1 Form 8621 source replay retains QEF, MTM, and section 1291 tota
         assertSchedule1Form8621Source({
           ...pending,
           schedule1: { ...schedule1, [key]: schedule1[key] + 1 },
-        }),
+        }, { taxYear: 2025, formType: "f1040" }),
       Error,
       "differs from retained PFIC holdings",
     );
@@ -99,7 +99,7 @@ test("Schedule 1 Form 8621 source replay retains QEF, MTM, and section 1291 tota
             item: { ...form.items[0].item, qef_ordinary_income: 2_001 },
           }],
         },
-      }),
+      }, { taxYear: 2025, formType: "f1040" }),
     Error,
     "differs from retained PFIC holdings",
   );

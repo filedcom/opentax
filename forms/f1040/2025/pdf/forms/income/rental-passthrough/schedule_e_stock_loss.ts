@@ -89,7 +89,10 @@ export const scheduleEStockLossPdf: PdfFormDescriptor = {
   instances(raw, filer, allPending) {
     if (Object.keys(raw).length === 0) return [];
     if (raw.current_passive_s_corp_loss !== undefined) {
-      projectPassiveSCorp7203Copy(raw, allPending, filer);
+      projectPassiveSCorp7203Copy(raw, allPending, filer, {
+        taxYear: mefTaxYear(),
+        formType: "f1040",
+      });
       return [];
     }
     const pending = allPending ?? {};

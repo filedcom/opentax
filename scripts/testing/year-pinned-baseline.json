@@ -230,11 +230,6 @@
     "count": 5
   },
   {
-    "path": "forms/f1040/2025/domains/deductions/itemized/schedule-a/schedule_a_line16_estate_source.ts",
-    "pattern": "year-value",
-    "count": 1
-  },
-  {
     "path": "forms/f1040/2025/domains/general/filing/form8886/document.ts",
     "pattern": "date-pinned",
     "count": 1
@@ -310,11 +305,6 @@
     "count": 4
   },
   {
-    "path": "forms/f1040/2025/domains/income/business/form172/form172_amt_projected_return.ts",
-    "pattern": "year-comparison",
-    "count": 1
-  },
-  {
     "path": "forms/f1040/2025/domains/income/business/form172/form172_carry_absorption.ts",
     "pattern": "year-comparison",
     "count": 1
@@ -336,17 +326,7 @@
   },
   {
     "path": "forms/f1040/2025/domains/income/business/form172/form172_current_deduction.ts",
-    "pattern": "year-comparison",
-    "count": 2
-  },
-  {
-    "path": "forms/f1040/2025/domains/income/business/form172/form172_current_deduction.ts",
     "pattern": "year-identifier",
-    "count": 2
-  },
-  {
-    "path": "forms/f1040/2025/domains/income/business/form172/form172_current_deduction.ts",
-    "pattern": "year-value",
     "count": 1
   },
   {
@@ -370,59 +350,14 @@
     "count": 1
   },
   {
-    "path": "forms/f1040/2025/domains/income/business/form172/form172_modified_income.ts",
-    "pattern": "year-comparison",
-    "count": 1
-  },
-  {
-    "path": "forms/f1040/2025/domains/income/business/form172/form172_modified_income.ts",
-    "pattern": "year-value",
-    "count": 1
-  },
-  {
-    "path": "forms/f1040/2025/domains/income/business/form172/form172_projected_return.ts",
-    "pattern": "year-value",
-    "count": 1
-  },
-  {
     "path": "forms/f1040/2025/domains/income/business/form172/form172_reviewed_return.ts",
     "pattern": "year-identifier",
     "count": 2
   },
   {
-    "path": "forms/f1040/2025/domains/income/business/form172/form172_reviewed_return.ts",
-    "pattern": "year-value",
-    "count": 1
-  },
-  {
-    "path": "forms/f1040/2025/domains/income/business/passive-s-corp-loss-copies.ts",
-    "pattern": "year-value",
-    "count": 2
-  },
-  {
-    "path": "forms/f1040/2025/domains/income/foreign/form8621/form8621_1294_refigure.ts",
-    "pattern": "year-value",
-    "count": 1
-  },
-  {
-    "path": "forms/f1040/2025/domains/income/foreign/schedule1-form8621-source.ts",
-    "pattern": "year-value",
-    "count": 1
-  },
-  {
     "path": "forms/f1040/2025/domains/income/investments/schedule-b/schedule-b-interest-reconciliation.ts",
     "pattern": "year-value",
     "count": 1
-  },
-  {
-    "path": "forms/f1040/2025/domains/income/other/form982/form982-qpri.ts",
-    "pattern": "config-index",
-    "count": 2
-  },
-  {
-    "path": "forms/f1040/2025/domains/income/other/form982/form982-qpri.ts",
-    "pattern": "year-value",
-    "count": 2
   },
   {
     "path": "forms/f1040/2025/domains/income/rental-passthrough/k1_trust/trust-k1-native-copy-review.ts",
@@ -493,41 +428,6 @@
     "path": "forms/f1040/2025/domains/taxes/income-averaging/schedule-j/schedule_j_source_return.ts",
     "pattern": "z-literal",
     "count": 1
-  },
-  {
-    "path": "forms/f1040/2025/domains/taxes/retirement/form4972/form4972_amt_reconciliation.ts",
-    "pattern": "year-identifier",
-    "count": 7
-  },
-  {
-    "path": "forms/f1040/2025/domains/taxes/retirement/form4972/form4972_collection_reconciliation.ts",
-    "pattern": "year-value",
-    "count": 1
-  },
-  {
-    "path": "forms/f1040/2025/domains/taxes/retirement/form4972/form4972_estate_part2_reconciliation.ts",
-    "pattern": "year-value",
-    "count": 1
-  },
-  {
-    "path": "forms/f1040/2025/domains/taxes/retirement/form4972/form4972_full_share_reconciliation.ts",
-    "pattern": "year-value",
-    "count": 1
-  },
-  {
-    "path": "forms/f1040/2025/domains/taxes/retirement/form4972/form4972_multiple_1099r_reconciliation.ts",
-    "pattern": "year-value",
-    "count": 1
-  },
-  {
-    "path": "forms/f1040/2025/domains/taxes/retirement/form4972/form4972_multiple_recipient_reconciliation.ts",
-    "pattern": "year-value",
-    "count": 1
-  },
-  {
-    "path": "forms/f1040/2025/domains/taxes/retirement/form4972/form4972_nua_reconciliation.ts",
-    "pattern": "year-value",
-    "count": 3
   },
   {
     "path": "forms/f1040/2025/domains/taxes/underpayment/form2210/form2210_box_e_finalized.ts",

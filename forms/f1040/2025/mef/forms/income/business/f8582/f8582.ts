@@ -88,7 +88,10 @@ function partVIIIRowKey(
 function linkedK1Activities(context: MefBuildContext) {
   const pending = context.pending;
   const passiveLoss = pending
-    ? projectPassiveSCorpLossCopies(pending)
+    ? projectPassiveSCorpLossCopies(pending, {
+      taxYear: mefTaxYear(context),
+      formType: "f1040",
+    })
     : undefined;
   const partnerships = pending?.k1_partnership === undefined
     ? []

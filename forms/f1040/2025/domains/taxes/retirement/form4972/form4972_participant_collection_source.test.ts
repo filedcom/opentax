@@ -187,6 +187,7 @@ test("complete recipient/participant collections retain independent elections an
       pending.form4972,
       pending,
       filer,
+      { taxYear: 2025, formType: "f1040" },
     );
     const selected: any = structuredClone(scoped[target]);
     selected.fields.participant_collection_review.participant_birth_date =

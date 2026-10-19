@@ -75,7 +75,7 @@ test("issued participant, child, farm, dividend, W-2 and ISO sources refigure Sc
   assertEquals(noJ.f1040.line16_income_tax - 2768, 72381);
   assertEquals(noJ.f1040.form8814_tax, 135);
   assertScheduleJSourceReturn(result.pending, replayScheduleJ);
-  assertForm4972AmtJoin(2768, p);
+  assertForm4972AmtJoin(2768, p, { taxYear: 2025, formType: "f1040" });
 
   const filer = extractFilerIdentity(p.f1040)!;
   const prepared = await f1040_2025.prepareReturn!(result.pending, filer);
@@ -129,7 +129,7 @@ test("issued participant, child, farm, dividend, W-2 and ISO sources refigure Sc
   ) {
     const bad: any = structuredClone(p);
     change(bad);
-    assertThrows(() => assertForm4972AmtJoin(2768, bad));
+    assertThrows(() => assertForm4972AmtJoin(2768, bad, { taxYear: 2025, formType: "f1040" }));
     await assertRejects(() => f1040_2025.prepareReturn!(bad, filer));
     await assertRejects(() => buildPdfBytes(bad, filer, ".pdf-cache"));
   }
@@ -155,7 +155,7 @@ test("child income just above filing threshold retains a zero-tax Form8814 with 
   assertEquals(p.form6251.regular_tax, 71996);
   assertEquals(p.form6251.line11_amt, 53583);
   assertScheduleJSourceReturn(r.pending, replayScheduleJ);
-  assertForm4972AmtJoin(2768, p);
+  assertForm4972AmtJoin(2768, p, { taxYear: 2025, formType: "f1040" });
   const filer = extractFilerIdentity(p.f1040)!;
   const prepared = await f1040_2025.prepareReturn!(r.pending, filer);
   assertEquals((prepared.bundle.xml.match(/<IRS8814\b/g) ?? []).length, 1);

@@ -1,3 +1,4 @@
+import { mefTaxYear } from "../../../../mef/support/year-config.ts";
 import type { PdfFieldEntry, PdfFormDescriptor } from "../../../review-support/form-descriptor.ts";
 import { scheduleR } from "../../../../mef/forms/credits/elderly-disabled/schedule_r.ts";
 import { assertSchedule3Line8Join } from "../../../../domains/credits/individual/schedule3_line8_join.ts";
@@ -176,7 +177,9 @@ const fields: ReadonlyArray<PdfFieldEntry> = [
   },
 ];
 
-export const schedule3Pdf: PdfFormDescriptor = {
+/** Schedule 3 projection and guards for the return year; the 2025 layout. */
+export function schedule3PdfFor(taxYear: number): PdfFormDescriptor {
+  return {
   pendingKey: "schedule3",
   pdfUrl: "https://www.irs.gov/pub/irs-prior/f1040s3--2025.pdf",
   fields,
@@ -192,7 +195,7 @@ export const schedule3Pdf: PdfFormDescriptor = {
       ? { ...fields, line6l_form8978_credit: line6l }
       : fields;
     assertSchedule3PrintedTotals(projected, allPending);
-    assertSchedule3PaymentSources(projected, allPending, 2025);
+    assertSchedule3PaymentSources(projected, allPending, taxYear);
     assertSchedule3Line6jSource(
       fields.line6j_alt_fuel_vehicle_refueling,
       allPending.f8911,
@@ -222,4 +225,7 @@ export const schedule3Pdf: PdfFormDescriptor = {
       pdfField: "topmostSubform[0].Page1[0].f1_02[0]",
     },
   ],
-};
+  };
+}
+
+export const schedule3Pdf: PdfFormDescriptor = schedule3PdfFor(mefTaxYear());

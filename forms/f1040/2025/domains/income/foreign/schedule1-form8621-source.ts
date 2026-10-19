@@ -26,7 +26,7 @@ function amount(value: unknown): number {
 /** Replay the retained PFIC holdings before either final return exporter runs. */
 export function assertSchedule1Form8621Source(
   pending: Readonly<Record<string, unknown>>,
-  context: NodeContext = { taxYear: 2025, formType: "f1040" },
+  context: NodeContext,
 ): void {
   const schedule1 = record(pending.schedule1);
   const form = record(pending.form8621);

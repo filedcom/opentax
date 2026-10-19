@@ -1,3 +1,5 @@
+import type { NodeContext } from "../../../../../../../core/types/node-context.ts";
+import { assertForm172ReviewYear } from "./form172_current_deduction.ts";
 import { z } from "zod";
 import { form172CarryAbsorptionSchema } from "./form172_carry_absorption.ts";
 import { execute, type ExecuteResult } from "../../../../../../../core/runtime/executor.ts";
@@ -25,12 +27,14 @@ export function reconcileForm172ModifiedIncome(
   rawAnnual: unknown,
   before: Record<string, Record<string, unknown>>,
   expectedModifiedAgi: number,
+  context: NodeContext,
 ) {
+  assertForm172ReviewYear(context);
   const annual = form172CarryAbsorptionSchema.parse({
     ...z.record(z.unknown()).parse(rawAnnual),
     prior_absorption_records: [],
   });
-  if (annual.tax_year !== 2025 || !Number.isSafeInteger(expectedModifiedAgi)) {
+  if (annual.tax_year !== context.taxYear || !Number.isSafeInteger(expectedModifiedAgi)) {
     throw new Error(
       "Modified NOL income needs the current reviewed year and exact AGI",
     );
@@ -61,10 +65,9 @@ export function reconcileForm172ModifiedIncome(
     }
   }
   const modifiedRegistry = { ...registry, agi_aggregator: new ModifiedAgi() };
-  const modifiedContext = { taxYear: 2025, formType: "f1040" } as const;
   const graph = (
     source: Record<string, unknown>,
-    ctx: Parameters<typeof execute>[3] = modifiedContext,
+    ctx: Parameters<typeof execute>[3] = context,
   ) =>
     execute(
       buildExecutionPlan(modifiedRegistry),
@@ -75,11 +78,11 @@ export function reconcileForm172ModifiedIncome(
   const execution: ExecuteResult = inputs.form8990 === undefined
     ? executePreQefSourceReturn(
       structuredClone(inputs),
-      modifiedContext,
+      context,
       true,
       graph,
     )
-    : executeForm172Form8990Return(structuredClone(inputs), modifiedContext, graph).execution;
+    : executeForm172Form8990Return(structuredClone(inputs), context, graph).execution;
   if (execution.diagnostics.length) {
     throw new Error("Modified NOL income needs a successful source graph");
   }
