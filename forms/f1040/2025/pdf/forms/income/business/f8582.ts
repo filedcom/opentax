@@ -467,7 +467,8 @@ export function projectCurrentPropertyLoss8582Review(
   return projectWorksheet(reviewCurrentPropertyLoss8582(allPending).xml);
 }
 
-export const form8582Pdf: PdfFormDescriptor = {
+export function form8582PdfFor(taxYear: number): PdfFormDescriptor {
+  const descriptor: PdfFormDescriptor = {
   pendingKey: "form8582",
   pdfUrl: "https://www.irs.gov/pub/irs-prior/f8582--2025.pdf",
   projectFields(fields, allPending) {
@@ -488,7 +489,7 @@ export const form8582Pdf: PdfFormDescriptor = {
       ]
         .some((amount) => (amount ?? 0) !== 0);
     if (!hasActivity) return {};
-    const xml = nativeForm8582.build(fields, { pending: allPending });
+    const xml = nativeForm8582.build(fields, { pending: allPending, taxYear });
     if (typeof xml !== "string" || xml.length === 0) {
       return {};
     }
@@ -508,7 +509,7 @@ export const form8582Pdf: PdfFormDescriptor = {
         "Form 8582 continuation needs finalized worksheet source",
       );
     }
-    const expected = form8582Pdf.projectFields!(
+    const expected = descriptor.projectFields!(
       allPending.form8582,
       allPending,
     );
@@ -541,4 +542,8 @@ export const form8582Pdf: PdfFormDescriptor = {
     },
     pdfText("primarySSN", `${p1}.f1_02[0]`),
   ],
-};
+  };
+  return descriptor;
+}
+
+export const form8582Pdf: PdfFormDescriptor = form8582PdfFor(2025);

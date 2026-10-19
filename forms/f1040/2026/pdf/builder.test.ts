@@ -551,3 +551,15 @@ test("TY2026 PDF prints Form 8962 on the 2026 draft with line 27 uncapped", asyn
   assertMatch(printed, /Schedule 2 \(Form 1040\), line 1a [. ]* 27 5537/);
   assertMatch(printed, /28 Reserved for future use [. ]* 28\n/);
 });
+
+test("TY2026 PDF prints Form 8582 on the 2026 draft", async () => {
+  const printed = await text(
+    await render(fixture("single-nonparticipating-rental-loss")),
+  );
+  assertMatch(printed, /Part I 2026 Passive Activity Loss/);
+  assertMatch(printed, /Part V, column \(b\)\) [. ]* 2b \( 5000 \)/);
+  assertMatch(printed, /Combine lines 2a, 2b, and 2c [. ]* 2d -5000/);
+  assertMatch(printed, /normally used [. ]* 3 -5000/);
+  assertMatch(printed, /Total\. Enter on Part I, lines 2a, 2b, and 2c 5000 5000/);
+  assertMatch(printed, /Example rental Sch E, line 22 5000 5000 0/);
+});
