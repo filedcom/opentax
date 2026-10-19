@@ -22,6 +22,15 @@ test("Form 461: a Schedule C loss over the joint threshold limits the loss", () 
       spouse_first_name: "Test",
       spouse_last_name: "Spouse",
       spouse_ssn: "111-22-4444",
+      form461_scope_review: {
+        only_schedule_c_and_f_business_items: true,
+        other_part_i_lines_zero: true,
+        part_ii_adjustments_zero: true,
+        post_at_risk_and_passive_limits_confirmed: true,
+        line2_schedule_c_amount: -700_000,
+        line6_schedule_f_amount: 0,
+        source_document_refs: ["synthetic C/F-only Form 461 review"],
+      },
     },
     w2: [{
       employee_ssn: "111-22-3333",
