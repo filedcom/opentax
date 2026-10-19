@@ -307,14 +307,8 @@ function reitComponent(input: Form8995Input): number {
 function priorCarryforwardLines(input: Form8995Input) {
   const line3 = input.qbi_loss_carryforward ?? 0;
   const line7 = input.reit_loss_carryforward ?? 0;
-  // A loss disallowed under §461(l) is QBI only in the year it is allowed
-  // (i8995 2025, Determining Your Qualified Business Income).
-  const line2 = Math.round(
-    totalQbi(input) + (input.excess_business_loss_disallowed ?? 0),
-  );
-  // A current-year net loss (line 2 below zero) also carries forward on
-  // line 16, with no QBI component this year (i8995, lines 2-5 and 16).
-  if (line3 === 0 && line7 === 0 && line2 >= 0) return undefined;
+  if (line3 === 0 && line7 === 0) return undefined;
+  const line2 = Math.round(totalQbi(input));
   const line6 = sumField(input.line6_sec199a_dividends);
   return {
     line2,
@@ -382,13 +376,6 @@ function multiSourceLines(
       !row.business_name || !row.ein ||
       row.source_schedule_c.qbi_w2_wages !== row.w2_wages
     );
-  // Filed Form 8995 loss routes keep their returns.
-  if (
-    rawK1Rows.length === 0 && input.filing_status !== undefined &&
-    taxableIncome <= qbiThreshold(input.filing_status, cfg) &&
-    (excessBusinessLossLines(input, cfg) !== undefined ||
-      multipleScheduleCLines(input, cfg) !== undefined)
-  ) return undefined;
   if (
     !unidentifiedScheduleCLoss &&
     (rawK1Rows.length === 0 ||
@@ -447,7 +434,8 @@ function multiSourceLines(
     cRows.map((row) => row.qbi),
     sumField(input.se_tax_deduction),
   );
-  const scheduleCRows: QbiBusinessRow[] = cRows.map((row, index) => ({
+  const businesses: QbiBusinessRow[] = [
+    ...cRows.map((row, index) => ({
       business_name: row.business_name ??
         row.source_schedule_c.line_c_business_name ?? "Schedule C",
       ...(row.ein && { tin: row.ein.replace(/\D/g, "") }),
@@ -455,19 +443,9 @@ function multiSourceLines(
       w2_wages: row.w2_wages,
       ubia: row.ubia,
       sstb: isSstb(row),
-    }));
-  // A loss disallowed under §461(l) is QBI only in the year it is allowed
-  // (i8995 2025); it is placed only when exactly one business has a loss.
-  const disallowed = input.excess_business_loss_disallowed ?? 0;
-  const losing = [...scheduleCRows, ...k1Rows].filter((row) => row.qbi < 0);
-  if (
-    disallowed > 0 && (losing.length !== 1 || disallowed > -losing[0].qbi)
-  ) return undefined;
-  const businesses = [...scheduleCRows, ...k1Rows].map((row) =>
-    disallowed > 0 && row === losing[0]
-      ? { ...row, qbi: row.qbi + disallowed }
-      : row
-  );
+    })),
+    ...k1Rows,
+  ];
   return calculateMultiSource8995A({
     businesses,
     qbiLossCarryforward: input.qbi_loss_carryforward ?? 0,
@@ -2159,6 +2137,14 @@ class Form8995Node extends TaxNode<typeof inputSchema> {
     const excessLossLines = excessBusinessLossLines(input, cfg);
     const multipleLines = ownedSCorp ?? ownedLines ?? mixedLines ??
       excessLossLines ?? multipleScheduleCLines(input, cfg);
+    if (
+      totalQbi(input) < 0 && multipleLines === undefined &&
+      input.current_passive_property_sources === undefined
+    ) {
+      throw new Error(
+        "Form 8995 net QBI loss needs a sourced carryforward filing route",
+      );
+    }
 
     const currentPropertyLines =
       input.current_passive_property_sources === undefined

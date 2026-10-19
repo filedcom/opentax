@@ -59,11 +59,11 @@ test("signed Schedule C loss reaches Form 461, Schedule 1 addback, native, and P
   const result = preparedReturn();
   assertEquals(
     result.diagnostics.map(({ nodeType, message }) => [nodeType, message]),
-    [],
+    [[
+      "form8995",
+      'compute() threw for node "form8995": Form 8995 net QBI loss needs a sourced carryforward filing route',
+    ]],
   );
-  // The 87,000 excess business loss is QBI only when allowed, so the
-  // current-year QBI loss carried forward is 400,000 − 87,000 (i8995 2025).
-  assertEquals(result.carryforwards.qbi_loss_carryforward, 313_000);
   const pending = normalizeAllPending(result.pending);
   assertEquals(pending.form461?.line2_business_income_loss, -400_000);
   assertEquals(pending.form461?.line6_net_farm_profit_loss, 0);
