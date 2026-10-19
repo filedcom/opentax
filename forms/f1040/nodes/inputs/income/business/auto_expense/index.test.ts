@@ -368,3 +368,14 @@ test("auto_expense.compute: smoke test — two vehicles mixed methods and purpos
   ]);
   assertEquals(result.outputs.length, 2);
 });
+
+test("auto_expense: TY2026 standard miles need the rate period they were driven in", () => {
+  assertThrows(
+    () =>
+      auto_expense.compute({ taxYear: 2026, formType: "f1040" }, {
+        auto_expenses: [minimalItem({ business_miles: 1000 })],
+      }),
+    Error,
+    "miles by rate period",
+  );
+});

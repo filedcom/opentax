@@ -9,10 +9,7 @@ import { scheduleC } from "../schedule_c/index.ts";
 import { scheduleE } from "../../rental-passthrough/schedule_e/index.ts";
 import { schedule_f } from "../../../../intermediate/forms/income/business/schedule_f/index.ts";
 import type { NodeContext } from "../../../../../../../core/types/node-context.ts";
-
-// TY2025 standard mileage rate for business vehicles
-// IRS Notice 2025-5: 70 cents per mile
-const STANDARD_MILEAGE_RATE = 0.70;
+import { configForYear } from "../../../../config/index.ts";
 
 export enum AutoMethod {
   Standard = "standard",
@@ -96,12 +93,24 @@ function totalActualExpenses(
     (expenses.other ?? 0);
 }
 
+// Miles carry no driving dates, so a year whose rate changes mid-year
+// (TY2026: Announcement 2026-11) cannot be priced from them.
+function businessMileageRate(taxYear: number): number {
+  const periods = configForYear(taxYear).standardMileageRates;
+  if (periods.length !== 1) {
+    throw new Error(
+      `auto_expense standard mileage needs miles by rate period for ${taxYear}`,
+    );
+  }
+  return periods[0].business;
+}
+
 // Compute deductible expense for a single vehicle
-function deductibleExpense(item: AutoExpenseItem): number {
+function deductibleExpense(item: AutoExpenseItem, rate: number): number {
   if (item.business_miles === 0) return 0;
 
   if (item.method === AutoMethod.Standard) {
-    return item.business_miles * STANDARD_MILEAGE_RATE;
+    return item.business_miles * rate;
   }
 
   // Actual method: total actual × business percentage
@@ -117,6 +126,7 @@ function deductibleExpense(item: AutoExpenseItem): number {
 // Aggregate deductible amounts by purpose
 function aggregateByPurpose(
   items: AutoExpenseItems,
+  rate: number,
 ): Record<AutoPurpose, number> {
   const totals: Record<AutoPurpose, number> = {
     [AutoPurpose.SCHEDULE_C]: 0,
@@ -124,7 +134,7 @@ function aggregateByPurpose(
     [AutoPurpose.SCHEDULE_F]: 0,
   };
   for (const item of items) {
-    totals[item.purpose] += deductibleExpense(item);
+    totals[item.purpose] += deductibleExpense(item, rate);
   }
   return totals;
 }
@@ -132,6 +142,7 @@ function aggregateByPurpose(
 function buildOutputs(
   totals: Record<AutoPurpose, number>,
   items: AutoExpenseItems,
+  rate: number,
 ): NodeOutput[] {
   const outputs: NodeOutput[] = [];
   if (totals[AutoPurpose.SCHEDULE_C] > 0) {
@@ -150,7 +161,7 @@ function buildOutputs(
   }
   const farmSources = items.flatMap((item) => {
     if (item.purpose !== AutoPurpose.SCHEDULE_F) return [];
-    const amount = deductibleExpense(item);
+    const amount = deductibleExpense(item, rate);
     if (amount === 0) return [];
     if (!item.farm_id) {
       throw new Error(
@@ -170,7 +181,7 @@ class AutoExpenseNode extends TaxNode<typeof inputSchema> {
   readonly inputSchema = inputSchema;
   readonly outputNodes = new OutputNodes([scheduleC, scheduleE, schedule_f]);
 
-  compute(_ctx: NodeContext, input: z.infer<typeof inputSchema>): NodeResult {
+  compute(ctx: NodeContext, input: z.infer<typeof inputSchema>): NodeResult {
     const parsed = inputSchema.parse(input);
 
     // Cross-field validation
@@ -178,8 +189,13 @@ class AutoExpenseNode extends TaxNode<typeof inputSchema> {
       validateItem(item);
     }
 
-    const totals = aggregateByPurpose(parsed.auto_expenses);
-    return { outputs: buildOutputs(totals, parsed.auto_expenses) };
+    const rate = parsed.auto_expenses.some((item) =>
+        item.method === AutoMethod.Standard && item.business_miles > 0
+      )
+      ? businessMileageRate(ctx.taxYear)
+      : 0;
+    const totals = aggregateByPurpose(parsed.auto_expenses, rate);
+    return { outputs: buildOutputs(totals, parsed.auto_expenses, rate) };
   }
 }
 
