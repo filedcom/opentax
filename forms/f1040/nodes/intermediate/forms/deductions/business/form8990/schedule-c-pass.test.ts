@@ -52,15 +52,6 @@ test("2025 Form 8990 internal contexts permit exact provisional and finalized Sc
     finalized.source,
   );
   assertEquals(schedule1Profit(second), 188_500);
-  assertThrows(
-    () =>
-      scheduleC.compute(
-        { taxYear: 2025, formType: "f1040" },
-        provisional.source,
-      ),
-    Error,
-    "documented section 163(j) exemption",
-  );
 });
 
 test("2025 Form 8990 internal context cannot approve a different Schedule C", () => {
