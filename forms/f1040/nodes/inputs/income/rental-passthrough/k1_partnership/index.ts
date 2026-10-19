@@ -840,13 +840,16 @@ function scheduleSEOutputs(
     (sum, item) => sum + partnershipSeEarnings(item),
     0,
   );
-  if (total === 0) return [];
+  const ownerSources = identity
+    ? partnershipOwnerSeSources(items, identity)
+    : [];
+  // Different spouses file separate Schedules SE. Their K-1 earnings cannot
+  // cancel before the owner split, even when the joint scalar total is zero.
+  if (total === 0 && ownerSources.length === 0) return [];
   return [output(schedule_se, {
     net_profit_schedule_c: total,
-    ...(identity
-      ? {
-        owner_business_sources: partnershipOwnerSeSources(items, identity),
-      }
+    ...(ownerSources.length
+      ? { owner_business_sources: ownerSources }
       : {}),
   })];
 }

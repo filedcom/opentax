@@ -61,3 +61,44 @@ test("without the election 1099-DIV foreign tax still needs the Form 1116 review
     "1099-DIV foreign tax needs reviewed qualifying days",
   );
 });
+
+test("foreign-service wages disqualify the no-Form-1116 election even without foreign tax", () => {
+  const dividend = {
+    payerName: "Example Fund",
+    source_document_reference: "div-foreign-wage",
+    isNominee: false,
+    box11: false,
+    box1a: 4_000,
+    box1b: 0,
+    box7: 220,
+    holdingPeriodDays: 120,
+    foreign_tax_without_form1116: true as const,
+  };
+  const result = f1040_2025.executeReturn({
+    general: {
+      filing_status: "mfj",
+      taxpayer_first_name: "Alex",
+      taxpayer_last_name: "Example",
+      taxpayer_dob: "1980-01-01",
+      spouse_first_name: "Blair",
+      spouse_last_name: "Example",
+      spouse_dob: "1981-01-01",
+    },
+    fec: [{
+      foreign_employer_name: "Foreign Employer",
+      country_code: "DE",
+      compensation_amount: 50_000,
+      compensation_usd: 50_000,
+      foreign_service_compensation_usd: 50_000,
+    }],
+    f1099div: [dividend],
+    schedule_b_part_iii: {
+      foreign_accounts_question: false,
+      foreign_trust_question: false,
+    },
+  });
+  assertStringIncludes(
+    result.diagnostics.map((d) => d.message).join("\n"),
+    "every foreign tax on a qualified payee statement",
+  );
+});

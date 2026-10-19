@@ -628,6 +628,13 @@ export const inputSchema = z.object({
   foreign_tax_items: z.array(foreignTaxItemSchema).optional(),
   election_foreign_tax_items: z.array(electionForeignTaxItemSchema).min(1)
     .optional(),
+  // Foreign-source income that cannot qualify for the section 904(j)
+  // election, even when no foreign tax was paid on that source.
+  election_disqualifying_foreign_income: z.array(z.object({
+    income_category: z.nativeEnum(IncomeCategory),
+    foreign_gross_income: z.number().positive(),
+    source_kind: z.literal("foreign_employer_compensation"),
+  }).strict()).optional(),
   foreign_tax_redeterminations: z.array(redeterminationDisclosureSchema).min(1)
     .optional(),
   carryover_reviews: z.array(carryoverReviewSchema).optional(),
@@ -987,6 +994,7 @@ function electionCredit(
 ): number {
   if (
     (input.foreign_tax_items?.length ?? 0) > 0 ||
+    (input.election_disqualifying_foreign_income?.length ?? 0) > 0 ||
     (input.prior_year_carryovers?.length ?? 0) > 0 ||
     (input.foreign_tax_redeterminations?.length ?? 0) > 0
   ) {

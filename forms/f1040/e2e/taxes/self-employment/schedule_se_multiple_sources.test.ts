@@ -37,13 +37,18 @@ function scheduleC(recipient: "T" | "S", ssn: string) {
   };
 }
 
-function k1(name: string, ein: string, recipient: string) {
+function k1(
+  name: string,
+  ein: string,
+  recipient: string,
+  earnings = -32_870,
+) {
   return {
     partnership_name: name,
     partnership_ein: ein,
     recipient_tin: recipient,
-    box1_ordinary_business: -32_870,
-    box14a_se_earnings: -32_870,
+    box1_ordinary_business: earnings,
+    box14a_se_earnings: earnings,
   };
 }
 
@@ -87,4 +92,48 @@ test("single-filer Schedule SE sums Schedule C and K-1 box 14a", () => {
   assertEquals(result.pending.schedule_se?.net_profit_schedule_c, 186_819);
   assertEquals(result.pending.schedule2?.line4_se_tax, 26_396);
   assertEquals(result.pending.schedule1?.line15_se_deduction, 13_198);
+});
+
+test("joint Schedule SE keeps offsetting K-1 earnings with their separate spouses", () => {
+  const result = execute(plan, registry, {
+    general: {
+      filing_status: "mfj",
+      taxpayer_ssn: TAXPAYER,
+      spouse_ssn: SPOUSE,
+      digital_assets: false,
+    },
+    k1_partnership: [
+      k1("Taxpayer Partnership", "311111111", TAXPAYER, 50_000),
+      k1("Spouse Partnership", "322222222", SPOUSE, -50_000),
+    ],
+  }, ctx);
+  assertEquals(
+    result.diagnostics.filter((d) => d.nodeType === "schedule_se"),
+    [],
+  );
+  assertEquals(result.pending.schedule2?.line4_se_tax, 7_065);
+  assertEquals(result.pending.schedule1?.line15_se_deduction, 3_533);
+  assertEquals(assertOwnedScheduleSE(result.pending, 2025)?.tax, 7_065);
+});
+
+test("joint Schedule SE preserves offsetting K-1 owners beside Schedule C", () => {
+  const result = execute(plan, registry, {
+    general: {
+      filing_status: "mfj",
+      taxpayer_ssn: TAXPAYER,
+      spouse_ssn: SPOUSE,
+      digital_assets: false,
+    },
+    ...scheduleC("T", TAXPAYER),
+    k1_partnership: [
+      k1("Taxpayer Partnership", "311111111", TAXPAYER, 50_000),
+      k1("Spouse Partnership", "322222222", SPOUSE, -50_000),
+    ],
+  }, ctx);
+  assertEquals(
+    result.diagnostics.filter((d) => d.nodeType === "schedule_se"),
+    [],
+  );
+  assertEquals(result.pending.schedule2?.line4_se_tax, 29_059);
+  assertEquals(assertOwnedScheduleSE(result.pending, 2025)?.tax, 29_059);
 });
