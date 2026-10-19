@@ -412,7 +412,7 @@ test.skipIf(!xsdAvailable)("XSD: ATS 1040 Scenario 5 identity, dependents, and W
   assertEquals(result.diagnostics[0].nodeType, "f8812");
   assertStringIncludes(
     result.diagnostics[0].message,
-    "needs complete Credit Limit Worksheet A and B answers",
+    "refundable credit needs verified line 18a earned income",
   );
   const xml = buildXmlSlice(result, ["general", "f1040", "w2"]);
   assertEquals((xml.match(/<IRSW2 documentId=/g) ?? []).length, 1);

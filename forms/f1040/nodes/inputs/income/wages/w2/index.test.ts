@@ -793,7 +793,7 @@ test("statutory_employee_state_withholding_stays_on_schedule_a_line_5a", () => {
     minimalItem({ box1_wages: 8_513, box17_state_withheld: 101 }),
   ]);
   assertEquals(
-    fieldsOf(result.outputs, scheduleA)!.line_5a_state_income_tax,
+    fieldsOf(result.outputs, scheduleA)!.w2_state_local_income_tax,
     1_028,
   );
 });
@@ -1153,7 +1153,7 @@ test("box14_sdi_pfml_routes_to_schedule_a: $600 SDI → line_5a_state_income_tax
     }],
   })]);
   assertEquals(
-    fieldsOf(result.outputs, scheduleA)!.line_5a_state_income_tax,
+    fieldsOf(result.outputs, scheduleA)!.w2_state_local_income_tax,
     600,
   );
 });
@@ -1169,7 +1169,7 @@ test("box14_sdi_plus_state_withheld_combined_to_schedule_a: SDI $500 + box17 $3,
     box17_state_withheld: 3000,
   })]);
   assertEquals(
-    fieldsOf(result.outputs, scheduleA)!.line_5a_state_income_tax,
+    fieldsOf(result.outputs, scheduleA)!.w2_state_local_income_tax,
     3500,
   );
 });
@@ -1179,7 +1179,7 @@ test("box17_state_withheld_routes_to_schedule_a: $4,000 state withholding → li
     minimalItem({ box1_wages: 80000, box17_state_withheld: 4000 }),
   ]);
   assertEquals(
-    fieldsOf(result.outputs, scheduleA)!.line_5a_state_income_tax,
+    fieldsOf(result.outputs, scheduleA)!.w2_state_local_income_tax,
     4000,
   );
 });
@@ -1189,7 +1189,7 @@ test("box19_local_withheld_routes_to_schedule_a: $1,200 local → line_5a_state_
     minimalItem({ box1_wages: 80000, box19_local_withheld: 1200 }),
   ]);
   assertEquals(
-    fieldsOf(result.outputs, scheduleA)!.line_5a_state_income_tax,
+    fieldsOf(result.outputs, scheduleA)!.w2_state_local_income_tax,
     1200,
   );
 });
@@ -1408,7 +1408,7 @@ test("two_w2s_state_withheld_aggregate_to_schedule_a: $2k + $3k = $5,000 line_5a
     minimalItem({ box1_wages: 50000, box17_state_withheld: 3000 }),
   ]);
   assertEquals(
-    fieldsOf(result.outputs, scheduleA)!.line_5a_state_income_tax,
+    fieldsOf(result.outputs, scheduleA)!.w2_state_local_income_tax,
     5000,
   );
 });
@@ -1869,7 +1869,7 @@ test("comprehensive_w2_full_workflow: two W-2s with all major boxes populate all
   );
   // schedule_a: SDI $400 + state $5,000
   assertEquals(
-    fieldsOf(result.outputs, scheduleA)!.line_5a_state_income_tax,
+    fieldsOf(result.outputs, scheduleA)!.w2_state_local_income_tax,
     5400,
   );
 });

@@ -296,6 +296,12 @@ export const CTC_PHASE_OUT_THRESHOLD_OTHER_2025 = 200_000;
 /** ACTC earned income floor (minimum earned income for ACTC). */
 export const ACTC_EARNED_INCOME_FLOOR_2025 = 2_500;
 
+/** Form 1116 instructions (2025), Election To Claim the Foreign Tax Credit
+ * Without Filing Form 1116: total creditable foreign taxes of $300 or less
+ * ($600 if married filing jointly). IRC §904(j)(2)(B). */
+export const FTC_ELECTION_LIMIT_MFJ_2025 = 600;
+export const FTC_ELECTION_LIMIT_OTHER_2025 = 300;
+
 // ─── Saver's Credit (Form 8880) ───────────────────────────────────────────────
 // 2025 Form 8880 line 9 table; IRC §25B
 
@@ -658,6 +664,8 @@ export const config2025: F1040Config = {
   ctcPhaseOutThresholdMfj: CTC_PHASE_OUT_THRESHOLD_MFJ_2025,
   ctcPhaseOutThresholdOther: CTC_PHASE_OUT_THRESHOLD_OTHER_2025,
   actcEarnedIncomeFloor: ACTC_EARNED_INCOME_FLOOR_2025,
+  foreignTaxCreditElectionLimitMfj: FTC_ELECTION_LIMIT_MFJ_2025,
+  foreignTaxCreditElectionLimitOther: FTC_ELECTION_LIMIT_OTHER_2025,
   saversCreditContributionCap: SAVERS_CREDIT_CONTRIBUTION_CAP_2025,
   saversCreditAgiSingle: SAVERS_CREDIT_AGI_SINGLE_2025,
   saversCreditAgiHoh: SAVERS_CREDIT_AGI_HOH_2025,

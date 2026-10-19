@@ -11,6 +11,10 @@ import {
   qbiPatron,
 } from "../nodes/inputs/deductions/business/qbi_patron/index.ts";
 import {
+  inputSchema as qbiLossCarryforwardInputSchema,
+  qbi_loss_carryforward,
+} from "../nodes/inputs/deductions/business/qbi_loss_carryforward/index.ts";
+import {
   education_income,
   itemSchema as educationIncomeItemSchema,
 } from "../nodes/inputs/income/other/education_income/index.ts";
@@ -1100,6 +1104,11 @@ export const inputNodes: readonly InputNodeEntry[] = [
     isArray: false,
   },
   { node: qbiPatron, inputSchema: qbiPatronInputSchema, isArray: false },
+  {
+    node: qbi_loss_carryforward,
+    inputSchema: qbiLossCarryforwardInputSchema,
+    isArray: false,
+  },
   { node: f843, inputSchema: f843InputSchema, isArray: false },
   { node: f2120, inputSchema: f2120InputSchema, isArray: false },
   { node: f8275, inputSchema: f8275InputSchema, isArray: false },

@@ -163,6 +163,10 @@ export interface F1040Config {
   ctcPhaseOutThresholdOther: number;
   actcEarnedIncomeFloor: number;
 
+  // ── Foreign tax credit without Form 1116 (IRC §904(j)) ──────────────────
+  foreignTaxCreditElectionLimitMfj: number;
+  foreignTaxCreditElectionLimitOther: number;
+
   // ── Saver's Credit ────────────────────────────────────────────────────────
   saversCreditContributionCap: number;
   saversCreditAgiSingle: { rate50: number; rate20: number; rate10: number };

@@ -989,7 +989,7 @@ function scheduleAOutput(w2s: W2Items): NodeOutput[] {
   // All three contribute to Schedule A line 5a (state and local income taxes)
   const stateTaxTotal = line5a + line5b + line5c;
   if (stateTaxTotal === 0) return [];
-  return [output(schedule_a, { line_5a_state_income_tax: stateTaxTotal })];
+  return [output(schedule_a, { w2_state_local_income_tax: stateTaxTotal })];
 }
 
 // Route combined W-2 SS wages (box 3 + box 7 tips) to Schedule SE.

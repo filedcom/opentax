@@ -53,6 +53,8 @@ export async function executeWithSourceDocuments(
  * Rules:
  * - A computed field replaces the same field deposited directly by the start node.
  *   Derived context is authoritative for nodes that are both user inputs and output targets.
+ *   Row collections are the exception: computed rows (e.g. K-1 royalty Schedule E
+ *   properties) append to the rows the user entered instead of replacing them.
  * - If the target field already holds an array, append incoming scalar or concat incoming array.
  * - If the target field does not exist, set directly.
  * - If target is a scalar and incoming is scalar, promote both to an array (accumulation pattern:
@@ -60,6 +62,14 @@ export async function executeWithSourceDocuments(
  * - If target is a scalar and incoming is an array, replace with the array.
  * - A node's self-output is its finalized value and replaces its accumulated input.
  */
+/** An array of object rows, such as Schedule E properties. */
+function isRowCollection(value: unknown): value is unknown[] {
+  return Array.isArray(value) &&
+    value.every((row) =>
+      row !== null && typeof row === "object" && !Array.isArray(row)
+    );
+}
+
 function mergePending(
   pending: Record<string, Record<string, unknown>>,
   directInputFields: Record<string, Set<string>>,
@@ -87,7 +97,9 @@ function mergePending(
     if (isDirectInput) {
       (directInputFields[targetId] ??= new Set()).add(key);
     } else if (directInputFields[targetId]?.delete(key)) {
-      target[key] = incoming;
+      target[key] = isRowCollection(existing) && isRowCollection(incoming)
+        ? [...existing, ...incoming]
+        : incoming;
       continue;
     }
 
