@@ -11,7 +11,7 @@
 import { FilingStatus } from "../types.ts";
 
 // ─── Tax Brackets ─────────────────────────────────────────────────────────────
-// Rev. Proc. 2024-40, §3.01; IRC §1(a)–(d)
+// Rev. Proc. 2024-40, §2.01; IRC §1(j)(2)
 
 export type Bracket = {
   over: number;
@@ -65,8 +65,7 @@ export const BRACKETS_MFS_2025: ReadonlyArray<Bracket> = [
 ] as const;
 
 // ─── Standard Deduction ───────────────────────────────────────────────────────
-// Rev. Proc. 2024-40, §3.14; IRC §63(c); P.L. 119-21 (OBBBA) §70001
-// OBBBA increased base deductions by $750 (Single/MFS/HOH-proportional) effective TY2025.
+// IRC §63(c)(7) as amended by P.L. 119-21 §70102; Rev. Proc. 2025-32 §3.01.
 
 /** Base standard deduction by filing status (TY2025, post-OBBBA). */
 export const STANDARD_DEDUCTION_BASE_2025: Record<FilingStatus, number> = {
@@ -80,7 +79,7 @@ export const STANDARD_DEDUCTION_BASE_2025: Record<FilingStatus, number> = {
 /**
  * Additional standard deduction per age/blindness factor (TY2025).
  * Single/HOH: $2,000 per factor; MFJ/MFS/QSS: $1,600 per factor.
- * IRC §63(f); IRS Rev. Proc. 2024-40, §3.14 (updated for TY2025)
+ * IRC §63(f); Rev. Proc. 2024-40, §2.15(3)
  */
 export const STANDARD_DEDUCTION_ADDITIONAL_2025: Record<FilingStatus, number> =
   {
@@ -110,7 +109,7 @@ export const SENIOR_DEDUCTION_PHASEOUT_MFJ_2025 = 150_000;
 export const SENIOR_DEDUCTION_PHASEOUT_RATE_2025 = 0.06;
 
 // ─── QDCGT / Capital Gains Rate Thresholds ────────────────────────────────────
-// Rev. Proc. 2024-40, §3.02; IRC §1(h)
+// Rev. Proc. 2024-40, §2.03; IRC §1(h)
 
 /** Top of 0% LTCG/QD bracket (income at or below this → 0% rate). */
 export const QDCGT_ZERO_CEILING_2025: Record<FilingStatus, number> = {
@@ -132,7 +131,7 @@ export const QDCGT_TWENTY_FLOOR_2025: Record<FilingStatus, number> = {
 } as const;
 
 // ─── AMT — Form 6251 ──────────────────────────────────────────────────────────
-// IRS Instructions for Form 6251 (2025); IRC §55(d)
+// Rev. Proc. 2024-40, §2.11; 2025 Instructions for Form 6251
 
 /** AMT exemption amounts by filing status (TY2025). */
 export const AMT_EXEMPTION_2025: Record<FilingStatus, number> = {
@@ -177,7 +176,7 @@ export const AMT_BRACKET_ADJUSTMENT_STANDARD_2025 = 4_782;
 export const AMT_BRACKET_ADJUSTMENT_MFS_2025 = 2_391;
 
 // ─── FICA / Social Security ───────────────────────────────────────────────────
-// Rev. Proc. 2024-40, §3.28; IRC §3121(a)(1)
+// 2025 Schedule SE line 7; IRC §3121(a)(1)
 
 /** Social Security wage base (TY2025). */
 export const SS_WAGE_BASE_2025 = 176_100;
@@ -191,7 +190,7 @@ export const SS_MAX_TAX_PER_EMPLOYER_2025 = 10_918.20;
 // ─── Additional Medicare Tax (Form 8959) ─────────────────────────────────────
 // IRC §3101(b)(2); not indexed for inflation
 
-/** Additional Medicare Tax threshold — MFJ/QSS. */
+/** Additional Medicare Tax threshold — MFJ. */
 export const ADDITIONAL_MEDICARE_THRESHOLD_MFJ = 250_000;
 
 /** Additional Medicare Tax threshold — MFS. */
@@ -226,7 +225,7 @@ export const HSA_FAMILY_LIMIT_2025 = 8_550;
 export const HSA_CATCHUP_2025 = 1_000;
 
 // ─── IRA Contribution Limits ──────────────────────────────────────────────────
-// Rev. Proc. 2024-40, §3.19; IRC §219(b)(5)(A)
+// Notice 2024-80; IRC §219(b)(5)(A), §219(g)
 
 /** Traditional/Roth IRA contribution limit under age 50 (TY2025). */
 export const IRA_CONTRIBUTION_LIMIT_2025 = 7_000;
@@ -259,7 +258,7 @@ export const IRA_PHASEOUT_MFS_LOWER_2025 = 0;
 export const IRA_PHASEOUT_MFS_UPPER_2025 = 10_000;
 
 // ─── QBI Deduction Thresholds (Form 8995A) ────────────────────────────────────
-// Rev. Proc. 2024-40, §3.27; IRC §199A(b)(3)(B)(ii)
+// Rev. Proc. 2024-40, §2.27; IRC §199A(e)(2)
 
 /** QBI wage limitation phase-in threshold — Single/MFS/HOH/QSS (TY2025). */
 export const QBI_THRESHOLD_SINGLE_2025 = 197_300;
@@ -298,7 +297,7 @@ export const CTC_PHASE_OUT_THRESHOLD_OTHER_2025 = 200_000;
 export const ACTC_EARNED_INCOME_FLOOR_2025 = 2_500;
 
 // ─── Saver's Credit (Form 8880) ───────────────────────────────────────────────
-// 2025 Form 8880 line 9 table; IRC §25B
+// Notice 2024-80 (§25B(b) limits); IRC §25B
 
 /** Maximum contribution eligible for Saver's Credit per person. */
 export const SAVERS_CREDIT_CONTRIBUTION_CAP_2025 = 2_000;
@@ -325,7 +324,7 @@ export const SAVERS_CREDIT_AGI_MFJ_2025 = {
 } as const;
 
 // ─── EE/I Bond Interest Exclusion (Form 8815) ────────────────────────────────
-// 2025 Form 8815, lines 9-12; IRC §135(b)(2)(A)
+// Rev. Proc. 2024-40, §2.18; IRC §135(b)(2)(A)
 
 /** Form 8815 phase-out start — MFJ. */
 export const SAVINGS_BOND_PHASEOUT_START_MFJ_2025 = 149_250;
@@ -349,7 +348,7 @@ export const KIDDIE_TAX_UNEARNED_INCOME_THRESHOLD_2025 = 2_700;
 export const KIDDIE_TAX_STANDARD_DEDUCTION_FLOOR_2025 = 1_350;
 
 // ─── FEIE (Form 2555) ─────────────────────────────────────────────────────────
-// Rev. Proc. 2024-40, §3.04; IRC §911(b)(2)
+// Rev. Proc. 2024-40, §2.39; IRC §911(b)(2)
 
 /** Foreign Earned Income Exclusion limit (TY2025). */
 export const FEIE_LIMIT_2025 = 130_000;
@@ -362,7 +361,7 @@ export const FEIE_LIMIT_2025 = 130_000;
 export const FEIE_HOUSING_BASE_2025 = 20_800;
 
 // ─── Section 179 / Depreciation (Form 4562) ──────────────────────────────────
-// P.L. 119-21 ("One Big Beautiful Bill Act"); IRC §179
+// IRC §179(b) as amended by P.L. 119-21 §70306; luxury autos Rev. Proc. 2025-16.
 
 /** Section 179 expensing limit (TY2025, OBBBA). */
 export const SECTION_179_LIMIT_2025 = 2_500_000;
@@ -383,7 +382,7 @@ export const LUXURY_AUTO_YEAR2_2025 = 19_600;
 export const LUXURY_AUTO_YEAR3_PLUS_2025 = 11_800;
 
 // ─── Schedule H — Household Employment Taxes ─────────────────────────────────
-// IRC §3510; IRS Publication 926 (2025)
+// 2025 Publication 926; IRC §3121(x)
 
 /** Household employment FICA threshold: wages that trigger FICA (TY2025). */
 export const HOUSEHOLD_FICA_THRESHOLD_2025 = 2_800;
@@ -467,7 +466,7 @@ export const QCD_ANNUAL_LIMIT_2025 = 108_000;
 export const PSO_EXCLUSION_LIMIT_2025 = 3_000;
 
 // ─── Schedule C / Schedule F — Excess Business Loss ──────────────────────────
-// IRC §461(l); Rev. Proc. 2024-40, §3.30
+// IRC §461(l); Rev. Proc. 2024-40, §2.32
 
 /** Excess business loss threshold — Single/MFS/HOH/QSS (TY2025). */
 export const EBL_THRESHOLD_SINGLE_2025 = 313_000;
@@ -476,13 +475,13 @@ export const EBL_THRESHOLD_SINGLE_2025 = 313_000;
 export const EBL_THRESHOLD_MFJ_2025 = 626_000;
 
 // ─── Form 8990 — Interest Expense Limitation ──────────────────────────────────
-// IRC §163(j)(3); Rev. Proc. 2024-40
+// IRC §163(j)(3); Rev. Proc. 2024-40, §2.31
 
 /** Small business gross receipts threshold exempting from §163(j) (TY2025). */
 export const SMALL_BIZ_GROSS_RECEIPTS_2025 = 31_000_000;
 
 // ─── W-2 — Retirement Plan Contribution Limits ───────────────────────────────
-// Rev. Proc. 2024-40 / SECURE 2.0; IRC §402(g), §408(p)
+// Notice 2024-80; IRC §402(g), §408(p), §414(v)
 
 /**
  * Elective deferral limits for 401(k)/403(b)/457(b) by age bracket.
@@ -497,7 +496,7 @@ export const RETIREMENT_LIMITS_2025: Record<string, Record<number, number>> = {
 } as const;
 
 // ─── Form 8853 — Archer MSA / LTC ────────────────────────────────────────────
-// IRC §4974(c)(5); Rev. Proc. 2024-40
+// IRC §7702B(d)(4); Rev. Proc. 2024-40, §2.62
 
 /** LTC per-diem daily limit for non-tax-qualified contracts (TY2025). */
 export const LTC_PER_DIEM_DAILY_LIMIT_2025 = 420;
@@ -551,19 +550,19 @@ export const SEC199A_MFJ_THRESHOLD_2025 = 394_600;
 export const MCC_MAX_CREDIT_HIGH_RATE_2025 = 2_000;
 
 // ─── SEP-IRA / SIMPLE / Solo 401(k) Contribution Limits ──────────────────────
-// Rev. Proc. 2024-40, §3.20; IRC §404(a)(8), §408(k), §408(p)
+// Notice 2024-80; IRC §404(a)(8), §408(k), §408(p)
 
 /** SEP contribution rate — 25% of net SE compensation (Pub 560, ch. 4; IRC §408(k)). */
 export const SEP_CONTRIBUTION_RATE_2025 = 0.25;
 
-/** SEP / Solo 401(k) combined annual addition limit (TY2025, Rev. Proc. 2024-40 §3.20). */
+/** SEP / Solo 401(k) combined annual addition limit (TY2025, Notice 2024-80 §415(c)). */
 export const SEP_MAX_CONTRIBUTION_2025 = 70_000;
 
 /** SIMPLE IRA employer matching rate — 3% of compensation (statutory; IRC §408(p)(2)(A)(iii)). */
 export const SIMPLE_EMPLOYER_MATCH_RATE_2025 = 0.03;
 
 // ─── Student Loan Interest Deduction Phase-out (IRC §221(b)) ─────────────────
-// Rev. Proc. 2024-40, §3.15; IRC §221(b)(2)
+// Rev. Proc. 2024-40, §2.30; IRC §221(b)(2)
 
 /** SLI phase-out start — Single/HOH/QSS (TY2025). */
 export const SLI_PHASE_OUT_START_SINGLE_2025 = 85_000;
@@ -584,12 +583,12 @@ export const SLI_PHASE_OUT_END_MFJ_2025 = 200_000;
 export const F2106_PERFORMING_ARTIST_AGI_LIMIT = 16_000;
 
 // ─── LTC Insurance Premium Deductibility Limits ───────────────────────────────
-// Rev. Proc. 2024-40, §3.34; IRC §213(d)(10); IRC §213(d)(1)(D)
+// Rev. Proc. 2024-40, §2.28; IRC §213(d)(10)
 
 /**
  * Age-based deductible LTC insurance premium limits (TY2025).
  * `maxAge` is the inclusive upper bound for each bracket; Infinity = age 71+.
- * Source: Rev. Proc. 2024-40, §3.34.
+ * Source: Rev. Proc. 2024-40, §2.28.
  */
 export const LTC_PREMIUM_LIMITS_2025: ReadonlyArray<
   { readonly maxAge: number; readonly limit: number }
