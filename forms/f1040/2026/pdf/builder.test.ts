@@ -314,6 +314,20 @@ test("TY2026 PDF prints Schedule 1-A car loan and senior parts", async () => {
   );
 });
 
+test("TY2026 PDF prints Form 8863 on the 2026 draft", async () => {
+  // The fixture's worksheet holds 2025 tax; the 2026 return supplies its own.
+  const { f8863_credit_limit_worksheet: _, ...inputs } = fixture(
+    "single-form8863-lifetime-learning-scholarship",
+  );
+  const printed = await text(await render(inputs));
+  assertMatch(printed, /Education Credits[\s\S]*2026/);
+  assertMatch(printed, /11 Enter the smaller of line 10 or \$10,000[^\n]* 11 7500/);
+  assertMatch(printed, /12 Multiply line 11 by 20%[^\n]* 12 1500/);
+  assertMatch(printed, /Schedule 3 \(Form 1040\), line 3[^\n]* 19 1500/);
+  assertMatch(printed, /\n Test University\n/);
+  assertMatch(printed, /Part II, line 10[^\n]* 31 7500/);
+});
+
 test("TY2026 PDF refuses, by name, a form with no TY2026 mapping", async () => {
   await assertRejects(
     () => render(fixture("single-child-unearned-income")),
