@@ -687,12 +687,6 @@ function validateItem(
     );
   }
   if (
-    (item.box6_medicare_withheld ?? 0) > 0 &&
-    (item.box5_medicare_wages ?? 0) === 0
-  ) {
-    throw new Error("W-2 box 6 Medicare withholding needs box 5 wages");
-  }
-  if (
     (box14Amount(item, "RRTA compensation") ?? 0) === 0 &&
     (item.box5_medicare_wages ?? 0) === 0 &&
     (item.box12_entries ?? []).some((entry) =>
@@ -910,8 +904,25 @@ function statutoryOutput(w2s: W2Items): NodeOutput[] {
   return [output(schedule_c, { statutory_w2_sources: sources })];
 }
 
+/** Box 6 Medicare tax with no box 5 wage base, as on a pay-stub Form 4852. */
+function missingMedicareWageBase(item: W2Item): boolean {
+  return (item.box6_medicare_withheld ?? 0) > 0 &&
+    (item.box5_medicare_wages ?? 0) === 0;
+}
+
+/** Notes for W-2s kept without the wage bases Form 8959 needs. */
+function missingWageBaseWarnings(w2s: W2Items): string[] {
+  return w2s.filter(missingMedicareWageBase).map((item) =>
+    `W-2${
+      item.employer_name ? ` from ${item.employer_name}` : ""
+    } has box 6 Medicare tax but no box 5 Medicare wages; its wages and withholding are kept, and Form 8959 Additional Medicare Tax leaves it out until box 5 is entered`
+  );
+}
+
 function medicareOutput(w2s: W2Items): NodeOutput[] {
-  const ficaItems = w2s.filter(
+  // Form 8959 lines 1 and 19 pair box 6 with box 5; a W-2 missing box 5
+  // cannot supply either line.
+  const ficaItems = w2s.filter((item) => !missingMedicareWageBase(item)).filter(
     (item) =>
       item.box5_medicare_wages !== undefined ||
       item.box6_medicare_withheld !== undefined ||
@@ -1521,7 +1532,8 @@ class W2Node extends TaxNode<typeof inputSchema> {
       );
     }
 
-    return { outputs };
+    const warnings = missingWageBaseWarnings(input.w2s);
+    return warnings.length > 0 ? { outputs, warnings } : { outputs };
   }
 }
 

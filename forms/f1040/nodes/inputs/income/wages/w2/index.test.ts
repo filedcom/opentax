@@ -1395,16 +1395,14 @@ test("statutory employee W-2 box 5 enters Form 8959", () => {
   );
 });
 
-test("W-2 box 6 Medicare withholding needs box 5 wages", () => {
-  assertThrows(
-    () =>
-      compute([minimalItem({
-        box1_wages: 100_000,
-        box6_medicare_withheld: 1_450,
-      })]),
-    Error,
-    "box 6 Medicare withholding needs box 5 wages",
-  );
+test("W-2 box 6 without box 5 wages is kept with a warning and left off Form 8959", () => {
+  const kept = compute([minimalItem({
+    box1_wages: 100_000,
+    box6_medicare_withheld: 1_450,
+  })]);
+  assertEquals(kept.warnings?.length, 1);
+  assertEquals(fieldsOf(kept.outputs, f1040)?.line1a_wages, 100_000);
+  assertEquals(fieldsOf(kept.outputs, form8959), undefined);
   const result = compute([minimalItem({ box1_wages: 100_000 })]);
   assertEquals(fieldsOf(result.outputs, form8959), undefined);
 });
