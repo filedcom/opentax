@@ -12,7 +12,7 @@ export type Form5695GraphExecutor = (
 ) => ExecuteResult;
 
 export interface Form5695TaxLimits {
-  readonly partI: number | undefined;
+  readonly partI: number;
   readonly partII: number;
 }
 
@@ -54,22 +54,44 @@ function availableCredits(
   }
 }
 
-// Credits on the Line 14 worksheet that this stage does not refigure: line 19
-// may come from Schedule 8812 Credit Limit Worksheet B instead.
+function scheduleLine(
+  schedule3: Record<string, unknown>,
+  total: string,
+  source: string,
+): number {
+  return schedule3[total] === undefined
+    ? amount(schedule3[source])
+    : amount(schedule3[total]);
+}
+
+// Line 14 worksheet footnote: Schedule 8812 Credit Limit Worksheet B line 14
+// replaces Form 1040 line 19 when that worksheet applies.
+function childTaxCredit(f1040: Record<string, unknown>): number {
+  return f1040.form8859_worksheet_b_applies === true
+    ? amount(f1040.form8859_worksheet_b_line14)
+    : amount(f1040.line19_child_tax_credit);
+}
+
 function partIPrecedingCredits(
   f1040: Record<string, unknown>,
   schedule3: Record<string, unknown>,
-): boolean {
-  return amount(f1040.line19_child_tax_credit) > 0 ||
-    [
-      "line6c_adoption_credit",
-      "line6f_clean_vehicle_credit",
-      "line6f_total",
-      "line6g_mortgage_interest_credit",
-      "line6h_dc_homebuyer_credit",
-      "line6m_prev_owned_clean_vehicle_credit",
+): number {
+  return childTaxCredit(f1040) +
+    amount(schedule3.line6c_adoption_credit) +
+    scheduleLine(schedule3, "line6f_total", "line6f_clean_vehicle_credit") +
+    amount(schedule3.line6g_mortgage_interest_credit) +
+    amount(schedule3.line6h_dc_homebuyer_credit) +
+    scheduleLine(
+      schedule3,
       "line6m_total",
-    ].some((key) => amount(schedule3[key]) > 0) ||
+      "line6m_prev_owned_clean_vehicle_credit",
+    );
+}
+
+function hasPartIPrecedingCredits(executed: ExecuteResult): boolean {
+  const pending = buildPending(executed.pending);
+  const schedule3 = record(pending.schedule3);
+  return partIPrecedingCredits(record(pending.f1040), schedule3) > 0 ||
     [
       "form8396_source_credit_pending",
       "form8839_source_credit_pending",
@@ -79,8 +101,9 @@ function partIPrecedingCredits(
 
 /**
  * Instructions for Form 5695, Line 31 and Line 14 worksheets: Form 1040 line
- * 18 less Schedule 3 lines 1, 2, 3, 4, 6d and 6l; Part I also less line 32.
- * Part I is undefined when other credits it lists precede it.
+ * 18 less Schedule 3 lines 1, 2, 3, 4, 6d and 6l; Part I also less line 32,
+ * Schedule 3 lines 6c, 6f, 6g, 6h and 6m, and Form 1040 line 19 (or Schedule
+ * 8812 Credit Limit Worksheet B line 14).
  */
 export function form5695TaxLimits(
   executed: ExecuteResult,
@@ -106,10 +129,26 @@ export function form5695TaxLimits(
       amount(schedule3.line6l_form8978_credit),
   );
   return {
-    partI: partIPrecedingCredits(f1040, schedule3)
-      ? undefined
-      : Math.max(0, partII - partIICredit(partII)),
+    partI: Math.max(
+      0,
+      partII - partIICredit(partII) -
+        partIPrecedingCredits(f1040, schedule3),
+    ),
     partII,
+  };
+}
+
+function withLimits(
+  inputs: Record<string, unknown>,
+  used: { partI?: number; partII?: number },
+): Record<string, unknown> {
+  return {
+    ...inputs,
+    f5695: {
+      ...record(inputs.f5695),
+      ...(used.partI === undefined ? {} : { part_i_tax_limit: used.partI }),
+      ...(used.partII === undefined ? {} : { part_ii_tax_limit: used.partII }),
+    },
   };
 }
 
@@ -139,30 +178,28 @@ export function executeForm5695TaxLimits(
     const { f5695: _f5695, ...withoutCredit } = inputs;
     const pre = executeGraph(withoutCredit);
     if (pre.diagnostics.length > 0) return executeGraph(inputs);
-    const limits = form5695TaxLimits(pre, (limit) =>
+    const partIICredit = (limit: number) =>
       computeForm5695PartIIAmounts({
         ...source,
         part_ii_tax_limit: source.part_ii_tax_limit ?? limit,
-      }).allowed);
-    used = {
-      partI: derivePartI ? limits.partI : used.partI,
-      partII: derivePartII ? limits.partII : used.partII,
-    };
+      }).allowed;
+    const limits = form5695TaxLimits(pre, partIICredit);
+    const partII = derivePartII ? limits.partII : used.partII;
+    let partI = derivePartI ? limits.partI : used.partI;
+    if (derivePartI && hasPartIPrecedingCredits(pre)) {
+      // The preceding credits follow line 32, so settle them with no Part I
+      // credit; none of them is limited by Schedule 3 line 5a.
+      const settled = executeGraph(withLimits(inputs, { partI: 0, partII }));
+      if (settled.diagnostics.length > 0) return executeGraph(inputs);
+      partI = form5695TaxLimits(settled, partIICredit).partI;
+    }
+    used = { partI, partII };
   }
   const result = executeGraph(
     used.partI === source.part_i_tax_limit &&
       used.partII === source.part_ii_tax_limit
       ? inputs
-      : {
-        ...inputs,
-        f5695: {
-          ...record(inputs.f5695),
-          ...(used.partI === undefined ? {} : { part_i_tax_limit: used.partI }),
-          ...(used.partII === undefined
-            ? {}
-            : { part_ii_tax_limit: used.partII }),
-        },
-      },
+      : withLimits(inputs, used),
   );
   if (result.diagnostics.length > 0) return result;
   const checkPartI = credits.partI > 0 && (!counterfactual || derivePartI);
@@ -178,9 +215,7 @@ export function executeForm5695TaxLimits(
       "Form 5695 Part II tax-liability limit must equal its credit limit worksheet from the return",
     );
   }
-  if (
-    checkPartI && final.partI !== undefined && used.partI !== final.partI
-  ) {
+  if (checkPartI && used.partI !== final.partI) {
     throw new Error(
       "Form 5695 Part I tax-liability limit must equal its credit limit worksheet from the return",
     );
