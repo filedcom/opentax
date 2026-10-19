@@ -431,7 +431,7 @@ export function executeScheduleJSourceReturn(
       ?.items;
   if (child !== undefined) {
     const owner = String(record(inputs.general).taxpayer_ssn ?? "");
-    assertForm8814CalculatedLines(child, owner);
+    assertForm8814CalculatedLines(child, owner, context.taxYear);
     const childTotal = (pick: (line: Form8814Lines) => number) =>
       child.reduce((sum, line) => sum + pick(line), 0);
     if (

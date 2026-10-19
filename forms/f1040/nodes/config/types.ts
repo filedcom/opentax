@@ -179,6 +179,8 @@ export interface F1040Config {
   // ── Kiddie Tax (8615) ─────────────────────────────────────────────────────
   kiddieUnearnedIncomeThreshold: number;
   kiddieStandardDeductionFloor: number;
+  // Form 8814 line 4: the election requires child income below this amount.
+  form8814ChildIncomeLimit: number;
 
   // ── FEIE (2555) ───────────────────────────────────────────────────────────
   feieLimit: number;

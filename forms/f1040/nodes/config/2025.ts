@@ -347,6 +347,9 @@ export const KIDDIE_TAX_UNEARNED_INCOME_THRESHOLD_2025 = 2_700;
 /** Standard deduction floor for computing net unearned income (TY2025). */
 export const KIDDIE_TAX_STANDARD_DEDUCTION_FLOOR_2025 = 1_350;
 
+/** Form 8814 child income limit, Rev. Proc. 2024-40 §3.02; 2025 Form 8814 line 4. */
+export const FORM8814_CHILD_INCOME_LIMIT_2025 = 13_500;
+
 // ─── FEIE (Form 2555) ─────────────────────────────────────────────────────────
 // Rev. Proc. 2024-40, §2.39; IRC §911(b)(2)
 
@@ -669,6 +672,7 @@ export const config2025: F1040Config = {
   savingsBondPhaseoutEndSingle: SAVINGS_BOND_PHASEOUT_END_SINGLE_2025,
   kiddieUnearnedIncomeThreshold: KIDDIE_TAX_UNEARNED_INCOME_THRESHOLD_2025,
   kiddieStandardDeductionFloor: KIDDIE_TAX_STANDARD_DEDUCTION_FLOOR_2025,
+  form8814ChildIncomeLimit: FORM8814_CHILD_INCOME_LIMIT_2025,
   feieLimit: FEIE_LIMIT_2025,
   feieHousingBase: FEIE_HOUSING_BASE_2025,
   // Notice 2025-16.

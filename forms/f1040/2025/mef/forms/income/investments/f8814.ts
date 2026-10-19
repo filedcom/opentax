@@ -5,6 +5,7 @@ import {
   assertForm8814SourceYear,
   type Form8814Lines,
 } from "../../../../../nodes/inputs/income/investments/f8814/index.ts";
+import { configForYear } from "../../../../../nodes/config/index.ts";
 import type { MefBuildContext, MefFormDescriptor } from "../../../form-descriptor.ts";
 
 type Input = { items?: readonly Form8814Lines[] } & Record<string, unknown>;
@@ -19,7 +20,8 @@ function buildForm8814(
   statementId?: string,
 ): string {
   const item = line.item;
-  const activePartI = line.line4 > 2_700;
+  const cfg = configForYear(line.taxYear);
+  const activePartI = line.line4 > cfg.kiddieUnearnedIncomeThreshold;
   return elements("IRS8814", [
     element("ChildNm", item.child_name),
     element("ChildNameControlTxt", item.child_name_control),
@@ -77,7 +79,7 @@ function buildForm8814(
     activePartI ? element("ChildTaxBasisAdjustmentSumAmt", line.line11) : "",
     activePartI ? element("ChildNetAdjustedIncomeAmt", line.line12) : "",
     element("ChildInterestAndDivTaxBasisAmt", line.line14),
-    line.line14 < 1_350 ? element("ChildTaxBasisUnderSpcfdAmtInd", "true") : "",
+    line.line14 < cfg.kiddieStandardDeductionFloor ? element("ChildTaxBasisUnderSpcfdAmtInd", "true") : "",
     amount("ChildInterestAndDividendTaxAmt", line.line15),
   ]);
 }
@@ -92,7 +94,11 @@ export const form8814: MefFormDescriptor<"form8814", Input, readonly string[]> =
       if (items.length > 0 && !context?.filer?.primarySSN) {
         throw new Error("Form 8814 needs finalized electing-parent identity");
       }
-      assertForm8814CalculatedLines(items, context?.filer?.primarySSN ?? "");
+      assertForm8814CalculatedLines(
+        items,
+        context?.filer?.primarySSN ?? "",
+        mefTaxYear(context),
+      );
       assertForm8814SourceYear(
         items.map((line) => line.item),
         mefTaxYear(context),

@@ -150,6 +150,8 @@ export const config2026: F1040Config = {
   // RP §4.02: $1,350; the §1(g)(4)(A)(ii) threshold is twice that amount.
   kiddieUnearnedIncomeThreshold: 2_700,
   kiddieStandardDeductionFloor: 1_350,
+  // RP §4.02 and draft 2026 Form 8814 line 4: less than $13,500.
+  form8814ChildIncomeLimit: 13_500,
   // RP §4.39; housing base is 16% of the exclusion, IRC §911(c)(1)(B)(i).
   feieLimit: 132_900,
   feieHousingBase: 21_264,

@@ -139,7 +139,7 @@ export function assertEicSource(
     const item = f8814ItemSchema.parse(
       (rawLine as Record<string, unknown>).item,
     );
-    const line = calculateForm8814(item);
+    const line = calculateForm8814(item, taxYear);
     if ((rawLine as Record<string, unknown>).line12 !== line.line12) {
       throw new Error(
         "Form 1040 EIC Form 8814 line 12 differs from its child source",

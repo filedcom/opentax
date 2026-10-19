@@ -1159,7 +1159,7 @@ export function assertSchedule1Form8814Source(
   }
   let sourceTax = 0;
   const sourceTotal = items.reduce((sum, line) => {
-    const calculated = line?.item ? calculateForm8814(line.item) : undefined;
+    const calculated = line?.item ? calculateForm8814(line.item, line.taxYear) : undefined;
     if (
       !line || typeof line !== "object" || !line.item ||
       typeof line.line12 !== "number" ||

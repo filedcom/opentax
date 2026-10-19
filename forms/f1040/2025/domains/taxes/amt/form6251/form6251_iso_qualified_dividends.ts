@@ -45,7 +45,7 @@ export function assertForm6251QualifiedDividendSource(
         "Form 6251 needs retained Form 8814 owner and child sources",
       );
     }
-    assertForm8814CalculatedLines(child, owner);
+    assertForm8814CalculatedLines(child, owner, taxYear);
     if (childCapital > 0) {
       const refs = new Set<string>();
       for (const line of child) {
