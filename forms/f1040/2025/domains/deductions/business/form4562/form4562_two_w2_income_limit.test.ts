@@ -92,16 +92,7 @@ test("Form 4562 combines two employer W-2s with Schedule C to cap section 179 an
   const result = filedReturn();
   assertEquals(
     result.diagnostics.map(({ nodeType, message }) => [nodeType, message]),
-    [
-      [
-        "form461",
-        'compute() threw for node "form461": Form 461 C/F-only calculation needs a sourced review of other Part I items and Part II adjustments',
-      ],
-      [
-        "form8995",
-        'compute() threw for node "form8995": Form 8995 net QBI loss needs a sourced carryforward filing route',
-      ],
-    ],
+    [],
   );
   const pending = normalizeAllPending(result.pending);
   const filed = filedForm4562Schema.parse(pending.form4562);

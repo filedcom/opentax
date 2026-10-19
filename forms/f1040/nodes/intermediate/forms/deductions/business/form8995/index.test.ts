@@ -56,14 +56,13 @@ test("calc: one confirmed Schedule C business rounds fractional 20% to the filed
 
 // ── Input validation ─────────────────────────────────────────────────────────
 
-test("validation: a net QBI loss cannot disappear without a carryforward filing route", () => {
-  // i8995, Line 1: "Enter on line 1(c) the net QBI or (loss) for the trade, business,
-  // or aggregation reported in the corresponding row." The loss must carry forward.
-  assertThrows(
-    () => compute({ qbi_from_schedule_c: -1000, taxable_income: 50000 }),
-    Error,
-    "sourced carryforward filing route",
-  );
+test("calc: a net QBI loss carries forward on line 16", () => {
+  // i8995, Lines 2-5 and 16: a net loss gives no QBI component this year and
+  // carries forward as next year's line 3.
+  const result = compute({ qbi_from_schedule_c: -1000, taxable_income: 50000 });
+  assertEquals(findOutput(result, "f1040"), undefined);
+  assertEquals(findOutput(result, "form8995")?.fields.line16, 1000);
+  assertEquals(result.carryforwards, { qbi_loss_carryforward: 1000 });
 });
 
 test("validation: rejects negative line6_sec199a_dividends", () => {
@@ -183,33 +182,26 @@ test("calc: all three attributable deductions stack on Line 1(c)", () => {
   assertEquals(out?.fields.line13_qbi_deduction, 15800);
 });
 
-test("calc: attributable deduction creating net QBI loss needs carryforward route", () => {
-  assertThrows(
-    () =>
-      compute({
-        qbi_from_schedule_c: 5000,
-        se_tax_deduction: 8000,
-        taxable_income: 100000,
-      }),
-    Error,
-    "sourced carryforward filing route",
-  );
+test("calc: attributable deduction creating a net QBI loss carries it forward", () => {
+  const result = compute({
+    qbi_from_schedule_c: 5000,
+    se_tax_deduction: 8000,
+    taxable_income: 100000,
+  });
+  assertEquals(result.carryforwards, { qbi_loss_carryforward: 3000 });
 });
 
-test("calc: net Schedule C loss and REIT deduction still need QBI carryforward filing", () => {
+test("calc: net Schedule C loss carries forward while REIT dividends still deduct", () => {
   // i8995, Line 4: a qualified business net loss allows no QBI deduction "unless you have
   // qualified REIT dividends or qualified PTP income".
   // Line 4 = −20000 → Line 5 = 0; Line 8 = 5000 → Line 9 = 1000
-  assertThrows(
-    () =>
-      compute({
-        qbi_from_schedule_c: -20000,
-        line6_sec199a_dividends: 5000,
-        taxable_income: 100000,
-      }),
-    Error,
-    "sourced carryforward filing route",
-  );
+  const result = compute({
+    qbi_from_schedule_c: -20000,
+    line6_sec199a_dividends: 5000,
+    taxable_income: 100000,
+  });
+  assertEquals(findOutput(result, "f1040")?.fields.line13_qbi_deduction, 1000);
+  assertEquals(result.carryforwards, { qbi_loss_carryforward: 20000 });
 });
 
 // ── Per-field calculation — REIT/PTP component ───────────────────────────────
