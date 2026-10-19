@@ -177,9 +177,12 @@ export const inputSchema = z.object({
   // Line 5a: State and local income taxes — mutually exclusive with line_5a_sales_tax
   // per IRC §164(b)(5) election. Provide one or the other, never both.
   line_5a_state_income_tax: z.number().nonnegative().optional(),
+  // State and local income taxes paid other than W-2 withholding: estimated
+  // payments and prior-year balances paid in the tax year. Added to the W-2
+  // withholding; use instead of an entered full line 5a, never with one.
+  line_5a_other_state_income_tax: z.number().nonnegative().optional(),
   // From the w2 node: boxes 17 and 19 (and SDI/PFML). Kept apart from the
-  // entered line 5a (estimates, prior-year balances) so neither replaces the
-  // other; compute() adds them and retains the combined line 5a.
+  // entered fields so neither replaces the other; compute() retains line 5a.
   w2_state_local_income_tax: z.number().nonnegative().optional(),
   // Separate issued retirement withholding contribution; preserve wage/other taxes.
   retirement_state_local_withholding: z.number().nonnegative().optional(),
@@ -533,6 +536,7 @@ export const inputSchema = z.object({
   // deduct both. Reject when both are provided with nonzero values.
   const hasSalesTax = (data.line_5a_sales_tax ?? 0) > 0;
   const hasIncomeTax = ((data.line_5a_state_income_tax ?? 0) +
+    (data.line_5a_other_state_income_tax ?? 0) +
     (data.w2_state_local_income_tax ?? 0) +
     (data.retirement_state_local_withholding ?? 0)) > 0;
   if (hasSalesTax && hasIncomeTax) {
@@ -548,13 +552,29 @@ export const inputSchema = z.object({
 
 type ScheduleAInput = z.infer<typeof inputSchema>;
 
-// Schedule A line 5a: entered state income taxes plus W-2 withholding.
+// Schedule A line 5a: an entered full line 5a, or W-2 withholding plus the
+// other state and local income taxes paid (2025 i1040sca, line 5a).
 function withW2StateTax(input: ScheduleAInput): ScheduleAInput {
-  if (input.w2_state_local_income_tax === undefined) return input;
+  const withheld = input.w2_state_local_income_tax ?? 0;
+  const other = input.line_5a_other_state_income_tax;
+  if (input.w2_state_local_income_tax === undefined && other === undefined) {
+    return input;
+  }
+  const entered = input.line_5a_state_income_tax;
+  if (entered !== undefined && other !== undefined) {
+    throw new Error(
+      "Schedule A line 5a is either the full amount or the taxes beyond W-2 withholding, not both",
+    );
+  }
+  if (entered !== undefined && entered + 0.005 < withheld) {
+    throw new Error(
+      "Schedule A line 5a is less than its W-2 state and local withholding; enter other payments as line_5a_other_state_income_tax",
+    );
+  }
   return {
     ...input,
-    line_5a_state_income_tax: (input.line_5a_state_income_tax ?? 0) +
-      input.w2_state_local_income_tax,
+    line_5a_state_income_tax: entered ?? withheld + (other ?? 0),
+    line_5a_other_state_income_tax: undefined,
     w2_state_local_income_tax: 0,
   };
 }
@@ -1103,10 +1123,14 @@ class ScheduleANode extends TaxNode<typeof inputSchema> {
       finalizations: [{
         nodeType: this.nodeType,
         fields: {
-          ...(rawInput.w2_state_local_income_tax === undefined ? {} : {
-            line_5a_state_income_tax: input.line_5a_state_income_tax,
-            w2_state_local_income_tax: 0,
-          }),
+          ...(rawInput.w2_state_local_income_tax === undefined &&
+              rawInput.line_5a_other_state_income_tax === undefined
+            ? {}
+            : {
+              line_5a_state_income_tax: input.line_5a_state_income_tax,
+              line_5a_other_state_income_tax: 0,
+              w2_state_local_income_tax: 0,
+            }),
           line_11_cash_contributions: contributions.cash,
           line_12_noncash_contributions: contributions.noncash,
           line_13_contribution_carryover: line13Carryover,
