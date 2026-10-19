@@ -96,11 +96,6 @@ export function form8995PdfFor(taxYear: number): PdfFormDescriptor {
     );
   },
   projectFields(fields, allPending) {
-    if (fields.multi_source_8995a !== undefined) {
-      throw new Error(
-        "Multi-source Form 8995/8995-A business rows have no printed projection yet",
-      );
-    }
     const deduction = fields.qbi_deduction;
     if (
       (deduction === undefined || deduction === null || deduction === 0) &&

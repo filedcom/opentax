@@ -876,26 +876,6 @@ function form8995Output(items: K1PartnershipItems): NodeOutput[] {
         : {}),
     }
     : {};
-  // Form 8995-A Part I, line 1: one row per partnership trade or business,
-  // with its own W-2 wages, UBIA and specified-service status (box 20 code Z
-  // statement). The aggregate fields below stay for the single-source routes.
-  const businessRows = items.flatMap((item) =>
-    (item.box20z_qbi ?? 0) !== 0 || (item.box20_w2_wages ?? 0) > 0 ||
-      (item.box20_ubia ?? 0) > 0
-      ? [{
-        business_name: item.partnership_name,
-        ...(item.partnership_ein && { tin: item.partnership_ein }),
-        qbi: item.box20z_qbi ?? 0,
-        w2_wages: item.box20_w2_wages ?? 0,
-        ubia: item.box20_ubia ?? 0,
-        sstb: item.box20_sstb === true,
-        se_earnings: item.box14a_se_earnings ?? 0,
-      }]
-      : []
-  );
-  const rowFields = businessRows.length
-    ? { k1_qbi_businesses: businessRows }
-    : {};
   const totalQbi = items.reduce((sum, item) => sum + (item.box20z_qbi ?? 0), 0);
   const totalW2 = items.reduce(
     (sum, item) => sum + (item.box20_w2_wages ?? 0),
@@ -914,18 +894,13 @@ function form8995Output(items: K1PartnershipItems): NodeOutput[] {
 
   if (totalQbi !== 0 && totalW2 > 0) {
     return [
-      output(form8995, {
-        qbi: totalQbi,
-        w2_wages: totalW2,
-        ...sourceFields,
-        ...rowFields,
-      }),
+      output(form8995, { qbi: totalQbi, w2_wages: totalW2, ...sourceFields }),
     ];
   }
   if (totalQbi !== 0) {
-    return [output(form8995, { qbi: totalQbi, ...sourceFields, ...rowFields })];
+    return [output(form8995, { qbi: totalQbi, ...sourceFields })];
   }
-  return [output(form8995, { w2_wages: totalW2, ...rowFields })];
+  return [output(form8995, { w2_wages: totalW2 })];
 }
 
 // Box 9b (legacy) + Box 9c — Unrecaptured §1250 gain → unrecaptured_1250_worksheet

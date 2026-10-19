@@ -9,7 +9,6 @@ type Input = Partial<ReturnType<typeof inputSchema.parse>> & {
   line1_qbi?: number;
   line1_business_reference?: string;
   minimum_deduction?: number;
-  multi_source_8995a?: unknown;
 };
 
 export const form8995: MefFormDescriptor<"form8995", Input> = {
@@ -22,13 +21,6 @@ export const form8995: MefFormDescriptor<"form8995", Input> = {
     if (fields.minimum_deduction !== undefined) {
       throw new Error(
         "Form 8995 line 16 minimum deduction has no 2026v1.0 MeF element; export waits for a schema that carries it",
-      );
-    }
-    // The multi-source calculation has no Form 8995/8995-A line projection
-    // yet; refuse rather than file lines that do not carry its businesses.
-    if (fields.multi_source_8995a !== undefined) {
-      throw new Error(
-        "Multi-source Form 8995/8995-A business rows have no MeF projection yet",
       );
     }
     const deduction = fields.qbi_deduction;
