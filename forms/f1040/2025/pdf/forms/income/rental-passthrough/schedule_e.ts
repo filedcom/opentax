@@ -1,3 +1,4 @@
+import { mefTaxYear } from "../../../../mef/support/year-config.ts";
 import { StandardFonts } from "pdf-lib";
 import { currentPropertyPassiveAmounts } from "../../../../../nodes/inputs/income/rental-passthrough/schedule_e/current-property-source.ts";
 import type {
@@ -259,7 +260,10 @@ export const scheduleEPdf: PdfFormDescriptor = {
     },
   ],
   projectFields(raw, allPending) {
-    const k1Rows = scheduleEK1Part2Rows(allPending);
+    const k1Rows = scheduleEK1Part2Rows(allPending, {
+      taxYear: mefTaxYear(),
+      formType: "f1040",
+    });
     if (Object.keys(raw).length === 0 && k1Rows.length === 0) return {};
     const input = inputSchema.parse(raw);
     const trustRows = input.estate_trust_rows ?? [];

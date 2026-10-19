@@ -639,7 +639,10 @@ export const scheduleE: MefFormDescriptor<"schedule_e", Fields> = {
         { ...context.pending, schedule_e: fields },
       );
     }
-    const k1Rows = scheduleEK1Part2Rows(context?.pending);
+    const k1Rows = scheduleEK1Part2Rows(context?.pending, {
+      taxYear: mefTaxYear(context),
+      formType: "f1040",
+    });
     if ((!fields || Object.keys(fields).length === 0) && k1Rows.length === 0) {
       return "";
     }

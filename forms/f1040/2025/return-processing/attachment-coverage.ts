@@ -1,3 +1,4 @@
+import { mefTaxYear } from "../mef/support/year-config.ts";
 import { hasUnstatusedForm8874Investment } from "../domains/credits/business/form8874/form8874_cde_status_evidence.ts";
 import {
   form8886CoversLargeCapitalSources,
@@ -488,6 +489,7 @@ export function assertAttachmentCoverage(
   pending: object,
   exportKind: ExportKind,
   preparedForm8886?: PreparedForm8886ReturnPackets,
+  taxYear: number = mefTaxYear(),
 ): void {
   const byKey = pending as Readonly<Record<string, unknown>>;
   if (byKey.benefit_1042s !== undefined) {
@@ -610,7 +612,7 @@ export function assertAttachmentCoverage(
   const passiveLossCopies =
     (byKey.form7203 as Record<string, unknown> | undefined)
         ?.current_passive_s_corp_loss !== undefined
-      ? projectPassiveSCorpLossCopies(byKey)
+      ? projectPassiveSCorpLossCopies(byKey, { taxYear, formType: "f1040" })
       : undefined;
   for (const form of MISSING_ATTACHMENTS) {
     if (!form.exportKinds.includes(exportKind)) continue;

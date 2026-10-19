@@ -163,7 +163,7 @@ export function assertEicSource(
     ? []
     : sCorpK1InputSchema.parse(pending.k1_s_corp).k1_s_corps;
   const passiveLossCopies = pending
-    ? projectPassiveSCorpLossCopies(pending)
+    ? projectPassiveSCorpLossCopies(pending, { taxYear, formType: "f1040" })
     : undefined;
   assertK1EicReview(partnershipItems);
   const ownedLosses = sCorpItems.filter((item) =>

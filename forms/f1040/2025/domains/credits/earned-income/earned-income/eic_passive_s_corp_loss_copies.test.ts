@@ -32,7 +32,10 @@ for (
       passiveSCorpLossReturnInputs(c.cash, c.income),
     );
     assertEquals(r.diagnostics, []);
-    const p = r.pending, projection = projectPassiveSCorpLossCopies(p)!;
+    const p = r.pending, projection = projectPassiveSCorpLossCopies(p, {
+      taxYear: 2025,
+      formType: "f1040",
+    })!;
     assertEquals(projection.allowed, c.allowed);
     const filer = extractFilerIdentity(p.f1040)!;
     const b = new XMLParser().parse(

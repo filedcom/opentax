@@ -1,3 +1,4 @@
+import type { NodeContext } from "../../../../../../../core/types/node-context.ts";
 import { projectPassiveSCorpLossCopies } from "../passive-s-corp-loss-copies.ts";
 import { isDeepStrictEqual } from "node:util";
 
@@ -5,6 +6,7 @@ import { isDeepStrictEqual } from "node:util";
  * the owned shareholder's basis limitation and qualified-loss workpaper. */
 export function assertOwned7203RequiredCopies(
   pending: Readonly<Record<string, unknown>>,
+  context: NodeContext,
 ): void {
   const records = pending.k1_s_corp as {
     k1_s_corps?: Record<string, unknown>[];
@@ -18,7 +20,7 @@ export function assertOwned7203RequiredCopies(
     (pending.form8995 as Record<string, unknown> | undefined)
         ?.current_passive_s_corp_loss !== undefined
   ) {
-    if (!projectPassiveSCorpLossCopies(pending)) {
+    if (!projectPassiveSCorpLossCopies(pending, context)) {
       throw Error(
         "Passive S-corporation loss requires its original K1, basis and qualified-loss copies",
       );

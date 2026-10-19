@@ -645,7 +645,10 @@ async function buildPdfBytesInternal(
   assertScheduleBPreparedProjection(normalized);
   assertTaxExemptInterestSource(normalized);
   assertBusinessSchedule1Amounts(normalized);
-  assertOwned7203RequiredCopies(normalized);
+  assertOwned7203RequiredCopies(normalized, {
+    taxYear: mefTaxYear(),
+    formType: "f1040",
+  });
   assertHsaExcessRequiredCopy(normalized);
   assertRequiredLtcSource({ pending: normalized, filer });
   assertLine1iCombatPayElectionSource(normalized);
@@ -686,7 +689,7 @@ async function buildPdfBytesInternal(
     assertSchedule1Form8621Source({
       ...normalized,
       form8949: pending.form8949,
-    });
+    }, { taxYear: mefTaxYear(), formType: "f1040" });
     assertSchedule1NecSourceIdentity(normalized, filer);
     assertSchedule1KSourceIdentity(normalized, filer);
     assertScheduleFFarmSourceIdentity(normalized, filer);
@@ -899,7 +902,12 @@ async function buildPdfBytesInternal(
       form8949Rows ?? [],
     );
   }
-  assertAttachmentCoverage(normalized, "pdf", preparedBundle?.form8886Packets);
+  assertAttachmentCoverage(
+    normalized,
+    "pdf",
+    preparedBundle?.form8886Packets,
+    mefTaxYear(),
+  );
   const merged = await PDFDocument.create({ updateMetadata: false });
   const copyCounts = new Map<string, number>();
 
