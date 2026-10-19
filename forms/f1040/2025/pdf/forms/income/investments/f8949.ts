@@ -52,6 +52,7 @@ function assertSaleSourcesOnScheduleD(
   rawSource: unknown,
   rawScheduleD: unknown,
   hasFiledRows: boolean,
+  taxYear: number,
 ): void {
   const source = directSaleSchema.safeParse({ f8949s: sourceRows(rawSource) });
   const scheduleDRows = rawScheduleD !== undefined &&
@@ -62,7 +63,7 @@ function assertSaleSourcesOnScheduleD(
     throw new Error("Form 8949 PDF needs computed canonical transaction rows");
   }
   const calculated = directSaleNode.compute(
-    { taxYear: 2025, formType: "f1040" },
+    { taxYear, formType: "f1040" },
     source.data,
   ).outputs.filter((output) => output.nodeType === "form8949")
     .map((output) => transactionSchema.parse(output.fields.transaction));
@@ -279,7 +280,8 @@ function pageInstance(
   };
 }
 
-export const form8949Pdf: PdfFormDescriptor = {
+export function form8949PdfFor(taxYear: number): PdfFormDescriptor {
+  return {
   pendingKey: "form8949",
   pdfUrl: "https://www.irs.gov/pub/irs-prior/f8949--2025.pdf",
   projectFields(fields, allPending) {
@@ -296,11 +298,13 @@ export const form8949Pdf: PdfFormDescriptor = {
         source,
         allPending.schedule_d,
         rows.length > 0,
+        taxYear,
       );
     }
     if (rows.length > 0) {
       nativeForm8949.build(rows.map((row) => transactionSchema.parse(row)), {
         pending: allPending,
+        taxYear,
       });
     }
     return fields;
@@ -372,4 +376,7 @@ export const form8949Pdf: PdfFormDescriptor = {
       includeWhen: (fields) => fields.pdf_page_index === 1,
     },
   ],
-};
+  };
+}
+
+export const form8949Pdf: PdfFormDescriptor = form8949PdfFor(2025);

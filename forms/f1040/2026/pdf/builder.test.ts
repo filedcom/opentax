@@ -230,6 +230,19 @@ test("TY2026 PDF prints Schedule D and Form 8889 on the 2026 drafts", async () =
   assertMatch(hsa, /13 HSA deduction[^\n]* 13 4000/);
 });
 
+test("TY2026 PDF prints Form 8949 Parts I and II on the 2026 draft", async () => {
+  const printed = await text(
+    await render(fixture("single-short-and-long-form8949-sales")),
+  );
+  assertMatch(printed, /Form 8949 \(2026\)/);
+  assertMatch(printed, /✔ \(B\) Short-term transactions reported/);
+  assertMatch(printed, /Short-term shares\n 01\/10\/2025 06\/20\/2025 2000 1000 1000\n/);
+  assertMatch(printed, /line 3 \(if Box C or Box I above is checked\) 2000 1000 1000/);
+  assertMatch(printed, /✔ \(F\) Long-term transactions, other than/);
+  assertMatch(printed, /Long-term shares\n 01\/10\/2022 06\/20\/2025 4000 2000 2000\n/);
+  assertMatch(printed, /line 10 \(if Box F or Box L above is checked\) 4000 2000 2000/);
+});
+
 test("TY2026 PDF prints Form 2441 Part I providers as columns", async () => {
   const printed = await text(
     await render(fixture("single-form2441-child-care-credit")),
