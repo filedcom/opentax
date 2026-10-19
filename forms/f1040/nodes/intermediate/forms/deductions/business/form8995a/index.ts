@@ -298,7 +298,7 @@ export const inputSchema = z.object({
       review_reference: z.string().trim().min(1),
       reviewed_on: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
     }).strict(),
-  ).length(1).optional(),
+  ).min(1).optional(),
 
   // Prior-year QBI net loss carryforward (zero or negative)
   qbi_loss_carryforward: z.number().nonpositive().optional(),
@@ -1993,10 +1993,22 @@ function assertSupportedSchedulePath(
     (input.reit_dividend_sources ?? []).map((row) => row.ex_dividend_date),
     "Form 8995-A REIT 1099-DIV ex-dividend date must fall in the tax year",
   );
+  // Line 28 is the qualified REIT dividends held past the 45-day period
+  // (1099-DIV box 5; Reg. §1.199A-3(c)(2)(ii)), from any number of reviewed
+  // funds. The single-business filing route still carries one REIT-only fund.
+  const sources = input.reit_dividend_sources ?? [];
   if (
     reit > 0 &&
-      (!input.business_filing_details ||
-        input.patron_of_specified_cooperative === true ||
+    (sources.reduce((sum, row) => sum + row.box5, 0) !== reit ||
+      sources.some((row) => row.box1a < row.box5))
+  ) {
+    throw new Error(
+      "Form 8995-A REIT line 28 needs matching reviewed 1099-DIV sources",
+    );
+  }
+  if (
+    reit > 0 && input.business_filing_details &&
+      (input.patron_of_specified_cooperative === true ||
         reit > 1_500 ||
         input.reit_dividend_sources?.length !== 1 ||
         input.reit_dividend_sources[0].box5 !== reit ||
