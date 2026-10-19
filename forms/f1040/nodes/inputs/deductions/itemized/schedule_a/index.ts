@@ -195,6 +195,9 @@ export const inputSchema = z.object({
   line_6_other_tax_items: z.array(otherTaxItemSchema).min(1).max(2)
     .optional(),
   line_8a_mortgage_interest_1098: z.number().nonnegative().optional(),
+  // Pub. 936 Table 1 line 12 when Form 1098 interest was limited without a
+  // reviewed amount; the node applied the non-MFS debt limits.
+  form1098_table1_average_balance: z.number().nonnegative().optional(),
   line_8b_mortgage_interest_no_1098: z.number().nonnegative().optional(),
   line_8b_seller_financed: sellerFinancedLine8bSchema.optional(),
   home_mortgage_nonqualifying_use_review:
@@ -284,6 +287,17 @@ export const inputSchema = z.object({
         message: "Schedule A line 6 reviewed taxes must equal the filed total",
       });
     }
+  }
+  if (
+    data.filing_status === FilingStatus.MFS &&
+    (data.form1098_table1_average_balance ?? 0) > 375_000
+  ) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ["form1098_table1_average_balance"],
+      message:
+        "MFS Form 1098 mortgages over $375,000 need reviewed Pub. 936 deductible interest",
+    });
   }
   if (
     data.home_mortgage_nonqualifying_use_review !== undefined &&

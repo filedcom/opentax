@@ -191,7 +191,8 @@ export async function assertForm1098IssuerCopies(
   for (const item of f1098s) {
     if (
       (usesStandardDeduction ||
-        (item.box1_current_year_deductible_interest ?? 0) <= 0) &&
+        (item.box1_current_year_deductible_interest ??
+            item.box1_mortgage_interest) <= 0) &&
       (item.box4_taxable_recovery_verified_amount ?? 0) <= 0 &&
       (item.box6_points_paid ?? 0) <= 0 &&
       !refinanceReferences.has(item.source_document_reference ?? "") &&
