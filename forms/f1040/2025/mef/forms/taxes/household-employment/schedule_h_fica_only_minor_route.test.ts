@@ -43,7 +43,7 @@ const source = {
         birth_date_source_reference: "working-minor-birth-record",
         education_status_source_reference: "2025-nonenrollment-record",
         principal_occupation_source_reference: "2025-household-principal-work",
-        not_a_student_during_2025_verified: true,
+        not_a_student_during_tax_year_verified: true,
         household_services_principal_occupation_verified: true,
       },
       ordinary_cash_only: true,
@@ -126,7 +126,7 @@ test("Schedule H FICA-only minor rejects unsupported age, student, source, quart
           birth_date: "2008-05-10",
           birth_date_source_reference: "student-birth-record",
           student_enrollment_source_reference: "student-enrollment",
-          student_during_2025_verified: true,
+          student_during_tax_year_verified: true,
         },
       }),
     )

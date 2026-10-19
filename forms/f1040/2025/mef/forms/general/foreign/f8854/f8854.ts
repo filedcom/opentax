@@ -18,7 +18,7 @@ export const form8854: MefFormDescriptor<"f8854", unknown> = {
     if (Array.isArray(fields) && fields.length === 0) return "";
     if (context?.pending?.f8854_annual !== undefined) {
       throw new Error(
-        "One taxpayer cannot file both initial and annual Form 8854 for 2025",
+        "One taxpayer cannot file both initial and annual Form 8854 for one year",
       );
     }
     const input = inputSchema.parse(fields);

@@ -19,10 +19,10 @@ export function ownedSCorpLossLines(
   if (
     !note ||
     ![
-      "new_2025_formal_notes",
-      "owned_2025_formal_notes",
-      "owned_2025_open_account",
-      "owned_2025_formal_and_open_account",
+      "new_current_year_formal_notes",
+      "owned_current_year_formal_notes",
+      "owned_current_year_open_account",
+      "owned_current_year_formal_and_open_account",
     ].includes(
       String(note.kind),
     ) || !stock || !note.owned_current_records ||

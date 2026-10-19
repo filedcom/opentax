@@ -17,6 +17,7 @@ export function assertForm8815FinalReturn(
   source: Form8815Input,
   lines: Form8815Lines,
   pending: Readonly<Record<string, unknown>> | undefined,
+  taxYear: number,
 ): void {
   if (!pending) {
     throw new Error("Form 8815 needs the finalized return for MAGI review");
@@ -94,14 +95,14 @@ export function assertForm8815FinalReturn(
   if (Object.keys(pending.form8839 ?? {}).length > 0) {
     reconcilePublicForm8839Pending(pending);
   }
-  const foreignAddback = form8815ForeignAddback(pending);
+  const foreignAddback = form8815ForeignAddback(pending, taxYear);
   const special = source.line9_worksheet.royalty_debt_special_computation;
   const royaltyAdjustment = special
-    ? reconcileBondRoyaltyInterest(pending).magiIncomeAdjustment
+    ? reconcileBondRoyaltyInterest(pending, taxYear).magiIncomeAdjustment
     : 0;
   if (special) {
     const fields = z.record(z.unknown()).parse(pending.form4952);
-    reconcileRoyaltyDebtReturn(fields, pending);
+    reconcileRoyaltyDebtReturn(fields, pending, undefined, taxYear);
   }
   const grossInterest = source.line9_worksheet.schedule_b_line2_interest;
   const taxableInterest = form1040.line2b_taxable_interest ?? 0;

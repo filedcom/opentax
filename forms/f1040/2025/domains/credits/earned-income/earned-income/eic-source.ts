@@ -41,7 +41,7 @@ import {
   currentPassiveLine10Activities,
 } from "../../../../../nodes/inputs/income/rental-passthrough/k1_partnership/box11_line10.ts";
 import { inputSchema as sCorpK1InputSchema } from "../../../../../nodes/inputs/income/rental-passthrough/k1_s_corp/index.ts";
-import { EITC_INVESTMENT_INCOME_LIMIT_2025 } from "../../../../../nodes/config/2025.ts";
+import { configForYear } from "../../../../../nodes/config/index.ts";
 import {
   projectOwned7203Family,
   projectReviewedStockLoss7203,
@@ -139,7 +139,7 @@ export function assertEicSource(
     const item = f8814ItemSchema.parse(
       (rawLine as Record<string, unknown>).item,
     );
-    const line = calculateForm8814(item);
+    const line = calculateForm8814(item, taxYear);
     if ((rawLine as Record<string, unknown>).line12 !== line.line12) {
       throw new Error(
         "Form 1040 EIC Form 8814 line 12 differs from its child source",
@@ -193,9 +193,9 @@ export function assertEicSource(
     }
     const filer = extractFilerIdentity(filed ?? {});
     if (basisFields.owned_debt_loss_sources !== undefined) {
-      projectOwned7203Family(basisFields, pending!, filer);
+      projectOwned7203Family(basisFields, pending!, filer, taxYear);
     } else {
-      projectReviewedStockLoss7203(basisFields, pending!, filer);
+      projectReviewedStockLoss7203(basisFields, pending!, filer, taxYear);
     }
   }
   // A replayed materially participated S-corporation loss affects AGI, not
@@ -304,8 +304,10 @@ export function assertEicSource(
       "Form 1040 EIC investment income differs from filed interest, dividends, gains, royalties, and rent",
     );
   }
-  if (investmentIncomeFloor > EITC_INVESTMENT_INCOME_LIMIT_2025) {
-    throw new Error("Form 1040 EIC investment income exceeds the 2025 limit");
+  if (investmentIncomeFloor > configForYear(taxYear).eitcInvestmentIncomeLimit) {
+    throw new Error(
+      `Form 1040 EIC investment income exceeds the ${taxYear} limit`,
+    );
   }
   const source = generalInputSchema.safeParse(pending?.general);
   const form8862 = f8862InputSchema.safeParse(pending?.f8862);

@@ -8,7 +8,15 @@ import { schedule_d } from "../../../../intermediate/aggregation/income/investme
 import { schedule_b } from "../../../../intermediate/aggregation/income/investments/schedule_b/index.ts";
 import { form8960 } from "../../../../intermediate/forms/taxes/investments/form8960/index.ts";
 import { income_tax_calculation } from "../../../../intermediate/worksheets/taxes/calculation/income_tax_calculation/index.ts";
-import { f8621, itemSchema, PficRegime } from "./index.ts";
+import {
+  assertForm8621ParentSourceYear,
+  f8621,
+  form8621ParentSourceSchema,
+  itemSchema,
+  PficRegime,
+} from "./index.ts";
+import { form8621QefSourceInputs } from "../../../../../2025/domains/income/foreign/form8621/form8621_qef.fixture.ts";
+import { shiftDatedFacts } from "../../../../../../../scripts/testing/sample-year.ts";
 import type { F8621Item, Form8621Lines } from "./index.ts";
 import {
   calculateSection1291Interest,
@@ -400,4 +408,19 @@ test("Form 8621 rejects Part V events on a different regime", () => {
     Error,
     "basis requires the MTM regime",
   );
+});
+
+// Form 8621 (Rev. December 2025) is not annual: the PFIC tax year, any new
+// share acquisition and a first-year election belong to the return year.
+test("Form 8621 parent source dates are checked against the return year", () => {
+  const parent = form8621ParentSourceSchema.parse(
+    form8621QefSourceInputs({}).f8621[0].parent_source,
+  );
+  assertForm8621ParentSourceYear(parent, 2025);
+  assertThrows(
+    () => assertForm8621ParentSourceYear(parent, 2026),
+    Error,
+    "must fit TY2026",
+  );
+  assertForm8621ParentSourceYear(shiftDatedFacts(parent, 1), 2026);
 });

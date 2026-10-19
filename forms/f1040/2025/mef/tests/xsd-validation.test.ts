@@ -753,11 +753,11 @@ test.skipIf(!xsdAvailable)("XSD: Form 8396 credit limit and Schedule A interest 
     interest_paid_to_related_person: false,
     certificate_is_reissued: false,
     nonspouse_coowner: false,
-    prior_2024_form8396: {
+    prior_year_form8396: {
       document_reference: "Filed 2024 Form 8396",
-      line14_2023_carryforward: 0,
-      line16_2022_carryforward: 0,
-      line17_2024_carryforward: 300,
+      line14_second_prior_year_carryforward: 0,
+      line16_third_prior_year_carryforward: 0,
+      line17_prior_year_carryforward: 300,
     },
   });
   const lines = calculateForm8396(source, 1_100);
@@ -8305,8 +8305,8 @@ test.skipIf(!xsdAvailable)("XSD: early full payoff deducts remaining ordinary re
           month,
           document_reference: `payoff-payment-${month}`,
         })),
-        early_payoff_2025: {
-          payoff_month_2025: 9,
+        early_payoff: {
+          payoff_month: 9,
           payoff_statement_reference: "2025 full-payoff statement",
           full_payoff_verified: true,
           refinanced_with_same_lender: false,
@@ -8420,11 +8420,11 @@ test.skipIf(!xsdAvailable)("XSD: 2024 refinance ledger amortizes unreported poin
         pub936_workpaper_reference: "2025 refinance points workpaper",
         refinance_close_year: 2024,
         refinance_close_month: 6,
-        prior_year_2024: {
-          filed_2024_return_reference: "Filed 2024 Form 1040/Schedule A",
-          filed_2024_points_workpaper_reference: "2024 loan points ledger",
-          filed_2024_loan_points_deduction: 67,
-          payment_records_2024: [7, 8, 9, 10, 11, 12].map((month) => ({
+        prior_year: {
+          filed_return_reference: "Filed 2024 Form 1040/Schedule A",
+          filed_points_workpaper_reference: "2024 loan points ledger",
+          filed_loan_points_deduction: 67,
+          payment_records: [7, 8, 9, 10, 11, 12].map((month) => ({
             month,
             document_reference: `2024-payment-${month}`,
           })),
@@ -8484,20 +8484,20 @@ test.skipIf(!xsdAvailable)("XSD: 2023 refinance ledger carries two filed years i
         pub936_workpaper_reference: "2025 refinance points workpaper",
         refinance_close_year: 2023,
         refinance_close_month: 6,
-        prior_year_2023: {
-          filed_2023_return_reference: "Filed 2023 Form 1040/Schedule A",
-          filed_2023_points_workpaper_reference: "2023 loan points ledger",
-          filed_2023_loan_points_deduction: 67,
-          payment_records_2023: [7, 8, 9, 10, 11, 12].map((month) => ({
+        second_prior_year: {
+          filed_return_reference: "Filed 2023 Form 1040/Schedule A",
+          filed_points_workpaper_reference: "2023 loan points ledger",
+          filed_loan_points_deduction: 67,
+          payment_records: [7, 8, 9, 10, 11, 12].map((month) => ({
             month,
             document_reference: `2023-payment-${month}`,
           })),
         },
-        prior_year_2024: {
-          filed_2024_return_reference: "Filed 2024 Form 1040/Schedule A",
-          filed_2024_points_workpaper_reference: "2024 loan points ledger",
-          filed_2024_loan_points_deduction: 133,
-          payment_records_2024: Array.from({ length: 12 }, (_, index) => ({
+        prior_year: {
+          filed_return_reference: "Filed 2024 Form 1040/Schedule A",
+          filed_points_workpaper_reference: "2024 loan points ledger",
+          filed_loan_points_deduction: 133,
+          payment_records: Array.from({ length: 12 }, (_, index) => ({
             month: index + 1,
             document_reference: `2024-payment-${index + 1}`,
           })),

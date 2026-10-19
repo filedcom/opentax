@@ -1,3 +1,4 @@
+import { mefTaxYear } from "../../../../mef/support/year-config.ts";
 import { projectPassiveSCorp7203Copy } from "../../../../domains/income/business/passive-s-corp-loss-copies.ts";
 import { FilingStatus } from "../../../../../mef/header.ts";
 import type { PdfFieldEntry, PdfFormDescriptor } from "../../../review-support/form-descriptor.ts";
@@ -98,7 +99,7 @@ export const scheduleEStockLossPdf: PdfFormDescriptor = {
       );
     }
     if (raw.owned_debt_loss_sources !== undefined) {
-      const rows = projectOwned7203Family(raw, pending, filer),
+      const rows = projectOwned7203Family(raw, pending, filer, mefTaxYear()),
         total = rows.reduce((n, r) => n + r.allowed, 0);
       return [{
         joint_header: true,
@@ -123,6 +124,7 @@ export const scheduleEStockLossPdf: PdfFormDescriptor = {
       raw,
       pending,
       filer,
+      mefTaxYear(),
     );
     if (
       !ledger.materially_participated_in_s_corporation ||

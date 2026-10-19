@@ -92,7 +92,7 @@ export const form8854AnnualPdf: PdfFormDescriptor = {
       input.deferred_properties.length === 0 ||
       input.deferred_properties.length > 7 ||
       input.deferred_properties.some((row) =>
-        row.disposition.disposed_in_2025
+        row.disposition.disposed_in_tax_year
       ) ||
       input.eligible_deferred_compensation_items.some((row) =>
         row.distributions.length > 0
@@ -103,7 +103,7 @@ export const form8854AnnualPdf: PdfFormDescriptor = {
       input.source_1042s.length > 0
     ) {
       throw new Error(
-        "Annual Form 8854 PDF needs one to seven prior deferred properties, no 2025 events, and bounded Part I identity",
+        "Annual Form 8854 PDF needs one to seven prior deferred properties, no current-year events, and bounded Part I identity",
       );
     }
     reconcileAnnualForm8854Form8949Properties(input, allPending.form8949);

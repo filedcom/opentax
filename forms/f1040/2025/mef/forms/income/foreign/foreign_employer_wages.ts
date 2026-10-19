@@ -53,7 +53,8 @@ function w2Excess(context?: MefBuildContext): number {
   const raw = context?.pending?.w2;
   return raw === undefined
     ? 0
-    : codeDExcessDeferral(w2InputSchema.parse(raw).w2s).amount;
+    : codeDExcessDeferral(w2InputSchema.parse(raw).w2s, mefTaxYear(context))
+      .amount;
 }
 
 function standaloneFec(context?: MefBuildContext): readonly NativeFecItem[] {

@@ -6,8 +6,14 @@ import { f1040_2025 } from "../../../../index.ts";
 import { normalizeAllPending } from "../../../../return-processing/pending.ts";
 import { extractFilerIdentity } from "../../../../../mef/filer.ts";
 import { buildPdfBytes, type PdfPageOrigin } from "../../../../pdf/builder.ts";
-import { assertScheduleJSourceReturn } from "../../../taxes/income-averaging/schedule-j/schedule_j_source_return.ts";
+import {
+  assertScheduleJSourceReturn,
+  executeScheduleJSourceReturn,
+} from "../../../taxes/income-averaging/schedule-j/schedule_j_source_return.ts";
 import { form8814CapitalScheduleJInputs } from "./form8814_capital_schedulej.fixture.ts";
+
+const replayScheduleJ = (inputs: Record<string, unknown>) =>
+  executeScheduleJSourceReturn(inputs, { taxYear: 2025, formType: "f1040" });
 
 const cases = [
   {
@@ -86,7 +92,7 @@ for (const expected of cases) {
         { source: "schedule_d.net_capital_gain", amount: expected.capital },
       ],
     );
-    assertScheduleJSourceReturn(actual.pending);
+    assertScheduleJSourceReturn(actual.pending, replayScheduleJ);
     const noJ: any = structuredClone(input);
     delete noJ.schedule_j;
     const noElection = f1040_2025.executeReturn(noJ);

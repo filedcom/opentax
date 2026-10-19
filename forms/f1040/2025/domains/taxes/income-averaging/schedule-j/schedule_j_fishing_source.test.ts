@@ -14,10 +14,16 @@ import {
   scheduleJFishingInputs,
   scheduleJFishingPhaseInInputs,
 } from "./schedule_j_fishing_source.fixture.ts";
-import { assertScheduleJSourceReturn } from "./schedule_j_source_return.ts";
+import {
+  assertScheduleJSourceReturn,
+  executeScheduleJSourceReturn,
+} from "./schedule_j_source_return.ts";
 import { calculateMixedFishingQbi } from "../../../../../nodes/intermediate/forms/deductions/business/form8995a/mixed-fishing.ts";
 import { form8995a } from "../../../../mef/forms/deductions/business/f8995a/f8995a.ts";
 import { form8995aPdf } from "../../../../pdf/forms/deductions/business/f8995a.ts";
+
+const replayScheduleJ = (inputs: Record<string, unknown>) =>
+  executeScheduleJSourceReturn(inputs, { taxYear: 2025, formType: "f1040" });
 
 const evidenceDir = process.env.SCHEDULE_J_FISHING_EVIDENCE_DIR ??
   ".state/research/schedulej-fishing-preferential-source";
@@ -67,7 +73,7 @@ test("retained commercial catch, one/two farms and dividends refigure actual Sch
     const noJ = await packet(`${kind}-without-j`, without);
     const elected = await packet(kind, input);
     const p = elected.pending;
-    assertScheduleJSourceReturn(elected.result.pending);
+    assertScheduleJSourceReturn(elected.result.pending, replayScheduleJ);
     assertEquals(
       p.schedule1.line3_schedule_c,
       kind === "fishing" ? 320_000 : 120_000,
@@ -128,7 +134,7 @@ test("actual single-filer QBI phase-out at $247,300 leaves smaller mixed catch f
   assertEquals(p.f1040.line16_income_tax, 60_162);
   assertEquals(p.form6251.regular_tax, 62_451);
   assertEquals(noJ.pending.form6251.regular_tax, 62_451);
-  assertScheduleJSourceReturn(elected.result.pending);
+  assertScheduleJSourceReturn(elected.result.pending, replayScheduleJ);
   assertEquals(elected.xml.includes("<IRS8995A "), false);
 });
 
@@ -156,7 +162,7 @@ test("actual mixed fishing and farm phase-in derives separate advanced QBI", asy
     result.xml.includes("<NetCapitalGainAmt>30000</NetCapitalGainAmt>"),
     true,
   );
-  assertScheduleJSourceReturn(result.result.pending);
+  assertScheduleJSourceReturn(result.result.pending, replayScheduleJ);
   const filer = extractFilerIdentity(result.pending.f1040)!;
   for (
     const mutate of [
@@ -219,7 +225,7 @@ test("fishing attribution rejects absent, mutated and mismatched source bytes", 
   assertEquals(result.diagnostics, []);
   const pending: any = structuredClone(result.pending);
   pending.schedule_j_calculation.fishing_net_profit += 1;
-  assertThrows(() => assertScheduleJSourceReturn(pending), Error);
+  assertThrows(() => assertScheduleJSourceReturn(pending, replayScheduleJ), Error);
   const filer = extractFilerIdentity(
     normalizeAllPending(result.pending).f1040,
   )!;

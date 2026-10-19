@@ -1,10 +1,8 @@
 import { FilingStatus } from "../../../../../types.ts";
 import { scheduleJPriorYearRateTax } from "../../../../../inputs/taxes/income-averaging/schedule_j/prior_year_rates.ts";
 
-export type ScheduleJBaseYear = 2022 | 2023 | 2024;
-
 type CommonFacts = {
-  year: ScheduleJBaseYear;
+  year: number;
   filingStatus: FilingStatus;
   taxableIncomeWithAllocation: number;
   filedForm2555: boolean;
@@ -32,22 +30,34 @@ export type ScheduleJBaseYearPreferentialFacts = CommonFacts & (
   }
 );
 
-const zeroCeiling: Record<ScheduleJBaseYear, Record<FilingStatus, number>> = {
+// Each base year's Qualified Dividends and Capital Gain Tax Worksheet line 9
+// and line 16 amounts, and its Schedule D Tax Worksheet line 19 amount
+// (doubled for a joint return). The 2025 Schedule J instructions reproduce
+// the 2022-2024 worksheets. The 2025 amounts are those printed on the 2025
+// Form 1040 instructions' worksheet lines 6 and 13 (MFS $300,000) and the
+// 2025 Schedule D instructions' Schedule D Tax Worksheet lines 15, 19 and 26.
+const zeroCeiling: Readonly<Record<number, Record<FilingStatus, number>>> = {
   2022: { single: 41_675, mfs: 41_675, mfj: 83_350, qss: 83_350, hoh: 55_800 },
   2023: { single: 44_625, mfs: 44_625, mfj: 89_250, qss: 89_250, hoh: 59_750 },
   2024: { single: 47_025, mfs: 47_025, mfj: 94_050, qss: 94_050, hoh: 63_000 },
+  2025: { single: 48_350, mfs: 48_350, mfj: 96_700, qss: 96_700, hoh: 64_750 },
 };
 
-const twentyCeiling: Record<ScheduleJBaseYear, Record<FilingStatus, number>> = {
+const twentyCeiling: Readonly<Record<number, Record<FilingStatus, number>>> = {
   2022: { single: 459_750, mfs: 258_600, mfj: 517_200, qss: 517_200, hoh: 488_500 },
   2023: { single: 492_300, mfs: 276_900, mfj: 553_850, qss: 553_850, hoh: 523_050 },
   2024: { single: 518_900, mfs: 291_850, mfj: 583_750, qss: 583_750, hoh: 551_350 },
+  2025: { single: 533_400, mfs: 300_000, mfj: 600_050, qss: 600_050, hoh: 566_700 },
 };
 
-const scheduleDOrdinaryCeiling: Record<ScheduleJBaseYear, number> = {
-  2022: 170_050,
-  2023: 182_100,
+// Only base years whose Schedule D Tax Worksheet has the 47-line layout this
+// file follows (ordinary tax on lines 44 and 46): the 2024 worksheet the 2025
+// Schedule J line 16 instructions cite, and the 2025 worksheet. The 2025
+// Schedule J line 8 and 12 instructions cite 2022 and 2023 worksheet lines
+// that conflict with the archived 2022 and 2023 Schedule D instructions.
+const scheduleDOrdinaryCeiling: Readonly<Record<number, number>> = {
   2024: 191_950,
+  2025: 197_300,
 };
 
 function nonnegativeWholeDollar(value: number, name: string): void {
@@ -81,7 +91,7 @@ function validate(facts: ScheduleJBaseYearPreferentialFacts): void {
   if (facts.method !== "schedule_d") {
     throw new Error("Schedule J preferential-rate worksheet method is unavailable");
   }
-  if (facts.year !== 2024) {
+  if (scheduleDOrdinaryCeiling[facts.year] === undefined) {
     throw new Error(
       `Schedule J ${facts.year} cites Schedule D worksheet tax lines that conflict with the archived ${facts.year} Schedule D instructions`,
     );
@@ -100,7 +110,7 @@ function rateTax(facts: CommonFacts, income: number): number {
   return scheduleJPriorYearRateTax(facts.year, facts.filingStatus, income);
 }
 
-// 2025 Schedule J instructions reproduce a separate 27-line worksheet for
+// The Schedule J instructions reproduce a separate 27-line worksheet for
 // each base year. This follows lines 1-27, using the base year's rates for
 // ordinary tax on lines 24 and 26.
 function qualifiedDividendsTax(
@@ -126,10 +136,9 @@ function qualifiedDividendsTax(
   return Math.round(Math.min(line25, rateTax(facts, line1)));
 }
 
-// The official 2024 Schedule D instructions publish this 47-line worksheet.
+// The 2024 and 2025 Schedule D instructions publish this 47-line worksheet.
 // Its line 7 and line 11 include the allocated elected gains required by the
-// 2025 Schedule J line 16 instructions. Earlier years remain closed because
-// the 2025 Schedule J line references conflict with the archived worksheets.
+// Schedule J line 16 instructions.
 function scheduleDTax(
   facts: Extract<ScheduleJBaseYearPreferentialFacts, { method: "schedule_d" }>,
 ): number {
@@ -149,7 +158,11 @@ function scheduleDTax(
   const line16 = Math.min(line1, zeroCeiling[facts.year][facts.filingStatus]);
   const line17 = Math.min(line14, line16);
   const line18 = Math.max(0, line1 - line10);
-  const ordinaryCeiling = scheduleDOrdinaryCeiling[facts.year] *
+  const ceiling24 = scheduleDOrdinaryCeiling[facts.year];
+  if (ceiling24 === undefined) {
+    throw new Error(`Schedule J ${facts.year} Schedule D worksheet is unavailable`);
+  }
+  const ordinaryCeiling = ceiling24 *
     (facts.filingStatus === FilingStatus.MFJ || facts.filingStatus === FilingStatus.QSS ? 2 : 1);
   const line19 = Math.min(line1, ordinaryCeiling);
   const line20 = Math.min(line14, line19);
@@ -178,13 +191,15 @@ function scheduleDTax(
 }
 
 /**
- * Tax for 2025 Schedule J line 8, 12, or 16 before any Form 2555 refigure.
+ * Tax for Schedule J line 8, 12, or 16 before any Form 2555 refigure.
  * Pass the corresponding Schedule J line 7, 11, or 15 as taxable income.
  * The source amounts come from the filed base-year return; allocated elected
- * gains come from 2025 Schedule J lines 2b/2c, divided among three years.
+ * gains come from Schedule J lines 2b/2c, divided among three years.
  *
- * Sources: https://www.irs.gov/instructions/i1040sj and
- * https://www.irs.gov/pub/irs-prior/i1040sd--2022.pdf (likewise 2023/2024).
+ * Sources: https://www.irs.gov/instructions/i1040sj,
+ * https://www.irs.gov/pub/irs-prior/i1040sd--2022.pdf (likewise 2023/2024),
+ * https://www.irs.gov/instructions/i1040gi and
+ * https://www.irs.gov/instructions/i1040sd (2025).
  */
 export function calculateScheduleJBaseYearPreferentialTax(
   facts: ScheduleJBaseYearPreferentialFacts,

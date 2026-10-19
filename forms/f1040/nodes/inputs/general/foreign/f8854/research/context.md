@@ -18,11 +18,16 @@ For TY2025, the covered-expatriate average annual net income tax threshold is
 Failure to certify the preceding five years of federal tax compliance is another
 covered-expatriate criterion. The 2025 mark-to-market exclusion is **$890,000**.
 These amounts are from the
-[2025 Form 8854 instructions](https://www.irs.gov/instructions/i8854).
+[2025 Form 8854 instructions](https://www.irs.gov/instructions/i8854). For an
+expatriation in 2026, Rev. Proc. 2025-32 §§4.37 and 4.38 set **$211,000** and
+**$910,000**. Both come from `CONFIG_BY_YEAR` for the expatriation year, which
+the nodes require to be the return year (initial) or to precede it (annual).
 
-The input now records the U.S. income tax less foreign tax credit for each of
-2020-2024, as Part II Section A line 1 requires, and derives the five-year
-average. The supplied amounts still need reconciliation to those prior-year
+The input records the U.S. income tax less foreign tax credit for each of the
+five years before the expatriation year (`first_year_before` through
+`fifth_year_before`), as Part II Section A line 1 requires, and derives the
+five-year average. The old `year_2020`-`year_2024`, `tax_status_2025` and
+`disposed_in_2025` names are rejected. average. The supplied amounts still need reconciliation to those prior-year
 returns and credits.
 
 Part I now requires mailing address, phone, citizenship and notification facts,

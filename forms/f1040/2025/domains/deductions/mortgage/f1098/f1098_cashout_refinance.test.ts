@@ -13,7 +13,6 @@ import { buildPdfBytes } from "../../../../pdf/builder.ts";
 import { inputSchema } from "../../../../../nodes/inputs/deductions/mortgage/f1098/index.ts";
 import { cashoutRefinanceRatio, cashoutRefinanceReviewSchema } from "../../../../../nodes/inputs/deductions/mortgage/f1098/cashout_refinance.ts";
 import {
-  inputSchema as pointsInputSchema,
   refinancePointsDeduction,
 } from "../../../../../nodes/inputs/deductions/mortgage/mortgage_refinance_points/index.ts";
 
@@ -439,7 +438,7 @@ test("cash-out refinance points use annual Table 1 ratio and actual loan-term pa
     // The July fractional ratable points ($133.333...) must survive until
     // the .973 Table 1 multiplication: $129.733... rounds to $130.
     const expectedPoints = month === 7 ? 130 : 146;
-    assertEquals(refinancePointsDeduction(points), expectedPoints);
+    assertEquals(refinancePointsDeduction(points, 2025), expectedPoints);
     const result = f1040_2025.executeReturn({
       ...base.inputs,
       schedule_a: { force_itemized: true },
@@ -517,7 +516,7 @@ test("cash-out points reject missing and conflicting owner, settlement, note and
   const changed = (mutate: (value: typeof points) => void) => {
     const value = structuredClone(points);
     mutate(value);
-    assertThrows(() => pointsInputSchema.parse(value));
+    assertThrows(() => refinancePointsDeduction(value, 2025));
   };
   changed((value) => { delete (value as { cashout_source?: unknown }).cashout_source; });
   changed((value) => { value.refinances[0].cashout_points_payment.payer_tin = "999-88-7777"; });
@@ -672,7 +671,7 @@ test("one mixed refinance sources home improvement and personal use before inter
     assertEquals(ratio, month === 7 ? .975 : .978);
     assertEquals(totalAllowed, month === 7 ? 13_894 : 14_377);
     assertEquals(expectedPoints, month === 7 ? 948 : 968);
-    assertEquals(refinancePointsDeduction(points), expectedPoints);
+    assertEquals(refinancePointsDeduction(points, 2025), expectedPoints);
     const result = f1040_2025.executeReturn({
       ...base.inputs,
       schedule_a: { force_itemized: true },
@@ -842,7 +841,7 @@ test("mixed refinance rejects unjoined contractor, property, debt-category and i
   const changedPoints = (mutate: (source: typeof points) => void) => {
     const source = structuredClone(points);
     mutate(source);
-    assertThrows(() => pointsInputSchema.parse(source));
+    assertThrows(() => refinancePointsDeduction(source, 2025));
   };
   changedPoints((source) => {
     ((source.refinances[0] as Record<string, any>).improvement)
@@ -1021,7 +1020,7 @@ test("married cash-out refinance uses owner-bound paid interest and separate MFS
     assertEquals(ratio, status === "mfj" ? .987 : .593);
     assertEquals(totalInterest, status === "mfj" ? 25_909 : 15_566);
     assertEquals(
-      refinancePointsDeduction(points),
+      refinancePointsDeduction(points, 2025),
       status === "mfj" ? 642 : 385,
     );
     assertEquals(
@@ -1333,7 +1332,7 @@ test("mixed cash-out and separate second-home debt share one sourced Table 1 for
       await marriedCrossLoanSource(status);
     assertEquals(ratio, status === "mfj" ? .804 : .402);
     assertEquals(allAllowed, status === "mfj" ? 35_577 : 17_789);
-    assertEquals(refinancePointsDeduction(points), status === "mfj" ? 523 : 261);
+    assertEquals(refinancePointsDeduction(points, 2025), status === "mfj" ? 523 : 261);
     const general = {
       ...(base.inputs.general as Record<string, unknown>),
       filing_status: status,
@@ -1530,7 +1529,7 @@ test("pre-2017 second-home acquisition debt keeps its separate Table 1 ceiling b
       await pre2017SecondHomeSource(status);
     assertEquals(ratio, status === "mfj" ? .558 : .349);
     assertEquals(total, status === "mfj" ? 41_432 : 25_913);
-    assertEquals(refinancePointsDeduction(points), status === "mfj" ? 363 : 227);
+    assertEquals(refinancePointsDeduction(points, 2025), status === "mfj" ? 363 : 227);
     const general = {
       ...(base.inputs.general as Record<string, unknown>),
       filing_status: status,
@@ -2455,7 +2454,7 @@ test("July 15 refinance retains both lender periods and five paid points install
     mortgage_refinance_points: points };
   assertEquals(inputSchema.parse({ f1098s: mortgage.f1098,
     ...mortgage.f1098_cashout_refinance_review }).f1098s.length, 2);
-  assertEquals(refinancePointsDeduction(points), 106);
+  assertEquals(refinancePointsDeduction(points, 2025), 106);
   const result = f1040_2025.executeReturn(inputs);
   assertEquals(result.diagnostics, []);
   assertEquals(result.pending.schedule_a?.line_8a_mortgage_interest_1098,
@@ -2511,7 +2510,7 @@ test("July 15 refinance retains both lender periods and five paid points install
     month: 7, document_reference: "unsourced July payment",
     paid_on: "2025-07-31",
   });
-  assertThrows(() => pointsInputSchema.parse(unsourcedPayment));
+  assertThrows(() => refinancePointsDeduction(unsourcedPayment, 2025));
   for (const mutate of [
     (pending: any) => { pending.f1098.cashout_refinance_review
       .midmonth_lender_ledger_document.bytes[0] ^= 1; },
@@ -2564,8 +2563,8 @@ test("July 15 refinance retains both lender periods and five paid points install
   schedule.sha256 = Array.from(new Uint8Array(await crypto.subtle.digest(
     "SHA-256", schedule.bytes,
   )), (byte) => byte.toString(16).padStart(2, "0")).join("");
-  assertThrows(() => pointsInputSchema.parse(
-    wrongSchedule.mortgage_refinance_points));
+  assertThrows(() => refinancePointsDeduction(
+    wrongSchedule.mortgage_refinance_points, 2025));
   await assertRejects(() => buildMefBundle(wrongSchedule,
     { filer, attachments: [] }));
   await assertRejects(() => buildPdfBytes(wrongSchedule, filer, ".pdf-cache"));

@@ -119,8 +119,8 @@ export function interstateInputs(c: typeof interstateCases[number]) {
   const general = generalSchema.parse({
     ...base.general,
     taxpayer_can_be_claimed_as_dependent: false,
-    ptc_residence_states_2025: states,
-    ptc_residence_months_2025: c.months,
+    ptc_tax_year_residence_states: states,
+    ptc_tax_year_residence_months: c.months,
   });
   const w2 = base.w2.map((row) => ({
     ...row,

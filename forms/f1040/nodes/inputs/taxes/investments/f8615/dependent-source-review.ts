@@ -7,16 +7,19 @@ import {
   dependentScholarshipReviewSchema,
 } from "../../../income/other/education_income/dependent-scholarship-review.ts";
 import { FilingStatus } from "../../../../types.ts";
-import { configForYear } from "../../../../config/index.ts";
-import { ordinaryTaxForYear } from "../../../../intermediate/worksheets/taxes/calculation/year_schedule.ts";
+import {
+  configForYear,
+  dependentFilingThresholds,
+} from "../../../../config/index.ts";
+import {
+  ordinaryTaxForYear,
+  preferentialRateSchedule,
+} from "../../../../intermediate/worksheets/taxes/calculation/year_schedule.ts";
 import {
   assertDistinct1099DIVCopies,
   inputSchema as dividendSchema,
 } from "../../../income/investments/f1099div/index.ts";
-import {
-  ordinaryTax2025,
-  qualifiedDividendTax2025,
-} from "../../../../intermediate/worksheets/taxes/calculation/tax_table_2025.ts";
+import { qualifiedDividendTax } from "../../../../intermediate/worksheets/taxes/calculation/tax_table_2025.ts";
 import { calculateForm8615 } from "../../../../intermediate/forms/taxes/investments/form8615/calculation.ts";
 import { inputSchema } from "./schema.ts";
 const tin = (v: unknown) => String(v ?? "").replaceAll("-", "");
@@ -123,19 +126,25 @@ function childIncomeFacts(
     (s, r) => s + (r.kind === "ordinary_support" ? r.amount : 0),
     0,
   );
+  const limits = dependentFilingThresholds(review.tax_year);
+  const kiddieThreshold =
+    configForYear(review.tax_year).kiddieUnearnedIncomeThreshold;
   const birthday = new Date(`${review.student_dob}T00:00:00Z`);
-  const age = 2025 - birthday.getUTCFullYear() +
+  const age = review.tax_year - birthday.getUTCFullYear() +
     (birthday.getUTCMonth() === 0 && birthday.getUTCDate() === 1 ? 1 : 0);
-  const requiredToFile = deductionEarned > 15750;
+  const requiredToFile = deductionEarned > limits.singleStandardDeduction;
   const ageApplies = age < 18 ||
     (age === 18 ||
         age >= 19 && age < 24 && review.full_time_student_months.length >= 5) &&
       supportEarned * 2 <= support;
   const taxable = Math.max(
     0,
-    deductionEarned - Math.min(15750, Math.max(1350, deductionEarned + 450)),
+    deductionEarned - Math.min(
+      limits.singleStandardDeduction,
+      Math.max(limits.floor, deductionEarned + limits.earnedIncomeAddOn),
+    ),
   );
-  const line5 = Math.min(Math.max(0, unearned - 2700), taxable);
+  const line5 = Math.min(Math.max(0, unearned - kiddieThreshold), taxable);
   return {
     unearned,
     supportEarned,
@@ -145,12 +154,14 @@ function childIncomeFacts(
     ageApplies,
     taxable,
     line5,
+    kiddieThreshold,
   };
 }
 type ParentReturn = NonNullable<
   DependentScholarshipReview["kiddie_tax_review"]
 >["settled_parent_return"];
-function parentIncomeFacts(record: ParentReturn) {
+function parentIncomeFacts(record: ParentReturn, taxYear: number) {
+  const limits = dependentFilingThresholds(taxYear);
   const pending = record.pending;
   const general = object(pending.general),
     final = object(pending.f1040),
@@ -170,8 +181,8 @@ function parentIncomeFacts(record: ParentReturn) {
   const standardAmount = separate && general.mfs_spouse_itemizing === true
     ? 0
     : joint
-    ? 31500
-    : 15750;
+    ? limits.jointStandardDeduction
+    : limits.singleStandardDeduction;
   const itemized = separate && taxInput.taking_standard_deduction === false;
   const deductionAmount = itemized
     ? Number(deduction.itemized_deductions ?? 0)
@@ -199,7 +210,7 @@ function parentIncomeFacts(record: ParentReturn) {
       general.spouse_can_be_claimed_as_dependent === true ||
       general.spouse_blind === true ||
       typeof general.spouse_dob !== "string" ||
-      general.spouse_dob < "1961-01-02")
+      general.spouse_dob < limits.age65BornBefore)
   ) {
     throw new Error(
       "Joint selected parent return must bind its actual distinct spouse identity and ordinary deduction facts",
@@ -340,13 +351,14 @@ function parentIncomeFacts(record: ParentReturn) {
     ? "qualified_dividend" as const
     : "ordinary" as const;
   const tax = taxMethod === "qualified_dividend"
-    ? qualifiedDividendTax2025(
+    ? qualifiedDividendTax(
       taxable,
       qualifiedDividends,
       netCapitalGain,
       filingStatus,
+      preferentialRateSchedule(taxYear),
     )
-    : ordinaryTax2025(taxable, filingStatus);
+    : ordinaryTaxForYear(taxable, filingStatus, taxYear);
   const name = [filer.firstName, filer.middleInitial, filer.lastName].filter(
     Boolean,
   ).join(" ");
@@ -362,7 +374,7 @@ function parentIncomeFacts(record: ParentReturn) {
     general.taxpayer_can_be_claimed_as_dependent === true ||
     general.taxpayer_blind === true ||
     typeof general.taxpayer_dob !== "string" ||
-    general.taxpayer_dob < "1961-01-02" || final.line1a_wages !== wageIncome ||
+    general.taxpayer_dob < limits.age65BornBefore || final.line1a_wages !== wageIncome ||
     final.line9_total_income !== income || final.line11_agi !== income ||
     Number(final.line8_additional_income ?? 0) !== 0 ||
     (itemized
@@ -504,7 +516,9 @@ export function dependentKiddieTaxFacts(
     }
     return { ...facts, required: false, source: undefined };
   }
-  const parent = parentIncomeFacts(r.settled_parent_return);
+  const taxYear = review.tax_year;
+  const limits = dependentFilingThresholds(taxYear);
+  const parent = parentIncomeFacts(r.settled_parent_return, taxYear);
   const siblings = (r.other_child_returns ?? []).map((slot) => {
     const child = dependentScholarshipReviewSchema.parse(
       slot.student_claim_review,
@@ -531,7 +545,7 @@ export function dependentKiddieTaxFacts(
     }
     const siblingFacts = childIncomeFacts(child, earned, true);
     if (
-      siblingFacts.unearned <= 2700 || !siblingFacts.requiredToFile ||
+      siblingFacts.unearned <= siblingFacts.kiddieThreshold || !siblingFacts.requiredToFile ||
       !siblingFacts.ageApplies || !r.parent_alive_at_year_end
     ) {
       throw new Error(
@@ -592,7 +606,9 @@ export function dependentKiddieTaxFacts(
   } else if (
     selection.kind === "never_married_cohabiting_greater_taxable_income"
   ) {
-    parents = selection.eligible_parent_returns.map(parentIncomeFacts);
+    parents = selection.eligible_parent_returns.map((p) =>
+      parentIncomeFacts(p, taxYear)
+    );
     if (
       tin(selection.student_ssn) !== tin(review.student_ssn) ||
       new Set(parents.map((p) => p.owner)).size !== 2 || parents.some((p) =>
@@ -619,7 +635,9 @@ export function dependentKiddieTaxFacts(
   } else if (
     selection.kind === "divorced_custodial_remarried_mfs_greater_taxable_income"
   ) {
-    parents = selection.eligible_parent_returns.map(parentIncomeFacts);
+    parents = selection.eligible_parent_returns.map((p) =>
+      parentIncomeFacts(p, taxYear)
+    );
     const wageRefs = parents.flatMap((p) =>
       (object(p.record.pending.w2).w2s as Record<string, unknown>[]).map((w) =>
         w.source_document_reference
@@ -653,7 +671,7 @@ export function dependentKiddieTaxFacts(
             selection.noncustodial_parent_nights !== 365 ||
       selection.custodial_parent_nights <=
         selection.noncustodial_parent_nights ||
-      selection.remarriage_date > "2025-12-31" ||
+      selection.remarriage_date > `${taxYear}-12-31` ||
       !parents.some((p) => same(p.record, r.settled_parent_return))
     ) {
       throw new Error(
@@ -681,10 +699,10 @@ export function dependentKiddieTaxFacts(
           seen.has(payment.source_document_reference) ||
           tin(payment.payer_ssn) !== candidate.owner ||
           tin(payment.property_owner_ssn) !== candidate.owner ||
-          !payment.payment_date.startsWith("2025-")
+          !payment.payment_date.startsWith(`${taxYear}-`)
         ) {
           throw new Error(
-            "Separate-parent itemized tax payment must be uniquely owned and actually paid in 2025",
+            "Separate-parent itemized tax payment must be uniquely owned and actually paid in the tax year",
           );
         }
         seen.add(payment.source_document_reference);
@@ -699,9 +717,13 @@ export function dependentKiddieTaxFacts(
         ) ||
         amount > 20000 || candidate.income > 250000 ||
         candidate.deductionAmount !==
-          Math.max(amount, other.itemized ? 0 : 15750) ||
+          Math.max(
+            amount,
+            other.itemized ? 0 : limits.singleStandardDeduction,
+          ) ||
         candidate.itemized !==
-          (amount > 0 && (amount > 15750 || other.itemized))
+          (amount > 0 &&
+            (amount > limits.singleStandardDeduction || other.itemized))
       ) {
         throw new Error(
           "Separate-parent deduction must derive from the complete actual owned tax-payment inventory and MFS deduction rules",
@@ -748,7 +770,7 @@ export function dependentKiddieTaxFacts(
             selection.noncustodial_parent_nights !== 365 ||
       selection.custodial_parent_nights <=
         selection.noncustodial_parent_nights ||
-      selection.remarriage_date > "2025-12-31"
+      selection.remarriage_date > `${taxYear}-12-31`
     ) {
       throw new Error(
         "Remarried custodial Form8615 must select the actual custodian/stepparent joint return and first-listed identity, excluding the noncustodial parent",
@@ -808,7 +830,7 @@ export function dependentKiddieTaxFacts(
       );
     }
   }
-  const required = facts.unearned > 2700 && facts.requiredToFile &&
+  const required = facts.unearned > facts.kiddieThreshold && facts.requiredToFile &&
     facts.ageApplies && r.parent_alive_at_year_end;
   const source = required
     ? parentTaxSource(
@@ -915,7 +937,9 @@ export function assertSettledParentTaxSource(
     ? r.parent_selection.eligible_parent_returns
     : [r.settled_parent_return];
   const claimant = candidates.find((p) =>
-    parentIncomeFacts(p).owners.includes(tin(review.education_claimant_ssn))
+    parentIncomeFacts(p, review.tax_year).owners.includes(
+      tin(review.education_claimant_ssn),
+    )
   );
   if (
     !claimant || !same(claimant.pending, parentTaxProjection(parent)) ||
@@ -957,7 +981,9 @@ export function assertDependentKiddieTaxFamilyReturn(
       "Married filing separately family export cannot retain an education credit claim source",
     );
   }
-  const parents = family.parent_returns.map(parentIncomeFacts);
+  const parents = family.parent_returns.map((p) =>
+    parentIncomeFacts(p, family.tax_year)
+  );
   const own = parents.find((p) => p.owner === tin(general.taxpayer_ssn));
   if (
     !own || !same(own.record.pending, parentTaxProjection(pending!)) ||

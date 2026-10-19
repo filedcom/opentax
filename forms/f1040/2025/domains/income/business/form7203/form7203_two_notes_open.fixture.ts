@@ -58,7 +58,7 @@ export function twoNotesOpenInputs(c: typeof twoNotesOpenCases[number]) {
     record.principal_entries[1].closing_principal = 1000 - c.secondRepayment;
   } else {
     delete second.principal_repayment;
-    second.no_2025_repayments_confirmed = true;
+    second.no_current_year_repayments_confirmed = true;
     record.repayments = [];
     record.principal_entries = record.principal_entries.slice(0, 1);
   }
@@ -126,7 +126,7 @@ export function twoNotesOpenInputs(c: typeof twoNotesOpenCases[number]) {
   const repaid = (k.box16_code_e_loan_repayment ?? 0) + c.secondRepayment;
   k.box16_code_e_loan_repayment = repaid;
   s.issued_k1_record.box16_code_e_principal_repayments = repaid;
-  n.no_2025_repayments_confirmed = !repaid;
+  n.no_current_year_repayments_confirmed = !repaid;
   return built;
 }
 export const twoNotesFamilyCase = {

@@ -417,7 +417,7 @@ const syntheticAdoptionSource = {
     },
     reviewed_facts: {
       child_us_citizen_or_resident_when_effort_began_confirmed: true as const,
-      child_under_18_on_2025_12_31_confirmed: true as const,
+      child_under_18_at_end_of_tax_year_confirmed: true as const,
       child_not_taxpayers_spouses_child_confirmed: true as const,
       no_other_nonspouse_taxpayer_claim_confirmed: true as const,
       no_prior_form8839_claim_for_child_confirmed: true as const,
@@ -846,7 +846,7 @@ const interestSourceRecords = {
 async function interestFixture() {
   const f = await fixture();
   f.inputs = { ...interestBaseInputs, form8990: interestSourceRecords };
-  const before = executeForm172Form8990Return(f.inputs);
+  const before = executeForm172Form8990Return(f.inputs, { taxYear: 2025, formType: "f1040" });
   const return1040 = before.execution.pending.f1040!;
   const a = f.currentReview.annual_review;
   a.agi = Number(return1040.line11_agi);

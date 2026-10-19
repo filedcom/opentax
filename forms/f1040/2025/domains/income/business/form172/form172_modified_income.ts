@@ -79,7 +79,7 @@ export function reconcileForm172ModifiedIncome(
       true,
       graph,
     )
-    : executeForm172Form8990Return(structuredClone(inputs), graph).execution;
+    : executeForm172Form8990Return(structuredClone(inputs), modifiedContext, graph).execution;
   if (execution.diagnostics.length) {
     throw new Error("Modified NOL income needs a successful source graph");
   }

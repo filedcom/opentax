@@ -67,7 +67,7 @@ const sourcedStudentMinor = {
         birth_date: "2008-05-10",
         birth_date_source_reference: "student-age-record",
         student_enrollment_source_reference: "2025-school-enrollment",
-        student_during_2025_verified: true,
+        student_during_tax_year_verified: true,
       },
       ordinary_cash_only: true,
       annual_cash_wages: 4_000,

@@ -31,6 +31,7 @@ function projectSingleReviewedStockLoss7203(
   rawFields: Record<string, unknown>,
   allPending: Readonly<Record<string, unknown>>,
   filer: FilerIdentity | undefined,
+  taxYear: number,
 ) {
   if (!filer) {
     throw new Error(
@@ -61,6 +62,7 @@ function projectSingleReviewedStockLoss7203(
     ? reconcileNewFormalNotes(
       source.form7203_debt_evidence,
       source,
+      taxYear,
     ).note
     : undefined;
   const ledger = reviewedStockLossLedgerSchema.parse(
@@ -83,7 +85,7 @@ function projectSingleReviewedStockLoss7203(
   const basis = ledger.beginning_stock_basis;
   const contribution = ledger.cash_capital_contribution?.amount ?? 0;
   if (note && contribution > 0) {
-    reconcileCashCapitalAndNewNote(ledger, note);
+    reconcileCashCapitalAndNewNote(ledger, note, taxYear);
     if (
       currentLoss <= basis + contribution ||
       JSON.stringify(fields.reviewed_stock_loss_ledger) !==
@@ -176,7 +178,7 @@ function projectSingleReviewedStockLoss7203(
   const secondDebtBasis = (note?.second_formal_note?.cash_advance_amount ??
     note?.open_account_net_advance_amount ?? 0) -
     notePrincipalRepaid(note?.second_formal_note);
-  const thirdDebtBasis = note?.kind === "owned_2025_formal_and_open_account" &&
+  const thirdDebtBasis = note?.kind === "owned_current_year_formal_and_open_account" &&
       note.second_formal_note
     ? note.open_account_net_advance_amount
     : 0;
@@ -200,7 +202,7 @@ function projectSingleReviewedStockLoss7203(
   const inventoryAllocation = inventoryCapacities
     ? allocateDebtInventory(allowedDebt, inventoryCapacities)
     : undefined;
-  const three = note?.kind === "owned_2025_formal_and_open_account" &&
+  const three = note?.kind === "owned_current_year_formal_and_open_account" &&
       note.second_formal_note && !note.additional_formal_notes
     ? allocateThreeDebtReductions(allowedDebt, [
       firstDebtBasis,
@@ -209,7 +211,7 @@ function projectSingleReviewedStockLoss7203(
     ])
     : undefined;
   const allowedDebt1 = inventoryAllocation?.filed[0] ?? three?.filed[0] ??
-    (note?.kind === "owned_2025_formal_and_open_account"
+    (note?.kind === "owned_current_year_formal_and_open_account"
       ? allocateTwoDebtReductions(allowedDebt, firstDebtBasis, secondDebtBasis)
         .first
       : secondDebtBasis > 0
@@ -284,6 +286,7 @@ export function projectReviewedStockLoss7203(
   rawFields: Record<string, unknown>,
   allPending: Readonly<Record<string, unknown>>,
   filer: FilerIdentity | undefined,
+  taxYear: number,
 ) {
   if (rawFields.owned_debt_loss_sources !== undefined) {
     if (
@@ -295,7 +298,12 @@ export function projectReviewedStockLoss7203(
         "Owned MFJ basis copies cannot mix scalar or unreviewed basis fields",
       );
     }
-    const projections = projectOwned7203Family(rawFields, allPending, filer);
+    const projections = projectOwned7203Family(
+      rawFields,
+      allPending,
+      filer,
+      taxYear,
+    );
     const index = rawFields.owned_debt_loss_copy_index;
     if (
       typeof index !== "number" || !Number.isInteger(index) || index < 0 ||
@@ -303,13 +311,19 @@ export function projectReviewedStockLoss7203(
     ) throw Error("Owned MFJ Form7203 needs its actual selected source copy");
     return projections[index];
   }
-  return projectSingleReviewedStockLoss7203(rawFields, allPending, filer);
+  return projectSingleReviewedStockLoss7203(
+    rawFields,
+    allPending,
+    filer,
+    taxYear,
+  );
 }
 
 export function projectOwned7203Family(
   rawFields: Record<string, unknown>,
   allPending: Readonly<Record<string, unknown>>,
   filer: FilerIdentity | undefined,
+  taxYear: number,
 ) {
   if (
     !filer || filer.filingStatus !== FilingStatus.MarriedFilingJointly ||
@@ -385,6 +399,6 @@ export function projectOwned7203Family(
         owned_s_corp_loss_source: r.source,
       },
     };
-    return projectSingleReviewedStockLoss7203(r.fields, virtual, filer);
+    return projectSingleReviewedStockLoss7203(r.fields, virtual, filer, taxYear);
   });
 }

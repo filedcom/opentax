@@ -27,7 +27,7 @@ const review = {
   child_lived_in_home_all_year: true,
   child_filed_nonrefund_joint_return: true,
   taxpayer_paid_more_than_half_home_costs: true,
-  no_remarriage_through_2025: true,
+  no_remarriage_through_tax_year_end: true,
   entitled_to_joint_return_in_death_year: true,
   spouse_death_record_reference: "reviewed 2024 death record",
   child_joint_return_reference: "reviewed 2025 child joint return",

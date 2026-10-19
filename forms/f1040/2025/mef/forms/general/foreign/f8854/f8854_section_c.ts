@@ -1,6 +1,7 @@
 import { element, elements } from "../../../../../../mef/xml.ts";
 import {
   type F8854Input,
+  form8854YearAmounts,
   inputSchema,
   isCoveredExpatriate,
 } from "../../../../../../nodes/inputs/general/foreign/f8854/index.ts";
@@ -73,13 +74,16 @@ function sumMoney(values: readonly number[]): number {
 }
 
 /** Native Section C statements. Empty categories do not produce documents. */
-export function buildForm8854SectionCStatements(rawSection: SectionC) {
+export function buildForm8854SectionCStatements(
+  rawSection: SectionC,
+  exclusion: number,
+) {
   const section = sectionCSchema.parse(rawSection);
   if (section.mark_to_market_assets.length > 20) {
     throw new Error("Form 8854 Section C supports at most 20 property rows");
   }
   const assets = wholeDollarAssets(section);
-  const allocations = allocateMarkToMarketExclusion(assets);
+  const allocations = allocateMarkToMarketExclusion(assets, exclusion);
   const totalBuiltInGain = sumMoney(
     allocations.map((row) => Math.max(row.builtInGainOrLoss, 0)),
   );
@@ -227,9 +231,15 @@ export function buildForm8854SectionC(
       phase,
     ),
   };
+  const exclusion =
+    form8854YearAmounts(input.expatriation_date).markToMarketExclusion;
   const assets = wholeDollarAssets(section);
-  const allocations = allocateMarkToMarketExclusion(assets);
-  const deferral = calculateSectionDDeferral(section, input.section_d);
+  const allocations = allocateMarkToMarketExclusion(assets, exclusion);
+  const deferral = calculateSectionDDeferral(
+    section,
+    input.section_d,
+    exclusion,
+  );
   const deferredById = new Map<string, number>(
     deferral?.properties.map((row): [string, number] => [
       row.itemId,

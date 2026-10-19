@@ -40,7 +40,7 @@ export const rothActivityReviewSchema = z.object({
     z.object({
       form5498: z.object({
         source_document_reference: reference,
-        tax_year: z.number().int().min(1998).max(2025),
+        tax_year: z.number().int().min(1998),
         owner_ssn: ssn,
         custodian_ein: ssn,
         account_number: reference,
@@ -55,7 +55,7 @@ export const rothActivityReviewSchema = z.object({
           owner_ssn: ssn,
           custodian_ein: ssn,
           account_number: reference,
-          designated_tax_year: z.number().int().min(1998).max(2025),
+          designated_tax_year: z.number().int().min(1998),
           received_on: date,
           amount: money.refine((value) => value > 0),
         }).strict(),
@@ -79,6 +79,20 @@ export type RothActivityReview = z.infer<typeof rothActivityReviewSchema>;
 
 function sumMoney(values: readonly number[]) {
   return values.reduce((sum, value) => sum + Math.round(value * 100), 0) / 100;
+}
+
+function yearOf(date: string): number {
+  return Number(date.slice(0, 4));
+}
+
+/** The reviewed payment is a distribution in the return's tax year. */
+export function assertRothActivityTaxYear(raw: unknown, taxYear: number) {
+  const { payment } = rothActivityReviewSchema.parse(raw);
+  if (yearOf(payment.distributed_on) !== taxYear) {
+    throw new Error(
+      `Roth activity payment must be a ${taxYear} distribution`,
+    );
+  }
 }
 
 export function reviewedRothActivity(raw: unknown) {
@@ -157,7 +171,9 @@ export function reviewedRothActivity(raw: unknown) {
   if (
     ownerFacts.some((value) => value !== owner.owner_ssn) ||
     new Set(references).size !== references.length ||
-    !payment.distributed_on.startsWith("2025-") ||
+    review.contributions.some((row) =>
+      row.form5498.tax_year > yearOf(payment.distributed_on)
+    ) ||
     payment.distributed_on < owner.date_of_birth ||
     receiptDates.every((value) => value > payment.distributed_on)
   ) {
@@ -241,6 +257,9 @@ export function rothPaymentAgeFacts(
   }
   return {
     ageException,
-    qualified: ageException && firstContributionTaxYear <= 2020,
+    // IRC 408A(d)(2)(B): the five taxable years from the first contribution
+    // year end before the distribution year.
+    qualified: ageException &&
+      firstContributionTaxYear <= yearOf(payment.distributed_on) - 5,
   };
 }

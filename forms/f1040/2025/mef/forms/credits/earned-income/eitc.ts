@@ -1,3 +1,4 @@
+import { mefTaxYear } from "../../../support/year-config.ts";
 import { element, elements } from "../../../../../mef/xml.ts";
 import {
   type QualifyingChildDetail,
@@ -30,7 +31,7 @@ const CHILD_RELATIONSHIP_CODES = new Set([
   "NEPHEW",
 ]);
 
-function birthYear(dob: string, label: string): string {
+function birthYear(dob: string, label: string, taxYear: number): string {
   const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(dob);
   if (!match) throw new Error(`${label} needs a valid date of birth`);
   const year = Number(match[1]);
@@ -38,7 +39,7 @@ function birthYear(dob: string, label: string): string {
   const day = Number(match[3]);
   const date = new Date(Date.UTC(year, month - 1, day));
   if (
-    year > 2025 || year < 1900 || date.getUTCFullYear() !== year ||
+    year > taxYear || year < 1900 || date.getUTCFullYear() !== year ||
     date.getUTCMonth() !== month - 1 || date.getUTCDate() !== day
   ) {
     throw new Error(`${label} needs a valid date of birth`);
@@ -85,11 +86,11 @@ function childXml(
   ) {
     throw new Error(`${label} needs a qualifying IRS child relationship code`);
   }
-  const line6Months = scheduleEicLine6Months(child);
+  const line6Months = scheduleEicLine6Months(child, mefTaxYear(context));
   if (child.ip_pin !== undefined && !/^\d{6}$/.test(child.ip_pin)) {
     throw new Error(`${label} needs a six-digit IP PIN`);
   }
-  const year = birthYear(child.dob, label);
+  const year = birthYear(child.dob, label, mefTaxYear(context));
   return elements("QualifyingChildInformation", [
     element("QualifyingChildNameControlTxt", child.name_control),
     elements("ChildFirstAndLastName", [

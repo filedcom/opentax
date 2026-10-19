@@ -1448,7 +1448,7 @@ export function assertPositive8995(
   if (
     fields.owned_s_corp_loss_source !== undefined ||
     fields.owned_s_corp_loss_sources !== undefined
-  ) return assertOwnedSCorpLoss8995(fields, pending);
+  ) return assertOwnedSCorpLoss8995(fields, pending, taxYear);
   assertFarmWotcReturn(fields, pending, taxYear);
   if (
     fields.multi_business_filing_rows !== undefined &&

@@ -71,8 +71,8 @@ test("Form 8997 staged holding-only review binds one lot to distinct prior and i
       reviewed_by: "Reviewer A",
       reviewed_on: "2026-09-30",
     },
-    filed_2024_form8997_reference: "2024-filed-8997",
-    reviewed_2025_workpaper_reference: "2025-lot-review",
+    filed_prior_year_form8997_reference: "2024-filed-8997",
+    reviewed_annual_workpaper_reference: "2025-lot-review",
     lot_id: "lot-2021",
     qof_ein: "123456789",
     acquired_date: "2021-04-15",
@@ -81,7 +81,7 @@ test("Form 8997 staged holding-only review binds one lot to distinct prior and i
     long_term_deferred_gain: 50_000,
     prior_form_lot_fields_match_pdf_reviewed: true,
     issuer_identity_and_holding_match_pdf_reviewed: true,
-    issuer_qof_status_for_2025_reviewed: true,
+    issuer_qof_status_for_tax_year_reviewed: true,
   } as const;
   const statement = await reviewForm8997HoldingOnlySource(
     input,
@@ -96,7 +96,7 @@ test("Form 8997 staged holding-only review binds one lot to distinct prior and i
       { ...review, qof_ein: "987654321" },
       { ...review, long_term_deferred_gain: 49_999 },
       { ...review, lot_id: "other-lot" },
-      { ...review, issuer_qof_status_for_2025_reviewed: false },
+      { ...review, issuer_qof_status_for_tax_year_reviewed: false },
       {
         ...review,
         qof_issuer_statement_pdf: {

@@ -1,3 +1,4 @@
+import { mefTaxYear } from "../../../../mef/support/year-config.ts";
 import type { PdfFieldEntry, PdfFormDescriptor } from "../../../review-support/form-descriptor.ts";
 import { rgb, StandardFonts } from "pdf-lib";
 import { qualifyingChildDetailSchema } from "../../../../../nodes/intermediate/forms/credits/earned-income/eitc/index.ts";
@@ -133,7 +134,7 @@ export const eitcPdf: PdfFormDescriptor = {
         throw new Error(`Schedule EIC child ${n} needs a unique SSN`);
       }
       seenSsns.add(normalizedSsn);
-      const line6Months = scheduleEicLine6Months(child);
+      const line6Months = scheduleEicLine6Months(child, mefTaxYear());
       const year = child.dob.slice(0, 4);
       if (Number(year) <= 2006) {
         if (child.full_time_student === undefined) {

@@ -36,7 +36,7 @@ const parentSource = {
     year_end_value_usd: 20_000,
   }],
   jointly_owned_with_spouse: false,
-  shares_acquired_during_2025: true,
+  shares_acquired_during_tax_year: true,
   acquisition_date: "2025-03-17",
   election_status: "section1291_no_new_election",
   no_outstanding_section1294_election: true,
@@ -101,7 +101,7 @@ test("Form 8621 QEF and MTM parent pages use calculated Part III/IV amounts", ()
   const qef = itemSchema.parse({
     ...item,
     regime: PficRegime.QEF,
-    parent_source: { ...parentSource, election_status: "qef_new_2025" },
+    parent_source: { ...parentSource, election_status: "qef_new_election" },
     qef_ordinary_income: 1500,
     qef_ordinary_951_or_1293g_reduction: 100,
     qef_capital_gain: 800,
@@ -123,7 +123,7 @@ test("Form 8621 QEF and MTM parent pages use calculated Part III/IV amounts", ()
   const mtm = itemSchema.parse({
     ...item,
     regime: PficRegime.MTM,
-    parent_source: { ...parentSource, election_status: "mtm_new_2025" },
+    parent_source: { ...parentSource, election_status: "mtm_new_election" },
     mtm_adjusted_basis_at_year_end: 23000,
     mtm_unreversed_inclusions: 2000,
   });
@@ -180,7 +180,7 @@ test("Form 8621 printable source checks retained issuer, QEF, MTM, and prior ele
     parent_source: {
       ...parentSource,
       issuer_record: issuer,
-      election_status: "qef_new_2025",
+      election_status: "qef_new_election",
       qef_annual_statement: qefStatement,
     },
   });
@@ -220,7 +220,7 @@ test("Form 8621 printable source checks retained issuer, QEF, MTM, and prior ele
     parent_source: {
       ...parentSource,
       issuer_record: issuer,
-      election_status: "mtm_new_2025",
+      election_status: "mtm_new_election",
       mtm_year_end_value_record: {
         ...copy("market-2025", "Exchange 2025 quote: 20000"),
         quoted_value_usd: 20000,
@@ -265,7 +265,7 @@ test("Form 8621 staged parent creates a distinct Part V and statement for each s
     ...item,
     parent_source: {
       ...parentSource,
-      shares_acquired_during_2025: false,
+      shares_acquired_during_tax_year: false,
       acquisition_date: undefined,
       section1291_prior_distribution_records: [{
         source_event_index: 0,
@@ -447,7 +447,7 @@ test("Form 8621 prints Part V only for excess distributions in a mixed block", (
     ...item,
     parent_source: {
       ...parentSource,
-      shares_acquired_during_2025: false,
+      shares_acquired_during_tax_year: false,
       acquisition_date: undefined,
       section1291_prior_distribution_records: [{
         source_event_index: 0,
@@ -506,7 +506,7 @@ test("Form 8621 parent source rejects changed shares, election, and acquisition 
           ...item,
           parent_source: {
             ...parentSource,
-            election_status: "qef_new_2025",
+            election_status: "qef_new_election",
           },
         } as typeof item,
       ),

@@ -9,7 +9,11 @@ import {
 } from "pdf-lib";
 import { w2gPayerCopyFixture } from "../../domains/income/other/w2g_payer_copy.fixture.ts";
 import { type FilerIdentity, FilingStatus } from "../../../mef/header.ts";
-import { w2gPdf } from "../../pdf/forms/income/gambling/w2g.ts";
+import {
+  w2gPdf,
+  withheldW2GCopies,
+} from "../../pdf/forms/income/gambling/w2g.ts";
+import { w2gCopyBLayout } from "../../pdf/forms/income/gambling/w2g_copy_b.ts";
 import { assertW2GPayerCopyContents } from "./w2g-payer-copy.ts";
 import type { MefFormsPending } from "../types.ts";
 
@@ -70,14 +74,14 @@ test("W-2G bundle matches readable payer-copy contents to source", async () => {
     fileName: "IssuedW2G.pdf",
     description: "Payer-issued W-2G",
     bytes,
-  }]);
+  }], 2025);
   await assertRejects(
     async () =>
       assertW2GPayerCopyContents(pending, filer, [{
         fileName: "IssuedW2G.pdf",
         description: "Payer-issued W-2G",
         bytes: await copy({ box4_federal_withheld: "2399" }),
-      }]),
+      }], 2025),
     Error,
     "box4_federal_withheld differs",
   );
@@ -103,7 +107,7 @@ test("W-2G rejects field metadata without printable recipient widgets", async ()
         fileName: "IssuedW2G.pdf",
         description: "Metadata-only negative source",
         bytes: metadata,
-      }]),
+      }], 2025),
     Error,
     "printable field widgets",
   );
@@ -178,9 +182,70 @@ test("W-2G rejects hidden, offpage, stale, missing and forged-font normal appear
           fileName: "IssuedW2G.pdf",
           description: "Appearance-conflict negative source",
           bytes,
-        }]),
+        }], 2025),
       Error,
       "appearance",
     );
   }
+});
+
+test("TY2026 W-2G payer copy is read from the Rev. January 2026 Copy B", async () => {
+  const item2026 = {
+    ...item,
+    calendar_year: 2026,
+    source_document_reference: "2026 payer-issued W-2G",
+    box2_date_won: "2026-03-04",
+  };
+  const pending2026 = {
+    w2g: { w2gs: [item2026] },
+    f1040: { line25c_total: 2_400 },
+  } as MefFormsPending;
+  const layout = w2gCopyBLayout(2026);
+  const [projected] = withheldW2GCopies(
+    { w2gs: [item2026] },
+    filer,
+    { f1040: { line25c_total: 2_400 } },
+    2026,
+  );
+  const attach = (bytes: Uint8Array) => [{
+    fileName: "IssuedW2G.pdf",
+    description: "Payer-issued W-2G",
+    bytes,
+  }];
+  await assertW2GPayerCopyContents(
+    pending2026,
+    filer,
+    attach(await w2gPayerCopyFixture(projected, layout)),
+    2026,
+  );
+  await assertRejects(
+    async () =>
+      assertW2GPayerCopyContents(
+        pending2026,
+        filer,
+        attach(await w2gPayerCopyFixture(projected, w2gCopyBLayout(2025))),
+        2026,
+      ),
+    Error,
+    "Col_Left[0].f1_08[0]",
+  );
+  await assertRejects(
+    async () =>
+      assertW2GPayerCopyContents(
+        pending2026,
+        filer,
+        attach(
+          await w2gPayerCopyFixture({ ...projected, year: "25" }, layout),
+        ),
+        2026,
+      ),
+    Error,
+    "year differs",
+  );
+  await assertRejects(
+    async () =>
+      assertW2GPayerCopyContents(pending, filer, attach(await copy()), 2026),
+    Error,
+    "issued 2026 form",
+  );
 });

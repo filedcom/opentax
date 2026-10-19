@@ -85,7 +85,7 @@ export function contributionInputs(kind: typeof contributionCases[number]) {
       all_students_are_taxpayer_spouse_or_claimed_dependents: true,
       tuition_institutions_eligible: true,
       contribution_accounts_qualified: true,
-      expenses_are_eligible_2025_tuition_fees_or_contributions: true,
+      expenses_are_eligible_tuition_fees_or_contributions: true,
       expenses_not_used_for_education_credit_or_tax_free_distribution: true,
       nontaxable_benefits_paid_directly_by_institution_excluded: true,
     },
@@ -113,8 +113,8 @@ export function contributionInputs(kind: typeof contributionCases[number]) {
               special_needs_record_reference:
                 "synthetic-coverdell-special-needs-record",
             }),
-            other_2025_contributions_all_sources: phase ? 500 : 0,
-            other_2025_contributions_by_filers: 0,
+            other_contributions_all_sources: phase ? 500 : 0,
+            other_contributions_by_filers: 0,
             annual_contribution_inventory_reference:
               "synthetic-all-accounts-2025-inventory",
             no_prior_excess_remaining: true,

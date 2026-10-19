@@ -24,7 +24,7 @@ const source = {
   reviewed_on: "2026-04-01",
   return_wide_items_review_reference: "both-spouses-return-review",
   reviewed_spouse_return: {
-    tax_year: 2025 as const,
+    tax_year: 2025,
     form: "1040" as const,
     filing_status: FilingStatus.MFS as const,
     first_name: "Blair",
@@ -153,6 +153,33 @@ test("f8958 requires distinct MFS spouses and a 2025 period", () => {
         ...source.community_property_period,
         from: "2024-12-31",
       },
+    }).success,
+    false,
+  );
+});
+
+test("f8958 follows the reviewed spouse return year and the return year", () => {
+  const source2026 = {
+    ...source,
+    community_property_period: {
+      ...source.community_property_period,
+      from: "2026-01-01",
+      through: "2026-12-31",
+    },
+    reviewed_spouse_return: { ...source.reviewed_spouse_return, tax_year: 2026 },
+  };
+  const outputs =
+    f8958.compute({ taxYear: 2026, formType: "f1040" }, source2026).outputs;
+  assertEquals(outputs[0].fields.f8958_allocation, source2026);
+  assertThrows(
+    () => f8958.compute({ taxYear: 2026, formType: "f1040" }, source),
+    Error,
+    "Form 8958 reviewed spouse return must be for tax year 2026",
+  );
+  assertEquals(
+    inputSchema.safeParse({
+      ...source2026,
+      reviewed_spouse_return: source.reviewed_spouse_return,
     }).success,
     false,
   );

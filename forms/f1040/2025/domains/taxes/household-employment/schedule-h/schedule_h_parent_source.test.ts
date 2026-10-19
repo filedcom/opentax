@@ -114,7 +114,7 @@ const heldInputs: any = {
             "birth_date": "2008-05-10",
             "birth_date_source_reference": "student-small-birth",
             "student_enrollment_source_reference": "student-small-school",
-            "student_during_2025_verified": true,
+            "student_during_tax_year_verified": true,
           },
           "ordinary_cash_only": true,
           "annual_cash_wages": 400,
@@ -186,7 +186,7 @@ const heldInputs: any = {
           "parent_fica_review": {
             "classification": "excluded",
             "source_reference": "2025-employer-home-occupancy-no-children",
-            "no_child_of_employer_living_in_home_during_2025_verified": true,
+            "no_child_of_employer_living_in_home_during_tax_year_verified": true,
           },
         },
       ],

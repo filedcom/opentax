@@ -219,7 +219,7 @@ for (const entry of cases) {
               coverdell_beneficiaries: base.form8815.education_contributions!
                 .coverdell_beneficiaries.map((row) => ({
                   ...row,
-                  other_2025_contributions_by_filers: 500,
+                  other_contributions_by_filers: 500,
                 })),
             },
           },

@@ -3,7 +3,12 @@ import type { NodeResult } from "../../../../../../../core/types/tax-node.ts";
 import { TaxNode } from "../../../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../../../core/types/output-nodes.ts";
 import type { NodeContext } from "../../../../../../../core/types/node-context.ts";
-import { baseYearSourceSchema } from "./base_years.ts";
+import {
+  anyTaxTreatmentSchema,
+  baseYearSourceSchema,
+  baseYearSourceSchemaFor,
+  taxTreatmentSchemaFor,
+} from "./base_years.ts";
 import { schedule_j_calculation } from "../../../../intermediate/forms/taxes/income-averaging/schedule_j/index.ts";
 import { income_tax_calculation } from "../../../../intermediate/worksheets/taxes/calculation/income_tax_calculation/index.ts";
 
@@ -21,12 +26,7 @@ export const publicInputSchema = z.object({
   elected_farm_income: z.number().int().positive(),
   elected_farm_income_net_capital_gain: z.literal(0),
   base_year_source: baseYearSourceSchema,
-  tax_treatment: z.object({
-    year2025: ordinaryYearFactsSchema,
-    year2022: ordinaryYearFactsSchema,
-    year2023: ordinaryYearFactsSchema,
-    year2024: ordinaryYearFactsSchema,
-  }).strict(),
+  tax_treatment: anyTaxTreatmentSchema(ordinaryYearFactsSchema),
   nonfarm_wage_source: nonfarmWageSourceSchema.optional(),
   nonfarm_wage_sources: z.array(nonfarmWageSourceSchema).min(1).optional(),
 }).strict();
@@ -50,8 +50,13 @@ class ScheduleJNode extends TaxNode<typeof inputSchema> {
     income_tax_calculation,
   ]);
 
-  compute(_ctx: NodeContext, rawInput: ScheduleJInput): NodeResult {
+  compute(ctx: NodeContext, rawInput: ScheduleJInput): NodeResult {
     const input = inputSchema.parse(rawInput);
+    // The base years and facts must be those of this return's year.
+    baseYearSourceSchemaFor(ctx.taxYear).parse(input.base_year_source);
+    taxTreatmentSchemaFor(ctx.taxYear, ordinaryYearFactsSchema).parse(
+      input.tax_treatment,
+    );
     return {
       outputs: [
         this.outputNodes.output(schedule_j_calculation, {

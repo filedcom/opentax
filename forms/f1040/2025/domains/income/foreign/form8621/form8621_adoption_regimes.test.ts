@@ -40,7 +40,7 @@ function holdings(): Record<string, unknown>[] {
     mtm_unreversed_inclusions: 0,
     parent_source: {
       ...parent,
-      election_status: "mtm_new_2025",
+      election_status: "mtm_new_election",
       issuer_record: copy(
         "market-issuer",
         "Synthetic Market Fund holdings 100 shares",
@@ -95,7 +95,7 @@ function holdings(): Record<string, unknown>[] {
     }],
   });
   Object.assign(prior.parent_source, {
-    shares_acquired_during_2025: false,
+    shares_acquired_during_tax_year: false,
     acquisition_date: undefined,
     issuer_record: copy(
       "prior-issuer",

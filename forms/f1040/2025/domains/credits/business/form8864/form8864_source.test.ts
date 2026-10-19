@@ -14,7 +14,7 @@ test("Form 8864 direct producer joins Schedule C and its line 9 income", () => {
   assertEquals(
     reconcileForm8864DirectProducer(
       directAgriBiodieselSource,
-      directAgriBiodieselPending,
+      directAgriBiodieselPending, 2025,
     ).lines.line9,
     500,
   );
@@ -32,7 +32,7 @@ test("Form 8864 refuses mismatched producer, EIN and income inclusion", () => {
             ...directAgriBiodieselSource,
             producer_ein: "111111111",
           },
-        },
+        }, 2025,
       ),
     Error,
     "differs from the prepared return",
@@ -49,7 +49,7 @@ test("Form 8864 refuses mismatched producer, EIN and income inclusion", () => {
               line_d_ein: "111111111",
             }],
           },
-        },
+        }, 2025,
       ),
     Error,
     "same EIN",
@@ -66,7 +66,7 @@ test("Form 8864 refuses mismatched producer, EIN and income inclusion", () => {
               line_6_other_income: 499,
             }],
           },
-        },
+        }, 2025,
       ),
     Error,
     "line 6 other-income inclusion",
@@ -77,13 +77,13 @@ test("Form 8864 direct credit joins Form 3800 and signed AMT income exclusion", 
   assertEquals(
     reconcileForm8864DocumentSource(
       directAgriBiodieselSource,
-      directAgriBiodieselPending,
+      directAgriBiodieselPending, 2025,
     ).lines.line11,
     500,
   );
   assertForm6251Form8864Source(
     directAgriBiodieselPending.form6251,
-    directAgriBiodieselPending,
+    directAgriBiodieselPending, 2025,
   );
 });
 
@@ -99,7 +99,7 @@ test("Form 8864 rejects an altered credit or missing AMT exclusion", () => {
             credit_amount: 499,
           },
         },
-      }),
+      }, 2025),
     Error,
     "source credit differs",
   );
@@ -108,7 +108,7 @@ test("Form 8864 rejects an altered credit or missing AMT exclusion", () => {
       reconcileForm8864DocumentSource(directAgriBiodieselSource, {
         ...directAgriBiodieselPending,
         form6251: { line3_form8864_income_exclusion: -499 },
-      }),
+      }, 2025),
     Error,
     "AMT line 3 exclusion",
   );
@@ -116,7 +116,7 @@ test("Form 8864 rejects an altered credit or missing AMT exclusion", () => {
     () =>
       assertForm6251Form8864Source(
         { line3_form8864_income_exclusion: -499 },
-        directAgriBiodieselPending,
+        directAgriBiodieselPending, 2025,
       ),
     Error,
     "line 3 differs",

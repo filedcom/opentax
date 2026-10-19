@@ -57,7 +57,7 @@ export function reconcilePublicForm8839Pending(
     ? {
       ...settled1040,
       ...f1040.compute(
-        { taxYear: 2025, formType: "f1040" },
+        { taxYear: settled.credit.taxYear!, formType: "f1040" },
         f1040.inputSchema.parse({
           ...settled1040,
           form8621_1294_counterfactual_total_tax: counterfactual,

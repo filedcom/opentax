@@ -9,7 +9,7 @@ export function assertLine36EstimatedTaxSource(
   const rawElection = general !== null && typeof general === "object" &&
       !Array.isArray(general)
     ? (general as Record<string, unknown>)
-      .apply_overpayment_to_2026_estimated_tax_amount
+      .apply_overpayment_to_next_year_estimated_tax_amount
     : undefined;
   if (rawElection === undefined) {
     if (line36 !== undefined && line36 !== null) {
@@ -20,7 +20,7 @@ export function assertLine36EstimatedTaxSource(
     return;
   }
   const applied = generalInputSchema.parse(general)
-    .apply_overpayment_to_2026_estimated_tax_amount!;
+    .apply_overpayment_to_next_year_estimated_tax_amount!;
   const overpaid = filed.line34_overpayment;
   const refunded = filed.line35a_refund;
   const penalty = filed.line38_underpayment_penalty ?? 0;

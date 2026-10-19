@@ -6,6 +6,7 @@ import type {
   SourceDocumentBytes,
   SourceDocumentClaim,
 } from "../../../../../../../core/runtime/source-documents.ts";
+import type { NodeContext } from "../../../../../../../core/types/node-context.ts";
 import { buildExecutionPlan } from "../../../../../../../core/runtime/planner.ts";
 import { registry } from "../../../../registry.ts";
 import { inputSchema as k1InputSchema } from "../../../../../nodes/inputs/income/rental-passthrough/k1_s_corp/index.ts";
@@ -20,6 +21,7 @@ import { inspectPrior7203MeFXml } from "../../../../../nodes/intermediate/forms/
 export async function executePriorReduced7203WithSourceDocuments(
   inputs: Record<string, unknown>,
   documents: readonly SourceDocumentBytes[],
+  context: NodeContext,
 ): Promise<
   DocumentBoundExecuteResult & {
     readonly stagedPriorReducedNoteGain: ReturnType<
@@ -41,6 +43,7 @@ export async function executePriorReduced7203WithSourceDocuments(
   const stagedPriorReducedNoteGain = calculatePriorReducedNoteGainCandidate(
     source,
     k1,
+    context,
   );
   const stock = k1.form7203_stock_loss_ledger;
   const general = inputs.general as Record<string, unknown> | undefined;
@@ -104,7 +107,7 @@ export async function executePriorReduced7203WithSourceDocuments(
     buildExecutionPlan(registry),
     registry,
     inputs,
-    { taxYear: 2025, formType: "f1040" },
+    context,
     claims,
     documents,
   );

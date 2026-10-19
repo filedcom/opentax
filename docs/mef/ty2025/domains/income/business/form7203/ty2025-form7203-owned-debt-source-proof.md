@@ -3,8 +3,8 @@
 ## Verified scope
 
 The existing single-owner, ordinary-loss route now accepts
-`owned_2025_formal_notes` with mandatory retained current records. A legacy
-`new_2025_formal_notes` input that supplies those records must also reconcile
+`owned_current_year_formal_notes` with mandatory retained current records. A legacy
+`new_current_year_formal_notes` input that supplies those records must also reconcile
 and use them. Removing the owned records from the new kind rejects the source.
 Legacy paths and the prior reduced-note export guard remain in place.
 

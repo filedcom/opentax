@@ -1,3 +1,4 @@
+import { mefTaxYear } from "../../../../../mef/support/year-config.ts";
 import { assertCurrentProductionAllocationSource } from "../../../../../../nodes/inputs/credits/business/f3800/production-allocation.ts";
 import {
   assertCurrentOrphanAllocationSource,
@@ -165,7 +166,11 @@ export const form3800Pdf: PdfFormDescriptor = {
       all.form3800_current_orphan_allocation,
     );
     if (source.f8864_direct_producer_credit) {
-      const { lines } = reconcileForm8864DocumentSource(all.f8864, all);
+      const { lines } = reconcileForm8864DocumentSource(
+        all.f8864,
+        all,
+        mefTaxYear(),
+      );
       const rawSource = f3800InputSchema.parse(raw);
       const rows = prepared.currentRows.filter((row) => row.line === "1l");
       const amounts = prepared.currentAmounts.filter((row) =>

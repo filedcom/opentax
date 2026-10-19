@@ -103,8 +103,8 @@ const pending = {
   general: {
     filing_status: SourceFilingStatus.Single,
     address_state: "TX",
-    ptc_residence_states_2025: ["AK", "HI", "TX"],
-    ptc_residence_months_2025: residenceMonths,
+    ptc_tax_year_residence_states: ["AK", "HI", "TX"],
+    ptc_tax_year_residence_months: residenceMonths,
   },
   f1095a: { f1095as: policies },
   schedule2: { line1a_excess_advance_premium: 1_596 },

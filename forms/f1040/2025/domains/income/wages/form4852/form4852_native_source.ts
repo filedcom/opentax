@@ -6,12 +6,13 @@ import { reconcileForm4852Source } from "./form4852_source.ts";
 export function form4852NativeSources(
   pending: Readonly<Record<string, unknown>> | undefined,
   filer: FilerIdentity | undefined,
+  taxYear: number,
 ) {
   if (!pending?.f4852) return { w2s: [], f1099rs: [] };
   if (!filer) {
     throw new Error("Form 4852 native sources require filer identity");
   }
-  const { f4852s } = reconcileForm4852Source(pending, filer);
+  const { f4852s } = reconcileForm4852Source(pending, filer, taxYear);
   const projected = form4852CalculationSources(f4852s);
   if (projected.f1099rs.length && filer.address.foreignCountry) {
     throw new Error(

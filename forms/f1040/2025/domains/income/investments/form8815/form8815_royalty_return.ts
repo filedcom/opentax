@@ -9,7 +9,6 @@ import {
   calculateForm4952,
   inputSchema as interestSchema,
 } from "../../../../../nodes/intermediate/forms/deductions/investments/form4952/index.ts";
-import { CONFIG_BY_YEAR } from "../../../../../nodes/config/index.ts";
 
 /** Do not infer an empty inventory from opt-in 1099 investment flags. */
 export function assertRoyaltyInvestmentInventory(
@@ -38,6 +37,7 @@ export function assertRoyaltyInvestmentInventory(
 /** Shared by both filed forms; never calls either descriptor recursively. */
 export function reconcileBondRoyaltyInterest(
   pending: Readonly<Record<string, unknown>>,
+  taxYear: number,
 ) {
   const interest = interestSchema.parse(pending.form4952);
   if (pending.form8815 === undefined) {
@@ -59,7 +59,7 @@ export function reconcileBondRoyaltyInterest(
   assertRoyaltyInvestmentInventory(pending);
   // The employee source requires line50 = 0; its addback also equals the
   // line45 exclusion subtracted on Schedule1 line8d.
-  const foreignExclusion = form8815ForeignAddback(pending);
+  const foreignExclusion = form8815ForeignAddback(pending, taxYear);
   if (
     bond.line9_worksheet.foreign_adoption_and_puerto_rico_addbacks !==
       foreignExclusion
@@ -68,7 +68,7 @@ export function reconcileBondRoyaltyInterest(
       "Form 8815 royalty MAGI needs the sourced foreign exclusion addback",
     );
   }
-  const lines = calculateForm8815(bond, CONFIG_BY_YEAR[2025]);
+  const lines = calculateForm8815(bond, taxYear);
   const actual = calculateForm4952(interest).line8;
   const dummy = royaltyMagiDeduction(
     special,

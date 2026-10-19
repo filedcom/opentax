@@ -4,6 +4,7 @@ import {
 } from "../../../../nodes/inputs/general/filing/general/index.ts";
 import { inputSchema as w2InputSchema } from "../../../../nodes/inputs/income/wages/w2/index.ts";
 import { FilingStatus } from "../../../../nodes/types.ts";
+import { dependentFilingThresholds } from "../../../../nodes/config/index.ts";
 
 function amount(fields: Record<string, unknown>, key: string): number {
   const value = fields[key];
@@ -133,8 +134,11 @@ export function assertJointDependentRefundSource(
     "spouse_age_65_or_older",
     "spouse_blind",
   ].filter((key) => fields[key] === true).length;
-  const expectedDeduction = Math.min(31_500, Math.max(1_350, wages + 450)) +
-    1_600 * ageBlindCount;
+  const limits = dependentFilingThresholds(taxYear);
+  const expectedDeduction = Math.min(
+    limits.jointStandardDeduction,
+    Math.max(limits.floor, wages + limits.earnedIncomeAddOn),
+  ) + limits.jointAgeBlindAddition * ageBlindCount;
   if (
     amount(fields, "line12a_standard_deduction") !== expectedDeduction ||
     amount(fields, "line12c_deduction_total") !== expectedDeduction ||

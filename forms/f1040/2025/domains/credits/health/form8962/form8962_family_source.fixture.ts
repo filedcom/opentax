@@ -80,7 +80,7 @@ export function form8962FamilySourceInputs(
   );
   input.general.dependents = dependents;
   input.general.address_state = region;
-  input.general.ptc_residence_states_2025 = [region];
+  input.general.ptc_tax_year_residence_states = [region];
   input.general.address_city = region === "TX"
     ? "Austin"
     : region === "AK"

@@ -9,8 +9,8 @@ the highest federal poverty line table among the states lived in. The selected
 table does not necessarily match the year-end mailing address or the last
 Marketplace policy.
 
-The bounded route takes distinct `general.ptc_residence_states_2025` and twelve
-`general.ptc_residence_months_2025`, January through December. It requires two
+The bounded route takes distinct `general.ptc_tax_year_residence_states` and twelve
+`general.ptc_tax_year_residence_months`, January through December. It requires two
 through twelve states with one chronological residence switch per move, each state
 occupying one contiguous period, and a year-end state matching the Form 1040
 filing address. General derives the highest poverty region, prioritizing Alaska

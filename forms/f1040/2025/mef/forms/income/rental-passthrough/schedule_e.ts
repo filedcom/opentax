@@ -1,3 +1,4 @@
+import { mefTaxYear } from "../../../support/year-config.ts";
 import { reconcileRoyaltyDebtReturn } from "../../../../domains/deductions/investments/form4952/form4952_royalty_debt_reconciliation.ts";
 import { currentLossFilingProjection } from "../../../../domains/income/business/current-loss-filing-projection.ts";
 import { mefBusinessNameLine1 } from "../../../../../mef/business-name.ts";
@@ -145,6 +146,7 @@ export function verifyMiscRoyaltySource(
   pendingMisc: unknown,
   filer?: FilerIdentity,
   pending?: Readonly<Record<string, unknown>>,
+  taxYear = mefTaxYear(),
 ): void {
   const source = item.f1099m_royalty_source;
   if (!source) return;
@@ -159,6 +161,7 @@ export function verifyMiscRoyaltySource(
       z.record(z.unknown()).parse(form),
       pending,
       filer,
+      taxYear,
     );
     if (
       JSON.stringify(itemSchema.parse(item)) !==
@@ -671,6 +674,7 @@ export const scheduleE: MefFormDescriptor<"schedule_e", Fields> = {
         context?.pending?.f1099m,
         context?.filer,
         context?.pending,
+        mefTaxYear(context),
       )
     );
     validatePartIxCarryovers(itemList, context);

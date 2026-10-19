@@ -48,6 +48,10 @@ function compute(items: ReturnType<typeof minimalItem>[]) {
   return w2.compute({ taxYear: 2025, formType: "f1040" }, { w2s: items });
 }
 
+function compute2026(items: ReturnType<typeof minimalItem>[]) {
+  return w2.compute({ taxYear: 2026, formType: "f1040" }, { w2s: items });
+}
+
 function findOutput(result: ReturnType<typeof compute>, nodeType: string) {
   return result.outputs.find((o) => o.nodeType === nodeType);
 }
@@ -80,6 +84,21 @@ test("distinct reviewed code D W-2s deposit only their 2025 excess on line 1h an
     fieldsOf(result.outputs, agi_aggregator)?.line1h_other_earned,
     3_500,
   );
+});
+
+// Notice 2025-67: the 2026 elective deferral limit is $24,500 ($32,500 at age
+// 50, $35,750 at ages 60-63).
+test("2026 code D excess is measured against the $24,500 deferral limit", () => {
+  const result = compute2026([
+    reviewedCodeDW2("12-3456789", 15_000),
+    reviewedCodeDW2("98-7654321", 12_000),
+  ]);
+  assertEquals(fieldsOf(result.outputs, f1040)?.line1h_other_earned, 2_500);
+  const atLimit = compute2026([
+    reviewedCodeDW2("12-3456789", 12_500),
+    reviewedCodeDW2("98-7654321", 12_000),
+  ]);
+  assertEquals(fieldsOf(atLimit.outputs, f1040)?.line1h_other_earned, undefined);
 });
 
 test("code D excess rejects absent review, same employer, Roth, and age-50 facts", () => {
@@ -1933,5 +1952,57 @@ test("2026 reviewed W-2 box 12 code TT overtime routes to Schedule 1-A", () => {
       })]),
     Error,
     "W-2 FLSA overtime review",
+  );
+});
+
+// 2026 General Instructions for Forms W-2 and W-3, box 12 Code TP: total cash
+// tips reported to the employer, with the occupation code in box 14b; draft
+// 2026 Schedule 1-A line 4 column (iii) takes it per employer.
+test("2026 W-2 box 12 code TP tips route to Schedule 1-A line 4", () => {
+  const tipped = (code: string) => minimalItem({
+    employee_ssn: "111223333",
+    employer_ein: "123456789",
+    employer_name: "Example Restaurant",
+    box1_wages: 60_000,
+    box3_ss_wages: 45_000,
+    box5_medicare_wages: 60_000,
+    box7_ss_tips: 15_000,
+    box12_entries: [{ code: Box12Code.TP, amount: 12_000 }],
+    box14b_tipped_code: code,
+  });
+  const item = tipped("102");
+  const run = (taxYear: number, items: ReturnType<typeof minimalItem>[]) =>
+    w2.compute({ taxYear, formType: "f1040" }, { w2s: items });
+  assertEquals(
+    fieldsOf(run(2026, [item]).outputs, schedule1a)?.qualified_employee_tips,
+    [{
+      employee_ssn: "111223333",
+      employer_ein: "123456789",
+      employer_name: "Example Restaurant",
+      amount: 12_000,
+      box5_medicare_wages: 60_000,
+      occupation_code: "102",
+      source_type: "w2_code_tp",
+    }],
+  );
+  assertThrows(() => run(2025, [item]), Error, "code TP tips need tax year 2026");
+  assertThrows(
+    () =>
+      run(2026, [minimalItem({
+        employee_ssn: "111223333",
+        employer_ein: "123456789",
+        employer_name: "Example Restaurant",
+        box1_wages: 60_000,
+        box12_entries: [{ code: Box12Code.TP, amount: 12_000 }],
+      })]),
+    Error,
+    "box 14b occupation code",
+  );
+  assertEquals(
+    fieldsOf(
+      run(2026, [tipped("000")]).outputs,
+      schedule1a,
+    )?.qualified_employee_tips,
+    undefined,
   );
 });

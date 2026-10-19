@@ -155,7 +155,7 @@ statuses have since been reconciled with the current tree.
 | Source-only or separate workflow candidate  | Some K-1, payment, entity and information roots may belong to another filer or workflow.                                                                                                                                                                                                                                                                        | The current return's attachment rule must be confirmed individually. Neither schema presence nor nonregistration proves an exclusion.                                                                      |
 
 Static boundary review on 2026-10-01 found that the public `general` input
-rejects an explicit `dual_status_return_2025` before calculation, the TY2025
+rejects an explicit `dual_status_return` before calculation, the TY2025
 MeF builder rejects a return type other than `1040` or a year other than 2025,
 and both MeF and PDF export run the final-header dual-status guard. Existing
 focused rejection fixtures cover the public input, prepared return, MeF, and

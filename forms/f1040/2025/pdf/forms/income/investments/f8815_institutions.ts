@@ -1,3 +1,4 @@
+import { mefTaxYear } from "../../../../mef/support/year-config.ts";
 import {
   institutionAddressLines,
   institutionPrintedName,
@@ -9,7 +10,6 @@ import {
   calculateForm8815,
   inputSchema,
 } from "../../../../../nodes/intermediate/forms/income/investments/form8815/index.ts";
-import { CONFIG_BY_YEAR } from "../../../../../nodes/config/index.ts";
 import { assertForm8815FinalReturn } from "../../../../domains/income/investments/form8815/form8815_final_return.ts";
 
 function wrapped(value: string, font: PDFFont): string[] {
@@ -49,13 +49,18 @@ export const appendForm8815Institutions: NonNullable<
   ) {
     throw new Error("Form 8815 joint continuation needs the spouse name");
   }
-  const calculated = calculateForm8815(source, CONFIG_BY_YEAR[2025]);
+  const calculated = calculateForm8815(source, mefTaxYear());
   for (const [key, value] of Object.entries(calculated)) {
     if (fields[key] !== value) {
       throw new Error(`Form 8815 continuation ${key} differs from its sources`);
     }
   }
-  assertForm8815FinalReturn(source, calculated, allPending);
+  assertForm8815FinalReturn(
+    source,
+    calculated,
+    allPending,
+    mefTaxYear(),
+  );
   const font = await document.embedFont(StandardFonts.Helvetica);
   const bold = await document.embedFont(StandardFonts.HelveticaBold);
   const newPage = (number: number) => {

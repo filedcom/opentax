@@ -122,7 +122,8 @@ export function projectStagedForm8839Documents(
     filer.filingStatus !== FilingStatus.Single ||
     !filer.nameLine1?.trim() || !/^\d{9}$/.test(filer.primarySSN) ||
     canonicalValue(pending.form8839) !== canonicalValue(source) ||
-    credit.magi < 0 || credit.magi >= 299_190 ||
+    credit.phaseoutStart === undefined || credit.phaseoutEnd === undefined ||
+    credit.magi < 0 || credit.magi >= credit.phaseoutEnd ||
     credit.line13 <= 0 ||
     perChild.line3 !== 0 ||
     final1040.line11_agi !== pre1040.line11_agi ||
@@ -176,8 +177,8 @@ export function projectStagedForm8839Documents(
       "Form 8839 staged native/PDF projection needs whole-dollar lines",
     );
   }
-  const phased = credit.magi > 259_190;
-  const line8 = phased ? credit.magi - 259_190 : undefined;
+  const phased = credit.magi > credit.phaseoutStart;
+  const line8 = phased ? credit.magi - credit.phaseoutStart : undefined;
   const fraction = phased ? credit.fraction.toFixed(3) : undefined;
   if (
     (phased && (line8 === undefined || line8 <= 0 ||

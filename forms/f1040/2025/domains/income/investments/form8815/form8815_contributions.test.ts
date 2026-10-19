@@ -174,7 +174,7 @@ for (const kind of contributionCases) {
           ...review,
           coverdell_beneficiaries: review.coverdell_beneficiaries.map((
             row,
-          ) => ({ ...row, other_2025_contributions_all_sources: 2000 })),
+          ) => ({ ...row, other_contributions_all_sources: 2000 })),
         },
       });
       changes.push({
@@ -210,7 +210,7 @@ for (const kind of contributionCases) {
             row,
           ) => ({
             ...row,
-            other_2025_contributions_by_filers: 500,
+            other_contributions_by_filers: 500,
           })),
         },
       });

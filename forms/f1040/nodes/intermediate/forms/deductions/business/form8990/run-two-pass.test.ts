@@ -8,6 +8,7 @@ import { runBoundedForm8990TwoPass } from "./run-two-pass.ts";
 
 test("2025 Form 8990 bounded two-pass recomputes Schedule C after a sourced disallowance", () => {
   const result = runBoundedForm8990TwoPass({
+    context: { taxYear: 2025, formType: "f1040" },
     returnInputs: {
       general: { filing_status: "single", taxpayer_ssn: "123456789" },
       schedule_c: [{

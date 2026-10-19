@@ -709,7 +709,7 @@ export function assertScheduleCReceiptSourceIdentity(
           !Number.isSafeInteger(refund.amount) || refund.amount <= 0 ||
           typeof refund.refund_record_reference !== "string" ||
           !refund.refund_record_reference.trim() ||
-          refund.issued_in_2025 !== true ||
+          refund.issued_in_tax_year !== true ||
           refund.same_business_sale !== true ||
           refund.not_claimed_elsewhere !== true
         ) {
@@ -1159,7 +1159,7 @@ export function assertSchedule1Form8814Source(
   }
   let sourceTax = 0;
   const sourceTotal = items.reduce((sum, line) => {
-    const calculated = line?.item ? calculateForm8814(line.item) : undefined;
+    const calculated = line?.item ? calculateForm8814(line.item, line.taxYear) : undefined;
     if (
       !line || typeof line !== "object" || !line.item ||
       typeof line.line12 !== "number" ||
@@ -1595,8 +1595,8 @@ export function assertF1040FinalHeader(
   filer: FilerIdentity | undefined,
 ): void {
   assertNoUnsupportedDeceasedReturn(fields, undefined, filer);
-  if (fields.dual_status_return_2025 === true) {
-    throw new Error("TY2025 dual-status return cannot use Form 1040 e-file");
+  if (fields.dual_status_return === true) {
+    throw new Error("A dual-status return cannot use Form 1040 e-file");
   }
   if (
     !filer || !/^\d{9}$/.test(filer.primarySSN) ||

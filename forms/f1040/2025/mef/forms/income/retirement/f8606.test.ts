@@ -25,7 +25,7 @@ const partI = {
   source_roth_basis_conversions: 0,
   filing_details: {
     owner: IraOwner.Taxpayer,
-    prior_basis_documented_from_2024_form8606: true as const,
+    prior_basis_documented_from_prior_year_form8606: true as const,
     no_ira_distributions_or_conversions_confirmed: true as const,
   },
 };

@@ -4,7 +4,8 @@ import type { FilerIdentity } from "../../../../../mef/header.ts";
 import type { MefPdfAttachment } from "../../../../mef/form-descriptor.ts";
 import { sha256Hex } from "../../../../return-processing/prepared-source.ts";
 import { itemSchema } from "../../../../../nodes/inputs/income/gambling/w2g/index.ts";
-import { w2gPdf } from "../../../forms/income/gambling/w2g.ts";
+import { withheldW2GCopies } from "../../../forms/income/gambling/w2g.ts";
+import { w2gCopyBLayout } from "../../../forms/income/gambling/w2g_copy_b.ts";
 
 type W2GItem = z.input<typeof itemSchema>;
 
@@ -13,6 +14,7 @@ export async function withSyntheticW2GCopy<T extends W2GItem>(
   caseId: string,
   item: T,
   filer: FilerIdentity,
+  calendarYear = 2025,
 ): Promise<{
   item: T & {
     issued_copy_attachment_file_name: string;
@@ -20,13 +22,17 @@ export async function withSyntheticW2GCopy<T extends W2GItem>(
   };
   attachment: MefPdfAttachment;
 }> {
-  const [projected] = w2gPdf.instances?.(
+  const [projected] = withheldW2GCopies(
     { w2gs: [item] },
     filer,
     { f1040: { line25c_total: item.box4_federal_withheld } },
-  ) ?? [];
+    calendarYear,
+  );
   if (!projected) throw new Error("Synthetic W-2G copy needs its projection");
-  const bytes = await w2gPayerCopyFixture(projected);
+  const bytes = await w2gPayerCopyFixture(
+    projected,
+    w2gCopyBLayout(calendarYear),
+  );
   const fileName = `${caseId}-W2G-CopyB.pdf`;
   return {
     item: {

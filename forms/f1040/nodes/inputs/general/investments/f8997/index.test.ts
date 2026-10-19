@@ -262,3 +262,23 @@ test("Form 8997: transfer-out needs an amount removed from the lot", () => {
   }];
   assertEquals(inputSchema.safeParse(input).success, false);
 });
+
+test("Form 8997: the ledger year must be the return year; TY2026 refuses end-of-deferral recognition", () => {
+  assertThrows(
+    () => f8997.compute({ taxYear: 2026, formType: "f1040" }, continuingHolding()),
+    Error,
+    "Form 8997 ledger must be for tax year 2026",
+  );
+  const holding2026 = { ...continuingHolding(), tax_year: 2026 };
+  assertEquals(inputSchema.safeParse(holding2026).success, true);
+  assertThrows(
+    () => f8997.compute({ taxYear: 2026, formType: "f1040" }, holding2026),
+    Error,
+    "Form 8997 end-of-deferral recognition (Part III Section B, Part V) for tax year 2026 is not computed",
+  );
+  assertThrows(
+    () => f8997.compute(context, holding2026),
+    Error,
+    "Form 8997 ledger must be for tax year 2025",
+  );
+});

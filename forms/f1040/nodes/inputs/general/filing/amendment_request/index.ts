@@ -6,12 +6,14 @@ import {
   TaxNode,
 } from "../../../../../../../core/types/tax-node.ts";
 
-// An amendment is a separate filing for the affected tax year. Preserve an
-// entered intent without applying the correction to the original TY2025 graph.
+// An amendment is a separate Form 1040-X for each affected year already filed
+// (Instructions for Form 1040-X, "File a separate Form 1040-X for each year you
+// are amending"). Preserve an entered intent without applying the correction to
+// the return being prepared; no affected year can follow the return year.
 export const inputSchema = z.object({
   requests: z.array(
     z.object({
-      affected_tax_year: z.number().int().positive().max(2025),
+      affected_tax_year: z.number().int().positive(),
       correction_summary: z.string().trim().min(1),
       request_reference: z.string().trim().min(1),
       prior_return_reference: z.string().trim().min(1),
@@ -32,8 +34,13 @@ class AmendmentRequestNode extends TaxNode<typeof inputSchema> {
   readonly inputSchema = inputSchema;
   readonly outputNodes = new OutputNodes([]);
 
-  compute(_ctx: NodeContext, input: z.infer<typeof inputSchema>): NodeResult {
-    inputSchema.parse(input);
+  compute(ctx: NodeContext, input: z.infer<typeof inputSchema>): NodeResult {
+    const { requests } = inputSchema.parse(input);
+    if (requests.some((request) => request.affected_tax_year > ctx.taxYear)) {
+      throw new Error(
+        `Amendment requests must affect tax year ${ctx.taxYear} or earlier`,
+      );
+    }
     return { outputs: [] };
   }
 }

@@ -124,7 +124,7 @@ const reviewedReissuedMccSchema = z.object({
   replacement_certified_indebtedness_amount: z.number().finite().positive(),
   original_certificate_credit_rate: z.number().finite().min(0.1).max(0.5),
   replacement_certificate_credit_rate: z.number().finite().min(0.1).max(0.5),
-  scheduled_original_loan_interest_2025: wholeDollars,
+  scheduled_original_loan_year_interest: wholeDollars,
 }).strict();
 
 function sameQualifiedHomeAddress(
@@ -135,7 +135,7 @@ function sameQualifiedHomeAddress(
     a.city === b.city && a.state === b.state && a.zip === b.zip;
 }
 
-/** Source facts for the 2025 Form 8396, not a precomputed Schedule 3 credit. */
+/** Source facts for Form 8396, not a precomputed Schedule 3 credit. */
 export const form8396SourceSchema = z.object({
   qualified_home_address_if_different: qualifiedHomeAddressSchema.optional(),
   certificate_issuer_name: z.string().trim().min(1),
@@ -154,27 +154,20 @@ export const form8396SourceSchema = z.object({
   reviewed_reissued_mcc: reviewedReissuedMccSchema.optional(),
   nonspouse_coowner: z.boolean().optional(),
   nonspouse_coowner_share: z.number().finite().positive().lt(1).optional(),
-  prior_2024_form8396: z.object({
+  prior_year_form8396: z.object({
     document_reference: z.string().trim().min(1),
-    line14_2023_carryforward: wholeDollars,
-    line16_2022_carryforward: wholeDollars,
-    line17_2024_carryforward: wholeDollars,
+    line14_second_prior_year_carryforward: wholeDollars,
+    line16_third_prior_year_carryforward: wholeDollars,
+    line17_prior_year_carryforward: wholeDollars,
   }).strict().refine(
     (prior) =>
-      prior.line14_2023_carryforward + prior.line16_2022_carryforward +
-          prior.line17_2024_carryforward > 0,
+      prior.line14_second_prior_year_carryforward + prior.line16_third_prior_year_carryforward +
+          prior.line17_prior_year_carryforward > 0,
     {
       message: "A prior Form 8396 reference must contain a carryforward",
     },
   ).optional(),
 }).strict().superRefine((source, ctx) => {
-  if (source.certificate_issue_date > "2025-12-31") {
-    ctx.addIssue({
-      code: z.ZodIssueCode.custom,
-      path: ["certificate_issue_date"],
-      message: "The MCC must be issued by the 2025 tax year",
-    });
-  }
   if (source.current_year_claim) {
     if (
       source.interest_evidence === undefined ||
@@ -213,7 +206,6 @@ export const form8396SourceSchema = z.object({
       reissue.reissued_certificate_number !== source.certificate_number ||
       reissue.issuer_name !== source.certificate_issuer_name ||
       reissue.reissued_certificate_effective_date !== reissue.refinance_date ||
-      reissue.refinance_date >= "2025-01-01" ||
       reissue.original_certificate_issue_date >
         reissue.original_loan_closing_date ||
       reissue.original_loan_closing_date >= reissue.refinance_date ||
@@ -269,6 +261,26 @@ export const form8396SourceSchema = z.object({
 
 export type Form8396Source = z.infer<typeof form8396SourceSchema>;
 
+/**
+ * The MCC is issued by the end of the return year. A reissued MCC's ceiling
+ * replays the original loan's schedule for the whole year, so the refinance
+ * precedes it.
+ */
+export function assertForm8396ReturnYear(
+  source: Form8396Source,
+  taxYear: number,
+): void {
+  if (source.certificate_issue_date > `${taxYear}-12-31`) {
+    throw new Error(`The MCC must be issued by the ${taxYear} tax year`);
+  }
+  const refinance = source.reviewed_reissued_mcc?.refinance_date;
+  if (refinance !== undefined && refinance >= `${taxYear}-01-01`) {
+    throw new Error(
+      `A reissued MCC's refinance must precede the ${taxYear} tax year`,
+    );
+  }
+}
+
 /** Publication 530: use the original loan's fixed certified fraction. */
 export function calculateForm8396Line1(raw: Form8396Source): number {
   const source = form8396SourceSchema.parse(raw);
@@ -297,7 +309,7 @@ export function calculateForm8396Line3(raw: Form8396Source): number {
   const originalCeiling = source.reviewed_reissued_mcc
     ? Math.min(
       Math.round(
-        source.reviewed_reissued_mcc.scheduled_original_loan_interest_2025 *
+        source.reviewed_reissued_mcc.scheduled_original_loan_year_interest *
           source.reviewed_reissued_mcc.original_certificate_credit_rate,
       ),
       source.reviewed_reissued_mcc.original_certificate_credit_rate > 0.2
@@ -308,7 +320,7 @@ export function calculateForm8396Line3(raw: Form8396Source): number {
   return Math.min(tentative, cap, originalCeiling);
 }
 
-/** Printed 2025 Form 8396 lines 1-17 after its Credit Limit Worksheet. */
+/** Printed Form 8396 lines 1-17 after its Credit Limit Worksheet (2025 and draft 2026 revisions). */
 export function calculateForm8396(
   raw: Form8396Source,
   taxLiabilityLimit: number,
@@ -317,12 +329,12 @@ export function calculateForm8396(
   if (!Number.isSafeInteger(taxLiabilityLimit) || taxLiabilityLimit < 0) {
     throw new Error("Form 8396 line 8 needs a nonnegative whole-dollar limit");
   }
-  const prior = source.prior_2024_form8396;
+  const prior = source.prior_year_form8396;
   const line1 = calculateForm8396Line1(source);
   const line3 = calculateForm8396Line3(source);
-  const line4 = prior?.line16_2022_carryforward ?? 0;
-  const line5 = prior?.line14_2023_carryforward ?? 0;
-  const line6 = prior?.line17_2024_carryforward ?? 0;
+  const line4 = prior?.line16_third_prior_year_carryforward ?? 0;
+  const line5 = prior?.line14_second_prior_year_carryforward ?? 0;
+  const line6 = prior?.line17_prior_year_carryforward ?? 0;
   const line7 = line3 + line4 + line5 + line6;
   const line8 = taxLiabilityLimit;
   const line9 = Math.min(line7, line8);
@@ -340,7 +352,7 @@ export function calculateForm8396(
       line7,
       line8,
       line9,
-      carryforwardTo2026: { year2023: 0, year2024: 0, year2025: 0 },
+      carryforwardToNextYear: { secondPriorYear: 0, priorYear: 0, currentYear: 0 },
     };
   }
   const line10 = line3 + line4;
@@ -369,10 +381,10 @@ export function calculateForm8396(
     line15,
     line16,
     line17,
-    carryforwardTo2026: {
-      year2023: line16,
-      year2024: line14,
-      year2025: line17,
+    carryforwardToNextYear: {
+      secondPriorYear: line16,
+      priorYear: line14,
+      currentYear: line17,
     },
   };
 }

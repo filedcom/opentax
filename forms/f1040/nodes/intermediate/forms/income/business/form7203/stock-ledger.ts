@@ -13,7 +13,7 @@ export const reviewedStockLossLedgerSchema = z.object({
   beginning_basis_workpaper_reference: z.string().trim().min(1),
   cash_capital_contribution: z.object({
     amount: z.number().int().positive(),
-    contributed_date: z.string().regex(/^2025-\d{2}-\d{2}$/).refine((value) =>
+    contributed_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).refine((value) =>
       !Number.isNaN(Date.parse(value)) &&
       new Date(value).toISOString().slice(0, 10) === value
     ),
@@ -29,7 +29,7 @@ export const reviewedStockLossLedgerSchema = z.object({
   all_shares_one_stock_block: z.literal(true),
   no_current_year_stock_transactions: z.literal(true),
   no_section_1367_1_g_election: z.literal(true),
-  no_other_2025_stock_basis_changes: z.literal(true),
+  no_other_current_year_stock_basis_changes: z.literal(true),
   no_other_schedule_e_activity: z.boolean(),
   materially_participated_in_s_corporation: z.literal(true),
   material_participation_workpaper_reference: z.string().trim().min(1),

@@ -7,6 +7,7 @@ import type {
 import { TaxNode } from "../../../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../../../core/types/output-nodes.ts";
 import type { NodeContext } from "../../../../../../../core/types/node-context.ts";
+import { configForYear } from "../../../../config/index.ts";
 import { f1040 } from "../../../../outputs/general/return-assembly/f1040/index.ts";
 import { schedule1 } from "../../../../outputs/general/return-assembly/schedule1/index.ts";
 import { schedule_d } from "../../../../intermediate/aggregation/income/investments/schedule_d/index.ts";
@@ -18,10 +19,6 @@ import { form8960 } from "../../../../intermediate/forms/taxes/investments/form8
 import { form4952 } from "../../../../intermediate/forms/deductions/investments/form4952/index.ts";
 import { form6251 } from "../../../../intermediate/forms/taxes/amt/form6251/index.ts";
 
-// 2025 Form 8814, Parts I and II.
-const UNTAXED_AMOUNT = 1_350;
-const BASE_AMOUNT = 2_700;
-const MAX_CHILD_GROSS_INCOME = 13_500;
 
 const sourcedAmounts = [
   "interest_income",
@@ -42,7 +39,7 @@ const sourceIncomeSchema = z.object(
 ).strict();
 const sourceReviewSchema = z.object({
   source_document_reference: z.string().trim().min(1),
-  tax_year: z.literal(2025),
+  tax_year: z.number().int(),
   child_ssn: z.string().regex(/^\d{3}-?\d{2}-?\d{4}$/),
   electing_parent_ssn: z.string().regex(/^\d{3}-?\d{2}-?\d{4}$/),
   eligibility_reviewed: z.literal(true),
@@ -105,7 +102,7 @@ export const itemSchema = z.object({
   alaska_pfd: z.number().nonnegative().optional(),
   nontaxable_social_security: z.number().nonnegative().optional(),
   child_had_foreign_account: z.boolean().optional(),
-  // Distribution, grantor status, or transfer to a foreign trust in 2025.
+  // Distribution, grantor status, or transfer to a foreign trust in the year.
   child_foreign_trust_part_iii_event: z.boolean().optional(),
 }).superRefine((item, ctx) => {
   if ((item.qualified_dividends ?? 0) > (item.dividend_income ?? 0)) {
@@ -128,6 +125,20 @@ export const itemSchema = z.object({
 export const inputSchema = z.object({ f8814s: z.array(itemSchema).max(10) });
 export type F8814Item = z.infer<typeof itemSchema>;
 type F8814Input = z.infer<typeof inputSchema>;
+
+/** Each reviewed child-income packet is for the return year. */
+export function assertForm8814SourceYear(
+  items: readonly F8814Item[],
+  taxYear: number,
+): void {
+  if (
+    items.some((item) =>
+      item.source_review !== undefined && item.source_review.tax_year !== taxYear
+    )
+  ) {
+    throw new Error(`Form 8814 reviewed child income must be for ${taxYear}`);
+  }
+}
 
 export function assertForm8814SourceReview(
   item: F8814Item,
@@ -172,6 +183,7 @@ export function assertForm8814SourceReview(
 
 export interface Form8814Lines {
   readonly item: F8814Item;
+  readonly taxYear: number;
   readonly line2a: number;
   readonly line4: number;
   readonly line6: number;
@@ -187,16 +199,41 @@ export interface Form8814Lines {
   readonly line12InvestmentIncome: number;
 }
 
-export function calculateForm8814(item: F8814Item): Form8814Lines {
+/** Lines 13 and 5 are the §1(g)(7) amount and twice it; line 4 caps at ten times. */
+function form8814Amounts(taxYear: number) {
+  const cfg = configForYear(taxYear);
+  return {
+    untaxed: cfg.kiddieStandardDeductionFloor,
+    base: cfg.kiddieUnearnedIncomeThreshold,
+    limit: cfg.form8814ChildIncomeLimit,
+  };
+}
+
+function assertAboveUntaxedAmount(lines: readonly Form8814Lines[]): void {
+  for (const line of lines) {
+    const { untaxed } = form8814Amounts(line.taxYear);
+    if (line.line4 <= untaxed) {
+      throw new Error(
+        `Form 8814 requires child income above the $${untaxed.toLocaleString("en-US")} filing threshold`,
+      );
+    }
+  }
+}
+
+export function calculateForm8814(
+  item: F8814Item,
+  taxYear: number,
+): Form8814Lines {
+  const { untaxed, base, limit } = form8814Amounts(taxYear);
   const line2a = (item.dividend_income ?? 0) + (item.alaska_pfd ?? 0);
   const line4 = (item.interest_income ?? 0) + line2a +
     (item.capital_gain_distributions ?? 0);
-  if (line4 >= MAX_CHILD_GROSS_INCOME) {
+  if (line4 >= limit) {
     throw new Error(
-      "Form 8814 is unavailable when child income is $13,500 or more",
+      `Form 8814 is unavailable when child income is $${limit.toLocaleString("en-US")} or more`,
     );
   }
-  const line6 = Math.max(0, line4 - BASE_AMOUNT);
+  const line6 = Math.max(0, line4 - base);
   const line7 = line6 > 0 ? (item.qualified_dividends ?? 0) / line4 : 0;
   const line8 = line6 > 0 ? (item.capital_gain_distributions ?? 0) / line4 : 0;
   // Retain full ratio precision until the whole-dollar lines 9 and 10.
@@ -204,11 +241,11 @@ export function calculateForm8814(item: F8814Item): Form8814Lines {
   const line10 = Math.min(Math.round(line6 * line8), line6 - line9);
   const line11 = line9 + line10;
   const line12 = line6 - line11;
-  const line14 = Math.max(0, line4 - UNTAXED_AMOUNT);
-  const line15 = Math.round(Math.min(line14, UNTAXED_AMOUNT) * 0.1);
+  const line14 = Math.max(0, line4 - untaxed);
+  const line15 = Math.round(Math.min(line14, untaxed) * 0.1);
   // Form 8962 Worksheet 1-2 uses a special amount for a child on Form 8814.
-  const dependentPtcMagi = line4 > UNTAXED_AMOUNT
-    ? (item.tax_exempt_interest ?? 0) + Math.min(line4, BASE_AMOUNT) +
+  const dependentPtcMagi = line4 > untaxed
+    ? (item.tax_exempt_interest ?? 0) + Math.min(line4, base) +
       (item.nontaxable_social_security ?? 0)
     : 0;
   // IRS Form 8960 line 7 excludes the Alaska PFD share of line 12. Pub. 550
@@ -219,6 +256,7 @@ export function calculateForm8814(item: F8814Item): Form8814Lines {
   const line12InvestmentIncome = Math.max(0, line12 - pfdShare);
   return {
     item,
+    taxYear,
     line2a,
     line4,
     line6,
@@ -235,13 +273,21 @@ export function calculateForm8814(item: F8814Item): Form8814Lines {
   };
 }
 
-/** Recompute every emitted child line from the reviewed election source. */
+/**
+ * Recompute every emitted child line from the reviewed election source, for
+ * `taxYear` when the caller knows the return year, else for the stamped year.
+ */
 export function assertForm8814CalculatedLines(
   lines: readonly Form8814Lines[],
   parentSSN: string,
+  taxYear?: number,
 ): void {
   const owners = new Set<string>();
+  const year = taxYear ?? lines[0]?.taxYear;
   for (const line of lines) {
+    if (line.taxYear !== year) {
+      throw new Error("Form 8814 child lines differ from the return year");
+    }
     const item = itemSchema.parse(line.item);
     assertForm8814SourceReview(item, parentSSN);
     const owner = item.child_ssn.replaceAll("-", "");
@@ -249,12 +295,8 @@ export function assertForm8814CalculatedLines(
       throw new Error("Form 8814 cannot elect twice for the same child");
     }
     owners.add(owner);
-    const expected = calculateForm8814(item);
-    if (expected.line4 <= UNTAXED_AMOUNT) {
-      throw new Error(
-        "Form 8814 requires child income above the $1,350 filing threshold",
-      );
-    }
+    const expected = calculateForm8814(item, line.taxYear);
+    assertAboveUntaxedAmount([expected]);
     for (const key of Object.keys(expected) as (keyof Form8814Lines)[]) {
       if (key !== "item" && line[key] !== expected[key]) {
         throw new Error(
@@ -300,19 +342,18 @@ class F8814Node extends TaxNode<typeof inputSchema> {
     form8995,
   ]);
 
-  compute(_ctx: NodeContext, rawInput: F8814Input): NodeResult {
+  compute(ctx: NodeContext, rawInput: F8814Input): NodeResult {
     const input = inputSchema.parse(rawInput);
     if (input.f8814s.length === 0) return { outputs: [] };
+    assertForm8814SourceYear(input.f8814s, ctx.taxYear);
     const ssns = input.f8814s.map((item) => item.child_ssn.replaceAll("-", ""));
     if (new Set(ssns).size !== ssns.length) {
       throw new Error("Form 8814 cannot elect twice for the same child");
     }
-    const lines = input.f8814s.map(calculateForm8814);
-    if (lines.some((line) => line.line4 <= UNTAXED_AMOUNT)) {
-      throw new Error(
-        "Form 8814 requires child income above the $1,350 filing threshold",
-      );
-    }
+    const lines = input.f8814s.map((item) =>
+      calculateForm8814(item, ctx.taxYear)
+    );
+    assertAboveUntaxedAmount(lines);
     const sum = (pick: (line: Form8814Lines) => number) =>
       lines.reduce((total, line) => total + pick(line), 0);
     const line9 = sum((line) => line.line9);

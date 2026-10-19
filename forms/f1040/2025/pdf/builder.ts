@@ -619,11 +619,13 @@ async function buildPdfBytesInternal(
     normalized,
     filer,
     preparedBundle?.retainedSourceDocuments !== undefined,
+    mefTaxYear(),
   );
   await assertForm4852RetainedEvidence(
     normalized,
     filer,
     preparedBundle?.retainedSourceDocuments ?? [],
+    mefTaxYear(),
   );
   await assertForm8874CdeStatusEvidence(
     normalized,
@@ -766,6 +768,7 @@ async function buildPdfBytesInternal(
       preparedBundle.pending,
       filer,
       preparedBundle.attachments,
+      mefTaxYear(),
     );
     if (
       (preparedBundle.form3800Parts === undefined) !==

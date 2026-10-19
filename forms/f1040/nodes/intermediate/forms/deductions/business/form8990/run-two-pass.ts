@@ -69,7 +69,7 @@ export interface BoundedForm8990TwoPassResult {
  */
 export function runBoundedForm8990TwoPass(args: {
   /** Tax year and form; the passes add their Schedule C permit to it. */
-  readonly context?: NodeContext;
+  readonly context: NodeContext;
   readonly returnInputs: Readonly<Record<string, unknown>>;
   /** Internal source-composed executor; preserve the exact per-pass context. */
   readonly executeGraph?: (

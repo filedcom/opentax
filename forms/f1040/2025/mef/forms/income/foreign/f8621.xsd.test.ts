@@ -82,7 +82,7 @@ test.skipIf(!xsdAvailable)("XSD: Form 8621 Part V links its statement, line 16 t
         year_end_value_usd: 10_000,
       }],
       jointly_owned_with_spouse: false,
-      shares_acquired_during_2025: false,
+      shares_acquired_during_tax_year: false,
       election_status: "section1291_no_new_election",
       no_outstanding_section1294_election: true,
       issuer_record: copy("issuer-2025", "2025 issuer holdings"),

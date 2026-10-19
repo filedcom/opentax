@@ -424,7 +424,7 @@ and rejection cases are written but unrun.
 
 The bounded annual and monthly routes now accept an Alaska or Hawaii poverty
 table when the filer address, Form 1095-A coverage state, general return source
-state, and a single-element `ptc_residence_states_2025` report all agree. The
+state, and a single-element `ptc_tax_year_residence_states` report all agree. The
 independent MeF reconciliation uses the
 [2025 instructions' Tables 1-2 and 1-3](https://www.irs.gov/pub/irs-prior/i8962--2025.pdf):
 $18,810/$25,540 for Alaska family sizes one/two and $17,310/$23,500 for Hawaii.

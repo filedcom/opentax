@@ -1,5 +1,7 @@
 import { element, elements } from "../../../../../mef/xml.ts";
+import { mefTaxYear } from "../../../support/year-config.ts";
 import {
+  assertForm8396ReturnYear,
   calculateForm8396,
   CertifiedInterestDocumentKind,
   type Form8396Source,
@@ -47,7 +49,7 @@ const SOURCE_KEYS = [
   "reviewed_reissued_mcc",
   "nonspouse_coowner",
   "nonspouse_coowner_share",
-  "prior_2024_form8396",
+  "prior_year_form8396",
 ] as const;
 
 const FIELD_MAP: ReadonlyArray<readonly [LineKey, string]> = [
@@ -154,6 +156,7 @@ export const form8396: MefFormDescriptor<"form8396", Input> = {
   build(fields, context) {
     if (fields.certificate_issuer_name === undefined) return "";
     const { source, lines } = reconciledLines(fields);
+    assertForm8396ReturnYear(source, mefTaxYear(context));
     checkFiledCredit(lines.line9, context);
     reconcileInterestEvidence(source, context);
     assertForm8396ReissueForm8828Join(source, context?.pending);

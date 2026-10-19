@@ -12,6 +12,7 @@ import type { Filed8995 } from "./f8995-route.ts";
 export function assertOwnedSCorpLoss8995(
   fields: Record<string, unknown>,
   pending: Readonly<Record<string, unknown>> | undefined,
+  taxYear: number,
 ): Filed8995 {
   if (fields.owned_s_corp_loss_sources !== undefined) {
     const f = pending?.f1040 as Record<string, unknown> | undefined,
@@ -24,6 +25,7 @@ export function assertOwnedSCorpLoss8995(
       pending.form7203 as Record<string, unknown>,
       pending,
       filer,
+      taxYear,
     );
     const taxable = Math.max(
       0,
@@ -103,7 +105,7 @@ export function assertOwnedSCorpLoss8995(
       "Owned S corporation loss needs the actual shareholder filer identity",
     );
   }
-  projectReviewedStockLoss7203(basisFields, pending!, filer);
+  projectReviewedStockLoss7203(basisFields, pending!, filer, taxYear);
   const additional = Number(f.line13b_additional_deductions ?? 0);
   const taxable = Math.max(
     0,

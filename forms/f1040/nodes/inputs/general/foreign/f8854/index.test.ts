@@ -11,13 +11,13 @@ import {
 } from "../../../../../2025/mef/forms/general/foreign/f8854/f8854_part_ii_a.ts";
 import {
   averageAnnualNetIncomeTax,
-  AVG_ANNUAL_TAX_THRESHOLD_2025,
   ExpatriateType,
   f8854,
+  form8854YearAmounts,
   inputSchema,
   isCoveredExpatriate,
-  MARK_TO_MARKET_EXCLUSION_2025,
   NET_WORTH_THRESHOLD,
+  PRIOR_YEAR_TAX_KEYS,
   sectionAExceptionAnswers,
 } from "./index.ts";
 import { allocateMarkToMarketExclusion } from "./mark-to-market.ts";
@@ -131,7 +131,7 @@ function input(overrides: Record<string, unknown> = {}) {
   return {
     expatriation_date: "2025-06-15",
     expatriate_type: ExpatriateType.CITIZEN,
-    tax_status_2025: "FULL_YEAR_US_CITIZEN_OR_RESIDENT",
+    tax_status: "FULL_YEAR_US_CITIZEN_OR_RESIDENT",
     part_i: {
       mailing_address: {
         kind: "US",
@@ -156,7 +156,7 @@ function input(overrides: Record<string, unknown> = {}) {
         tax_year: year,
         filed_form1040_document_id: `filed-${year}-form1040`,
         filed_form1040_sha256: String(year).repeat(16),
-        form1040_line24_total_tax: priorTax[`year_${year}`],
+        form1040_line24_total_tax: priorTax[PRIOR_YEAR_TAX_KEYS[2024 - year]],
         schedule3_line1_foreign_tax_credit: 0,
         irs_acceptance_reference: `irs-accepted-${year}`,
       }),
@@ -171,11 +171,11 @@ function input(overrides: Record<string, unknown> = {}) {
 
 function priorYearTax(amount: number) {
   return {
-    year_2024: amount,
-    year_2023: amount,
-    year_2022: amount,
-    year_2021: amount,
-    year_2020: amount,
+    first_year_before: amount,
+    second_year_before: amount,
+    third_year_before: amount,
+    fourth_year_before: amount,
+    fifth_year_before: amount,
   };
 }
 
@@ -214,7 +214,7 @@ test("Form 8854 Section A binds five filed Form 1040 tax lines and Schedule 3 fo
   const filed = input({
     prior_year_us_income_tax_less_foreign_tax_credit: {
       ...priorYearTax(0),
-      year_2024: 80,
+      first_year_before: 80,
     },
     prior_year_filed_return_sources: sources.map((source) =>
       source.tax_year === 2024
@@ -228,7 +228,7 @@ test("Form 8854 Section A binds five filed Form 1040 tax lines and Schedule 3 fo
   });
   const parsed = inputSchema.parse(filed);
   assertEquals(
-    parsed.prior_year_us_income_tax_less_foreign_tax_credit.year_2024,
+    parsed.prior_year_us_income_tax_less_foreign_tax_credit.first_year_before,
     80,
   );
   assertEquals(isCoveredExpatriate(parsed), false);
@@ -275,9 +275,11 @@ test("Form 8854 Section A binds five filed Form 1040 tax lines and Schedule 3 fo
 });
 
 test("Form 8854 uses TY2025 covered-expatriate thresholds", () => {
-  assertEquals(AVG_ANNUAL_TAX_THRESHOLD_2025, 206_000);
+  assertEquals(form8854YearAmounts("2025-06-30"), {
+    averageTaxThreshold: 206_000,
+    markToMarketExclusion: 890_000,
+  });
   assertEquals(NET_WORTH_THRESHOLD, 2_000_000);
-  assertEquals(MARK_TO_MARKET_EXCLUSION_2025, 890_000);
   assertEquals(
     isCoveredExpatriate(inputSchema.parse(input({
       prior_year_us_income_tax_less_foreign_tax_credit: priorYearTax(206_000),
@@ -288,7 +290,7 @@ test("Form 8854 uses TY2025 covered-expatriate thresholds", () => {
     isCoveredExpatriate(inputSchema.parse(input({
       prior_year_us_income_tax_less_foreign_tax_credit: {
         ...priorYearTax(206_000),
-        year_2024: 206_005,
+        first_year_before: 206_005,
       },
     }))),
     true,
@@ -296,11 +298,11 @@ test("Form 8854 uses TY2025 covered-expatriate thresholds", () => {
   assertEquals(
     averageAnnualNetIncomeTax(inputSchema.parse(input({
       prior_year_us_income_tax_less_foreign_tax_credit: {
-        year_2024: 100_000,
-        year_2023: 200_000,
-        year_2022: 300_000,
-        year_2021: 400_000,
-        year_2020: 500_000,
+        first_year_before: 100_000,
+        second_year_before: 200_000,
+        third_year_before: 300_000,
+        fourth_year_before: 400_000,
+        fifth_year_before: 500_000,
       },
     }))),
     300_000,
@@ -494,7 +496,7 @@ test("Form 8854 validates its source date and asset amounts", () => {
     inputSchema.safeParse(input({
       prior_year_us_income_tax_less_foreign_tax_credit: {
         ...priorYearTax(0),
-        year_2024: -1,
+        first_year_before: -1,
       },
     })).success,
     false,
@@ -502,7 +504,7 @@ test("Form 8854 validates its source date and asset amounts", () => {
   assertEquals(
     inputSchema.safeParse(input({
       prior_year_us_income_tax_less_foreign_tax_credit: {
-        year_2024: 1,
+        first_year_before: 1,
       },
     })).success,
     false,
@@ -604,11 +606,11 @@ test("Form 8854 Section A emits all five prior years and explicit exception answ
   const parsed = inputSchema.parse(input({
     part_i: dualCitizenPartI(),
     prior_year_us_income_tax_less_foreign_tax_credit: {
-      year_2024: 1,
-      year_2023: 2,
-      year_2022: 3,
-      year_2021: 4,
-      year_2020: 5,
+      first_year_before: 1,
+      second_year_before: 2,
+      third_year_before: 3,
+      fourth_year_before: 4,
+      fifth_year_before: 5,
     },
     balance_sheet: balanceSheetWithNetWorth(2_000_000),
     exception_facts: {
@@ -874,7 +876,7 @@ test("Form 8854 allocates the 2025 exclusion to gain assets, not losses", () => 
     asset("business", 2_000_000, 200_000),
     asset("stock", 1_000_000, 800_000),
     asset("loss", 500_000, 800_000),
-  ]);
+  ], 890_000);
   assertEquals(
     allocations.map((row) => ({
       gainOrLoss: row.builtInGainOrLoss,
@@ -899,14 +901,14 @@ test("Form 8854 caps exclusion at total positive gain and balances cents", () =>
       asset("A", 100, 0),
       asset("B", 50, 0),
       asset("C", 10, 20),
-    ]).map((row) => [row.exclusionAllocated, row.gainAfterExclusion]),
+    ], 890_000).map((row) => [row.exclusionAllocated, row.gainAfterExclusion]),
     [[100, 0], [50, 0], [0, 0]],
   );
   const rows = allocateMarkToMarketExclusion([
     asset("A", 890_000.01, 0),
     asset("B", 890_000.01, 0),
     asset("C", 890_000.01, 0),
-  ]);
+  ], 890_000);
   assertEquals(rows.map((row) => row.exclusionAllocated), [
     296_666.67,
     296_666.67,
@@ -922,12 +924,12 @@ test("Form 8854 caps exclusion at total positive gain and balances cents", () =>
 
 test("Form 8854 rejects duplicate asset IDs and invalid precision", () => {
   assertThrows(
-    () => allocateMarkToMarketExclusion([asset("A", 1, 0), asset("A", 2, 0)]),
+    () => allocateMarkToMarketExclusion([asset("A", 1, 0), asset("A", 2, 0)], 890_000),
     Error,
     "Duplicate Form 8854 asset ID",
   );
   assertThrows(
-    () => allocateMarkToMarketExclusion([asset("A", 1.001, 0)]),
+    () => allocateMarkToMarketExclusion([asset("A", 1.001, 0)], 890_000),
   );
 });
 
@@ -986,7 +988,7 @@ test("Form 8854 Section C separates excluded items and links native statements",
     xml,
     "<TotGainAfterAllocationExclAmt>10000</TotGainAfterAllocationExclAmt>",
   );
-  const statements = buildForm8854SectionCStatements(parsed.section_c!);
+  const statements = buildForm8854SectionCStatements(parsed.section_c!, 890_000);
   assertStringIncludes(
     statements.eligibleDeferredCompensation,
     "<EligDeferredCompItemStmt>",
@@ -1092,7 +1094,7 @@ test("Form 8854 Section C XML uses consistent whole-dollar property math", () =>
     xml,
     "<TotGainAfterAllocationExclAmt>10012</TotGainAfterAllocationExclAmt>",
   );
-  const statements = buildForm8854SectionCStatements(parsed.section_c!);
+  const statements = buildForm8854SectionCStatements(parsed.section_c!, 890_000);
   assertStringIncludes(
     statements.computation,
     "<TotalBuiltInGainAmt>900012</TotalBuiltInGainAmt>",
@@ -1112,6 +1114,7 @@ test("Form 8854 Section D allocates tax over all gain property before partial el
   const allocation = calculateSectionDDeferral(
     parsed.section_c!,
     parsed.section_d,
+    890_000,
   );
   assertEquals(allocation?.taxEligibleForDeferral, 500_000);
   assertEquals(allocation?.totalDeferredTax, 50_000);
@@ -1759,7 +1762,7 @@ test("Form 8854 noncovered initial input reaches the registered XML path", () =>
     [],
   );
   assertEquals(
-    inputSchema.safeParse(input({ tax_status_2025: undefined })).success,
+    inputSchema.safeParse(input({ tax_status: undefined })).success,
     false,
   );
   assertThrows(
@@ -1767,10 +1770,72 @@ test("Form 8854 noncovered initial input reaches the registered XML path", () =>
       f8854.compute(
         { taxYear: 2025, formType: "f1040" },
         inputSchema.parse(input({
-          tax_status_2025: "NONRESIDENT_OR_DUAL_STATUS",
+          tax_status: "NONRESIDENT_OR_DUAL_STATUS",
         })),
       ),
     Error,
     "nonresident or dual-status returns cannot use this Form 1040 MeF path",
+  );
+});
+
+function input2026(tax: number, overrides: Record<string, unknown> = {}) {
+  const base = input();
+  return {
+    ...base,
+    expatriation_date: "2026-06-15",
+    part_i: {
+      ...base.part_i,
+      notification: { kind: "CITIZEN_STATE_DEPARTMENT", date: "2026-06-15" },
+    },
+    prior_year_us_income_tax_less_foreign_tax_credit: priorYearTax(tax),
+    prior_year_filed_return_sources: base.prior_year_filed_return_sources.map(
+      (source) => ({
+        ...source,
+        tax_year: source.tax_year + 1,
+        form1040_line24_total_tax: tax,
+      }),
+    ),
+    ...overrides,
+  };
+}
+
+test("Form 8854 TY2026 uses Rev. Proc. 2025-32 amounts and 2021-2025 returns", () => {
+  assertEquals(form8854YearAmounts("2026-06-15"), {
+    averageTaxThreshold: 211_000,
+    markToMarketExclusion: 910_000,
+  });
+  const at = inputSchema.parse(input2026(211_000));
+  assertEquals(isCoveredExpatriate(at), false);
+  assertEquals(
+    f8854.compute({ taxYear: 2026, formType: "f1040" }, at).outputs,
+    [],
+  );
+  assertEquals(
+    isCoveredExpatriate(inputSchema.parse(input2026(211_001))),
+    true,
+  );
+  assertThrows(
+    () => f8854.compute({ taxYear: 2025, formType: "f1040" }, at),
+    Error,
+    "Initial Form 8854 expatriation date must be in tax year 2025",
+  );
+  assertEquals(inputSchema.safeParse(input()).success, true);
+  assertEquals(
+    inputSchema.safeParse({ ...input2026(0), expatriation_date: "2025-06-15" })
+      .success,
+    false,
+  );
+  assertEquals(
+    inputSchema.safeParse(input({
+      prior_year_us_income_tax_less_foreign_tax_credit: {
+        ...priorYearTax(0),
+        year_2024: 0,
+      },
+    })).success,
+    false,
+  );
+  assertEquals(
+    inputSchema.safeParse({ ...input(), tax_status_2025: "x" }).success,
+    false,
   );
 });

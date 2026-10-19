@@ -37,8 +37,8 @@ const completeInputSchema = z.object({
   nonfarm_qef_ordinary: z.number().nonnegative().optional(),
   se_tax_deduction: finiteAmount,
   agi: finiteAmount,
-  taxable_income_2025: finiteAmount,
-  filing_status_2025: z.nativeEnum(FilingStatus),
+  current_year_taxable_income: finiteAmount,
+  current_year_filing_status: z.nativeEnum(FilingStatus),
   taking_standard_deduction: z.boolean(),
   itemized_investment_interest_source: z.literal(true).optional(),
   qbi_deduction: finiteAmount,
@@ -55,7 +55,7 @@ type ScheduleJCalculationInput = z.infer<typeof completeInputSchema>;
 
 function reconcileCurrentYear(source: ScheduleJCalculationInput): void {
   if (
-    source.se_tax_deduction < 0 || source.taxable_income_2025 < 0 ||
+    source.se_tax_deduction < 0 || source.current_year_taxable_income < 0 ||
     source.qbi_deduction < 0 || source.additional_deductions < 0 ||
     source.nol_deduction < 0
   ) {
@@ -171,7 +171,7 @@ function reconcileCurrentYear(source: ScheduleJCalculationInput): void {
   if (
     taxableFarmIncome <= 0 ||
     source.elected_farm_income > taxableFarmIncome ||
-    source.elected_farm_income > Math.round(source.taxable_income_2025)
+    source.elected_farm_income > Math.round(source.current_year_taxable_income)
   ) {
     throw new Error(
       "Schedule J election exceeds sourced taxable farm income or Form 1040 line 15",
@@ -185,7 +185,7 @@ class ScheduleJCalculationNode extends TaxNode<typeof inputSchema> {
   readonly outputNodes = new OutputNodes([income_tax_calculation]);
 
   compute(
-    _ctx: NodeContext,
+    ctx: NodeContext,
     rawInput: z.infer<typeof inputSchema>,
   ): NodeResult {
     const partial = inputSchema.parse(rawInput);
@@ -195,14 +195,16 @@ class ScheduleJCalculationNode extends TaxNode<typeof inputSchema> {
     const input = completeInputSchema.parse(partial);
     reconcileCurrentYear(input);
     const lines = calculateScheduleJOrdinaryIncome({
-      taxable_income_2025: Math.round(input.taxable_income_2025),
-      filing_status_2025: input.filing_status_2025,
+      current_year_taxable_income: Math.round(
+        input.current_year_taxable_income,
+      ),
+      current_year_filing_status: input.current_year_filing_status,
       elected_farm_income: input.elected_farm_income,
       elected_farm_income_net_capital_gain: 0,
       base_year_source: input.base_year_source,
       tax_treatment: input.tax_treatment,
       current_year_tax_source: input.current_year_tax_source,
-    });
+    }, ctx.taxYear);
     return {
       outputs: [this.outputNodes.output(income_tax_calculation, {
         schedule_j_calculated_tax: lines.line23,

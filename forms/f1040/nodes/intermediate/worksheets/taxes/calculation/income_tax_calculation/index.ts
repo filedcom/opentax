@@ -111,25 +111,6 @@ export const inputSchema = z.object({
 
 type IncomeTaxCalcInput = z.infer<typeof inputSchema>;
 
-// ─── Pure helpers ─────────────────────────────────────────────────────────────
-
-// Form 8814 (its node fixes the TY2025 base amounts) and Schedule J (its
-// base-year tables end in TY2024) still apply TY2025 rules.
-function assertYearSupportsWorksheets(
-  taxYear: number,
-  input: IncomeTaxCalcInput,
-): void {
-  if (taxYear === 2025) return;
-  if (
-    (input.form8814_tax ?? 0) > 0 ||
-    input.schedule_j_calculated_tax !== undefined
-  ) {
-    throw new Error(
-      `TY${taxYear} Form 8814 and Schedule J tax worksheets are not supported yet`,
-    );
-  }
-}
-
 // ─── Node class ───────────────────────────────────────────────────────────────
 
 class IncomeTaxCalculationNode extends TaxNode<typeof inputSchema> {
@@ -166,7 +147,6 @@ class IncomeTaxCalculationNode extends TaxNode<typeof inputSchema> {
       );
     }
 
-    assertYearSupportsWorksheets(ctx.taxYear, input);
     const foreignExclusion = input.foreign_earned_income_exclusion ?? 0;
     if (
       foreignExclusion > 0 &&

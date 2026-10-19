@@ -1,3 +1,4 @@
+import { mefTaxYear } from "../../../support/year-config.ts";
 import { element, elements } from "../../../../../mef/xml.ts";
 import {
   calculatePhysicalPresence2555,
@@ -63,7 +64,7 @@ function buildIRS2555(fields: Input, context?: MefBuildContext): string {
     throw new Error("Form 2555 needs the taxpayer's name and SSN");
   }
   const filing = physicalPresenceFilingSchema.parse(fields.filing_details);
-  const lines = calculatePhysicalPresence2555(filing, 2025);
+  const lines = calculatePhysicalPresence2555(filing, mefTaxYear(context));
   const schedule1 = context?.pending?.schedule1;
   const schedule1Exclusion = schedule1 && typeof schedule1 === "object" &&
       "line8d_foreign_earned_income_exclusion" in schedule1

@@ -64,11 +64,11 @@ test("Schedule 3 line 6g replays a retained Form 8396 carryforward", async () =>
     certificate_number: "MCC-2022-104",
     certificate_issue_date: "2022-03-15",
     current_year_claim: false,
-    prior_2024_form8396: {
+    prior_year_form8396: {
       document_reference: "Filed 2024 Form 8396",
-      line14_2023_carryforward: 0,
-      line16_2022_carryforward: 0,
-      line17_2024_carryforward: 300,
+      line14_second_prior_year_carryforward: 0,
+      line16_third_prior_year_carryforward: 0,
+      line17_prior_year_carryforward: 300,
     },
   });
   const lines = calculateForm8396(source, 300);

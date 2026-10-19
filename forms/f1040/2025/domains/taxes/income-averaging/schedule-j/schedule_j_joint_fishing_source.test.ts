@@ -8,7 +8,13 @@ import { scheduleJJointFishingInputs } from "./schedule_j_joint_fishing.fixture.
 import { extractFilerIdentity } from "../../../../../mef/filer.ts";
 import { buildPdfBytes, type PdfPageOrigin } from "../../../../pdf/builder.ts";
 import { normalizeAllPending } from "../../../../return-processing/pending.ts";
-import { assertScheduleJSourceReturn } from "./schedule_j_source_return.ts";
+import {
+  assertScheduleJSourceReturn,
+  executeScheduleJSourceReturn,
+} from "./schedule_j_source_return.ts";
+
+const replayScheduleJ = (inputs: Record<string, unknown>) =>
+  executeScheduleJSourceReturn(inputs, { taxYear: 2025, formType: "f1040" });
 
 const evidenceDir = process.env.SCHEDULE_J_JOINT_EVIDENCE_DIR ??
   ".state/research/schedulej-joint-fishing-oct6/packets";
@@ -58,7 +64,7 @@ test("joint primary/spouse farm and fishing source elects owner-specific Schedul
     const noJ = await packet(`joint-${fishingOwner}-without-j`, noJInput);
     const elected = await packet(`joint-${fishingOwner}`, input);
     const p = elected.pending;
-    assertScheduleJSourceReturn(elected.result.pending);
+    assertScheduleJSourceReturn(elected.result.pending, replayScheduleJ);
     assertEquals(p.f1040.filing_status, "mfj");
     assertEquals(p.schedule1.line3_schedule_c, 120_000);
     assertEquals(p.schedule1.line6_schedule_f, 200_000);
@@ -125,7 +131,7 @@ test("joint Schedule J source and owner conflicts cannot be exported", async () 
   ) {
     const pending: any = structuredClone(result.pending);
     change(pending);
-    assertThrows(() => assertScheduleJSourceReturn(pending));
+    assertThrows(() => assertScheduleJSourceReturn(pending, replayScheduleJ));
     await assertRejects(() => f1040_2025.prepareReturn(pending, filer));
     await assertRejects(() => buildPdfBytes(pending, filer, ".pdf-cache"));
   }

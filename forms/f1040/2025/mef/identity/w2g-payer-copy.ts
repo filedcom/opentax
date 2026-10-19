@@ -1,7 +1,8 @@
 import { PDFDocument } from "pdf-lib";
 import { assertPrintableSourceTextFields } from "../../../source-printable-fields.ts";
 import { inputSchema } from "../../../nodes/inputs/income/gambling/w2g/index.ts";
-import { w2gPdf } from "../../pdf/forms/income/gambling/w2g.ts";
+import { withheldW2GCopies } from "../../pdf/forms/income/gambling/w2g.ts";
+import { w2gCopyBLayout } from "../../pdf/forms/income/gambling/w2g_copy_b.ts";
 import type { FilerIdentity } from "../../../mef/header.ts";
 import type { MefPdfAttachment } from "../form-descriptor.ts";
 import type { MefFormsPending } from "../types.ts";
@@ -19,7 +20,8 @@ function sameField(key: string, expected: unknown, actual: string): boolean {
     return actual.trim() === "";
   }
   if (key === "year") {
-    return digits(actual) === "25" || digits(actual) === "2025";
+    return digits(actual) === digits(expected) ||
+      digits(actual) === `20${digits(expected)}`;
   }
   if (key === "payer_ein" || key === "winner_tin") {
     return digits(actual) === digits(expected);
@@ -37,6 +39,7 @@ export async function assertW2GPayerCopyContents(
   pending: MefFormsPending,
   filer: FilerIdentity | undefined,
   attachments: ReadonlyArray<MefPdfAttachment>,
+  taxYear: number,
 ): Promise<void> {
   if (!pending.w2g) return;
   const source = inputSchema.parse(pending.w2g);
@@ -44,12 +47,14 @@ export async function assertW2GPayerCopyContents(
     (item.box4_federal_withheld ?? 0) > 0
   );
   if (active.length === 0) return;
-  const projected = w2gPdf.instances?.(
+  const projected = withheldW2GCopies(
     source,
     filer,
-    pending as Readonly<Record<string, Record<string, unknown>>>,
+    pending as Record<string, Record<string, unknown>>,
+    taxYear,
   );
-  if (!projected || projected.length !== active.length) {
+  const { fields } = w2gCopyBLayout(taxYear);
+  if (projected.length !== active.length) {
     throw new Error(
       "W-2G payer copy needs the reconciled recipient projection",
     );
@@ -63,13 +68,13 @@ export async function assertW2GPayerCopyContents(
     }
     await assertPrintableSourceTextFields(
       attachment.bytes,
-      w2gPdf.fields.filter((field) =>
+      fields.filter((field) =>
         field.kind === "text" && field.domainKey !== "payer_phone"
       ),
       "W-2G payer copy",
     );
     const form = (await PDFDocument.load(attachment.bytes)).getForm();
-    for (const field of w2gPdf.fields) {
+    for (const field of fields) {
       if (field.kind !== "text" || field.domainKey === "payer_phone") {
         continue;
       }

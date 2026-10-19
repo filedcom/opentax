@@ -123,7 +123,7 @@ export const form6251Pdf: PdfFormDescriptor = {
     assertPriorIsoSaleRetention(fields, allPending);
     assertForm6251CirculationSource(fields, allPending);
     assertForm6251MiningSource(fields, allPending);
-    assertForm6251Form8864Source(fields, allPending);
+    assertForm6251Form8864Source(fields, allPending, mefTaxYear());
     assertForm6251HouseboatInterestSource(fields, allPending);
     assertForm6251LongTermContractSource(fields, allPending);
     assertForm6251DepletionSource(fields, allPending);
@@ -168,7 +168,7 @@ export const form6251Pdf: PdfFormDescriptor = {
   },
   instances(fields, filer, allPending) {
     assertForm6251MiningSource(fields, allPending);
-    assertForm6251Form8864Source(fields, allPending);
+    assertForm6251Form8864Source(fields, allPending, mefTaxYear());
     assertForm6251LongTermContractSource(fields, allPending);
     assertForm6251Form4952Line2c(fields, allPending, filer?.primarySSN, true);
     assertPriorIsoSaleExport(

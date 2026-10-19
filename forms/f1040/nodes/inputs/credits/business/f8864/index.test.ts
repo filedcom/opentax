@@ -1,5 +1,6 @@
 import { test } from "bun:test";
-import { assertEquals } from "@std/assert";
+import { assertEquals, assertThrows } from "@std/assert";
+import { shiftDatedFacts } from "../../../../../../../scripts/testing/sample-year.ts";
 import { fieldsOf } from "../../../../../../../core/test-utils/output.ts";
 import { form6251 } from "../../../../intermediate/forms/taxes/amt/form6251/index.ts";
 import { f3800 } from "../f3800/index.ts";
@@ -7,7 +8,7 @@ import { calculateForm8864, f8864, inputSchema } from "./index.ts";
 import { directAgriBiodieselSource } from "./fixture.ts";
 
 test("Form 8864 computes the dated 2025 small producer credit", () => {
-  assertEquals(calculateForm8864(directAgriBiodieselSource), {
+  assertEquals(calculateForm8864(directAgriBiodieselSource, 2025), {
     line7_gallons: 0,
     line7_rate: 0.10,
     line7: 0,
@@ -53,14 +54,6 @@ test("Form 8864 rejects old gallon shortcuts, missing registration and ineligibl
       },
       {
         ...directAgriBiodieselSource,
-        lots: [{ ...lot, sale_date: "2024-12-31" }],
-      },
-      {
-        ...directAgriBiodieselSource,
-        lots: [{ ...lot, sale_date: "2025-06-30" }],
-      },
-      {
-        ...directAgriBiodieselSource,
         lots: [{ ...lot, feedstock_origin: "BR" }],
       },
       {
@@ -83,4 +76,28 @@ test("Form 8864 rejects old gallon shortcuts, missing registration and ineligibl
   ) {
     assertEquals(inputSchema.safeParse(candidate).success, false);
   }
+});
+
+// Instructions for Form 8864 (Rev. December 2025): $.20 a gallon for fuel sold
+// or used after June 30, 2025 and before January 1, 2027 (P.L. 119-21).
+test("Form 8864 sales fall in the return year at the $.20 rate before 2027", () => {
+  const lot = directAgriBiodieselSource.lots[0];
+  for (const sale_date of ["2025-06-30", "2026-01-02"]) {
+    assertThrows(
+      () =>
+        calculateForm8864({
+          ...directAgriBiodieselSource,
+          lots: [{ ...lot, sale_date }],
+        }, 2025),
+      Error,
+      "must fall in 2025",
+    );
+  }
+  const in2026 = shiftDatedFacts(directAgriBiodieselSource, 1);
+  assertEquals(calculateForm8864(in2026, 2026).line11, 500);
+  assertThrows(
+    () => calculateForm8864(directAgriBiodieselSource, 2026),
+    Error,
+    "must fall in 2026",
+  );
 });

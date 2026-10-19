@@ -9,8 +9,14 @@ import { scheduleJJointFishingZeroLimitInputs } from "./schedule_j_joint_fishing
 import { extractFilerIdentity } from "../../../../../mef/filer.ts";
 import { buildPdfBytes, type PdfPageOrigin } from "../../../../pdf/builder.ts";
 import { normalizeAllPending } from "../../../../return-processing/pending.ts";
-import { assertScheduleJSourceReturn } from "./schedule_j_source_return.ts";
+import {
+  assertScheduleJSourceReturn,
+  executeScheduleJSourceReturn,
+} from "./schedule_j_source_return.ts";
 import { calculateMixedFishingQbi } from "../../../../../nodes/intermediate/forms/deductions/business/form8995a/mixed-fishing.ts";
+
+const replayScheduleJ = (inputs: Record<string, unknown>) =>
+  executeScheduleJSourceReturn(inputs, { taxYear: 2025, formType: "f1040" });
 
 const evidenceDir = process.env.SCHEDULE_J_JOINT_ZERO_EVIDENCE_DIR ??
   ".state/research/schedulej-joint-zero-oct6/packets";
@@ -61,7 +67,7 @@ test("joint C/F above full MFJ QBI phase-out retains two zero-limited 8995-A row
     const elected = await packet(`zero-${fishingOwner}`, input);
     const p = elected.pending;
     const q = calculateMixedFishingQbi(p.form8995a, 2025);
-    assertScheduleJSourceReturn(elected.result.pending);
+    assertScheduleJSourceReturn(elected.result.pending, replayScheduleJ);
     assertEquals(q.profits, [200_000, 400_000]);
     assertEquals(q.allocations, [13_596, 16_275]);
     assertEquals(q.rows.map((row) => row.lines.line15), [0, 0]);
@@ -141,7 +147,7 @@ test("full-phase-out QBI requires byte-bound complete owner-specific zero-limit 
   const pending: any = structuredClone(result.pending);
   pending.form8995a.mixed_fishing_qbi_source.schedule_f.qbi_zero_limit_inventory
     .sha256 = "0".repeat(64);
-  assertThrows(() => assertScheduleJSourceReturn(pending));
+  assertThrows(() => assertScheduleJSourceReturn(pending, replayScheduleJ));
   await assertRejects(() => f1040_2025.prepareReturn(pending, filer));
   await assertRejects(() => buildPdfBytes(pending, filer, ".pdf-cache"));
 });

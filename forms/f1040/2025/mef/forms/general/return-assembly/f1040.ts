@@ -459,7 +459,7 @@ function dependentXml(fields: Input, context?: MefBuildContext): string[] {
       element("IdentityProtectionPIN", dep.ip_pin),
       element("DependentSSN", normalizedTin),
       element("DependentRelationshipCd", dep.irs_relationship_code),
-      dependentLivedWithFilerOverHalfYear(dep)
+      dependentLivedWithFilerOverHalfYear(dep, mefTaxYear(context))
         ? element("YesLiveWithChildOverHalfYrInd", "X")
         : "",
       dep.lived_in_us_over_half_year === true
@@ -477,7 +477,9 @@ function dependentXml(fields: Input, context?: MefBuildContext): string[] {
     ]);
   });
   const livedWithYou =
-    details.filter(dependentLivedWithFilerOverHalfYear).length;
+    details.filter((dep) =>
+      dependentLivedWithFilerOverHalfYear(dep, mefTaxYear(context))
+    ).length;
   return [
     ...rows,
     separatedSpouseMark,
@@ -554,7 +556,10 @@ function buildIRS1040(fields: Input, context?: MefBuildContext): string {
         "Form 1040 line 1h needs valid retained W-2 deferral facts",
       );
     }
-    const excess = codeDExcessDeferral(source.data.w2s);
+    const excess = codeDExcessDeferral(
+      source.data.w2s,
+      mefTaxYear(context),
+    );
     if (excess.amount > 0) {
       const filer = context.filer;
       const allowedOwners = [

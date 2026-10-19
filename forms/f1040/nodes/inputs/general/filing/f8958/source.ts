@@ -141,7 +141,7 @@ export const inputSchema = z.object({
   reviewed_on: date,
   return_wide_items_review_reference: reference,
   reviewed_spouse_return: z.object({
-    tax_year: z.literal(2025),
+    tax_year: z.number().int(),
     form: z.literal("1040"),
     filing_status: z.literal(FilingStatus.MFS),
     first_name: reference,
@@ -162,13 +162,18 @@ export const inputSchema = z.object({
     input.taxpayer.ssn === input.spouse.ssn ||
     input.community_property_period.from >
       input.community_property_period.through ||
-    input.community_property_period.from < "2025-01-01" ||
-    input.community_property_period.through > "2025-12-31"
+    !input.community_property_period.from.startsWith(
+      `${input.reviewed_spouse_return.tax_year}-`,
+    ) ||
+    !input.community_property_period.through.startsWith(
+      `${input.reviewed_spouse_return.tax_year}-`,
+    )
   ) {
     ctx.addIssue({
       code: "custom",
       path: ["community_property_period"],
-      message: "Distinct spouses and a valid 2025 domicile period are required",
+      message:
+        "Distinct spouses and a domicile period within the reviewed return year are required",
     });
   }
   if (
@@ -214,7 +219,7 @@ export const inputSchema = z.object({
       ctx.addIssue({
         code: "custom",
         path: ["rows"],
-        message: "TY2025 IRS8958 permits at most 40 native rows per line",
+        message: "IRS8958 permits at most 40 native rows per line",
       });
       break;
     }

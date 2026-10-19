@@ -1,6 +1,10 @@
 /** MeF readiness: every complete sample return through calculation, XML and IRS business rules. */
 import * as fs from "node:fs/promises";
 import { z } from "zod";
+import { PDFDocument, StandardFonts } from "pdf-lib";
+import { form4852RetainedPdf } from "../../forms/f1040/2025/pdf/forms/income/wages/f4852_retained.ts";
+import { sha256Hex } from "../../forms/f1040/2025/return-processing/prepared-source.ts";
+import type { Form4852RetainedDocument } from "../../forms/f1040/2025/domains/income/wages/form4852/form4852_source.ts";
 import { f1040_2025 } from "../../forms/f1040/2025/index.ts";
 import { f1040_2026 } from "../../forms/f1040/2026/index.ts";
 import type { FormDefinition } from "../../core/types/form-definition.ts";
@@ -12,6 +16,10 @@ import { normalizeAllPending } from "../../forms/f1040/2025/return-processing/pe
 import { extractFilerIdentity } from "../../forms/f1040/mef/filer.ts";
 import { shiftDatedFacts } from "./sample-year.ts";
 import { withSyntheticForm1098Copy } from "../../forms/f1040/2025/pdf/reviews/deductions/mortgage/review-1098-copy.fixture.ts";
+import { withSyntheticW2GCopy } from "../../forms/f1040/2025/pdf/reviews/income/other/review-w2g-copy.fixture.ts";
+import type { FilerIdentity } from "../../forms/f1040/mef/header.ts";
+import { itemSchema as w2gItemSchema } from "../../forms/f1040/nodes/inputs/income/gambling/w2g/index.ts";
+import type { MefPdfAttachment } from "../../forms/f1040/2025/mef/form-descriptor.ts";
 import {
   businessRuleReport,
   emittedValidationScope,
@@ -171,6 +179,186 @@ export async function sampleForYear(
   );
 }
 
+const W2G_COPY_SUFFIX = "-W2G-CopyB.pdf";
+
+/**
+ * A synthetic W-2G Copy B is printed on the form revision issued for its
+ * calendar year, so a moved sample is issued that year's Copy B in place of
+ * the attachment it carried.
+ */
+async function reissuedW2GCopies(
+  inputs: Record<string, unknown>,
+  attachments: readonly MefPdfAttachment[],
+  filer: FilerIdentity | undefined,
+  taxYear: number,
+): Promise<{
+  inputs: Record<string, unknown>;
+  attachments: readonly MefPdfAttachment[];
+}> {
+  if (!Array.isArray(inputs.w2g) || !filer) return { inputs, attachments };
+  const replaced = new Map<string, MefPdfAttachment>();
+  const w2g = await Promise.all(
+    inputs.w2g.map(async (item: Record<string, unknown>) => {
+      const fileName = item.issued_copy_attachment_file_name;
+      if (typeof fileName !== "string" || !fileName.endsWith(W2G_COPY_SUFFIX)) {
+        return item;
+      }
+      const {
+        issued_copy_attachment_file_name: _,
+        issued_copy_pdf_sha256: __,
+        ...source
+      } = item;
+      const copy = await withSyntheticW2GCopy(
+        fileName.slice(0, -W2G_COPY_SUFFIX.length),
+        w2gItemSchema.parse(source),
+        filer,
+        taxYear,
+      );
+      replaced.set(fileName, copy.attachment);
+      return copy.item;
+    }),
+  );
+  return {
+    inputs: { ...inputs, w2g },
+    attachments: attachments.map((a) => replaced.get(a.fileName) ?? a),
+  };
+}
+
+const retainedRefSchema = z.object({
+  document_reference: z.string(),
+  sha256: z.string(),
+}).passthrough();
+const retainedRecordSchema = z.object({
+  source_workpaper: retainedRefSchema,
+  completed_form: retainedRefSchema,
+  incorrect_original: retainedRefSchema.optional(),
+  treatment_documents: z.array(retainedRefSchema).optional(),
+}).passthrough();
+const form4852ReviewInputSchema = z.object({
+  reviewed_source: z.object({ records: z.array(retainedRecordSchema) })
+    .passthrough(),
+}).passthrough();
+
+/** The completed Form 4852 with its line 4 year printed for `taxYear`. */
+async function completedForm4852ForYear(
+  bytes: Uint8Array,
+  taxYear: number,
+): Promise<Uint8Array> {
+  const pdf = await PDFDocument.load(bytes, { updateMetadata: false });
+  const year = form4852RetainedPdf.fields.find((f) =>
+    f.domainKey === "form_year"
+  );
+  if (!year) throw new Error("Form 4852 retained PDF has no year field");
+  pdf.getForm().getTextField(year.pdfField).setText(String(taxYear));
+  pdf.getForm().updateFieldAppearances(
+    await pdf.embedFont(StandardFonts.Helvetica),
+  );
+  return pdf.save();
+}
+
+/**
+ * A sample's retained Form 4852 packet is reissued for the year it moves to:
+ * its JSON source records carry the same moved dates as the inputs, the
+ * completed form prints that year, and the reviewed hashes follow the bytes.
+ * An incorrect original stays as issued.
+ */
+async function reissuedForm4852Packet(
+  inputs: Record<string, unknown>,
+  documents: readonly Form4852RetainedDocument[],
+  taxYear: number,
+): Promise<{
+  inputs: Record<string, unknown>;
+  documents: readonly Form4852RetainedDocument[];
+}> {
+  const review = form4852ReviewInputSchema.safeParse(
+    inputs.f4852_reviewed_source,
+  );
+  if (!review.success) return { inputs, documents };
+  const records = review.data.reviewed_source.records;
+  const completed = new Set(
+    records.map((r) => r.completed_form.document_reference),
+  );
+  const reissued = new Set([
+    ...completed,
+    ...records.flatMap((r) => [
+      r.source_workpaper.document_reference,
+      ...(r.treatment_documents ?? []).map((d) => d.document_reference),
+    ]),
+  ]);
+  const replaced = await Promise.all(documents.map(async (document) => {
+    if (!reissued.has(document.document_reference)) return document;
+    const bytes = completed.has(document.document_reference)
+      ? await completedForm4852ForYear(document.bytes, taxYear)
+      : new TextEncoder().encode(JSON.stringify(shiftDatedFacts(
+        JSON.parse(new TextDecoder().decode(document.bytes)),
+        taxYear - SAMPLE_TAX_YEAR,
+      )));
+    return { ...document, bytes };
+  }));
+  const hashes = new Map(
+    await Promise.all(
+      replaced.map(async (d) =>
+        [d.document_reference, await sha256Hex(d.bytes)] as const
+      ),
+    ),
+  );
+  const rehash = (ref: z.infer<typeof retainedRefSchema>) =>
+    reissued.has(ref.document_reference)
+      ? { ...ref, sha256: hashes.get(ref.document_reference) ?? ref.sha256 }
+      : ref;
+  return {
+    inputs: {
+      ...inputs,
+      f4852_reviewed_source: {
+        ...review.data,
+        reviewed_source: {
+          ...review.data.reviewed_source,
+          records: records.map((r) => ({
+            ...r,
+            source_workpaper: rehash(r.source_workpaper),
+            completed_form: rehash(r.completed_form),
+            ...(r.treatment_documents
+              ? { treatment_documents: r.treatment_documents.map(rehash) }
+              : {}),
+          })),
+        },
+      },
+    },
+    documents: replaced,
+  };
+}
+
+/** A sample's attachments as issued for `taxYear`, matching `sampleForYear`. */
+export async function sampleDocumentsForYear(
+  shifted: Record<string, unknown>,
+  documents:
+    & Pick<PdfReviewFixture, "attachments" | "retainedSourceDocuments">
+    & { readonly filer?: FilerIdentity },
+  taxYear: number,
+): Promise<{
+  inputs: Record<string, unknown>;
+  attachments: readonly MefPdfAttachment[];
+  retainedSourceDocuments: readonly Form4852RetainedDocument[];
+}> {
+  const attachments = documents.attachments ?? [];
+  const retained = documents.retainedSourceDocuments ?? [];
+  if (taxYear === SAMPLE_TAX_YEAR) {
+    return { inputs: shifted, attachments, retainedSourceDocuments: retained };
+  }
+  const w2g = await reissuedW2GCopies(
+    shifted,
+    attachments,
+    documents.filer,
+    taxYear,
+  );
+  const packet = await reissuedForm4852Packet(w2g.inputs, retained, taxYear);
+  return {
+    inputs: packet.inputs,
+    attachments: w2g.attachments,
+    retainedSourceDocuments: packet.documents,
+  };
+}
+
 function oneLine(error: unknown): string {
   const message = error instanceof Error ? error.message : String(error);
   return message.replace(/\s+/g, " ").trim().slice(0, 160);
@@ -179,19 +367,21 @@ function oneLine(error: unknown): string {
 /** What stops one signed sample return from filing, as sorted findings. */
 export async function returnFindings(
   inputs: Record<string, unknown>,
-  documents: Pick<
-    PdfReviewFixture,
-    "attachments" | "retainedSourceDocuments"
-  > = {},
+  documents:
+    & Pick<PdfReviewFixture, "attachments" | "retainedSourceDocuments">
+    & { readonly filer?: FilerIdentity } = {},
   taxYear = 2025,
 ): Promise<string[]> {
   const form = SAMPLE_YEARS[taxYear]?.form;
   if (!form) throw new Error(`No sample returns for tax year ${taxYear}`);
+  const sample = await sampleDocumentsForYear(
+    await sampleForYear(inputs, taxYear),
+    documents,
+    taxYear,
+  );
   let result: ReturnType<FormDefinition["executeReturn"]>;
   try {
-    result = form.executeReturn(
-      signedForYear(await sampleForYear(inputs, taxYear), taxYear),
-    );
+    result = form.executeReturn(signedForYear(sample.inputs, taxYear));
   } catch (error) {
     return [`calculation threw ${oneLine(error)}`];
   }
@@ -212,8 +402,8 @@ export async function returnFindings(
     xml = (await form.prepareReturn(
       pending,
       filer,
-      documents.attachments ?? [],
-      documents.retainedSourceDocuments ?? [],
+      sample.attachments,
+      sample.retainedSourceDocuments,
     )).bundle.xml;
   } catch (error) {
     return [`xml ${oneLine(error)}`];

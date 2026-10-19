@@ -20,6 +20,14 @@ import { buildPending } from "../../../../../2025/mef/execution/pending.ts";
 import { buildPdfBytes } from "../../../../../2025/pdf/builder.ts";
 import { projectStagedForm8958Documents } from "./staged_documents.ts";
 
+type StagedStart = Parameters<typeof projectStagedForm8958Documents>[0];
+type StagedFiler = Parameters<typeof projectStagedForm8958Documents>[1];
+const project2025 = (start: StagedStart, filer: StagedFiler) =>
+  projectStagedForm8958Documents(start, filer, {
+    taxYear: 2025,
+    formType: "f1040",
+  });
+
 const source = {
   domicile_state: CommunityPropertyState.CA,
   federal_filing_status: FilingStatus.MFS as const,
@@ -118,7 +126,7 @@ const filer = {
 };
 
 test("f8958 staged XML and PDF are derived from the reconciled ledger", () => {
-  const result = projectStagedForm8958Documents(start, filer);
+  const result = project2025(start, filer);
   assertEquals(result.execution.diagnostics, []);
   assertEquals(result.execution.pending.f1040?.line1a_wages, 50_000);
   assertEquals(result.execution.pending.f1040?.line25a_w2_withheld, 5_000);
@@ -161,14 +169,14 @@ test("f8958 staged projection requires the reviewed spouse return to match both 
     ]
   ) {
     assertThrows(() =>
-      projectStagedForm8958Documents(
+      project2025(
         { ...start, f8958: { ...source, reviewed_spouse_return } },
         filer,
       )
     );
   }
   assertThrows(() =>
-    projectStagedForm8958Documents(
+    project2025(
       {
         ...start,
         f8958: {
@@ -182,6 +190,26 @@ test("f8958 staged projection requires the reviewed spouse return to match both 
   );
 });
 
+test("f8958 staged projection runs the TY2026 return under its own year", () => {
+  const source2026 = {
+    ...source,
+    community_property_period: {
+      ...source.community_property_period,
+      from: "2026-01-01",
+      through: "2026-12-31",
+    },
+    reviewed_spouse_return: { ...source.reviewed_spouse_return, tax_year: 2026 },
+  };
+  const result = projectStagedForm8958Documents(
+    { ...start, f8958: source2026 },
+    filer,
+    { taxYear: 2026, formType: "f1040" },
+  );
+  assertEquals(result.execution.diagnostics, []);
+  assertEquals(result.execution.pending.f1040?.line1a_wages, 50_000);
+  assertThrows(() => project2025({ ...start, f8958: source2026 }, filer));
+});
+
 test("f8958 staged projection rejects altered W-2 and filer source", () => {
   for (
     const changed of [
@@ -193,13 +221,13 @@ test("f8958 staged projection rejects altered W-2 and filer source", () => {
       },
     ]
   ) {
-    assertThrows(() => projectStagedForm8958Documents(changed, filer));
+    assertThrows(() => project2025(changed, filer));
   }
 });
 
 test("f8958 staged projection rejects non-wage rows and absent filer identity", () => {
   assertThrows(() =>
-    projectStagedForm8958Documents(
+    project2025(
       {
         ...start,
         f8958: {
@@ -215,7 +243,7 @@ test("f8958 staged projection rejects non-wage rows and absent filer identity", 
     )
   );
   assertThrows(() =>
-    projectStagedForm8958Documents(
+    project2025(
       start,
       { ...filer, firstName: undefined },
     )
@@ -256,7 +284,7 @@ test("f8958 staged whole-dollar allocations conserve both shares and preserve th
       line25a_w2_withheld: spouseWithheld,
       line25d_total_withholding: spouseWithheld,
     });
-    const result = projectStagedForm8958Documents(input, filer);
+    const result = project2025(input, filer);
     const pending = result.execution.pending;
     assertEquals(pending.f1040.line11_agi, taxpayerWage);
     assertEquals(pending.f1040.line25d_total_withholding, taxpayerWithheld);
@@ -274,7 +302,7 @@ test("f8958 staged whole-dollar allocations conserve both shares and preserve th
 });
 
 test("f8958 complete staged execution remains blocked by both public exporters", async () => {
-  const staged = projectStagedForm8958Documents(start, filer);
+  const staged = project2025(start, filer);
   // The staged projector deliberately accepts a minimal general source;
   // public export also needs the retained digital-assets answer.
   const executed = f1040_2025.executeReturn({
@@ -310,7 +338,7 @@ try {
   componentSchemaAvailable = sys.statSync(componentSchema).isFile;
 } catch { /* local IRS schema */ }
 test.skipIf(!componentSchemaAvailable)("f8958 staged wage and withholding component validates against TY2025 XSD", async () => {
-    const staged = projectStagedForm8958Documents(start, filer);
+    const staged = project2025(start, filer);
     // Supply only the component namespace/required document ID, not a fake return.
     const xml = staged.xml.replace(
       "<IRS8958>",

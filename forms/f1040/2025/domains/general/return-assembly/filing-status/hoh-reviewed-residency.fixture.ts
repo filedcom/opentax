@@ -35,7 +35,7 @@ export function hohReviewedResidencyInputs(
       child.eic_birth_residency_review = {
         birth_record_reference: "Synthetic HOH December birth",
         us_home_residence_periods: [period("2025-12-01", "2025-12-16")],
-        alive_on_2025_12_31_verified: true,
+        alive_at_year_end_verified: true,
       };
     } else {child.eic_death_residency_review = {
         child_ssn: "444556666",

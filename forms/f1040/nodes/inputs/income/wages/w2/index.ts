@@ -36,7 +36,7 @@ import { f1040 } from "../../../../outputs/general/return-assembly/f1040/index.t
 import { schedule1 } from "../../../../outputs/general/return-assembly/schedule1/index.ts";
 import { f8812 } from "../../../credits/child/f8812/index.ts";
 import type { NodeContext } from "../../../../../../../core/types/node-context.ts";
-import { CONFIG_BY_YEAR } from "../../../../config/index.ts";
+import { CONFIG_BY_YEAR, configForYear } from "../../../../config/index.ts";
 import {
   isQualifiedTipsOccupationCode,
   schedule1a,
@@ -73,6 +73,7 @@ export enum Box12Code {
   R = "R", // Employer contributions to Archer MSA
   S = "S", // 408(p) SIMPLE salary reduction contributions
   T = "T", // Adoption benefits
+  TP = "TP", // Cash tips reported to the employer (2026 W-2)
   TT = "TT", // Qualified overtime compensation (2026 W-2)
   V = "V", // Income from exercise of nonstatutory stock options
   W = "W", // Employer contributions to HSA
@@ -175,7 +176,7 @@ export const w2ItemSchema = z.object({
     "Coded benefit/deferral entries (up to 4 per W-2)",
   ),
   excess_deferral_review: excessDeferralReviewSchema.optional().describe(
-    "Reviewed non-SIMPLE 401(k), age, and W-2 evidence for a 2025 code D excess deferral",
+    "Reviewed non-SIMPLE 401(k), age, and W-2 evidence for a code D excess deferral",
   ),
   box13_statutory_employee: z.boolean().optional().describe(
     "Statutory employee — wages go to Schedule C, not line 1a",
@@ -333,32 +334,13 @@ const ELECTIVE_DEFERRAL_CODES = new Set<Box12Code>([
   Box12Code.EE,
 ]);
 
-/** Below the year's base deferral limit no owner can have a line 1h excess. */
-function noCodeDExcessDeferral(
-  w2s: W2Items,
-  baseLimit: number,
-): { amount: number; owners: string[] } {
-  const byOwner = new Map<string, number>();
-  for (const item of w2s) {
-    const owner = item.employee_ssn?.replaceAll("-", "") ?? "";
-    const codeD = (item.box12_entries ?? [])
-      .filter((entry) => entry.code === Box12Code.D)
-      .reduce((sum, entry) => sum + entry.amount, 0);
-    byOwner.set(owner, (byOwner.get(owner) ?? 0) + codeD);
-  }
-  if ([...byOwner.values()].some((total) => total > baseLimit)) {
-    throw new Error(
-      "W-2 code D above the base deferral limit needs the TY2025 excess review, not yet available for this year",
-    );
-  }
-  return { amount: 0, owners: [] };
-}
-
-/** The one supported 2025 line 1h W-2 excess: traditional, non-SIMPLE code D. */
-export function codeDExcessDeferral(w2s: W2Items): {
+/** The one supported line 1h W-2 excess: traditional, non-SIMPLE code D. */
+export function codeDExcessDeferral(w2s: W2Items, taxYear: number): {
   amount: number;
   owners: string[];
 } {
+  const limits = configForYear(taxYear).retirementLimits["401k"];
+  const baseLimit = limits[49];
   const candidateOwners = new Set<string>();
   for (const item of w2s) {
     if (
@@ -385,7 +367,7 @@ export function codeDExcessDeferral(w2s: W2Items): {
           .reduce((subtotal, entry) => subtotal + entry.amount, 0),
       0,
     );
-    if (codeD <= 23_500) continue;
+    if (codeD <= baseLimit) continue;
     const sourceItems = items.filter((item) =>
       (item.box12_entries ?? []).some((entry) =>
         entry.code === Box12Code.D && entry.amount > 0
@@ -401,7 +383,7 @@ export function codeDExcessDeferral(w2s: W2Items): {
     const birth = date ? new Date(`${date}T00:00:00Z`) : new Date(Number.NaN);
     const reviewedAge = Number.isFinite(birth.getTime()) &&
         birth.toISOString().slice(0, 10) === date
-      ? 2025 - birth.getUTCFullYear()
+      ? taxYear - birth.getUTCFullYear()
       : undefined;
     const reviewedCatchUp = reviewedAge !== undefined && reviewedAge >= 50 &&
       reviewedAge <= 100 &&
@@ -422,7 +404,7 @@ export function codeDExcessDeferral(w2s: W2Items): {
       );
     if (
       reviewedCatchUp && Number.isSafeInteger(codeD) &&
-      codeD <= (reviewedAge >= 60 && reviewedAge <= 63 ? 34_750 : 31_000)
+      codeD <= (reviewedAge >= 60 && reviewedAge <= 63 ? limits[63] : limits[59])
     ) continue;
     if (
       items.some((item) =>
@@ -455,17 +437,17 @@ export function codeDExcessDeferral(w2s: W2Items): {
       dates.some((value) => value !== date) ||
       !Number.isFinite(birth.getTime()) ||
       birth.toISOString().slice(0, 10) !== date ||
-      date! < "1976-01-01" || date! > "2025-12-31" ||
+      date! < `${taxYear - 49}-01-01` || date! > `${taxYear}-12-31` ||
       sourceItems.some((item) =>
         item.taxpayer_age !== undefined &&
-        item.taxpayer_age !== 2025 - birth.getUTCFullYear()
+        item.taxpayer_age !== taxYear - birth.getUTCFullYear()
       )
     ) {
       throw new Error(
         "W-2 line 1h code D excess needs distinct employer W-2s, one under-50 owner, reviewed non-SIMPLE plans, and no competing deferrals",
       );
     }
-    amount += codeD - 23_500;
+    amount += codeD - baseLimit;
     owners.push(owner);
   }
   return { amount, owners };
@@ -498,6 +480,24 @@ function codeTTAmount(item: W2Item): number {
   return (item.box12_entries ?? [])
     .filter((entry) => entry.code === Box12Code.TT)
     .reduce((sum, entry) => sum + entry.amount, 0);
+}
+
+function codeTPAmount(item: W2Item): number {
+  return (item.box12_entries ?? [])
+    .filter((entry) => entry.code === Box12Code.TP)
+    .reduce((sum, entry) => sum + entry.amount, 0);
+}
+
+/**
+ * 2026 W-2 box 12 code TP: total cash tips reported to the employer, with the
+ * Treasury Tipped Occupation Code in box 14b (2026 General Instructions for
+ * Forms W-2 and W-3, Code TP). Draft 2026 Schedule 1-A line 4 column (iii)
+ * takes this amount for a qualifying occupation.
+ */
+function claimsCodeTP(item: W2Item): boolean {
+  return codeTPAmount(item) > 0 &&
+    item.box14b_tipped_code !== undefined &&
+    isQualifiedTipsOccupationCode(item.box14b_tipped_code);
 }
 
 /** From 2026 a reviewed overtime claim reads box 12 code TT when it is reported. */
@@ -560,6 +560,24 @@ function validateItem(
       );
     }
   }
+  if (codeTPAmount(item) > 0) {
+    // Code TP first appears on the 2026 Form W-2.
+    const codeTPReported = taxYear >= 2026;
+    if (!codeTPReported) {
+      throw new Error("W-2 box 12 code TP tips need tax year 2026 or later");
+    }
+    if (
+      item.box14b_tipped_code === undefined ||
+      item.qualified_tips_box14_review !== undefined ||
+      !Number.isSafeInteger(codeTPAmount(item)) ||
+      codeTPAmount(item) > item.box1_wages ||
+      item.box13_statutory_employee === true
+    ) {
+      throw new Error(
+        "W-2 box 12 code TP needs a box 14b occupation code and whole-dollar tips included in box 1",
+      );
+    }
+  }
   if (item.qualified_tips_box14_review !== undefined) {
     const review = item.qualified_tips_box14_review;
     const matches = (item.box14_entries ?? []).filter((entry) =>
@@ -587,7 +605,7 @@ function validateItem(
   if (
     item.box14b_tipped_code !== undefined &&
     isQualifiedTipsOccupationCode(item.box14b_tipped_code) &&
-    (item.box7_ss_tips ?? 0) > 0 &&
+    ((item.box7_ss_tips ?? 0) > 0 || codeTPAmount(item) > 0) &&
     !/^\d{9}$/.test(item.employee_ssn?.replaceAll("-", "") ?? "")
   ) {
     throw new Error("W-2 qualified tips need a nine-digit employee SSN");
@@ -595,7 +613,7 @@ function validateItem(
   if (
     item.box14b_tipped_code !== undefined &&
     isQualifiedTipsOccupationCode(item.box14b_tipped_code) &&
-    (item.box7_ss_tips ?? 0) > 0 &&
+    ((item.box7_ss_tips ?? 0) > 0 || codeTPAmount(item) > 0) &&
     (!/^\d{2}-?\d{7}$/.test(item.employer_ein ?? "") ||
       !item.employer_name?.trim())
   ) {
@@ -711,6 +729,7 @@ function wageFields(w2s: W2Items): F1040Input {
 function communityW2Fields(
   w2s: W2Items,
   allocation: NonNullable<z.infer<typeof inputSchema>["f8958_allocation"]>,
+  taxYear: number,
 ): F1040Input {
   const item = w2s[0];
   const wages = allocation.rows.find((row) =>
@@ -722,8 +741,8 @@ function communityW2Fields(
   if (
     w2s.length !== 1 || !item || !wages || !withholding ||
     allocation.rows.length !== 2 ||
-    allocation.community_property_period.from !== "2025-01-01" ||
-    allocation.community_property_period.through !== "2025-12-31" ||
+    allocation.community_property_period.from !== `${taxYear}-01-01` ||
+    allocation.community_property_period.through !== `${taxYear}-12-31` ||
     wages.allocation_basis !== AllocationBasis.CommunityEqual ||
     withholding.allocation_basis !== AllocationBasis.CommunityEqual ||
     wages.source_document_id !== withholding.source_document_id ||
@@ -1009,6 +1028,7 @@ function scheduleSEOutput(w2s: W2Items): NodeOutput[] {
 function qualifiedTipsOutput(w2s: W2Items): NodeOutput[] {
   const tips = regularItems(w2s)
     .filter((item) =>
+      claimsCodeTP(item) ||
       item.qualified_tips_box14_review !== undefined ||
       (item.box14b_tipped_code !== undefined &&
         isQualifiedTipsOccupationCode(item.box14b_tipped_code) &&
@@ -1016,16 +1036,21 @@ function qualifiedTipsOutput(w2s: W2Items): NodeOutput[] {
     )
     .map((item) => {
       const review = item.qualified_tips_box14_review;
+      const codeTP = claimsCodeTP(item);
       return {
         employee_ssn: item.employee_ssn!,
         employer_ein: item.employer_ein!,
         employer_name: item.employer_name!,
-        amount: review === undefined
+        amount: codeTP
+          ? codeTPAmount(item)
+          : review === undefined
           ? item.box7_ss_tips!
           : box14Amount(item, review.box14_description)!,
         box5_medicare_wages: item.box5_medicare_wages,
         occupation_code: review?.occupation_code ?? item.box14b_tipped_code!,
-        source_type: review === undefined
+        source_type: codeTP
+          ? "w2_code_tp" as const
+          : review === undefined
           ? "w2_box7" as const
           : "w2_box14" as const,
       };
@@ -1323,12 +1348,10 @@ class W2Node extends TaxNode<typeof inputSchema> {
         "Patron reviewed owner W-2 sources differ from public issued copies",
       );
     }
-    const excessDeferral = ctx.taxYear === 2025
-      ? codeDExcessDeferral(input.w2s)
-      : noCodeDExcessDeferral(input.w2s, cfg.retirementLimits["401k"][49]);
+    const excessDeferral = codeDExcessDeferral(input.w2s, ctx.taxYear);
 
     const incomeTaxFields = input.f8958_allocation
-      ? communityW2Fields(input.w2s, input.f8958_allocation)
+      ? communityW2Fields(input.w2s, input.f8958_allocation, ctx.taxYear)
       : { ...withholdingFields(input.w2s), ...wageFields(input.w2s) };
     const f1040Fields: F1040Input = {
       ...incomeTaxFields,

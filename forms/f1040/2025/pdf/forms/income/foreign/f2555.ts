@@ -1,3 +1,4 @@
+import { mefTaxYear } from "../../../../mef/support/year-config.ts";
 import type { PdfFieldEntry, PdfFormDescriptor } from "../../../review-support/form-descriptor.ts";
 import {
   calculatePhysicalPresence2555,
@@ -123,7 +124,7 @@ export const form2555Pdf: PdfFormDescriptor = {
   projectFields(raw, pending) {
     if (Object.keys(raw).length === 0) return {};
     const filing = physicalPresenceFilingSchema.parse(raw.filing_details);
-    const lines = calculatePhysicalPresence2555(filing, 2025);
+    const lines = calculatePhysicalPresence2555(filing, mefTaxYear());
     if (
       pending.schedule1?.line8d_foreign_earned_income_exclusion !==
         lines.line45 ||

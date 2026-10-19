@@ -1,3 +1,4 @@
+import { mefTaxYear } from "../../../support/year-config.ts";
 import { notePrincipalRepaid } from "../../../../../nodes/intermediate/forms/income/business/form7203/repayment-inventory.ts";
 import { projectPassiveSCorp7203Copy } from "../../../../domains/income/business/passive-s-corp-loss-copies.ts";
 import { buildFirstYearPassiveSCorp7203 } from "../../../../domains/income/business/form7203/form7203-passive-loss-projection.ts";
@@ -32,6 +33,7 @@ export function buildReviewedStockLoss7203(
     rawFields,
     context?.pending ?? {},
     context?.filer,
+    mefTaxYear(context),
   );
   const overflow = projectOverflowDebtInventory(note, allowedDebt);
   const repayment = sumPrincipalRepayments(note?.principal_repayments);
@@ -40,7 +42,7 @@ export function buildReviewedStockLoss7203(
     note?.open_account_net_advance_amount ?? 0;
   const secondRepayment = notePrincipalRepaid(note?.second_formal_note);
   const secondDebtAfterRepayment = secondAdvance - secondRepayment;
-  const thirdAdvance = note?.kind === "owned_2025_formal_and_open_account" &&
+  const thirdAdvance = note?.kind === "owned_current_year_formal_and_open_account" &&
       note.second_formal_note
     ? note.open_account_net_advance_amount
     : undefined;
@@ -99,7 +101,7 @@ export function buildReviewedStockLoss7203(
       : [
         note
           ? elements("ShareholderDebtBasisGrp", [
-            note.kind === "owned_2025_open_account"
+            note.kind === "owned_current_year_open_account"
               ? element("OpenAccountDebtInd", "X")
               : element("FormalNoteInd", "X"),
             element("LoanBalanceBeginTaxYrAmt", 0),
@@ -124,9 +126,9 @@ export function buildReviewedStockLoss7203(
           ])
           : "",
         (note?.second_formal_note ||
-            note?.kind === "owned_2025_formal_and_open_account")
+            note?.kind === "owned_current_year_formal_and_open_account")
           ? elements("ShareholderDebtBasisGrp", [
-            note?.kind === "owned_2025_formal_and_open_account" &&
+            note?.kind === "owned_current_year_formal_and_open_account" &&
               !note.second_formal_note
               ? element("OpenAccountDebtInd", "X")
               : element("FormalNoteInd", "X"),

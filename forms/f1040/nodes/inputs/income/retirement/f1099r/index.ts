@@ -16,6 +16,7 @@ import {
 } from "../../../../intermediate/forms/income/retirement/form8606/recharacterization.ts";
 import { reconcileRothOwnerInventoryCopies, rothOwnerInventorySchema } from "../../../../intermediate/forms/income/retirement/form8606/roth-inventory.ts";
 import {
+  assertRothActivityTaxYear,
   reviewedRothActivity,
   rothActivityReviewSchema,
 } from "../../../../intermediate/forms/income/retirement/form8606/roth-activity.ts";
@@ -1164,7 +1165,7 @@ function validateItem(item: R1099Item, taxYear: number): void {
     )
   ) {
     throw new Error(
-      "Non-IRA code 8 corrective distribution needs one identified 2025 Form 1099-R, owner, payer and positive taxable box 2a",
+      "Non-IRA code 8 corrective distribution needs one identified Form 1099-R, owner, payer and positive taxable box 2a",
     );
   }
   validateIraRolloverEvidence(item, taxYear);
@@ -1175,6 +1176,7 @@ function validateItem(item: R1099Item, taxYear: number): void {
     throw new Error("Complete Roth inventory conflicts with another distribution treatment");
   }
   if (item.roth_activity_review) {
+    assertRothActivityTaxYear(item.roth_activity_review, taxYear);
     const facts = reviewedRothActivity(item.roth_activity_review);
     const payment = facts.review.payment;
     if (
@@ -1397,7 +1399,7 @@ function form8606PartIInput(item: R1099Item) {
     distribution_evidence: evidence,
     filing_details: {
       owner: item.ts === "S" ? IraOwner.Spouse : IraOwner.Taxpayer,
-      prior_basis_documented_from_2024_form8606: true as const,
+      prior_basis_documented_from_prior_year_form8606: true as const,
       no_ira_distributions_or_conversions_confirmed: false,
     },
   };
@@ -1567,7 +1569,7 @@ function form8606RothInput(item: R1099Item) {
 // Form 5329 outputs: code 1 ordinarily routes early distributions here.
 // A reviewed, source-matched Form 8915-F qualified disaster distribution is
 // exempt and the exporter requires its actual Form 8915-F document.
-function form5329Outputs(items: R1099Items): NodeOutput[] {
+function form5329Outputs(items: R1099Items, taxYear: number): NodeOutput[] {
   const inventories = reconcileRothOwnerInventoryCopies(activeItems(items));
   const earlyItems = activeItems(items).filter(
     (item) =>
@@ -1595,7 +1597,7 @@ function form5329Outputs(items: R1099Items): NodeOutput[] {
       ? taxableTraditionalDistribution({
         ...form8606PartIInput(item),
         nondeductible_contributions: 0,
-      })
+      }, taxYear)
       // Form 5329 line 1 uses the early distribution included in income.
       // A confirmed IRA rollover removes its rolled portion from that amount.
       : isIraRollover(item)
@@ -2115,14 +2117,15 @@ class F1099rNode extends TaxNode<typeof inputSchema> {
         sum + (item.box14_state_tax ?? 0) + (item.box17_local_tax ?? 0),
       0,
     );
+    // Code 8: corrective distributions taxable in the return year (2025 and
+    // 2026 Instructions for Forms 1099-R and 5498, box 7 code 8).
     if (
       corrective.length > 0 &&
-      (ctx.taxYear !== 2025 ||
-        new Set(corrective.map((item) => item.source_document_reference))
-            .size !== corrective.length)
+      new Set(corrective.map((item) => item.source_document_reference))
+          .size !== corrective.length
     ) {
       throw new Error(
-        "TY2025 corrective plan distributions need distinct Form 1099-R source references",
+        "Corrective plan distributions need distinct Form 1099-R source references",
       );
     }
     assertIraRolloverEvidence(r1099s, ctx.taxYear);
@@ -2221,7 +2224,7 @@ class F1099rNode extends TaxNode<typeof inputSchema> {
     }
 
     // Secondary form outputs
-    outputs.push(...form5329Outputs(r1099s));
+    outputs.push(...form5329Outputs(r1099s, ctx.taxYear));
     outputs.push(...form4972Outputs(r1099s));
     outputs.push(...form8606Outputs(r1099s));
 

@@ -4,13 +4,18 @@ import { reconcileForm8864DocumentSource } from "../../../credits/business/form8
 export function assertForm6251Form8864Source(
   fields: Readonly<Record<string, unknown>>,
   pending: Readonly<Record<string, unknown>> | undefined,
+  taxYear: number,
 ): void {
   const adjustment = fields.line3_form8864_income_exclusion;
   if (pending?.f8864 === undefined && adjustment === undefined) return;
   if (!pending || adjustment === undefined) {
     throw new Error("Form 6251 Form 8864 income exclusion needs its source");
   }
-  const { lines } = reconcileForm8864DocumentSource(pending.f8864, pending);
+  const { lines } = reconcileForm8864DocumentSource(
+    pending.f8864,
+    pending,
+    taxYear,
+  );
   if (adjustment !== -lines.line9) {
     throw new Error(
       "Form 6251 line 3 differs from Form 8864 taxable income exclusion",

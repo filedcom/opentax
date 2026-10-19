@@ -35,7 +35,7 @@ const studentMinorFuta = {
         birth_date: "2008-05-10",
         birth_date_source_reference: "student-age-record",
         student_enrollment_source_reference: "2025-school-enrollment",
-        student_during_2025_verified: true,
+        student_during_tax_year_verified: true,
       },
       ordinary_cash_only: true,
       annual_cash_wages: 4_000,
@@ -61,7 +61,7 @@ const nonstudentMinorFuta = {
         birth_date_source_reference: "working-minor-age-record",
         education_status_source_reference: "2025-nonenrollment-record",
         principal_occupation_source_reference: "2025-household-work-record",
-        not_a_student_during_2025_verified: true,
+        not_a_student_during_tax_year_verified: true,
         household_services_principal_occupation_verified: true,
       },
       ordinary_cash_only: true,
@@ -801,7 +801,7 @@ test("2026: cash wages below $3,000 are not FICA wages", () => {
   );
 });
 
-test("2026: FUTA and minor classifications stay refused", () => {
+test("2026: FUTA stays refused and a minor still needs its classification", () => {
   assertThrows(
     () =>
       compute2026({
@@ -815,7 +815,7 @@ test("2026: FUTA and minor classifications stay refused", () => {
         },
       }),
     Error,
-    "minor FICA classifications are not supported for 2026",
+    "needs exactly one student or principal-occupation source classification",
   );
   assertThrows(() => compute2026(studentMinorFuta), Error);
 });

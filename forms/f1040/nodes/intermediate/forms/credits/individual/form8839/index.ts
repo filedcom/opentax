@@ -3,6 +3,7 @@ import type { NodeResult } from "../../../../../../../../core/types/tax-node.ts"
 import { TaxNode } from "../../../../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../../../../core/types/output-nodes.ts";
 import { filingStatusSchema } from "../../../../../types.ts";
+import { CONFIG_BY_YEAR } from "../../../../../config/index.ts";
 import type { NodeContext } from "../../../../../../../../core/types/node-context.ts";
 
 // ─── Schemas ─────────────────────────────────────────────────────────────────
@@ -37,16 +38,17 @@ export const adoptionExpenseSchema = z.object({
   }
 });
 
-// One domestic adoption finalized in 2025, with record identifiers for
-// independent review. Record identifiers do not themselves verify contents.
+// One domestic adoption finalized in the return's tax year, with record
+// identifiers for independent review. Record identifiers do not themselves
+// verify contents.
 export const childSchema = z.object({
   first_name: z.string().min(1).max(20),
   last_name: z.string().min(1).max(35),
-  birth_year: z.number().int().min(2008).max(2025),
+  birth_year: z.number().int(),
   ssn: z.string().regex(/^\d{9}$/),
   final_decree: z.object({
     source_document_id: sourceDocumentIdSchema,
-    finalization_date: dateSchema.refine((date) => date.startsWith("2025-")),
+    finalization_date: dateSchema,
     issuing_jurisdiction: z.string().min(1),
     child_origin: z.literal("US"),
   }).strict(),
@@ -134,11 +136,63 @@ function priorFiledCredit(child: ChildItem): number {
     (child.prior_filed_form8839?.line6 ?? 0);
 }
 
-function qualifiedUnreimbursedExpenses(child: ChildItem): number {
+function yearOf(date: string): number {
+  return Number(date.slice(0, 4));
+}
+
+/**
+ * A domestic adoption's credit is claimed for the year its decree becomes
+ * final; that year's Form 8839 amounts apply (IRC 23(a)(2)).
+ */
+export function adoptionFinalYear(input: Form8839Input): number | undefined {
+  const years = new Set(
+    (input.children ?? []).map((child) =>
+      yearOf(child.final_decree.finalization_date)
+    ),
+  );
+  if (years.size > 1) {
+    throw new Error("Form 8839 children need one adoption-final tax year");
+  }
+  return [...years][0];
+}
+
+/** The adoption claimed is final in the return's tax year. */
+export function assertForm8839TaxYear(
+  input: Form8839Input,
+  taxYear: number,
+): void {
+  const year = adoptionFinalYear(inputSchema.parse(input));
+  if (year !== undefined && year !== taxYear) {
+    throw new Error(
+      `Form 8839 domestic adoption must become final in ${taxYear}`,
+    );
+  }
+}
+
+function adoptionAmounts(taxYear: number) {
+  const cfg = CONFIG_BY_YEAR[taxYear];
+  if (!cfg) throw new Error(`No Form 8839 amounts for TY${taxYear}`);
+  return {
+    maximum: cfg.adoptionCreditMax,
+    refundable: cfg.adoptionCreditRefundableMax,
+    phaseoutStart: cfg.adoptionPhaseoutStart,
+    phaseoutRange: cfg.adoptionPhaseoutRange,
+  };
+}
+
+// Expenses paid the year before the adoption is final, or in that year, are
+// claimed for the final year (Form 8839 instructions, line 5).
+function qualifiedUnreimbursedExpenses(
+  child: ChildItem,
+  finalYear: number,
+): number {
   return child.expenses.reduce((total, expense) => {
-    if (!/^202[45]-/.test(expense.paid_date)) {
+    const paid = yearOf(expense.paid_date);
+    if (paid !== finalYear - 1 && paid !== finalYear) {
       throw new Error(
-        "Form 8839 domestic 2025-final adoption needs 2024/2025 payment dates",
+        `Form 8839 domestic ${finalYear}-final adoption needs ${
+          finalYear - 1
+        }/${finalYear} payment dates`,
       );
     }
     return total + expense.amount - expense.reimbursed_amount;
@@ -146,16 +200,20 @@ function qualifiedUnreimbursedExpenses(child: ChildItem): number {
 }
 
 // Per-child credit before phase-out (Part II Lines 2-6).
-// A 2025-final U.S. special-needs adoption uses the remaining maximum even
-// when the reviewed receipt ledger has no paid expenses.
-function perChildBaseline(child: ChildItem, maxCreditPerChild: number): number {
+// A U.S. special-needs adoption final in the tax year uses the remaining
+// maximum even when the reviewed receipt ledger has no paid expenses.
+function perChildBaseline(
+  child: ChildItem,
+  maxCreditPerChild: number,
+  finalYear: number,
+): number {
   const prior = priorFiledCredit(child);
   const remaining = Math.max(0, maxCreditPerChild - prior);
 
   if (child.special_needs_determination) {
     return remaining;
   }
-  return Math.min(remaining, qualifiedUnreimbursedExpenses(child));
+  return Math.min(remaining, qualifiedUnreimbursedExpenses(child, finalYear));
 }
 
 // Per-child credit after phase-out (Part II Line 11a).
@@ -185,8 +243,17 @@ function creditLimitWorksheetPriority(
 
 export function prepareForm8839Credit(input: Form8839Input) {
   const sourced = inputSchema.parse(input);
+  const taxYear = adoptionFinalYear(sourced);
   const perChild = (sourced.children ?? []).map((child) => {
-    const line2 = 17_280;
+    const finalYear = taxYear!;
+    // Line 1 column (c): a child must be under 18 at the end of the year
+    // unless physically or mentally unable to care for themselves.
+    if (child.birth_year > finalYear || child.birth_year < finalYear - 17) {
+      throw new Error(
+        `Form 8839 child must be born from ${finalYear - 17} through ${finalYear}`,
+      );
+    }
+    const line2 = adoptionAmounts(finalYear).maximum;
     const line3 = priorFiledCredit(child);
     if (line3 > line2) {
       throw new Error(
@@ -194,16 +261,20 @@ export function prepareForm8839Credit(input: Form8839Input) {
       );
     }
     const line4 = Math.max(0, line2 - line3);
-    // 2025 instructions, Part II line 5: for a qualifying special-needs
-    // adoption finalized in 2025, enter the remaining statutory maximum,
-    // not the actual cash expenses paid.
+    // Instructions, Part II line 5: for a qualifying special-needs adoption
+    // final in the tax year, enter the remaining statutory maximum, not the
+    // actual cash expenses paid.
     const line5 = child.special_needs_determination
       ? line4
-      : qualifiedUnreimbursedExpenses(child);
-    const line6 = perChildBaseline(child, line2);
+      : qualifiedUnreimbursedExpenses(child, finalYear);
+    const line6 = perChildBaseline(child, line2, finalYear);
     return { line2, line3, line4, line5, line6 };
   });
-  return { perChild, adoptionBenefits: sourced.adoption_benefits ?? 0 };
+  return {
+    taxYear,
+    perChild,
+    adoptionBenefits: sourced.adoption_benefits ?? 0,
+  };
 }
 
 export type PreparedForm8839Credit = ReturnType<typeof prepareForm8839Credit>;
@@ -219,11 +290,16 @@ export function settleForm8839Credit(
   }
   const context = finalizedReturnCreditContextSchema.parse(finalizedReturn);
   const magi = finalizedMagi(context);
-  const fraction = phaseOutFraction(magi, 259_190, 40_000);
+  const amounts = prepared.taxYear === undefined
+    ? undefined
+    : adoptionAmounts(prepared.taxYear);
+  const fraction = amounts
+    ? phaseOutFraction(magi, amounts.phaseoutStart, amounts.phaseoutRange)
+    : 0;
   const perChild = prepared.perChild.map((base) => {
     const line10 = Math.round(base.line6 * fraction * 100) / 100;
     const line11a = perChildAllowed(base.line6, fraction);
-    const line11b = Math.min(line11a, 5_000);
+    const line11b = Math.min(line11a, amounts!.refundable);
     return { ...base, line10, line11a, line11b };
   });
   const line11c = perChild.reduce((sum, child) => sum + child.line11b, 0);
@@ -238,6 +314,9 @@ export function settleForm8839Credit(
   const line17 = Math.min(line14, capacity);
   const line18 = line17;
   return {
+    taxYear: prepared.taxYear,
+    phaseoutStart: amounts?.phaseoutStart,
+    phaseoutEnd: amounts && amounts.phaseoutStart + amounts.phaseoutRange,
     magi,
     fraction,
     perChild,
