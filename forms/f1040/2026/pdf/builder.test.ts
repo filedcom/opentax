@@ -295,6 +295,24 @@ test("TY2026 PDF prints Form 6251 on the 2026 draft", async () => {
   assertMatch(printed, /Schedule 2 \(Form 1040\), line 2 11 56348/);
 });
 
+test("TY2026 PDF prints Form 8615 on the 2026 draft", async () => {
+  const inputs = JSON.parse(
+    JSON.stringify(fixture("single-child-unearned-income"))
+      .replace(/202[4-6]/g, (year) => String(Number(year) + 1)),
+  );
+  const printed = await text(await render(inputs));
+  assertMatch(printed, /Tax for Certain Children[\s\S]*2026/);
+  assertMatch(printed, /Alex Child 123456789\n[\s\S]*?Jane Parent 987654321/);
+  assertMatch(printed, /unearned income\. See instructions[^\n]* 1 5000/);
+  assertMatch(printed, /enter \$2,700\. Otherwise[^\n]* 2 2700/);
+  assertMatch(printed, /see the instructions [. ]* 4 3650/);
+  assertMatch(printed, /8 Add lines 5, 6, and 7[^\n]* 8 82300/);
+  assertMatch(printed, /go to Part III [. ]* 11 257/);
+  assertMatch(printed, /14 Subtract line 5 from line 4[^\n]* 14 1350/);
+  assertMatch(printed, /16 Add lines 13 and 15[^\n]* 16 393/);
+  assertMatch(printed, /child files Form 2555[^\n]* 18 393/);
+});
+
 test("TY2026 PDF prints Form 2441 Part I providers as columns", async () => {
   const printed = await text(
     await render(fixture("single-form2441-child-care-credit")),
@@ -464,9 +482,9 @@ test("TY2026 PDF prints Form 8863 on the 2026 draft", async () => {
 
 test("TY2026 PDF refuses, by name, a form with no TY2026 mapping", async () => {
   await assertRejects(
-    () => render(fixture("single-child-unearned-income")),
+    () => render(fixture("single-form5329-two-early-ira-distributions")),
     Error,
-    "TY2026 PDF export needs form8615",
+    "TY2026 PDF export needs form5329",
   );
 });
 
