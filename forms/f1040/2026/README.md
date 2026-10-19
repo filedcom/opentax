@@ -7,7 +7,8 @@ normalization with the 2026v1.0 schema. It accepts every input TY2025 accepts;
 there is no allowlist.
 
 PDF output (`pdf/builder.ts`) prints Form 1040, Schedules 1, 1-A, 2, 3, A, B, C, D,
-E and SE and Forms 2441, 8863, 8889 and 8995 on the IRS 2026 early-release drafts, fetched from `irs.gov/pub/irs-dft/` and pinned by
+E and SE and Forms 2441, 6251, 8606, 8615, 8863, 8880, 8889, 8949, 8959, 8960
+and 8995 on the IRS 2026 early-release drafts, fetched from `irs.gov/pub/irs-dft/` and pinned by
 SHA-256 like the 2025 templates; the IRS cover sheet is dropped and the packet's
 PDF Subject and the CLI say it uses draft forms. Each overlay in `pdf/forms/`
 reuses the 2025 projection, built for the 2026 tax year, and renames only the

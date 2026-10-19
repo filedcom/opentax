@@ -180,11 +180,6 @@
     "count": 1
   },
   {
-    "path": "forms/f1040/2025/domains/credits/individual/form8880/form8880_tax_limit.ts",
-    "pattern": "year-value",
-    "count": 1
-  },
-  {
     "path": "forms/f1040/2025/domains/deductions/additional/schedule1a-senior-source.ts",
     "pattern": "year-value",
     "count": 1
@@ -763,11 +758,6 @@
     "path": "forms/f1040/2025/pdf/forms/income/investments/f8815_address.ts",
     "pattern": "year-identifier",
     "count": 2
-  },
-  {
-    "path": "forms/f1040/2025/pdf/forms/income/investments/f8949.ts",
-    "pattern": "year-value",
-    "count": 1
   },
   {
     "path": "forms/f1040/2025/pdf/forms/income/retirement/f8915f_groups.ts",
