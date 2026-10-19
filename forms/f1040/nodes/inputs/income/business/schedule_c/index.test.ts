@@ -822,9 +822,24 @@ test("routing_gambler_with_profit_routes_normally: professional_gambler, profit=
   assertEquals(input.line3_schedule_c, 1000);
 });
 
-test("Schedule C positive interest requires a documented section 163(j) exemption", () => {
+// Form 8990 (2025) instructions, Who Must File: a taxpayer meeting the IRC
+// 448(c) gross-receipts test ($31,000,000 for 2025) files no Form 8990, and
+// its business interest is not limited.
+test("Schedule C interest under the 448(c) threshold is exempt by default", () => {
+  const result = compute([minimalItem({
+    line_1_gross_receipts: 558_695,
+    line_16b_interest_other: 10_079,
+  })]);
+  assertEquals(findOutput(result, "form8990"), undefined);
+  assertEquals(
+    findOutput(result, "schedule1")?.fields.line3_schedule_c,
+    548_616,
+  );
+});
+
+test("Schedule C interest over the threshold requires a documented section 163(j) exemption", () => {
   const business = minimalItem({
-    line_1_gross_receipts: 50_000,
+    line_1_gross_receipts: 31_000_001,
     line_16b_interest_other: 5_000,
   });
   assertThrows(

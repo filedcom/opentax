@@ -516,7 +516,13 @@ test("2025 Schedule C PDF refuses source details that cannot be printed faithful
       }),
   );
   assertThrows(
-    () => copies({ schedule_cs: [business({ line_16b_interest_other: 100 })] }),
+    () =>
+      copies({
+        schedule_cs: [business({
+          line_1_gross_receipts: 31_000_001,
+          line_16b_interest_other: 100,
+        })],
+      }),
     Error,
     "section 163(j) exemption",
   );

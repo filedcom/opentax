@@ -241,14 +241,15 @@ class ScheduleFNode extends TaxNode<typeof inputSchema> {
       outputs.push(
         this.outputNodes.output(schedule_se, {
           owner_business_sources: input.schedule_fs.map((item, index) => {
-            if (!item.proprietor_recipient || !item.farm_id) {
+            if (!item.proprietor_recipient) {
               throw new Error(
                 "Joint Schedule SE needs each farm proprietor and source activity",
               );
             }
+            // Without a farm ID, the row's place identifies the activity.
             return {
               recipient: item.proprietor_recipient,
-              source_reference: item.farm_id,
+              source_reference: item.farm_id ?? `schedule_f_${index + 1}`,
               kind: "schedule_f",
               business_name: item.line_c_farm_name,
               ein: item.line_d_ein?.replace(/\D/g, ""),

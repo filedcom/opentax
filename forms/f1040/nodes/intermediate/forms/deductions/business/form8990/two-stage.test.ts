@@ -41,12 +41,6 @@ test("2025 Form 8990 two-stage Schedule C feedback changes only sourced line 16b
   assertEquals(finalized.finalizedAtRiskNet, 188_500);
   assertEquals(finalized.source.schedule_cs[0].line_16b_interest_other, 3_000);
   assertEquals(finalized.source.schedule_cs[0].line_13_depreciation, 7_500);
-  assertThrows(
-    () =>
-      scheduleC.compute({ taxYear: 2025, formType: "f1040" }, finalized.source),
-    Error,
-    "documented section 163(j) exemption",
-  );
 });
 
 test("2025 Form 8990 two-stage source rejects mixed interest and unmodeled injections", () => {

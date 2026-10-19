@@ -240,10 +240,11 @@ test("Schedule C rejects an unsourced WOTC wage reduction in a return bundle", (
   );
 });
 
-test("Schedule C interest without section 163(j) exemption fails closed", () => {
+test("Schedule C interest over the 448(c) threshold without section 163(j) exemption fails closed", () => {
   const fields = {
     schedule_cs: [item({
       business_reference: "C-1",
+      line_1_gross_receipts: 31_000_001,
       line_16b_interest_other: 8_000,
     })],
   };
