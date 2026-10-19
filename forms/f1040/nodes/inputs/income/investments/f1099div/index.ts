@@ -459,6 +459,24 @@ class F1099divNode extends TaxNode<typeof inputSchema> {
       )
       : [];
     for (const item of div1099s) {
+      if (
+        item.investment_property_for_form4952 === undefined &&
+        item.box1a > 0 && (item.box1b ?? 0) <= item.box1a
+      ) {
+        outputs.push({
+          nodeType: form4952.nodeType,
+          fields: {
+            default_1099_dividends: item.box1a,
+            ...((item.box1b ?? 0) > 0
+              ? { default_1099_qualified_dividends: item.box1b }
+              : {}),
+            ...((item.box2a ?? 0) > 0
+              ? { default_1099_capital_gain_distributions: item.box2a }
+              : {}),
+          },
+        });
+        continue;
+      }
       if (item.investment_property_for_form4952 !== true) continue;
       if ((item.box1b ?? 0) > item.box1a) {
         throw new Error(

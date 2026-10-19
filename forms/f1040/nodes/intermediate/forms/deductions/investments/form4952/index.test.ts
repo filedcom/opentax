@@ -481,3 +481,29 @@ test("Form 4952 rejects unsourced investment income at export", () => {
     "source-reconciled investment-income route",
   );
 });
+
+// 2025 Instructions for Form 4952: line 4a gross income from property held
+// for investment includes 1099 interest and ordinary dividends; line 4b
+// excludes qualified dividends unless elected. Synthetic: investment
+// interest 3,000, unmarked 1099-INT 2,000 and 1099-DIV 1,500 (500
+// qualified): line 4c 3,000, line 6 3,000, deduction 3,000.
+test("Form 4952 counts unmarked 1099 interest and dividends as investment income", () => {
+  const lines = calculateForm4952(inputSchema.parse({
+    investment_interest_expense: 3_000,
+    amt_refigure: {
+      prior_year_disallowed_interest: 0,
+      interest_on_private_activity_bonds: 0,
+      other_gross_income_adjustment: 0,
+      qualified_dividends_adjustment: 0,
+      net_disposition_gain_adjustment: 0,
+      net_capital_gain_adjustment: 0,
+      investment_expenses_adjustment: 0,
+    },
+    default_1099_interest: 2_000,
+    default_1099_dividends: 1_500,
+    default_1099_qualified_dividends: 500,
+  }));
+  assertEquals(lines.line4a, 3_500);
+  assertEquals(lines.line4c, 3_000);
+  assertEquals(lines.line8, 3_000);
+});

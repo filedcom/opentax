@@ -76,6 +76,13 @@ export const inputSchema = z.object({
   investment_expenses: z.number().nonnegative().optional(),
   investment_expenses_exclude_sourced_k1: z.literal(true).optional(),
   source_1099_interest: accumulableAmount.optional(),
+  // 1099-INT/DIV amounts not marked either way. Interest and dividends from
+  // property held for investment are investment income (2025 Instructions
+  // for Form 4952, line 4a); they count when no 1099 item was marked.
+  default_1099_interest: accumulableAmount.optional(),
+  default_1099_dividends: accumulableAmount.optional(),
+  default_1099_qualified_dividends: accumulableAmount.optional(),
+  default_1099_capital_gain_distributions: accumulableAmount.optional(),
   source_8815_excluded_interest: z.number().int().nonnegative().optional(),
   source_1099_royalties: accumulableAmount.optional(),
   source_k1_royalties: accumulableAmount.optional(),
@@ -175,6 +182,10 @@ function sourceTotals(input: Form4952Input): Form4952Totals {
       "source_1099_interest",
       "source_8815_excluded_interest",
       "amt_refigure",
+      "default_1099_interest",
+      "default_1099_dividends",
+      "default_1099_qualified_dividends",
+      "default_1099_capital_gain_distributions",
     ]);
     if (
       Object.keys(input).some((key) => !permitted.has(key)) ||
@@ -230,6 +241,19 @@ function sourceTotals(input: Form4952Input): Form4952Totals {
   }
   const childDividends = input.form8814_line9_qualified_dividends ?? 0;
   const childGain = input.form8814_line10_capital_gain ?? 0;
+  const useDefaults = !input.royalty_debt_trace &&
+    input.source_1099_interest === undefined &&
+    input.source_1099_dividends === undefined &&
+    input.source_1099_qualified_dividends === undefined &&
+    input.source_1099_capital_gain_distributions === undefined;
+  const defaults = useDefaults
+    ? {
+      interest: sum(input.default_1099_interest),
+      dividends: sum(input.default_1099_dividends),
+      qualified: sum(input.default_1099_qualified_dividends),
+      gain: sum(input.default_1099_capital_gain_distributions),
+    }
+    : { interest: 0, dividends: 0, qualified: 0, gain: 0 };
   return {
     line1:
       (input.royalty_debt_trace
@@ -244,15 +268,18 @@ function sourceTotals(input: Form4952Input): Form4952Totals {
       sum(input.source_1099_royalties) +
       sum(input.source_k1_royalties) +
       sum(input.source_1099_dividends) +
+      defaults.interest + defaults.dividends +
       sum(input.source_k1_interest) + sum(input.source_k1_dividends) +
       childDividends + (input.form8814_line12_investment_income ?? 0),
     line4b: (input.other_investment_property_qualified_dividends ?? 0) +
-      sum(input.source_1099_qualified_dividends) +
+      sum(input.source_1099_qualified_dividends) + defaults.qualified +
       sum(input.source_k1_qualified_dividends) + childDividends,
     line4d: (input.other_investment_property_net_disposition_gain ?? 0) +
-      sum(input.source_1099_capital_gain_distributions) + childGain,
+      sum(input.source_1099_capital_gain_distributions) + defaults.gain +
+      childGain,
     netCapitalGain: (input.other_investment_property_net_capital_gain ?? 0) +
-      sum(input.source_1099_capital_gain_distributions) + childGain,
+      sum(input.source_1099_capital_gain_distributions) + defaults.gain +
+      childGain,
     line4g: input.investment_income_election ?? 0,
     line5: (input.investment_expenses ?? 0) +
       sum(input.source_k1_allowed_investment_expenses),

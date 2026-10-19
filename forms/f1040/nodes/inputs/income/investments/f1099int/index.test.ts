@@ -212,9 +212,19 @@ test("1099-INT does not split one payer when only one copy has its TIN", () => {
   );
 });
 
-test("1099-INT routes adjusted investment-property interest to Form 4952 only when affirmed", () => {
+// 2025 Instructions for Form 4952, line 4a: interest from property held
+// for investment is investment income. Unmarked interest goes to Form 4952
+// as a default source; an item marked false is left out.
+test("1099-INT routes interest to Form 4952 by default and adjusted interest when affirmed", () => {
   const ordinary = compute([minimalItem({ box1: 1_000 })]);
-  assertEquals(findOutput(ordinary, "form4952"), undefined);
+  assertEquals(findOutput(ordinary, "form4952")?.fields, {
+    default_1099_interest: 1_000,
+  });
+  const excluded = compute([minimalItem({
+    box1: 1_000,
+    investment_property_for_form4952: false,
+  })]);
+  assertEquals(findOutput(excluded, "form4952"), undefined);
   const investment = compute([minimalItem({
     box1: 1_000,
     box11: 100,
