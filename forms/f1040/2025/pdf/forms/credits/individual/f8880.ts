@@ -127,7 +127,8 @@ const fields: ReadonlyArray<PdfFieldEntry> = [
   },
 ];
 
-export const form8880Pdf: PdfFormDescriptor = {
+export function form8880PdfFor(taxYear: number): PdfFormDescriptor {
+  return {
   pendingKey: "form8880",
   pdfUrl: "https://www.irs.gov/pub/irs-prior/f8880--2025.pdf",
   pageIndices: () => [0], // The second source page contains instructions only.
@@ -170,7 +171,7 @@ export const form8880Pdf: PdfFormDescriptor = {
         source.taxpayer_dob,
         source.taxpayer_student_five_months,
         source.taxpayer_claimed_as_dependent,
-        2025,
+        taxYear,
       );
     }
     if (
@@ -182,11 +183,11 @@ export const form8880Pdf: PdfFormDescriptor = {
         source.spouse_dob,
         source.spouse_student_five_months,
         source.spouse_claimed_as_dependent,
-        2025,
+        taxYear,
       );
     }
     assertForm8880TaxLimit(line11, credit, allPending);
-    assertForm8880FiledCalculation(raw, allPending);
+    assertForm8880FiledCalculation(raw, allPending, taxYear);
     // The official line 9 field is one character wide; "x 0." is printed
     // beside it on the template.
     return {
@@ -208,4 +209,7 @@ export const form8880Pdf: PdfFormDescriptor = {
   ],
   includeWhen: (fields) =>
     ((fields["print_line12_credit"] as number | undefined) ?? 0) > 0,
-};
+  };
+}
+
+export const form8880Pdf: PdfFormDescriptor = form8880PdfFor(2025);

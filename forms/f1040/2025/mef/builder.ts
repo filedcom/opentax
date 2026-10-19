@@ -291,7 +291,7 @@ function buildReturnXml(
   readonly form3800Parts?: Form3800DocumentParts;
   readonly documents: readonly MefDocumentFragment[];
 } {
-  assertEmployeeContributionReturn(pending);
+  assertEmployeeContributionReturn(pending, year);
   assertMefReturnVersion(year, schemaVersion, returnType);
   if (!filer) {
     throw new Error("MeF export requires a real filer identity");

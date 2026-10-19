@@ -269,6 +269,7 @@ export function assertForm8880EligibleTotals(
 export function assertForm8880FiledCalculation(
   fields: object,
   pending: Readonly<Record<string, unknown>>,
+  taxYear: number,
 ): void {
   const source = form8880InputSchema.parse(fields);
   if (source.nonjoint_distribution_review) {
@@ -326,7 +327,7 @@ export function assertForm8880FiledCalculation(
     ? physicalPresenceFilingSchema.safeParse(form2555.filing_details)
     : undefined;
   const foreignLines = filing?.success
-    ? calculatePhysicalPresence2555(filing.data, 2025)
+    ? calculatePhysicalPresence2555(filing.data, taxYear)
     : undefined;
   const foreignAddback = source.foreign_agi_addback ?? 0;
   const schedule1 = pending.schedule1 as Schedule1Fields | undefined;
@@ -357,7 +358,7 @@ export function assertForm8880FiledCalculation(
       (schedule3.line6l_form8978_credit ?? 0),
   );
   const calculated = calculateForm8880(
-    { taxYear: 2025, formType: "f1040" },
+    { taxYear, formType: "f1040" },
     source,
     capacity,
   );
@@ -393,6 +394,7 @@ export function assertForm8880FiledCalculation(
 export function assertReviewedForm8880Outcome(
   fields: object,
   pending: Readonly<Record<string, unknown>>,
+  taxYear: number,
 ): void {
   const source = form8880InputSchema.parse(fields);
   const general = pending.general === undefined
@@ -409,13 +411,14 @@ export function assertReviewedForm8880Outcome(
     general?.form8880_joint_distribution_review
       ?.current_year_source_inventory_review
   ) {
-    assertForm8880FiledCalculation(fields, pending);
+    assertForm8880FiledCalculation(fields, pending, taxYear);
   }
 }
 
 /** Validate reviewed contribution routes before selecting positive documents. */
 export function assertEmployeeContributionReturn(
   pending: Readonly<Record<string, unknown>>,
+  taxYear: number,
 ): void {
   assertAbleDistributionReturn(pending);
   assertAbleSelfEmploymentReturn(pending);
@@ -449,5 +452,5 @@ export function assertEmployeeContributionReturn(
       "Form 8880 reviewed contribution needs its computed outcome",
     );
   }
-  assertForm8880FiledCalculation(fields, pending);
+  assertForm8880FiledCalculation(fields, pending, taxYear);
 }

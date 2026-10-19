@@ -124,7 +124,11 @@ function buildIRS8880(fields: Input, context?: MefBuildContext): string {
         "Form 8880 zero-credit outcome conflicts with native lines",
       );
     }
-    assertReviewedForm8880Outcome(fields, context?.pending ?? {});
+    assertReviewedForm8880Outcome(
+      fields,
+      context?.pending ?? {},
+      mefTaxYear(context),
+    );
     return "";
   }
   if (!hasPrintLine) {
@@ -218,7 +222,11 @@ function buildIRS8880(fields: Input, context?: MefBuildContext): string {
     credit,
     context.pending,
   );
-  assertForm8880FiledCalculation(fields, context.pending);
+  assertForm8880FiledCalculation(
+    fields,
+    context.pending,
+    mefTaxYear(context),
+  );
   const children = FIELD_MAP.map(([key, tag]) => {
     const value = fields[key];
     return value === undefined ? "" : element(tag, value);

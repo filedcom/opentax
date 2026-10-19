@@ -121,7 +121,11 @@ test("Form 8880 filed foreign AGI addback matches Form 2555 and Schedule 1", () 
     schedule3: { line4_retirement_savings_credit: result.credit },
     form2555: { filing_details: filing },
   };
-  assertForm8880FiledCalculation({ ...source, ...result.printFields }, pending);
+  assertForm8880FiledCalculation(
+    { ...source, ...result.printFields },
+    pending,
+    2025,
+  );
   assertThrows(
     () =>
       assertForm8880FiledCalculation(
@@ -131,6 +135,7 @@ test("Form 8880 filed foreign AGI addback matches Form 2555 and Schedule 1", () 
           ...result.printFields,
         },
         pending,
+        2025,
       ),
     Error,
     "foreign AGI addback differs",

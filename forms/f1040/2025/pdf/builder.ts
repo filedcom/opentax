@@ -601,7 +601,7 @@ async function buildPdfBytesInternal(
   assertDigitalAssetDispositionAnswer(pending);
   await assertForm1098IssuerCopies(pending);
   const normalized = normalizeAllPending(pending);
-  assertEmployeeContributionReturn(normalized);
+  assertEmployeeContributionReturn(normalized, options.taxYear);
   assertScheduleJSourceReturn(
     pending,
     (inputs) =>

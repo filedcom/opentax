@@ -313,6 +313,22 @@ test("TY2026 PDF prints Form 8615 on the 2026 draft", async () => {
   assertMatch(printed, /child files Form 2555[^\n]* 18 393/);
 });
 
+test("TY2026 PDF prints Form 8880 on the 2026 draft", async () => {
+  const inputs = JSON.parse(
+    JSON.stringify(fixture("single-form8880-w2-deferral"))
+      .replace(/202[4-6]/g, (year) => String(Number(year) + 1)),
+  );
+  const printed = await text(await render(inputs));
+  assertMatch(printed, /Form 8880[\s\S]*2026/);
+  assertMatch(printed, /plan contributions for 2026 \(see instructions\)[^\n]* 2 2000/);
+  assertMatch(printed, /7 Add the amounts on line 6[^\n]* 7 2000/);
+  assertMatch(printed, /line 11a\* [. ]* 8 20000/);
+  assertMatch(printed, /\$26,250 \$36,375 0\.5 0\.5 0\.1 9 x0\. 5/);
+  assertMatch(printed, /10 Multiply line 7 by line 9[^\n]* 10 1000/);
+  assertMatch(printed, /Credit Limit Worksheet in the instructions 11 393/);
+  assertMatch(printed, /Schedule 3 \(Form 1040\), line 4 [. ]* 12 393/);
+});
+
 test("TY2026 PDF prints Form 2441 Part I providers as columns", async () => {
   const printed = await text(
     await render(fixture("single-form2441-child-care-credit")),
