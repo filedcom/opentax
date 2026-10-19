@@ -49,7 +49,7 @@ test("MFS benefits default to the lived-with-spouse rule and the return computes
   assertEquals(result.pending.standard_deduction.filing_status, "mfs");
   assertEquals(result.pending.income_tax_calculation.filing_status, "mfs");
   assertEquals(result.pending.form6251.filing_status, "mfs");
-  assertEquals(result.pending.f1040.line24_total_tax > 0, true);
+  assertEquals(Number(result.pending.f1040.line24_total_tax) > 0, true);
   assertEquals(
     returnHints(result.pending).some((hint) =>
       hint.includes("assumed you lived with your spouse")

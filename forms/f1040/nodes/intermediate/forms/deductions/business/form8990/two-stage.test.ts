@@ -1,6 +1,5 @@
 import { test } from "bun:test";
 import { assertEquals, assertThrows } from "@std/assert";
-import { scheduleC } from "../../../../../inputs/income/business/schedule_c/index.ts";
 import {
   applyCalculatedInterestAllowance,
   stageProvisionalScheduleCInterest,
