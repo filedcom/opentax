@@ -5,8 +5,6 @@ import { f1040 } from "../../../../../nodes/outputs/general/return-assembly/f104
 import { buildPending } from "../../../../mef/execution/pending.ts";
 import { executePreQefSourceReturn } from "../../../../return-processing/staged_source_return.ts";
 
-const sourceReplayContext = { taxYear: 2025, formType: "f1040" } as const;
-
 function record(value: unknown): Record<string, unknown> | undefined {
   return value !== null && typeof value === "object" && !Array.isArray(value)
     ? value as Record<string, unknown>
@@ -222,7 +220,7 @@ export function applyForm8621QefRefigure(
 /** Both exporters independently rerun the retained full and counterfactual returns. */
 export function assertForm8621QefRefigureSource(
   pending: Readonly<Record<string, unknown>>,
-  context: NodeContext = sourceReplayContext,
+  context: NodeContext,
 ): void {
   const marker = record(pending.form8621_1294_refigure);
   if (!marker) {

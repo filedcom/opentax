@@ -89,7 +89,7 @@ test("QEF Election B refigures actual education MAGI, phaseout, and credit capac
   const result = f1040_2025.executeReturn(input);
   assertEquals(result.diagnostics, []);
   const pending = buildPending(result.pending);
-  assertForm8621QefRefigureSource(pending);
+  assertForm8621QefRefigureSource(pending, { taxYear: 2025, formType: "f1040" });
   const filed = pending.f1040 as Record<string, number>;
   assertEquals(filed.line11_agi, 83_000);
   assertEquals(filed.line18_total_tax_before_credits, 9_715);
@@ -295,7 +295,7 @@ test("issued Form 1098-T and payments retain an LLC credit-limit refigure", asyn
   const result = f1040_2025.executeReturn(input);
   assertEquals(result.diagnostics, []);
   const pending = buildPending(result.pending);
-  assertForm8621QefRefigureSource(pending);
+  assertForm8621QefRefigureSource(pending, { taxYear: 2025, formType: "f1040" });
   assertEquals(pending.f1040?.line11_agi, 19_000);
   assertEquals(pending.f1040?.line18_total_tax_before_credits, 328);
   assertEquals(pending.schedule3?.line3_education_credit, 328);
@@ -368,7 +368,7 @@ test("dependent education and Schedule 8812 worksheets refigure together", async
   const result = f1040_2025.executeReturn(input);
   assertEquals(result.diagnostics, []);
   const pending = buildPending(result.pending);
-  assertForm8621QefRefigureSource(pending);
+  assertForm8621QefRefigureSource(pending, { taxYear: 2025, formType: "f1040" });
   assertEquals(pending.f1040?.line11_agi, 77_000);
   assertEquals(pending.f1040?.line18_total_tax_before_credits, 8_395);
   assertEquals(pending.schedule3?.line3_education_credit, 3_000);
@@ -441,7 +441,7 @@ test("QEF Election B replays sourced Form 3800 tax-limited business credit", asy
   const result = f1040_2025.executeReturn(input);
   assertEquals(result.diagnostics, []);
   const pending = buildPending(result.pending);
-  assertForm8621QefRefigureSource(pending);
+  assertForm8621QefRefigureSource(pending, { taxYear: 2025, formType: "f1040" });
   assertEquals(pending.f1040?.line18_total_tax_before_credits, 18_347);
   assertEquals(pending.schedule3?.line6a_total, 9_533);
   assertEquals(pending.f1040?.form8621_1294_total_tax_before_deferral, 8_814);
