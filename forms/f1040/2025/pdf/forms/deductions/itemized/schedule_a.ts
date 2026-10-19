@@ -1,4 +1,3 @@
-import { mefTaxYear } from "../../../../mef/support/year-config.ts";
 import { assertRetirementStateLocalTaxSource } from "../../../../domains/income/retirement/retirement_state_local_tax_source.ts";
 import type {
   PdfFieldEntry,
@@ -222,7 +221,8 @@ function line16Description(
     : undefined;
 }
 
-export const scheduleAPdf: PdfFormDescriptor = {
+export function scheduleAPdfFor(taxYear: number): PdfFormDescriptor {
+  return {
   pendingKey: "schedule_a",
   pdfUrl: "https://www.irs.gov/pub/irs-prior/f1040sa--2025.pdf",
   filerFields: [
@@ -322,7 +322,7 @@ export const scheduleAPdf: PdfFormDescriptor = {
         all.f1098,
         recipients,
         Number(input.line_8c_points_no_1098 ?? 0),
-        mefTaxYear(),
+        taxYear,
       );
     }
     const hasPriorCarryover = [
@@ -348,14 +348,18 @@ export const scheduleAPdf: PdfFormDescriptor = {
     assertRetirementStateLocalTaxSource(all, input);
     const parsed = scheduleAInputSchema.parse(source);
     const recomputed = scheduleA.compute(
-      { taxYear: 2025, formType: "f1040" },
+      { taxYear, formType: "f1040" },
       parsed,
     );
     const standard = recomputed.outputs.find((output) =>
       output.nodeType === "standard_deduction"
     )?.fields;
+    // TY2026 Form 1040 line 12e is after the IRC §68 reduction.
+    const overallLimit = Number(
+      all?.standard_deduction?.overall_itemized_limit_reduction ?? 0,
+    );
     if (
-      !standard || standard.itemized_deductions !==
+      !standard || Number(standard.itemized_deductions) - overallLimit !==
         all?.f1040?.line12e_itemized_deductions
     ) {
       throw new Error(
@@ -405,7 +409,7 @@ export const scheduleAPdf: PdfFormDescriptor = {
     const line16Rows = scheduleALine16AllRows(
       all,
       input.line_16_other_deductions,
-      { taxYear: mefTaxYear(), formType: "f1040" },
+      { taxYear, formType: "f1040" },
     );
     const line16 = input.line_16_other_deductions === undefined &&
         input.net_qualified_disaster_loss === undefined
@@ -509,4 +513,7 @@ export const scheduleAPdf: PdfFormDescriptor = {
     }
     return true;
   },
-};
+  };
+}
+
+export const scheduleAPdf: PdfFormDescriptor = scheduleAPdfFor(2025);

@@ -15,6 +15,7 @@ import { scheduleBPdf2026 } from "./forms/income/investments/schedule_b.ts";
 import { scheduleDPdf2026 } from "./forms/income/investments/schedule_d.ts";
 import { form8889Pdf2026 } from "./forms/adjustments/health/f8889.ts";
 import { scheduleEPdf2026 } from "./forms/income/rental-passthrough/schedule_e.ts";
+import { scheduleAPdf2026 } from "./forms/deductions/itemized/schedule_a.ts";
 import { form8863Pdf2026 } from "./forms/credits/individual/f8863.ts";
 
 const MAPPED: ReadonlyMap<string, PdfFormDescriptor> = new Map(
@@ -23,6 +24,7 @@ const MAPPED: ReadonlyMap<string, PdfFormDescriptor> = new Map(
     schedule1Pdf2026,
     schedule2Pdf2026,
     schedule3Pdf2026,
+    scheduleAPdf2026,
     scheduleBPdf2026,
     scheduleCPdf2026,
     scheduleDPdf2026,

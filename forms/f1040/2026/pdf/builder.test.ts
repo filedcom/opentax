@@ -268,6 +268,27 @@ test("TY2026 PDF prints Schedule E on the 2026 draft pages", async () => {
   });
 });
 
+test("TY2026 PDF prints Schedule A with the 0.5% gift floor and line 18", async () => {
+  const itemizer = fixture("single-1098-purchase-points");
+  const schedule_a = {
+    line_5b_real_estate_tax: 4000,
+    cash_contributions_to_50_percent_organizations: 10000,
+  };
+  const printed = await text(await render({ ...itemizer, schedule_a }));
+  assertMatch(printed, /SCHEDULE A[\s\S]*2026/);
+  assertMatch(printed, /line 11b[^\n]* 2 80000/);
+  assertMatch(printed, /7 Add lines 5e and 6[^\n]* 7 4000/);
+  assertMatch(printed, /8e Add lines 8a through 8d[^\n]* 8e 20400/);
+  assertMatch(printed, /10 Add lines 8e and 9[^\n]* 10 20400/);
+  assertMatch(printed, /see instructions[^\n]* 11 10000/);
+  assertMatch(printed, /Limitation Worksheet[^\n]* 13 9600/);
+  assertMatch(printed, /15 Add lines 13 and 14[^\n]* 15 9600/);
+  assertMatch(printed, /✔ No\. Your deductions are not limited/);
+  assertMatch(printed, /the amount to enter[^\n]* 18 34000/);
+  assertMatch(printed, /12e Standard deduction or itemized[^\n]* 12e 34000/);
+
+});
+
 test("TY2026 PDF refuses, by name, a form with no TY2026 mapping", async () => {
   await assertRejects(
     () => render(fixture("single-child-unearned-income")),
