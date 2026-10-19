@@ -18,6 +18,8 @@ import { scheduleEPdf2026 } from "./forms/income/rental-passthrough/schedule_e.t
 import { scheduleAPdf2026 } from "./forms/deductions/itemized/schedule_a.ts";
 import { schedule1aPdf2026 } from "./forms/deductions/additional/schedule1a.ts";
 import { form8863Pdf2026 } from "./forms/credits/individual/f8863.ts";
+import { form8959Pdf2026 } from "./forms/taxes/employment/f8959.ts";
+import { form8960Pdf2026 } from "./forms/taxes/investments/f8960.ts";
 
 const MAPPED: ReadonlyMap<string, PdfFormDescriptor> = new Map(
   [
@@ -35,6 +37,8 @@ const MAPPED: ReadonlyMap<string, PdfFormDescriptor> = new Map(
     form2441Pdf2026,
     form8863Pdf2026,
     form8889Pdf2026,
+    form8959Pdf2026,
+    form8960Pdf2026,
     form8995Pdf2026,
   ].map((descriptor) => [descriptor.pendingKey, descriptor]),
 );

@@ -169,6 +169,29 @@ test("TY2026 PDF prints Schedules C and SE and Form 8995 on the 2026 drafts", as
   assertMatch(printed, /18 Total qualified business \(loss\)[^\n]* 18 \( 0\)/);
 });
 
+test("TY2026 PDF prints Form 8959 self-employment Part IV", async () => {
+  const [w2] = soleProprietor.w2;
+  const printed = await text(
+    await render({
+      ...soleProprietor,
+      w2: [{
+        ...w2,
+        box1_wages: 190000,
+        box3_ss_wages: 184500,
+        box4_ss_withheld: 11439,
+        box5_medicare_wages: 190000,
+        box6_medicare_withheld: 2755,
+      }],
+    }),
+  );
+  assertMatch(printed, /had a loss, enter -0-[^\n]* 13 25535/);
+  assertMatch(printed, /15 Enter the amount from line 4[^\n]* 15 190000/);
+  assertMatch(printed, /16 Subtract line 15 from line 14[^\n]* 16 10000/);
+  assertMatch(printed, /17 Subtract line 16 from line 13[^\n]* 17 15535/);
+  assertMatch(printed, /Part I, line 5a\. Go to Part V[^\n]* 18 140/);
+  assertMatch(printed, /Attach Form 8959[^\n]* 11 140/);
+});
+
 test("TY2026 PDF prints Schedule B on the 2026 draft", async () => {
   const { schedule_c: _, ...wageEarner } = soleProprietor;
   const printed = await text(
@@ -286,6 +309,52 @@ test("TY2026 PDF prints Schedule A with the 0.5% gift floor and line 18", async 
   assertMatch(printed, /✔ No\. Your deductions are not limited/);
   assertMatch(printed, /the amount to enter[^\n]* 18 34000/);
   assertMatch(printed, /12e Standard deduction or itemized[^\n]* 12e 34000/);
+});
+
+test("TY2026 PDF prints Schedule A line 18 Yes with Forms 8959 and 8960", async () => {
+  const itemizer = fixture("single-1098-purchase-points");
+  const [w2] = itemizer.w2 as Array<Record<string, unknown>>;
+  const printed = await text(
+    await render({
+      ...itemizer,
+      w2: [{
+        ...w2,
+        box1_wages: 900000,
+        box2_fed_withheld: 250000,
+        box5_medicare_wages: 900000,
+        box6_medicare_withheld: 19350,
+      }],
+      f1099int: [
+        { payer_name: "Example Bank", recipient_tin: "111223333", box1: 40000 },
+      ],
+      schedule_b_part_iii: {
+        foreign_accounts_question: false,
+        foreign_trust_question: false,
+      },
+      schedule_a: {
+        line_5b_real_estate_tax: 4000,
+        cash_contributions_to_50_percent_organizations: 10000,
+      },
+    }),
+  );
+  // 2/37 of the 29,700 itemized total: line 18 prints the reduced 28,095.
+  assertMatch(printed, /15 Add lines 13 and 14[^\n]* 15 5300/);
+  assertMatch(printed, /✔ Yes\. Your deductions may be limited/);
+  assertMatch(printed, /the amount to enter[^\n]* 18 28095/);
+  assertMatch(printed, /12e Standard deduction or itemized[^\n]* 12e 28095/);
+  assertMatch(printed, /Form 8959[\s\S]*2026/);
+  assertMatch(printed, /4 Add lines 1 through 3[^\n]* 4 900000/);
+  assertMatch(printed, /\n Part II[^\n]* 7 6300\n/);
+  assertMatch(printed, /Part I, line 5b\. Go to Part IV[^\n]* 12 6300/);
+  assertMatch(printed, /Form 1040-SS, Part I, line 5a\. Go to Part V[^\n]* 18\n/);
+  assertMatch(printed, /withholding on Medicare wages[^\n]* 21 13050/);
+  assertMatch(printed, /\n line 11a[^\n]* 24 6300/);
+  assertMatch(printed, /Form 8959[^\n]* 17b 6300/);
+  assertMatch(printed, /8960 Net Investment Income Tax[\s\S]*2026/);
+  assertMatch(printed, /8 Total investment income[^\n]* 8 40000/);
+  assertMatch(printed, /13 Modified adjusted gross income[^\n]* 13 940000/);
+  assertMatch(printed, /16 Enter the smaller of line 12 or line 15[^\n]* 16 40000/);
+  assertMatch(printed, /on your tax return \(see instructions\)[^\n]* 17 1520/);
 });
 
 test("TY2026 PDF prints Schedule 1-A car loan and senior parts", async () => {
