@@ -730,11 +730,6 @@
     "count": 4
   },
   {
-    "path": "forms/f1040/2025/pdf/forms/credits/individual/f2441.ts",
-    "pattern": "config-index",
-    "count": 1
-  },
-  {
     "path": "forms/f1040/2025/pdf/forms/credits/individual/f8862.ts",
     "pattern": "year-value",
     "count": 1
@@ -763,11 +758,6 @@
     "path": "forms/f1040/2025/pdf/forms/general/return-assembly/f1040.ts",
     "pattern": "year-identifier",
     "count": 3
-  },
-  {
-    "path": "forms/f1040/2025/pdf/forms/income/business/schedule_c.ts",
-    "pattern": "config-index",
-    "count": 1
   },
   {
     "path": "forms/f1040/2025/pdf/forms/income/foreign/f8621_parent_source.ts",
@@ -833,11 +823,6 @@
     "path": "forms/f1040/2025/pdf/forms/taxes/other/schedule2.ts",
     "pattern": "year-identifier",
     "count": 2
-  },
-  {
-    "path": "forms/f1040/2025/pdf/forms/taxes/self-employment/schedule_se.ts",
-    "pattern": "config-index",
-    "count": 1
   },
   {
     "path": "forms/f1040/2025/pdf/forms/taxes/underpayment/f2210_box_e.ts",

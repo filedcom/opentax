@@ -6,11 +6,13 @@
 normalization with the 2026v1.0 schema. It accepts every input TY2025 accepts;
 there is no allowlist.
 
-PDF output (`pdf/builder.ts`) prints Form 1040 and Schedules 1, 2 and 3 on the
-IRS 2026 early-release drafts, fetched from `irs.gov/pub/irs-dft/` and pinned by
+PDF output (`pdf/builder.ts`) prints Form 1040, Schedules 1, 2, 3, B, C, D and
+SE and Forms 2441, 8863, 8889 and 8995 on the IRS 2026 early-release drafts, fetched from `irs.gov/pub/irs-dft/` and pinned by
 SHA-256 like the 2025 templates; the IRS cover sheet is dropped and the packet's
 PDF Subject and the CLI say it uses draft forms. Each overlay in `pdf/forms/`
-reuses the 2025 projection and renames only the fields the 2026 form moved.
+reuses the 2025 projection, built for the 2026 tax year, and renames only the
+fields the 2026 form moved; new 2026 lines the engine does not model (Form 8995
+line 16 minimum deduction, 2025-titled continuation statements) refuse by name.
 Every other form refuses by name when the return needs it, as do refundable
 credits that need Schedule 3-A (Form 1040 lines 27a-30). A redrafted IRS PDF
 fails its digest until the mapping is reviewed.

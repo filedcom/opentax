@@ -28,6 +28,24 @@ function renameEntry(
     : { ...entry, pdfField: name(entry.pdfField) };
 }
 
+/** The base form's pages, shifted past the draft cover sheet. */
+function draftPages(
+  base: PdfFormDescriptor,
+  template: Ty2026Template,
+  fields: Record<string, unknown>,
+): readonly number[] {
+  if (!base.pageIndices) return template.formPages;
+  return base.pageIndices(fields).map((index) => {
+    const page = template.formPages[index];
+    if (page === undefined) {
+      throw new Error(
+        `TY2026 PDF ${base.pendingKey} page ${index + 1} is not on the 2026 draft`,
+      );
+    }
+    return page;
+  });
+}
+
 /**
  * The 2025 projection printed on a 2026 template. `rename` maps a 2025 field
  * name to its 2026 name; `drop` removes domain keys the 2026 form has no box for.
@@ -44,7 +62,7 @@ export function onTy2026Template(
     ...base,
     pdfUrl: template.pdfUrl,
     pdfSha256: template.pdfSha256,
-    pageIndices: () => template.formPages,
+    pageIndices: (fields) => draftPages(base, template, fields),
     fields: [
       ...base.fields.filter(keep).map((entry) => renameEntry(entry, rename)),
       ...added,
@@ -77,6 +95,30 @@ export function refusedOnTy2026(base: PdfFormDescriptor): PdfFormDescriptor {
       throw new Error(
         `TY2026 PDF export needs ${form} (2025 template ${pdf}), which has no TY2026 PDF mapping yet; export MeF XML`,
       );
+    },
+  };
+}
+
+/**
+ * Refuses, by name, when the 2025 projection would append its continuation
+ * statements, whose page titles still name 2025.
+ */
+export function withoutStatements(
+  descriptor: PdfFormDescriptor,
+  form: string,
+): PdfFormDescriptor {
+  const append = descriptor.appendSupplementalPages;
+  if (!append) return descriptor;
+  return {
+    ...descriptor,
+    async appendSupplementalPages(document, ...rest) {
+      const pages = document.getPageCount();
+      await append(document, ...rest);
+      if (document.getPageCount() > pages) {
+        throw new Error(
+          `TY2026 PDF ${form} continuation statements are not mapped; export MeF XML`,
+        );
+      }
     },
   };
 }

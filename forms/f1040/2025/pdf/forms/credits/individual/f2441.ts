@@ -70,7 +70,8 @@ const fields: PdfFieldEntry[] = [
 ];
 
 /** The supported no-benefit route prints the filing page and its source rows. */
-export const form2441Pdf: PdfFormDescriptor = {
+export function form2441PdfFor(taxYear: number): PdfFormDescriptor {
+  return {
   pendingKey: "form2441",
   pdfUrl: "https://www.irs.gov/pub/irs-prior/f2441--2025.pdf",
   pageIndices: () => [0],
@@ -94,7 +95,7 @@ export const form2441Pdf: PdfFormDescriptor = {
     if (typeof agi !== "number" || (raw.agi !== undefined && raw.agi !== agi)) {
       throw new Error("Form 2441 PDF needs final Form 1040 AGI");
     }
-    const lines = calculateForm2441(details, agi, 0, CONFIG_BY_YEAR[2025]);
+    const lines = calculateForm2441(details, agi, 0, CONFIG_BY_YEAR[taxYear]);
     if (allPending.schedule3?.line2_childcare_credit !== lines.line11) {
       throw new Error("Form 2441 PDF credit differs from Schedule 3 line 2");
     }
@@ -142,4 +143,7 @@ export const form2441Pdf: PdfFormDescriptor = {
   },
   includeWhen: (fields) =>
     typeof fields.line11 === "number" && fields.line11 > 0,
-};
+  };
+}
+
+export const form2441Pdf: PdfFormDescriptor = form2441PdfFor(2025);

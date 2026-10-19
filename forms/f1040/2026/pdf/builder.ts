@@ -7,11 +7,30 @@ import { irs1040Pdf2026 } from "./forms/general/return-assembly/f1040.ts";
 import { schedule1Pdf2026 } from "./forms/general/return-assembly/schedule1.ts";
 import { schedule3Pdf2026 } from "./forms/general/return-assembly/schedule3.ts";
 import { schedule2Pdf2026 } from "./forms/taxes/other/schedule2.ts";
+import { scheduleSePdf2026 } from "./forms/taxes/self-employment/schedule_se.ts";
+import { scheduleCPdf2026 } from "./forms/income/business/schedule_c.ts";
+import { form8995Pdf2026 } from "./forms/deductions/business/f8995.ts";
+import { form2441Pdf2026 } from "./forms/credits/individual/f2441.ts";
+import { scheduleBPdf2026 } from "./forms/income/investments/schedule_b.ts";
+import { scheduleDPdf2026 } from "./forms/income/investments/schedule_d.ts";
+import { form8889Pdf2026 } from "./forms/adjustments/health/f8889.ts";
+import { form8863Pdf2026 } from "./forms/credits/individual/f8863.ts";
 
 const MAPPED: ReadonlyMap<string, PdfFormDescriptor> = new Map(
-  [irs1040Pdf2026, schedule1Pdf2026, schedule2Pdf2026, schedule3Pdf2026].map(
-    (descriptor) => [descriptor.pendingKey, descriptor],
-  ),
+  [
+    irs1040Pdf2026,
+    schedule1Pdf2026,
+    schedule2Pdf2026,
+    schedule3Pdf2026,
+    scheduleBPdf2026,
+    scheduleCPdf2026,
+    scheduleDPdf2026,
+    scheduleSePdf2026,
+    form2441Pdf2026,
+    form8863Pdf2026,
+    form8889Pdf2026,
+    form8995Pdf2026,
+  ].map((descriptor) => [descriptor.pendingKey, descriptor]),
 );
 
 /** The 2025 print order; forms without a TY2026 mapping refuse when needed. */

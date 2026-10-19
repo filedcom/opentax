@@ -4,7 +4,6 @@ import {
   assertNoUnfiled8995Loss,
   assertPositive8995,
 } from "../../../../../mef/forms/deductions/business/f8995/f8995-route.ts";
-import { mefTaxYear } from "../../../../../mef/support/year-config.ts";
 
 const page1 = "topmostSubform[0].Page1[0].";
 const fields: ReadonlyArray<PdfFieldEntry> = [
@@ -67,7 +66,8 @@ const fields: ReadonlyArray<PdfFieldEntry> = [
   }),
 ];
 
-export const form8995Pdf: PdfFormDescriptor = {
+export function form8995PdfFor(taxYear: number): PdfFormDescriptor {
+  return {
   pendingKey: "form8995",
   pdfUrl: "https://www.irs.gov/pub/irs-prior/f8995--2025.pdf",
   filerFields: [
@@ -110,7 +110,7 @@ export const form8995Pdf: PdfFormDescriptor = {
       !(typeof fields.line1_qbi === "number" && fields.line1_qbi > 0 &&
         typeof fields.line1_business_reference === "string")
     ) {
-      assertNoUnfiled8995Loss(fields, allPending, mefTaxYear());
+      assertNoUnfiled8995Loss(fields, allPending, taxYear);
       return {};
     }
     if (
@@ -122,7 +122,7 @@ export const form8995Pdf: PdfFormDescriptor = {
     const { businesses, lines } = assertPositive8995(
       fields,
       allPending,
-      2025,
+      taxYear,
     );
     return {
       pdf_current_joint_ordinary: allPending.general?.filing_status === "mfj" &&
@@ -153,4 +153,7 @@ export const form8995Pdf: PdfFormDescriptor = {
       ),
     };
   },
-};
+  };
+}
+
+export const form8995Pdf: PdfFormDescriptor = form8995PdfFor(2025);

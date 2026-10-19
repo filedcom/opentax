@@ -4,7 +4,6 @@ import { scheduleSELines } from "../../../../../nodes/intermediate/forms/taxes/s
 import { CONFIG_BY_YEAR } from "../../../../../nodes/config/index.ts";
 import { FilingStatus } from "../../../../../nodes/types.ts";
 import { scheduleSeSpouseProprietor } from "../../../../domains/taxes/self-employment/schedule-se/schedule-se-proprietor.ts";
-import { mefTaxYear } from "../../../../mef/support/year-config.ts";
 
 // IRS Schedule SE (2025) AcroForm field names.
 // Verified layout from https://www.irs.gov/pub/irs-prior/f1040sse--2025.pdf
@@ -63,17 +62,18 @@ const fields: ReadonlyArray<PdfFieldEntry> = [
   { kind: "text", domainKey: "line15", pdfField: `${page2}f2_2[0]` },
 ];
 
-export const scheduleSePdf: PdfFormDescriptor = {
+export function scheduleSePdfFor(taxYear: number): PdfFormDescriptor {
+  return {
   pendingKey: "schedule_se",
   pdfUrl: "https://www.irs.gov/pub/irs-prior/f1040sse--2025.pdf",
   fields,
   projectFields(fields, allPending) {
     if (Object.keys(fields).length === 0) return fields;
     if (fields.owner_identity) {
-      assertOwnedScheduleSE(allPending, mefTaxYear());
+      assertOwnedScheduleSE(allPending, taxYear);
       return fields;
     }
-    const lines = scheduleSELines(fields, CONFIG_BY_YEAR[2025].ssWageBase);
+    const lines = scheduleSELines(fields, CONFIG_BY_YEAR[taxYear].ssWageBase);
     const spouseOwned = scheduleSeSpouseProprietor(allPending, fields);
     const general = allPending?.general;
     const return1040 = allPending?.f1040;
@@ -111,7 +111,7 @@ export const scheduleSePdf: PdfFormDescriptor = {
   },
   instances(fields, filer, allPending) {
     const owned = allPending
-      ? assertOwnedScheduleSE(allPending, mefTaxYear(), filer)
+      ? assertOwnedScheduleSE(allPending, taxYear, filer)
       : undefined;
     if (!owned) return [fields];
     return owned.instances.map((row) => {
@@ -135,4 +135,7 @@ export const scheduleSePdf: PdfFormDescriptor = {
   // (Schedule 2 line 4); W-2 social security wages alone do not require it.
   includeWhen: (_fields, all) =>
     (((all?.["schedule2"]?.["line4_se_tax"]) as number | undefined) ?? 0) > 0,
-};
+  };
+}
+
+export const scheduleSePdf: PdfFormDescriptor = scheduleSePdfFor(2025);
