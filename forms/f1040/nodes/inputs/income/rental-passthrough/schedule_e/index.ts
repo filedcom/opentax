@@ -793,6 +793,13 @@ export function computePropertyNet(item: EItem): number {
   return grossIncome - expenses;
 }
 
+/** The property's whole-dollar net as filed on Schedule E line 21 or 22.
+ * Form 8582, Schedule 1 line 5 and Form 8995 take the filed amount, so
+ * cents or a fractional ownership share do not leave unreconciled totals. */
+export function filedPropertyNet(item: EItem): number {
+  return Math.round(computePropertyNet(item));
+}
+
 /** Self-rental (Schedule E line 1b code 7) net income is nonpassive and is
  * kept off Form 8582; a net loss stays passive. Pub. 925 (2025),
  * Recharacterization of Passive Income and Rental of Property to a
@@ -879,7 +886,7 @@ function passiveCurrentLoss(items: EItems): number {
       item.current_property_source
         ? currentPropertyPassiveAmounts(item.current_property_source)
           .passiveOperating
-        : computePropertyNet(item)
+        : filedPropertyNet(item)
     )
     .filter((n) => n < 0)
     .reduce((sum, n) => sum + Math.abs(n), 0);
@@ -892,7 +899,7 @@ function passiveCurrentIncome(items: EItems): number {
       item.current_property_source
         ? currentPropertyPassiveAmounts(item.current_property_source)
           .passiveOperating
-        : computePropertyNet(item)
+        : filedPropertyNet(item)
     )
     .filter((n) => n > 0)
     .reduce((sum, n) => sum + n, 0);
@@ -907,7 +914,7 @@ function activeRentalCurrentLoss(items: EItems): number {
       item.current_property_source
         ? currentPropertyPassiveAmounts(item.current_property_source)
           .passiveOperating
-        : computePropertyNet(item)
+        : filedPropertyNet(item)
     )
     .filter((n) => n < 0)
     .reduce((sum, n) => sum + Math.abs(n), 0);
@@ -920,7 +927,7 @@ function activeRentalCurrentIncome(items: EItems): number {
       item.current_property_source
         ? currentPropertyPassiveAmounts(item.current_property_source)
           .passiveOperating
-        : computePropertyNet(item)
+        : filedPropertyNet(item)
     )
     .filter((net) => net > 0)
     .reduce((sum, net) => sum + net, 0);
@@ -970,7 +977,7 @@ export function scheduleEPassiveEicIncome(rawInput: unknown): number {
       const net = item.current_property_source
         ? currentPropertyPassiveAmounts(item.current_property_source)
           .passiveOperating
-        : computePropertyNet(item);
+        : filedPropertyNet(item);
       if ((item.royalties_income ?? 0) === 0) return sum + Math.max(0, net);
       const fraction = (item.ownership_percent ?? 100) / 100;
       const royaltyGross = Math.round(item.royalties_income! * fraction);
@@ -1011,7 +1018,7 @@ function form8582Outputs(
             .passiveOperating !== 0 ||
         currentPropertyPassiveAmounts(item.current_property_source)
             .passiveGain < 0
-      : computePropertyNet(item) !== 0 ||
+      : filedPropertyNet(item) !== 0 ||
         (item.passive_property_sales?.length ?? 0) > 0 ||
         (item.prior_unallowed_passive_operating ?? 0) > 0 ||
         (item.prior_unallowed_passive_4797_part1 ?? 0) > 0 ||
@@ -1054,7 +1061,7 @@ function form8582Outputs(
       current_net: item.current_property_source
         ? currentPropertyPassiveAmounts(item.current_property_source)
           .passiveOperating
-        : computePropertyNet(item),
+        : filedPropertyNet(item),
       prior_unallowed_operating: item.prior_unallowed_passive_operating ?? 0,
       prior_year_8582_source: item.prior_year_8582_source,
       first_year_activity_source: item.first_year_activity_source,
@@ -1191,7 +1198,7 @@ function form8960Outputs(items: EItems): NodeOutput[] {
   if (niitItems.length === 0) return [];
 
   const totalNet = niitItems.reduce(
-    (sum, item) => sum + computePropertyNet(item),
+    (sum, item) => sum + filedPropertyNet(item),
     0,
   );
   return [output(form8960, { line4b_rental_net: totalNet })];
@@ -1256,7 +1263,7 @@ function form8995Outputs(items: EItems): NodeOutput[] {
   const f8995Input: Partial<z.infer<typeof form8995["inputSchema"]>> = {};
 
   const qbiAmount = (item: EItem) =>
-    item.qbi_override ?? computePropertyNet(item);
+    item.qbi_override ?? filedPropertyNet(item);
   const nonSstbItems = qbiItems.filter((item) =>
     item.qbi_specified_service !== true
   );
@@ -1517,7 +1524,7 @@ class ScheduleENode extends TaxNode<typeof inputSchema> {
     }
 
     const propertyNet = schedule_es.reduce(
-      (sum, item) => sum + computePropertyNet(item),
+      (sum, item) => sum + filedPropertyNet(item),
       0,
     );
     const eicRoyalty = scheduleERoyaltyEicAmounts(parsed);

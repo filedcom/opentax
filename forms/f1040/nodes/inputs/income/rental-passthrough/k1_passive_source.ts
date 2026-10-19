@@ -40,6 +40,8 @@ export interface PassiveK1Item extends K1PassiveEicItem {
   recipient_tin?: string;
   source_document_reference?: string;
   passive_income_source?: z.infer<typeof k1PassiveIncomeSourceSchema>;
+  box20z_qbi?: number;
+  qbi_amount?: number;
 }
 const boxes = [
   ["box1", "box1_ordinary_business"],
@@ -193,6 +195,11 @@ export function passiveK1LossActivities(
         prior_unallowed_operating: 0,
         prior_unallowed_4797_part1: 0,
         prior_unallowed_4797_part2: 0,
+        // The K-1 reports this loss as QBI; a suspended part leaves QBI
+        // until allowed (Reg. 1.199A-3(b)(1)(iv); Form 8995 instructions).
+        ...((item.box20z_qbi ?? item.qbi_amount) !== undefined
+          ? { qbi_trade_or_business: true }
+          : {}),
       };
     });
   });
