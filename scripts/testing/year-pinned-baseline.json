@@ -175,11 +175,6 @@
     "count": 1
   },
   {
-    "path": "forms/f1040/2025/domains/credits/individual/form8880/able_self_employment_sources.ts",
-    "pattern": "config-index",
-    "count": 1
-  },
-  {
     "path": "forms/f1040/2025/domains/deductions/additional/schedule1a-senior-source.ts",
     "pattern": "year-value",
     "count": 1
@@ -706,18 +701,8 @@
   },
   {
     "path": "forms/f1040/2025/pdf/forms/credits/foreign/f1116/f1116_general_wage.ts",
-    "pattern": "date-pinned",
-    "count": 1
-  },
-  {
-    "path": "forms/f1040/2025/pdf/forms/credits/foreign/f1116/f1116_general_wage.ts",
     "pattern": "year-identifier",
     "count": 2
-  },
-  {
-    "path": "forms/f1040/2025/pdf/forms/credits/foreign/f1116/f1116_single_source.ts",
-    "pattern": "date-pinned",
-    "count": 1
   },
   {
     "path": "forms/f1040/2025/pdf/forms/credits/foreign/f1116/f1116_single_source.ts",
