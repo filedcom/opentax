@@ -305,17 +305,21 @@ class Schedule3Node extends TaxNode<typeof inputSchema> {
         (input.line6i_qualified_electric_vehicle_credit ?? 0);
     }
 
-    const worksheetA = credits > 0 ? creditLimitWorksheetA(input) : undefined;
+    // Schedule 8812 Credit Limit Worksheet A line 2 is a sum of Schedule 3
+    // lines, so every active Schedule 3 tells Schedule 8812 either those lines
+    // or that a credit settled after the child tax credit leaves them pending.
+    const worksheetA = creditLimitWorksheetA(input);
     const outputs: NodeOutput[] = [
       this.outputNodes.output(
         f1040,
         f1040Input as AtLeastOne<z.infer<typeof f1040["inputSchema"]>>,
       ),
-      ...(worksheetA
-        ? [this.outputNodes.output(f8812, {
-          schedule3_credit_limit_worksheet: worksheetA,
-        })]
-        : []),
+      this.outputNodes.output(
+        f8812,
+        worksheetA
+          ? { schedule3_credit_limit_worksheet: worksheetA }
+          : { schedule3_credit_limit_pending: true },
+      ),
     ];
     // Self-emit computed line values into this node's own pending dict so the
     // PDF/MeF builders can print the schedule (same pattern as the f1040 node).

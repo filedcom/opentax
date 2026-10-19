@@ -1373,7 +1373,11 @@ test("Schedule 8812 Worksheet B refuses caller line 14 and missing earned worksh
 test("Schedule 8812 rejects missing or duplicated credit-limit worksheets", () => {
   const f8812s = [minimalItem({ qualifying_children_count: 1 })];
   assertThrows(
-    () => calculateSchedule8812Lines(2025, { f8812s }),
+    () =>
+      calculateSchedule8812Lines(2025, {
+        f8812s,
+        schedule3_credit_limit_pending: true,
+      }),
     Error,
     "needs complete Credit Limit Worksheet A and B answers",
   );
@@ -1390,6 +1394,23 @@ test("Schedule 8812 rejects missing or duplicated credit-limit worksheets", () =
     Error,
     "cannot be supplied both on an item and at the root",
   );
+});
+
+test("Schedule 8812 derives Worksheet A when the return has no Schedule 3 credits", () => {
+  // 2025 Schedule 8812 instructions, Credit Limit Worksheet A: line 2 sums
+  // Schedule 3 lines 1-4, 5b, 6d, 6f, 6l and 6m; none is present, and with no
+  // Form 8396, 8839, 5695 Part I or 8859 credit Worksheet B line 4 is -0-.
+  // MFJ, two children under 17, tax 10,146 → line 14 is the full 4,400.
+  const lines = calculateSchedule8812Lines(2025, {
+    auto_qualifying_children: 2,
+    auto_filing_status: FilingStatus.MFJ,
+    auto_agi: 120_000,
+    auto_income_tax_liability: 10_146,
+    auto_earned_income: 120_000,
+  });
+  assertEquals(lines?.line12, 4_400);
+  assertEquals(lines?.line13, 10_146);
+  assertEquals(lines?.line14, 4_400);
 });
 
 test("Schedule 8812 structured worksheet limits line 19", () => {

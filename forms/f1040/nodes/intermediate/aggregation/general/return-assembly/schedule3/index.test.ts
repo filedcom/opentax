@@ -46,7 +46,10 @@ test("Form 2439 box 2 reaches Schedule 3 lines 13a, 14, 15 and Form 1040 line 31
 
 test("Schedule 3: Form 3800 pending source keeps the schedule available without gross credit", () => {
   const result = compute({ form3800_source_credit_pending: true });
-  assertEquals(result.outputs.length, 1);
+  assertEquals(result.outputs.length, 2);
+  assertEquals(findOutput(result, "f8812")?.fields, {
+    schedule3_credit_limit_pending: true,
+  });
   assertEquals(
     fieldsOf(result.outputs, f1040)?.line20_nonrefundable_credits,
     undefined,
@@ -76,7 +79,7 @@ test("Schedule 3: Form 3800 pending source keeps the schedule available without 
 
 test("Schedule 3: Form 8912 pending source supplies the shared credit-limit snapshot", () => {
   const result = compute({ form8912_source_credit_pending: true });
-  assertEquals(result.outputs.length, 1);
+  assertEquals(result.outputs.length, 2);
   assertEquals(
     fieldsOf(result.outputs, f1040)?.credit_limit_schedule3_lines?.line7,
     0,
@@ -408,7 +411,13 @@ test("smoke: all fields populated — correct totals emitted to f1040", () => {
     fieldsOf(result.outputs, f1040)!.line31_additional_payments,
     1540,
   );
-  assertEquals(result.outputs.length, 2);
+  // f1040, the Schedule 8812 pending signal (adoption is a Worksheet B
+  // credit) and the printed Schedule 3 lines.
+  assertEquals(result.outputs.length, 3);
+  assertEquals(
+    findOutput(result, "f8812")?.fields.schedule3_credit_limit_pending,
+    true,
+  );
 });
 
 // ── Previously untested Part I credits ───────────────────────────────────────
