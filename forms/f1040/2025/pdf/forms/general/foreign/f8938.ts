@@ -170,7 +170,9 @@ function detailFields(
       accountCustodial:
         account.asset_type === ForeignAssetType.CustodialAccount,
       accountIdentifier: account.asset_identifier,
-      accountOpened: !!account.opened_or_acquired_date?.startsWith("2025-"),
+      accountOpened: !!account.opened_or_acquired_date?.startsWith(
+        account.exchange_rate_date.slice(0, 5),
+      ),
       accountClosed: !!account.closed_or_disposed_date,
       accountJointSpouse: account.owner === "joint_with_spouse",
       accountNoTaxItem: account.tax_items.length === 0,
@@ -200,7 +202,9 @@ function detailFields(
     Object.assign(fields, {
       otherDescription: other.description,
       otherIdentifier: other.asset_identifier,
-      otherAcquired: other.opened_or_acquired_date?.startsWith("2025-")
+      otherAcquired: other.opened_or_acquired_date?.startsWith(
+          other.exchange_rate_date.slice(0, 5),
+        )
         ? other.opened_or_acquired_date
         : undefined,
       otherDisposed: other.closed_or_disposed_date,
