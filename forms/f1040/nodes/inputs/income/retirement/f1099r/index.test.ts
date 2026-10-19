@@ -2744,3 +2744,28 @@ test("f1099r.compute: a TY2026 rollover needs a 2026 distribution", () => {
     "needs a 2026 distribution",
   );
 });
+
+// 2025 Form 8606 Part III (lines 22-25) and Pub. 590-B ordering rules: a
+// nonqualified Roth IRA distribution (code J) comes first from regular
+// contributions. Synthetic: 8,644 distributed against 16,500 of prior-year
+// contribution basis is not taxable and has no Form 5329 additional tax;
+// 20,000 against the same basis leaves 3,500 taxable and subject to it.
+test("code J Roth distribution is taxable only above prior contribution basis", () => {
+  const roth = (gross: number) =>
+    compute([minimalPensionItem({
+      box1_gross_distribution: gross,
+      box7_distribution_code: DistributionCode.CodeJ,
+      box7_ira_simple_indicator: false,
+      roth_prior_contribution_basis: 16_500,
+    })]);
+  const within = roth(8_644);
+  assertEquals(f1040Input(within).line4a_ira_gross, 8_644);
+  assertEquals(f1040Input(within).line4b_ira_taxable, 0);
+  assertEquals(
+    within.outputs.find((o) => o.nodeType === "form5329")?.fields
+      .owner_entries,
+    [{ owner: TS.T, early_distribution: 0, distribution_code: "J" }],
+  );
+  const over = roth(20_000);
+  assertEquals(f1040Input(over).line4b_ira_taxable, 3_500);
+});

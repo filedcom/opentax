@@ -126,6 +126,9 @@ function effectiveTaxableAmount(
     return reviewedRothActivity(item.roth_activity_review).taxable;
   }
   if (item.exclude_8606_roth === true) return 0;
+  if (item.roth_prior_contribution_basis !== undefined) {
+    return rothBasisTaxable(item);
+  }
 
   const rawTaxable = item.box2a_taxable_amount ?? item.box1_gross_distribution;
 
@@ -477,6 +480,10 @@ export const itemSchema = z.object({
   roth_distribution_evidence: rothDistributionEvidenceSchema.optional(),
   roth_activity_review: rothActivityReviewSchema.optional(),
   roth_owner_inventory_review: rothOwnerInventorySchema.optional(),
+  // Code J: the owner's basis in regular Roth IRA contributions carried from
+  // prior years (2025 Form 8606 line 22). The distribution is taxable only
+  // above it (Form 8606 lines 22-25; Pub. 590-B ordering rules).
+  roth_prior_contribution_basis: z.number().nonnegative().optional(),
 
   // Form 8606 — year-end FMV of all traditional IRAs (line 6).
   // Required when prior_ira_basis is set and there are remaining IRA assets after distribution.
@@ -1142,7 +1149,29 @@ function validateIraRolloverEvidence(item: R1099Item, taxYear: number): void {
 }
 
 // Cross-field validation for a single item
+/** Form 8606 line 25a: a code J distribution over the contribution basis. */
+function rothBasisTaxable(item: R1099Item): number {
+  return Math.max(
+    0,
+    item.box1_gross_distribution - (item.roth_prior_contribution_basis ?? 0),
+  );
+}
+
 function validateItem(item: R1099Item, taxYear: number): void {
+  if (
+    item.roth_prior_contribution_basis !== undefined &&
+    (item.box7_distribution_code !== DistributionCode.CodeJ ||
+      item.box7_code2 !== undefined || item.ts === undefined ||
+      item.exclude_8606_roth === true ||
+      item.roth_distribution_evidence !== undefined ||
+      item.roth_activity_review !== undefined ||
+      item.roth_owner_inventory_review !== undefined ||
+      item.rollover_code !== undefined || item.prior_ira_basis !== undefined)
+  ) {
+    throw new Error(
+      "Roth contribution basis applies to one owner's code J Form 1099-R without another Roth or rollover treatment",
+    );
+  }
   if (item.ira_recharacterization_review) reviewedIraRecharacterization(item);
   if (
     item.box7_distribution_code === DistributionCode.Code8 &&
@@ -1600,6 +1629,8 @@ function form5329Outputs(items: R1099Items, taxYear: number): NodeOutput[] {
       }, taxYear)
       // Form 5329 line 1 uses the early distribution included in income.
       // A confirmed IRA rollover removes its rolled portion from that amount.
+      : item.roth_prior_contribution_basis !== undefined
+      ? rothBasisTaxable(item)
       : isIraRollover(item)
       ? effectiveTaxableAmount(item, 0, 0)
       : item.box2a_taxable_amount ?? item.box1_gross_distribution;
@@ -2110,6 +2141,15 @@ class F1099rNode extends TaxNode<typeof inputSchema> {
     // Cross-field validation
     for (const item of r1099s) {
       validateItem(item, ctx.taxYear);
+    }
+    // One owner's prior-year Roth contribution basis is applied once.
+    const basisOwners = r1099s.filter((item) =>
+      item.roth_prior_contribution_basis !== undefined
+    ).map((item) => item.ts);
+    if (new Set(basisOwners).size !== basisOwners.length) {
+      throw new Error(
+        "Roth contribution basis needs one code J Form 1099-R per owner",
+      );
     }
     const corrective = correctivePlanItems(r1099s);
     const stateLocalWithholding = activeItems(r1099s).reduce(
