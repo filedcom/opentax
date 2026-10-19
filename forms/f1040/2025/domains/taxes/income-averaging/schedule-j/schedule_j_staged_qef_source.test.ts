@@ -255,7 +255,7 @@ test("Alex's Schedule J and adoption source retains staged credit without QEF", 
 test("Alex's issued education sources compose the J and QEF shadow at the actual phaseout", async () => {
   const source = alexSources(true);
   delete source.form8839;
-  const pre = buildPending(executeScheduleJSourceReturn(source).pending);
+  const pre = buildPending(executeScheduleJSourceReturn(source, { taxYear: 2025, formType: "f1040" }).pending);
   const education = pdfReviewFixtures.find((row) =>
     row.id === "single-form8863-lifetime-learning-scholarship"
   )!;

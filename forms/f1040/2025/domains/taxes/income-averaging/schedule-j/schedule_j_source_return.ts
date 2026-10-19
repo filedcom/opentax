@@ -19,6 +19,7 @@ import {
   type Form8814Lines,
 } from "../../../../../nodes/inputs/income/investments/f8814/index.ts";
 import { registry } from "../../../../registry.ts";
+import type { NodeContext } from "../../../../../../../core/types/node-context.ts";
 import { buildPending } from "../../../../mef/execution/pending.ts";
 
 export const nonfarmEmployerRecordSchema = z.object({
@@ -234,7 +235,6 @@ function nonfarmWageAmount(
   return amount;
 }
 
-const context = { taxYear: 2025, formType: "f1040" } as const;
 function record(value: unknown): Record<string, unknown> {
   if (!value || typeof value !== "object" || Array.isArray(value)) {
     throw new Error(
@@ -253,8 +253,9 @@ function total(value: unknown): number {
   }
   return result;
 }
-function raw(inputs: Record<string, unknown>): ExecuteResult {
-  return execute(buildExecutionPlan(registry), registry, inputs, context);
+function graphFor(context: NodeContext) {
+  return (inputs: Record<string, unknown>): ExecuteResult =>
+    execute(buildExecutionPlan(registry), registry, inputs, context);
 }
 
 function jointFishingFarmOwners(
@@ -373,7 +374,10 @@ function jointFishingFarmOwners(
 /** Innermost graph stage, reusable in credit and QEF counterfactual passes. */
 export function executeScheduleJSourceReturn(
   inputs: Record<string, unknown>,
-  executeGraph: (inputs: Record<string, unknown>) => ExecuteResult = raw,
+  context: NodeContext,
+  executeGraph: (inputs: Record<string, unknown>) => ExecuteResult = graphFor(
+    context,
+  ),
 ): ExecuteResult {
   if (inputs.schedule_j === undefined) return executeGraph(inputs);
   // Private worksheet operands cannot be supplied by a public caller.
@@ -548,7 +552,7 @@ export function assertScheduleJSourceReturn(
   pending: Readonly<Record<string, unknown>>,
   executeFiledReturn: (
     inputs: Record<string, unknown>,
-  ) => ExecuteResult = executeScheduleJSourceReturn,
+  ) => ExecuteResult,
 ): void {
   const calculation = pending.schedule_j_calculation as
     | Record<string, unknown>

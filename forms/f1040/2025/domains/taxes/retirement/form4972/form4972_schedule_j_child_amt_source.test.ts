@@ -10,7 +10,13 @@ import { normalizeAllPending } from "../../../../return-processing/pending.ts";
 import { extractFilerIdentity } from "../../../../../mef/filer.ts";
 import { buildPdfBytes, type PdfPageOrigin } from "../../../../pdf/builder.ts";
 import { assertForm4972AmtJoin } from "./form4972_amt_reconciliation.ts";
-import { assertScheduleJSourceReturn } from "../../income-averaging/schedule-j/schedule_j_source_return.ts";
+import {
+  assertScheduleJSourceReturn,
+  executeScheduleJSourceReturn,
+} from "../../income-averaging/schedule-j/schedule_j_source_return.ts";
+
+const replayScheduleJ = (inputs: Record<string, unknown>) =>
+  executeScheduleJSourceReturn(inputs, { taxYear: 2025, formType: "f1040" });
 
 function sourcedReturn(): Record<string, unknown> {
   const input: any = scheduleJNonfarmW2Inputs();
@@ -68,7 +74,7 @@ test("issued participant, child, farm, dividend, W-2 and ISO sources refigure Sc
   const noJ: any = normalizeAllPending(without.pending);
   assertEquals(noJ.f1040.line16_income_tax - 2768, 72381);
   assertEquals(noJ.f1040.form8814_tax, 135);
-  assertScheduleJSourceReturn(result.pending);
+  assertScheduleJSourceReturn(result.pending, replayScheduleJ);
   assertForm4972AmtJoin(2768, p);
 
   const filer = extractFilerIdentity(p.f1040)!;
@@ -148,7 +154,7 @@ test("child income just above filing threshold retains a zero-tax Form8814 with 
   assertEquals(p.f1040.line16_income_tax, 71257);
   assertEquals(p.form6251.regular_tax, 71996);
   assertEquals(p.form6251.line11_amt, 53583);
-  assertScheduleJSourceReturn(r.pending);
+  assertScheduleJSourceReturn(r.pending, replayScheduleJ);
   assertForm4972AmtJoin(2768, p);
   const filer = extractFilerIdentity(p.f1040)!;
   const prepared = await f1040_2025.prepareReturn!(r.pending, filer);

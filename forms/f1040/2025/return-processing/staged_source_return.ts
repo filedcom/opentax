@@ -35,7 +35,7 @@ function executeCreditStages(
   executeGraph: F1040GraphExecutor,
 ): ExecuteResult {
   const scheduleJGraph = (source: Record<string, unknown>) =>
-    executeScheduleJSourceReturn(source, executeGraph);
+    executeScheduleJSourceReturn(source, context, executeGraph);
   const elected = Array.isArray(inputs.f8621) &&
     inputs.f8621.some((item) =>
       item !== null && typeof item === "object" &&
