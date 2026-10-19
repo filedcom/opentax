@@ -388,7 +388,7 @@
       "calculation form8995a"
     ],
     "single-form8863-missing-tuition-form-taxable-scholarship-phaseout": [
-      "xml Form 8863 filing needs source MAGI, Credit Limit Worksheet, and finalized Form 1040/Schedule 3 credit lines to reconcile"
+      "calculation threw Form 8863 filed MAGI and credit limit must equal the actual pre-education return"
     ],
     "single-passive-partnership-new-markets": [
       "xml Form 8582-CR line 6 tax sides must use the finalized Form 1040 ordinary-tax method"
@@ -478,7 +478,7 @@
       "rule F4562-003-11"
     ],
     "single-form8863-lifetime-learning-scholarship": [
-      "xml Form 8863 filing needs source MAGI, Credit Limit Worksheet, and finalized Form 1040/Schedule 3 credit lines to reconcile"
+      "calculation threw Form 8863 filed MAGI and credit limit must equal the actual pre-education return"
     ],
     "single-form8915f-disaster-and-ordinary-plan-distributions": [
       "rule F8915F-001",
@@ -510,10 +510,10 @@
       "calculation f8882"
     ],
     "single-form8863-two-school-llc": [
-      "xml Form 8863 filing needs source MAGI, Credit Limit Worksheet, and finalized Form 1040/Schedule 3 credit lines to reconcile"
+      "calculation threw Form 8863 filed MAGI and credit limit must equal the actual pre-education return"
     ],
     "single-form8863-two-school-aoc": [
-      "xml Form 8863 filing needs source MAGI, Credit Limit Worksheet, and finalized Form 1040/Schedule 3 credit lines to reconcile"
+      "calculation threw Form 8863 filed MAGI and credit limit must equal the actual pre-education return"
     ],
     "qualified-tip-qbi-advanced-event-wotc-tip-exclusion": [
       "calculation form8960",
