@@ -1,5 +1,6 @@
 import { FilingStatus } from "../../../../../types.ts";
 import type { Bracket } from "../../../../../config/2025.ts";
+import { configForYear } from "../../../../../config/index.ts";
 import type { F8615Input } from "../../../../../inputs/taxes/investments/f8615/schema.ts";
 import { qualifiedDividendTax } from "../../../../worksheets/taxes/calculation/tax_table_2025.ts";
 import {
@@ -35,9 +36,14 @@ export interface Line5PreferentialIncome {
   netCapitalGain: number;
 }
 
-// Form 8615 line 2: $1,350 and $2,700 for both TY2025 (2025 Form 8615) and
-// TY2026 (Rev. Proc. 2025-32 §4.02).
-const KIDDIE = { base: 1_350, double: 2_700 } as const;
+// Form 8615 line 2 amounts, from the year's config.
+function kiddieAmounts(taxYear: number): { base: number; double: number } {
+  const cfg = configForYear(taxYear);
+  return {
+    base: cfg.kiddieStandardDeductionFloor,
+    double: cfg.kiddieUnearnedIncomeThreshold,
+  };
+}
 
 function roundedRatio(numerator: number, denominator: number): number {
   return Math.min(1, Math.round(numerator / denominator * 1_000) / 1_000);
@@ -53,7 +59,7 @@ export function line5PreferentialIncome(
   line3: number,
   line5: number,
 ): Line5PreferentialIncome {
-  const kiddie = KIDDIE;
+  const kiddie = kiddieAmounts(context.taxYear);
   const qualifiedDividends = context.childQualifiedDividends;
   const netCapitalGain = context.childNetCapitalGain;
   if (qualifiedDividends === undefined || netCapitalGain === undefined) {
@@ -227,7 +233,7 @@ export function calculateForm8615(
   }
 
   const line1 = Math.round(source.child_unearned_income);
-  const kiddie = KIDDIE;
+  const kiddie = kiddieAmounts(context.taxYear);
   const line2 = context.takingStandardDeduction ? kiddie.double : Math.max(
     kiddie.double,
     kiddie.base +
