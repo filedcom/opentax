@@ -8158,7 +8158,7 @@ const sourcePdfReviewFixtures: readonly PdfReviewFixture[] = [
           }],
           central_air_conditioner: { cost: 2_000, qmid: "C3D4" },
         },
-        part_ii_tax_limit: 1_000,
+        part_ii_tax_limit: 9_055,
       },
     },
     filer: singleFiler,
