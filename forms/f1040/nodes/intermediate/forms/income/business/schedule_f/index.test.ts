@@ -703,3 +703,19 @@ test("schedule_f: negative expense throws", () => {
     })
   );
 });
+
+// 2025 Schedule SE instructions (joint returns): each spouse's farm profit or
+// loss goes on that spouse's own Schedule SE. A single farm owned by one
+// spouse is identified by its proprietor even without a farm ID.
+test("joint Schedule F without a farm ID routes the loss to its proprietor's Schedule SE", () => {
+  const result = compute({
+    owner_filing_status: "mfj",
+    schedule_fs: [minimalItem({ proprietor_recipient: "T", line16_feed: 5_680 })],
+  });
+  const sources = findOutput(result, "schedule_se")?.fields
+    .owner_business_sources as Array<Record<string, unknown>>;
+  assertEquals(sources.length, 1);
+  assertEquals(sources[0].recipient, "T");
+  assertEquals(sources[0].source_reference, "schedule_f_1");
+  assertEquals(sources[0].net_profit, -5_680);
+});
