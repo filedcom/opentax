@@ -182,12 +182,26 @@ export const inputSchema = z.object({
   // Line 5a (alternative): General sales tax deduction in lieu of income taxes
   // IRC §164(b)(5)(A) — taxpayer elects sales tax OR income tax, not both.
   line_5a_sales_tax: z.number().nonnegative().optional(),
-  line_5b_real_estate_tax: z.number().nonnegative().optional(),
+  line_5b_real_estate_tax: z.union([
+    z.number().nonnegative(),
+    z.array(z.number().nonnegative()),
+  ]).transform((value) =>
+    Array.isArray(value)
+      ? value.reduce((sum, amount) => sum + amount, 0)
+      : value
+  ).optional(),
   line_5c_personal_property_tax: z.number().nonnegative().optional(),
   line_6_other_taxes: z.number().nonnegative().optional(),
   line_6_other_tax_items: z.array(otherTaxItemSchema).min(1).max(2)
     .optional(),
-  line_8a_mortgage_interest_1098: z.number().nonnegative().optional(),
+  line_8a_mortgage_interest_1098: z.union([
+    z.number().nonnegative(),
+    z.array(z.number().nonnegative()),
+  ]).transform((value) =>
+    Array.isArray(value)
+      ? value.reduce((sum, amount) => sum + amount, 0)
+      : value
+  ).optional(),
   line_8b_mortgage_interest_no_1098: z.number().nonnegative().optional(),
   line_8b_seller_financed: sellerFinancedLine8bSchema.optional(),
   home_mortgage_nonqualifying_use_review:
