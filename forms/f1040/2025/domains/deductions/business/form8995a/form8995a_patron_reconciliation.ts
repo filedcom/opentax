@@ -106,7 +106,10 @@ export function assertForm8995APatronReturn(
     ? w2Schema.parse({ w2s: patronW2Sources(review) }).w2s
     : [];
   const w2Input = pending.w2 ? w2Schema.parse(pending.w2) : undefined;
-  const w2s = w2Input?.w2s ?? [];
+  // Birth dates from the general information join each parsed copy.
+  const w2s = (w2Input?.w2s ?? []).map(({ owner_birth_date: _, ...row }) =>
+    row
+  );
   if (
     pending.general?.filing_status !== input.filing_status ||
     owner !== review.source_1099patr.recipient_tin ||
