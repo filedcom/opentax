@@ -1,3 +1,4 @@
+import type { NodeContext } from "../../../../../../../core/types/node-context.ts";
 import { CONFIG_BY_YEAR } from "../../../../../nodes/config/index.ts";
 import {
   ExclusionType,
@@ -10,14 +11,12 @@ import {
 } from "../../../../../nodes/inputs/income/other/f1099c/index.ts";
 
 export function assertForm982AbsentSource(
-  pending?: Readonly<Record<string, unknown>>,
+  pending: Readonly<Record<string, unknown>> | undefined,
+  context: NodeContext,
 ): void {
   if (pending?.f1099c === undefined) return;
   const original = f1099cSchema.parse(pending.f1099c);
-  const hasForm982Deposit = f1099c.compute(
-    { taxYear: 2025, formType: "f1040" },
-    original,
-  ).outputs.some((entry) => entry.nodeType === "form982");
+  const hasForm982Deposit = f1099c.compute(context, original).outputs.some((entry) => entry.nodeType === "form982");
   if (hasForm982Deposit) {
     throw new Error("Form 982 source exists without its required filing form");
   }
@@ -27,7 +26,16 @@ export function assertForm982AbsentSource(
 export function projectQpriForm982(
   raw: unknown,
   pending: Readonly<Record<string, unknown>>,
+  context: NodeContext,
 ) {
+  // IRC §108(a)(1)(E), as amended by P.L. 119-21, and the Form 982 line 1e
+  // instructions: a discharge after 2025 qualifies only under a written
+  // arrangement entered into before 2026, which the 1099-C source lacks.
+  if (context.taxYear >= 2026) {
+    throw new Error(
+      `Form 982 QPRI for TY${context.taxYear} needs a written arrangement entered into before 2026; IRC §108(a)(1)(E) excludes no later discharge without one`,
+    );
+  }
   const input = form982Schema.strict().parse(raw);
   if (input.exclusion_type !== ExclusionType.Qpri) {
     throw new Error(
@@ -55,10 +63,7 @@ export function projectQpriForm982(
   ) {
     throw new Error("Form 982 QPRI needs one original excluded 1099-C");
   }
-  const sourceOutput = f1099c.compute(
-    { taxYear: 2025, formType: "f1040" },
-    original,
-  ).outputs.find((entry) => entry.nodeType === "form982");
+  const sourceOutput = f1099c.compute(context, original).outputs.find((entry) => entry.nodeType === "form982");
   if (!sourceOutput) {
     throw new Error("Form 982 QPRI lacks an original 1099-C exclusion deposit");
   }
@@ -74,9 +79,9 @@ export function projectQpriForm982(
   ) {
     throw new Error("Form 982 QPRI differs from its original 1099-C deposit");
   }
-  const cap = input.qpri_mfs
-    ? CONFIG_BY_YEAR[2025].qpriCapMfs
-    : CONFIG_BY_YEAR[2025].qpriCapStandard;
+  const cfg = CONFIG_BY_YEAR[context.taxYear];
+  if (!cfg) throw new Error(`No f1040 config for year ${context.taxYear}`);
+  const cap = input.qpri_mfs ? cfg.qpriCapMfs : cfg.qpriCapStandard;
   const excluded = qpriExcludedAmount(input, cap);
   if (excluded <= 0) {
     throw new Error("Form 982 QPRI has no qualifying debt to exclude");

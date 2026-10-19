@@ -4,6 +4,7 @@ import {
   projectQpriForm982,
 } from "../../../../domains/income/other/form982/form982-qpri.ts";
 import { FilingStatus, filingStatusSchema } from "../../../../../nodes/types.ts";
+import { mefTaxYear } from "../../../../mef/support/year-config.ts";
 
 // IRS Form 982 (March 2018) AcroForm field names. This remains the current
 // revision for TY2025; the IRS has not published a 2025-specific Form 982.
@@ -46,11 +47,17 @@ export const form982Pdf: PdfFormDescriptor = {
   ],
   projectFields: (raw, all) => {
     if (Object.keys(raw).length === 0) {
-      assertForm982AbsentSource(all);
+      assertForm982AbsentSource(all, {
+        taxYear: mefTaxYear(),
+        formType: "f1040",
+      });
       return raw;
     }
     const status = filingStatusSchema.parse(all.f1040?.filing_status);
-    const qpri = projectQpriForm982(raw, all);
+    const qpri = projectQpriForm982(raw, all, {
+      taxYear: mefTaxYear(),
+      formType: "f1040",
+    });
     if ((status === FilingStatus.MFS) !== raw.qpri_mfs) {
       throw new Error(
         "Form 982 QPRI filing-status cap conflicts with Form 1040",
