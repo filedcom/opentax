@@ -297,7 +297,7 @@ export function scheduleEPdfFor(taxYear: number): PdfFormDescriptor {
         input.rental_income !== undefined ||
         input.royalty_income !== undefined ||
         trustRows.length > 2 ||
-        !scheduleE.build(input, { pending: allPending })
+        !scheduleE.build(input, { pending: allPending, taxYear })
       ) {
         throw new Error(
           "Schedule E PDF Part II needs up to four sourced K-1 rows on a supported page 2",
@@ -363,7 +363,7 @@ export function scheduleEPdfFor(taxYear: number): PdfFormDescriptor {
         input.rental_income !== undefined ||
         input.royalty_income !== undefined ||
         trustRows.length > 2 ||
-        !scheduleE.build(input, { pending: allPending })
+        !scheduleE.build(input, { pending: allPending, taxYear })
       ) {
         throw new Error(
           "Schedule E PDF trust rows need a sourced Part III return",
@@ -395,7 +395,7 @@ export function scheduleEPdfFor(taxYear: number): PdfFormDescriptor {
       if (input.schedule_es.length === 0) return partIIFields!;
     }
     if (input.schedule_es.length === 0 && input.farm_rental_net !== undefined) {
-      if (!scheduleE.build(input, { pending: allPending })) {
+      if (!scheduleE.build(input, { pending: allPending, taxYear })) {
         throw new Error(
           "Schedule E PDF farm rental needs a native Form 4835 join",
         );
@@ -449,6 +449,7 @@ export function scheduleEPdfFor(taxYear: number): PdfFormDescriptor {
       ).some(Boolean);
     const allowedByActivity = validatePassiveActivityLink(items, {
       pending: allPending,
+      taxYear,
     });
     // Native Schedule E checks every source row, limitation, and finalized total.
     if (items[0].f1099m_royalty_source) {
@@ -458,7 +459,7 @@ export function scheduleEPdfFor(taxYear: number): PdfFormDescriptor {
         undefined,
         allPending,
       );
-    } else if (!scheduleE.build(input, { pending: allPending })) {
+    } else if (!scheduleE.build(input, { pending: allPending, taxYear })) {
       throw new Error("Schedule E PDF needs native Part I properties");
     }
     const rows = items.map((item, index) => {
@@ -666,7 +667,7 @@ export function scheduleEPdfFor(taxYear: number): PdfFormDescriptor {
     if (input?.schedule_es[0]?.f1099m_royalty_source) {
       if (
         !filer || !allPending ||
-        !scheduleE.build(input, { pending: allPending, filer })
+        !scheduleE.build(input, { pending: allPending, filer, taxYear })
       ) {
         throw new Error(
           "Schedule E PDF linked 1099-MISC royalty needs its primary filer and native property",

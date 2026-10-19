@@ -288,6 +288,32 @@ test("TY2026 PDF prints Schedule A with the 0.5% gift floor and line 18", async 
   assertMatch(printed, /12e Standard deduction or itemized[^\n]* 12e 34000/);
 });
 
+test("TY2026 PDF prints Schedule 1-A car loan and senior parts", async () => {
+  const car = await text(
+    await render(fixture("single-reviewed-car-loan-schedule1a")),
+  );
+  assertMatch(car, /SCHEDULE 1-A[\s\S]*2026/);
+  assertMatch(car, /line 11b[^\n]* 1 80000/);
+  assertMatch(car, /28a 1 H G C M 8 2 6 3 3 A 0 0 4 3 5 2 0 4000/);
+  assertMatch(car, /does not qualify\)\?[^\n]* ✔ Yes No/);
+  assertMatch(car, /final assembly\)\?[^\n]* ✔ Yes No/);
+  assertMatch(car, /29 Add lines 28a and 28b[^\n]* 29 4000/);
+  assertMatch(car, /32 Enter \$100,000[^\n]* 32 100000/);
+  assertMatch(car, /enter -0- [. ]* 36 4000/);
+  assertMatch(car, /44 Add lines 15, 27, 36, and 43[^\n]* 44 4000/);
+  const senior = await text(await render(fixture("joint-senior-schedule1a")));
+  assertMatch(senior, /37 Enter the amount from line 3[^\n]* 37 160000/);
+  assertMatch(senior, /40 Multiply line 39 by 6%[^\n]* 40 600/);
+  assertMatch(senior, /41 Subtract line 40 from \$6,000[^\n]* 41 5400/);
+  assertMatch(senior, /43 Enhanced deduction for seniors[^\n]* 43 10800/);
+  assertMatch(senior, /44 Add lines 15, 27, 36, and 43[^\n]* 44 10800/);
+  await assertRejects(
+    () => render(fixture("single-w2-qualified-tips-schedule1a")),
+    Error,
+    "Schedule 1-A tips, overtime",
+  );
+});
+
 test("TY2026 PDF refuses, by name, a form with no TY2026 mapping", async () => {
   await assertRejects(
     () => render(fixture("single-child-unearned-income")),

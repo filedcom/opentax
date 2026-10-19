@@ -236,14 +236,15 @@ const fields: ReadonlyArray<PdfFieldEntry> = [
   },
 ];
 
-export const schedule1aPdf: PdfFormDescriptor = {
+export function schedule1aPdfFor(taxYear: number): PdfFormDescriptor {
+  return {
   pendingKey: "schedule1a",
   pdfUrl: "https://www.irs.gov/pub/irs-prior/f1040s1a--2025.pdf",
   projectFields(raw, allPending) {
     if (Object.keys(raw).length === 0) return raw;
     const input = inputSchema.parse(raw);
     // Keep the PDF authorization identical to native XML authorization.
-    if (!schedule1a.build(input, { pending: allPending })) return {};
+    if (!schedule1a.build(input, { pending: allPending, taxYear })) return {};
     const projected: Record<string, unknown> = {
       line1_agi: input.magi,
       line2b_form2555_exclusion: input.form2555_line45_exclusion,
@@ -260,7 +261,7 @@ export const schedule1aPdf: PdfFormDescriptor = {
       (input.qualified_trade_business_tips?.length ?? 0) > 0
     ) {
       const lines = calculateQualifiedTipsSchedule1A(
-        { taxYear: 2025, formType: "f1040" },
+        { taxYear, formType: "f1040" },
         input,
       );
       Object.assign(projected, {
@@ -281,7 +282,7 @@ export const schedule1aPdf: PdfFormDescriptor = {
     }
     if ((input.qualified_w2_overtime?.length ?? 0) > 0) {
       const lines = calculateW2OvertimeSchedule1A(
-        { taxYear: 2025, formType: "f1040" },
+        { taxYear, formType: "f1040" },
         input,
       );
       Object.assign(projected, {
@@ -300,7 +301,7 @@ export const schedule1aPdf: PdfFormDescriptor = {
     }
     if ((input.vehicle_loans?.length ?? 0) > 0) {
       const lines = calculateVehicleInterestSchedule1A(
-        { taxYear: 2025, formType: "f1040" },
+        { taxYear, formType: "f1040" },
         input,
       );
       const [first, second] = lines.line22_vehicles;
@@ -331,9 +332,9 @@ export const schedule1aPdf: PdfFormDescriptor = {
       });
       total += lines.line30_vehicle_interest;
     }
-    if (seniorDeduction({ taxYear: 2025, formType: "f1040" }, input) > 0) {
+    if (seniorDeduction({ taxYear, formType: "f1040" }, input) > 0) {
       const lines = calculateSeniorOnlySchedule1A(
-        { taxYear: 2025, formType: "f1040" },
+        { taxYear, formType: "f1040" },
         input,
       );
       Object.assign(projected, {
@@ -362,4 +363,7 @@ export const schedule1aPdf: PdfFormDescriptor = {
       pdfField: `${page1}.f1_02[0]`,
     },
   ],
-};
+  };
+}
+
+export const schedule1aPdf: PdfFormDescriptor = schedule1aPdfFor(2025);
