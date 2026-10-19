@@ -268,6 +268,11 @@ export const inputSchema = z.object({
   // Set by Form 8862 when prior-year AOTC disallowance has been cleared
   form8862_filed: z.boolean().optional(),
   credit_limit_worksheet: creditLimitWorksheetSchema.optional(),
+  // Return-level context: filing status (general) and Form 8863 lines 3/14
+  // MAGI, Form 1040 line 11 plus the Form 2555 exclusion (agi_aggregator).
+  // A student's filer_magi or filing_status overrides them.
+  auto_filing_status: filingStatusSchema.optional(),
+  auto_magi: z.number().optional(),
 });
 
 export type F8863Item = z.infer<typeof itemSchema>;
@@ -1036,11 +1041,30 @@ function llcOutputs(
   return [output(schedule3, { line3_education_credit: llcAllowed })];
 }
 
+// 2025 Form 8863 instructions, lines 3 and 14: MAGI is Form 1040 line 11
+// plus any Form 2555 exclusion; MFS filers cannot claim either credit.
+function withReturnContext(input: F8863Input): F8863Input {
+  const magi = input.auto_magi === undefined
+    ? undefined
+    : Math.max(0, input.auto_magi);
+  return {
+    ...input,
+    f8863s: input.f8863s.map((item) => ({
+      ...item,
+      ...(item.filer_magi === undefined && magi !== undefined &&
+        { filer_magi: magi }),
+      ...(item.filing_status === undefined &&
+        input.auto_filing_status !== undefined &&
+        { filing_status: input.auto_filing_status }),
+    })),
+  };
+}
+
 export function calculateForm8863Lines(
   rawInput: F8863Input,
   taxYear: number,
 ) {
-  const input = inputSchema.parse(rawInput);
+  const input = withReturnContext(inputSchema.parse(rawInput));
   const items = reviewedEducationStudents(input);
   validateReturnContext(items);
   const aocStudents = eligibleAocStudents(items);
@@ -1138,6 +1162,7 @@ class F8863Node extends TaxNode<typeof inputSchema> {
   readonly nodeType = "f8863";
   readonly inputSchema = inputSchema;
   readonly outputNodes = new OutputNodes([schedule3, f1040]);
+  override readonly contextFields = ["auto_filing_status", "auto_magi"];
 
   compute(ctx: NodeContext, input: z.infer<typeof inputSchema>): NodeResult {
     const lines = calculateForm8863Lines(input, ctx.taxYear);

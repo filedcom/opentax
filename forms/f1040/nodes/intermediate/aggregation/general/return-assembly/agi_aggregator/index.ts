@@ -35,6 +35,7 @@ import { schedule_j_calculation } from "../../../../forms/taxes/income-averaging
 import { box11CodeJSourceSchema } from "../../../../../inputs/income/rental-passthrough/k1_partnership/box11_code_j.ts";
 import { box11CodeESourceSchema } from "../../../../../inputs/income/rental-passthrough/k1_partnership/box11_code_e.ts";
 import { box11CodeKSourceSchema } from "../../../../../inputs/income/rental-passthrough/k1_partnership/box11_code_k.ts";
+import { f8863 } from "../../../../../inputs/credits/individual/f8863/index.ts";
 
 // Fields that may arrive from multiple upstream nodes accumulate as arrays in the
 // executor pending dict. Declaring them accumulable prevents Zod parse failure.
@@ -747,6 +748,7 @@ class AgiAggregatorNode extends TaxNode<typeof inputSchema> {
       eitc,
       schedule_r,
       f8812,
+      f8863,
       f2441,
       form8995,
       form8960,
@@ -873,6 +875,10 @@ class AgiAggregatorNode extends TaxNode<typeof inputSchema> {
       this.outputNodes.output(schedule_r, { auto_agi: agi }),
       // Pass AGI to f8812 for CTC/ACTC phase-out computation
       this.outputNodes.output(f8812, { auto_agi: agi }),
+      // Form 8863 lines 3 and 14: AGI plus the Form 2555 exclusion.
+      this.outputNodes.output(f8863, {
+        auto_magi: agi + (input.line8d_foreign_earned_income_exclusion ?? 0),
+      }),
       // Pass AGI to f2441 for dependent care credit rate calculation
       this.outputNodes.output(f2441, { agi }),
       // Pass AGI to form8995 so it can apply the 20%-of-taxable-income income limit

@@ -9,6 +9,7 @@ import {
   educationDependentSourceEligible,
 } from "../../../../../nodes/inputs/general/filing/general/index.ts";
 import { assertEducationClaimantSources } from "../../../../../nodes/inputs/credits/individual/f8863/claimant-review.ts";
+import { inputSchema as w2Schema } from "../../../../../nodes/inputs/income/wages/w2/index.ts";
 import { assertEducationIncomeSource } from "../../../../../nodes/inputs/income/other/education_income/index.ts";
 import { element, elements } from "../../../../../mef/xml.ts";
 import {
@@ -298,6 +299,7 @@ export function assertForm8863FinalizedReturn(
         dependentSchema.parse(source),
         mefTaxYear(context),
       ),
+    pending?.w2 === undefined ? [] : w2Schema.parse(pending.w2).w2s,
     filer.spouse?.ssn,
   );
 }
