@@ -158,7 +158,15 @@ export const inputSchema = z.object({
   ).optional(),
 
   // Current-year net passive loss (positive amount; sum of |net| for loss activities)
-  current_loss: z.number().nonnegative().optional(),
+  // Schedule E and passive K-1 losses each send their own total.
+  current_loss: z.union([
+    z.number().nonnegative(),
+    z.array(z.number().nonnegative()),
+  ]).transform((value) =>
+    Array.isArray(value)
+      ? value.reduce((sum, amount) => sum + amount, 0)
+      : value
+  ).optional(),
 
   // Current-year net passive loss from rental real estate activities only (positive amount).
   // Used for IRC §469(i) $25K special allowance — only rental losses qualify, not other

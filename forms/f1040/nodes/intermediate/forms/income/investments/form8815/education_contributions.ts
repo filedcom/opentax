@@ -37,14 +37,14 @@ export const educationFactsSchema = z.discriminatedUnion(
       ...commonEducationFacts,
       no_coverdell_or_qtp_contributions_in_claim: z.literal(true),
       all_institutions_eligible: z.literal(true),
-      expenses_are_eligible_2025_tuition_or_fees: z.literal(true),
+      expenses_are_eligible_tuition_or_fees: z.literal(true),
     }).strict(),
     z.object({
       ...commonEducationFacts,
       no_coverdell_or_qtp_contributions_in_claim: z.literal(false),
       tuition_institutions_eligible: z.literal(true),
       contribution_accounts_qualified: z.literal(true),
-      expenses_are_eligible_2025_tuition_fees_or_contributions: z.literal(true),
+      expenses_are_eligible_tuition_fees_or_contributions: z.literal(true),
     }).strict(),
   ],
 );
@@ -57,10 +57,7 @@ export const contributionReviewSchema = z.object({
       payment_reference: reference,
       source_document_reference: reference,
       contributor_tin: tin,
-      paid_date: date.refine(
-        (value) => value.startsWith("2025-"),
-        "Form 8815 needs 2025 payments",
-      ),
+      paid_date: date,
       amount: amount.positive(),
       cash_contribution_not_rollover_or_transfer: z.literal(true),
       not_returned_or_used_for_another_tax_benefit: z.literal(true),
@@ -71,8 +68,8 @@ export const contributionReviewSchema = z.object({
       beneficiary_tin: tin,
       beneficiary_dob: date,
       special_needs_record_reference: reference.optional(),
-      other_2025_contributions_all_sources: amount,
-      other_2025_contributions_by_filers: amount,
+      other_contributions_all_sources: amount,
+      other_contributions_by_filers: amount,
       annual_contribution_inventory_reference: reference,
       no_prior_excess_remaining: z.literal(true),
     }).strict(),
@@ -179,15 +176,15 @@ function assertCoverdellInventories(
     });
     const total = payments.reduce(
       (sum, payment) => sum + payment.amount,
-      inventory.other_2025_contributions_all_sources,
+      inventory.other_contributions_all_sources,
     );
     const eighteenthBirthday = `${
       Number(inventory.beneficiary_dob.slice(0, 4)) + 18
     }${inventory.beneficiary_dob.slice(4)}`;
     if (
       total > 2000 ||
-      inventory.other_2025_contributions_by_filers >
-        inventory.other_2025_contributions_all_sources ||
+      inventory.other_contributions_by_filers >
+        inventory.other_contributions_all_sources ||
       payments.some((payment) =>
         payment.paid_date < inventory.beneficiary_dob ||
         (!inventory.special_needs_record_reference &&
@@ -202,7 +199,10 @@ function assertCoverdellInventories(
 }
 
 /** Reconcile all contributions before calculating the exclusion. */
-export function assertEducationContributions(input: Form8815Input): void {
+export function assertEducationContributions(
+  input: Form8815Input,
+  taxYear: number,
+): void {
   const accounts = contributionAccounts(input);
   const review = input.education_contributions;
   if (input.education_facts.no_coverdell_or_qtp_contributions_in_claim) {
@@ -215,6 +215,13 @@ export function assertEducationContributions(input: Form8815Input): void {
   }
   if (!review || accounts.length === 0) {
     throw new Error("Form 8815 contributions need account and payment records");
+  }
+  if (
+    review.payments.some((payment) =>
+      !payment.paid_date.startsWith(`${taxYear}-`)
+    )
+  ) {
+    throw new Error(`Form 8815 needs ${taxYear} payments`);
   }
   assertPaymentAccounts(input, review, accounts);
   assertTuitionTotal(input, review, accounts.length);

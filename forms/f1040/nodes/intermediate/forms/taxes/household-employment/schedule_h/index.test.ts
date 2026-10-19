@@ -35,7 +35,7 @@ const studentMinorFuta = {
         birth_date: "2008-05-10",
         birth_date_source_reference: "student-age-record",
         student_enrollment_source_reference: "2025-school-enrollment",
-        student_during_2025_verified: true,
+        student_during_tax_year_verified: true,
       },
       ordinary_cash_only: true,
       annual_cash_wages: 4_000,
@@ -61,7 +61,7 @@ const nonstudentMinorFuta = {
         birth_date_source_reference: "working-minor-age-record",
         education_status_source_reference: "2025-nonenrollment-record",
         principal_occupation_source_reference: "2025-household-work-record",
-        not_a_student_during_2025_verified: true,
+        not_a_student_during_tax_year_verified: true,
         household_services_principal_occupation_verified: true,
       },
       ordinary_cash_only: true,
@@ -801,7 +801,7 @@ test("2026: cash wages below $3,000 are not FICA wages", () => {
   );
 });
 
-test("2026: FUTA and minor classifications stay refused", () => {
+test("2026: FUTA stays refused and a minor still needs its classification", () => {
   assertThrows(
     () =>
       compute2026({
@@ -815,7 +815,36 @@ test("2026: FUTA and minor classifications stay refused", () => {
         },
       }),
     Error,
-    "minor FICA classifications are not supported for 2026",
+    "needs exactly one student or principal-occupation source classification",
   );
   assertThrows(() => compute2026(studentMinorFuta), Error);
+});
+
+// 2025 Schedule H instructions: Part I lines 1a, 3 and 7 are employer totals,
+// and Part II Section A (one state, all contributions paid on time) needs only
+// the state, contributions paid (line 14) and total FUTA wages (line 15).
+test("schedule_h: Part I and Section A totals compute without employee rows", () => {
+  const result = compute({
+    employer_ein: "123456789",
+    cash_wages_over_2025_limit: true,
+    cash_wages_over_quarter_limit: true,
+    ss_wages: 4_259,
+    medicare_wages: 4_259,
+    federal_income_tax_withheld: 169,
+    federal_unemployment: {
+      paid_only_one_state: true,
+      all_contributions_paid_on_time: true,
+      all_futa_wages_state_taxable: true,
+      state: "OH",
+      contributions_paid: 71,
+      taxable_wages: 4_259,
+      all_household_employees_included: true,
+      prior_year_quarter_threshold_met: false,
+    },
+  });
+  // Line 8 = 4,259 x 15.3% (652) + 169 = 821; line 16 = 4,259 x 0.6% = 26.
+  assertEquals(
+    findOutput(result, "schedule2")?.fields.line9_household_employment,
+    847,
+  );
 });

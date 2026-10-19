@@ -317,7 +317,7 @@ test("getReturnCommand marks the summary incomplete when a node fails", async ()
     await appendInput(returnPath, "general", {
       filing_status: "single",
       taxpayer_ssn: "400-45-6789",
-      dual_status_return_2025: true,
+      spouse_can_be_claimed_as_dependent: true,
     });
     await appendInput(returnPath, "w2", {
       box1_wages: 85000,

@@ -388,17 +388,7 @@
       "calculation form8995a"
     ],
     "single-form8863-missing-tuition-form-taxable-scholarship-phaseout": [
-      "xml Form 8863 filing needs source MAGI, Credit Limit Worksheet, and finalized Form 1040/Schedule 3 credit lines to reconcile"
-    ],
-    "single-source-qef-1294-election": [
-      "calculation form8960",
-      "calculation standard_deduction",
-      "calculation start"
-    ],
-    "single-retained-4852-ordinary-roth": [
-      "calculation form8960",
-      "calculation standard_deduction",
-      "calculation start"
+      "calculation threw Form 8863 filed MAGI and credit limit must equal the actual pre-education return"
     ],
     "single-passive-partnership-new-markets": [
       "xml Form 8582-CR line 6 tax sides must use the finalized Form 1040 ordinary-tax method"
@@ -406,60 +396,17 @@
     "single-mixed-passive-new-markets": [
       "xml Form 8582-CR line 6 tax sides must use the finalized Form 1040 ordinary-tax method"
     ],
-    "single-reviewed-adoption-credit": [
-      "calculation threw [ { \"code\": \"custom\", \"message\": \"Invalid input\", \"path\": [ \"children\", 0, \"final_decree\", \"finalization_date\" ] } ]"
-    ],
-    "single-agri-biodiesel-producer-credit": [
-      "calculation form8960",
-      "calculation standard_deduction",
-      "calculation start"
-    ],
-    "single-w2-three-eic-children-with-reviewed-birth": [
-      "calculation form8959",
-      "calculation form8960",
-      "calculation general",
-      "calculation standard_deduction"
-    ],
-    "single-unreported-refinance-points": [
-      "calculation form8960",
-      "calculation standard_deduction",
-      "calculation start"
-    ],
-    "single-2023-refinance-points-ledger": [
-      "calculation form8960",
-      "calculation standard_deduction",
-      "calculation start"
-    ],
     "single-8862-ctc-reinstatement": [
       "calculation f8812"
     ],
     "single-five-dependent-continuation": [
       "calculation f8812"
     ],
-    "single-withheld-w2g": [
-      "xml Withheld W-2G needs the issued 2025 form, structured payer identity, standard code, winnings, and withholding"
-    ],
-    "joint-schedule-h-spouse-withholding-only": [
-      "calculation schedule_h"
-    ],
     "single-schedule-h-fica-and-futa": [
       "calculation schedule_h"
     ],
     "single-schedule-h-three-state-futa": [
       "calculation schedule_h"
-    ],
-    "single-form8814-child-dividends-adjustments": [
-      "calculation form8960",
-      "calculation standard_deduction",
-      "calculation start"
-    ],
-    "single-form8814-child-gain-with-schedule-d": [
-      "calculation form8960",
-      "calculation standard_deduction",
-      "calculation start"
-    ],
-    "single-partnership-code-k-and-w2g": [
-      "xml Withheld W-2G needs the issued 2025 form, structured payer identity, standard code, winnings, and withholding"
     ],
     "single-two-w2-flsa-overtime-schedule1a": [
       "xml Schedule 1-A 2026 overtime filing needs W-2 box 12 code TT amounts"
@@ -492,10 +439,10 @@
       "xml Schedule 1-A 2026 overtime filing needs W-2 box 12 code TT amounts"
     ],
     "single-k-business-refund": [
-      "calculation f1099k"
+      "xml Form 8995 line 16 minimum deduction has no 2026v1.0 MeF element; export waits for a schema that carries it"
     ],
     "single-k-business-refund-and-fee": [
-      "calculation f1099k"
+      "xml Form 8995 line 16 minimum deduction has no 2026v1.0 MeF element; export waits for a schema that carries it"
     ],
     "single-k-mixed-business-personal": [
       "xml Form 8995 line 16 minimum deduction has no 2026v1.0 MeF element; export waits for a schema that carries it"
@@ -527,37 +474,15 @@
     "single-five-sequential-corrected-slcsp-policies": [
       "xml Form 8962 household income and above-400%-FPL contribution must reconcile to finalized Form 1040"
     ],
-    "single-w2-code-d-excess-line1h": [
-      "calculation w2"
-    ],
-    "single-1099r-code8-corrective-line1h": [
-      "calculation f1099r"
-    ],
-    "single-form2555-full-year-physical-presence": [
-      "calculation form2555"
-    ],
     "single-form4562-section179-w2-income-limit": [
       "rule F4562-003-11"
     ],
     "single-form8863-lifetime-learning-scholarship": [
-      "xml Form 8863 filing needs source MAGI, Credit Limit Worksheet, and finalized Form 1040/Schedule 3 credit lines to reconcile"
-    ],
-    "single-form8606-post-year-contribution-and-distribution": [
-      "calculation form8960",
-      "calculation standard_deduction",
-      "calculation start"
-    ],
-    "single-form8815-series-ee-bond-exclusion": [
-      "calculation form8815"
+      "calculation threw Form 8863 filed MAGI and credit limit must equal the actual pre-education return"
     ],
     "single-form8915f-disaster-and-ordinary-plan-distributions": [
       "rule F8915F-001",
       "rule F8915F-002"
-    ],
-    "single-form7203-capital-and-debt-basis-loss": [
-      "calculation form8960",
-      "calculation standard_deduction",
-      "calculation start"
     ],
     "single-form982-qpri-exclusion": [
       "calculation form982"
@@ -567,14 +492,6 @@
     ],
     "single-form461-schedule-c-excess-business-loss": [
       "rule F461-002-05"
-    ],
-    "single-form8396-certified-loan-interest-credit": [
-      "calculation form8960",
-      "calculation standard_deduction",
-      "calculation start"
-    ],
-    "single-schedule-j-farm-income-averaging": [
-      "calculation income_tax_calculation"
     ],
     "mfj-form2210f-first-joint-filing": [
       "calculation f1040"
@@ -593,10 +510,10 @@
       "calculation f8882"
     ],
     "single-form8863-two-school-llc": [
-      "xml Form 8863 filing needs source MAGI, Credit Limit Worksheet, and finalized Form 1040/Schedule 3 credit lines to reconcile"
+      "calculation threw Form 8863 filed MAGI and credit limit must equal the actual pre-education return"
     ],
     "single-form8863-two-school-aoc": [
-      "xml Form 8863 filing needs source MAGI, Credit Limit Worksheet, and finalized Form 1040/Schedule 3 credit lines to reconcile"
+      "calculation threw Form 8863 filed MAGI and credit limit must equal the actual pre-education return"
     ],
     "qualified-tip-qbi-advanced-event-wotc-tip-exclusion": [
       "calculation form8960",
@@ -775,34 +692,22 @@
     "joint-spouse-owned-form8995a-patron-income-cap": "MeF schema gap: 2026v1.0 IRS8995A/IRS8995AScheduleA enumerate only the TY2025 FilingStatusThresholdCd values (197300, 394600); Rev. Proc. 2025-32 \u00a74.26 sets 201750/201775/403500 for 2026",
     "single-form8995a-two-business-aggregation": "Sample amount: the reviewed Form 8995-A Schedule B members carry QBI computed with the 2025 self-employment tax deduction; amounts are not shifted",
     "single-form8863-missing-tuition-form-taxable-scholarship-phaseout": "Sample fixture input: its Form 8863 filer MAGI and Credit Limit Worksheet operands are TY2025 amounts",
-    "single-source-qef-1294-election": "Open TY2026 work: Form 8621 pins the 2025 PFIC year, acquisition flags and country codes",
-    "single-retained-4852-ordinary-roth": "Open TY2026 work: the Roth/IRA basis sources pin 2024/2025 years and the April 15, 2026 contribution deadline",
     "single-passive-partnership-new-markets": "Sample amount: the reviewed Form 8582-CR line 6 worksheet carries tax computed under the 2025 rate schedule; amounts are not shifted",
     "single-mixed-passive-new-markets": "Sample amount: the reviewed Form 8582-CR line 6 worksheet carries tax computed under the 2025 rate schedule; amounts are not shifted",
-    "single-reviewed-adoption-credit": "Open TY2026 work: the staged Form 8839 route requires a 2025 decree (childSchema finalization_date) and carries TY2025 amounts through prepare/settle ($17,280 maximum, $259,190 phase-out start, $5,000 refundable), its carryforward (origin 2025) and MeF; the Rev. Proc. 2025-32 \u00a74.04 2026 amounts are in config but not threaded through that route",
-    "single-agri-biodiesel-producer-credit": "Open TY2026 work: Form 8864 accepts only 2025 small agri-biodiesel sales",
-    "single-w2-three-eic-children-with-reviewed-birth": "Named TY2025-only route: the node refuses TY2026 until that year's law is implemented",
-    "single-unreported-refinance-points": "Open TY2026 work: refinance-points ledger names its prior years in field names (prior_year_2023/2024)",
-    "single-2023-refinance-points-ledger": "Open TY2026 work: refinance-points ledger names its prior years in field names (prior_year_2023/2024)",
     "single-8862-ctc-reinstatement": "Sample amount: the reviewed Schedule 8812 carries the TY2025 Form 1040 line 18 tax ($9,055 on $80,000 single AGI); the 2026 return figures line 18 with the Rev. Proc. 2025-32 standard deduction and rates, and amounts are not shifted",
     "single-five-dependent-continuation": "Sample amount: the reviewed Schedule 8812 carries the TY2025 Form 1040 line 18 tax ($9,055 on $80,000 single AGI); the 2026 return figures line 18 with the Rev. Proc. 2025-32 standard deduction and rates, and amounts are not shifted",
-    "single-withheld-w2g": "Named TY2025-only route: W-2G payer Copy B verification reads the 2025 Form W-2G template; the 2026 template (irs/corpus/ty2026/authorities/fw2g--2026.pdf) is not mapped yet",
-    "joint-schedule-h-spouse-withholding-only": "Open TY2026 work: Schedule H family withholding source replays TY2025 payroll rules",
     "single-schedule-h-fica-and-futa": "Named TY2025-only route: Schedule H FUTA credit-reduction states for 2026 are not yet published",
     "single-schedule-h-three-state-futa": "Named TY2025-only route: Schedule H FUTA credit-reduction states for 2026 are not yet published",
-    "single-form8814-child-dividends-adjustments": "Named TY2025-only route: TY2026 Form 8814 and Schedule J tax worksheets are not supported yet",
-    "single-form8814-child-gain-with-schedule-d": "Named TY2025-only route: TY2026 Form 8814 and Schedule J tax worksheets are not supported yet",
-    "single-partnership-code-k-and-w2g": "Named TY2025-only route: W-2G payer Copy B verification reads the 2025 Form W-2G template; the 2026 template (irs/corpus/ty2026/authorities/fw2g--2026.pdf) is not mapped yet",
     "single-two-w2-flsa-overtime-schedule1a": "TY2026 law: the sample reports overtime on a box 14 or employer statement, the TY2025 reporting route; 2026 W-2s report it in box 12 code TT (2026 W-2 instructions, irs/corpus/ty2026/authorities/iw2w3--2026.pdf)",
     "single-employer-statement-flsa-overtime-schedule1a": "TY2026 law: the sample reports overtime on a box 14 or employer statement, the TY2025 reporting route; 2026 W-2s report it in box 12 code TT (2026 W-2 instructions, irs/corpus/ty2026/authorities/iw2w3--2026.pdf)",
     "single-aggregate-payroll-flsa-overtime-schedule1a": "TY2026 law: the sample reports overtime on a box 14 or employer statement, the TY2025 reporting route; 2026 W-2s report it in box 12 code TT (2026 W-2 instructions, irs/corpus/ty2026/authorities/iw2w3--2026.pdf)",
     "single-double-time-flsa-overtime-schedule1a": "TY2026 law: the sample reports overtime on a box 14 or employer statement, the TY2025 reporting route; 2026 W-2s report it in box 12 code TT (2026 W-2 instructions, irs/corpus/ty2026/authorities/iw2w3--2026.pdf)",
-    "single-employer-statement-qualified-tips-schedule1a": "Named TY2025-only route: the node refuses TY2026 Form 4070 and employer tip statements until 2026 reporting is implemented",
-    "single-form4070-high-wage-qualified-tips-schedule1a": "Named TY2025-only route: the node refuses TY2026 Form 4070 and employer tip statements until 2026 reporting is implemented",
-    "single-form4070-form4137-no-w2-code-schedule1a": "Named TY2025-only route: the node refuses TY2026 Form 4070 and employer tip statements until 2026 reporting is implemented",
+    "single-employer-statement-qualified-tips-schedule1a": "TY2026 law: the sample reports tips on Form 4070 or an employer tip statement with no W-2 box 12 code TP, the TY2025 transition route (2025 Form 1040 instructions, Schedule 1-A line 4: no separate W-2 tip accounting for 2025); draft 2026 Schedule 1-A line 4 takes W-2 box 12 code TP (column iii) or Form 4137 line 1 column (c) (column iv) per employer (2026 W-2 instructions, irs/corpus/ty2026/authorities/iw2w3--2026.pdf)",
+    "single-form4070-high-wage-qualified-tips-schedule1a": "TY2026 law: the sample reports tips on Form 4070 or an employer tip statement with no W-2 box 12 code TP, the TY2025 transition route (2025 Form 1040 instructions, Schedule 1-A line 4: no separate W-2 tip accounting for 2025); draft 2026 Schedule 1-A line 4 takes W-2 box 12 code TP (column iii) or Form 4137 line 1 column (c) (column iv) per employer (2026 W-2 instructions, irs/corpus/ty2026/authorities/iw2w3--2026.pdf)",
+    "single-form4070-form4137-no-w2-code-schedule1a": "TY2026 law: the sample reports tips on Form 4070 or an employer tip statement with no W-2 box 12 code TP, the TY2025 transition route (2025 Form 1040 instructions, Schedule 1-A line 4: no separate W-2 tip accounting for 2025); draft 2026 Schedule 1-A line 4 takes W-2 box 12 code TP (column iii) or Form 4137 line 1 column (c) (column iv) per employer (2026 W-2 instructions, irs/corpus/ty2026/authorities/iw2w3--2026.pdf)",
     "joint-mixed-schedule1a": "TY2026 law: the sample reports overtime on a box 14 or employer statement, the TY2025 reporting route; 2026 W-2s report it in box 12 code TT (2026 W-2 instructions, irs/corpus/ty2026/authorities/iw2w3--2026.pdf)",
-    "single-k-business-refund": "Named TY2025-only route: the node refuses TY2026 1099-K customer refund reviews",
-    "single-k-business-refund-and-fee": "Named TY2025-only route: the node refuses TY2026 1099-K customer refund reviews",
+    "single-k-business-refund": "MeF schema gap: 2026v1.0 has no element for the IRC \u00a7199A(i) minimum deduction (P.L. 119-21 \u00a770105; draft 2026 Form 8995 line 16)",
+    "single-k-business-refund-and-fee": "MeF schema gap: 2026v1.0 has no element for the IRC \u00a7199A(i) minimum deduction (P.L. 119-21 \u00a770105; draft 2026 Form 8995 line 16)",
     "single-k-mixed-business-personal": "MeF schema gap: 2026v1.0 has no element for the IRC \u00a7199A(i) minimum deduction (P.L. 119-21 \u00a770105; draft 2026 Form 8995 line 16)",
     "single-k-mixed-duplicate-personal": "MeF schema gap: 2026v1.0 has no element for the IRC \u00a7199A(i) minimum deduction (P.L. 119-21 \u00a770105; draft 2026 Form 8995 line 16)",
     "single-k-mixed-error-duplicate-personal": "MeF schema gap: 2026v1.0 has no element for the IRC \u00a7199A(i) minimum deduction (P.L. 119-21 \u00a770105; draft 2026 Form 8995 line 16)",
@@ -813,20 +718,12 @@
     "single-alternating-policies-all-covered-slcsp-corrections": "TY2026 law: the shifted household is above 400% FPL, which IRC \u00a736B(c)(1)(A) again excludes after 2025 (Rev. Proc. 2025-25); the MeF reconciliation has no APTC-only above-limit route yet (open TY2026 work)",
     "single-alternating-policies-both-slcsp-corrected": "TY2026 law: the shifted household is above 400% FPL, which IRC \u00a736B(c)(1)(A) again excludes after 2025 (Rev. Proc. 2025-25); the MeF reconciliation has no APTC-only above-limit route yet (open TY2026 work)",
     "single-five-sequential-corrected-slcsp-policies": "TY2026 law: the shifted household is above 400% FPL, which IRC \u00a736B(c)(1)(A) again excludes after 2025 (Rev. Proc. 2025-25); the MeF reconciliation has no APTC-only above-limit route yet (open TY2026 work)",
-    "single-w2-code-d-excess-line1h": "Named TY2025-only route: the node refuses TY2026 until that year's law is implemented",
-    "single-1099r-code8-corrective-line1h": "Named TY2025-only route: the node refuses TY2026 until that year's law is implemented",
-    "single-form2555-full-year-physical-presence": "Named TY2025-only route: the node refuses TY2026 until that year's law is implemented",
     "single-form4562-section179-w2-income-limit": "MeF schema gap: the 2026v1.0 rules cap Form 4562 line 3 at $4,000,000 (F4562-003-12) while Rev. Proc. 2025-32 sets the 2026 section 179 phase-out threshold at $4,090,000",
     "single-form8863-lifetime-learning-scholarship": "Sample fixture input: its Form 8863 filer MAGI and Credit Limit Worksheet operands are TY2025 amounts",
-    "single-form8606-post-year-contribution-and-distribution": "Open TY2026 work: the Roth/IRA basis sources pin 2024/2025 years and the April 15, 2026 contribution deadline",
-    "single-form8815-series-ee-bond-exclusion": "Named TY2025-only route: the node refuses TY2026 until that year's law is implemented",
     "single-form8915f-disaster-and-ordinary-plan-distributions": "MeF rules gap: the 2026v1.0 package words F8915F-001-01 and F8915F-002-01 for a return filed for Tax Year 2025 (rejecting CalendarYrDisasterCd and TaxYearFilingFormCd 2026); until a package states the TY2026 check, the engine keeps the coded TY2025 rule, which rejects this 2026 disaster and filing year",
-    "single-form7203-capital-and-debt-basis-loss": "Open TY2026 work: Form 7203 debt and stock ledgers pin 2025 dates",
     "single-form982-qpri-exclusion": "TY2026 law: shifted a year, the QPRI discharge falls in 2026; IRC \u00a7108(a)(1)(E) excludes qualified principal residence indebtedness discharged before January 1, 2026 unless under an arrangement entered into and evidenced in writing before then (Instructions for Form 982, line 1e), and the sample has no such arrangement",
     "single-form5695-door-and-air-conditioner": "TY2026 law: P.L. 119-21 \u00a7\u00a770505-70506 end the \u00a725C and \u00a725D credits for property placed in service after 2025",
     "single-form461-schedule-c-excess-business-loss": "Same finding in the TY2025 baseline: not a TY2026 difference",
-    "single-form8396-certified-loan-interest-credit": "Open TY2026 work: Form 8396 names its 2024 carryforward and 2025 interest in field names",
-    "single-schedule-j-farm-income-averaging": "Named TY2025-only route: TY2026 Form 8814 and Schedule J tax worksheets are not supported yet",
     "mfj-form2210f-first-joint-filing": "Sample amount: the Form 2210-F box B source carries the TY2025 Form 1040 line 22 tax, which the 2026 return refigures with Rev. Proc. 2025-32 rates; with matching amounts, an underpayment still needs the line 16 rate the draft 2026 Form 2210-F prints as x.xx (not yet published)",
     "single-certified-work-opportunity-credit": "TY2026 law: shifted a year, the sample hires its WOTC employee in 2026; IRC \u00a751(c)(4) ends the work opportunity credit for individuals who begin work after December 31, 2025, so the 2026 return correctly cannot claim it",
     "single-reported-tax-credit-bond": "Dated fact outside TY2026: shifting the sample moves its 2017 QECB issue date past the December 31, 2017 cutoff (P.L. 115-97 \u00a713404 repealed tax credit bonds issued after 2017); a 2026 version of this bond cannot exist",

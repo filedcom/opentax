@@ -67,7 +67,7 @@ const sourcedStudentMinor = {
         birth_date: "2008-05-10",
         birth_date_source_reference: "student-age-record",
         student_enrollment_source_reference: "2025-school-enrollment",
-        student_during_2025_verified: true,
+        student_during_tax_year_verified: true,
       },
       ordinary_cash_only: true,
       annual_cash_wages: 4_000,
@@ -164,10 +164,10 @@ test("ATS Scenario 1 Schedule H PDF prints sourced Part I on the 2025 widgets", 
     schedule_h: source,
     schedule2: { line9_household_employment: 474 },
   };
-  assertThrows(
-    () => scheduleHPdf.instances?.(projected, filer, pending),
-    Error,
-    "needs employee payroll source",
+  // Part I is filed from employer totals; employee rows are not required.
+  assertEquals(
+    scheduleHPdf.instances?.(projected, filer, pending)?.length,
+    1,
   );
   assertThrows(
     () =>

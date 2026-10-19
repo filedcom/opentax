@@ -34,11 +34,11 @@ const source = form8396SourceSchema.parse({
   interest_paid_to_related_person: false,
   certificate_is_reissued: false,
   nonspouse_coowner: false,
-  prior_2024_form8396: {
+  prior_year_form8396: {
     document_reference: "Filed 2024 Form 8396",
-    line14_2023_carryforward: 0,
-    line16_2022_carryforward: 0,
-    line17_2024_carryforward: 300,
+    line14_second_prior_year_carryforward: 0,
+    line16_third_prior_year_carryforward: 0,
+    line17_prior_year_carryforward: 300,
   },
 });
 const lines = calculateForm8396(source, 1_100);

@@ -6,11 +6,18 @@ import {
 import { z } from "zod";
 import { FilingStatus } from "../../../../../types.ts";
 import {
+  anyTaxTreatmentSchema,
   baseYearSourceSchema,
+  baseYearSourceSchemaFor,
+  type BaseYearSource,
+  scheduleJBaseReturn,
+  scheduleJBaseYears,
+  scheduleJYearKey,
   selectScheduleJBaseYearLines,
+  taxTreatmentSchemaFor,
 } from "../../../../../inputs/taxes/income-averaging/schedule_j/base_years.ts";
 import { scheduleJPriorYearRateTax } from "../../../../../inputs/taxes/income-averaging/schedule_j/prior_year_rates.ts";
-import { ordinaryTax2025 } from "../../../../worksheets/taxes/calculation/tax_table_2025.ts";
+import { ordinaryTaxForYear } from "../../../../worksheets/taxes/calculation/year_schedule.ts";
 
 // Each year uses its own sourced tax-method determination and worksheet.
 // Preferential inputs are distinct from elected farm gain; foreign exclusion
@@ -27,17 +34,12 @@ const dollar = z.number().int().min(0).max(Number.MAX_SAFE_INTEGER);
 
 export const scheduleJOrdinaryIncomeInputSchema = z.object({
   current_year_tax_source: scheduleJTaxSourceSchema.optional(),
-  taxable_income_2025: dollar,
-  filing_status_2025: z.nativeEnum(FilingStatus),
+  current_year_taxable_income: dollar,
+  current_year_filing_status: z.nativeEnum(FilingStatus),
   elected_farm_income: dollar.positive(),
   elected_farm_income_net_capital_gain: dollar,
   base_year_source: baseYearSourceSchema,
-  tax_treatment: z.object({
-    year2025: ordinaryYearFactsSchema,
-    year2022: ordinaryYearFactsSchema,
-    year2023: ordinaryYearFactsSchema,
-    year2024: ordinaryYearFactsSchema,
-  }).strict(),
+  tax_treatment: anyTaxTreatmentSchema(ordinaryYearFactsSchema),
 }).strict();
 
 export type ScheduleJOrdinaryIncomeInput = z.infer<
@@ -80,23 +82,54 @@ function wholeDollarTax(tax: number): number {
   return Math.round(tax);
 }
 
+// One base year's tax on its combined line 7, 11 or 15 amount: its sourced
+// preferential worksheet, or else its Tax Rate Schedules.
+function baseYearTax(
+  source: BaseYearSource,
+  year: number,
+  income: number,
+): number {
+  if (income <= 0) return 0;
+  const filed = scheduleJBaseReturn(source, year);
+  return wholeDollarTax(
+    filed.preferential_tax_source
+      ? scheduleJBaseYearSourceTax(
+        year,
+        income,
+        filed.filing_status,
+        filed.preferential_tax_source,
+      )
+      : scheduleJPriorYearRateTax(year, filed.filing_status, income),
+  );
+}
+
 /**
- * 2025 Schedule J with sourced current/base tax worksheets. Inputs and tax
- * lines use whole dollars. Line 6 is the rounded one-third amount, reused
+ * Schedule J for the return year with sourced current/base tax worksheets.
+ * Inputs and tax lines use whole dollars. Line 6 is the rounded one-third amount, reused
  * unchanged on lines 10 and 14 and in each base-year tax calculation.
  *
  * The caller must establish and source taxable farm/fishing income before
  * passing the elected amount. The selected base-year lines come only from
  * filed returns and the most recent filed Schedule J, as the form directs.
  *
- * Sources: https://www.irs.gov/pub/irs-pdf/f1040sj.pdf and
- * https://www.irs.gov/instructions/i1040sj
+ * Base years are the three years before the return year: 2022-2024 on the
+ * 2025 form, 2023-2025 on the draft 2026 form (Created 4/30/26).
+ *
+ * Sources: https://www.irs.gov/pub/irs-pdf/f1040sj.pdf,
+ * https://www.irs.gov/instructions/i1040sj and the draft 2026 Schedule J
+ * (irs/corpus/ty2026/draft/f1040sj.pdf).
  */
 export function calculateScheduleJOrdinaryIncome(
   raw: ScheduleJOrdinaryIncomeInput,
+  taxYear: number,
 ): ScheduleJLines {
   const input = scheduleJOrdinaryIncomeInputSchema.parse(raw);
-  if (input.elected_farm_income > input.taxable_income_2025) {
+  const baseSource = baseYearSourceSchemaFor(taxYear).parse(
+    input.base_year_source,
+  );
+  const treatment = taxTreatmentSchemaFor(taxYear, ordinaryYearFactsSchema)
+    .parse(input.tax_treatment);
+  if (input.elected_farm_income > input.current_year_taxable_income) {
     throw new Error("Schedule J line 2a cannot exceed line 1");
   }
   if (input.elected_farm_income_net_capital_gain > 0) {
@@ -104,17 +137,18 @@ export function calculateScheduleJOrdinaryIncome(
       "Schedule J elected net capital gain needs the Schedule D tax worksheets",
     );
   }
-  for (const [year, facts] of Object.entries(input.tax_treatment)) {
+  const [firstYear, secondYear, thirdYear] = scheduleJBaseYears(taxYear);
+  for (const year of [firstYear, secondYear, thirdYear, taxYear]) {
+    const facts = treatment[scheduleJYearKey(year)];
+    if (!facts) throw new Error(`Schedule J has no ${year} tax treatment`);
     if (facts.filed_form2555) {
       throw new Error(
         `Schedule J ${year} needs its foreign-earned-income worksheet`,
       );
     }
-    const source = year === "year2025"
+    const source = year === taxYear
       ? input.current_year_tax_source
-      : input.base_year_source
-        .base_returns[year as "year2022" | "year2023" | "year2024"]
-        .preferential_tax_source;
+      : scheduleJBaseReturn(baseSource, year).preferential_tax_source;
     const flags = [
       facts.has_qualified_dividends,
       facts.has_net_capital_gain,
@@ -136,8 +170,8 @@ export function calculateScheduleJOrdinaryIncome(
     }
   }
 
-  const base = selectScheduleJBaseYearLines(input.base_year_source);
-  const line1 = input.taxable_income_2025;
+  const base = selectScheduleJBaseYearLines(baseSource, taxYear);
+  const line1 = input.current_year_taxable_income;
   const line2a = input.elected_farm_income;
   const line2b = 0;
   const line2c = 0;
@@ -145,63 +179,25 @@ export function calculateScheduleJOrdinaryIncome(
   const line4 = input.current_year_tax_source
     ? scheduleJCurrentYearTax(
       line3,
-      input.filing_status_2025,
+      input.current_year_filing_status,
       input.current_year_tax_source,
+      taxYear,
     )
-    : ordinaryTax2025(line3, input.filing_status_2025);
+    : ordinaryTaxForYear(line3, input.current_year_filing_status, taxYear);
   const line5 = base.line5;
   // Whole-dollar filing rounds the division once; every copy and combined
   // base-year line uses that same reported amount.
   const line6 = Math.round(line2a / 3);
   const line7 = Math.max(0, line5 + line6);
-  const line8 = line7 === 0 ? 0 : wholeDollarTax(
-    input.base_year_source.base_returns.year2022.preferential_tax_source
-      ? scheduleJBaseYearSourceTax(
-        2022,
-        line7,
-        input.base_year_source.base_returns.year2022.filing_status,
-        input.base_year_source.base_returns.year2022.preferential_tax_source!,
-      )
-      : scheduleJPriorYearRateTax(
-        2022,
-        input.base_year_source.base_returns.year2022.filing_status,
-        line7,
-      ),
-  );
+  const line8 = baseYearTax(baseSource, firstYear, line7);
   const line9 = base.line9;
   const line10 = line6;
   const line11 = line9 + line10;
-  const line12 = line11 <= 0 ? 0 : wholeDollarTax(
-    input.base_year_source.base_returns.year2023.preferential_tax_source
-      ? scheduleJBaseYearSourceTax(
-        2023,
-        line11,
-        input.base_year_source.base_returns.year2023.filing_status,
-        input.base_year_source.base_returns.year2023.preferential_tax_source!,
-      )
-      : scheduleJPriorYearRateTax(
-        2023,
-        input.base_year_source.base_returns.year2023.filing_status,
-        line11,
-      ),
-  );
+  const line12 = baseYearTax(baseSource, secondYear, line11);
   const line13 = base.line13;
   const line14 = line6;
   const line15 = line13 + line14;
-  const line16 = line15 <= 0 ? 0 : wholeDollarTax(
-    input.base_year_source.base_returns.year2024.preferential_tax_source
-      ? scheduleJBaseYearSourceTax(
-        2024,
-        line15,
-        input.base_year_source.base_returns.year2024.filing_status,
-        input.base_year_source.base_returns.year2024.preferential_tax_source!,
-      )
-      : scheduleJPriorYearRateTax(
-        2024,
-        input.base_year_source.base_returns.year2024.filing_status,
-        line15,
-      ),
-  );
+  const line16 = baseYearTax(baseSource, thirdYear, line15);
   const line17 = line4 + line8 + line12 + line16;
   const line18 = line17;
   const line19 = base.line19;

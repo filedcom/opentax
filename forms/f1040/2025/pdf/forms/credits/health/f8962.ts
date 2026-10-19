@@ -473,7 +473,7 @@ export const form8962Pdf: PdfFormDescriptor = {
       (Array.isArray(projected.shared_policy_allocations) &&
         projected.shared_policy_allocations.length > 0) ||
       (general.success &&
-        (general.data.ptc_residence_states_2025?.length ?? 1) > 1) ||
+        (general.data.ptc_tax_year_residence_states?.length ?? 1) > 1) ||
       ((projected.annual_premium !== undefined ||
         Array.isArray(projected.monthly_ptc_rows)) && policies.length > 1) ||
       (Array.isArray(projected.monthly_ptc_rows) &&

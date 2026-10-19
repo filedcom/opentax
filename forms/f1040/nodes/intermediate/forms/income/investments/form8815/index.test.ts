@@ -27,7 +27,7 @@ const source: Form8815Input = {
   education_facts: {
     all_students_are_taxpayer_spouse_or_claimed_dependents: true,
     all_institutions_eligible: true,
-    expenses_are_eligible_2025_tuition_or_fees: true,
+    expenses_are_eligible_tuition_or_fees: true,
     expenses_not_used_for_education_credit_or_tax_free_distribution: true,
     no_coverdell_or_qtp_contributions_in_claim: true,
     nontaxable_benefits_paid_directly_by_institution_excluded: true,
@@ -45,7 +45,7 @@ const source: Form8815Input = {
     other_1040_and_schedule1_income: 70_000,
     schedule1_adjustments: 0,
     foreign_adoption_and_puerto_rico_addbacks: 0,
-    finalized_2025_income_lines_reviewed: true,
+    finalized_income_lines_reviewed: true,
     no_royalty_interest_special_computation: true,
   },
   filing_status: FilingStatus.Single,
@@ -283,7 +283,7 @@ test("native MeF lines and Schedule B line 3 reconcile", () => {
   assertEquals(xml.includes("ExclBondIntExcessAGIRt"), false);
   assertEquals(xml.includes("SavingsBondInterestAmt"), false);
   assertThrows(() => mef8815.build({ ...fields, line14: 1 }), Error, "line14");
-  assertThrows(() => mef8815.build(source), Error, "computed 2025 lines");
+  assertThrows(() => mef8815.build(source), Error, "computed form lines");
   assertThrows(() => mef8815.build(fields), Error, "finalized return");
   assertThrows(
     () =>
@@ -401,4 +401,31 @@ test("Form 8815 native and PDF reject return-wide MAGI tampering", () => {
     assertThrows(() => mef8815.build(fields, { filer, pending: changed }));
     assertThrows(() => form8815Pdf.instances!(projected, filer, changed));
   }
+});
+
+// Draft 2026 Form 8815 (created 5/7/26), lines 9-12: $101,800 start and
+// $116,800 ceiling for single filers (Rev. Proc. 2025-32).
+test("2026 single phase-out reads the return year's $101,800 start", () => {
+  const compute2026 = (other: number) =>
+    form8815.compute(
+      { taxYear: 2026, formType: "f1040" },
+      inputSchema.parse({
+        ...source,
+        line9_worksheet: {
+          ...source.line9_worksheet,
+          other_1040_and_schedule1_income: other,
+        },
+      }),
+    ).outputs.find((item) => item.nodeType === "form8815")?.fields;
+  const form = compute2026(105_800);
+  assertEquals(
+    [form?.line9, form?.line10, form?.line11, form?.line12],
+    [107_800, 101_800, 6_000, 0.4],
+  );
+  assertEquals([form?.line13, form?.line14], [800, 1_200]);
+  assertThrows(
+    () => compute2026(114_800),
+    Error,
+    "at or above the 2026 exclusion ceiling",
+  );
 });

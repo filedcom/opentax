@@ -51,7 +51,7 @@ test("prepared Form 1040 rejects an explicitly dual-status return", async () => 
   await assertRejects(
     () =>
       f1040_2025.prepareReturn({
-        f1040: { ...complete, dual_status_return_2025: true },
+        f1040: { ...complete, dual_status_return: true },
       }, filer),
     Error,
     "dual-status return cannot use Form 1040 e-file",

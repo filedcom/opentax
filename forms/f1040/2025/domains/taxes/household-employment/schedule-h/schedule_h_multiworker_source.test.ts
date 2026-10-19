@@ -39,7 +39,7 @@ function worker(
           birth_date: "2008-05-10",
           birth_date_source_reference: `${id}-birth`,
           student_enrollment_source_reference: `${id}-school`,
-          student_during_2025_verified: true as const,
+          student_during_tax_year_verified: true as const,
         },
       }
       : {}),
@@ -50,7 +50,7 @@ function worker(
           birth_date_source_reference: `${id}-birth`,
           education_status_source_reference: `${id}-nonenrollment`,
           principal_occupation_source_reference: `${id}-principal-occupation`,
-          not_a_student_during_2025_verified: true as const,
+          not_a_student_during_tax_year_verified: true as const,
           household_services_principal_occupation_verified: true as const,
         },
       }

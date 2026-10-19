@@ -39,7 +39,7 @@ export const reviewedDomestic8839SourceSchema = z.object({
   }).strict(),
   reviewed_facts: z.object({
     child_us_citizen_or_resident_when_effort_began_confirmed: z.literal(true),
-    child_under_18_on_2025_12_31_confirmed: z.literal(true),
+    child_under_18_at_end_of_tax_year_confirmed: z.literal(true),
     child_not_taxpayers_spouses_child_confirmed: z.literal(true),
     no_other_nonspouse_taxpayer_claim_confirmed: z.literal(true),
     no_prior_form8839_claim_for_child_confirmed: z.literal(true),
@@ -102,9 +102,11 @@ export function assertReviewedDomestic8839Source(
     );
   }
   const child = input.children?.[0];
+  const finalYear = Number(child?.final_decree.finalization_date.slice(0, 4));
+  const firstBirthYear = finalYear - 17;
   if (
     !child || child.special_needs_determination || child.prior_filed_form8839 ||
-    child.birth_year < 2008 || child.expenses.length === 0 ||
+    child.birth_year < firstBirthYear || child.expenses.length === 0 ||
     review.reviewed_on < child.final_decree.finalization_date
   ) {
     throw new Error(
@@ -131,7 +133,7 @@ export function assertReviewedDomestic8839Source(
     birthRecord.child_first_name !== child.first_name ||
     birthRecord.child_last_name !== child.last_name ||
     birthRecord.date_of_birth.slice(0, 4) !== String(child.birth_year) ||
-    birthRecord.date_of_birth < "2008-01-01" ||
+    birthRecord.date_of_birth < `${firstBirthYear}-01-01` ||
     birthRecord.date_of_birth > child.final_decree.finalization_date ||
     birthRecord.date_of_birth > review.reviewed_on
   ) {
@@ -187,10 +189,12 @@ export function assertReviewedDomestic8839Source(
       expense.reimbursement_source_document_id !==
         evidence.reimbursement?.source_document_id ||
       (evidence.reimbursement !== undefined &&
-        (!evidence.reimbursement.paid_date.startsWith("2025-") ||
+        (!evidence.reimbursement.paid_date.startsWith(`${finalYear}-`) ||
           evidence.reimbursement.paid_date < expense.paid_date ||
           evidence.reimbursement.paid_date > review.reviewed_on)) ||
-      !/^202[45]-/.test(expense.paid_date)
+      ![finalYear - 1, finalYear].includes(
+        Number(expense.paid_date.slice(0, 4)),
+      )
     ) {
       throw new Error(
         "Form 8839 reviewed payment does not match a qualified unreimbursed expense",

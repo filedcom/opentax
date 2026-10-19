@@ -1,3 +1,4 @@
+import { mefTaxYear } from "../../../../mef/support/year-config.ts";
 import { formatForm8606BasisRatio } from "../../../../../nodes/intermediate/forms/income/retirement/form8606/roth-current-conversion.ts";
 import { reconcileForm8606RothInventories } from "../../../../domains/income/retirement/form8606/form8606_roth_inventory_reconciliation.ts";
 import type { PdfFieldEntry, PdfFormDescriptor } from "../../../review-support/form-descriptor.ts";
@@ -340,7 +341,12 @@ export const form8606Pdf: PdfFormDescriptor = {
         print_owner_ssn: roth.ownerSsn,
       }];
     }
-    const reviewed = reconcileForm8606Distribution(raw, allPending, filer);
+    const reviewed = reconcileForm8606Distribution(
+      raw,
+      allPending,
+      filer,
+      mefTaxYear(),
+    );
     const spouseNoActivity = !reviewed &&
       printSchema.parse(raw).filing_details?.owner === "spouse";
     return [{

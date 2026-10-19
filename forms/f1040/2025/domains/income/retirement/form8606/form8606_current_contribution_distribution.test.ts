@@ -103,7 +103,7 @@ function filedReturn(receivedOn = "2026-02-15") {
       active_participant: true,
       form8606_filing_details: {
         owner: IraOwner.Taxpayer,
-        prior_basis_documented_from_2024_form8606: true,
+        prior_basis_documented_from_prior_year_form8606: true,
         no_ira_distributions_or_conversions_confirmed: false,
       },
       form8606_current_contribution_source: {

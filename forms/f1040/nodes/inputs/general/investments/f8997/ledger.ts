@@ -142,7 +142,7 @@ const priorYearLotSchema = z.object({
 }).strict();
 
 export const inputSchema = z.object({
-  tax_year: z.literal(2025),
+  tax_year: z.number().int(),
   complete_annual_ledger_confirmed: z.literal(true),
   reviewed_annual_workpaper_reference: sourceReference,
   prior_year: z.discriminatedUnion("kind", [
@@ -161,6 +161,8 @@ export const inputSchema = z.object({
 }).strict().superRefine((input, ctx) => {
   const fail = (message: string) =>
     ctx.addIssue({ code: z.ZodIssueCode.custom, message });
+  const yearStart = `${input.tax_year}-01-01`;
+  const yearEnd = `${input.tax_year}-12-31`;
   const lots = input.investment_lots;
   const ids = lots.map((lot) => lot.lot_id);
   if (new Set(ids).size !== ids.length) fail("Form 8997 lot IDs must be unique");
@@ -198,20 +200,20 @@ export const inputSchema = z.object({
           lot.closing_deferred_gain.long_term === 0) {
       fail("Form 8997 lot needs an opening, new, event, or closing fact");
     }
-    if (lot.acquired_date > "2025-12-31") {
-      fail("Form 8997 acquisition date cannot be after 2025");
+    if (lot.acquired_date > yearEnd) {
+      fail("Form 8997 acquisition date cannot be after the tax year");
     }
     const fresh = lot.new_deferral;
-    if (lot.acquired_date >= "2025-01-01" && !fresh) {
-      fail("New 2025 QOF lot needs its Part II deferral or transfer source");
+    if (lot.acquired_date >= yearStart && !fresh) {
+      fail("New current-year QOF lot needs its Part II deferral or transfer source");
     }
     if (fresh) {
       if (lot.opening_deferred_gain.short_term +
         lot.opening_deferred_gain.long_term > 0) {
         fail("New Part II acquisition cannot also be a beginning-of-year lot");
       }
-      if (lot.acquired_date < "2025-01-01") {
-        fail("Part II acquisition must occur during 2025");
+      if (lot.acquired_date < yearStart) {
+        fail("Part II acquisition must occur during the tax year");
       }
       const amounts = fresh.deferred_gain;
       if (amounts.short_term + amounts.long_term === 0) {
@@ -263,9 +265,9 @@ export const inputSchema = z.object({
     for (const event of lot.events) {
       eventIds.push(event.event_id);
       if (event.event_date < lot.acquired_date ||
-        event.event_date > "2025-12-31" ||
-        event.event_date < "2025-01-01") {
-        fail("Form 8997 event date must be in 2025 after acquisition");
+        event.event_date > yearEnd ||
+        event.event_date < yearStart) {
+        fail("Form 8997 event date must be in the tax year after acquisition");
       }
       removed.short_term += event.deferred_gain_removed.short_term;
       removed.long_term += event.deferred_gain_removed.long_term;

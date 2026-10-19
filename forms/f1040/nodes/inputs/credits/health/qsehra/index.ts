@@ -20,14 +20,6 @@ import type { NodeContext } from "../../../../../../../core/types/node-context.t
 //   - If employee has MEC: QSEHRA is excluded from gross income, but the
 //     amount OFFERED reduces the PTC dollar-for-dollar.
 //   - If employee lacks MEC: QSEHRA amounts received are gross income (line 1a).
-//
-// TY2025 limits (Rev Proc 2024-40 §3.25):
-//   - Self-only: $6,350
-//   - Family: $12,800
-
-// TY2025 QSEHRA limits
-export const QSEHRA_LIMIT_SELF_ONLY = 6_350;
-export const QSEHRA_LIMIT_FAMILY = 12_800;
 
 export const inputSchema = z.object({
   // Annual QSEHRA amount offered by employer (used for PTC reduction)

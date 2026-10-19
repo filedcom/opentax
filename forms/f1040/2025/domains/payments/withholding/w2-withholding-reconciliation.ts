@@ -39,8 +39,9 @@ function hasReportedAmount(
 /** Form 4852 amounts cannot be filed until its completed substitute-form route exists. */
 export function assertForm4852FilingRoute(
   pending: Record<string, unknown>,
-  filer?: FilerIdentity,
-  retainedEvidenceVerified = false,
+  filer: FilerIdentity | undefined,
+  retainedEvidenceVerified: boolean,
+  taxYear: number,
 ): void {
   if (pending.f4852 === undefined) return;
   const substitutes = substituteInputSchema.parse(pending.f4852).f4852s;
@@ -49,7 +50,7 @@ export function assertForm4852FilingRoute(
       "Form 4852 requires a completed substitute-form filing and packet route before export",
     );
   }
-  if (filer) reconcileForm4852Source(pending, filer);
+  if (filer) reconcileForm4852Source(pending, filer, taxYear);
 }
 
 /** Replay ordinary W-2 and substitute W-2 wages into Form 1040 line 1a. */

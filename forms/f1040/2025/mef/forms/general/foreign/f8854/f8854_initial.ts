@@ -1,6 +1,7 @@
 import { elements } from "../../../../../../mef/xml.ts";
 import {
   type F8854Input,
+  form8854YearAmounts,
   inputSchema,
 } from "../../../../../../nodes/inputs/general/foreign/f8854/index.ts";
 import { NongrantorTrustTreatment } from "../../../../../../nodes/inputs/general/foreign/f8854/section-c.ts";
@@ -67,7 +68,10 @@ export function buildForm8854NativeStatementContents(
   const input = inputSchema.parse(rawInput);
   const balance = buildForm8854BalanceSheetStatements(input.balance_sheet);
   const sectionC = input.section_c
-    ? buildForm8854SectionCStatements(input.section_c)
+    ? buildForm8854SectionCStatements(
+      input.section_c,
+      form8854YearAmounts(input.expatriation_date).markToMarketExclusion,
+    )
     : null;
   // ReturnData1040.xsd orders the Form 8854 native roots as listed here.
   const candidates: Form8854NativeStatementContent[] = [

@@ -18,7 +18,7 @@ export const form8854NativeStatements: MefFormDescriptor<
     const annualRaw = context?.pending?.f8854_annual;
     if (raw !== undefined && annualRaw !== undefined) {
       throw new Error(
-        "One taxpayer cannot file both initial and annual Form 8854 for 2025",
+        "One taxpayer cannot file both initial and annual Form 8854 for one year",
       );
     }
     if (raw !== undefined) {

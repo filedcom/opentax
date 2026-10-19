@@ -43,16 +43,51 @@ function findOutput(result: ReturnType<typeof compute>, nodeType: string) {
   return result.outputs.find((o) => o.nodeType === nodeType);
 }
 
-test("general rejects an explicitly dual-status 2025 e-file", () => {
+test("general rejects an explicitly dual-status e-file", () => {
   assertThrows(
     () =>
       compute({
         filing_status: FilingStatus.Single,
-        dual_status_return_2025: true,
+        dual_status_return: true,
       }),
     Error,
     "dual-status return cannot use Form 1040 e-file",
   );
+});
+
+test("general names the return year when rejecting a dual-status e-file", () => {
+  assertThrows(
+    () =>
+      general.compute(
+        { taxYear: 2026, formType: "f1040" },
+        general.inputSchema.parse({
+          filing_status: FilingStatus.Single,
+          dual_status_return: true,
+        }),
+      ),
+    Error,
+    "TY2026 dual-status return cannot use Form 1040 e-file",
+  );
+});
+
+test("general rejects retired year-named inputs", () => {
+  for (
+    const key of [
+      "dual_status_return_2025",
+      "ptc_residence_states_2025",
+      "ptc_residence_months_2025",
+      "apply_overpayment_to_2026_estimated_tax_amount",
+    ]
+  ) {
+    assertEquals(
+      general.inputSchema.safeParse({
+        filing_status: FilingStatus.Single,
+        [key]: key.startsWith("ptc") ? ["CA"] : true,
+      }).success,
+      false,
+      key,
+    );
+  }
 });
 
 test("general gives Form 8880 filing status and both return SSNs", () => {
@@ -1582,7 +1617,7 @@ test("smoke: all new major fields populated → routes correctly to f1040", () =
 
 test("reviewed HOH lived-apart spouse marks the Form 1040 separated-spouse box only for HOH", () => {
   const review = {
-    lived_apart_last_six_months_of_2025_verified: true,
+    lived_apart_last_six_months_of_tax_year_verified: true,
     separate_residence_record_reference: "2025 residence ledger",
   };
   const result = compute({

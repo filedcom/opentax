@@ -174,7 +174,7 @@ export const inputSchema = claimInputSchema.extend({
     amount: z.number().nonnegative(),
     box5_medicare_wages: z.number().nonnegative().optional(),
     occupation_code: z.string().regex(/^\d{3}$/).optional(),
-    source_type: z.enum(["w2_box7", "w2_box14"]),
+    source_type: z.enum(["w2_box7", "w2_box14", "w2_code_tp"]),
   })).optional(),
   qualified_form4137_tips: z.array(
     z.object({

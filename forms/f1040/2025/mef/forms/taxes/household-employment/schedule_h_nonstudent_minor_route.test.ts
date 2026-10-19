@@ -34,7 +34,7 @@ const source = {
         birth_date_source_reference: "working-minor-age-record",
         education_status_source_reference: "2025-nonenrollment-record",
         principal_occupation_source_reference: "2025-household-work-record",
-        not_a_student_during_2025_verified: true,
+        not_a_student_during_tax_year_verified: true,
         household_services_principal_occupation_verified: true,
       },
       ordinary_cash_only: true,

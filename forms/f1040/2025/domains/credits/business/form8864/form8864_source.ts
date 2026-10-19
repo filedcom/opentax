@@ -9,6 +9,7 @@ import { inputSchema as scheduleCInputSchema } from "../../../../../nodes/inputs
 export function reconcileForm8864DirectProducer(
   raw: unknown,
   pending: Readonly<Record<string, unknown>>,
+  taxYear: number,
 ) {
   const source = form8864InputSchema.parse(raw);
   if (
@@ -41,7 +42,7 @@ export function reconcileForm8864DirectProducer(
     );
   }
   const business = matches[0];
-  const lines = calculateForm8864(source);
+  const lines = calculateForm8864(source, taxYear);
   if (
     (business.line_1_gross_receipts ?? 0) <= 0 ||
     business.line_6_other_income !== lines.line9
@@ -57,9 +58,10 @@ export function reconcileForm8864DirectProducer(
 export function reconcileForm8864DocumentSource(
   raw: unknown,
   pending: Readonly<Record<string, unknown>>,
+  taxYear: number,
 ) {
-  const reconciled = reconcileForm8864DirectProducer(raw, pending);
-  const claims = form8864DirectClaims(reconciled.source);
+  const reconciled = reconcileForm8864DirectProducer(raw, pending, taxYear);
+  const claims = form8864DirectClaims(reconciled.source, taxYear);
   const form3800 = pending.f3800;
   const credit = form3800 && typeof form3800 === "object" &&
       "f8864_direct_producer_credit" in form3800

@@ -6,7 +6,10 @@ import {
   retirementAccountTypeSchema,
   reviewedForm4852AccountType,
 } from "./retirement-account.ts";
-import { reviewedRothActivity } from "../../../../intermediate/forms/income/retirement/form8606/roth-activity.ts";
+import {
+  assertRothActivityTaxYear,
+  reviewedRothActivity,
+} from "../../../../intermediate/forms/income/retirement/form8606/roth-activity.ts";
 import { ownerIdentitySchema } from "../../../../intermediate/forms/taxes/self-employment/schedule_se/owner-calculation.ts";
 import { z } from "zod";
 import type {
@@ -106,7 +109,7 @@ export const itemSchema = z.object({
   payer_address_state: z.string().trim().min(1).optional(),
   payer_address_zip: z.string().trim().min(1).optional(),
   recipient_ssn: z.string().regex(/^\d{3}-?\d{2}-?\d{4}$/).optional(),
-  form_year: z.literal(2025).optional(),
+  form_year: z.number().int().optional(),
   missing_or_incorrect: z.enum(["missing", "incorrect"]).optional(),
   amount_determination_explanation: z.string().trim().min(1).optional(),
   payer_form_efforts_explanation: z.string().trim().min(1).optional(),
@@ -414,6 +417,15 @@ export function effectiveTaxable(item: F4852Item): number {
   );
 }
 
+/** A substitute completes the form for the return's tax year (Form 4852 line 4). */
+export function assertForm4852TaxYear(item: F4852Item, taxYear: number): void {
+  if (item.form_year !== undefined && item.form_year !== taxYear) {
+    throw new Error(`Form 4852 substitute must be completed for ${taxYear}`);
+  }
+  const roth = item.retirement_source?.roth_activity_review;
+  if (roth) assertRothActivityTaxYear(roth, taxYear);
+}
+
 // Build f1040 fields for W-2 substitutes → line1a and line25a
 function wagesFields(items: F4852Items): Partial<F1040Input> {
   const w2s = w2Items(items);
@@ -616,9 +628,10 @@ class F4852Node extends TaxNode<typeof inputSchema> {
     f1099r,
   ]);
 
-  compute(_ctx: NodeContext, input: z.infer<typeof inputSchema>): NodeResult {
+  compute(ctx: NodeContext, input: z.infer<typeof inputSchema>): NodeResult {
     const parsed = inputSchema.parse(input);
     const { f4852s } = parsed;
+    for (const item of f4852s) assertForm4852TaxYear(item, ctx.taxYear);
     if (parsed.reviewed_source) {
       for (const item of f4852s) assertQualifiedRothSource(item);
       const sources = form4852CalculationSources(f4852s);

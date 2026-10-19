@@ -1,3 +1,4 @@
+import { mefTaxYear } from "../../../../support/year-config.ts";
 import { element, elements } from "../../../../../../mef/xml.ts";
 import { reconcileForm4952DividendPath } from "../../../../../domains/deductions/investments/form4952/form4952_dividend_reconciliation.ts";
 import { reconcileForm4952InterestPath } from "../../../../../domains/deductions/investments/form4952/form4952_interest_reconciliation.ts";
@@ -126,6 +127,7 @@ export const form4952: MefFormDescriptor<"form4952", Input> = {
         fields,
         context.pending ?? {},
         context.filer,
+        mefTaxYear(context),
       );
     } else if (
       fields.source_1099_dividends !== undefined &&

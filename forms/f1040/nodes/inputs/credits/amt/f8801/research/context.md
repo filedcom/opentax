@@ -29,6 +29,27 @@ Allows individuals, estates, and trusts who paid Alternative Minimum Tax (AMT) i
 | credit_allowed_this_year | `min(available_credit, excess_regular_over_tmt)` |
 | carryforward_to_next_year | `available_credit - credit_allowed_this_year` |
 
+### Carryforward-only route (computed in Form 1040)
+When only `prior_year_carryforward` is entered (no 2024 AMT and no entered
+regular tax or TMT), it is 2025 Form 8801 line 19 and line 21, and it needs no
+reviewed 2024 Forms 6251/8801 (evidence, if entered, must still match). The
+node asks Form 6251 for its line 9 (`must_file_for_credit`), opens Schedule 3
+line 6b at zero, and sends `form8801_line21_credit_available` to Form 1040,
+which finishes Part II from the final return
+([2025 Form 8801 instructions](https://www.irs.gov/instructions/i8801)):
+
+| Line | Value |
+|------|-------|
+| 22 | Form 1040 line 16 + Schedule 2 line 1z − line 19 − Schedule 3 lines 1–6z other than 6b and 6k (≥ 0) |
+| 23 | Form 6251 line 9 |
+| 24 | max(0, line 22 − line 23) |
+| 25 | min(line 21, line 24) → Schedule 3 line 6b (finalized by Form 1040) |
+| 26 | line 21 − line 25, carried to 2026 |
+
+Form 3800, 8834 or 8912 credits, or a prefilled Schedule 3 line 6b, beside
+this route are refused until the joint credit ordering is modeled. The return
+still needs the native Form 8801 attachment before export.
+
 ## 5. Output Routing
 | Condition | Output Node | Field |
 |-----------|-------------|-------|

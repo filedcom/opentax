@@ -81,9 +81,9 @@ export function mixedDebtSource(c: typeof mixedDebtCases[number]) {
     )
   );
   open.oral_creditor_terms_record.agreed_on = open.transactions[0].date;
-  n.kind = "owned_2025_formal_and_open_account";
+  n.kind = "owned_current_year_formal_and_open_account";
   n.open_account_net_advance_amount = c.events.reduce((a, b) => a + b, 0);
-  n.no_2025_repayments_confirmed =
+  n.no_current_year_repayments_confirmed =
     !(c.formalRepayment || c.events.some((x) => x < 0));
   s.complete_current_shareholder_debt_inventory = [formal, open];
   delete s.no_other_guaranteed_corporate_or_passthrough_debt;

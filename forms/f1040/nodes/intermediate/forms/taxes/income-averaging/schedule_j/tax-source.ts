@@ -1,10 +1,7 @@
 import { z } from "zod";
 import { FilingStatus } from "../../../../../types.ts";
 import { preferentialTax } from "../../../../worksheets/taxes/calculation/income_tax_calculation/preferential_tax.ts";
-import {
-  QDCGT_TWENTY_FLOOR_2025,
-  QDCGT_ZERO_CEILING_2025,
-} from "../../../../../config/2025.ts";
+import { configForYear } from "../../../../../config/index.ts";
 import { calculateScheduleJBaseYearPreferentialTax } from "./preferential_tax.ts";
 const amount = z.number().int().nonnegative().max(Number.MAX_SAFE_INTEGER);
 export const scheduleJTaxSourceSchema = z.object({
@@ -29,8 +26,10 @@ export function scheduleJCurrentYearTax(
   income: number,
   status: FilingStatus,
   source: ScheduleJTaxSource,
+  taxYear: number,
 ): number {
   const s = scheduleJTaxSourceSchema.parse(source);
+  const cfg = configForYear(taxYear);
   return preferentialTax({
     taxableIncome: income,
     filingStatus: status,
@@ -40,12 +39,13 @@ export function scheduleJCurrentYearTax(
     rate28Gain: s.rate_28_gain,
     form4952Election: s.form4952_line4g,
     electedCapitalGain: s.form4952_line4e,
-    zeroCeiling: QDCGT_ZERO_CEILING_2025,
-    twentyFloor: QDCGT_TWENTY_FLOOR_2025,
+    zeroCeiling: cfg.qdcgtZeroCeiling,
+    twentyFloor: cfg.qdcgtTwentyFloor,
+    taxYear,
   });
 }
 export function scheduleJBaseYearSourceTax(
-  year: 2022 | 2023 | 2024,
+  year: number,
   income: number,
   status: FilingStatus,
   source: ScheduleJTaxSource,

@@ -5,7 +5,9 @@ import { OutputNodes } from "../../../../../../../core/types/output-nodes.ts";
 import type { NodeContext } from "../../../../../../../core/types/node-context.ts";
 
 // The continuous-use Form 8938 and instructions (Rev. November 2021) govern
-// the TY2025 individual-return disclosure. This node does not file the form.
+// the individual-return disclosure. Its thresholds are fixed by Treas. Reg.
+// §1.6038D-2(a)(1)-(3), (b)(1) and (c), not indexed, so every year uses them.
+// This node does not file the form.
 export enum ForeignAssetType {
   DepositAccount = "deposit_account",
   CustodialAccount = "custodial_account",
@@ -146,7 +148,7 @@ const assetSchema = z.object({
       message: "USD assets use a conversion rate of 1",
     });
   }
-  if (asset.exchange_rate_date !== "2025-12-31") {
+  if (!asset.exchange_rate_date.endsWith("-12-31")) {
     ctx.addIssue({
       code: "custom",
       path: ["exchange_rate_date"],
@@ -196,27 +198,6 @@ const assetSchema = z.object({
       code: "custom",
       path: ["closed_or_disposed_date"],
       message: "Disposition precedes acquisition",
-    });
-  }
-  if (
-    asset.opened_or_acquired_date &&
-    asset.opened_or_acquired_date > "2025-12-31"
-  ) {
-    ctx.addIssue({
-      code: "custom",
-      path: ["opened_or_acquired_date"],
-      message: "Asset was not held during TY2025",
-    });
-  }
-  if (
-    asset.closed_or_disposed_date &&
-    (asset.closed_or_disposed_date < "2025-01-01" ||
-      asset.closed_or_disposed_date > "2025-12-31")
-  ) {
-    ctx.addIssue({
-      code: "custom",
-      path: ["closed_or_disposed_date"],
-      message: "TY2025 disposition date must occur during TY2025",
     });
   }
   if (asset.excepted_on_form && !asset.filed_exception_form_reference) {
@@ -300,6 +281,13 @@ const eligibilityEvidence = z.object({
   }).strict().optional(),
 }).strict();
 
+/** The year whose last-day exchange rate values the assets; it must be the return year. */
+export function form8938ReportingYear(
+  input: { readonly assets: readonly { readonly exchange_rate_date: string }[] },
+): number {
+  return Number(input.assets[0].exchange_rate_date.slice(0, 4));
+}
+
 export const inputSchema = z.object({
   specified_individual_type: z.enum([
     "us_citizen",
@@ -314,6 +302,9 @@ export const inputSchema = z.object({
   year_end_value_all_assets: money,
   assets: z.array(assetSchema).min(1),
 }).strict().superRefine((input, ctx) => {
+  const reportingYear = form8938ReportingYear(input);
+  const yearStart = `${reportingYear}-01-01`;
+  const lastDay = `${reportingYear}-12-31`;
   const evidence = input.eligibility_evidence;
   const statusKinds = {
     us_citizen: ["us_passport", "citizenship_certificate", "us_birth_record"],
@@ -439,13 +430,13 @@ export const inputSchema = z.object({
     const residence = input.residence;
     if (residence.presence_test === "bona_fide_resident_full_year") {
       if (
-        residence.qualifying_period_start > "2025-01-01" ||
-        residence.qualifying_period_end < "2025-12-31"
+        residence.qualifying_period_start > yearStart ||
+        residence.qualifying_period_end < lastDay
       ) {
         ctx.addIssue({
           code: "custom",
           path: ["residence"],
-          message: "Bona fide residence must include the entire TY2025 year",
+          message: "Bona fide residence must include the entire reporting year",
         });
       }
     } else {
@@ -457,15 +448,15 @@ export const inputSchema = z.object({
         .toISOString().slice(0, 10);
       if (
         residence.qualifying_period_end !== expectedEnd ||
-        residence.qualifying_period_end < "2025-01-01" ||
-        residence.qualifying_period_end > "2025-12-31" ||
+        residence.qualifying_period_end < yearStart ||
+        residence.qualifying_period_end > lastDay ||
         (residence.full_days_abroad_in_period ?? 0) < 330
       ) {
         ctx.addIssue({
           code: "custom",
           path: ["residence"],
           message:
-            "Physical presence needs 330 full foreign days in a 12-month period ending in TY2025",
+            "Physical presence needs 330 full foreign days in a 12-month period ending in the reporting year",
         });
       }
     }
@@ -484,6 +475,33 @@ export const inputSchema = z.object({
       });
     }
     ids.add(asset.asset_id);
+    if (asset.exchange_rate_date !== lastDay) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["assets", i, "exchange_rate_date"],
+        message: "Every asset uses the same reporting year's last-day rate",
+      });
+    }
+    if (
+      asset.opened_or_acquired_date && asset.opened_or_acquired_date > lastDay
+    ) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["assets", i, "opened_or_acquired_date"],
+        message: "Asset was not held during the reporting year",
+      });
+    }
+    if (
+      asset.closed_or_disposed_date &&
+      (asset.closed_or_disposed_date < yearStart ||
+        asset.closed_or_disposed_date > lastDay)
+    ) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["assets", i, "closed_or_disposed_date"],
+        message: "Disposition date must occur during the reporting year",
+      });
+    }
     if (input.filing_status !== "mfj" && asset.owner === "spouse") {
       ctx.addIssue({
         code: "custom",
@@ -634,8 +652,13 @@ class F8938Node extends TaxNode<typeof inputSchema> {
   readonly inputSchema = inputSchema;
   readonly outputNodes = new OutputNodes([]);
 
-  compute(_ctx: NodeContext, rawInput: F8938Input): NodeResult {
-    inputSchema.parse(rawInput);
+  compute(ctx: NodeContext, rawInput: F8938Input): NodeResult {
+    const input = inputSchema.parse(rawInput);
+    if (form8938ReportingYear(input) !== ctx.taxYear) {
+      throw new Error(
+        `Form 8938 assets must be valued at the end of tax year ${ctx.taxYear}`,
+      );
+    }
     return { outputs: [] }; // information disclosure, no tax computation
   }
 }

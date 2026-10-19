@@ -142,12 +142,17 @@ test("Form 8396 reissue source rejects debt, rate, date and holder tampering", (
       false,
     );
   }
+  assertThrows(
+    () => form8396.build(fields, { pending, taxYear: 2024 }),
+    Error,
+    "refinance must precede the 2024 tax year",
+  );
   assertEquals(
     calculateForm8396Line3(form8396SourceSchema.parse({
       ...reissuedMccSource,
       reviewed_reissued_mcc: {
         ...reissue,
-        scheduled_original_loan_interest_2025: 2_000,
+        scheduled_original_loan_year_interest: 2_000,
       },
     })),
     400,

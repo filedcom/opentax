@@ -1,11 +1,13 @@
 import { publicInputSchema } from "../../../../../nodes/intermediate/forms/deductions/business/form8990/index.ts";
 import { runBoundedForm8990TwoPass } from "../../../../../nodes/intermediate/forms/deductions/business/form8990/run-two-pass.ts";
 import { execute, type ExecuteResult } from "../../../../../../../core/runtime/executor.ts";
+import type { NodeContext } from "../../../../../../../core/types/node-context.ts";
 
 /** Internal composed workpaper. Public8990 still requires authentic source and
  * accepted carry persistence; this does not create an admitted export route. */
 export function executeForm172Form8990Return(
   inputs: Record<string, unknown>,
+  context: NodeContext,
   executeGraph?: (
     inputs: Record<string, unknown>,
     context: Parameters<typeof execute>[3],
@@ -17,6 +19,7 @@ export function executeForm172Form8990Return(
     Object.entries(inputs).filter(([key]) => key !== "form8990"),
   );
   const twoPass = runBoundedForm8990TwoPass({
+    context,
     returnInputs,
     ...source,
     executeGraph,

@@ -882,6 +882,7 @@ export function prepareForm3800DocumentParts(
     ? reconcileForm8864DocumentSource(
       context.pending?.f8864,
       context.pending ?? {},
+      mefTaxYear(context),
     )
     : undefined;
   if (

@@ -55,3 +55,18 @@ test("a zero shift returns the sample itself", () => {
   const inputs = { date_sold: "2025-06-20" };
   assertStrictEquals(shiftDatedFacts(inputs, 0), inputs);
 });
+
+test("a year-named key moves with its year; other keys stay", () => {
+  // The shifted keys differ from the input's, so its type is not kept.
+  const shifted: unknown = shiftDatedFacts({
+    base_returns: { year2024: { filed_on: "2025-04-15" } },
+    tax_treatment: { year2025: true, yearly: 1 },
+  }, 1);
+  assertEquals(
+    shifted,
+    {
+      base_returns: { year2025: { filed_on: "2026-04-15" } },
+      tax_treatment: { year2026: true, yearly: 1 },
+    },
+  );
+});

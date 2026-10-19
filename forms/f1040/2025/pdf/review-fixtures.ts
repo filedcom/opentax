@@ -581,7 +581,7 @@ const sourcePdfReviewFixtures: readonly PdfReviewFixture[] = [
           child_lived_in_home_all_year: true,
           child_filed_nonrefund_joint_return: true,
           taxpayer_paid_more_than_half_home_costs: true,
-          no_remarriage_through_2025: true,
+          no_remarriage_through_tax_year_end: true,
           entitled_to_joint_return_in_death_year: true,
           spouse_death_record_reference: "Synthetic 2024 death record review",
           child_joint_return_reference:
@@ -679,7 +679,7 @@ const sourcePdfReviewFixtures: readonly PdfReviewFixture[] = [
     inputs: {
       general: {
         ...singleGeneral,
-        apply_overpayment_to_2026_estimated_tax_amount: 500,
+        apply_overpayment_to_next_year_estimated_tax_amount: 500,
       },
       w2: [{
         ...wage(75_000, 11_000, "Example Employer", "12-3456789"),
@@ -870,8 +870,8 @@ const sourcePdfReviewFixtures: readonly PdfReviewFixture[] = [
               birth_record_reference: "Synthetic 2025 birth certificate",
               us_home_residence_record_reference:
                 "Synthetic December 2025 home and custody record",
-              lived_with_filer_in_us_from_birth_through_2025_verified: true,
-              alive_on_2025_12_31_verified: true,
+              lived_with_filer_in_us_from_birth_through_year_end_verified: true,
+              alive_at_year_end_verified: true,
             },
           },
         ],
@@ -1352,20 +1352,20 @@ const sourcePdfReviewFixtures: readonly PdfReviewFixture[] = [
           pub936_workpaper_reference: "2025 refinance points workpaper",
           refinance_close_year: 2023,
           refinance_close_month: 6,
-          prior_year_2023: {
-            filed_2023_return_reference: "Filed 2023 Form 1040/Schedule A",
-            filed_2023_points_workpaper_reference: "2023 loan points ledger",
-            filed_2023_loan_points_deduction: 67,
-            payment_records_2023: [7, 8, 9, 10, 11, 12].map((month) => ({
+          second_prior_year: {
+            filed_return_reference: "Filed 2023 Form 1040/Schedule A",
+            filed_points_workpaper_reference: "2023 loan points ledger",
+            filed_loan_points_deduction: 67,
+            payment_records: [7, 8, 9, 10, 11, 12].map((month) => ({
               month,
               document_reference: `2023-payment-${month}`,
             })),
           },
-          prior_year_2024: {
-            filed_2024_return_reference: "Filed 2024 Form 1040/Schedule A",
-            filed_2024_points_workpaper_reference: "2024 loan points ledger",
-            filed_2024_loan_points_deduction: 133,
-            payment_records_2024: Array.from({ length: 12 }, (_, index) => ({
+          prior_year: {
+            filed_return_reference: "Filed 2024 Form 1040/Schedule A",
+            filed_points_workpaper_reference: "2024 loan points ledger",
+            filed_loan_points_deduction: 133,
+            payment_records: Array.from({ length: 12 }, (_, index) => ({
               month: index + 1,
               document_reference: `2024-payment-${index + 1}`,
             })),
@@ -1692,7 +1692,7 @@ const sourcePdfReviewFixtures: readonly PdfReviewFixture[] = [
             marriage_source_reference: "marriage-certificate-review",
             marriage_continuity_source_reference:
               "2025-marriage-continuity-review",
-            married_through_2025_verified: true,
+            married_through_tax_year_verified: true,
             payroll_source_reference: "2025-spouse-payroll-ledger",
             ordinary_cash_only: true,
             annual_cash_wages: 5_000,
@@ -4653,7 +4653,7 @@ const sourcePdfReviewFixtures: readonly PdfReviewFixture[] = [
             refund_transaction_id: "refund-2025-001",
             amount: 400,
             refund_record_reference: "Synthetic 2025 processor refund ledger",
-            issued_in_2025: true,
+            issued_in_tax_year: true,
             same_business_sale: true,
             not_claimed_elsewhere: true,
           }],
@@ -4714,7 +4714,7 @@ const sourcePdfReviewFixtures: readonly PdfReviewFixture[] = [
             refund_transaction_id: "service-refund-2025-001",
             amount: 400,
             refund_record_reference: "Synthetic 2025 processor refund ledger",
-            issued_in_2025: true,
+            issued_in_tax_year: true,
             same_business_sale: true,
             not_claimed_elsewhere: true,
           }],
@@ -7543,7 +7543,7 @@ const sourcePdfReviewFixtures: readonly PdfReviewFixture[] = [
         active_participant: true,
         form8606_filing_details: {
           owner: IraOwner.Taxpayer,
-          prior_basis_documented_from_2024_form8606: true,
+          prior_basis_documented_from_prior_year_form8606: true,
           no_ira_distributions_or_conversions_confirmed: false,
         },
         form8606_current_contribution_source: {
@@ -7688,7 +7688,7 @@ const sourcePdfReviewFixtures: readonly PdfReviewFixture[] = [
         education_facts: {
           all_students_are_taxpayer_spouse_or_claimed_dependents: true,
           all_institutions_eligible: true,
-          expenses_are_eligible_2025_tuition_or_fees: true,
+          expenses_are_eligible_tuition_or_fees: true,
           expenses_not_used_for_education_credit_or_tax_free_distribution: true,
           no_coverdell_or_qtp_contributions_in_claim: true,
           nontaxable_benefits_paid_directly_by_institution_excluded: true,
@@ -7706,7 +7706,7 @@ const sourcePdfReviewFixtures: readonly PdfReviewFixture[] = [
           other_1040_and_schedule1_income: 70_000,
           schedule1_adjustments: 0,
           foreign_adoption_and_puerto_rico_addbacks: 0,
-          finalized_2025_income_lines_reviewed: true,
+          finalized_income_lines_reviewed: true,
           no_royalty_interest_special_computation: true,
         },
         filing_status: "single",
@@ -8007,7 +8007,7 @@ const sourcePdfReviewFixtures: readonly PdfReviewFixture[] = [
           all_shares_one_stock_block: true,
           no_current_year_stock_transactions: true,
           no_section_1367_1_g_election: true,
-          no_other_2025_stock_basis_changes: true,
+          no_other_current_year_stock_basis_changes: true,
           no_other_schedule_e_activity: true,
           materially_participated_in_s_corporation: true,
           material_participation_workpaper_reference: "2025 participation log",
@@ -8016,7 +8016,7 @@ const sourcePdfReviewFixtures: readonly PdfReviewFixture[] = [
           no_at_risk_or_passive_limitation: true,
         },
         form7203_debt_evidence: {
-          kind: "new_2025_formal_notes",
+          kind: "new_current_year_formal_notes",
           shareholder_ssn: "123456789",
           corporation_ein: "987654321",
           k1_source_document_reference: "2025 signed S corporation K-1",
@@ -8037,9 +8037,9 @@ const sourcePdfReviewFixtures: readonly PdfReviewFixture[] = [
           beginning_note_face_amount: 0,
           beginning_note_debt_basis: 0,
           no_other_shareholder_debt_confirmed: true,
-          no_2025_repayments_confirmed: true,
+          no_current_year_repayments_confirmed: true,
           no_prior_reduced_debt_basis_confirmed: true,
-          no_other_2025_basis_changes_confirmed: true,
+          no_other_current_year_basis_changes_confirmed: true,
           no_prior_suspended_losses_confirmed: true,
         },
       }],
@@ -8158,7 +8158,7 @@ const sourcePdfReviewFixtures: readonly PdfReviewFixture[] = [
           }],
           central_air_conditioner: { cost: 2_000, qmid: "C3D4" },
         },
-        part_ii_tax_limit: 1_000,
+        part_ii_tax_limit: 9_055,
       },
     },
     filer: singleFiler,

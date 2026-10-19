@@ -16,6 +16,7 @@ import { buildMefXml } from "../../../../mef/builder.ts";
 import { buildPdfBytes } from "../../../../pdf/builder.ts";
 import { eitcPdf } from "../../../../pdf/forms/credits/earned-income/eitc.ts";
 import { extractFilerIdentity } from "../../../../../mef/filer.ts";
+import { shiftDatedFacts } from "../../../../../../../scripts/testing/sample-year.ts";
 
 const period = (start: string, end: string) => ({
   start_date: start,
@@ -76,8 +77,8 @@ export function datedResidencyInputs(split = false, dependent = false) {
 }
 
 test("dated EIC residence distinguishes183 from182days and prints7 while preserving6actualmonths", () => {
-  assertEquals(reviewedEicDatedResidence(child), true);
-  assertEquals(scheduleEicLine6Months(child), 7);
+  assertEquals(reviewedEicDatedResidence(child, 2025), true);
+  assertEquals(scheduleEicLine6Months(child, 2025), 7);
   for (
     const periods of [
       [period("2025-07-03", "2025-12-31")],
@@ -95,18 +96,18 @@ test("dated EIC residence distinguishes183 from182days and prints7 while preserv
           ...child.eic_dated_residency_review,
           residence_periods: periods,
         },
-      })
+      }, 2025)
     );
   }
   assertThrows(() =>
-    reviewedEicDatedResidence({ ...child, months_lived_with_you_in_us: 7 })
+    reviewedEicDatedResidence({ ...child, months_lived_with_you_in_us: 7 }, 2025)
   );
   assertThrows(() =>
-    reviewedEicDatedResidence({ ...child, months_in_home: 5 })
+    reviewedEicDatedResidence({ ...child, months_in_home: 5 }, 2025)
   );
-  assertThrows(() => reviewedEicDatedResidence({ ...child, ssn: "999887777" }));
+  assertThrows(() => reviewedEicDatedResidence({ ...child, ssn: "999887777" }, 2025));
   assertThrows(() =>
-    reviewedEicDatedResidence({ ...child, dob: "2025-01-01" })
+    reviewedEicDatedResidence({ ...child, dob: "2025-01-01" }, 2025)
   );
 });
 
@@ -188,3 +189,12 @@ for (const dependent of [false, true]) {
     });
   }
 }
+
+// Pub. 596: the residency test counts days in the return year, so a 2026
+// return reviews 2026 home periods (183 of 365 days is more than half).
+test("dated EIC residence reads the return year's home periods", () => {
+  const in2026 = shiftDatedFacts(child, 1);
+  assertEquals(reviewedEicDatedResidence(in2026, 2026), true);
+  assertEquals(scheduleEicLine6Months(in2026, 2026), 7);
+  assertThrows(() => reviewedEicDatedResidence(child, 2026));
+});

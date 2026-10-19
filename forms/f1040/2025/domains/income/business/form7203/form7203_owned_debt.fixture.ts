@@ -12,7 +12,7 @@ const ledger = {
   all_shares_one_stock_block: true,
   no_current_year_stock_transactions: true,
   no_section_1367_1_g_election: true,
-  no_other_2025_stock_basis_changes: true,
+  no_other_current_year_stock_basis_changes: true,
   no_other_schedule_e_activity: true,
   materially_participated_in_s_corporation: true,
   material_participation_workpaper_reference: "2025 participation log",
@@ -22,7 +22,7 @@ const ledger = {
 };
 
 const note = {
-  kind: "owned_2025_formal_notes",
+  kind: "owned_current_year_formal_notes",
   shareholder_ssn: "123456789",
   corporation_ein: "987654321",
   k1_source_document_reference: "2025 signed S corporation K-1",
@@ -42,9 +42,9 @@ const note = {
   beginning_note_face_amount: 0,
   beginning_note_debt_basis: 0,
   no_other_shareholder_debt_confirmed: true,
-  no_2025_repayments_confirmed: true,
+  no_current_year_repayments_confirmed: true,
   no_prior_reduced_debt_basis_confirmed: true,
-  no_other_2025_basis_changes_confirmed: true,
+  no_other_current_year_basis_changes_confirmed: true,
   no_prior_suspended_losses_confirmed: true,
 };
 
@@ -140,7 +140,7 @@ export function ownedDebtSource(
     principal_only_confirmed: true,
   }));
   if (!repayments.length) delete n.principal_repayments;
-  n.no_2025_repayments_confirmed = !repayments.length && !second;
+  n.no_current_year_repayments_confirmed = !repayments.length && !second;
   if (second) {
     n.second_formal_note = {
       formal_note_id: "formal note 2025-02",
@@ -155,7 +155,7 @@ export function ownedDebtSource(
       not_a_guarantee_or_cosign_confirmed: true,
       beginning_note_face_amount: 0,
       beginning_note_debt_basis: 0,
-      no_2025_repayments_confirmed: false,
+      no_current_year_repayments_confirmed: false,
       no_prior_reduced_debt_basis_confirmed: true,
       principal_repayment: {
         formal_note_id: "formal note 2025-02",

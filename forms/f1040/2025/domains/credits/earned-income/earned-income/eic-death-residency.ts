@@ -8,7 +8,7 @@ export const eicDeathResidencyReviewSchema = z.object({
   child_ssn: z.string().regex(/^\d{3}-?\d{2}-?\d{4}$/),
   birth_record_reference: z.string().trim().min(1),
   death_record_reference: z.string().trim().min(1),
-  death_date: z.string().regex(/^2025-\d{2}-\d{2}$/),
+  death_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
   us_home_residence_periods: z.array(residencePeriodSchema).min(1),
 }).strict();
 interface Facts {
@@ -20,8 +20,11 @@ interface Facts {
   readonly eic_birth_residency_review?: unknown;
   readonly eic_dated_residency_review?: unknown;
 }
-/** Replays reviewed actual residence over the child's 2025 lifetime, with an SSN. */
-export function reviewedEicDeathResidence(child: Facts): boolean {
+/** Replays reviewed actual residence over the child's lifetime in the return year, with an SSN. */
+export function reviewedEicDeathResidence(
+  child: Facts,
+  taxYear: number,
+): boolean {
   if (child.eic_death_residency_review === undefined) return false;
   const review = eicDeathResidencyReviewSchema.parse(
     child.eic_death_residency_review,
@@ -49,9 +52,14 @@ export function reviewedEicDeathResidence(child: Facts): boolean {
   if (birth > death) {
     throw new Error("EIC death residence needs birth on or before death");
   }
-  const firstAlive = child.dob > "2025-01-01" ? child.dob : "2025-01-01";
+  if (!review.death_date.startsWith(`${taxYear}-`)) {
+    throw new Error(`EIC death residence needs a ${taxYear} death date`);
+  }
+  const yearStart = `${taxYear}-01-01`;
+  const firstAlive = child.dob > yearStart ? child.dob : yearStart;
   const { days, months } = reviewedResidencePeriodTotals(
     review.us_home_residence_periods,
+    taxYear,
     firstAlive,
   );
   const lifeDays = (death - date(firstAlive)) / 86_400_000 + 1;
@@ -62,7 +70,7 @@ export function reviewedEicDeathResidence(child: Facts): boolean {
     child.months_lived_with_you_in_us !== months.size
   ) {
     throw new Error(
-      "EIC death residence needs actual home periods within more than half of 2025 life and matching months",
+      `EIC death residence needs actual home periods within more than half of ${taxYear} life and matching months`,
     );
   }
   return true;

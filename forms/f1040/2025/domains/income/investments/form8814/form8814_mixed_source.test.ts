@@ -78,7 +78,7 @@ test("Form8814 mixed child sources recalculate native/PDF lines and full-return 
     };
     const result = f1040_2025.executeReturn(inputs);
     assertEquals(result.diagnostics, []);
-    const lines = items.map(calculateForm8814);
+    const lines = items.map((item) => calculateForm8814(item, 2025));
     assertEquals(lines[0].line9, 1320);
     assertEquals(lines[0].line10, 550);
     assertEquals(lines[0].line12, 1430);

@@ -7,8 +7,6 @@ type Form8990ScheduleCPass =
 
 const passes = new WeakMap<NodeContext, Form8990ScheduleCPass>();
 
-const sourceReturnContext = { taxYear: 2025, formType: "f1040" } as const;
-
 function contextFor(
   pass: Form8990ScheduleCPass,
   base: NodeContext,
@@ -21,7 +19,7 @@ function contextFor(
 /** Internal first-pass permit; never represented in public tax input JSON. */
 export function provisionalScheduleCContext(
   pass: ProvisionalScheduleCInterestPass,
-  base: NodeContext = sourceReturnContext,
+  base: NodeContext,
 ): NodeContext {
   return contextFor({ phase: "provisional", source: pass.source }, base);
 }
@@ -29,7 +27,7 @@ export function provisionalScheduleCContext(
 /** Internal final-pass permit, after a calculated allowance has been applied. */
 export function finalizedScheduleCContext(
   pass: FinalizedScheduleCInterestPass,
-  base: NodeContext = sourceReturnContext,
+  base: NodeContext,
 ): NodeContext {
   return contextFor({ phase: "finalized", source: pass.source }, base);
 }

@@ -10,6 +10,7 @@
 import { FilingStatus } from "../types.ts";
 import type { Bracket } from "./2025.ts";
 import type { F1040Config } from "./types.ts";
+import { housingLimitTable as noticeHousingLimits } from "../intermediate/forms/income/foreign/form2555/housing_limits_2026.ts";
 
 // RP §4.01, Tables 1-4.
 export const BRACKETS_MFJ_2026: ReadonlyArray<Bracket> = [
@@ -152,9 +153,31 @@ export const config2026: F1040Config = {
   // RP §4.02: $1,350; the §1(g)(4)(A)(ii) threshold is twice that amount.
   kiddieUnearnedIncomeThreshold: 2_700,
   kiddieStandardDeductionFloor: 1_350,
+  // RP §4.02 and draft 2026 Form 8814 line 4: less than $13,500.
+  form8814ChildIncomeLimit: 13_500,
   // RP §4.39; housing base is 16% of the exclusion, IRC §911(c)(1)(B)(i).
   feieLimit: 132_900,
   feieHousingBase: 21_264,
+  // Notice 2026-25 sec. 3; standard $39,870 ($109.23 a day), draft 2026
+  // Instructions for Form 2555, line 29b.
+  foreignHousingLimits: noticeHousingLimits,
+  // IRC §1400Z-2(b)(1)(B): deferral ends December 31, 2026; draft 2026
+  // Form 8997 (created 5/29/26) Part III Section B recognizes it and
+  // reserves Part IV.
+  qofDeferralPeriodEnds: true,
+  // P.L. 119-21 §70323 strikes the net deemed tangible income return
+  // (net CFC tested income) for CFC tax years beginning after 2025.
+  cfcNetDeemedTangibleIncomeReturn: false,
+  // RP §4.37 ($211,000) and §4.38 ($910,000).
+  expatriationAverageTaxThreshold: 211_000,
+  expatriationMarkToMarketExclusion: 910_000,
+  // Instructions for Form 8864 (Rev. December 2025): P.L. 119-21 raises the
+  // credit to $.20 a gallon for fuel sold or used after June 30, 2025, and
+  // ends it for fuel sold or used after 2026.
+  smallAgriBiodieselSales: {
+    twentyCentRateFrom: "2025-07-01",
+    soldBefore: "2027-01-01",
+  },
   // RP §4.24; Rev. Proc. 2026-15 Tables 1-2. The third-year limit is $11,900
   // and each succeeding year $7,160; this field holds the third-year amount.
   section179Limit: 2_560_000,
@@ -403,4 +426,6 @@ export const config2026: F1040Config = {
   // Draft 2026 Form 2210-F (created 4/1/26) prints line 16's rate as "x.xx";
   // the January 15-April 15, 2027 rate is not yet published.
   form2210fPenaltyRate: null,
+  // The 2026 Form 2210 instructions and their rate periods are not published.
+  form2210RegularMethod: null,
 };

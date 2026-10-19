@@ -1,3 +1,4 @@
+import { mefTaxYear } from "../../../../mef/support/year-config.ts";
 import { assertRetirementStateLocalTaxSource } from "../../../../domains/income/retirement/retirement_state_local_tax_source.ts";
 import type {
   PdfFieldEntry,
@@ -321,6 +322,7 @@ export const scheduleAPdf: PdfFormDescriptor = {
         all.f1098,
         recipients,
         Number(input.line_8c_points_no_1098 ?? 0),
+        mefTaxYear(),
       );
     }
     const hasPriorCarryover = [

@@ -1,8 +1,10 @@
 import { z } from "zod";
 
+const isoDate = z.string().regex(/^\d{4}-\d{2}-\d{2}$/);
+
 export const residencePeriodSchema = z.object({
-  start_date: z.string().regex(/^2025-\d{2}-\d{2}$/),
-  end_date: z.string().regex(/^2025-\d{2}-\d{2}$/),
+  start_date: isoDate,
+  end_date: isoDate,
   record_reference: z.string().trim().min(1),
   child_lived_with_filer_in_us_verified: z.literal(true),
 }).strict();
@@ -20,8 +22,11 @@ interface DatedResidencyFacts {
   readonly eic_dated_residency_review?: unknown;
 }
 
-/** Replays actual 2025 U.S. home intervals; references are reviewed facts, not authentication. */
-export function reviewedEicDatedResidence(child: DatedResidencyFacts): boolean {
+/** Replays actual U.S. home intervals in the return year; references are reviewed facts, not authentication. */
+export function reviewedEicDatedResidence(
+  child: DatedResidencyFacts,
+  taxYear: number,
+): boolean {
   if (child.eic_dated_residency_review === undefined) return false;
   const review = eicDatedResidencyReviewSchema.parse(
     child.eic_dated_residency_review,
@@ -29,17 +34,20 @@ export function reviewedEicDatedResidence(child: DatedResidencyFacts): boolean {
   if (
     !child.ssn ||
     review.child_ssn.replaceAll("-", "") !== child.ssn.replaceAll("-", "") ||
-    child.dob >= "2025-01-01"
+    child.dob >= `${taxYear}-01-01`
   ) {
     throw new Error(
-      "EIC dated residence needs the matching child born before 2025",
+      `EIC dated residence needs the matching child born before ${taxYear}`,
     );
   }
   const { days, months } = reviewedResidencePeriodTotals(
     review.residence_periods,
+    taxYear,
   );
+  const yearDays = (Date.UTC(taxYear, 11, 31) - Date.UTC(taxYear, 0, 1)) /
+      86_400_000 + 1;
   if (
-    days * 2 <= 365 || child.months_lived_with_you_in_us !== months.size ||
+    days * 2 <= yearDays || child.months_lived_with_you_in_us !== months.size ||
     child.months_in_home < months.size
   ) {
     throw new Error(
@@ -49,10 +57,11 @@ export function reviewedEicDatedResidence(child: DatedResidencyFacts): boolean {
   return true;
 }
 
-/** Exact, nonoverlapping actual U.S. home periods within 2025. */
+/** Exact, nonoverlapping actual U.S. home periods within the return year. */
 export function reviewedResidencePeriodTotals(
   input: unknown,
-  earliestDate = "2025-01-01",
+  taxYear: number,
+  earliestDate = `${taxYear}-01-01`,
 ) {
   const residence_periods = residencePeriodSchema.array().min(1).parse(input);
   const date = (value: string): number => {
@@ -61,7 +70,7 @@ export function reviewedResidencePeriodTotals(
       !Number.isFinite(parsed.getTime()) ||
       parsed.toISOString().slice(0, 10) !== value
     ) {
-      throw new Error("EIC dated residence needs valid 2025 dates");
+      throw new Error(`EIC dated residence needs valid ${taxYear} dates`);
     }
     return parsed.getTime();
   };
@@ -72,6 +81,14 @@ export function reviewedResidencePeriodTotals(
   const earliest = date(earliestDate);
   if (periods.some((period) => period.start < earliest)) {
     throw new Error("EIC residence period starts before the child was alive");
+  }
+  const yearEnd = Date.UTC(taxYear, 11, 31);
+  if (
+    periods.some((period) =>
+      period.start < Date.UTC(taxYear, 0, 1) || period.end > yearEnd
+    )
+  ) {
+    throw new Error(`EIC dated residence needs valid ${taxYear} dates`);
   }
   let days = 0;
   let previousEnd = -Infinity;

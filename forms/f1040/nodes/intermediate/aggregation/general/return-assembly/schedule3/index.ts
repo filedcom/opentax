@@ -263,6 +263,15 @@ class Schedule3Node extends TaxNode<typeof inputSchema> {
     }
     if (credits > 0) f1040Input.line20_nonrefundable_credits = credits;
     if (payments > 0) f1040Input.line31_additional_payments = payments;
+    // Form 2210 line 3 leaves these out of refundable credits (line 6
+    // counts excess social security as withholding).
+    if ((input.line10_amount_paid_extension ?? 0) > 0) {
+      f1040Input.schedule3_line10_extension_payment =
+        input.line10_amount_paid_extension;
+    }
+    if ((input.line11_excess_ss ?? 0) > 0) {
+      f1040Input.schedule3_line11_excess_ss = input.line11_excess_ss;
+    }
     const cleanNew = sumAccumulable(input.line6f_clean_vehicle_credit);
     const cleanUsed = sumAccumulable(
       input.line6m_prev_owned_clean_vehicle_credit,

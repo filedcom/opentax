@@ -21,6 +21,7 @@ export interface Form4852RetainedDocument {
 export function reconcileForm4852Source(
   pending: Readonly<Record<string, unknown>>,
   filer: FilerIdentity,
+  taxYear: number,
 ) {
   const source = inputSchema.parse(pending.f4852);
   const review = source.reviewed_source;
@@ -110,7 +111,7 @@ export function reconcileForm4852Source(
       );
     }
     if (
-      item.form_year !== 2025 || !item.missing_or_incorrect ||
+      item.form_year !== taxYear || !item.missing_or_incorrect ||
       !item.amount_determination_explanation ||
       !item.payer_form_efforts_explanation ||
       !item.payer_address_line1 || !item.payer_address_city ||
@@ -148,7 +149,7 @@ export function reconcileForm4852Source(
         item.payer_name.trim().toUpperCase(),
         item.payer_address_line1.trim().toUpperCase(),
       ],
-      2025,
+      taxYear,
       item.source_copy_lineage ?? null,
     ]);
     if (identities.has(identity)) {
@@ -245,7 +246,7 @@ export function reconcileForm4852Source(
             ]);
             if (
               row.owner_ssn !== recipient || row.payer_tin !== payer ||
-              !row.paid_on.startsWith("2025-") || periods.has(identity) ||
+              !row.paid_on.startsWith(`${taxYear}-`) || periods.has(identity) ||
               (item.payroll_allocations ?? []).some((source) =>
                 source.payroll_account_reference ===
                   row.payroll_account_reference &&
@@ -291,7 +292,7 @@ export function reconcileForm4852Source(
           lineage.source_copy_lineage === item.source_copy_lineage ||
           actual.payer_tin !== payer || actual.owner_ssn !== recipient ||
           actual.account_number !== facts.account_number ||
-          !actual.paid_on.startsWith("2025-")
+          !actual.paid_on.startsWith(`${taxYear}-`)
         ) {
           throw new Error(
             "Form4852 issued copy account/owner/payer differs from retained actual lineage source",
@@ -382,8 +383,9 @@ export function assertForm4852RetainedBytes(
   pending: Readonly<Record<string, unknown>>,
   filer: FilerIdentity,
   documents: readonly Form4852RetainedDocument[],
+  taxYear: number,
 ) {
-  const source = reconcileForm4852Source(pending, filer);
+  const source = reconcileForm4852Source(pending, filer, taxYear);
   for (const record of source.reviewed_source!.records) {
     for (
       const expected of [

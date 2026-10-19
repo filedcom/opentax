@@ -298,8 +298,8 @@ function buildReturnXml(
   }
   assertPreparedForm8886PublicSource(pending, preparedForm8886);
   assertForm8858FilingSource(pending.f8858);
-  if (pending.f1040?.dual_status_return_2025 === true) {
-    throw new Error("TY2025 dual-status return cannot use Form 1040 e-file");
+  if (pending.f1040?.dual_status_return === true) {
+    throw new Error("A dual-status return cannot use Form 1040 e-file");
   }
   if (pending.f1040) {
     assertF1040SourceIdentity(pending.f1040, filer);
@@ -318,7 +318,7 @@ function buildReturnXml(
   assertPatrIssuedCopies(pending.f1099patr);
   assertPatrWithholdingRecipient(pending.f1099patr, filer);
   assertLine1bHouseholdWageSource(pending);
-  assertForm4852FilingRoute(pending, filer, form4852EvidenceVerified);
+  assertForm4852FilingRoute(pending, filer, form4852EvidenceVerified, year);
   reconcileForm8606RothInventories(pending, filer);
   reconcileForm8606RothActivity(pending, filer);
   assertW2WithholdingSource(pending, filer);
@@ -634,6 +634,7 @@ export async function buildMefBundle(
     pending,
     options.filer,
     retainedSourceDocuments,
+    mefTaxYear({ taxYear: options.year }),
   );
   await assertForm8874CdeStatusEvidence(
     pending,
@@ -704,7 +705,12 @@ export async function buildMefBundle(
     options.filer,
     attachments,
   );
-  await assertW2GPayerCopyContents(pending, options.filer, attachments);
+  await assertW2GPayerCopyContents(
+    pending,
+    options.filer,
+    attachments,
+    mefTaxYear({ taxYear: options.year }),
+  );
   const attachmentSha256ByFileName = Object.fromEntries(
     await Promise.all(attachments.map(async ({ fileName, bytes }) => {
       return [fileName, await sha256Hex(bytes)] as const;

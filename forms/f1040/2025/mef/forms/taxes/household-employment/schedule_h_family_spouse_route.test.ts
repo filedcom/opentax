@@ -50,7 +50,7 @@ const source = {
       marriage_date: "2010-06-15",
       marriage_source_reference: "marriage-certificate-review",
       marriage_continuity_source_reference: "2025-marriage-continuity-review",
-      married_through_2025_verified: true,
+      married_through_tax_year_verified: true,
       payroll_source_reference: "2025-spouse-payroll-ledger",
       ordinary_cash_only: true,
       annual_cash_wages: 5_000,
@@ -192,4 +192,28 @@ test("Schedule H spouse source and export reject marriage, W-2, spouse identity 
       { ...result.pending, schedule2: { line9_household_employment: 249 } },
     )
   );
+});
+
+// Draft 2026 Instructions for Schedule H: wages paid to a spouse are excluded
+// from social security, Medicare and FUTA wages, as in 2025.
+test("2026 spouse withholding route needs a marriage before the return year", () => {
+  const employee = source.family_withholding_only_payroll.employee;
+  const compute2026 = (marriage_date: string) =>
+    schedule_h.compute(
+      { taxYear: 2026, formType: "f1040" },
+      inputSchema.parse({
+        ...source,
+        family_withholding_only_payroll: {
+          ...source.family_withholding_only_payroll,
+          employee: { ...employee, marriage_date },
+        },
+      }),
+    );
+  const result = compute2026("2025-06-15");
+  assertEquals(
+    result.outputs.find((row) => row.nodeType === "schedule2")?.fields
+      .line9_household_employment,
+    250,
+  );
+  assertThrows(() => compute2026("2026-06-15"));
 });

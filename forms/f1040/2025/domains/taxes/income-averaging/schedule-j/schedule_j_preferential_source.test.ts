@@ -12,8 +12,14 @@ import {
 } from "../../retirement/form4972/form4972_preferential_amt.fixture.ts";
 import { normalizeAllPending } from "../../../../return-processing/pending.ts";
 import { extractFilerIdentity } from "../../../../../mef/filer.ts";
-import { assertScheduleJSourceReturn } from "./schedule_j_source_return.ts";
+import {
+  assertScheduleJSourceReturn,
+  executeScheduleJSourceReturn,
+} from "./schedule_j_source_return.ts";
 import { assertForm4972AmtJoin } from "../../retirement/form4972/form4972_amt_reconciliation.ts";
+
+const replayScheduleJ = (inputs: Record<string, unknown>) =>
+  executeScheduleJSourceReturn(inputs, { taxYear: 2025, formType: "f1040" });
 function sources(): Record<string, unknown> {
   const farm: any = structuredClone(
     pdfReviewFixtures.find((f) =>
@@ -45,7 +51,7 @@ test("Schedule J derives preferential tax from issued dividend/farm sources and 
   assertEquals(p.f1040.line16_income_tax, 30187);
   assertEquals(p.form6251.regular_tax, 31214);
   assertEquals(p.form6251.line11_amt, 55517);
-  assertScheduleJSourceReturn(actual.pending);
+  assertScheduleJSourceReturn(actual.pending, replayScheduleJ);
   assertForm4972AmtJoin(830, p);
   const filer = extractFilerIdentity(p.f1040)!;
   const prepared = await f1040_2025.prepareReturn!(actual.pending, filer);
@@ -92,15 +98,15 @@ test("Schedule J derives preferential tax from issued dividend/farm sources and 
   ) {
     const bad: any = structuredClone(actual.pending);
     bad[form][field] += 1;
-    assertThrows(() => assertScheduleJSourceReturn(bad));
+    assertThrows(() => assertScheduleJSourceReturn(bad, replayScheduleJ));
     await assertRejects(() => f1040_2025.prepareReturn!(bad, filer));
   }
   const missing: any = structuredClone(actual.pending);
   delete missing.schedule_j_source_replay;
-  assertThrows(() => assertScheduleJSourceReturn(missing));
+  assertThrows(() => assertScheduleJSourceReturn(missing, replayScheduleJ));
   delete missing.schedule_j_calculation;
   delete missing.income_tax_calculation;
-  assertThrows(() => assertScheduleJSourceReturn(missing));
+  assertThrows(() => assertScheduleJSourceReturn(missing, replayScheduleJ));
 });
 test("Schedule J rejects public private tax operands and stale current tax treatment", () => {
   const privateInput: any = sources();

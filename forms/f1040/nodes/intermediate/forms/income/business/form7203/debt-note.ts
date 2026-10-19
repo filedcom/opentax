@@ -22,14 +22,14 @@ import { reviewedPriorReducedNoteSchema } from "./prior-reduced-note.ts";
 import type { ReviewedStockLossLedger } from "./stock-ledger.ts";
 
 const sourceReference = z.string().trim().min(1);
-const ty2025Date = z.string().regex(/^2025-\d{2}-\d{2}$/).refine((value) =>
+const isoDate = z.string().regex(/^\d{4}-\d{2}-\d{2}$/).refine((value) =>
   !Number.isNaN(Date.parse(value)) &&
   new Date(value).toISOString().slice(0, 10) === value
 );
 
 const principalRepaymentSchema = z.object({
   formal_note_id: sourceReference,
-  date: ty2025Date,
+  date: isoDate,
   amount: z.number().int().positive().refine(Number.isSafeInteger),
   corporate_loan_ledger_reference: sourceReference,
   shareholder_bank_deposit_reference: sourceReference,
@@ -44,7 +44,7 @@ export function sumPrincipalRepayments(
 
 // Each current written note retains its complete dated principal repayments.
 const newFormalNotesBaseSchema = z.object({
-  kind: z.enum(["new_2025_formal_notes", "owned_2025_formal_notes"]),
+  kind: z.enum(["new_current_year_formal_notes", "owned_current_year_formal_notes"]),
   open_account_net_advance_amount: z.never().optional(),
   owned_current_records: ownedCurrentDebtRecordsSchema.optional(),
   shareholder_ssn: z.string().regex(/^\d{9}$/),
@@ -55,7 +55,7 @@ const newFormalNotesBaseSchema = z.object({
   current_box1_ordinary_loss: z.number().int().positive(),
   formal_note_id: sourceReference,
   signed_note_document_reference: sourceReference,
-  note_execution_date: ty2025Date,
+  note_execution_date: isoDate,
   shareholder_lender_ssn: z.string().regex(/^\d{9}$/),
   corporate_borrower_ein: z.string().regex(/^\d{9}$/),
   bank_transfer_reference: sourceReference,
@@ -64,7 +64,7 @@ const newFormalNotesBaseSchema = z.object({
   second_formal_note: z.object({
     formal_note_id: sourceReference,
     signed_note_document_reference: sourceReference,
-    note_execution_date: ty2025Date,
+    note_execution_date: isoDate,
     shareholder_lender_ssn: z.string().regex(/^\d{9}$/),
     corporate_borrower_ein: z.string().regex(/^\d{9}$/),
     bank_transfer_reference: sourceReference,
@@ -76,7 +76,7 @@ const newFormalNotesBaseSchema = z.object({
     not_a_guarantee_or_cosign_confirmed: z.literal(true),
     beginning_note_face_amount: z.literal(0),
     beginning_note_debt_basis: z.literal(0),
-    no_2025_repayments_confirmed: z.boolean(),
+    no_current_year_repayments_confirmed: z.boolean(),
     principal_repayment: principalRepaymentSchema.optional(),
     principal_repayments: z.array(principalRepaymentSchema).min(1).optional(),
     no_prior_reduced_debt_basis_confirmed: z.literal(true),
@@ -103,11 +103,11 @@ const newFormalNotesBaseSchema = z.object({
   beginning_note_face_amount: z.literal(0),
   beginning_note_debt_basis: z.literal(0),
   no_other_shareholder_debt_confirmed: z.literal(true),
-  no_2025_repayments_confirmed: z.boolean(),
+  no_current_year_repayments_confirmed: z.boolean(),
   principal_repayments: z.array(principalRepaymentSchema).min(1)
     .optional(),
   no_prior_reduced_debt_basis_confirmed: z.literal(true),
-  no_other_2025_basis_changes_confirmed: z.literal(true),
+  no_other_current_year_basis_changes_confirmed: z.literal(true),
   no_prior_suspended_losses_confirmed: z.literal(true),
 }).strict();
 export const reviewedNewFormalNotesSchema = newFormalNotesBaseSchema
@@ -123,7 +123,7 @@ export const reviewedNewFormalNotesSchema = newFormalNotesBaseSchema
       return;
     }
     if (
-      note.kind === "owned_2025_formal_notes" && !note.owned_current_records
+      note.kind === "owned_current_year_formal_notes" && !note.owned_current_records
     ) {
       ctx.addIssue({
         code: "custom",
@@ -170,10 +170,10 @@ export const reviewedNewFormalNotesSchema = newFormalNotesBaseSchema
             note.shareholder_ssn ||
           note.second_formal_note.corporate_borrower_ein !==
             note.corporation_ein ||
-          note.second_formal_note.no_2025_repayments_confirmed ===
+          note.second_formal_note.no_current_year_repayments_confirmed ===
             (principalRepayments(note.second_formal_note).length > 0))) ||
       new Set(references).size !== references.length ||
-      note.no_2025_repayments_confirmed ===
+      note.no_current_year_repayments_confirmed ===
         ((note.principal_repayments?.length ?? 0) > 0) ||
       (note.principal_repayments ?? []).some((payment, index) =>
         payment.formal_note_id !== note.formal_note_id ||
@@ -211,11 +211,11 @@ export const reviewedOpenAccountSchema = newFormalNotesBaseSchema.omit({
   bank_transfer_reference: true,
   shareholder_lender_ssn: true,
   corporate_borrower_ein: true,
-  no_2025_repayments_confirmed: true,
+  no_current_year_repayments_confirmed: true,
   principal_repayments: true,
   second_formal_note: true,
 }).extend({
-  kind: z.literal("owned_2025_open_account"),
+  kind: z.literal("owned_current_year_open_account"),
   owned_current_records: ownedOpenAccountRecordsSchema,
   cash_advance_amount: z.number().int().nonnegative().refine(
     Number.isSafeInteger,
@@ -234,7 +234,7 @@ export const reviewedOpenAccountSchema = newFormalNotesBaseSchema.omit({
   }
 });
 export const reviewedMixedCurrentDebtSchema = newFormalNotesBaseSchema.extend({
-  kind: z.literal("owned_2025_formal_and_open_account"),
+  kind: z.literal("owned_current_year_formal_and_open_account"),
   owned_current_records: ownedMixedDebtRecordsSchema,
   additional_formal_notes: z.array(
     newFormalNotesBaseSchema.shape.second_formal_note.unwrap(),
@@ -251,7 +251,7 @@ export const reviewedMixedCurrentDebtSchema = newFormalNotesBaseSchema.extend({
         note.additional_formal_notes.some((n) =>
           n.shareholder_lender_ssn !== note.shareholder_ssn ||
           n.corporate_borrower_ein !== note.corporation_ein ||
-          n.no_2025_repayments_confirmed === (principalRepayments(n).length > 0)
+          n.no_current_year_repayments_confirmed === (principalRepayments(n).length > 0)
         ))
     ) {
       throw Error(
@@ -261,13 +261,13 @@ export const reviewedMixedCurrentDebtSchema = newFormalNotesBaseSchema.extend({
     if (
       note.shareholder_lender_ssn !== note.shareholder_ssn ||
       note.corporate_borrower_ein !== note.corporation_ein ||
-      note.no_2025_repayments_confirmed === (r.repayments > 0) ||
+      note.no_current_year_repayments_confirmed === (r.repayments > 0) ||
       (note.second_formal_note &&
         (note.second_formal_note.shareholder_lender_ssn !==
             note.shareholder_ssn ||
           note.second_formal_note.corporate_borrower_ein !==
             note.corporation_ein ||
-          note.second_formal_note.no_2025_repayments_confirmed ===
+          note.second_formal_note.no_current_year_repayments_confirmed ===
             (principalRepayments(note.second_formal_note).length > 0)))
     ) {
       throw Error(
@@ -295,12 +295,13 @@ export type ReviewedNewFormalNotes = z.infer<
 export function reconcileCashCapitalAndNewNote(
   ledger: ReviewedStockLossLedger,
   note: ReviewedNewFormalNotes,
+  taxYear: number,
 ): number {
   const contribution = ledger.cash_capital_contribution;
   if (
-    !contribution ||
+    !contribution || !contribution.contributed_date.startsWith(`${taxYear}-`) ||
     (note.second_formal_note &&
-      note.kind !== "owned_2025_formal_and_open_account")
+      note.kind !== "owned_current_year_formal_and_open_account")
   ) {
     throw new Error(
       "Form 7203 combined capital-and-debt route needs one new formal note",
@@ -334,6 +335,27 @@ export function reconcileCashCapitalAndNewNote(
   return contribution.amount;
 }
 
+/** Current written notes are executed and repaid within the return year. */
+function assertCurrentDebtDates(
+  note: ReviewedNewFormalNotes,
+  taxYear: number,
+): void {
+  const notes = [
+    note,
+    ...(note.second_formal_note ? [note.second_formal_note] : []),
+    ...(note.additional_formal_notes ?? []),
+  ];
+  const dates = notes.flatMap((written) => [
+    ...(written.note_execution_date ? [written.note_execution_date] : []),
+    ...principalRepayments(written).map((payment) => payment.date),
+  ]);
+  if (dates.some((date) => !date.startsWith(`${taxYear}-`))) {
+    throw new Error(
+      `Form 7203 current notes need ${taxYear} execution and repayment dates`,
+    );
+  }
+}
+
 export function reconcileNewFormalNotes(
   raw: unknown,
   k1: {
@@ -343,8 +365,10 @@ export function reconcileNewFormalNotes(
     box1_ordinary_business?: number;
     box16_code_e_loan_repayment?: number;
   },
+  taxYear: number,
 ) {
   const note = reviewedCurrentDebtSchema.parse(raw);
+  assertCurrentDebtDates(note, taxYear);
   const loss = -(k1.box1_ordinary_business ?? 0);
   if (
     !k1.corporation_ein || !k1.source_document_reference ||
@@ -375,7 +399,7 @@ export function reconcileNewFormalNotes(
   );
   if (
     note.second_formal_note &&
-    note.kind !== "owned_2025_formal_and_open_account" &&
+    note.kind !== "owned_current_year_formal_and_open_account" &&
     !Number.isSafeInteger(
       debtSupportedLossCandidate *
         (note.cash_advance_amount -
@@ -392,8 +416,8 @@ export function reconcileNewFormalNotes(
   }
   if (
     debtSupportedLossCandidate <= 0 &&
-    note.kind !== "owned_2025_open_account" &&
-    note.kind !== "owned_2025_formal_and_open_account"
+    note.kind !== "owned_current_year_open_account" &&
+    note.kind !== "owned_current_year_formal_and_open_account"
   ) {
     throw new Error(
       "Form 7203 one-note debt candidate needs a current loss beyond reviewed stock basis",
@@ -404,7 +428,7 @@ export function reconcileNewFormalNotes(
 
 export { totalCurrentDebtAdvances } from "./debt-allocation.ts";
 export function actualCurrentDebtRepayments(note: ReviewedNewFormalNotes) {
-  if (note.kind === "owned_2025_formal_and_open_account") {
+  if (note.kind === "owned_current_year_formal_and_open_account") {
     return sumPrincipalRepayments(note.principal_repayments) +
       replayOpenAccount(
         note.owned_current_records
@@ -413,7 +437,7 @@ export function actualCurrentDebtRepayments(note: ReviewedNewFormalNotes) {
       notePrincipalRepaid(note.second_formal_note) +
       additionalPrincipalRepayments(note);
   }
-  return note.kind === "owned_2025_open_account"
+  return note.kind === "owned_current_year_open_account"
     ? replayOpenAccount(
       note.owned_current_records.complete_current_shareholder_debt_inventory[0],
     ).repayments
@@ -428,10 +452,10 @@ export function currentOpenAccountCarry(
   allowedDebt: number,
 ): Record<string, number> {
   if (
-    note?.kind !== "owned_2025_open_account" &&
-    note?.kind !== "owned_2025_formal_and_open_account"
+    note?.kind !== "owned_current_year_open_account" &&
+    note?.kind !== "owned_current_year_formal_and_open_account"
   ) return {};
-  const mixed = note.kind === "owned_2025_formal_and_open_account";
+  const mixed = note.kind === "owned_current_year_formal_and_open_account";
   const r = replayOpenAccount(
     note.owned_current_records
       .complete_current_shareholder_debt_inventory[

@@ -6,6 +6,7 @@ import { scheduleA } from "../../../../../inputs/deductions/itemized/schedule_a/
 import { schedule3 } from "../../../../aggregation/general/return-assembly/schedule3/index.ts";
 import { f1040 } from "../../../../../outputs/general/return-assembly/f1040/index.ts";
 import {
+  assertForm8396ReturnYear,
   calculateForm8396Line3,
   type Form8396Source,
   form8396SourceSchema,
@@ -18,13 +19,14 @@ class Form8396Node extends TaxNode<typeof form8396SourceSchema> {
   readonly inputSchema = form8396SourceSchema;
   readonly outputNodes = new OutputNodes([scheduleA, schedule3, f1040]);
 
-  compute(_ctx: NodeContext, rawInput: Form8396Source): NodeResult {
+  compute(ctx: NodeContext, rawInput: Form8396Source): NodeResult {
     const source = form8396SourceSchema.parse(rawInput);
+    assertForm8396ReturnYear(source, ctx.taxYear);
     const line3 = calculateForm8396Line3(source);
-    const prior = source.prior_2024_form8396;
-    const priorCarryforward = (prior?.line14_2023_carryforward ?? 0) +
-      (prior?.line16_2022_carryforward ?? 0) +
-      (prior?.line17_2024_carryforward ?? 0);
+    const prior = source.prior_year_form8396;
+    const priorCarryforward = (prior?.line14_second_prior_year_carryforward ?? 0) +
+      (prior?.line16_third_prior_year_carryforward ?? 0) +
+      (prior?.line17_prior_year_carryforward ?? 0);
     if (line3 + priorCarryforward === 0) return { outputs: [] };
     return {
       outputs: [

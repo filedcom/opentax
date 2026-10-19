@@ -233,7 +233,11 @@ export const w2: MefFormDescriptor<"w2", Fields, readonly string[]> = {
   pdfUrl: "https://www.irs.gov/pub/irs-pdf/fw2.pdf",
   build(fields, context) {
     const substitutes =
-      form4852NativeSources(context?.pending, context?.filer).w2s;
+      form4852NativeSources(
+        context?.pending,
+        context?.filer,
+        mefTaxYear(context),
+      ).w2s;
     const allSources = [...(fields.w2s ?? []), ...substitutes];
     return allSources.map((item, index) => buildW2(item, context ?? {}, index));
   },

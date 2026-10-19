@@ -9,8 +9,14 @@ import { normalizeAllPending } from "../../../../return-processing/pending.ts";
 import { extractFilerIdentity } from "../../../../../mef/filer.ts";
 import { buildPdfBytes, type PdfPageOrigin } from "../../../../pdf/builder.ts";
 import { scheduleJNonfarmW2Inputs } from "./schedule_j_nonfarm_w2.fixture.ts";
-import { assertScheduleJSourceReturn } from "./schedule_j_source_return.ts";
+import {
+  assertScheduleJSourceReturn,
+  executeScheduleJSourceReturn,
+} from "./schedule_j_source_return.ts";
 import { assertSingleFarmQbiReturn } from "../../../deductions/business/form8995a/form8995a_single_farm_reconciliation.ts";
+
+const replayScheduleJ = (inputs: Record<string, unknown>) =>
+  executeScheduleJSourceReturn(inputs, { taxYear: 2025, formType: "f1040" });
 
 const outputDir = process.env.SCHEDULE_J_NONFARM_W2_EVIDENCE_DIR ??
   ".state/research/schedulej-nonfarm-w2-source";
@@ -68,7 +74,7 @@ test("issued nonfarm W-2 joins high-income farm Schedule J, SE, zero-limited QBI
   assertEquals(pending.form6251.line11_amt, 53_583);
   assertEquals(pending.f1040.line24_total_tax, 139_786);
   assertEquals(pending.f1040.line37_amount_owed, 119_786);
-  assertScheduleJSourceReturn(actual.pending);
+  assertScheduleJSourceReturn(actual.pending, replayScheduleJ);
   assertSingleFarmQbiReturn(pending, 2025);
   const filer = extractFilerIdentity(pending.f1040)!;
   const prepared = await f1040_2025.prepareReturn(actual.pending, filer);

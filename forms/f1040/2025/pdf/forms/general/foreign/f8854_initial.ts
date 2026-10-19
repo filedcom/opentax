@@ -3,11 +3,12 @@ import {
   assertForm8854FilingScope,
   inputSchema,
   isCoveredExpatriate,
+  PRIOR_YEAR_TAX_KEYS,
   sectionAExceptionAnswers,
 } from "../../../../../nodes/inputs/general/foreign/f8854/index.ts";
 import type { PdfFieldEntry, PdfFormDescriptor } from "../../../review-support/form-descriptor.ts";
 
-// TY2025 initial statement for a noncovered former citizen with cash only.
+// Initial statement for a noncovered former citizen with cash only.
 // All five Section A tax amounts remain tied to prior filed-return records.
 const page1 = "topmostSubform[0].Page1[0].";
 const page2 = "topmostSubform[0].Page2[0].";
@@ -51,7 +52,7 @@ export const form8854InitialPdf: PdfFormDescriptor = {
     check("citizen_by_naturalization", `${page1}c1_3[1]`),
     ...[19, 20, 21, 22, 23].map((number, index) =>
       text(
-        `prior_tax_${2024 - index}`,
+        `prior_tax_${PRIOR_YEAR_TAX_KEYS[index]}`,
         `${page1}${
           ["First", "Second", "Third", "Fourth", "Fifth"][index]
         }Year_ReadOrder[0].f1_${number}[0]`,
@@ -169,16 +170,12 @@ export const form8854InitialPdf: PdfFormDescriptor = {
       citizen_by_birth: partI.us_citizenship_acquisition === "BIRTH",
       citizen_by_naturalization: partI.us_citizenship_acquisition ===
         "NATURALIZATION",
-      prior_tax_2024: input.prior_year_us_income_tax_less_foreign_tax_credit
-        .year_2024,
-      prior_tax_2023: input.prior_year_us_income_tax_less_foreign_tax_credit
-        .year_2023,
-      prior_tax_2022: input.prior_year_us_income_tax_less_foreign_tax_credit
-        .year_2022,
-      prior_tax_2021: input.prior_year_us_income_tax_less_foreign_tax_credit
-        .year_2021,
-      prior_tax_2020: input.prior_year_us_income_tax_less_foreign_tax_credit
-        .year_2020,
+      ...Object.fromEntries(
+        PRIOR_YEAR_TAX_KEYS.map((key) => [
+          `prior_tax_${key}`,
+          input.prior_year_us_income_tax_less_foreign_tax_credit[key],
+        ]),
+      ),
       net_worth: totals.netWorth,
       no_significant_changes: true,
       no_dual_citizen_exception: true,

@@ -18,7 +18,7 @@ function rowXml(
   row: Form8997Row,
 ): string {
   if (row.description.length > 100) {
-    throw new Error("Form 8997 description exceeds the TY2025 MeF one-line limit");
+    throw new Error("Form 8997 description exceeds the MeF one-line limit");
   }
   return elements(groupTag, [
     element("EIN", row.qof_ein),

@@ -1,6 +1,9 @@
 import type { PdfFieldEntry, PdfFormDescriptor } from "../../../review-support/form-descriptor.ts";
 import { reconcileForm8990Projection } from "../../../../domains/deductions/business/form8990/form8990_projection.ts";
 import { buildPending } from "../../../../mef/execution/pending.ts";
+import { mefTaxYear } from "../../../../mef/support/year-config.ts";
+
+const pdfContext = () => ({ taxYear: mefTaxYear(), formType: "f1040" });
 
 // Canonical AcroForm /Fields and page /Widget positions of the Rev. Dec. 2025
 // PDF, Part I only. Page 1 f1_1..5 are identity/foreign-entity header fields,
@@ -62,6 +65,7 @@ export const form8990Pdf: PdfFormDescriptor = {
     const projected = reconcileForm8990Projection(
       fields,
       buildPending(allPending),
+      pdfContext(),
     );
     return {
       ...projected,
@@ -73,7 +77,11 @@ export const form8990Pdf: PdfFormDescriptor = {
   },
   includeWhen(fields, allPending) {
     if (Object.keys(fields).length === 0) return false;
-    reconcileForm8990Projection(fields, buildPending(allPending ?? {}));
+    reconcileForm8990Projection(
+      fields,
+      buildPending(allPending ?? {}),
+      pdfContext(),
+    );
     return true;
   },
   fields,

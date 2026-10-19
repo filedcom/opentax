@@ -9,8 +9,14 @@ import { scheduleJJointFishingPositiveLimitsInputs } from "./schedule_j_joint_fi
 import { extractFilerIdentity } from "../../../../../mef/filer.ts";
 import { buildPdfBytes, type PdfPageOrigin } from "../../../../pdf/builder.ts";
 import { normalizeAllPending } from "../../../../return-processing/pending.ts";
-import { assertScheduleJSourceReturn } from "./schedule_j_source_return.ts";
+import {
+  assertScheduleJSourceReturn,
+  executeScheduleJSourceReturn,
+} from "./schedule_j_source_return.ts";
 import { calculateMixedFishingQbi } from "../../../../../nodes/intermediate/forms/deductions/business/form8995a/mixed-fishing.ts";
+
+const replayScheduleJ = (inputs: Record<string, unknown>) =>
+  executeScheduleJSourceReturn(inputs, { taxYear: 2025, formType: "f1040" });
 
 const evidenceDir = process.env.SCHEDULE_J_JOINT_POSITIVE_EVIDENCE_DIR ??
   ".state/research/schedulej-joint-positive-oct6/packets";
@@ -68,7 +74,7 @@ test("joint C/F wages and UBIA derive three distinct full phase-out limits", asy
     const elected = await packet(`${kind}-${owner}`, input);
     const p = elected.pending;
     const q = calculateMixedFishingQbi(p.form8995a, 2025);
-    assertScheduleJSourceReturn(elected.result.pending);
+    assertScheduleJSourceReturn(elected.result.pending, replayScheduleJ);
     assertEquals(q.profits[0], 200_000);
     assertEquals(q.profits[1], wages ? 478_185 : 500_000);
     assertEquals(q.rows.map((row) => row.lines.line15), [0, rowDed]);
@@ -146,7 +152,7 @@ test("joint positive QBI source rejects payroll, W-2, ownership, property, and f
   const pending: any = structuredClone(result.pending);
   pending.form8995a.mixed_fishing_qbi_source.schedule_f
     .qbi_positive_limit_inventory.sha256 = "0".repeat(64);
-  assertThrows(() => assertScheduleJSourceReturn(pending));
+  assertThrows(() => assertScheduleJSourceReturn(pending, replayScheduleJ));
   await assertRejects(() => f1040_2025.prepareReturn(pending, filer));
   await assertRejects(() => buildPdfBytes(pending, filer, ".pdf-cache"));
 });

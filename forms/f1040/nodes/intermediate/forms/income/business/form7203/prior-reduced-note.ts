@@ -1,4 +1,5 @@
 import { z } from "zod";
+import type { NodeContext } from "../../../../../../../../core/types/node-context.ts";
 import {
   assertForm8949TransactionMath,
   form8949,
@@ -68,7 +69,7 @@ export const reviewedPriorReducedNoteSchema = z.object({
   no_other_shareholder_debt_confirmed: z.literal(true),
   no_2025_advances_confirmed: z.literal(true),
   no_2025_basis_restoration_confirmed: z.literal(true),
-  no_other_2025_basis_changes_confirmed: z.literal(true),
+  no_other_current_year_basis_changes_confirmed: z.literal(true),
   no_prior_suspended_losses_confirmed: z.literal(true),
 }).strict().superRefine((source, ctx) => {
   const references = [
@@ -198,6 +199,7 @@ export function calculatePriorReducedNoteWorkpaper(
 export function calculatePriorReducedNoteGainCandidate(
   raw: unknown,
   k1: Parameters<typeof calculatePriorReducedNoteWorkpaper>[1],
+  context: NodeContext,
 ) {
   const workpaper = calculatePriorReducedNoteWorkpaper(raw, k1);
   const source = workpaper.source;
@@ -223,7 +225,6 @@ export function calculatePriorReducedNoteGainCandidate(
     is_long_term: true,
   });
   assertForm8949TransactionMath(transaction);
-  const context = { taxYear: 2025, formType: "f1040" };
   const form8949Result = form8949.compute(context, { transaction });
   const routed = form8949Result.outputs.filter((output) =>
     output.nodeType === "schedule_d"

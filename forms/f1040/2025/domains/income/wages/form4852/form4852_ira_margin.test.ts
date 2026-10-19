@@ -351,7 +351,7 @@ test("actual retained account classifications and printable IRA/SEP/SIMPLE margi
       record.completed_form.sha256 = createHash("sha256").update(d.bytes)
         .digest("hex");
       await assertRejects(
-        () => assertForm4852RetainedEvidence(pending, filer, docs),
+        () => assertForm4852RetainedEvidence(pending, filer, docs, 2025),
         Error,
         "Retained Form4852 IRA",
         mutation,

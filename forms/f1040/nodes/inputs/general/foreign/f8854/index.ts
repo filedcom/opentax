@@ -6,12 +6,21 @@ import type { NodeContext } from "../../../../../../../core/types/node-context.t
 import { balanceSheetSchema, calculateBalanceSheet } from "./balance-sheet.ts";
 import { ReportedFormCode, sectionCSchema } from "./section-c.ts";
 import { sectionDSchema } from "./section-d.ts";
-export { MARK_TO_MARKET_EXCLUSION_2025 } from "./constants.ts";
+import { configForYear } from "../../../../config/index.ts";
 
-// 2025 Form 8854 and instructions. The $206,000 average-tax threshold and
-// $890,000 mark-to-market exclusion apply to TY2025, not the 2024 amounts.
-export const AVG_ANNUAL_TAX_THRESHOLD_2025 = 206_000;
 export const NET_WORTH_THRESHOLD = 2_000_000;
+
+/** The indexed amounts for an expatriation in a year (IRC §§877(a)(2)(A), 877A(a)(3)). */
+export function form8854YearAmounts(expatriationDate: string): {
+  averageTaxThreshold: number;
+  markToMarketExclusion: number;
+} {
+  const cfg = configForYear(Number(expatriationDate.slice(0, 4)));
+  return {
+    averageTaxThreshold: cfg.expatriationAverageTaxThreshold,
+    markToMarketExclusion: cfg.expatriationMarkToMarketExclusion,
+  };
+}
 
 export enum ExpatriateType {
   CITIZEN = "CITIZEN",
@@ -30,7 +39,7 @@ export const dateSchema = z.string().refine(
   "Date must be valid ISO YYYY-MM-DD",
 );
 
-export const taxStatus2025Schema = z.enum([
+export const taxStatusSchema = z.enum([
   "FULL_YEAR_US_CITIZEN_OR_RESIDENT",
   "NONRESIDENT_OR_DUAL_STATUS",
 ]);
@@ -105,16 +114,30 @@ const moneySchema = z.number().finite().nonnegative().refine(
   "Form 8854 amounts must have safe cent precision",
 );
 
+/** Part II Section A line 1: the five tax years before the expatriation year, nearest first. */
+export const PRIOR_YEAR_TAX_KEYS = [
+  "first_year_before",
+  "second_year_before",
+  "third_year_before",
+  "fourth_year_before",
+  "fifth_year_before",
+] as const;
+
 export const priorYearTaxSchema = z.object({
-  year_2024: moneySchema,
-  year_2023: moneySchema,
-  year_2022: moneySchema,
-  year_2021: moneySchema,
-  year_2020: moneySchema,
+  first_year_before: moneySchema,
+  second_year_before: moneySchema,
+  third_year_before: moneySchema,
+  fourth_year_before: moneySchema,
+  fifth_year_before: moneySchema,
+  year_2024: z.never().optional(),
+  year_2023: z.never().optional(),
+  year_2022: z.never().optional(),
+  year_2021: z.never().optional(),
+  year_2020: z.never().optional(),
 });
 
 const priorFiledReturnSchema = z.object({
-  tax_year: z.number().int().min(2020).max(2024),
+  tax_year: z.number().int(),
   filed_form1040_document_id: z.string().trim().min(1),
   filed_form1040_sha256: z.string().regex(/^[a-f0-9]{64}$/),
   form1040_line24_total_tax: moneySchema,
@@ -128,12 +151,12 @@ const priorFiledReturnSchema = z.object({
 );
 
 export const inputSchema = z.object({
-  expatriation_date: dateSchema.refine(
-    (date) => date.startsWith("2025-"),
-    "This Form 8854 input covers initial expatriation in 2025 only",
-  ),
+  // The initial statement is for the expatriation year; compute checks it is
+  // the return year.
+  expatriation_date: dateSchema,
   expatriate_type: z.nativeEnum(ExpatriateType),
-  tax_status_2025: taxStatus2025Schema,
+  tax_status: taxStatusSchema,
+  tax_status_2025: z.never().optional(),
   part_i: partISchema,
   prior_year_us_income_tax_less_foreign_tax_credit: priorYearTaxSchema,
   prior_year_filed_return_sources: z.array(priorFiledReturnSchema).length(5),
@@ -145,7 +168,10 @@ export const inputSchema = z.object({
   section_c: sectionCSchema.nullable(),
   section_d: sectionDSchema,
 }).strict().superRefine((input, ctx) => {
-  const priorYears = [2020, 2021, 2022, 2023, 2024] as const;
+  const expatriationYear = Number(input.expatriation_date.slice(0, 4));
+  const priorYears = PRIOR_YEAR_TAX_KEYS.map((_, index) =>
+    expatriationYear - 1 - index
+  );
   const sourceYears = input.prior_year_filed_return_sources.map((row) =>
     row.tax_year
   );
@@ -167,14 +193,17 @@ export const inputSchema = z.object({
   ) {
     ctx.addIssue({
       code: z.ZodIssueCode.custom,
-      message: "Form 8854 needs five distinct filed 2020-2024 return sources",
+      message: `Form 8854 needs five distinct filed ${
+        expatriationYear - 5
+      }-${expatriationYear - 1} return sources`,
       path: ["prior_year_filed_return_sources"],
     });
   }
   for (const source of input.prior_year_filed_return_sources) {
-    const reported = input.prior_year_us_income_tax_less_foreign_tax_credit[
-      `year_${source.tax_year}` as keyof typeof input.prior_year_us_income_tax_less_foreign_tax_credit
-    ];
+    const key = PRIOR_YEAR_TAX_KEYS[expatriationYear - 1 - source.tax_year];
+    const reported = key === undefined
+      ? undefined
+      : input.prior_year_us_income_tax_less_foreign_tax_credit[key];
     if (
       reported !== source.form1040_line24_total_tax -
           source.schedule3_line1_foreign_tax_credit
@@ -334,10 +363,7 @@ export type F8854Input = z.infer<typeof inputSchema>;
 
 export function averageAnnualNetIncomeTax(input: F8854Input): number {
   const taxes = input.prior_year_us_income_tax_less_foreign_tax_credit;
-  return (
-    taxes.year_2024 + taxes.year_2023 + taxes.year_2022 +
-    taxes.year_2021 + taxes.year_2020
-  ) / 5;
+  return PRIOR_YEAR_TAX_KEYS.reduce((sum, key) => sum + taxes[key], 0) / 5;
 }
 
 function underEighteenAndHalf(
@@ -388,14 +414,14 @@ export function isCoveredExpatriate(rawInput: F8854Input): boolean {
   }
   if (answers.minorQualifies) return false;
   return averageAnnualNetIncomeTax(input) >
-      AVG_ANNUAL_TAX_THRESHOLD_2025 ||
+      form8854YearAmounts(input.expatriation_date).averageTaxThreshold ||
     calculateBalanceSheet(input.balance_sheet).netWorth >= NET_WORTH_THRESHOLD;
 }
 
 /** Scope the registered initial filing path before its MeF source reconciliation. */
 export function assertForm8854FilingScope(rawInput: F8854Input): void {
   const input = inputSchema.parse(rawInput);
-  if (input.tax_status_2025 !== "FULL_YEAR_US_CITIZEN_OR_RESIDENT") {
+  if (input.tax_status !== "FULL_YEAR_US_CITIZEN_OR_RESIDENT") {
     throw new Error(
       "Initial Form 8854 nonresident or dual-status returns cannot use this Form 1040 MeF path",
     );
@@ -430,8 +456,13 @@ class F8854Node extends TaxNode<typeof inputSchema> {
   readonly inputSchema = inputSchema;
   readonly outputNodes = new OutputNodes([]);
 
-  compute(_ctx: NodeContext, rawInput: F8854Input): NodeResult {
+  compute(ctx: NodeContext, rawInput: F8854Input): NodeResult {
     const input = inputSchema.parse(rawInput);
+    if (!input.expatriation_date.startsWith(`${ctx.taxYear}-`)) {
+      throw new Error(
+        `Initial Form 8854 expatriation date must be in tax year ${ctx.taxYear}`,
+      );
+    }
     assertForm8854FilingScope(input);
     // Deemed gain is reported by the asset's income-form character. The
     // registered IRS8854 builder reconciles its identified Form 8949 rows.

@@ -5,6 +5,7 @@ import { OutputNodes } from "../../../../../../../core/types/output-nodes.ts";
 import { f1040 } from "../../../../outputs/general/return-assembly/f1040/index.ts";
 import type { NodeContext } from "../../../../../../../core/types/node-context.ts";
 import { computeRegularMethodPenalty } from "./calculation.ts";
+import { configForYear } from "../../../../config/index.ts";
 import {
   calculateForm2210BoxEPage1,
   form2210BoxEInputSchema,
@@ -48,15 +49,15 @@ export const inputSchema = z.object({
 
 type F2210Input = z.infer<typeof inputSchema>;
 
-function computePenalty(input: F2210Input): number {
+function computePenalty(input: F2210Input, taxYear: number): number {
   if (
     input.current_year_tax === undefined &&
     input.underpayment_penalty === undefined
   ) return 0;
-  return computeRegularMethodPenalty({
-    ...input,
-    current_year_tax: input.current_year_tax ?? 0,
-  });
+  return computeRegularMethodPenalty(
+    { ...input, current_year_tax: input.current_year_tax ?? 0 },
+    configForYear(taxYear).form2210RegularMethod,
+  );
 }
 
 class F2210Node extends TaxNode<typeof inputSchema> {
@@ -64,7 +65,7 @@ class F2210Node extends TaxNode<typeof inputSchema> {
   readonly inputSchema = inputSchema;
   readonly outputNodes = new OutputNodes([f1040]);
 
-  compute(_ctx: NodeContext, input: z.infer<typeof inputSchema>): NodeResult {
+  compute(ctx: NodeContext, input: z.infer<typeof inputSchema>): NodeResult {
     const parsed = inputSchema.parse(input);
     if (Object.keys(parsed).length === 0) return { outputs: [] };
     if (parsed.box_e_source !== undefined) {
@@ -87,7 +88,7 @@ class F2210Node extends TaxNode<typeof inputSchema> {
       };
     }
     if (parsed.current_year_tax !== undefined) {
-      const penalty = computePenalty(parsed);
+      const penalty = computePenalty(parsed, ctx.taxYear);
       if (penalty === 0) return { outputs: [] };
       return {
         outputs: [output(f1040, { line38_underpayment_penalty: penalty })],

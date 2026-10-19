@@ -67,7 +67,7 @@ for (
     general: {
       filing_status: SourceFilingStatus.Single,
       address_state: state,
-      ptc_residence_states_2025: [state],
+      ptc_tax_year_residence_states: [state],
     },
     f1095a: {
       f1095as: [{
@@ -155,7 +155,7 @@ for (
             ...pending,
             general: {
               ...pending.general,
-              ptc_residence_states_2025: [state, "TX"],
+              ptc_tax_year_residence_states: [state, "TX"],
             },
           },
         }),
@@ -175,7 +175,7 @@ for (
             general: {
               ...pending.general,
               address_state: "TX",
-              ptc_residence_states_2025: [state, "TX"],
+              ptc_tax_year_residence_states: [state, "TX"],
             },
             f1095a: {
               f1095as: [{ ...pending.f1095a.f1095as[0], coverage_state: "TX" }],

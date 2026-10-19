@@ -3,6 +3,7 @@ import type { Form8995AInput } from "../../../../../nodes/intermediate/forms/ded
 import { calculateMixedFishingQbi } from "../../../../../nodes/intermediate/forms/deductions/business/form8995a/mixed-fishing.ts";
 import {
   assertScheduleJSourceReturn,
+  executeScheduleJSourceReturn,
   retainedFishingProfit,
 } from "../../../taxes/income-averaging/schedule-j/schedule_j_source_return.ts";
 import { assertMultiBusinessInvestmentSources } from "../../../../mef/forms/deductions/business/f8995/f8995-investment.ts";
@@ -94,6 +95,10 @@ export function assertMixedFishingQbiReturn(
       "Mixed fishing QBI needs only the reviewed C/F and issued dividend income",
     );
   }
-  assertScheduleJSourceReturn(pending);
+  assertScheduleJSourceReturn(
+    pending,
+    (inputs) =>
+      executeScheduleJSourceReturn(inputs, { taxYear, formType: "f1040" }),
+  );
   return calculated;
 }

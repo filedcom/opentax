@@ -1,5 +1,7 @@
 import { inputSchema as f1099rSchema } from "../../../../../nodes/inputs/income/retirement/f1099r/index.ts";
 import {
+  assertForm8606SourceYears,
+  contributionReceiptWindow,
   currentContributionSourceSchema,
   distributionEvidenceSchema,
   IraOwner,
@@ -14,6 +16,7 @@ export function reconcileForm8606Distribution(
   rawFields: unknown,
   pending: Readonly<Record<string, unknown>> | undefined,
   filer: FilerIdentity | undefined,
+  taxYear: number,
 ) {
   const source = f1099rSchema.safeParse(pending?.f1099r);
   const entered = source.success ? source.data.f1099rs : [];
@@ -38,8 +41,16 @@ export function reconcileForm8606Distribution(
     ? undefined
     : currentContributionSourceSchema.parse(fields.current_contribution_source);
   const contribution = contributionSource?.form5498.box1_ira_contributions ?? 0;
+  assertForm8606SourceYears(
+    {
+      distribution_evidence: evidence,
+      current_contribution_source: contributionSource,
+    },
+    taxYear,
+  );
+  const window = contributionReceiptWindow(taxYear);
   const received = contributionSource?.contribution_receipt.received_on;
-  const line4 = received?.startsWith("2026-") ? contribution : 0;
+  const line4 = received?.startsWith(window.postYearPrefix) ? contribution : 0;
   const item = entered[0];
   const priorBasis = evidence.prior_form8606.filed_line14_basis;
   const totalBasis = priorBasis + contribution;
@@ -67,7 +78,7 @@ export function reconcileForm8606Distribution(
   const contributionSourcesMatch = !contributionSource || (
     receipt !== undefined && form5498 !== undefined &&
     received !== undefined &&
-    received >= "2025-01-01" && received <= "2026-04-15" &&
+    received >= window.first && received <= window.last &&
     !Number.isNaN(Date.parse(`${received}T00:00:00Z`)) &&
     new Date(`${received}T00:00:00Z`).toISOString().slice(0, 10) === received &&
     receipt.contribution_amount === contribution &&

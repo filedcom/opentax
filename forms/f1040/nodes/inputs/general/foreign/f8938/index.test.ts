@@ -286,3 +286,30 @@ test("f8938: eligibility requires distinct reviewed status, residence, and filin
     }))
   );
 });
+
+test("f8938: a TY2026 return values assets at 2026 year end with the same thresholds", () => {
+  const value = parsed(input({
+    assets: [asset({
+      exchange_rate_date: "2026-12-31",
+      opened_or_acquired_date: "2026-03-01",
+    })],
+  }));
+  assertEquals(form8938ThresholdDecision(value).yearEndThreshold, 50_000);
+  assertEquals(
+    f8938.compute({ taxYear: 2026, formType: "f1040" }, value).outputs,
+    [],
+  );
+  assertThrows(
+    () => f8938.compute({ taxYear: 2026, formType: "f1040" }, parsed(input())),
+    Error,
+    "Form 8938 assets must be valued at the end of tax year 2026",
+  );
+  assertThrows(() =>
+    parsed(input({
+      assets: [asset({ closed_or_disposed_date: "2025-05-01" }), asset({
+        asset_id: "bank-2026-1",
+        exchange_rate_date: "2026-12-31",
+      })],
+    }))
+  );
+});

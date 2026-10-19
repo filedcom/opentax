@@ -1200,3 +1200,26 @@ test("scheduleA.inputSchema: line 13 input names the carryover field", () => {
     true,
   );
 });
+
+// Pub. 936 Table 1 lines 3 and 8: married filing separately halves the limits,
+// which the Form 1098 node's unreviewed Table 1 does not apply.
+test("schedule_a: MFS Form 1098 Table 1 balances over $375,000 need reviewed interest", () => {
+  const base = {
+    line_8a_mortgage_interest_1098: 20_000,
+    form1098_table1_average_balance: 400_000,
+  };
+  assertEquals(
+    scheduleA.inputSchema.safeParse({
+      ...base,
+      filing_status: FilingStatus.MFS,
+    }).success,
+    false,
+  );
+  assertEquals(
+    scheduleA.inputSchema.safeParse({
+      ...base,
+      filing_status: FilingStatus.Single,
+    }).success,
+    true,
+  );
+});

@@ -1,6 +1,11 @@
 import { test } from "bun:test";
 import { assertEquals, assertThrows } from "@std/assert";
-import { form8606, type inputSchema, IraOwner } from "./index.ts";
+import {
+  contributionReceiptWindow,
+  form8606,
+  type inputSchema,
+  IraOwner,
+} from "./index.ts";
 import type { z } from "zod";
 
 type Form8606Input = z.infer<typeof inputSchema>;
@@ -25,7 +30,7 @@ test("form8606: sourced taxpayer no-activity basis reaches native print record",
     roth_distribution: 0,
     filing_details: {
       owner: IraOwner.Taxpayer,
-      prior_basis_documented_from_2024_form8606: true,
+      prior_basis_documented_from_prior_year_form8606: true,
       no_ira_distributions_or_conversions_confirmed: true,
     },
   });
@@ -37,7 +42,7 @@ test("form8606: sourced taxpayer no-activity basis reaches native print record",
   assertEquals(print?.fields.source_roth_distribution, 0);
   assertEquals(print?.fields.filing_details, {
     owner: IraOwner.Taxpayer,
-    prior_basis_documented_from_2024_form8606: true,
+    prior_basis_documented_from_prior_year_form8606: true,
     no_ira_distributions_or_conversions_confirmed: true,
   });
   assertEquals(findOutput(result, "f1040"), undefined);
@@ -383,7 +388,7 @@ function statedBasisDistribution(taxYear: number) {
     year_end_ira_value: 58_999,
     filing_details: {
       owner: IraOwner.Spouse,
-      prior_basis_documented_from_2024_form8606: true as const,
+      prior_basis_documented_from_prior_year_form8606: true as const,
       no_ira_distributions_or_conversions_confirmed: false,
     },
     distribution_evidence: {
@@ -423,4 +428,40 @@ test("form8606: line 2 basis cannot come from a current-year Form 8606", () => {
     Error,
     "Form 8606 filed for an earlier year",
   );
+});
+
+// Form 8606 line 6 is the December 31 value for the return year, and a
+// contribution for the year may be made through the return's April 15 due
+// date (IRC §219(f)(3)); one made after December 31 is line 4.
+test("form8606: year-end value and contribution window follow the return year", () => {
+  const source = statedBasisDistribution(2019);
+  const in2026 = {
+    ...source,
+    distribution_evidence: {
+      ...source.distribution_evidence,
+      year_end_statement: {
+        ...source.distribution_evidence.year_end_statement,
+        as_of: "2026-12-31",
+      },
+    },
+  };
+  const result = form8606.compute(
+    { taxYear: 2026, formType: "f1040" },
+    in2026 as Form8606Input,
+  );
+  assertEquals(findOutput(result, "f1040")?.fields.line4b_ira_taxable, 7_352);
+  assertThrows(
+    () =>
+      form8606.compute(
+        { taxYear: 2026, formType: "f1040" },
+        source as Form8606Input,
+      ),
+    Error,
+    "sources must be for 2026",
+  );
+  assertEquals(contributionReceiptWindow(2026), {
+    first: "2026-01-01",
+    last: "2027-04-15",
+    postYearPrefix: "2027-",
+  });
 });

@@ -1,3 +1,4 @@
+import { mefTaxYear } from "../../../support/year-config.ts";
 import { element, elements } from "../../../../../mef/xml.ts";
 import type { MefFormDescriptor } from "../../../form-descriptor.ts";
 import { reconcileForm8864DocumentSource } from "../../../../domains/credits/business/form8864/form8864_source.ts";
@@ -17,7 +18,11 @@ export const form8864: MefFormDescriptor<"f8864", unknown> = {
     ) {
       throw new Error("Form 8864 needs sourced Form 3800 and AMT documents");
     }
-    const { lines } = reconcileForm8864DocumentSource(raw, context.pending);
+    const { lines } = reconcileForm8864DocumentSource(
+      raw,
+      context.pending,
+      mefTaxYear(context),
+    );
     return elements("IRS8864", [
       lines.line8_gallons
         ? element("QlfyAgriBioDieselProdAfterQty", lines.line8_gallons)

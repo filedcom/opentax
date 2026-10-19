@@ -89,7 +89,7 @@ function assertCoverdellMagiLimit(
             account.beneficiary_tin === inventory.beneficiary_tin
           ? payment.amount
           : 0);
-    }, inventory.other_2025_contributions_by_filers);
+    }, inventory.other_contributions_by_filers);
     if (paid > limit) {
       throw new Error(
         "Form 8815 Coverdell payments exceed the final-return MAGI limit",

@@ -211,7 +211,11 @@ function buildIRS6251(fields: Input, context?: MefBuildContext): string {
   );
   assertForm6251CirculationSource(fields, context?.pending);
   assertForm6251MiningSource(fields, context?.pending);
-  assertForm6251Form8864Source(fields, context?.pending);
+  assertForm6251Form8864Source(
+    fields,
+    context?.pending,
+    mefTaxYear(context),
+  );
   assertForm6251HouseboatInterestSource(fields, context?.pending);
   assertForm6251LongTermContractSource(fields, context?.pending);
   assertForm6251DepletionSource(fields, context?.pending);

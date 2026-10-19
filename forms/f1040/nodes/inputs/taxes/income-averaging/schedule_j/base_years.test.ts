@@ -37,7 +37,7 @@ test("Schedule J selects direct filed-return base lines with no prior averaging"
   assertEquals(selectScheduleJBaseYearLines({
     latest_averaging_year: "none",
     base_returns,
-  }), {
+  }, 2025), {
     line5: 10_000,
     line9: 20_000,
     line13: 30_000,
@@ -56,7 +56,7 @@ test("Schedule J selects only the latest prior Schedule J worksheet lines", () =
       line4: 400,
       filed_schedule_j_reference: "Filed 2022 Schedule J",
     },
-  }), {
+  }, 2025), {
     line5: 4_000,
     line9: 20_000,
     line13: 30_000,
@@ -74,7 +74,7 @@ test("Schedule J selects only the latest prior Schedule J worksheet lines", () =
       line4: 600,
       filed_schedule_j_reference: "Filed 2023 Schedule J",
     },
-  }), {
+  }, 2025), {
     line5: 5_000,
     line9: 6_000,
     line13: 30_000,
@@ -94,7 +94,7 @@ test("Schedule J selects only the latest prior Schedule J worksheet lines", () =
       line4: 900,
       filed_schedule_j_reference: "Filed 2024 Schedule J",
     },
-  }), {
+  }, 2025), {
     line5: 7_000,
     line9: 8_000,
     line13: 9_000,
@@ -133,7 +133,7 @@ test("Schedule J does not treat zero filed taxable income as a completed base-ye
       ...base_returns,
       year2022: { ...base_returns.year2022, taxable_income_line15: 0 },
     },
-  }), Error, "sourced worksheet");
+  }, 2025), Error, "sourced worksheet");
 });
 
 function zeroYear(
@@ -171,7 +171,7 @@ test("Schedule J reproduces the IRS 2022 through 2024 negative-income worksheet 
       year2023: zeroYear(2023, 29_900, 7_000, 14_500),
       year2024: zeroYear(2024, 1_000, 5_000, 0),
     },
-  }), {
+  }, 2025), {
     line5: 0,
     line9: -12_400,
     line13: 0,
@@ -205,4 +205,55 @@ test("Schedule J refuses an irreconcilable zero-income worksheet", () => {
     },
   };
   assertEquals(baseYearSourceSchema.safeParse(source).success, false);
+});
+
+// Draft 2026 Schedule J (Created 4/30/26), lines 5-21: the base years move to
+// 2023-2025 and each prior Schedule J is read by its distance from 2026.
+test("TY2026 Schedule J reads base years 2023 through 2025", () => {
+  const { year2022: _, ...later } = base_returns;
+  const returns2026 = {
+    ...later,
+    year2025: {
+      ...base_returns.year2024,
+      taxable_income_line15: 40_000,
+      filed_line16_tax: 4_000,
+      section1_tax_from_line16: 4_000,
+      filed_return_reference: "Filed 2025 Form 1040",
+    },
+  };
+  assertEquals(selectScheduleJBaseYearLines({
+    latest_averaging_year: "none",
+    base_returns: returns2026,
+  }, 2026), {
+    line5: 20_000,
+    line9: 30_000,
+    line13: 40_000,
+    line19: 2_000,
+    line20: 3_000,
+    line21: 4_000,
+  });
+  assertEquals(selectScheduleJBaseYearLines({
+    latest_averaging_year: 2024,
+    base_returns: returns2026,
+    latest_filed_schedule_j: {
+      line15: 5_000,
+      line3: 6_000,
+      line16: 500,
+      line4: 600,
+      filed_schedule_j_reference: "Filed 2024 Schedule J",
+    },
+  }, 2026), {
+    line5: 5_000,
+    line9: 6_000,
+    line13: 40_000,
+    line19: 500,
+    line20: 600,
+    line21: 4_000,
+  });
+  assertThrows(() =>
+    selectScheduleJBaseYearLines({
+      latest_averaging_year: "none",
+      base_returns,
+    }, 2026)
+  );
 });

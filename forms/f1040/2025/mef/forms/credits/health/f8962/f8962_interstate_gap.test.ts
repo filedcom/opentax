@@ -92,8 +92,8 @@ const pending = {
   general: {
     filing_status: "single",
     address_state: "TX",
-    ptc_residence_states_2025: ["AK", "TX"],
-    ptc_residence_months_2025: [
+    ptc_tax_year_residence_states: ["AK", "TX"],
+    ptc_tax_year_residence_months: [
       ...Array<string>(6).fill("AK"),
       ...Array<string>(6).fill("TX"),
     ],

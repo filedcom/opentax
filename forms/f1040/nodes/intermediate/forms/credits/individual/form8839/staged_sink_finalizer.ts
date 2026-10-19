@@ -56,7 +56,7 @@ export function finalizeStagedForm8839Sink(
     },
   });
   const computed = f1040.compute(
-    { taxYear: 2025, formType: "f1040" },
+    { taxYear: adoption.taxYear!, formType: "f1040" },
     finalInput,
   );
   if (computed.finalizations?.some((entry) => entry.nodeType === "schedule3")) {

@@ -68,7 +68,7 @@ const sources = {
     education_facts: {
       all_students_are_taxpayer_spouse_or_claimed_dependents: true,
       all_institutions_eligible: true,
-      expenses_are_eligible_2025_tuition_or_fees: true,
+      expenses_are_eligible_tuition_or_fees: true,
       expenses_not_used_for_education_credit_or_tax_free_distribution: true,
       no_coverdell_or_qtp_contributions_in_claim: true,
       nontaxable_benefits_paid_directly_by_institution_excluded: true,
@@ -86,7 +86,7 @@ const sources = {
       other_1040_and_schedule1_income: 70_000,
       schedule1_adjustments: 0,
       foreign_adoption_and_puerto_rico_addbacks: 0,
-      finalized_2025_income_lines_reviewed: true,
+      finalized_income_lines_reviewed: true,
       no_royalty_interest_special_computation: true,
     },
     filing_status: "single",

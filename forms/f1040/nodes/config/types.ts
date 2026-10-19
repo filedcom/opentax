@@ -1,6 +1,7 @@
 // forms/f1040/nodes/config/types.ts
 import type { FilingStatus } from "../types.ts";
 import type { Bracket } from "./2025.ts";
+import type { HousingLimitTable } from "../intermediate/forms/income/foreign/form2555/housing_limits.ts";
 
 /** IRC §32(b) amounts for one qualifying-child count. */
 export type EitcParameters = {
@@ -50,6 +51,22 @@ export type EmployerProvidedChildcareTerms = {
   readonly referralRate: number;
   readonly creditLimit: number;
   readonly smallBusinessCreditLimit: number;
+};
+
+/**
+ * Form 2210 Part III, Section B penalty worksheet terms. Due dates are the
+ * dates printed over columns (a)-(d); a payment made on or before
+ * `timelyThrough` for that column (the next business day after a weekend or
+ * holiday due date) counts as made on the due date. Each rate period runs
+ * from the day after the previous period's `through` date; the last ends on
+ * the return due date.
+ */
+export type Form2210RegularMethodTerms = {
+  readonly installmentDueDates: readonly [string, string, string, string];
+  readonly timelyThrough: readonly [string, string, string, string];
+  readonly ratePeriods: ReadonlyArray<
+    { readonly through: string; readonly rate: number }
+  >;
 };
 
 /** IRC §36B(b)(3)(A) applicable percentage band, in hundredths of a percent. */
@@ -182,10 +199,33 @@ export interface F1040Config {
   // ── Kiddie Tax (8615) ─────────────────────────────────────────────────────
   kiddieUnearnedIncomeThreshold: number;
   kiddieStandardDeductionFloor: number;
+  // Form 8814 line 4: the election requires child income below this amount.
+  form8814ChildIncomeLimit: number;
 
   // ── FEIE (2555) ───────────────────────────────────────────────────────────
   feieLimit: number;
   feieHousingBase: number;
+  /** Form 2555 line 29b: the year's IRC 911(c)(2)(B) housing-limit notice. */
+  foreignHousingLimits: HousingLimitTable;
+
+  // ── Controlled foreign corporations (5471, 8992) ───────────────────────
+  /** IRC §951A(b)(2): tested income is reduced by the net deemed tangible income return for CFC years beginning in the year. */
+  cfcNetDeemedTangibleIncomeReturn: boolean;
+
+  // ── Qualified opportunity funds (8997) ─────────────────────────────────
+  /** IRC §1400Z-2(b)(1)(B): the year ends the deferral period, so remaining deferred gain is recognized at year end. */
+  qofDeferralPeriodEnds: boolean;
+
+  // ── Expatriation (8854) ──────────────────────────────────────────────────
+  /** IRC §877(a)(2)(A): covered above this average annual net income tax for an expatriation in the year. */
+  expatriationAverageTaxThreshold: number;
+  /** IRC §877A(a)(3): mark-to-market exclusion for taxable years beginning in the year. */
+  expatriationMarkToMarketExclusion: number;
+  /** IRC §40A(b)(4) small agri-biodiesel producer credit sale-date window, as amended by P.L. 119-21. */
+  smallAgriBiodieselSales: {
+    readonly twentyCentRateFrom: string;
+    readonly soldBefore: string;
+  };
 
   // ── Section 179 / Depreciation (4562) ────────────────────────────────────
   section179Limit: number;
@@ -358,4 +398,6 @@ export interface F1040Config {
   cleanElectricityMaterialAssistanceAfter: string | null;
   /** Form 2210-F line 16 annual rate; null until the IRS publishes it. */
   form2210fPenaltyRate: number | null;
+  /** Form 2210 regular-method worksheet; null until the IRS publishes it. */
+  form2210RegularMethod: Form2210RegularMethodTerms | null;
 }

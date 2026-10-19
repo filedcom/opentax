@@ -173,7 +173,7 @@ calculated downstream candidate but remains unjoined to the actual return
 pending graph.
 
 The public K-1 source now uses the strict tagged `form7203_debt_evidence`
-contract. Its `new_2025_formal_notes` branch retains the active new-note routes
+contract. Its `new_current_year_formal_notes` branch retains the active new-note routes
 below. The `prior_reduced_formal_note_repayment` branch records a signed older
 note, its original date and shareholder/corporation identities, the accepted
 prior return and Form 7203 references and SHA-256 digests, exact prior Form 7203
@@ -337,7 +337,7 @@ separate formal-note column and the loan-specific principal total on line 19.
 ## One new formal-note debt loss route (2026-10-01, unrun)
 
 The public S-corporation K-1 input accepts a strict `form7203_debt_evidence`
-with `kind: "new_2025_formal_notes"` for a single new 2025 formal shareholder
+with `kind: "new_current_year_formal_notes"` for a single new 2025 formal shareholder
 note. It ties the shareholder/borrower identifiers, exact K-1 source and box-1
 loss, opening stock-basis workpaper, signed note, separate note ID, and bank
 transfer to one direct cash advance. It requires zero beginning note balance and

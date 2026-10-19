@@ -59,7 +59,7 @@ for (const c of openAccountCases) {
     assertEquals(copies.length, sources.length);
     const accounts = sources.map((s: any, i: number) => {
       const n = s.form7203_debt_evidence;
-      if (n.kind !== "owned_2025_open_account") return undefined;
+      if (n.kind !== "owned_current_year_open_account") return undefined;
       const calc = replayOpenAccount(
         n.owned_current_records.complete_current_shareholder_debt_inventory[0],
       );
@@ -317,7 +317,7 @@ test("open-account export rejects altered source, omitted owner copies and basis
       "pretend formal source",
       (p) =>
         p.k1_s_corp.k1_s_corps[1].form7203_debt_evidence.kind =
-          "owned_2025_formal_notes",
+          "owned_current_year_formal_notes",
     ],
     ["suspended QBI loss", (p) => p.form8995.line16 += 1400],
     ["loss pooling", (p) => p.schedule1.line5_schedule_e = -7000],

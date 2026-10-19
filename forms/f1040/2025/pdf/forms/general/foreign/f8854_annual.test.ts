@@ -121,7 +121,7 @@ test("annual Form 8854 PDF rejects prior-ledger tampering and 2025 events", () =
     deferred_properties: [{
       ...source.deferred_properties[0],
       disposition: {
-        disposed_in_2025: true,
+        disposed_in_tax_year: true,
         entire_deferred_property_disposed_confirmed: true,
         disposition_date: "2025-05-20",
         reported_form_code: ReportedFormCode.Form8949,
@@ -142,6 +142,6 @@ test("annual Form 8854 PDF rejects prior-ledger tampering and 2025 events", () =
         f8854_annual: disposition,
       }),
     Error,
-    "no 2025 events",
+    "no current-year events",
   );
 });

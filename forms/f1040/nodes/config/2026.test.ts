@@ -55,6 +55,7 @@ test("2026 deductions and credits use the Rev. Proc. 2025-32 amounts", () => {
   );
   assertEquals(config2026.eitcInvestmentIncomeLimit, 12_200);
   assertEquals(config2026.kiddieUnearnedIncomeThreshold, 2 * 1_350);
+  assertEquals(config2026.form8814ChildIncomeLimit, 10 * 1_350);
   assertEquals(config2026.feieHousingBase, 0.16 * config2026.feieLimit);
   assertEquals(
     config2026.qbiThresholdMfj + config2026.qbiPhaseInRange,

@@ -5,9 +5,10 @@ import { output, TaxNode } from "../../../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../../../core/types/output-nodes.ts";
 import { f3800 } from "../f3800/index.ts";
 import { form6251 } from "../../../../intermediate/forms/taxes/amt/form6251/index.ts";
+import { configForYear } from "../../../../config/index.ts";
 
-// December 2025 Form 8864. Only the section 40A small agri-biodiesel
-// producer credit survives for qualified 2025 sale or use.
+// Form 8864 (Rev. December 2025). Only the section 40A small agri-biodiesel
+// producer credit survives, for fuel sold or used before 2027.
 const reference = z.string().trim().min(1);
 const gallons = z.number().int().positive().finite().refine(
   Number.isSafeInteger,
@@ -22,10 +23,7 @@ const lotSchema = z.object({
   production_batch_reference: reference,
   production_date: date,
   sale_invoice_reference: reference,
-  // The checked-in TY2025 MeF rule F8864-012 forbids line 7 data.
-  sale_date: date.refine((value) =>
-    value >= "2025-07-01" && value < "2026-01-01"
-  ),
+  sale_date: date,
   gallons_sold: gallons,
   produced_by_taxpayer_confirmed: z.literal(true),
   agri_biodiesel_derived_solely_from_virgin_oils_or_animal_fats_confirmed: z
@@ -93,12 +91,34 @@ export const inputSchema = z.object({
 
 export type F8864Input = z.infer<typeof inputSchema>;
 
-export function calculateForm8864(raw: F8864Input) {
+/**
+ * Every sale falls in the return year and earns the $.20 rate. The 2025 MeF
+ * rule F8864-012 forbids line 7 ($.10) data, so earlier sales are refused.
+ */
+function assertSalesInYear(source: F8864Input, taxYear: number): void {
+  const window = configForYear(taxYear).smallAgriBiodieselSales;
+  if (
+    source.lots.some((lot) =>
+      !lot.sale_date.startsWith(`${taxYear}-`) ||
+      lot.sale_date < window.twentyCentRateFrom ||
+      lot.sale_date >= window.soldBefore
+    )
+  ) {
+    throw new Error(
+      `Form 8864 sales must fall in ${taxYear} at the $.20 rate, before ${window.soldBefore}`,
+    );
+  }
+}
+
+export function calculateForm8864(raw: F8864Input, taxYear: number) {
   const source = inputSchema.parse(raw);
-  const line7Gallons = source.lots.filter((lot) => lot.sale_date < "2025-07-01")
-    .reduce((sum, lot) => sum + lot.gallons_sold, 0);
+  assertSalesInYear(source, taxYear);
+  const { twentyCentRateFrom } = configForYear(taxYear).smallAgriBiodieselSales;
+  const line7Gallons = source.lots.filter((lot) =>
+    lot.sale_date < twentyCentRateFrom
+  ).reduce((sum, lot) => sum + lot.gallons_sold, 0);
   const line8Gallons = source.lots.filter((lot) =>
-    lot.sale_date >= "2025-07-01"
+    lot.sale_date >= twentyCentRateFrom
   ).reduce((sum, lot) => sum + lot.gallons_sold, 0);
   const line7 = Math.round(line7Gallons * 0.10);
   const line8 = Math.round(line8Gallons * 0.20);
@@ -117,9 +137,9 @@ export function calculateForm8864(raw: F8864Input) {
 }
 
 /** Prepared direct claims for one post-June direct Schedule C producer. */
-export function form8864DirectClaims(raw: F8864Input) {
+export function form8864DirectClaims(raw: F8864Input, taxYear: number) {
   const source = inputSchema.parse(raw);
-  const lines = calculateForm8864(source);
+  const lines = calculateForm8864(source, taxYear);
   if (lines.line11 <= 0) {
     throw new Error("Form 8864 direct producer needs a positive credit");
   }
@@ -141,8 +161,8 @@ class F8864Node extends TaxNode<typeof inputSchema> {
   readonly inputSchema = inputSchema;
   readonly outputNodes = new OutputNodes([f3800, form6251]);
 
-  compute(_ctx: NodeContext, rawInput: F8864Input): NodeResult {
-    const claims = form8864DirectClaims(rawInput);
+  compute(ctx: NodeContext, rawInput: F8864Input): NodeResult {
+    const claims = form8864DirectClaims(rawInput, ctx.taxYear);
     return {
       outputs: [
         output(f3800, claims.form3800),

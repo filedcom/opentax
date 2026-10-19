@@ -71,6 +71,7 @@ async function calculateRecord(
   const projected = reconcileForm8990Projection(
     pending.form8990,
     pending,
+    { taxYear: meta.year, formType: "f1040" },
   );
   const taxpayerSsn = z.object({ taxpayer_ssn: z.string().min(1) })
     .passthrough().parse(projected.sourceRecords.returnInputs.general)

@@ -3,7 +3,7 @@ import { assertEmployerPostyearOwnerSources } from "./form8889_employer_postyear
 import {
   CoverageType,
   form8889,
-  inputSchema,
+  statedBeneficiarySourceSchema as inputSchema,
 } from "../../../../../nodes/intermediate/forms/adjustments/health/form8889/index.ts";
 import { TS } from "../../../../../nodes/types.ts";
 import { type FilerIdentity, FilingStatus } from "../../../../../mef/header.ts";

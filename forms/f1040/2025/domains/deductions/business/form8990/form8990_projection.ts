@@ -1,4 +1,5 @@
 import { z } from "zod";
+import type { NodeContext } from "../../../../../../../core/types/node-context.ts";
 import {
   form8990LinesSchema,
   publicInputSchema,
@@ -81,10 +82,12 @@ export function projectForm8990ForExport(
 export function reconcileForm8990Projection(
   raw: unknown,
   allPending: Readonly<Record<string, unknown>>,
+  context: NodeContext,
 ): Form8990Projection {
   const projected = projectionSchema.parse(raw);
   const source = projected.sourceRecords;
   const result = runBoundedForm8990TwoPass({
+    context,
     returnInputs: source.returnInputs,
     receipts: source.form8990.receipts,
     interestExpenseRecords: source.form8990.interestExpenseRecords,

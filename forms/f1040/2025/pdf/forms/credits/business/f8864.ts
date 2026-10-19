@@ -1,3 +1,4 @@
+import { mefTaxYear } from "../../../../mef/support/year-config.ts";
 import type { PdfFieldEntry, PdfFormDescriptor } from "../../../review-support/form-descriptor.ts";
 import { assertForm3800FinalCreditJoin } from "../../../../domains/credits/business/form3800/form3800_final_credit_join.ts";
 import { reconcileForm8864DocumentSource } from "../../../../domains/credits/business/form8864/form8864_source.ts";
@@ -33,7 +34,11 @@ export const form8864Pdf: PdfFormDescriptor = {
   ],
   projectFields(raw, allPending) {
     if (Object.keys(raw).length === 0) return {};
-    const { lines } = reconcileForm8864DocumentSource(raw, allPending);
+    const { lines } = reconcileForm8864DocumentSource(
+      raw,
+      allPending,
+      mefTaxYear(),
+    );
     return {
       line7_gallons: lines.line7_gallons || undefined,
       line7_rate: lines.line7_gallons ? "0.10" : undefined,
@@ -56,6 +61,7 @@ export const form8864Pdf: PdfFormDescriptor = {
     const { lines } = reconcileForm8864DocumentSource(
       allPending.f8864,
       allPending,
+      mefTaxYear(),
     );
     const rows = prepared.currentRows.filter((row) => row.line === "1l");
     const amounts = prepared.currentAmounts.filter((row) => row.line === "1l");

@@ -62,7 +62,7 @@ test.skipIf(!xsdAvailable)("XSD: 2025 Form 8814 child election, 1040 indicator, 
           eligibility_reviewed: true,
           income: { interest_income: 3700 },
         },
-      })],
+      }, 2025)],
     },
   };
   const line8z = pending.form8814!.items!.reduce(
@@ -120,7 +120,7 @@ test.skipIf(!xsdAvailable)("XSD: Form 8814 child interest statement links only t
     },
     form8814: {
       items: [
-        calculateForm8814(child),
+        calculateForm8814(child, 2025),
         calculateForm8814({
           ...child,
           child_name: "Jamie Rivera",
@@ -157,7 +157,7 @@ test.skipIf(!xsdAvailable)("XSD: Form 8814 child interest statement links only t
           capital_gain_nominee_distribution: 50,
           child_had_foreign_account: true,
           child_foreign_trust_part_iii_event: true,
-        }),
+        }, 2025),
       ],
     },
     schedule_b: {

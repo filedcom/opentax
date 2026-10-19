@@ -159,9 +159,16 @@ function buildSchedule(raw: Input, context?: MefBuildContext): string {
     const filedW2s = context?.pending?.w2
       ? w2InputSchema.parse(context.pending.w2).w2s
       : [];
+    const codeTP = (item: (typeof filedW2s)[number]) =>
+      (item.box12_entries ?? []).filter((entry) => entry.code === Box12Code.TP)
+        .reduce((sum, entry) => sum + entry.amount, 0);
+    const reportsCodeTP = (item: (typeof filedW2s)[number]) =>
+      codeTP(item) > 0 && item.box14b_tipped_code !== undefined &&
+      isQualifiedTipsOccupationCode(item.box14b_tipped_code);
     const sourceW2s = filedW2s.filter((item) =>
       item.box13_statutory_employee !== true &&
-      (item.qualified_tips_box14_review !== undefined ||
+      (reportsCodeTP(item) ||
+        item.qualified_tips_box14_review !== undefined ||
         (item.box14b_tipped_code !== undefined &&
           isQualifiedTipsOccupationCode(item.box14b_tipped_code) &&
           (item.box7_ss_tips ?? 0) > 0))
@@ -176,7 +183,10 @@ function buildSchedule(raw: Input, context?: MefBuildContext): string {
           normalize(source.employer_ein ?? "") ===
             normalize(entry.employer_ein) &&
           source.employer_name === entry.employer_name &&
-          (source.qualified_tips_box14_review === undefined
+          (reportsCodeTP(source)
+            ? entry.source_type === "w2_code_tp" &&
+              codeTP(source) === entry.amount
+            : source.qualified_tips_box14_review === undefined
             ? entry.source_type === "w2_box7" &&
               source.box7_ss_tips === entry.amount
             : entry.source_type === "w2_box14" &&

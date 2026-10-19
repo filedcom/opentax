@@ -10,7 +10,7 @@ const account = z.object({
 }).strict();
 const receipt = account.extend({
   source_document_reference: ref,
-  designated_tax_year: z.number().int().min(1998).max(2025),
+  designated_tax_year: z.number().int().min(1998),
   received_on: z.string().date(),
   amount: z.number().positive(),
   regular_cash_contribution: z.literal(true),
@@ -33,7 +33,7 @@ export const qualifiedRothReviewSchema = z.object({
     all_owned_roth_accounts_included: z.literal(true),
     accounts: z.array(
       account.extend({
-        first_contribution_tax_year: z.number().int().min(1998).max(2025),
+        first_contribution_tax_year: z.number().int().min(1998),
       }).strict(),
     ).min(1),
   }).strict(),
@@ -107,6 +107,7 @@ export function assertQualifiedRothSource(
     v.account_number === a.original_account_number
   );
   const y = c.designated_tax_year;
+  const paidYear = Number(item.distribution_source.paid_on.slice(0, 4));
   const actualDate = (v: string) => {
     const d = new Date(`${v}T00:00:00Z`);
     return Number.isFinite(d.getTime()) && d.toISOString().slice(0, 10) === v;
@@ -134,7 +135,10 @@ export function assertQualifiedRothSource(
     !current || current.account_type !== a.account_type ||
     first.first_contribution_tax_year !== y ||
     y !== Math.min(...i.accounts.map((v) => v.first_contribution_tax_year)) ||
-    y > 2020 || key(c) !== key(f) || f.account_type !== c.account_type ||
+    // IRC 408A(d)(2)(B): five taxable years end before the payment year.
+    y > paidYear - 5 ||
+    i.accounts.some((v) => v.first_contribution_tax_year > paidYear) ||
+    key(c) !== key(f) || f.account_type !== c.account_type ||
     first.account_type !== c.account_type || f.tax_year !== y ||
     f.box10_regular_roth_contributions !== c.amount ||
     c.received_on < `${y}-01-01` || c.received_on > `${y + 1}-04-15` ||
