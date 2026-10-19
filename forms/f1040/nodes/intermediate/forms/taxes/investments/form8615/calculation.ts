@@ -36,8 +36,7 @@ export interface Line5PreferentialIncome {
 }
 
 // Form 8615 line 2: $1,350 and $2,700 for both TY2025 (2025 Form 8615) and
-// TY2026 (2 x $1,350 in the 2026 config). The TY2025 config's
-// kiddieUnearnedIncomeThreshold still holds 2,600, so it is not read here.
+// TY2026 (Rev. Proc. 2025-32 §4.02).
 const KIDDIE = { base: 1_350, double: 2_700 } as const;
 
 function roundedRatio(numerator: number, denominator: number): number {

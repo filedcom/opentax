@@ -340,13 +340,13 @@ export const SAVINGS_BOND_PHASEOUT_START_SINGLE_2025 = 99_500;
 export const SAVINGS_BOND_PHASEOUT_END_SINGLE_2025 = 114_500;
 
 // ─── Kiddie Tax (Form 8615) ───────────────────────────────────────────────────
-// Rev. Proc. 2024-40, §3.10; IRC §1(g)
+// Rev. Proc. 2024-40 §2.02 ($1,350); 2025 Form 8615 line 2 ($2,700).
 
 /** Net unearned income threshold for kiddie tax (TY2025). */
-export const KIDDIE_TAX_UNEARNED_INCOME_THRESHOLD_2025 = 2_600;
+export const KIDDIE_TAX_UNEARNED_INCOME_THRESHOLD_2025 = 2_700;
 
 /** Standard deduction floor for computing net unearned income (TY2025). */
-export const KIDDIE_TAX_STANDARD_DEDUCTION_FLOOR_2025 = 1_300;
+export const KIDDIE_TAX_STANDARD_DEDUCTION_FLOOR_2025 = 1_350;
 
 // ─── FEIE (Form 2555) ─────────────────────────────────────────────────────────
 // Rev. Proc. 2024-40, §3.04; IRC §911(b)(2)
@@ -379,8 +379,8 @@ export const LUXURY_AUTO_YEAR1_WITH_BONUS_2025 = 20_200;
 /** Luxury auto Year 2 limit (TY2025). */
 export const LUXURY_AUTO_YEAR2_2025 = 19_600;
 
-/** Luxury auto Year 3+ limit (TY2025). */
-export const LUXURY_AUTO_YEAR3_PLUS_2025 = 11_900;
+/** Luxury auto third-year limit, Rev. Proc. 2025-16 Tables 1-2 (TY2025). */
+export const LUXURY_AUTO_YEAR3_PLUS_2025 = 11_800;
 
 // ─── Schedule H — Household Employment Taxes ─────────────────────────────────
 // IRC §3510; IRS Publication 926 (2025)
