@@ -9,7 +9,7 @@ import { extractFilerIdentity } from "../../mef/filer.ts";
 import { Box12Code } from "../../nodes/inputs/income/wages/w2/index.ts";
 import { f1040_2026 } from "../index.ts";
 import { TY2026_DRAFT_NOTICE } from "./draft-template.ts";
-import { TY2026_PDF_FORMS, TY2026_PDF_MAPPED_FORMS } from "./builder.ts";
+import { TY2026_PDF_MAPPED_FORMS, ty2026PdfForms } from "./builder.ts";
 import { loadPdfTemplate } from "../../2025/pdf/support/template-cache.ts";
 
 const fixture = (id: string) => {
@@ -100,8 +100,9 @@ test("TY2026 PDF refuses, by name, a form with no TY2026 mapping", async () => {
 });
 
 test("every TY2026 mapped field exists on its pinned 2026 template", async () => {
+  const forms = await ty2026PdfForms();
   for (const key of TY2026_PDF_MAPPED_FORMS) {
-    const descriptor = TY2026_PDF_FORMS.find((row) => row.pendingKey === key)!;
+    const descriptor = forms.find((row) => row.pendingKey === key)!;
     const doc = await PDFDocument.load(
       await loadPdfTemplate(
         descriptor.pdfUrl,
