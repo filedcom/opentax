@@ -54,6 +54,38 @@ test("explicit Schedule A election files below-standard and zero deductions", ()
   );
 });
 
+test("standard deduction election wins over larger itemized deductions (IRC 63(e))", () => {
+  // Single, $30,000 state income tax itemized; electing the standard
+  // deduction files line 12 at $15,750.
+  const result = compute({
+    filing_status: FilingStatus.Single,
+    agi: 300_000,
+    itemized_deductions: 30_000,
+    itemized_taxes: 30_000,
+    force_standard: true,
+  });
+  assertEquals(
+    findOutput(result, "f1040")?.fields.line12a_standard_deduction,
+    15_750,
+  );
+  assertEquals(
+    findOutput(result, "f1040")?.fields.line12e_itemized_deductions,
+    undefined,
+  );
+  assertThrows(
+    () =>
+      compute({
+        filing_status: FilingStatus.MFS,
+        agi: 50_000,
+        itemized_deductions: 30_000,
+        mfs_spouse_itemizing: true,
+        force_standard: true,
+      }),
+    Error,
+    "cannot elect the standard deduction",
+  );
+});
+
 test("MFJ: base standard deduction $31,500", () => {
   const result = compute({ filing_status: FilingStatus.MFJ, agi: 80_000 });
   const f1040 = findOutput(result, "f1040");

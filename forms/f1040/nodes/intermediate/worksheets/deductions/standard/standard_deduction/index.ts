@@ -53,6 +53,9 @@ export const inputSchema = z.object({
   // From schedule_a — total itemized deductions (Schedule A line 17)
   itemized_deductions: z.number().nonnegative().optional(),
   force_itemized: z.boolean().optional(),
+  // Election to take the standard deduction even when itemized deductions are
+  // larger (IRC §63(e); Form 1040 instructions, line 12e).
+  force_standard: z.boolean().optional(),
   // From schedule_a: cash gifts eligible for the non-itemizer deduction
   // (1040 line 12f, IRC §170(p)). `unclassified` marks 50%-organization cash
   // gifts whose donor-advised-fund or supporting-organization share is unknown.
@@ -197,8 +200,24 @@ function resolveDeduction(
   };
 
   // IRC §63(c)(6)(A): MFS taxpayer whose spouse itemizes must also itemize.
-  if (input.mfs_spouse_itemizing === true) return itemizing;
+  if (input.mfs_spouse_itemizing === true) {
+    if (input.force_standard === true) {
+      throw new Error(
+        "A married-filing-separately return whose spouse itemizes cannot elect the standard deduction",
+      );
+    }
+    return itemizing;
+  }
   if (input.force_itemized === true) return itemizing;
+  if (input.force_standard === true) {
+    return {
+      deduction: increasedStandard,
+      takingStandard: true,
+      standardAmount,
+      nonitemizerCharitable,
+      overallLimitReduction: 0,
+    };
+  }
   if (itemized > increasedStandard + nonitemizerCharitable) return itemizing;
 
   return {
