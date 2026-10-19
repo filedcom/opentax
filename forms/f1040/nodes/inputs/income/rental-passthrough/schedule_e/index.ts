@@ -1,4 +1,9 @@
 import {
+  priorYearAssetSchema,
+  priorYearDepreciationRowSchema,
+  priorYearDepreciationTotal,
+} from "../../../../intermediate/forms/deductions/business/form4562/prior-year.ts";
+import {
   allocateCurrentPassiveForms,
   currentPassiveFormsSchema,
 } from "../../../../intermediate/forms/income/business/form8582/current-form-allocation.ts";
@@ -215,6 +220,11 @@ export const itemSchema = z.object({
   expense_taxes: z.number().nonnegative().optional(),
   expense_utilities: z.number().nonnegative().optional(),
   expense_depreciation: z.number().nonnegative().optional(),
+  // Assets placed in service before the return year (Pub. 946 tables);
+  // their deduction is added to this depreciation line.
+  prior_year_assets: z.array(priorYearAssetSchema).min(1).optional(),
+  prior_year_depreciation_rows: z.array(priorYearDepreciationRowSchema)
+    .optional(),
   expense_depreciation_amt: z.number().nonnegative().optional(),
   expense_depletion: z.number().nonnegative().optional(),
   expense_other_lines: z.array(otherExpenseLineSchema).max(6).optional(),
@@ -1414,6 +1424,32 @@ class ScheduleENode extends TaxNode<typeof inputSchema> {
   ]);
 
   compute(ctx: NodeContext, input: z.infer<typeof inputSchema>): NodeResult {
+    // Prior-year assets become this activity's depreciation (Pub. 946,
+    // Appendix A); the finalized rows carry the deduction to every reader.
+    if (!input.schedule_es?.some((item) => item.prior_year_assets)) {
+      return this.computeRows(ctx, input);
+    }
+    const schedule_es = input.schedule_es.map((item) => {
+      if (!item.prior_year_assets) return item;
+      const { prior_year_assets: assets, ...rest } = item;
+      const { rows, total } = priorYearDepreciationTotal(assets, ctx.taxYear);
+      return {
+        ...rest,
+        expense_depreciation: (item.expense_depreciation ?? 0) + total,
+        prior_year_depreciation_rows: rows,
+      };
+    });
+    const result = this.computeRows(ctx, { ...input, schedule_es });
+    return {
+      ...result,
+      outputs: [
+        ...result.outputs,
+        { nodeType: this.nodeType, fields: { schedule_es } },
+      ],
+    };
+  }
+
+  private computeRows(ctx: NodeContext, input: z.infer<typeof inputSchema>): NodeResult {
     const parsed = inputSchema.parse(input);
     assertTy2025OnlyFacts(ctx.taxYear, parsed);
     const {
