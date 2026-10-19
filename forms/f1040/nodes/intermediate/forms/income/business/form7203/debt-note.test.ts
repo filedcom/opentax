@@ -5,7 +5,7 @@ import { shiftDatedFacts } from "../../../../../../../../scripts/testing/sample-
 import { k1SCorpNode } from "../../../../../inputs/income/rental-passthrough/k1_s_corp/index.ts";
 import { reconcileNewFormalNotes } from "./debt-note.ts";
 import {
-  calculatePriorReducedNoteGainCandidate,
+  calculatePriorReducedNoteGainCandidate as gainCandidate,
   calculatePriorReducedNoteWorkpaper,
 } from "./prior-reduced-note.ts";
 import { buildReviewedStockLoss7203 } from "../../../../../../2025/mef/forms/income/business/f7203_stock_loss.ts";
@@ -14,7 +14,17 @@ import { buildReviewedStockLossScheduleE } from "../../../../../../2025/mef/form
 import { scheduleEStockLossPdf } from "../../../../../../2025/pdf/forms/income/rental-passthrough/schedule_e_stock_loss.ts";
 import { form7203 as form7203Node } from "./index.ts";
 import { FilingStatus } from "../../../../../../mef/header.ts";
-import { executePriorReduced7203WithSourceDocuments } from "../../../../../../2025/domains/income/business/form7203/form7203_prior_reduced_execution.ts";
+import { executePriorReduced7203WithSourceDocuments as executePriorReduced } from "../../../../../../2025/domains/income/business/form7203/form7203_prior_reduced_execution.ts";
+
+const ctx2025 = { taxYear: 2025, formType: "f1040" };
+const calculatePriorReducedNoteGainCandidate = (
+  raw: unknown,
+  k1: Parameters<typeof gainCandidate>[1],
+) => gainCandidate(raw, k1, ctx2025);
+const executePriorReduced7203WithSourceDocuments = (
+  inputs: Parameters<typeof executePriorReduced>[0],
+  documents: Parameters<typeof executePriorReduced>[1],
+) => executePriorReduced(inputs, documents, ctx2025);
 
 export const oneNote = {
   kind: "new_current_year_formal_notes",
