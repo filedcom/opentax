@@ -704,18 +704,18 @@ test("agi_aggregator: tax_exempt_interest absent → provisional income excludes
 
 // ─── MFS lived-with-spouse rule (IRC §86(c)(2)) ───────────────────────────────
 
-test("agi_aggregator: MFS lived-with-spouse → 85% of SS always taxable", () => {
-  // IRC §86(c)(2): 85% taxable regardless of provisional income level
-  // Wages $5_000 (well below any threshold without the rule)
-  // SSA gross $20_000 → taxable = 0.85 × 20_000 = 17_000
-  // AGI = 5_000 + 17_000 = 22_000
+test("agi_aggregator: MFS lived-with-spouse → no base amount, up to 85% taxable", () => {
+  // 2025 Form 1040 instructions, Social Security Benefits Worksheet: an MFS
+  // filer who lived with their spouse skips lines 8-15. Line 7 = 10_000 +
+  // 5_000 = 15_000; line 16 = 85% × 15_000 = 12_750; line 17 = 85% × 20_000
+  // = 17_000; taxable is the smaller, 12_750. AGI = 5_000 + 12_750.
   const result = compute({
     line1a_wages: 5_000,
     line6a_ss_gross: 20_000,
     filing_status: "mfs",
     mfs_lived_with_spouse: true,
   });
-  assertEquals(agi(result), 22_000);
+  assertEquals(agi(result), 17_750);
 });
 
 test("agi_aggregator: MFS not-lived-with-spouse → normal worksheet applies", () => {
@@ -730,12 +730,14 @@ test("agi_aggregator: MFS not-lived-with-spouse → normal worksheet applies", (
   assertEquals(agi(result), 5_000);
 });
 
-test("agi_aggregator: MFS Social Security needs a lived-with-spouse answer", () => {
-  assertThrows(
-    () => compute({ line6a_ss_gross: 20_000, filing_status: "mfs" }),
-    Error,
-    "MFS Social Security taxability requires whether the filer lived with their spouse",
-  );
+test("agi_aggregator: MFS without a lived-apart answer uses the lived-with-spouse rule", () => {
+  // Same worksheet as above with no answer: 12_750 of 20_000 is taxable.
+  const result = compute({
+    line1a_wages: 5_000,
+    line6a_ss_gross: 20_000,
+    filing_status: "mfs",
+  });
+  assertEquals(agi(result), 17_750);
 });
 
 // ─── AGI can be negative in NOL scenarios (IRC §172) ─────────────────────────

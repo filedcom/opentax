@@ -495,22 +495,6 @@ function resolveSsaTaxable(
   const ssaGross = Math.round(input.line6a_ss_gross ?? 0);
   if (ssaGross === 0) return 0;
 
-  if (
-    input.filing_status === "mfs" &&
-    input.mfs_lived_with_spouse === undefined
-  ) {
-    throw new Error(
-      "MFS Social Security taxability requires whether the filer lived with their spouse during the year",
-    );
-  }
-
-  // IRC §86(c)(2): MFS filer who lived with spouse at any time during the year —
-  // 85% of benefits are always taxable; no threshold applies.
-  if (input.filing_status === "mfs" && input.mfs_lived_with_spouse === true) {
-    return Math.round(0.85 * ssaGross);
-  }
-
-  const isMfj = input.filing_status === "mfj";
   const taxExemptInterest = input.tax_exempt_interest ?? 0;
   // IRS SSA Worksheet (Form 1040 instructions, Lines 6a–6b):
   // Line 7 = Line 5 − Line 6.  Line 5 = 50% benefits + income items + tax-exempt interest.
@@ -520,6 +504,23 @@ function resolveSsaTaxable(
     0,
     nonSsaIncome(input) - exclusions(input) - aboveLineDeductions(input, cfg),
   );
+
+  // IRC §86(c)(1)(C)(ii): an MFS filer who lived with their spouse at any
+  // time in the year has no base amount. The worksheet skips lines 8-15:
+  // line 16 is 85% of line 7, and line 18 is the smaller of line 16 and 85%
+  // of benefits. Unless the filer says they lived apart all year, this rule
+  // applies (return-hints reports the assumption).
+  if (
+    input.filing_status === "mfs" && input.mfs_lived_with_spouse !== false
+  ) {
+    const line7 = Math.max(
+      0,
+      ssaGross / 2 + otherAgi + Math.round(taxExemptInterest),
+    );
+    return Math.round(Math.min(0.85 * line7, 0.85 * ssaGross));
+  }
+
+  const isMfj = input.filing_status === "mfj";
   return Math.round(
     computeSsaTaxable(ssaGross, otherAgi, Math.round(taxExemptInterest), isMfj),
   );
