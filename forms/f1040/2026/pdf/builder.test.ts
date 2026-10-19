@@ -272,6 +272,29 @@ test("TY2026 PDF prints Form 8606 on the 2026 draft", async () => {
   assertMatch(printed, /1040-NR, line 4b[^\n]* 15c 16000/);
 });
 
+test("TY2026 PDF prints Form 6251 on the 2026 draft", async () => {
+  const inputs = fixture("single-iso-amt");
+  const [grant] = inputs.f3921 as Array<Record<string, unknown>>;
+  const printed = await text(
+    await render({
+      ...inputs,
+      f3921: [{ ...grant, box2_date_option_exercised: "2026-06-02" }],
+    }),
+  );
+  // 2026 exemption 90,100 and 26%/28% break at 244,500 less 4,890.
+  assertMatch(printed, /Alternative Minimum Tax—Individuals[\s\S]*2026/);
+  assertMatch(printed, /1040-NR, line 14 [. ]* 1a 16100/);
+  assertMatch(printed, /\n amount\) [. ]* 1b 183900/);
+  assertMatch(printed, /2i Exercise of incentive stock options[^\n]* 2i 240000/);
+  assertMatch(printed, /more than \$640,200, see instructions\.\)[^\n]* 4 440000/);
+  assertMatch(printed, /70,100 \. \. 5 90100/);
+  assertMatch(printed, /and go to line 10[^\n]* 6 349900/);
+  assertMatch(printed, /complete Part III \. \. 7 93082/);
+  assertMatch(printed, /9 Tentative minimum tax[^\n]* 9 93082/);
+  assertMatch(printed, /\n instructions [. ]* 10 36734/);
+  assertMatch(printed, /Schedule 2 \(Form 1040\), line 2 11 56348/);
+});
+
 test("TY2026 PDF prints Form 2441 Part I providers as columns", async () => {
   const printed = await text(
     await render(fixture("single-form2441-child-care-credit")),
