@@ -395,11 +395,6 @@
     "count": 1
   },
   {
-    "path": "forms/f1040/2025/domains/income/business/form7203/form7203_prior_reduced_execution.ts",
-    "pattern": "year-value",
-    "count": 1
-  },
-  {
     "path": "forms/f1040/2025/domains/income/business/passive-s-corp-loss-copies.ts",
     "pattern": "year-value",
     "count": 2
@@ -493,11 +488,6 @@
     "path": "forms/f1040/2025/domains/taxes/income-averaging/schedule-j/schedule_j_source_return.ts",
     "pattern": "date-pinned",
     "count": 2
-  },
-  {
-    "path": "forms/f1040/2025/domains/taxes/income-averaging/schedule-j/schedule_j_source_return.ts",
-    "pattern": "year-value",
-    "count": 1
   },
   {
     "path": "forms/f1040/2025/domains/taxes/income-averaging/schedule-j/schedule_j_source_return.ts",
@@ -1370,11 +1360,6 @@
     "count": 2
   },
   {
-    "path": "forms/f1040/nodes/inputs/general/filing/f8958/staged_documents.ts",
-    "pattern": "year-value",
-    "count": 1
-  },
-  {
     "path": "forms/f1040/nodes/inputs/general/filing/general/index.ts",
     "pattern": "year-identifier",
     "count": 5
@@ -1613,11 +1598,6 @@
     "path": "forms/f1040/nodes/inputs/income/wages/clergy/index.ts",
     "pattern": "year-identifier",
     "count": 1
-  },
-  {
-    "path": "forms/f1040/nodes/inputs/income/wages/w2/index.ts",
-    "pattern": "date-pinned",
-    "count": 2
   },
   {
     "path": "forms/f1040/nodes/inputs/income/wages/w2/index.ts",
@@ -1985,11 +1965,6 @@
     "count": 1
   },
   {
-    "path": "forms/f1040/nodes/intermediate/forms/deductions/business/form8990/schedule-c-pass.ts",
-    "pattern": "year-value",
-    "count": 1
-  },
-  {
     "path": "forms/f1040/nodes/intermediate/forms/deductions/investments/form4952/debt_trace.ts",
     "pattern": "date-pinned",
     "count": 1
@@ -2113,11 +2088,6 @@
     "path": "forms/f1040/nodes/intermediate/forms/income/business/form7203/prior-reduced-note.ts",
     "pattern": "year-identifier",
     "count": 3
-  },
-  {
-    "path": "forms/f1040/nodes/intermediate/forms/income/business/form7203/prior-reduced-note.ts",
-    "pattern": "year-value",
-    "count": 1
   },
   {
     "path": "forms/f1040/nodes/intermediate/forms/income/business/form8582/index.ts",
