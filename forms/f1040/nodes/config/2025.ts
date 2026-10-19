@@ -125,7 +125,8 @@ export const QDCGT_ZERO_CEILING_2025: Record<FilingStatus, number> = {
 export const QDCGT_TWENTY_FLOOR_2025: Record<FilingStatus, number> = {
   [FilingStatus.Single]: 533_400,
   [FilingStatus.MFJ]: 600_050,
-  [FilingStatus.MFS]: 300_025,
+  // MFS: 2025 Form 1040 instructions, Qualified Dividends and Capital Gain Tax Worksheet line 13.
+  [FilingStatus.MFS]: 300_000,
   [FilingStatus.HOH]: 566_700,
   [FilingStatus.QSS]: 600_050,
 } as const;
