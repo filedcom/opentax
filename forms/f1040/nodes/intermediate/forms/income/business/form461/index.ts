@@ -91,14 +91,13 @@ class Form461Node extends TaxNode<typeof inputSchema> {
       );
     }
     if (line2 >= 0 && line6 >= 0) return { outputs: [] };
-    if (!input.scope_review) {
-      throw new Error(
-        "Form 461 C/F-only calculation needs a sourced review of other Part I items and Part II adjustments",
-      );
-    }
+    // Form 461 is figured from the return's own business lines; an entered
+    // review must still match them. Wages are not business income here
+    // (IRC §461(l)(3)(A) flush language; 2025 Instructions for Form 461).
     if (
-      input.scope_review.line2_schedule_c_amount !== line2 ||
-      input.scope_review.line6_schedule_f_amount !== line6
+      input.scope_review !== undefined &&
+      (input.scope_review.line2_schedule_c_amount !== line2 ||
+        input.scope_review.line6_schedule_f_amount !== line6)
     ) {
       throw new Error(
         "Form 461 signed Schedule C/F source review amounts differ from the calculated business lines",
