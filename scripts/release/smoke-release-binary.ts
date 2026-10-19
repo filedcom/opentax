@@ -339,6 +339,49 @@ try {
     throw new Error("Built asset PDF omitted a Form 1040 page");
   }
   assertFlattenedPdfValues(pdf);
+
+  const ty2026 = JSON.parse(
+    await invoke("return", "create", "--year", "2026"),
+  ).returnId as string;
+  for (
+    const [nodeType, data] of [
+      ["general", { ...general, taxpayer_signature_date: "2027-04-15" }],
+      ["w2", w2],
+    ] as const
+  ) {
+    await invoke(
+      "form",
+      "add",
+      "--returnId",
+      ty2026,
+      "--node_type",
+      nodeType,
+      JSON.stringify(data),
+    );
+  }
+  const pdf2026Path = join(workingDir, "synthetic-return-2026.pdf");
+  // TY2026 returns cannot be received until the 2027 processing year, so the
+  // timing rules (IND-002, IND-689-01) are overridden for this print check.
+  const notice = await invoke(
+    "return",
+    "export",
+    "--returnId",
+    ty2026,
+    "--type",
+    "pdf",
+    "--output",
+    pdf2026Path,
+    "--force",
+  );
+  if (!notice.includes("IRS draft forms")) {
+    throw new Error("Built asset TY2026 PDF export did not name its draft forms");
+  }
+  const pdf2026 = await PDFDocument.load(await sys.readBytes(pdf2026Path));
+  if (
+    pdf2026.getPageCount() !== 2 || pdf2026.getForm().getFields().length !== 0
+  ) {
+    throw new Error("Built asset TY2026 PDF is not the flattened draft 1040");
+  }
   if (transcriptPath) {
     const digest = new Uint8Array(
       await crypto.subtle.digest("SHA-256", pdfBytes),
@@ -352,7 +395,7 @@ try {
   }
 
   console.log(
-    `Release smoke passed: ${expectedVersion}, synthetic W-2, finalized MeF, ${pdf.getPageCount()} PDF pages`,
+    `Release smoke passed: ${expectedVersion}, synthetic W-2, finalized MeF, ${pdf.getPageCount()} PDF pages, TY2026 draft PDF`,
   );
 } finally {
   await sys.remove(workingDir, { recursive: true });
