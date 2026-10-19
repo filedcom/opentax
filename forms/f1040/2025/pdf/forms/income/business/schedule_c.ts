@@ -16,7 +16,7 @@ import {
   computeTotalExpenses,
   homeOfficeDeduction,
   inputSchema,
-  mealsDeductiblePct,
+  deductibleMeals,
   projectScheduleCItems,
   type ScheduleCItem,
   wagesLessEmploymentCredits,
@@ -308,8 +308,7 @@ function projectBusiness(
     line5,
     line6,
     line7,
-    line_24b_meals: filing?.meals_deduction ??
-      (item.line_24b_meals ?? 0) * mealsDeductiblePct(item),
+    line_24b_meals: filing?.meals_deduction ?? deductibleMeals(item),
     line_26_wages: wagesLessEmploymentCredits(item, wotcReduction),
     line27b: line48,
     line28,

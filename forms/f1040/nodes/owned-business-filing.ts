@@ -1,7 +1,7 @@
 import {
   computeGrossIncome as cGross,
   computeTotalExpenses as cExpenses,
-  mealsDeductiblePct,
+  deductibleMeals,
   type ScheduleCItem,
 } from "./inputs/income/business/schedule_c/model.ts";
 import {
@@ -51,9 +51,7 @@ export function filedOwnedScheduleC(
     item.home_office_method || (item.line_30_home_office ?? 0) !== 0
   ) return undefined;
   const filed = filedLeaves(item);
-  const meals_deduction = roundWholeDollars(
-    (item.line_24b_meals ?? 0) * mealsDeductiblePct(item),
-  );
+  const meals_deduction = roundWholeDollars(deductibleMeals(item));
   const gross = cGross(filed);
   const other_expenses = roundWholeDollars(
     (item.line_27b_other_expenses ?? 0) +
@@ -66,6 +64,7 @@ export function filedOwnedScheduleC(
     ...filed,
     donated_natural_resource_property_source: undefined,
     line_24b_meals: 0,
+    line_24b_meals_dot_hours_of_service: 0,
     line_27b_other_expenses: 0,
     part_v_other_expenses: [],
   }, reduction) + meals_deduction + other_expenses;

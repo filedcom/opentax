@@ -297,6 +297,9 @@ export const itemSchema = z.object({
   line_24a_travel: z.number().nonnegative().optional(),
   line_24b_meals: z.number().nonnegative().optional(),
   meals_dot_worker: z.boolean().optional(), // DOT hours-of-service → 80% meals
+  // Meals eaten during DOT hours-of-service duty, 80% deductible beside the
+  // line_24b_meals amount at its own rate (IRC 274(n)(3)).
+  line_24b_meals_dot_hours_of_service: z.number().nonnegative().optional(),
   meals_as_wages: z.boolean().optional(), // Meals treated as wages → 100%
   line_25_utilities: z.number().nonnegative().optional(),
   // Gross payroll before the Form 5884 and other employment-credit reductions.
@@ -815,6 +818,13 @@ export function mealsDeductiblePct(item: ScheduleCItem): number {
   return MEALS_STANDARD_PCT;
 }
 
+/** Schedule C line 24b: each meals amount at its own deductible rate
+ * (Schedule C instructions, line 24b; IRC 274(n)(1) and (n)(3)). */
+export function deductibleMeals(item: ScheduleCItem): number {
+  return (item.line_24b_meals ?? 0) * mealsDeductiblePct(item) +
+    (item.line_24b_meals_dot_hours_of_service ?? 0) * MEALS_DOT_PCT;
+}
+
 export function homeOfficeDeduction(
   item: ScheduleCItem,
   tentativeProfit: number,
@@ -1093,7 +1103,7 @@ export function computeTotalExpenses(
   item: ScheduleCItem,
   wotcReduction = 0,
 ): number {
-  const mealsDeductible = (item.line_24b_meals ?? 0) * mealsDeductiblePct(item);
+  const mealsDeductible = deductibleMeals(item);
   const partVTotal = item.donated_natural_resource_property_source
     ? naturalResourceCurrentCosts(item)
     : (item.part_v_other_expenses ?? []).reduce(

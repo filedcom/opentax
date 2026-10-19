@@ -32,6 +32,7 @@ export const businessCostFields = [
   "line_23_taxes_licenses",
   "line_24a_travel",
   "line_24b_meals",
+  "line_24b_meals_dot_hours_of_service",
   "line_25_utilities",
   "line_26_wages",
   "line_27a_energy_efficient",

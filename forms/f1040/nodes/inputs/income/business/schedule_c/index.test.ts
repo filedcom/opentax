@@ -1628,3 +1628,14 @@ test("smoke_comprehensive_all_major_boxes: full Schedule C computes correct net 
   const f6251 = findOutput(result, "form6251");
   assertEquals(f6251, undefined);
 });
+
+test("DOT hours-of-service meals are 80% deductible beside 50% meals", () => {
+  // IRC 274(n)(1) and (n)(3): 2,000 ordinary meals at 50% plus 10,000
+  // hours-of-service meals at 80% make line 24b 9,000.
+  const result = compute([minimalItem({
+    line_1_gross_receipts: 50_000,
+    line_24b_meals: 2_000,
+    line_24b_meals_dot_hours_of_service: 10_000,
+  })]);
+  assertEquals(findOutput(result, "schedule1")?.fields.line3_schedule_c, 41_000);
+});

@@ -16,7 +16,7 @@ import {
   computeTotalExpenses,
   homeOfficeDeduction,
   inputSchema as scheduleCInputSchema,
-  mealsDeductiblePct,
+  deductibleMeals,
   projectScheduleCItems,
   type ScheduleCItem,
   wagesLessEmploymentCredits,
@@ -272,10 +272,13 @@ function buildScheduleC(
     amount("SuppliesAmt", item.line_22_supplies),
     amount("TaxesAndLicensesAmt", item.line_23_taxes_licenses),
     amount("TravelAmt", item.line_24a_travel),
-    item.line_24b_meals === undefined ? "" : element(
-      "MealsAndEntertainmentAmt",
-      filing?.meals_deduction ?? item.line_24b_meals * mealsDeductiblePct(item),
-    ),
+    item.line_24b_meals === undefined &&
+      item.line_24b_meals_dot_hours_of_service === undefined
+      ? ""
+      : element(
+        "MealsAndEntertainmentAmt",
+        filing?.meals_deduction ?? deductibleMeals(item),
+      ),
     amount("UtilitiesAmt", item.line_25_utilities),
     amount(
       "WagesLessEmploymentCreditsAmt",
