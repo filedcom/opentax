@@ -341,6 +341,17 @@ export function codeDExcessDeferral(w2s: W2Items, taxYear: number): {
 } {
   const limits = configForYear(taxYear).retirementLimits["401k"];
   const baseLimit = limits[49];
+  // 2025 Form 1040 instructions, line 1h: only deferrals over the limit are
+  // income. Code D at or under the base limit across every W-2 has no excess
+  // for anyone, so no owner or plan review is needed.
+  const totalCodeD = w2s.reduce(
+    (sum, item) =>
+      sum +
+      (item.box12_entries ?? []).filter((entry) => entry.code === Box12Code.D)
+        .reduce((subtotal, entry) => subtotal + entry.amount, 0),
+    0,
+  );
+  if (totalCodeD <= baseLimit) return { amount: 0, owners: [] };
   const candidateOwners = new Set<string>();
   for (const item of w2s) {
     if (

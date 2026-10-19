@@ -1,6 +1,6 @@
 import { test } from "bun:test";
 import { assertEquals, assertThrows } from "@std/assert";
-import { Box12Code, w2 } from "./index.ts";
+import { Box12Code, codeDExcessDeferral, w2 } from "./index.ts";
 import { fieldsOf } from "../../../../../../../core/test-utils/output.ts";
 import { f1040 } from "../../../../outputs/general/return-assembly/f1040/index.ts";
 import { form8839 } from "../../../../intermediate/forms/credits/individual/form8839/index.ts";
@@ -913,7 +913,7 @@ test("W-2 Form 8880 deferral cannot lose employee identity", () => {
         box12_entries: [{ code: Box12Code.D, amount: 1_000 }],
       })]),
     Error,
-    "W-2 code D excess review needs the employee SSN",
+    "W-2 saver-credit box 12 deferrals need the employee's nine-digit SSN for Form 8880",
   );
 });
 
@@ -2004,5 +2004,19 @@ test("2026 W-2 box 12 code TP tips route to Schedule 1-A line 4", () => {
       schedule1a,
     )?.qualified_employee_tips,
     undefined,
+  );
+});
+
+// 2025 Form 1040 instructions, line 1h: only elective deferrals over the
+// 23,500 limit are income, so code D within it needs no owner or plan review.
+test("W-2 code D within the 2025 limit has no line 1h excess and needs no review", () => {
+  assertEquals(
+    codeDExcessDeferral([
+      minimalItem({
+        box1_wages: 46_386,
+        box12_entries: [{ code: Box12Code.D, amount: 18_000 }],
+      }),
+    ], 2025),
+    { amount: 0, owners: [] },
   );
 });
