@@ -228,6 +228,9 @@ export const itemSchema = z.object({
   expense_depreciation_amt: z.number().nonnegative().optional(),
   expense_depletion: z.number().nonnegative().optional(),
   expense_other_lines: z.array(otherExpenseLineSchema).max(6).optional(),
+  // The expense lines above are already the rental-use share of a unit with
+  // personal use, so they are not divided again by days (Pub. 527, ch. 5).
+  expenses_are_rental_portion: z.boolean().optional(),
 }).superRefine((item, ctx) => {
   if (item.qbi_aggregation_number !== undefined) {
     ctx.addIssue({
@@ -1426,6 +1429,60 @@ function withPriorYearDepreciation(item: EItem, taxYear: number): EItem {
   };
 }
 
+const dividedExpenseKeys = [
+  "expense_advertising",
+  "expense_auto_travel",
+  "expense_cleaning",
+  "expense_commissions",
+  "expense_insurance",
+  "expense_legal_professional",
+  "expense_management",
+  "expense_mortgage_interest",
+  "expense_other_interest",
+  "expense_repairs",
+  "expense_supplies",
+  "expense_taxes",
+  "expense_utilities",
+  "expense_depreciation",
+  "expense_depreciation_amt",
+  "expense_depletion",
+] as const satisfies ReadonlyArray<keyof EItem>;
+
+const cents = (amount: number) => Math.round(amount * 100) / 100;
+
+// IRC 280A(e)(1); Pub. 527, ch. 5, Dividing Expenses: a unit used for both
+// rental and personal purposes deducts only rental days / total days used of
+// each expense. A unit rented under 15 days deducts nothing (280A(g)), and a
+// row with an occupancy_percent split keeps that reviewed split instead.
+function withRentalShareOfExpenses(item: EItem): EItem {
+  if (
+    item.personal_use_days === 0 || item.fair_rental_days === 0 ||
+    item.expenses_are_rental_portion === true ||
+    item.occupancy_percent !== undefined ||
+    isVacationHomeExcluded(item)
+  ) return item;
+  const share = item.fair_rental_days /
+    (item.fair_rental_days + item.personal_use_days);
+  const divided: Partial<EItem> = {};
+  for (const key of dividedExpenseKeys) {
+    const amount = item[key];
+    if (amount !== undefined) divided[key] = cents(amount * share);
+  }
+  return {
+    ...item,
+    ...divided,
+    ...(item.expense_other_lines
+      ? {
+        expense_other_lines: item.expense_other_lines.map((line) => ({
+          ...line,
+          amount: cents(line.amount * share),
+        })),
+      }
+      : {}),
+    expenses_are_rental_portion: true,
+  };
+}
+
 // The auto_expense worksheet's rental car expense goes on line 6 of the
 // rental it was driven for (Schedule E instructions, line 6; Rev. Proc.
 // 2019-46 standard mileage). Royalty rows are not rentals.
@@ -1460,15 +1517,15 @@ export function finalizeScheduleEInput(
   input: z.infer<typeof inputSchema>,
   taxYear: number,
 ): z.infer<typeof inputSchema> {
-  const withAssets = input.schedule_es?.some((item) => item.prior_year_assets)
-    ? {
-      ...input,
-      schedule_es: input.schedule_es.map((item) =>
-        withPriorYearDepreciation(item, taxYear)
-      ),
-    }
+  const rows = input.schedule_es ?? [];
+  const finalizedRows = rows.map((item) =>
+    withRentalShareOfExpenses(withPriorYearDepreciation(item, taxYear))
+  );
+  const withRows = finalizedRows.some((item, index) => item !== rows[index])
+    ? { ...input, schedule_es: finalizedRows }
     : input;
-  return withAutoTravel(withAssets);
+  // Worksheet miles are rental miles only, so they are added after dividing.
+  return withAutoTravel(withRows);
 }
 
 // ─── Node class ───────────────────────────────────────────────────────────────

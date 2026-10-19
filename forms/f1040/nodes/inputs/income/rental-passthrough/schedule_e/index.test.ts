@@ -1216,6 +1216,7 @@ test("threshold §280A: personal_use_days=14 with fair_rental_days=200 — no va
       personal_use_days: 14,
       rent_income: 8_000,
       expense_repairs: 10_000,
+      expenses_are_rental_portion: true,
     }),
   ]);
   // Loss survives the §280A expense cap, then goes to Form 8582 for the §469 limit
@@ -1258,6 +1259,7 @@ test("threshold §280A: personal use below 14 days is not home use even above 10
       personal_use_days: 2,
       rent_income: 1_000,
       expense_repairs: 2_000,
+      expenses_are_rental_portion: true,
     }),
   ]);
   const input = findOutput(result, "schedule1")!.fields as Record<
@@ -1278,6 +1280,7 @@ test("threshold §280A: more than 14 days can still be below 10% of rental days"
     personal_use_days: 15,
     rent_income: 1_000,
     expense_repairs: 2_000,
+    expenses_are_rental_portion: true,
   })]);
   assertEquals(
     (findOutput(result, "form8582")!.fields as Record<string, number>)
@@ -1888,5 +1891,35 @@ test("auto_expense rental car expense reaches the sole rental's line 6", () => {
       ),
     Error,
     "exactly one rental property",
+  );
+});
+
+test("§280A(e): a unit with personal use deducts rental days / total days of each expense", () => {
+  // Pub. 527, ch. 5, Dividing Expenses: 100 rental days and 10 personal days
+  // leave 100/110 of the 11,000 expenses, 10,000, against 30,000 rent.
+  const result = compute([minimalItem({
+    fair_rental_days: 100,
+    personal_use_days: 10,
+    rent_income: 30_000,
+    expense_mortgage_interest: 5_500,
+    expense_utilities: 3_300,
+    expense_other_lines: [{ description: "Cleaning service", amount: 2_200 }],
+  })]);
+  assertEquals(
+    findOutput(result, "schedule1")?.fields.line5_schedule_e,
+    20_000,
+  );
+  const rows = findOutput(result, "schedule_e")?.fields.schedule_es as {
+    expense_mortgage_interest?: number;
+    expense_other_lines?: { amount: number }[];
+    expenses_are_rental_portion?: boolean;
+  }[];
+  assertEquals(rows[0].expense_mortgage_interest, 5_000);
+  assertEquals(rows[0].expense_other_lines?.[0].amount, 2_000);
+  assertEquals(rows[0].expenses_are_rental_portion, true);
+  // The finalized row is not divided a second time.
+  assertEquals(
+    findOutput(compute(rows), "schedule1")?.fields.line5_schedule_e,
+    20_000,
   );
 });
