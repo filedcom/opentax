@@ -12,6 +12,8 @@ import { form8582 } from "../../../../intermediate/forms/income/business/form858
 import {
   k1PassiveIncomeSourceSchema,
   passiveK1Activities,
+  passiveK1LossActivities,
+  passiveK1LossTotal,
 } from "../k1_passive_source.ts";
 import {
   ownedDebtFamily,
@@ -433,10 +435,14 @@ function schedule1Output(items: K1SCorpItems): NodeOutput[] {
     ];
   }
   const activities = passiveK1Activities(items, "k1_s_corp");
+  const lossActivities = passiveK1LossActivities(items, "k1_s_corp");
   const passiveIncome = activities.reduce(
     (sum, row) => sum + row.current_net,
     0,
   );
+  // A passive box 1-3 loss is held back for Form 8582 (2025 Instructions
+  // for Form 8582, Worksheet 3), which posts the allowed part.
+  const passiveLoss = passiveK1LossTotal(lossActivities);
   const total = items.reduce(
     (sum, item) =>
       sum +
@@ -445,23 +451,25 @@ function schedule1Output(items: K1SCorpItems): NodeOutput[] {
       (item.box3_other_rental ?? 0) +
       (item.box6_royalties ?? 0),
     0,
-  );
-  if (total === 0) return [];
+  ) + passiveLoss;
+  if (total === 0 && passiveLoss === 0) return [];
   return [
-    output(schedule1, { line5_schedule_e: total }),
+    ...(total !== 0 ? [output(schedule1, { line5_schedule_e: total })] : []),
     output(agi_aggregator, {
       line5_schedule_e: total,
       eic_passive_k1_income: reviewedK1PassiveIncome(items),
       ...(passiveIncome > 0
         ? { pal_current_income: passiveIncome, pal_rental_income: 0 }
         : {}),
+      ...(passiveLoss > 0 ? { pal_current_loss: passiveLoss } : {}),
     }),
-    ...(activities.length
+    ...(activities.length || lossActivities.length
       ? [output(form8582, {
         current_income: passiveIncome,
         rental_current_income: 0,
+        ...(passiveLoss > 0 ? { current_loss: passiveLoss } : {}),
         has_other_passive: true,
-        activities,
+        activities: [...activities, ...lossActivities],
       })]
       : []),
   ];

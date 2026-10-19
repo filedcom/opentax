@@ -1,3 +1,7 @@
+import {
+  priorYearAssetSchema,
+  priorYearDepreciationRowSchema,
+} from "../../../deductions/business/form4562/prior-year.ts";
 import { independentReviewsSchema } from "../../../../../inputs/deductions/business/qbi_patron/schema.ts";
 import {
   calculateCharitableNaturalResource,
@@ -172,6 +176,11 @@ export const itemSchema = z.object({
   line12_conservation: z.number().nonnegative().optional(), // capped at 25% of gross
   line13_custom_hire: z.number().nonnegative().optional(),
   line14_depreciation: z.number().nonnegative().optional(),
+  // Assets placed in service before the return year (Pub. 946 tables);
+  // their deduction is added to this depreciation line.
+  prior_year_assets: z.array(priorYearAssetSchema).min(1).optional(),
+  prior_year_depreciation_rows: z.array(priorYearDepreciationRowSchema)
+    .optional(),
   line15_employee_benefits: z.number().nonnegative().optional(),
   line16_feed: z.number().nonnegative().optional(),
   line17_fertilizers: z.number().nonnegative().optional(),

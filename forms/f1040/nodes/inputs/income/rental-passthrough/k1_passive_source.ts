@@ -40,6 +40,8 @@ export interface PassiveK1Item extends K1PassiveEicItem {
   recipient_tin?: string;
   source_document_reference?: string;
   passive_income_source?: z.infer<typeof k1PassiveIncomeSourceSchema>;
+  box20z_qbi?: number;
+  qbi_amount?: number;
 }
 const boxes = [
   ["box1", "box1_ordinary_business"],
@@ -145,4 +147,67 @@ export function passiveK1Activities(
         : {}),
     }));
   });
+}
+
+/** Current passive K-1 box losses as their own Form 8582 activities. The 2025
+ * Instructions for Form 8582 (Worksheet 3, Other Passive Activities) report a
+ * passive partnership or S corporation loss on Form 8582 so it nets with every
+ * other passive activity, Schedule E rentals included; only the allowed part
+ * reaches Schedule E. The activity is "B": a K-1 rental is not shown to be an
+ * actively participated rental, so no §469(i) allowance is presumed. */
+export function passiveK1LossActivities(
+  items: readonly PassiveK1Item[],
+  kind: "k1_partnership" | "k1_s_corp",
+) {
+  return items.flatMap((item) => {
+    const review = item.eic_passive_activity_review;
+    const losses = boxes.filter(([box, amount]) =>
+      review?.[box] === "passive" && (item[amount] ?? 0) < 0
+    );
+    if (!losses.length) return [];
+    const ein = item.partnership_ein ?? item.corporation_ein;
+    const recipient = item.recipient_tin ?? review?.recipient_tin;
+    if (
+      !ein || !recipient || review?.recipient_tin !== recipient ||
+      (kind === "k1_partnership" &&
+        review.partnership_not_publicly_traded_verified !== true)
+    ) {
+      throw new Error(
+        "K-1 passive loss needs matching owned non-PTP classification",
+      );
+    }
+    return losses.map(([box, amount]) => {
+      const loss = item[amount]!;
+      if (!Number.isSafeInteger(loss)) {
+        throw new Error("K-1 passive loss needs a whole-dollar amount");
+      }
+      return {
+        activity_id: `${
+          kind === "k1_partnership" ? "P" : "S"
+        }:${ein}:${recipient}:${box}`,
+        name: `${
+          kind === "k1_partnership" ? "Partnership" : "S corporation"
+        } ${box}`,
+        activity_type: "B" as const,
+        property_type: 8,
+        reporting_form: kind,
+        current_net: loss,
+        prior_unallowed_operating: 0,
+        prior_unallowed_4797_part1: 0,
+        prior_unallowed_4797_part2: 0,
+        // The K-1 reports this loss as QBI; a suspended part leaves QBI
+        // until allowed (Reg. 1.199A-3(b)(1)(iv); Form 8995 instructions).
+        ...((item.box20z_qbi ?? item.qbi_amount) !== undefined
+          ? { qbi_trade_or_business: true }
+          : {}),
+      };
+    });
+  });
+}
+
+/** Box 1-3 amounts held back from Schedule E for Form 8582 (positive). */
+export function passiveK1LossTotal(
+  activities: readonly { current_net: number }[],
+): number {
+  return activities.reduce((sum, row) => sum - Math.min(0, row.current_net), 0);
 }

@@ -189,12 +189,26 @@ export const inputSchema = z.object({
   // Line 5a (alternative): General sales tax deduction in lieu of income taxes
   // IRC §164(b)(5)(A) — taxpayer elects sales tax OR income tax, not both.
   line_5a_sales_tax: z.number().nonnegative().optional(),
-  line_5b_real_estate_tax: z.number().nonnegative().optional(),
+  line_5b_real_estate_tax: z.union([
+    z.number().nonnegative(),
+    z.array(z.number().nonnegative()),
+  ]).transform((value) =>
+    Array.isArray(value)
+      ? value.reduce((sum, amount) => sum + amount, 0)
+      : value
+  ).optional(),
   line_5c_personal_property_tax: z.number().nonnegative().optional(),
   line_6_other_taxes: z.number().nonnegative().optional(),
   line_6_other_tax_items: z.array(otherTaxItemSchema).min(1).max(2)
     .optional(),
-  line_8a_mortgage_interest_1098: z.number().nonnegative().optional(),
+  line_8a_mortgage_interest_1098: z.union([
+    z.number().nonnegative(),
+    z.array(z.number().nonnegative()),
+  ]).transform((value) =>
+    Array.isArray(value)
+      ? value.reduce((sum, amount) => sum + amount, 0)
+      : value
+  ).optional(),
   // Pub. 936 Table 1 line 12 when Form 1098 interest was limited without a
   // reviewed amount; the node applied the non-MFS debt limits.
   form1098_table1_average_balance: z.number().nonnegative().optional(),

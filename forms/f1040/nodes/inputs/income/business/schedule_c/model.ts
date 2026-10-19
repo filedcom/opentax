@@ -1,3 +1,7 @@
+import {
+  priorYearAssetSchema,
+  priorYearDepreciationRowSchema,
+} from "../../../../intermediate/forms/deductions/business/form4562/prior-year.ts";
 import { sstbServiceClassificationSchema } from "./sstb-classification.ts";
 import {
   calculateCharitableNaturalResource,
@@ -269,6 +273,11 @@ export const itemSchema = z.object({
     ).min(1),
   }).strict().optional(),
   line_13_depreciation: z.number().nonnegative().optional(),
+  // Assets placed in service before the return year (Pub. 946 tables);
+  // their deduction is added to this depreciation line.
+  prior_year_assets: z.array(priorYearAssetSchema).min(1).optional(),
+  prior_year_depreciation_rows: z.array(priorYearDepreciationRowSchema)
+    .optional(),
   donated_natural_resource_property_source:
     charitableNaturalResourceSourceSchema.optional(),
   donated_depreciable_property_source: charitableDepreciationSourceSchema
