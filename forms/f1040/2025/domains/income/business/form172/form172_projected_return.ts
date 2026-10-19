@@ -22,12 +22,13 @@ export async function stageForm172ProjectedReturn(
   rawDocuments: readonly SourceDocumentBytes[],
 ) {
   const inputs = structuredClone(rawInputs);
+  const nolContext = { taxYear: 2025, formType: "f1040" } as const;
   const staged = await stageForm172ReviewedReturnCalculation(
     inputs,
     rawBinding,
     rawDocuments,
     inputs.form8990 !== undefined
-      ? (source) => executeForm172Form8990Return(source).execution
+      ? (source) => executeForm172Form8990Return(source, nolContext).execution
       : undefined,
   );
   // These routes need their source-dependent staging composed with the NOL
@@ -76,7 +77,6 @@ export async function stageForm172ProjectedReturn(
     }
   }
   const projectedRegistry = { ...registry, start: new RetainedNolStart() };
-  const nolContext = { taxYear: 2025, formType: "f1040" } as const;
   const executeNolGraph = (
     source: Record<string, unknown>,
     context: Parameters<typeof execute>[3] = nolContext,
@@ -90,7 +90,7 @@ export async function stageForm172ProjectedReturn(
   // Recompute return-derived adoption/education operands on every NOL pass.
   const interestComposition = inputs.form8990 === undefined
     ? undefined
-    : executeForm172Form8990Return(inputs, executeNolGraph, deduction);
+    : executeForm172Form8990Return(inputs, nolContext, executeNolGraph, deduction);
   const execution = interestComposition?.execution ??
     executePreQefSourceReturn(inputs, nolContext, true, executeNolGraph);
   if (execution.diagnostics.length > 0) {

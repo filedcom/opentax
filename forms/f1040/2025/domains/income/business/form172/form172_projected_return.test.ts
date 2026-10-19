@@ -846,7 +846,7 @@ const interestSourceRecords = {
 async function interestFixture() {
   const f = await fixture();
   f.inputs = { ...interestBaseInputs, form8990: interestSourceRecords };
-  const before = executeForm172Form8990Return(f.inputs);
+  const before = executeForm172Form8990Return(f.inputs, { taxYear: 2025, formType: "f1040" });
   const return1040 = before.execution.pending.f1040!;
   const a = f.currentReview.annual_review;
   a.agi = Number(return1040.line11_agi);

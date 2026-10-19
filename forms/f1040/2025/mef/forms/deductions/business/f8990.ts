@@ -2,6 +2,7 @@ import type { Form8990Lines } from "../../../../../nodes/intermediate/forms/dedu
 import { reconcileForm8990Projection } from "../../../../domains/deductions/business/form8990/form8990_projection.ts";
 import { element, elements } from "../../../../../mef/xml.ts";
 import type { MefFormDescriptor } from "../../../form-descriptor.ts";
+import { mefTaxYear } from "../../../support/year-config.ts";
 
 type Input = Partial<Form8990Lines> & Record<string, unknown>;
 
@@ -34,9 +35,13 @@ export const FIELD_MAP: ReadonlyArray<readonly [keyof Form8990Lines, string]> =
 function buildIRS8990(
   fields: Input,
   pending: Readonly<Record<string, unknown>>,
+  taxYear: number,
 ): string {
   if (Object.keys(fields).length === 0) return "";
-  const projected = reconcileForm8990Projection(fields, pending);
+  const projected = reconcileForm8990Projection(fields, pending, {
+    taxYear,
+    formType: "f1040",
+  });
   return elements(
     "IRS8990",
     FIELD_MAP.map(([key, tag]) => element(tag, projected[key])),
@@ -52,6 +57,6 @@ export const form8990: MefFormDescriptor<"form8990", Input> = {
     if (!context?.pending) {
       throw new Error("Form 8990 MeF needs the finalized return graph");
     }
-    return buildIRS8990(fields, context.pending);
+    return buildIRS8990(fields, context.pending, mefTaxYear(context));
   },
 };
