@@ -286,7 +286,6 @@ test("TY2026 PDF prints Schedule A with the 0.5% gift floor and line 18", async 
   assertMatch(printed, /✔ No\. Your deductions are not limited/);
   assertMatch(printed, /the amount to enter[^\n]* 18 34000/);
   assertMatch(printed, /12e Standard deduction or itemized[^\n]* 12e 34000/);
-
 });
 
 test("TY2026 PDF refuses, by name, a form with no TY2026 mapping", async () => {
