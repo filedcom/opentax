@@ -146,6 +146,19 @@ import {
 } from "../../nodes/intermediate/forms/credits/individual/form8839/public_source.ts";
 import { mefTaxYear } from "../mef/support/year-config.ts";
 
+/** The printed form set and return year a packet is rendered for. */
+export interface PdfBuildOptions {
+  readonly descriptors: ReadonlyArray<PdfFormDescriptor>;
+  readonly taxYear: number;
+  /** Recorded as the packet's PDF Subject. */
+  readonly subject?: string;
+}
+
+const DEFAULT_PDF_BUILD: PdfBuildOptions = {
+  descriptors: ALL_PDF_FORMS,
+  taxYear: mefTaxYear(),
+};
+
 /** Diagnostic origin of a page in a prepared filled-PDF review packet. */
 export interface PdfPageOrigin {
   readonly pageNumber: number;
@@ -577,6 +590,7 @@ async function buildPdfBytesInternal(
   preparedBundleInput?: MefBundle,
   pageOrigins?: PdfPageOrigin[],
   paperOnly4972 = false,
+  options: PdfBuildOptions = DEFAULT_PDF_BUILD,
 ): Promise<Uint8Array> {
   // Preserve the authenticated disclosure identity and XML throughout awaits.
   const preparedBundle = preparedBundleInput
@@ -592,11 +606,11 @@ async function buildPdfBytesInternal(
     pending,
     (inputs) =>
       executeComposedSourceReturn(inputs, {
-        taxYear: mefTaxYear(),
+        taxYear: options.taxYear,
         formType: "f1040",
       }),
   );
-  assertSingleFarmQbiReturn(normalized, mefTaxYear());
+  assertSingleFarmQbiReturn(normalized, options.taxYear);
   if (normalized.f1040) {
     assertF1040FinalHeader(normalized.f1040, filer);
     assertLine1hSupportedSource(normalized.f1040, 2025, normalized, filer);
@@ -609,7 +623,7 @@ async function buildPdfBytesInternal(
   assert1099RRecipientOwner(normalized.f1099r, filer, 2025);
   assertPositiveW2GRecipient(normalized.w2g, filer, 2025);
   assertNecWithholdingRecipient(normalized.f1099nec, filer);
-  assert1099BRecipientOwner(normalized.f1099b, filer, mefTaxYear());
+  assert1099BRecipientOwner(normalized.f1099b, filer, options.taxYear);
   assertNoRepeatedBrokerSaleSources(normalized.f1099b, normalized.f8949);
   assertCapitalSaleSourceRows(normalized, 2025);
   assertPatrIssuedCopies(normalized.f1099patr);
@@ -619,18 +633,18 @@ async function buildPdfBytesInternal(
     normalized,
     filer,
     preparedBundle?.retainedSourceDocuments !== undefined,
-    mefTaxYear(),
+    options.taxYear,
   );
   await assertForm4852RetainedEvidence(
     normalized,
     filer,
     preparedBundle?.retainedSourceDocuments ?? [],
-    mefTaxYear(),
+    options.taxYear,
   );
   await assertForm8874CdeStatusEvidence(
     normalized,
     preparedBundle?.retainedSourceDocuments ?? [],
-    mefTaxYear(),
+    options.taxYear,
   );
   reconcileForm8606RothInventories(normalized, filer);
   reconcileForm8606RothActivity(normalized, filer);
@@ -646,7 +660,7 @@ async function buildPdfBytesInternal(
   assertTaxExemptInterestSource(normalized);
   assertBusinessSchedule1Amounts(normalized);
   assertOwned7203RequiredCopies(normalized, {
-    taxYear: mefTaxYear(),
+    taxYear: options.taxYear,
     formType: "f1040",
   });
   assertHsaExcessRequiredCopy(normalized);
@@ -689,7 +703,7 @@ async function buildPdfBytesInternal(
     assertSchedule1Form8621Source({
       ...normalized,
       form8949: pending.form8949,
-    }, { taxYear: mefTaxYear(), formType: "f1040" });
+    }, { taxYear: options.taxYear, formType: "f1040" });
     assertSchedule1NecSourceIdentity(normalized, filer);
     assertSchedule1KSourceIdentity(normalized, filer);
     assertScheduleFFarmSourceIdentity(normalized, filer);
@@ -722,13 +736,13 @@ async function buildPdfBytesInternal(
       normalized.f8835,
       filer,
       [],
-      mefTaxYear(),
+      options.taxYear,
     );
     await assertForm8835DomesticStatements(
       normalized.f8835,
       filer,
       [],
-      mefTaxYear(),
+      options.taxYear,
     );
     await assertForm8835IncreaseStatements(normalized.f8835, filer, []);
   }
@@ -746,13 +760,13 @@ async function buildPdfBytesInternal(
       normalized.f8835,
       filer,
       preparedBundle.attachments,
-      mefTaxYear(),
+      options.taxYear,
     );
     await assertForm8835DomesticStatements(
       normalized.f8835,
       filer,
       preparedBundle.attachments,
-      mefTaxYear(),
+      options.taxYear,
     );
     await assertForm8835IncreaseStatements(
       normalized.f8835,
@@ -771,7 +785,7 @@ async function buildPdfBytesInternal(
       preparedBundle.pending,
       filer,
       preparedBundle.attachments,
-      mefTaxYear(),
+      options.taxYear,
     );
     if (
       (preparedBundle.form3800Parts === undefined) !==
@@ -906,12 +920,12 @@ async function buildPdfBytesInternal(
     normalized,
     "pdf",
     preparedBundle?.form8886Packets,
-    mefTaxYear(),
+    options.taxYear,
   );
   const merged = await PDFDocument.create({ updateMetadata: false });
   const copyCounts = new Map<string, number>();
 
-  for (const registeredDescriptor of ALL_PDF_FORMS) {
+  for (const registeredDescriptor of options.descriptors) {
     const descriptor = paperOnly4972 &&
         registeredDescriptor.pendingKey === "form4972"
       ? form4972PaperPdf
@@ -1095,6 +1109,7 @@ async function buildPdfBytesInternal(
       "No PDF forms were generated — return may have no computed data.",
     );
   }
+  if (options.subject !== undefined) merged.setSubject(options.subject);
 
   return merged.save();
 }
@@ -1105,6 +1120,7 @@ export function buildPdfBytes(
   cacheDir = ".pdf-cache",
   preparedBundle?: MefBundle,
   pageOrigins?: PdfPageOrigin[],
+  options: PdfBuildOptions = DEFAULT_PDF_BUILD,
 ): Promise<Uint8Array> {
   return buildPdfBytesInternal(
     pending,
@@ -1112,6 +1128,8 @@ export function buildPdfBytes(
     cacheDir,
     preparedBundle,
     pageOrigins,
+    false,
+    options,
   );
 }
 

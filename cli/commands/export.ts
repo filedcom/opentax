@@ -253,6 +253,8 @@ export async function exportMefCommand(
 export type ExportPdfArgs = ExportReturnArgs & {
   /** Output file path. Defaults to <baseDir>/<returnId>/export.pdf */
   readonly outputPath?: string;
+  /** Receives the form year's PDF notice, if it has one. */
+  readonly notice?: (message: string) => void;
 };
 
 export async function exportPdfCommand(
@@ -283,6 +285,7 @@ export async function exportPdfCommand(
   const outPath = args.outputPath ??
     join(args.baseDir, args.returnId, "export.pdf");
   await writeFile(outPath, outputBytes);
+  if (def.pdfNotice) args.notice?.(def.pdfNotice);
   return outPath;
 }
 
