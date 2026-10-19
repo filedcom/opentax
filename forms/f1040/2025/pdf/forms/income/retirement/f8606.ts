@@ -1,4 +1,3 @@
-import { mefTaxYear } from "../../../../mef/support/year-config.ts";
 import { formatForm8606BasisRatio } from "../../../../../nodes/intermediate/forms/income/retirement/form8606/roth-current-conversion.ts";
 import { reconcileForm8606RothInventories } from "../../../../domains/income/retirement/form8606/form8606_roth_inventory_reconciliation.ts";
 import type { PdfFieldEntry, PdfFormDescriptor } from "../../../review-support/form-descriptor.ts";
@@ -203,7 +202,8 @@ const fields: ReadonlyArray<PdfFieldEntry> = [
   },
 ];
 
-export const form8606Pdf: PdfFormDescriptor = {
+export function form8606PdfFor(taxYear: number): PdfFormDescriptor {
+  return {
   pendingKey: "form8606",
   pdfUrl: "https://www.irs.gov/pub/irs-prior/f8606--2025.pdf",
   projectFields(raw) {
@@ -229,6 +229,7 @@ export const form8606Pdf: PdfFormDescriptor = {
     form8606.build(raw as Parameters<typeof form8606.build>[0], {
       filer,
       pending: allPending,
+      taxYear,
     });
     const inventory = reconcileForm8606RothInventories(allPending, filer);
     if (inventory) {
@@ -345,7 +346,7 @@ export const form8606Pdf: PdfFormDescriptor = {
       raw,
       allPending,
       filer,
-      mefTaxYear(),
+      taxYear,
     );
     const spouseNoActivity = !reviewed &&
       printSchema.parse(raw).filing_details?.owner === "spouse";
@@ -364,4 +365,7 @@ export const form8606Pdf: PdfFormDescriptor = {
     }];
   },
   fields,
-};
+  };
+}
+
+export const form8606Pdf: PdfFormDescriptor = form8606PdfFor(2025);

@@ -243,6 +243,35 @@ test("TY2026 PDF prints Form 8949 Parts I and II on the 2026 draft", async () =>
   assertMatch(printed, /line 10 \(if Box F or Box L above is checked\) 4000 2000 2000/);
 });
 
+test("TY2026 PDF prints Form 8606 on the 2026 draft", async () => {
+  // The 2025 sample's source documents, one year later; born 1970 so the
+  // 2026 return takes no senior deduction.
+  const inputs = JSON.parse(
+    JSON.stringify(
+      fixture("single-form8606-post-year-contribution-and-distribution"),
+    ).replace(/202[4-6]/g, (year) => String(Number(year) + 1)),
+  );
+  const general = inputs.general as Record<string, unknown>;
+  const printed = await text(
+    await render({
+      ...inputs,
+      general: { ...general, taxpayer_dob: "1970-06-15" },
+    }),
+  );
+  assertMatch(printed, /Form 8606[\s\S]*2026/);
+  assertMatch(printed, /through April 15, 2027\. See instructions[^\n]* 1 1000/);
+  assertMatch(printed, /2 Enter your total basis[^\n]* 2 6000/);
+  assertMatch(printed, /\n 2027 [. ]* 4 1000/);
+  assertMatch(printed, /5 Subtract line 4 from line 3[^\n]* 5 6000/);
+  assertMatch(printed, /\n instructions [. ]* 6 10000/);
+  assertMatch(printed, /9 Add lines 6, 7, and 8[^\n]* 9 30000/);
+  assertMatch(printed, /enter “1\.000”[^\n]* 10 × 0 \. 200/);
+  assertMatch(printed, /that you did not convert to a Roth IRA[^\n]* 12 4000/);
+  assertMatch(printed, /2026 and earlier years[^\n]* 14 3000/);
+  assertMatch(printed, /15a Subtract line 12 from line 7[^\n]* 15a 16000/);
+  assertMatch(printed, /1040-NR, line 4b[^\n]* 15c 16000/);
+});
+
 test("TY2026 PDF prints Form 2441 Part I providers as columns", async () => {
   const printed = await text(
     await render(fixture("single-form2441-child-care-credit")),
