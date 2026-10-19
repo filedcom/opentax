@@ -78,7 +78,10 @@ import { form8995 } from "../../../../intermediate/forms/deductions/business/for
 import { scheduleA } from "../../../deductions/itemized/schedule_a/index.ts";
 import { schedule_d } from "../../../../intermediate/aggregation/income/investments/schedule_d/index.ts";
 import { FilingStatus, TS } from "../../../../types.ts";
-import { CONFIG_BY_YEAR } from "../../../../config/index.ts";
+import {
+  CONFIG_BY_YEAR,
+  dependentFilingThresholds,
+} from "../../../../config/index.ts";
 import type { F1040Config } from "../../../../config/index.ts";
 import type { NodeContext } from "../../../../../../../core/types/node-context.ts";
 import { schedule1a } from "../../../../intermediate/forms/deductions/additional/schedule1a/index.ts";
@@ -211,7 +214,7 @@ export const dependentSchema = z.object({
       filing_requirement_review: z.object({
         source_document_id: z.string().min(1),
         dependent_ssn: z.string().regex(/^\d{3}-?\d{2}-?\d{4}$/),
-        tax_year: z.literal(2025),
+        tax_year: z.number().int(),
         filing_status: z.literal("single"),
         blind: z.literal(false),
         wage_source_document_id: z.string().min(1),
@@ -227,13 +230,13 @@ export const dependentSchema = z.object({
       interest_form1099: z.object({
         source_document_id: z.string().min(1),
         recipient_ssn: z.string().regex(/^\d{3}-?\d{2}-?\d{4}$/),
-        box1_taxable_interest: z.number().positive().max(1_350),
+        box1_taxable_interest: z.number().positive(),
         box8_tax_exempt_interest: z.number().nonnegative(),
       }).strict(),
       filing_requirement_review: z.object({
         source_document_id: z.string().min(1),
         dependent_ssn: z.string().regex(/^\d{3}-?\d{2}-?\d{4}$/),
-        tax_year: z.literal(2025),
+        tax_year: z.number().int(),
         filing_status: z.literal("single"),
         blind: z.literal(false),
         interest_source_document_id: z.string().min(1),
@@ -250,7 +253,7 @@ export const dependentSchema = z.object({
       filed_form1040: z.object({
         source_document_id: z.string().min(1),
         taxpayer_ssn: z.string().regex(/^\d{3}-?\d{2}-?\d{4}$/).optional(),
-        tax_year: z.literal(2025),
+        tax_year: z.number().int(),
         filing_status: z.literal("single"),
         blind: z.boolean(),
         line1z_wages: z.number().nonnegative(),
@@ -633,6 +636,7 @@ export function ptcDependentsModifiedAgi(dependents: DependentItem[]): number {
     const taxReturn = dep.ptc_tax_return;
     if (taxReturn?.filing === "not_required") {
       const review = taxReturn.filing_requirement_review;
+      const limits = dependentFilingThresholds(review.tax_year);
       const birth = /^\d{4}-\d{2}-\d{2}$/.test(dep.dob)
         ? new Date(`${dep.dob}T00:00:00Z`)
         : new Date(Number.NaN);
@@ -644,22 +648,22 @@ export function ptcDependentsModifiedAgi(dependents: DependentItem[]): number {
         throw new Error("Form 8962 dependent needs a valid birth date");
       }
       if (
-        birth.getTime() < Date.UTC(1961, 0, 2) ||
+        dep.dob < limits.age65BornBefore ||
         Number.isNaN(reviewed.getTime()) ||
         reviewed.toISOString().slice(0, 10) !== review.reviewed_on ||
-        reviewed.getTime() < Date.UTC(2026, 0, 1) ||
+        review.reviewed_on < `${review.tax_year + 1}-01-01` ||
         review.dependent_ssn.replaceAll("-", "") !==
           dep.ssn?.replaceAll("-", "") ||
         !dep.ssn
       ) {
         throw new Error(
-          "Form 8962 dependent not-required review must match the under-65 dependent and 2025 filing threshold",
+          `Form 8962 dependent not-required review must match the under-65 dependent and ${review.tax_year} filing threshold`,
         );
       }
       if ("wage_form_w2" in taxReturn) {
         const wage = taxReturn.wage_form_w2;
         if (
-          wage.box1_wages > 15_750 ||
+          wage.box1_wages > limits.singleStandardDeduction ||
           !("wage_source_document_id" in review) ||
           review.wage_source_document_id !== wage.source_document_id ||
           review.source_document_id === wage.source_document_id ||
@@ -672,6 +676,7 @@ export function ptcDependentsModifiedAgi(dependents: DependentItem[]): number {
       } else {
         const interest = taxReturn.interest_form1099;
         if (
+          interest.box1_taxable_interest > limits.floor ||
           !("interest_source_document_id" in review) ||
           review.interest_source_document_id !== interest.source_document_id ||
           review.source_document_id === interest.source_document_id ||
@@ -687,6 +692,7 @@ export function ptcDependentsModifiedAgi(dependents: DependentItem[]): number {
     }
     if (!taxReturn || taxReturn.filing !== "required") return total;
     const filed = taxReturn.filed_form1040;
+    const limits = dependentFilingThresholds(filed.tax_year);
     const taxableInterest = taxReturn.interest_forms1099.reduce(
       (sum, source) => sum + source.box1_taxable_interest,
       0,
@@ -753,21 +759,27 @@ export function ptcDependentsModifiedAgi(dependents: DependentItem[]): number {
     ) {
       throw new Error("Form 8962 dependent needs a valid birth date");
     }
-    const age65 = birth.getTime() < Date.UTC(1961, 0, 2);
-    // Pub.501 Table2 single dependents: each age/blind condition adds $2,000.
-    const increase = (age65 ? 2_000 : 0) + (filed.blind ? 2_000 : 0);
+    const age65 = dep.dob < limits.age65BornBefore;
+    // Pub. 501 Table 2 single dependents: each age/blind condition adds the
+    // unmarried additional standard deduction.
+    const increase = ((age65 ? 1 : 0) + (filed.blind ? 1 : 0)) *
+      limits.unmarriedAgeBlindAddition;
     const unearned = taxableInterest + dividends;
     const gross = wages + unearned;
     const combinedThreshold = Math.max(
-      1_350 + increase,
-      Math.min(wages, 15_300) + 450 + increase,
+      limits.floor + increase,
+      Math.min(
+        wages,
+        limits.singleStandardDeduction - limits.earnedIncomeAddOn,
+      ) + limits.earnedIncomeAddOn + increase,
     );
     if (
-      unearned <= 1_350 + increase && wages <= 15_750 + increase &&
+      unearned <= limits.floor + increase &&
+      wages <= limits.singleStandardDeduction + increase &&
       gross <= combinedThreshold
     ) {
       throw new Error(
-        "Form 8962 dependent sourced income does not establish the 2025 single-dependent filing requirement",
+        `Form 8962 dependent sourced income does not establish the ${filed.tax_year} single-dependent filing requirement`,
       );
     }
     return total + filed.line11b_agi + exemptInterest;
@@ -790,11 +802,6 @@ const CTC_QUALIFYING_RELATIONSHIPS = new Set<DependentRelationship>([
   DependentRelationship.ChildSibling, // niece/nephew = child of sibling
 ]);
 
-// Dependent review facts whose schemas still encode TY2025 dates or limits.
-const TY2025_DATED_DEPENDENT_FACTS = [
-  "ptc_tax_return",
-] as const;
-
 // ─── Pure helpers ─────────────────────────────────────────────────────────────
 
 function configForYear(taxYear: number): F1040Config {
@@ -803,19 +810,26 @@ function configForYear(taxYear: number): F1040Config {
   return cfg;
 }
 
+function ptcReturnYear(dep: DependentItem): number | undefined {
+  const taxReturn = dep.ptc_tax_return;
+  if (taxReturn?.filing === "not_required") {
+    return taxReturn.filing_requirement_review.tax_year;
+  }
+  return taxReturn?.filing === "required"
+    ? taxReturn.filed_form1040.tax_year
+    : undefined;
+}
+
+// Dependent filing reviews must describe the return's own tax year.
 function assertDependentFactsForYear(
   deps: ReadonlyArray<DependentItem>,
   taxYear: number,
 ): void {
-  if (taxYear === 2025) return;
-  const dated = TY2025_DATED_DEPENDENT_FACTS.filter((key) =>
-    deps.some((dep) => dep[key] !== undefined)
-  );
-  if (dated.length > 0) {
+  if (
+    deps.some((dep) => (ptcReturnYear(dep) ?? taxYear) !== taxYear)
+  ) {
     throw new Error(
-      `TY${taxYear} does not yet support these dependent facts: ${
-        dated.join(", ")
-      }`,
+      `Form 8962 dependent filing review must be for tax year ${taxYear}`,
     );
   }
 }
@@ -834,8 +848,7 @@ function ageAtYearEnd(dob: string, taxYear: number): number {
 }
 
 // For federal tax purposes, a person reaches age 65 on the day before their
-// 65th birthday. For TY2025, this matches the Schedule 1-A instruction to use
-// a birth date before January 2, 1961.
+// 65th birthday: born before January 2 of the tax year minus 64.
 // CTC requires an employment-valid SSN issued before the return due date
 // (IRC §24(h)(7)); an ITIN or ATIN cannot satisfy that test.
 function passesSSNTest(dep: DependentItem): boolean {

@@ -1,5 +1,6 @@
 import { assertDependentKiddieTaxReturn } from "../../../taxes/investments/f8615/dependent-source-review.ts";
 import { z } from "zod";
+import { dependentFilingThresholds } from "../../../../config/index.ts";
 import {
   type EducationIncome,
   educationIncomeSources,
@@ -418,6 +419,11 @@ export function assertDependentScholarshipIncome(
     general.dependent_education_income_review,
   );
   const earned = dependentScholarshipEarned(review);
+  const limits = dependentFilingThresholds(review.tax_year);
+  const standardDeduction = Math.min(
+    limits.singleStandardDeduction,
+    Math.max(limits.floor, earned + limits.earnedIncomeAddOn),
+  );
   const final = pending?.f1040 as Record<string, unknown> | undefined;
   const wages =
     ((pending?.w2 as { w2s?: Record<string, unknown>[] } | undefined)?.w2s ??
@@ -452,14 +458,10 @@ export function assertDependentScholarshipIncome(
     final.line1a_wages !== sourceWages ||
     Number(final.line8_additional_income ?? 0) !== sourceScholarship ||
     final.line9_total_income !== earned || final.line11_agi !== earned ||
-    final.line12a_standard_deduction !==
-      Math.min(15750, Math.max(1350, earned + 450)) ||
-    final.line12c_deduction_total !==
-      Math.min(15750, Math.max(1350, earned + 450)) ||
-    final.line14_deductions_qbi_total !==
-      Math.min(15750, Math.max(1350, earned + 450)) ||
-    final.line15_taxable_income !==
-      Math.max(0, earned - Math.min(15750, Math.max(1350, earned + 450))) ||
+    final.line12a_standard_deduction !== standardDeduction ||
+    final.line12c_deduction_total !== standardDeduction ||
+    final.line14_deductions_qbi_total !== standardDeduction ||
+    final.line15_taxable_income !== Math.max(0, earned - standardDeduction) ||
     (final.line15_taxable_income === 0 &&
       Number(final.line16_income_tax ?? 0) !== 0) ||
     (pending?.f8863 !== undefined) ||

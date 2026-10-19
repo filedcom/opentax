@@ -1436,23 +1436,8 @@
   },
   {
     "path": "forms/f1040/nodes/inputs/general/filing/general/index.ts",
-    "pattern": "date-pinned",
-    "count": 1
-  },
-  {
-    "path": "forms/f1040/nodes/inputs/general/filing/general/index.ts",
-    "pattern": "year-comparison",
-    "count": 1
-  },
-  {
-    "path": "forms/f1040/nodes/inputs/general/filing/general/index.ts",
     "pattern": "year-identifier",
-    "count": 17
-  },
-  {
-    "path": "forms/f1040/nodes/inputs/general/filing/general/index.ts",
-    "pattern": "z-literal",
-    "count": 3
+    "count": 15
   },
   {
     "path": "forms/f1040/nodes/inputs/general/foreign/f5471/index.ts",
@@ -1811,13 +1796,8 @@
   },
   {
     "path": "forms/f1040/nodes/inputs/taxes/investments/f8615/dependent-source-review.ts",
-    "pattern": "date-pinned",
-    "count": 2
-  },
-  {
-    "path": "forms/f1040/nodes/inputs/taxes/investments/f8615/dependent-source-review.ts",
     "pattern": "year-identifier",
-    "count": 5
+    "count": 1
   },
   {
     "path": "forms/f1040/nodes/inputs/taxes/other/f5405/index.ts",
@@ -2357,17 +2337,17 @@
   {
     "path": "forms/f1040/nodes/intermediate/forms/taxes/household-employment/schedule_h/index.ts",
     "pattern": "date-pinned",
-    "count": 44
+    "count": 13
   },
   {
     "path": "forms/f1040/nodes/intermediate/forms/taxes/household-employment/schedule_h/index.ts",
     "pattern": "year-comparison",
-    "count": 3
+    "count": 1
   },
   {
     "path": "forms/f1040/nodes/intermediate/forms/taxes/household-employment/schedule_h/index.ts",
     "pattern": "year-identifier",
-    "count": 7
+    "count": 4
   },
   {
     "path": "forms/f1040/nodes/intermediate/forms/taxes/income-averaging/schedule_j/preferential_line4.ts",
