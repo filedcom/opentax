@@ -19,8 +19,10 @@ const pdfReview = z.object({
 export const form8997HoldingOnlyReviewSchema = z.object({
   prior_form8997_pdf: pdfReview,
   qof_issuer_statement_pdf: pdfReview,
-  filed_2024_form8997_reference: z.string().trim().min(1),
-  reviewed_2025_workpaper_reference: z.string().trim().min(1),
+  filed_prior_year_form8997_reference: z.string().trim().min(1),
+  reviewed_annual_workpaper_reference: z.string().trim().min(1),
+  filed_2024_form8997_reference: z.never().optional(),
+  reviewed_2025_workpaper_reference: z.never().optional(),
   lot_id: z.string().trim().min(1),
   qof_ein: z.string().regex(/^\d{9}$/),
   acquired_date: z.string().date(),
@@ -29,7 +31,8 @@ export const form8997HoldingOnlyReviewSchema = z.object({
   long_term_deferred_gain: z.number().int().nonnegative(),
   prior_form_lot_fields_match_pdf_reviewed: z.literal(true),
   issuer_identity_and_holding_match_pdf_reviewed: z.literal(true),
-  issuer_qof_status_for_2025_reviewed: z.literal(true),
+  issuer_qof_status_for_tax_year_reviewed: z.literal(true),
+  issuer_qof_status_for_2025_reviewed: z.never().optional(),
 }).strict();
 
 function validDate(value: string): boolean {
@@ -79,15 +82,16 @@ export async function reviewForm8997HoldingOnlySource(
     input.investment_lots.length !== 1 || !lot || !priorLot ||
     lot.new_deferral !== undefined || lot.events.length !== 0 ||
     lot.formerly_qof_ein !== undefined ||
-    lot.acquired_date >= "2025-01-01" ||
+    lot.acquired_date >= `${input.tax_year}-01-01` ||
     review.short_term_deferred_gain + review.long_term_deferred_gain === 0 ||
     input.uninvested_deferred_gain_at_year_end.short_term !== 0 ||
     input.uninvested_deferred_gain_at_year_end.long_term !== 0 ||
     input.no_form1099b_for_disposition ||
-    review.filed_2024_form8997_reference !== prior.filed_form8997_reference ||
+    review.filed_prior_year_form8997_reference !==
+      prior.filed_form8997_reference ||
     review.prior_form8997_pdf.source_document_reference !==
       prior.filed_form8997_reference ||
-    review.reviewed_2025_workpaper_reference !==
+    review.reviewed_annual_workpaper_reference !==
       input.reviewed_annual_workpaper_reference ||
     lot.reviewed_workpaper_reference !==
       input.reviewed_annual_workpaper_reference ||

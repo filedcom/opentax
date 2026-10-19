@@ -2,6 +2,7 @@ import type { NodeResult } from "../../../../../../../core/types/tax-node.ts";
 import { TaxNode } from "../../../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../../../core/types/output-nodes.ts";
 import type { NodeContext } from "../../../../../../../core/types/node-context.ts";
+import { configForYear } from "../../../../config/index.ts";
 import {
   calculateForm8997Statement,
   inputSchema,
@@ -22,8 +23,16 @@ class F8997Node extends TaxNode<typeof inputSchema> {
   readonly inputSchema = inputSchema;
   readonly outputNodes = new OutputNodes([]);
 
-  compute(_ctx: NodeContext, rawInput: Form8997Input): NodeResult {
+  compute(ctx: NodeContext, rawInput: Form8997Input): NodeResult {
     const input = inputSchema.parse(rawInput);
+    if (input.tax_year !== ctx.taxYear) {
+      throw new Error(`Form 8997 ledger must be for tax year ${ctx.taxYear}`);
+    }
+    if (configForYear(ctx.taxYear).qofDeferralPeriodEnds) {
+      throw new Error(
+        `Form 8997 end-of-deferral recognition (Part III Section B, Part V) for tax year ${ctx.taxYear} is not computed`,
+      );
+    }
     const statement = calculateForm8997Statement(input);
     if (statement.part_ii.rows.length > 0 || statement.part_iii.rows.length > 0) {
       throw new Error(

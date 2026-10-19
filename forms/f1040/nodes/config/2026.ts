@@ -158,6 +158,10 @@ export const config2026: F1040Config = {
   // Notice 2026-25 sec. 3; standard $39,870 ($109.23 a day), draft 2026
   // Instructions for Form 2555, line 29b.
   foreignHousingLimits: noticeHousingLimits,
+  // IRC §1400Z-2(b)(1)(B): deferral ends December 31, 2026; draft 2026
+  // Form 8997 (created 5/29/26) Part III Section B recognizes it and
+  // reserves Part IV.
+  qofDeferralPeriodEnds: true,
   // P.L. 119-21 §70323 strikes the net deemed tangible income return
   // (net CFC tested income) for CFC tax years beginning after 2025.
   cfcNetDeemedTangibleIncomeReturn: false,

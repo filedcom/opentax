@@ -677,6 +677,8 @@ export const config2025: F1040Config = {
   feieHousingBase: FEIE_HOUSING_BASE_2025,
   // Notice 2025-16.
   foreignHousingLimits: noticeHousingLimits,
+  // IRC §1400Z-2(b)(1)(B): deferral continues through December 31, 2026.
+  qofDeferralPeriodEnds: false,
   // IRC §951A(b)(2) before P.L. 119-21.
   cfcNetDeemedTangibleIncomeReturn: true,
   // Rev. Proc. 2024-40 §§4.37, 4.38; 2025 Instructions for Form 8854.

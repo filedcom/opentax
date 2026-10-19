@@ -192,6 +192,10 @@ export interface F1040Config {
   /** IRC §951A(b)(2): tested income is reduced by the net deemed tangible income return for CFC years beginning in the year. */
   cfcNetDeemedTangibleIncomeReturn: boolean;
 
+  // ── Qualified opportunity funds (8997) ─────────────────────────────────
+  /** IRC §1400Z-2(b)(1)(B): the year ends the deferral period, so remaining deferred gain is recognized at year end. */
+  qofDeferralPeriodEnds: boolean;
+
   // ── Expatriation (8854) ──────────────────────────────────────────────────
   /** IRC §877(a)(2)(A): covered above this average annual net income tax for an expatriation in the year. */
   expatriationAverageTaxThreshold: number;
