@@ -1,6 +1,11 @@
 import { z } from "zod";
 import { transactionSchema as filedTransactionSchema } from "../../../../intermediate/forms/income/investments/form8949/index.ts";
-import { dateSchema, type F8854Input, inputSchema } from "./index.ts";
+import {
+  dateSchema,
+  type F8854Input,
+  form8854YearAmounts,
+  inputSchema,
+} from "./index.ts";
 import {
   allocateMarkToMarketExclusion,
   wholeDollarAssets,
@@ -38,7 +43,10 @@ export function reconcileForm8854Form8949Properties(
   const transactions = z.array(filedTransactionSchema).parse(
     filedForm8949 ?? [],
   );
-  const allocations = allocateMarkToMarketExclusion(assets);
+  const allocations = allocateMarkToMarketExclusion(
+    assets,
+    form8854YearAmounts(input.expatriation_date).markToMarketExclusion,
+  );
   const matches = assets.flatMap((asset, index) => {
     if (asset.reported_form_code !== ReportedFormCode.Form8949) return [];
     const allocation = allocations[index];

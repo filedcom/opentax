@@ -3,7 +3,7 @@ import {
   dateSchema,
   ExpatriateType,
   partISchema,
-  taxStatus2025Schema,
+  taxStatusSchema,
 } from "./index.ts";
 import { ReportedFormCode } from "./section-c.ts";
 
@@ -20,10 +20,9 @@ const cents = z.number().finite().nonnegative().refine(
   "Annual Form 8854 distributions must have safe cent precision",
 );
 const positiveCents = cents.refine((amount) => amount > 0);
-const annualDate = dateSchema.refine(
-  (date) => date.startsWith("2025-"),
-  "Annual Form 8854 distribution or disposition date must be in 2025",
-);
+// Distributions and dispositions fall in the statement year; the input checks
+// they share one year and the node checks it is the return year.
+const annualDate = dateSchema;
 
 const distributionSchema = z.object({
   distribution_date: annualDate,
@@ -70,10 +69,14 @@ const deferredPropertySchema = z.object({
   prior_form8854_document_id: documentId,
   prior_mark_to_market_gain_or_loss_amount: dollars,
   prior_deferred_tax_amount: positiveDollars,
-  disposition: z.discriminatedUnion("disposed_in_2025", [
-    z.object({ disposed_in_2025: z.literal(false) }).strict(),
+  disposition: z.discriminatedUnion("disposed_in_tax_year", [
     z.object({
-      disposed_in_2025: z.literal(true),
+      disposed_in_tax_year: z.literal(false),
+      disposed_in_2025: z.never().optional(),
+    }).strict(),
+    z.object({
+      disposed_in_tax_year: z.literal(true),
+      disposed_in_2025: z.never().optional(),
       entire_deferred_property_disposed_confirmed: z.literal(true),
       disposition_date: annualDate,
       reported_form_code: z.nativeEnum(ReportedFormCode),
@@ -91,7 +94,7 @@ const deferredPropertySchema = z.object({
       payment_confirmation_attachment_file_name: z.string().trim().min(1),
     }).strict(),
   ]).superRefine((disposition, ctx) => {
-    if (!disposition.disposed_in_2025) return;
+    if (!disposition.disposed_in_tax_year) return;
     if (
       (disposition.actual_sale_adjustment_codes === undefined) !==
         (disposition.actual_sale_adjustment_amount === undefined)
@@ -112,7 +115,7 @@ const deferredPropertySchema = z.object({
   }),
 }).strict().superRefine((property, ctx) => {
   if (
-    property.disposition.disposed_in_2025 &&
+    property.disposition.disposed_in_tax_year &&
     property.disposition.deferred_tax_paid_amount !==
       property.prior_deferred_tax_amount
   ) {
@@ -144,7 +147,7 @@ const annualTrustSchema = annualItemSchema.extend({
 const priorObligationLedgerSchema = z.object({
   source_document_id: documentId,
   source_sha256: z.string().regex(/^[a-f0-9]{64}$/),
-  filed_tax_year: z.number().int().min(2008).max(2024),
+  filed_tax_year: z.number().int().min(2008),
   irs_acceptance_reference: z.string().trim().min(1),
   deferred_properties: z.array(
     z.object({
@@ -172,13 +175,16 @@ const priorObligationLedgerSchema = z.object({
 }).strict();
 
 export const annualInputSchema = z.object({
+  // IRC §877A(g)(1) applies to expatriation on or after June 17, 2008; the
+  // node checks it precedes the return year.
   expatriation_date: dateSchema.refine(
-    (date) => date >= "2008-06-17" && date < "2025-01-01",
-    "2025 annual Form 8854 covers expatriation from June 17, 2008 through 2024",
+    (date) => date >= "2008-06-17",
+    "Annual Form 8854 covers expatriation from June 17, 2008",
   ),
   expatriate_type: z.nativeEnum(ExpatriateType),
   part_i: partISchema,
-  tax_status_2025: taxStatus2025Schema,
+  tax_status: taxStatusSchema,
+  tax_status_2025: z.never().optional(),
   prior_form8854_obligations_confirmed_complete: z.literal(true),
   prior_form8854_obligation_ledger: priorObligationLedgerSchema,
   original_form8854_mailed_confirmed: z.literal(true),
@@ -300,9 +306,26 @@ export const annualInputSchema = z.object({
       path: ["deferred_properties"],
     });
   }
+  const eventYears = new Set(
+    annualEventDates(input).map((date) => date.slice(0, 4)),
+  );
+  if (
+    eventYears.size > 1 ||
+    [...eventYears].some((year) =>
+      input.expatriation_date >= `${year}-01-01` ||
+      ledger.filed_tax_year >= Number(year)
+    )
+  ) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message:
+        "Annual Form 8854 events fall in one year after the expatriation and prior filing",
+      path: ["deferred_properties"],
+    });
+  }
   const dispositionTransactionIds = input.deferred_properties.flatMap(
     (property) =>
-      property.disposition.disposed_in_2025
+      property.disposition.disposed_in_tax_year
         ? [property.disposition.reported_transaction_id]
         : [],
   );
@@ -340,14 +363,14 @@ export const annualInputSchema = z.object({
     ),
   ];
   if (
-    input.tax_status_2025 === "FULL_YEAR_US_CITIZEN_OR_RESIDENT" &&
+    input.tax_status === "FULL_YEAR_US_CITIZEN_OR_RESIDENT" &&
     reportedDistributions.length > 0
   ) {
     ctx.addIssue({
       code: z.ZodIssueCode.custom,
       message:
         "Form 1042-S code 38/39 payments cannot use the covered-expatriate withholding route during a full-year U.S. citizen or resident period",
-      path: ["tax_status_2025"],
+      path: ["tax_status"],
     });
   }
   for (
@@ -419,3 +442,18 @@ export const annualInputSchema = z.object({
 });
 
 export type F8854AnnualInput = z.infer<typeof annualInputSchema>;
+
+/** Every distribution and disposition date the annual statement reports. */
+export function annualEventDates(input: F8854AnnualInput): string[] {
+  return [
+    ...input.eligible_deferred_compensation_items,
+    ...input.nongrantor_trust_interests,
+  ].flatMap((item) => item.distributions.map((row) => row.distribution_date))
+    .concat(
+      input.deferred_properties.flatMap((property) =>
+        property.disposition.disposed_in_tax_year
+          ? [property.disposition.disposition_date]
+          : []
+      ),
+    );
+}

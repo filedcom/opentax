@@ -85,6 +85,7 @@ export type DeferredPropertyAllocation = {
 export function calculateSectionDDeferral(
   rawSectionC: SectionC,
   rawSectionD: SectionD,
+  exclusion: number,
 ): {
   taxEligibleForDeferral: number;
   totalDeferredTax: number;
@@ -97,7 +98,7 @@ export function calculateSectionDDeferral(
     throw new Error("Form 8854 Section D supports at most 20 property rows");
   }
   const assets = wholeDollarAssets(sectionC);
-  const allocations = allocateMarkToMarketExclusion(assets);
+  const allocations = allocateMarkToMarketExclusion(assets, exclusion);
   const gainRows = allocations.map((row, index) => ({
     itemId: assets[index].item_id,
     description: row.description,

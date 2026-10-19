@@ -26,8 +26,8 @@ test("initial Form 8854 cash-only source reaches native and matching PDF Section
   const [pdf] = form8854InitialPdf.instances!(source, form8992Filer, pending);
   assertEquals(form8854InitialPdf.pageIndices!(pdf), [0, 1, 2, 3, 4]);
   assertEquals(pdf.initial_statement, true);
-  assertEquals(pdf.prior_tax_2024, 80);
-  assertEquals(pdf.prior_tax_2023, 0);
+  assertEquals(pdf.prior_tax_first_year_before, 80);
+  assertEquals(pdf.prior_tax_second_year_before, 0);
   assertEquals(pdf.cash_fmv, 100_000);
   assertEquals(pdf.cash_basis, 100_000);
   assertEquals(pdf.total_assets_fmv, 100_000);

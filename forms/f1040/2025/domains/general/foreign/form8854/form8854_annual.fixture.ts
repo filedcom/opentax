@@ -17,7 +17,7 @@ export const form8854AnnualNoEvent = {
     citizenships: [{ country_code: "US", acquired_date: "1980-01-01" }],
     us_citizenship_acquisition: "BIRTH",
   },
-  tax_status_2025: "FULL_YEAR_US_CITIZEN_OR_RESIDENT",
+  tax_status: "FULL_YEAR_US_CITIZEN_OR_RESIDENT",
   prior_form8854_obligations_confirmed_complete: true,
   prior_form8854_obligation_ledger: {
     source_document_id: "DOC-PRIOR",
@@ -42,7 +42,7 @@ export const form8854AnnualNoEvent = {
     prior_form8854_document_id: "DOC-PRIOR",
     prior_mark_to_market_gain_or_loss_amount: 111_000,
     prior_deferred_tax_amount: 50_000,
-    disposition: { disposed_in_2025: false },
+    disposition: { disposed_in_tax_year: false },
   }],
   eligible_deferred_compensation_items: [],
   nongrantor_trust_interests: [],

@@ -187,6 +187,12 @@ export interface F1040Config {
   feieHousingBase: number;
   /** Form 2555 line 29b: the year's IRC 911(c)(2)(B) housing-limit notice. */
   foreignHousingLimits: HousingLimitTable;
+
+  // ── Expatriation (8854) ──────────────────────────────────────────────────
+  /** IRC §877(a)(2)(A): covered above this average annual net income tax for an expatriation in the year. */
+  expatriationAverageTaxThreshold: number;
+  /** IRC §877A(a)(3): mark-to-market exclusion for taxable years beginning in the year. */
+  expatriationMarkToMarketExclusion: number;
   /** IRC §40A(b)(4) small agri-biodiesel producer credit sale-date window, as amended by P.L. 119-21. */
   smallAgriBiodieselSales: {
     readonly twentyCentRateFrom: string;

@@ -158,6 +158,9 @@ export const config2026: F1040Config = {
   // Notice 2026-25 sec. 3; standard $39,870 ($109.23 a day), draft 2026
   // Instructions for Form 2555, line 29b.
   foreignHousingLimits: noticeHousingLimits,
+  // RP §4.37 ($211,000) and §4.38 ($910,000).
+  expatriationAverageTaxThreshold: 211_000,
+  expatriationMarkToMarketExclusion: 910_000,
   // Instructions for Form 8864 (Rev. December 2025): P.L. 119-21 raises the
   // credit to $.20 a gallon for fuel sold or used after June 30, 2025, and
   // ends it for fuel sold or used after 2026.

@@ -1,6 +1,7 @@
 import { element, elements } from "../../../../../../mef/xml.ts";
 import {
   type F8854Input,
+  form8854YearAmounts,
   inputSchema,
   isCoveredExpatriate,
 } from "../../../../../../nodes/inputs/general/foreign/f8854/index.ts";
@@ -23,7 +24,11 @@ export function buildForm8854SectionD(rawInput: F8854Input): string {
   if (input.section_c === null) {
     throw new Error("Section D deferral requires Section C property facts");
   }
-  const deferral = calculateSectionDDeferral(input.section_c, input.section_d);
+  const deferral = calculateSectionDDeferral(
+    input.section_c,
+    input.section_d,
+    form8854YearAmounts(input.expatriation_date).markToMarketExclusion,
+  );
   if (!deferral) throw new Error("Section D election calculation is missing");
   return elements("ExptrtTaxDeferralGrp", [
     element("TaxDeferSect877AbElectionInd", "true"),
@@ -50,7 +55,11 @@ export function buildForm8854DeferredPropertyStatement(
       "Section D deferral requires covered expatriate Section C facts",
     );
   }
-  const deferral = calculateSectionDDeferral(input.section_c, input.section_d);
+  const deferral = calculateSectionDDeferral(
+    input.section_c,
+    input.section_d,
+    form8854YearAmounts(input.expatriation_date).markToMarketExclusion,
+  );
   if (!deferral) throw new Error("Section D election calculation is missing");
   return elements(
     "DeferredPropertyTaxElectStmt",

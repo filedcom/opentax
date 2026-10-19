@@ -1,4 +1,3 @@
-import { MARK_TO_MARKET_EXCLUSION_2025 } from "./constants.ts";
 import {
   type MarkToMarketAsset,
   markToMarketAssetSchema,
@@ -26,11 +25,12 @@ export function wholeDollarAssets(section: SectionC): MarkToMarketAsset[] {
 }
 
 // Part II, Section C, line 2: only properties with built-in gain share the
-// $890,000 exclusion. This returns the per-property amounts needed for the
+// year's IRC §877A(a)(3) exclusion (form8854YearAmounts). This returns the per-property amounts needed for the
 // eventual statement and income-form routing. It does not decide whether a
 // built-in loss is deductible or whether an asset is subject to mark-to-market.
 export function allocateMarkToMarketExclusion(
   rawAssets: readonly MarkToMarketAsset[],
+  exclusion: number,
 ): MarkToMarketAssetAllocation[] {
   const assets = rawAssets.map((asset) => markToMarketAssetSchema.parse(asset));
   const ids = new Set<string>();
@@ -52,7 +52,7 @@ export function allocateMarkToMarketExclusion(
   }
   const exclusionCents = Math.min(
     totalPositiveCents,
-    MARK_TO_MARKET_EXCLUSION_2025 * 100,
+    Math.round(exclusion * 100),
   );
   const allocatedCents = Array<number>(assets.length).fill(0);
   if (exclusionCents > 0) {

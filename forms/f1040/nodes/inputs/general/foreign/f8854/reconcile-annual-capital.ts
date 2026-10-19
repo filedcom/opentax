@@ -11,7 +11,7 @@ export function reconcileAnnualForm8854Form8949Properties(
 ): { itemId: string; transactionId: string; gainOrLoss: number }[] {
   const input = annualInputSchema.parse(rawAnnual);
   const properties = input.deferred_properties.filter((property) =>
-    property.disposition.disposed_in_2025 &&
+    property.disposition.disposed_in_tax_year &&
     property.disposition.reported_form_code === ReportedFormCode.Form8949
   );
   if (properties.length === 0) return [];
@@ -20,7 +20,7 @@ export function reconcileAnnualForm8854Form8949Properties(
   );
   return properties.map((property) => {
     const disposition = property.disposition;
-    if (!disposition.disposed_in_2025) {
+    if (!disposition.disposed_in_tax_year) {
       throw new Error("Annual Form 8854 disposition state changed");
     }
     const matches = transactions.filter((transaction) =>

@@ -63,7 +63,7 @@ export function buildForm8854PartIII(rawInput: F8854AnnualInput): string {
           property.prior_mark_to_market_gain_or_loss_amount,
         ),
         element("DeferredTaxAmt", property.prior_deferred_tax_amount),
-        property.disposition.disposed_in_2025
+        property.disposition.disposed_in_tax_year
           ? element("DispositionDt", property.disposition.disposition_date)
           : "",
       ])
@@ -101,7 +101,7 @@ export function buildForm8854Annual(
   const paymentFileNames = [
     ...new Set(input.deferred_properties.flatMap(
       (property) =>
-        property.disposition.disposed_in_2025
+        property.disposition.disposed_in_tax_year
           ? [property.disposition.payment_confirmation_attachment_file_name]
           : [],
     )),
@@ -141,7 +141,7 @@ export const form8854Annual: MefFormDescriptor<"f8854_annual", unknown> = {
     if (Array.isArray(fields) && fields.length === 0) return "";
     if (context?.pending?.f8854 !== undefined) {
       throw new Error(
-        "One taxpayer cannot file both initial and annual Form 8854 for 2025",
+        "One taxpayer cannot file both initial and annual Form 8854 for one year",
       );
     }
     const input = validateAnnualForm8854Filing(annualInputSchema.parse(fields));
