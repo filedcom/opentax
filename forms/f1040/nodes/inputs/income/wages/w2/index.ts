@@ -1438,7 +1438,12 @@ class W2Node extends TaxNode<typeof inputSchema> {
         this.outputNodes.output(eitc, { earned_income: earnedIncome }),
       );
       outputs.push(
-        this.outputNodes.output(f8812, { auto_earned_income: earnedIncome }),
+        this.outputNodes.output(f8812, {
+          auto_earned_income: earnedIncome,
+          // W-2 box 12 code Q: Schedule 8812 Earned Income Worksheet line 1b.
+          auto_nontaxable_combat_pay:
+            combatPayFields(input.w2s).line1i_combat_pay ?? 0,
+        }),
       );
     }
 
