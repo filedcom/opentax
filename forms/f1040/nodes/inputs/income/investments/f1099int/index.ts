@@ -333,15 +333,6 @@ class F1099intNode extends TaxNode<typeof inputSchema> {
     ];
 
     for (const item of int1099s) {
-      if (item.investment_property_for_form4952 === undefined) {
-        const interest = computeTaxableInterestNet(item);
-        if (interest > 0) {
-          outputs.push(this.outputNodes.output(form4952, {
-            default_1099_interest: interest,
-          }));
-        }
-        continue;
-      }
       if (item.investment_property_for_form4952 !== true) continue;
       const interest = computeTaxableInterestNet(item);
       if (interest < 0) {

@@ -326,19 +326,9 @@ test("f1099div: sourced foreign qualified dividends contradict a zero-preference
   );
 });
 
-test("1099-DIV routes dividends to Form 4952 by default and as sources when affirmed", () => {
+test("1099-DIV routes investment-property dividends and capital gain to Form 4952 only when affirmed", () => {
   assertEquals(
-    findOutput(compute([minimalItem({ box1a: 500 })]), "form4952")?.fields,
-    { default_1099_dividends: 500 },
-  );
-  assertEquals(
-    findOutput(
-      compute([minimalItem({
-        box1a: 500,
-        investment_property_for_form4952: false,
-      })]),
-      "form4952",
-    ),
+    findOutput(compute([minimalItem({ box1a: 500 })]), "form4952"),
     undefined,
   );
   const result = compute([minimalItem({
