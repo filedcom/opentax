@@ -67,7 +67,7 @@ export function assertAbleEmploymentW2Sources(
 export function assertPublicAbleContributionSources(
   rawGeneral: unknown,
   rawW2: unknown,
-  rawBusinesses?: unknown,
+  rawBusinesses: unknown,
   rawFarms: unknown,
   taxYear: number,
 ): void {
