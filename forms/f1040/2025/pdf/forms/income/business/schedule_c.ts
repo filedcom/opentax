@@ -30,7 +30,6 @@ import {
   calculateForm5884,
   inputSchema as form5884InputSchema,
 } from "../../../../../nodes/inputs/credits/business/f5884/index.ts";
-import { mefTaxYear } from "../../../../mef/support/year-config.ts";
 
 // Field names and locations are from the two-page 2025 Schedule C AcroForm.
 const page1 = "topmostSubform[0].Page1[0].";
@@ -398,7 +397,8 @@ function proprietorIdentity(
   return { proprietor_name: name, proprietor_ssn: ssn.replaceAll("-", "") };
 }
 
-export const scheduleCPdf: PdfFormDescriptor = {
+export function scheduleCPdfFor(taxYear: number): PdfFormDescriptor {
+  return {
   pendingKey: "schedule_c",
   pdfUrl: "https://www.irs.gov/pub/irs-prior/f1040sc--2025.pdf",
   fields,
@@ -408,7 +408,7 @@ export const scheduleCPdf: PdfFormDescriptor = {
       assertFarmWotcReturn(
         allPending.form8995a ?? allPending.form8995,
         allPending,
-        mefTaxYear(),
+        taxYear,
         undefined,
         { key: "schedule_c", value: raw },
       );
@@ -427,7 +427,7 @@ export const scheduleCPdf: PdfFormDescriptor = {
       assertCurrentYearSection481aMatches(
         allPending.f3115,
         input.section481a_adjustments ?? [],
-        2025,
+        taxYear,
       );
     }
     if (input.schedule_cs.length === 0) {
@@ -472,7 +472,7 @@ export const scheduleCPdf: PdfFormDescriptor = {
     items.forEach((item) =>
       assertScheduleCInterestExempt(
         item,
-        CONFIG_BY_YEAR[2025].smallBizGrossReceipts,
+        CONFIG_BY_YEAR[taxYear].smallBizGrossReceipts,
       )
     );
     const wotc = wotcReductionsByBusiness(input);
@@ -601,7 +601,7 @@ export const scheduleCPdf: PdfFormDescriptor = {
         ? `  Reference: ${String(fields.business_reference)}`
         : "");
     await appendExpenseStatement(document, {
-      title: "Schedule C (2025) - Part V other expenses",
+      title: `Schedule C (${taxYear}) - Part V other expenses`,
       proprietorName: String(fields.proprietor_name ?? ""),
       proprietorSsn: String(fields.proprietor_ssn ?? ""),
       activityLabel: businessLabel,
@@ -610,4 +610,7 @@ export const scheduleCPdf: PdfFormDescriptor = {
       expectedTotal: Number(fields.part_v_statement_total),
     });
   },
-};
+  };
+}
+
+export const scheduleCPdf: PdfFormDescriptor = scheduleCPdfFor(2025);

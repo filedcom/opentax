@@ -613,19 +613,24 @@ async function buildPdfBytesInternal(
   assertSingleFarmQbiReturn(normalized, options.taxYear);
   if (normalized.f1040) {
     assertF1040FinalHeader(normalized.f1040, filer);
-    assertLine1hSupportedSource(normalized.f1040, 2025, normalized, filer);
+    assertLine1hSupportedSource(
+      normalized.f1040,
+      options.taxYear,
+      normalized,
+      filer,
+    );
   }
   assertGeneral1040HeaderSource(normalized);
-  assertGeneral1040DependentSource(normalized, 2025);
+  assertGeneral1040DependentSource(normalized, options.taxYear);
   assertGeneral1040DepositSource(normalized, filer);
   if (filer) assert1098EInterestSource(normalized, filer);
   assertExtensionPaymentSource(normalized, filer);
-  assert1099RRecipientOwner(normalized.f1099r, filer, 2025);
-  assertPositiveW2GRecipient(normalized.w2g, filer, 2025);
+  assert1099RRecipientOwner(normalized.f1099r, filer, options.taxYear);
+  assertPositiveW2GRecipient(normalized.w2g, filer, options.taxYear);
   assertNecWithholdingRecipient(normalized.f1099nec, filer);
   assert1099BRecipientOwner(normalized.f1099b, filer, options.taxYear);
   assertNoRepeatedBrokerSaleSources(normalized.f1099b, normalized.f8949);
-  assertCapitalSaleSourceRows(normalized, 2025);
+  assertCapitalSaleSourceRows(normalized, options.taxYear);
   assertPatrIssuedCopies(normalized.f1099patr);
   assertPatrWithholdingRecipient(normalized.f1099patr, filer);
   assertLine1bHouseholdWageSource(normalized);
@@ -669,13 +674,13 @@ async function buildPdfBytesInternal(
   assertSchedule2W2Line13Sources(normalized);
   assertSchedule2W2Line17KSource(normalized);
   assertSchedule2Line17HSources(normalized, filer);
-  assertSchedule2Form4137Tax(normalized, 2025);
-  assertLine1cForm4137Income(normalized, 2025);
-  assertSchedule2Form8919Tax(normalized, 2025);
-  assertLine1gForm8919Wages(normalized, 2025);
-  assertSchedule2ScheduleHTax(normalized, 2025);
+  assertSchedule2Form4137Tax(normalized, options.taxYear);
+  assertLine1cForm4137Income(normalized, options.taxYear);
+  assertSchedule2Form8919Tax(normalized, options.taxYear);
+  assertLine1gForm8919Wages(normalized, options.taxYear);
+  assertSchedule2ScheduleHTax(normalized, options.taxYear);
   assertSchedule2Form8960Tax(normalized);
-  assertSchedule2ScheduleSETax(normalized, 2025);
+  assertSchedule2ScheduleSETax(normalized, options.taxYear);
   assertSchedule2Form8828Tax(normalized);
   assertSchedule2Form8936Repayment(normalized);
   assertSchedule3Form8859Credit(normalized);
@@ -686,17 +691,17 @@ async function buildPdfBytesInternal(
   assertF8288WithholdingOwner(normalized.f8288, filer);
   assertSocialSecurityBenefitSource(normalized);
   assertBenefitStatementOwner(normalized, filer);
-  assertRrb1099rPensionSource(normalized, filer, 2025);
-  assertIra1099rIncomeSource(normalized, 2025);
+  assertRrb1099rPensionSource(normalized, filer, options.taxYear);
+  assertIra1099rIncomeSource(normalized, options.taxYear);
   assertForm8915FSourceLinks(normalized);
   assertKIncomeClassification(normalized);
   if (filer) {
-    assertEitcChildSources(pending, filer, 2025);
+    assertEitcChildSources(pending, filer, options.taxYear);
     assertKReportedErrorSources(normalized, filer);
     assertScheduleCReceiptSourceIdentity(normalized, filer);
     assertScheduleCStatutoryW2Sources(normalized, filer);
     assertKWithholdingSourceIdentity(normalized, filer);
-    assertKPersonalSaleSources(pending, filer, 2025);
+    assertKPersonalSaleSources(pending, filer, options.taxYear);
     assertSchedule1Box3SourceIdentity(normalized, filer);
     assertSchedule1Box8SourceIdentity(normalized, filer);
     assertSchedule1Form8814Source(normalized);

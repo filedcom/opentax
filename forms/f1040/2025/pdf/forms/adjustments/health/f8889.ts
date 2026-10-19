@@ -1,4 +1,3 @@
-import { mefTaxYear } from "../../../../mef/support/year-config.ts";
 import { z } from "zod";
 import type { PdfFieldEntry, PdfFormDescriptor } from "../../../review-support/form-descriptor.ts";
 import {
@@ -172,7 +171,8 @@ const fields: ReadonlyArray<PdfFieldEntry> = [
   },
 ];
 
-export const form8889Pdf: PdfFormDescriptor = {
+export function form8889PdfFor(taxYear: number): PdfFormDescriptor {
+  return {
   pendingKey: "form8889",
   pdfUrl: "https://www.irs.gov/pub/irs-prior/f8889--2025.pdf",
   instances(pending, filer, allPending) {
@@ -213,13 +213,13 @@ export const form8889Pdf: PdfFormDescriptor = {
         );
       }
     }
-    reconcileSpouseOnlyForm8889(forms, allPending, filer, mefTaxYear());
-    reconcileDatedExceptionForm8889(forms, allPending, filer, mefTaxYear());
-    reconcileCode2Form8889(forms, allPending, filer, mefTaxYear());
-    reconcilePrimaryLastMonthRuleForm8889(forms, allPending, filer, mefTaxYear());
-    reconcileRolloverForm8889(forms, allPending, filer, mefTaxYear());
-    reconcilePairedForm8889(forms, allPending, filer, mefTaxYear());
-    reconcilePrimaryMixedMedicalForm8889(forms, allPending, filer, mefTaxYear());
+    reconcileSpouseOnlyForm8889(forms, allPending, filer, taxYear);
+    reconcileDatedExceptionForm8889(forms, allPending, filer, taxYear);
+    reconcileCode2Form8889(forms, allPending, filer, taxYear);
+    reconcilePrimaryLastMonthRuleForm8889(forms, allPending, filer, taxYear);
+    reconcileRolloverForm8889(forms, allPending, filer, taxYear);
+    reconcilePairedForm8889(forms, allPending, filer, taxYear);
+    reconcilePrimaryMixedMedicalForm8889(forms, allPending, filer, taxYear);
     const numericKeys = new Set(fields.filter((entry) =>
       entry.domainKey.startsWith("print_line") &&
       entry.domainKey !== "print_line1_coverage" &&
@@ -260,4 +260,7 @@ export const form8889Pdf: PdfFormDescriptor = {
     return forms;
   },
   fields,
-};
+  };
+}
+
+export const form8889Pdf: PdfFormDescriptor = form8889PdfFor(2025);
