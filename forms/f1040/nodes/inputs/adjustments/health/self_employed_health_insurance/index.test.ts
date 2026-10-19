@@ -28,16 +28,19 @@ test("requires explicit Marketplace overlap review before routing", () => {
   );
 });
 
-test("premium-only claims cannot bypass the Form 7206 business limit", () => {
-  assertThrows(
-    () => compute([{ premiums_paid: 1_000 }]),
-    Error,
-    "identified Form 7206 plan",
-  );
-  assertThrows(
-    () => compute([{ premiums_paid: 3_000 }, { premiums_paid: 2_000 }]),
-    Error,
-    "identified Form 7206 plan",
+// 2025 Instructions for Form 7206: premiums for months eligible for a
+// subsidized employer plan are left out of line 1; the rest go to Form 7206,
+// which applies the business-earnings limit.
+test("positive premiums route to Form 7206 less employer-plan-eligible months", () => {
+  assertEquals(
+    self_employed_health_insurance.compute(ctx, {
+      items: [
+        { premiums_paid: 3_000, employer_plan_eligible_month_premiums: 500 },
+        { premiums_paid: 2_000 },
+      ],
+      marketplace_ptc_premium_overlap: false,
+    }).outputs,
+    [{ nodeType: "form7206", fields: { premium_only_premiums: 4_500 } }],
   );
 });
 
@@ -47,14 +50,12 @@ test("returns empty outputs when premiums_paid is zero", () => {
 });
 
 test("TY2026 also routes positive premiums to Form 7206", () => {
-  assertThrows(
-    () =>
-      self_employed_health_insurance.compute(
-        { taxYear: 2026, formType: "f1040" },
-        { items: [{ premiums_paid: 1_000 }], marketplace_ptc_premium_overlap: false },
-      ),
-    Error,
-    "Form 7206",
+  assertEquals(
+    self_employed_health_insurance.compute(
+      { taxYear: 2026, formType: "f1040" },
+      { items: [{ premiums_paid: 1_000 }], marketplace_ptc_premium_overlap: false },
+    ).outputs,
+    [{ nodeType: "form7206", fields: { premium_only_premiums: 1_000 } }],
   );
   assertEquals(
     self_employed_health_insurance.compute(

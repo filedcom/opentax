@@ -51,13 +51,16 @@ test("SEHI CLI stores the Marketplace answer in the canonical singleton", async 
           returnId,
           nodeType: "self_employed_health_insurance",
           dataJson: JSON.stringify({
-            items: [{ premiums_paid: 1200 }],
+            items: [{
+              premiums_paid: 1200,
+              employer_plan_eligible_month_premiums: 1300,
+            }],
             marketplace_ptc_premium_overlap: false,
           }),
           baseDir: tmpDir,
         }),
       Error,
-      "enter form7206 instead",
+      "cannot exceed premiums paid",
     );
     await assertRejects(
       () =>

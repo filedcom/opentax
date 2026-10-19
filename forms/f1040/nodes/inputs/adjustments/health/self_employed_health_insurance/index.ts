@@ -3,9 +3,10 @@ import type { NodeResult } from "../../../../../../../core/types/tax-node.ts";
 import { TaxNode } from "../../../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../../../core/types/output-nodes.ts";
 import type { NodeContext } from "../../../../../../../core/types/node-context.ts";
+import { form7206 } from "../../../../intermediate/forms/adjustments/health/form7206/index.ts";
 
-// Premiums alone cannot establish the business-earnings deduction limit.
-// Positive claims need the identified Form 7206 source route.
+// Premiums go to Form 7206, which limits them by the return's own business
+// earnings (Schedule C net profit less the SE tax and retirement deductions).
 
 // ── Per-item schema ───────────────────────────────────────────────────────────
 
@@ -13,6 +14,9 @@ export const itemSchema = z.object({
   // Total health insurance premiums paid — medical, dental, and vision
   // coverage for the taxpayer, spouse, and dependents
   premiums_paid: z.number().nonnegative(),
+  // Premiums paid for months the owner was eligible for a subsidized
+  // employer plan; Form 7206 line 1 leaves them out.
+  employer_plan_eligible_month_premiums: z.number().nonnegative().optional(),
 });
 
 // ── Input schema ─────────────────────────────────────────────────────────────
@@ -29,12 +33,16 @@ export const inputSchema = z.object({
         "Marketplace PTC overlap requires the Publication 974 deduction calculation; do not enter a premium-only deduction",
     });
   }
-  if (input.items.some((item) => item.premiums_paid > 0)) {
+  if (
+    input.items.some((item) =>
+      (item.employer_plan_eligible_month_premiums ?? 0) > item.premiums_paid
+    )
+  ) {
     ctx.addIssue({
       code: z.ZodIssueCode.custom,
       path: ["items"],
       message:
-        "Positive self-employed health insurance premiums require an identified Form 7206 plan and business earnings calculation; enter form7206 instead",
+        "Employer-plan-eligible month premiums cannot exceed premiums paid",
     });
   }
 });
@@ -46,7 +54,7 @@ type SehiInput = z.infer<typeof inputSchema>;
 class SelfEmployedHealthInsuranceNode extends TaxNode<typeof inputSchema> {
   readonly nodeType = "self_employed_health_insurance";
   readonly inputSchema = inputSchema;
-  readonly outputNodes = new OutputNodes([]);
+  readonly outputNodes = new OutputNodes([form7206]);
 
   compute(_ctx: NodeContext, rawInput: SehiInput): NodeResult {
     const input = inputSchema.parse(rawInput);
@@ -55,12 +63,20 @@ class SelfEmployedHealthInsuranceNode extends TaxNode<typeof inputSchema> {
         "Self-employed health insurance Marketplace PTC overlap requires Publication 974 deduction calculation",
       );
     }
-    if (input.items.some((item) => item.premiums_paid > 0)) {
-      throw new Error(
-        "Self-employed health insurance needs an identified Form 7206 plan and business earnings calculation",
-      );
-    }
-    return { outputs: [] };
+    const premiums = input.items.reduce(
+      (sum, item) =>
+        sum + item.premiums_paid -
+        (item.employer_plan_eligible_month_premiums ?? 0),
+      0,
+    );
+    if (premiums <= 0) return { outputs: [] };
+    return {
+      outputs: [
+        this.outputNodes.output(form7206, {
+          premium_only_premiums: premiums,
+        }),
+      ],
+    };
   }
 }
 

@@ -7,6 +7,8 @@ import { ownerSourcesSchema } from "../../../taxes/self-employment/schedule_se/o
 import {
   calculateSingleScheduleCForm7206,
   money,
+  type Form7206Lines,
+  form7206LinesSchema,
   type SingleScheduleCPlan,
   singleScheduleCPlanSchema,
 } from "./single-source.ts";
@@ -77,6 +79,10 @@ export const inputSchema = z.object({
   schedule1_line16_source: money.optional(),
   marketplace_ptc_premium_overlap: z.boolean().optional(),
   pub974_single_business: pub974SingleBusinessSourceSchema.optional(),
+  // Premiums from the self-employed health insurance entry for months the
+  // owner could not join a subsidized employer plan; the limit comes from
+  // the return's own Schedule C, Schedule SE and retirement lines.
+  premium_only_premiums: money.optional(),
 }).strict();
 
 type Form7206Input = z.infer<typeof inputSchema>;
@@ -138,6 +144,51 @@ function buildOutput(
       ...(source ? { joint_owner_health_plan_source: source } : {}),
     }),
   ];
+}
+
+/**
+ * 2025 Form 7206 for one profitable Schedule C from return values: line 1
+ * premiums; line 4 net profit; line 7 the Schedule 1 line 15 SE tax
+ * deduction; line 9 the line 16 retirement deduction; line 14 the smaller of
+ * line 3 and line 13 (Instructions for Form 7206).
+ */
+function premiumOnlyLines(input: Form7206Input): Form7206Lines {
+  const premiums = input.premium_only_premiums ?? 0;
+  const profitable = (input.schedule_c_source?.businesses ?? []).filter((b) =>
+    b.line31_net_profit > 0
+  );
+  const farmProfit = (input.schedule_f_source?.businesses ?? []).some((b) =>
+    b.line34_net_profit > 0
+  );
+  if (
+    profitable.length !== 1 || farmProfit ||
+    input.schedule_se_source === undefined ||
+    input.schedule_se_source.farm_optional_method_elected
+  ) {
+    throw new Error(
+      "Form 7206 from premiums alone needs one profitable Schedule C and its Schedule SE; enter the Form 7206 plan for other business mixes",
+    );
+  }
+  const profit = profitable[0].line31_net_profit;
+  const seTax = input.schedule_se_source.line13_deduction;
+  const retirement = input.schedule1_line16_source ?? 0;
+  const line8 = Math.max(0, profit - seTax);
+  const line10 = Math.max(0, line8 - retirement);
+  return form7206LinesSchema.parse({
+    line1: premiums,
+    line2: 0,
+    line3: premiums,
+    line4: profit,
+    line5: profit,
+    line6: 1,
+    line7: seTax,
+    line8,
+    line9: retirement,
+    line10,
+    line12: 0,
+    line13: line10,
+    line14: Math.round(Math.min(premiums, line10)),
+  });
 }
 
 // ─── Node Class ───────────────────────────────────────────────────────────────
@@ -364,6 +415,20 @@ class Form7206Node extends TaxNode<typeof inputSchema> {
       };
     }
     const source = input.single_schedule_c_plan;
+    if (!source && (input.premium_only_premiums ?? 0) > 0) {
+      if (input.marketplace_ptc_premium_overlap === true) {
+        throw new Error(
+          "Form 7206 Marketplace PTC overlap requires Publication 974 deduction calculation",
+        );
+      }
+      const lines = premiumOnlyLines(input);
+      return {
+        outputs: [
+          ...buildOutput(lines.line14),
+          { nodeType: this.nodeType, fields: { ...lines } },
+        ],
+      };
+    }
     if (!source) {
       if (
         input.pub974_single_business === undefined &&
