@@ -152,6 +152,13 @@ export const inputSchema = z.object({
   auto_disability_pension_earned_income: z.number().nonnegative().optional(),
   // Number of other qualifying dependents for ODC (from general node)
   auto_other_dependents: z.number().int().nonnegative().optional(),
+  // Earned Income Worksheet lines for a wage-only return (agi_aggregator),
+  // less line 1b, and W-2 box 12 code Q nontaxable combat pay (w2).
+  auto_earned_income_worksheet: earnedIncomeWorksheetSchema.innerType().omit({
+    nontaxable_combat_pay: true,
+    schedule_se_line15: true,
+  }).optional(),
+  auto_nontaxable_combat_pay: z.number().nonnegative().optional(),
 });
 
 /** One Form 1040 line 28 election applies to the whole return. */
@@ -560,7 +567,18 @@ export function calculateSchedule8812Lines(
       "Schedule 8812 earned-income worksheet cannot be supplied both on an item and at the root",
     );
   }
-  const worksheetInput = input.earned_income_worksheet ?? itemWorksheets[0];
+  // Line 18a falls back to the return's own wage-only Earned Income
+  // Worksheet; a keyed worksheet or line 18a overrides it.
+  const derivedEarnedIncome = input.auto_earned_income_worksheet &&
+      input.line18a_earned_income === undefined &&
+      returnValue(items, "line18a_earned_income") === undefined
+    ? {
+      ...input.auto_earned_income_worksheet,
+      nontaxable_combat_pay: input.auto_nontaxable_combat_pay ?? 0,
+    }
+    : undefined;
+  const worksheetInput = input.earned_income_worksheet ?? itemWorksheets[0] ??
+    derivedEarnedIncome;
   if (creditWorksheet.worksheet_b_applies && !worksheetInput) {
     throw new Error(
       "Schedule 8812 Worksheet B needs its earned-income worksheet line 7 sources",

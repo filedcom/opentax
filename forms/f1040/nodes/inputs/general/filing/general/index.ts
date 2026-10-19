@@ -48,6 +48,7 @@ import {
   priorEicDisallowanceReviewSchema,
 } from "../../../../intermediate/forms/credits/earned-income/eitc/index.ts";
 import { f8812 } from "../../../credits/child/f8812/index.ts";
+import { f8863 } from "../../../credits/individual/f8863/index.ts";
 import { priorCreditDisallowanceReviewSchema } from "../../../credits/individual/f8862/index.ts";
 import { agi_aggregator } from "../../../../intermediate/aggregation/general/return-assembly/agi_aggregator/index.ts";
 import { form8959 } from "../../../../intermediate/forms/taxes/employment/form8959/index.ts";
@@ -1397,6 +1398,7 @@ class GeneralNode extends TaxNode<typeof inputSchema> {
     standard_deduction,
     eitc,
     f8812,
+    f8863,
     agi_aggregator,
     form4137,
     form8919,
@@ -1832,6 +1834,10 @@ class GeneralNode extends TaxNode<typeof inputSchema> {
     outputs.push(this.outputNodes.output(f8812, {
       auto_qualifying_children: counts.qualifying_child_tax_credit_count,
       auto_other_dependents: counts.other_dependent_count,
+      auto_filing_status: parsed.filing_status,
+    }));
+    // Form 8863 takes the return's filing status unless a student overrides it.
+    outputs.push(this.outputNodes.output(f8863, {
       auto_filing_status: parsed.filing_status,
     }));
 

@@ -370,11 +370,12 @@ test("agi_aggregator: routes agi to schedule_a", () => {
   assertEquals((schA!.fields as Record<string, number>).agi, 75_000);
 });
 
-test("agi_aggregator: wages-only produces 14 context outputs without Schedule 1 items", () => {
+test("agi_aggregator: wages-only produces 15 context outputs without Schedule 1 items", () => {
   // With wages only, line8=0 and line10=0 so no extra f1040 fields beyond line11_agi
-  // Outputs include Schedule 1-A MAGI and Schedule R line 14 AGI context.
+  // Outputs include Schedule 1-A MAGI, Schedule R line 14 AGI and Form 8863
+  // MAGI context.
   const result = compute({ line1a_wages: 50_000 });
-  assertEquals(result.outputs.length, 14);
+  assertEquals(result.outputs.length, 15);
 });
 
 // Schedule R (2025) line 14: "Enter the amount from Form 1040 or 1040-SR, line 11."

@@ -35,6 +35,7 @@ import { schedule_j_calculation } from "../../../../forms/taxes/income-averaging
 import { box11CodeJSourceSchema } from "../../../../../inputs/income/rental-passthrough/k1_partnership/box11_code_j.ts";
 import { box11CodeESourceSchema } from "../../../../../inputs/income/rental-passthrough/k1_partnership/box11_code_e.ts";
 import { box11CodeKSourceSchema } from "../../../../../inputs/income/rental-passthrough/k1_partnership/box11_code_k.ts";
+import { f8863 } from "../../../../../inputs/credits/individual/f8863/index.ts";
 
 // Fields that may arrive from multiple upstream nodes accumulate as arrays in the
 // executor pending dict. Declaring them accumulable prevents Zod parse failure.
@@ -521,6 +522,34 @@ function grossIncome(
   );
 }
 
+// 2025 Schedule 8812 Earned Income Worksheet for a return whose earned income
+// is Form 1040 line 1z alone: no Schedule C or F, no self-employment tax
+// deduction. Line 1a is line 1z; lines 2a-2e and 4-5 are zero. Nontaxable
+// combat pay (line 1b) is added by Schedule 8812 from the W-2s.
+function wageOnlyEarnedIncomeWorksheet(input: AgiInput) {
+  if (
+    (input.line3_schedule_c ?? 0) !== 0 ||
+    (input.line6_schedule_f ?? 0) !== 0 ||
+    (input.line15_se_deduction ?? 0) !== 0
+  ) return undefined;
+  const line1z = Math.round(sumField(input.line1a_wages)) +
+    Math.round(sumField(input.line1b_household_wages)) +
+    Math.round(sumField(input.line1h_other_earned)) +
+    Math.round(input.line1c_unreported_tips ?? 0) +
+    Math.round(input.line1e_taxable_dep_care ?? 0) +
+    Math.round(input.line1f_taxable_adoption_benefits ?? 0) +
+    Math.round(input.line1g_wages_8919 ?? 0);
+  return {
+    form1040_line1z_wages: Math.max(0, line1z),
+    schedule_c_statutory_employee_income: 0,
+    nonfarm_schedule_c_and_k1_net: 0,
+    farm_schedule_f_and_k1_net: 0,
+    farm_optional_method_used: false,
+    excluded_medicaid_waiver_payments: 0,
+    schedule1_line15_se_deduction: 0,
+  };
+}
+
 // Sum IRC §911 exclusions. Form 8815 savings-bond interest is excluded
 // before taxable interest reaches this node, not on Schedule 1 line 8b.
 function exclusions(input: AgiInput): number {
@@ -747,6 +776,7 @@ class AgiAggregatorNode extends TaxNode<typeof inputSchema> {
       eitc,
       schedule_r,
       f8812,
+      f8863,
       f2441,
       form8995,
       form8960,
@@ -872,7 +902,16 @@ class AgiAggregatorNode extends TaxNode<typeof inputSchema> {
       // Schedule R line 14 is Form 1040 line 11.
       this.outputNodes.output(schedule_r, { auto_agi: agi }),
       // Pass AGI to f8812 for CTC/ACTC phase-out computation
-      this.outputNodes.output(f8812, { auto_agi: agi }),
+      this.outputNodes.output(f8812, {
+        auto_agi: agi,
+        ...(wageOnlyEarnedIncomeWorksheet(input) && {
+          auto_earned_income_worksheet: wageOnlyEarnedIncomeWorksheet(input),
+        }),
+      }),
+      // Form 8863 lines 3 and 14: AGI plus the Form 2555 exclusion.
+      this.outputNodes.output(f8863, {
+        auto_magi: agi + (input.line8d_foreign_earned_income_exclusion ?? 0),
+      }),
       // Pass AGI to f2441 for dependent care credit rate calculation
       this.outputNodes.output(f2441, { agi }),
       // Pass AGI to form8995 so it can apply the 20%-of-taxable-income income limit

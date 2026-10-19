@@ -235,6 +235,7 @@ export const inputSchema = z.object({
   additional_deductions: z.number().nonnegative().optional(),
   itemized_deductions: z.number().nonnegative().optional(),
   force_itemized: z.boolean().optional(),
+  force_standard: z.boolean().optional(),
   mfs_spouse_itemizing: z.boolean().optional(),
   qualified_tip_qbi_source: qualifiedTipQbiSourceSchema.optional(),
   // Filing status — used to look up the standard deduction base for income limit
@@ -358,8 +359,11 @@ function standardDeductionAmount(
 
 function sourceDeductionAmount(input: Form8995Input, cfg: F1040Config): number {
   const itemized = input.itemized_deductions ?? 0;
-  return input.force_itemized === true || input.mfs_spouse_itemizing === true
-    ? itemized
+  if (input.force_itemized === true || input.mfs_spouse_itemizing === true) {
+    return itemized;
+  }
+  return input.force_standard === true
+    ? standardDeductionAmount(input, cfg)
     : Math.max(itemized, standardDeductionAmount(input, cfg));
 }
 
