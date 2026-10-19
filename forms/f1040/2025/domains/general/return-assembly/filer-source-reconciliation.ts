@@ -1595,8 +1595,8 @@ export function assertF1040FinalHeader(
   filer: FilerIdentity | undefined,
 ): void {
   assertNoUnsupportedDeceasedReturn(fields, undefined, filer);
-  if (fields.dual_status_return_2025 === true) {
-    throw new Error("TY2025 dual-status return cannot use Form 1040 e-file");
+  if (fields.dual_status_return === true) {
+    throw new Error("A dual-status return cannot use Form 1040 e-file");
   }
   if (
     !filer || !/^\d{9}$/.test(filer.primarySSN) ||

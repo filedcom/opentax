@@ -27,7 +27,7 @@
       "address_line1": "1 Main St",
       "address_city": "Austin",
       "address_state": "TX",
-      "ptc_residence_states_2025": [
+      "ptc_tax_year_residence_states": [
         "TX"
       ],
       "address_zip": "78701",
@@ -1298,7 +1298,7 @@
       "address_line1": "1 Main St",
       "address_city": "Austin",
       "address_state": "TX",
-      "ptc_residence_states_2025": [
+      "ptc_tax_year_residence_states": [
         "TX"
       ],
       "address_zip": "78701",
@@ -3434,7 +3434,7 @@
       "address_line1": "1 Main St",
       "address_city": "Anchorage",
       "address_state": "AK",
-      "ptc_residence_states_2025": [
+      "ptc_tax_year_residence_states": [
         "AK"
       ],
       "address_zip": "99501",
@@ -5570,7 +5570,7 @@
       "address_line1": "1 Main St",
       "address_city": "Honolulu",
       "address_state": "HI",
-      "ptc_residence_states_2025": [
+      "ptc_tax_year_residence_states": [
         "HI"
       ],
       "address_zip": "96801",

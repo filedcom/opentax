@@ -192,7 +192,7 @@ export function scenario104005Input() {
       filing_status: FilingStatus.HOH,
       hoh_paid_more_than_half_home_costs: true,
       hoh_spouse_lived_apart_review: {
-        lived_apart_last_six_months_of_2025_verified: true,
+        lived_apart_last_six_months_of_tax_year_verified: true,
         separate_residence_record_reference: `${PACKET}-form1040-page-2`,
       },
       digital_assets: taxpayer.digitalAssets,

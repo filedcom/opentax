@@ -274,10 +274,10 @@ function reconcilePovertyTable(
   }
   const general = generalSchema.safeParse(context.pending?.general);
   const residenceStates = general.success
-    ? general.data.ptc_residence_states_2025
+    ? general.data.ptc_tax_year_residence_states
     : undefined;
   const residenceMonths = general.success
-    ? general.data.ptc_residence_months_2025
+    ? general.data.ptc_tax_year_residence_months
     : undefined;
   const generalAddressState = general.success
     ? general.data.address_state
@@ -697,7 +697,7 @@ function reconcileSimpleAnnualPolicy(
       policy.annual_aptc === undefined
     ) ||
     (general.success &&
-      (general.data.ptc_residence_states_2025?.length ?? 1) > 1) ||
+      (general.data.ptc_tax_year_residence_states?.length ?? 1) > 1) ||
     source.data.alternative_marriage_month !== undefined ||
     fields.monthly_ptc_rows != null ||
     (fields.household_size !== 1 && fields.household_size !== 2 &&
@@ -1926,8 +1926,8 @@ function reconcileJointAptcPolicyMonths(
     context.filer.address.foreignCountry || policies.length !== 1 ||
     !policy?.policy_number ||
     policy.coverage_state !== context.filer.address.state ||
-    (general.data.ptc_residence_states_2025?.length ?? 1) > 1 ||
-    general.data.ptc_residence_months_2025?.some((state) =>
+    (general.data.ptc_tax_year_residence_states?.length ?? 1) > 1 ||
+    general.data.ptc_tax_year_residence_months?.some((state) =>
       state !== policy.coverage_state
     ) ||
     !policy.monthly_premiums || !policy.monthly_slcsps ||
@@ -2088,12 +2088,12 @@ function reconcileSimplePolicyMonths(
   const rows = fields.monthly_ptc_rows;
   const general = generalSchema.safeParse(pending?.general);
   const residenceStates = general.success
-    ? general.data.ptc_residence_states_2025
+    ? general.data.ptc_tax_year_residence_states
     : undefined;
   const residenceMonths = (residenceStates?.length ?? 0) >= 2 &&
       (residenceStates?.length ?? 0) <= 12 &&
       general.success
-    ? general.data.ptc_residence_months_2025
+    ? general.data.ptc_tax_year_residence_months
     : undefined;
   const interstateMove = residenceMonths !== undefined;
   const twoPersonPolicies = fields.household_size === 2 &&
@@ -2216,10 +2216,10 @@ function reconcileSimplePolicyMonths(
     const taxpayerInAlaskaOrHawaii = taxpayerState === "AK" ||
       taxpayerState === "HI";
     const verifiedSingleStateResidence = general.success &&
-      general.data.ptc_residence_states_2025?.length === 1 &&
-      general.data.ptc_residence_states_2025[0] === taxpayerState &&
-      general.data.ptc_residence_months_2025?.length === 12 &&
-      general.data.ptc_residence_months_2025.every((state) =>
+      general.data.ptc_tax_year_residence_states?.length === 1 &&
+      general.data.ptc_tax_year_residence_states[0] === taxpayerState &&
+      general.data.ptc_tax_year_residence_months?.length === 12 &&
+      general.data.ptc_tax_year_residence_months.every((state) =>
         state === taxpayerState
       );
     const supportedFamilyStates = taxpayerInAlaskaOrHawaii

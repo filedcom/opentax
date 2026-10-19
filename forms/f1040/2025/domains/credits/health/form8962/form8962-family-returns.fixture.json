@@ -703,10 +703,10 @@
       "taxpayer_ssn_valid_for_employment": true,
       "taxpayer_ssn_issued_before_due_date": true,
       "taxpayer_tin_issued_by_due_date": true,
-      "ptc_residence_states_2025": [
+      "ptc_tax_year_residence_states": [
         "AK"
       ],
-      "ptc_residence_months_2025": [
+      "ptc_tax_year_residence_months": [
         "AK",
         "AK",
         "AK",

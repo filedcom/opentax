@@ -212,7 +212,7 @@ test("Form 1040 PDF rejects an explicitly dual-status return", async () => {
         f1040: {
           filing_status: "single",
           digital_assets: false,
-          dual_status_return_2025: true,
+          dual_status_return: true,
         },
       }, mockFiler),
     Error,

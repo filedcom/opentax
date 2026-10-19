@@ -298,8 +298,8 @@ function buildReturnXml(
   }
   assertPreparedForm8886PublicSource(pending, preparedForm8886);
   assertForm8858FilingSource(pending.f8858);
-  if (pending.f1040?.dual_status_return_2025 === true) {
-    throw new Error("TY2025 dual-status return cannot use Form 1040 e-file");
+  if (pending.f1040?.dual_status_return === true) {
+    throw new Error("A dual-status return cannot use Form 1040 e-file");
   }
   if (pending.f1040) {
     assertF1040SourceIdentity(pending.f1040, filer);

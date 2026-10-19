@@ -122,8 +122,8 @@ const pending = {
     filing_status: "single" as const,
     taxpayer_ssn: "123456789",
     address_state: "AK",
-    ptc_residence_states_2025: ["AK"],
-    ptc_residence_months_2025: Array<string>(12).fill("AK"),
+    ptc_tax_year_residence_states: ["AK"],
+    ptc_tax_year_residence_months: Array<string>(12).fill("AK"),
     dependents: [dependent],
   },
   f1095a: { f1095as: [alaska, texas] },
@@ -161,10 +161,10 @@ test("Form 8962 Alaska taxpayer and Texas dependent monthly policies join source
 test("Form 8962 Alaska family overlap rejects residence, owner, benchmark and final return tampering", () => {
   for (
     const general of [
-      { ...pending.general, ptc_residence_states_2025: undefined },
+      { ...pending.general, ptc_tax_year_residence_states: undefined },
       {
         ...pending.general,
-        ptc_residence_months_2025: [...Array<string>(11).fill("AK"), "TX"],
+        ptc_tax_year_residence_months: [...Array<string>(11).fill("AK"), "TX"],
       },
     ]
   ) {

@@ -282,7 +282,7 @@
   {
     "path": "forms/f1040/2025/domains/general/return-assembly/filer-source-reconciliation.ts",
     "pattern": "year-identifier",
-    "count": 3
+    "count": 1
   },
   {
     "path": "forms/f1040/2025/domains/income/business/form172/form172_amt_annual_limit.ts",
@@ -462,7 +462,7 @@
   {
     "path": "forms/f1040/2025/domains/payments/settlement/line36-estimated-tax-source.ts",
     "pattern": "year-identifier",
-    "count": 3
+    "count": 1
   },
   {
     "path": "forms/f1040/2025/domains/taxes/amt/form6251/form6251_prior_iso_sale.ts",
@@ -606,11 +606,6 @@
   },
   {
     "path": "forms/f1040/2025/mef/builder.ts",
-    "pattern": "year-identifier",
-    "count": 2
-  },
-  {
-    "path": "forms/f1040/2025/mef/builder.ts",
     "pattern": "year-value",
     "count": 1
   },
@@ -653,11 +648,6 @@
     "path": "forms/f1040/2025/mef/forms/credits/foreign/f1116/f1116.ts",
     "pattern": "year-identifier",
     "count": 2
-  },
-  {
-    "path": "forms/f1040/2025/mef/forms/credits/health/f8962/f8962.ts",
-    "pattern": "year-identifier",
-    "count": 11
   },
   {
     "path": "forms/f1040/2025/mef/forms/credits/individual/f8862.ts",
@@ -863,11 +853,6 @@
     "path": "forms/f1040/2025/pdf/forms/credits/foreign/f1116/f1116_single_source.ts",
     "pattern": "year-identifier",
     "count": 4
-  },
-  {
-    "path": "forms/f1040/2025/pdf/forms/credits/health/f8962.ts",
-    "pattern": "year-identifier",
-    "count": 1
   },
   {
     "path": "forms/f1040/2025/pdf/forms/credits/individual/f2441.ts",
@@ -1437,7 +1422,7 @@
   {
     "path": "forms/f1040/nodes/inputs/general/filing/general/index.ts",
     "pattern": "year-identifier",
-    "count": 15
+    "count": 5
   },
   {
     "path": "forms/f1040/nodes/inputs/general/foreign/f5471/index.ts",
@@ -2407,7 +2392,7 @@
   {
     "path": "forms/f1040/nodes/outputs/general/return-assembly/f1040/index.ts",
     "pattern": "year-identifier",
-    "count": 5
+    "count": 2
   },
   {
     "path": "forms/f1040/nodes/outputs/general/return-assembly/schedule1/index.ts",

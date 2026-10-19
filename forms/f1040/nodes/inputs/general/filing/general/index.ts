@@ -319,7 +319,7 @@ export const inputSchema = z.object({
     .optional(),
   eic_tax_residency_review: eicTaxResidencyReviewSchema.optional(),
   do_not_claim_eic: z.boolean().optional(),
-  // 2025 EIC special rule for a married taxpayer filing separately.
+  // IRC 32(d)(2) separated-spouse EIC rule; Form 1040 dependents-section box.
   mfs_eitc_separation_review: z.discriminatedUnion("basis", [
     z.object({
       basis: z.literal("last_six_months_apart"),
@@ -337,8 +337,8 @@ export const inputSchema = z.object({
       not_qualifying_child_of_another_taxpayer_verified: z.literal(true),
     }).strict(),
   ]).optional(),
-  // A 2025 dual-status return cannot use the Form 1040 MeF filing path.
-  dual_status_return_2025: z.boolean().optional(),
+  // A dual-status return cannot use the Form 1040 MeF filing path.
+  dual_status_return: z.boolean().optional(),
   qbi_no_prior_loss_or_suspended_loss_confirmed: z.literal(true).optional(),
   qbi_not_patron_of_specified_cooperative_confirmed: z.literal(true)
     .optional(),
@@ -412,7 +412,6 @@ export const inputSchema = z.object({
   form8880_joint_distribution_review: jointDistributionReviewSchema.optional(),
   form8880_nonjoint_distribution_review: nonjointDistributionReviewSchema
     .optional(),
-  form8880_joint_2025_distribution_review: z.never().optional(),
   form8880_joint_prior_year_distribution_review: z.never().optional(),
   spouse_blind: z.boolean().optional(),
   spouse_age_65_or_older: z.boolean().optional(),
@@ -437,12 +436,12 @@ export const inputSchema = z.object({
   // Affirmative reviewed zero-income spouse inventory for joint family PTC.
   ptc_spouse_income_review: ptcSpouseIncomeReviewSchema.optional(),
   ptc_joint_income_review: ptcJointIncomeReviewSchema.optional(),
-  // Distinct 2025 residence states for the Form 8962 poverty table.
-  ptc_residence_states_2025: z.array(z.string().regex(/^[A-Z]{2}$/)).min(1)
+  // Distinct return-year residence states for the Form 8962 poverty table.
+  ptc_tax_year_residence_states: z.array(z.string().regex(/^[A-Z]{2}$/)).min(1)
     .optional(),
   // January through December residence. Required with a multi-state list so
   // a policy switch can be tied to the taxpayer's actual state each month.
-  ptc_residence_months_2025: z.array(z.string().regex(/^[A-Z]{2}$/)).length(12)
+  ptc_tax_year_residence_months: z.array(z.string().regex(/^[A-Z]{2}$/)).length(12)
     .optional(),
   address_zip: z.string().optional(),
   address_foreign_country: z.string().optional(),
@@ -473,9 +472,10 @@ export const inputSchema = z.object({
   hoh_qualifying_person_relationship: z.string().optional(),
   hoh_paid_more_than_half_home_costs: z.boolean().optional(),
   // Form 1040 dependents-section box: a married HOH filer lived apart from
-  // the spouse for the last 6 months of 2025 (Pub. 501, considered unmarried).
+  // the spouse for the last 6 months of the return year (Pub. 501, considered
+  // unmarried).
   hoh_spouse_lived_apart_review: z.object({
-    lived_apart_last_six_months_of_2025_verified: z.literal(true),
+    lived_apart_last_six_months_of_tax_year_verified: z.literal(true),
     separate_residence_record_reference: z.string().trim().min(1),
   }).strict().optional(),
   // QSS-specific
@@ -489,7 +489,7 @@ export const inputSchema = z.object({
     child_lived_in_home_all_year: z.literal(true),
     child_filed_nonrefund_joint_return: z.literal(true),
     taxpayer_paid_more_than_half_home_costs: z.literal(true),
-    no_remarriage_through_2025: z.literal(true),
+    no_remarriage_through_tax_year_end: z.literal(true),
     entitled_to_joint_return_in_death_year: z.literal(true),
     spouse_death_record_reference: z.string().trim().min(1),
     child_joint_return_reference: z.string().trim().min(1),
@@ -502,11 +502,19 @@ export const inputSchema = z.object({
     .optional(),
   bank_account_number: z.string().regex(/^[A-Za-z0-9-]{1,17}$/).optional(),
   bank_account_type: z.enum(["checking", "savings"]).optional(),
-  // Form 1040 line 36: irrevocable application to this filer's 2026 account.
-  apply_overpayment_to_2026_estimated_tax_amount: z.number().int().positive()
+  // Form 1040 line 36: irrevocable application to this filer's next-year
+  // estimated tax account.
+  apply_overpayment_to_next_year_estimated_tax_amount: z.number().int().positive()
     .optional(),
   // Dependents
   dependents: z.array(dependentSchema).optional(),
+  // Retired year-named inputs, rejected rather than silently stripped; the
+  // return year comes from the context.
+  dual_status_return_2025: z.never().optional(),
+  ptc_residence_states_2025: z.never().optional(),
+  ptc_residence_months_2025: z.never().optional(),
+  apply_overpayment_to_2026_estimated_tax_amount: z.never().optional(),
+  form8880_joint_2025_distribution_review: z.never().optional(),
 });
 
 // ─── Type aliases ─────────────────────────────────────────────────────────────
@@ -1392,8 +1400,8 @@ function buildF1040Input(
   addIfDefined(fields, "bank_account_type", input.bank_account_type);
   addIfDefined(
     fields,
-    "apply_overpayment_to_2026_estimated_tax_amount",
-    input.apply_overpayment_to_2026_estimated_tax_amount,
+    "apply_overpayment_to_next_year_estimated_tax_amount",
+    input.apply_overpayment_to_next_year_estimated_tax_amount,
   );
 
   return fields;
@@ -1457,8 +1465,10 @@ class GeneralNode extends TaxNode<typeof inputSchema> {
     if (mfsLivedApartAllYear) {
       assertMfsLivedApartSource(parsed.mfs_lived_apart_source);
     }
-    if (parsed.dual_status_return_2025 === true) {
-      throw new Error("TY2025 dual-status return cannot use Form 1040 e-file");
+    if (parsed.dual_status_return === true) {
+      throw new Error(
+        `TY${ctx.taxYear} dual-status return cannot use Form 1040 e-file`,
+      );
     }
     const jointDependent = parsed.filing_status === FilingStatus.MFJ &&
       (parsed.taxpayer_can_be_claimed_as_dependent === true ||
@@ -1741,12 +1751,12 @@ class GeneralNode extends TaxNode<typeof inputSchema> {
           .filter((dep) => dep.ptc_tax_return?.filing === "form8814")
           .map((dep) => dep.ssn?.replaceAll("-", "") ?? ""),
         dependent_income_complete: dependentIncomeComplete,
-        fpl_region: parsed.ptc_residence_states_2025?.includes("AK") ||
-            parsed.ptc_residence_months_2025?.includes("AK") ||
+        fpl_region: parsed.ptc_tax_year_residence_states?.includes("AK") ||
+            parsed.ptc_tax_year_residence_months?.includes("AK") ||
             parsed.address_state === "AK"
           ? "alaska"
-          : parsed.ptc_residence_states_2025?.includes("HI") ||
-              parsed.ptc_residence_months_2025?.includes("HI") ||
+          : parsed.ptc_tax_year_residence_states?.includes("HI") ||
+              parsed.ptc_tax_year_residence_months?.includes("HI") ||
               parsed.address_state === "HI"
           ? "hawaii"
           : "contiguous",

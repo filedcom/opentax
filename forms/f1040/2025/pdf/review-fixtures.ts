@@ -581,7 +581,7 @@ const sourcePdfReviewFixtures: readonly PdfReviewFixture[] = [
           child_lived_in_home_all_year: true,
           child_filed_nonrefund_joint_return: true,
           taxpayer_paid_more_than_half_home_costs: true,
-          no_remarriage_through_2025: true,
+          no_remarriage_through_tax_year_end: true,
           entitled_to_joint_return_in_death_year: true,
           spouse_death_record_reference: "Synthetic 2024 death record review",
           child_joint_return_reference:
@@ -679,7 +679,7 @@ const sourcePdfReviewFixtures: readonly PdfReviewFixture[] = [
     inputs: {
       general: {
         ...singleGeneral,
-        apply_overpayment_to_2026_estimated_tax_amount: 500,
+        apply_overpayment_to_next_year_estimated_tax_amount: 500,
       },
       w2: [{
         ...wage(75_000, 11_000, "Example Employer", "12-3456789"),

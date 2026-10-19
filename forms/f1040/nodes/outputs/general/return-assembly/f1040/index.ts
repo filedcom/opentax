@@ -77,7 +77,7 @@ const inputSchema = z.object({
     .optional(),
   bank_account_number: z.string().regex(/^[A-Za-z0-9-]{1,17}$/).optional(),
   bank_account_type: z.enum(["checking", "savings"]).optional(),
-  apply_overpayment_to_2026_estimated_tax_amount: z.number().int().positive()
+  apply_overpayment_to_next_year_estimated_tax_amount: z.number().int().positive()
     .optional(),
   taxpayer_age_65_or_older: z.boolean().optional(),
   spouse_age_65_or_older: z.boolean().optional(),
@@ -1107,7 +1107,7 @@ function assembleReturn(
 
   if (balance >= 0) {
     result.line34_overpayment = balance;
-    const applied = input.apply_overpayment_to_2026_estimated_tax_amount ?? 0;
+    const applied = input.apply_overpayment_to_next_year_estimated_tax_amount ?? 0;
     const available = Math.max(0, balance - Math.round(computed_line38));
     if (applied > available) {
       throw new Error(
@@ -1120,7 +1120,7 @@ function assembleReturn(
       result.line37_amount_owed = computed_line38 - balance;
     }
   } else {
-    if (input.apply_overpayment_to_2026_estimated_tax_amount !== undefined) {
+    if (input.apply_overpayment_to_next_year_estimated_tax_amount !== undefined) {
       throw new Error("Form 1040 line 36 needs an overpayment");
     }
     result.line37_amount_owed = Math.abs(balance) + computed_line38;

@@ -828,14 +828,14 @@ test("f1040: applies a sourced overpayment to 2026 estimated tax", () => {
   };
   const partial = fields({
     ...base,
-    apply_overpayment_to_2026_estimated_tax_amount: 750,
+    apply_overpayment_to_next_year_estimated_tax_amount: 750,
   });
   assertEquals(partial.line34_overpayment, 2_000);
   assertEquals(partial.line35a_refund, 1_000);
   assertEquals(partial.line36_applied_to_2026_estimated_tax, 750);
   const full = fields({
     ...base,
-    apply_overpayment_to_2026_estimated_tax_amount: 1_750,
+    apply_overpayment_to_next_year_estimated_tax_amount: 1_750,
   });
   assertEquals(full.line35a_refund, 0);
   assertEquals(full.line36_applied_to_2026_estimated_tax, 1_750);
@@ -843,7 +843,7 @@ test("f1040: applies a sourced overpayment to 2026 estimated tax", () => {
     () =>
       fields({
         ...base,
-        apply_overpayment_to_2026_estimated_tax_amount: 1_751,
+        apply_overpayment_to_next_year_estimated_tax_amount: 1_751,
       }),
     Error,
     "exceeds overpayment",
@@ -853,7 +853,7 @@ test("f1040: applies a sourced overpayment to 2026 estimated tax", () => {
       fields({
         line16_income_tax: 7_000,
         line25a_w2_withheld: 5_000,
-        apply_overpayment_to_2026_estimated_tax_amount: 1,
+        apply_overpayment_to_next_year_estimated_tax_amount: 1,
       }),
     Error,
     "needs an overpayment",

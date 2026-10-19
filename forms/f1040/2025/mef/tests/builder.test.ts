@@ -969,7 +969,7 @@ test("TY2025 MeF rejects an explicitly dual-status Form 1040", () => {
   assertThrows(
     () =>
       rawBuildMefXml(
-        { f1040: { dual_status_return_2025: true } },
+        { f1040: { dual_status_return: true } },
         sampleFiler(),
       ),
     Error,
