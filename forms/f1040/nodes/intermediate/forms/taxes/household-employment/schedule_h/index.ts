@@ -22,9 +22,17 @@ const SS_RATE_EMPLOYER = 0.062;
 const SS_RATE_EMPLOYEE = 0.062;
 const MEDICARE_RATE_EMPLOYER = 0.0145;
 const MEDICARE_RATE_EMPLOYEE = 0.0145;
-// Parent and child family-payroll helpers are dated to 2025; their callers
-// refuse other years.
-const TY2025_FICA_CASH_WAGE_THRESHOLD = 2_800;
+// Calendar bounds of the return year, which the payroll helpers date-check.
+function yearBounds(taxYear: number) {
+  return {
+    first: `${taxYear}-01-01`,
+    last: `${taxYear}-12-31`,
+    priorYearEnd: `${taxYear - 1}-12-31`,
+    quarterEnds: ["03-31", "06-30", "09-30", "12-31"].map((d) =>
+      `${taxYear}-${d}`
+    ),
+  };
+}
 function cashCents(amount: number): number {
   const value = Math.round(amount * 100);
   if (!Number.isFinite(amount) || Math.abs(amount * 100 - value) > 1e-7) {
@@ -456,15 +464,16 @@ function validateNoOrdinaryPayPractice(
   }
 }
 
-function childPost21Wages(employee: ChildPayrollEmployee) {
+function childPost21Wages(employee: ChildPayrollEmployee, taxYear: number) {
   const review = employee.age_21_transition_review;
   if (!review) return { wages: 0, paidQuarters: [0, 0, 0, 0] };
-  if (employee.birth_date === "2004-02-29") {
+  const year = yearBounds(taxYear);
+  if (employee.birth_date.slice(5) === "02-29") {
     throw new Error(
       "Schedule H leap-day age transition needs separate birthday-law review",
     );
   }
-  const birthday = `2025${employee.birth_date.slice(4)}`;
+  const birthday = `${taxYear}${employee.birth_date.slice(4)}`;
   const paidQuarters = [0, 0, 0, 0], allPaidQuarters = [0, 0, 0, 0];
   const quarter = (date: string) => Math.ceil(Number(date.slice(5, 7)) / 3) - 1;
   const references = [
@@ -518,15 +527,15 @@ function childPost21Wages(employee: ChildPayrollEmployee) {
   validateNoOrdinaryPayPractice(periods, review.no_ordinary_frequency_review);
   for (const [index, payment] of periods.entries()) {
     if (
-      payment.paid_date < "2025-01-01" || payment.paid_date > "2025-12-31" ||
-      payment.service_from < "2025-01-01" ||
-      payment.service_to > "2025-12-31" ||
+      payment.paid_date < year.first || payment.paid_date > year.last ||
+      payment.service_from < year.first ||
+      payment.service_to > year.last ||
       payment.service_from > payment.service_to ||
       payment.paid_date < payment.service_to ||
       index > 0 && periods[index - 1].service_to >= payment.service_from
     ) {
       throw new Error(
-        "Schedule H child transition needs distinct dated services split at the 21st birthday and paid in 2025",
+        "Schedule H child transition needs distinct dated services split at the 21st birthday and paid in the tax year",
       );
     }
     const paymentCents = cashCents(payment.cash_wages);
@@ -585,7 +594,10 @@ function parentDatedCashWages(
     { classification: "dated_service_periods" }
   >,
   quarters: z.infer<typeof parentQuarterSchema>[],
+  taxYear: number,
+  ficaThreshold: number,
 ): number {
+  const year = yearBounds(taxYear);
   const quarter = (date: string) => Math.ceil(Number(date.slice(5, 7)) / 3) - 1;
   const payments = [...review.wage_payments].sort((a, b) =>
     a.service_from.localeCompare(b.service_from)
@@ -647,9 +659,9 @@ function parentDatedCashWages(
     const days =
       (Date.parse(p.period_to) - Date.parse(p.period_from)) / 86400000 + 1;
     if (
-      payment.paid_date < "2025-01-01" || payment.paid_date > "2025-12-31" ||
-      payment.service_from < "2025-01-01" ||
-      payment.service_to > "2025-12-31" ||
+      payment.paid_date < year.first || payment.paid_date > year.last ||
+      payment.service_from < year.first ||
+      payment.service_to > year.last ||
       payment.service_from > payment.service_to ||
       payment.paid_date < payment.service_to ||
       quarter(payment.service_from) !== quarter(payment.service_to) ||
@@ -700,20 +712,10 @@ function parentDatedCashWages(
     if (
       status.kind === "divorced_not_remarried" &&
         status.divorce_date >
-          [
-            "2025-03-31",
-            "2025-06-30",
-            "2025-09-30",
-            "2025-12-31",
-          ][row.quarter - 1] ||
+          year.quarterEnds[row.quarter - 1] ||
       status.kind === "widowed_not_remarried" &&
         status.spouse_death_date >
-          [
-            "2025-03-31",
-            "2025-06-30",
-            "2025-09-30",
-            "2025-12-31",
-          ][row.quarter - 1]
+          year.quarterEnds[row.quarter - 1]
     ) {
       throw new Error(
         "Schedule H parent marital event must occur by its sourced service quarter",
@@ -828,7 +830,7 @@ function parentDatedCashWages(
       }
     } else coveredCents += state.coveredCents;
   }
-  return coveredCents >= TY2025_FICA_CASH_WAGE_THRESHOLD * 100
+  return coveredCents >= ficaThreshold * 100
     ? coveredCents / 100
     : 0;
 }
@@ -842,7 +844,9 @@ function validateParentRemarriage(
   >,
   employeeSsn: string,
   employerSsn: string,
+  taxYear: number,
 ): void {
+  const year = yearBounds(taxYear);
   const events = review.quarterly_circumstances.filter((row) =>
     row.employer_circumstances.kind === "remarried_capable_spouse" ||
     row.employer_circumstances.kind === "remarried_spouse_incapable"
@@ -868,10 +872,10 @@ function validateParentRemarriage(
   ];
   if (
     review.classification !== "dated_service_periods" || events.length !== 1 ||
-    status.remarriage_date < "2025-01-01" ||
-    status.remarriage_date > "2025-12-31" ||
+    status.remarriage_date < year.first ||
+    status.remarriage_date > year.last ||
     eventQuarter !== event.quarter ||
-    status.prior_marriage_end_date >= "2025-01-01" ||
+    status.prior_marriage_end_date >= year.first ||
     status.spouse_ssn === employeeSsn || status.spouse_ssn === employerSsn ||
     new Set(references).size !== references.length
   ) {
@@ -915,10 +919,13 @@ function validateParentRemarriage(
 function parentTaxableCashWages(
   employee: ParentPayrollEmployee,
   employerSsn: string,
+  taxYear: number,
+  ficaThreshold: number,
 ): number {
   const review = employee.parent_fica_review;
-  if (employee.birth_date > "2024-12-31") {
-    throw new Error("Schedule H parent birth date must precede 2025");
+  const year = yearBounds(taxYear);
+  if (employee.birth_date > year.priorYearEnd) {
+    throw new Error("Schedule H parent birth date must precede the tax year");
   }
   if (review.classification === "excluded") return 0;
   const quarters = review.quarterly_circumstances;
@@ -928,8 +935,8 @@ function parentTaxableCashWages(
     );
   }
   const bounds = (q: number) => ({
-    from: `2025-${String((q - 1) * 3 + 1).padStart(2, "0")}-01`,
-    to: ["2025-03-31", "2025-06-30", "2025-09-30", "2025-12-31"][q - 1],
+    from: `${taxYear}-${String((q - 1) * 3 + 1).padStart(2, "0")}-01`,
+    to: year.quarterEnds[q - 1],
   });
   const quarter = (date: string) => Math.ceil(Number(date.slice(5, 7)) / 3);
   const care = (
@@ -1008,9 +1015,15 @@ function parentTaxableCashWages(
       }
     }
   }
-  validateParentRemarriage(review, employee.employee_ssn, employerSsn);
+  validateParentRemarriage(review, employee.employee_ssn, employerSsn, taxYear);
   if (review.classification === "dated_service_periods") {
-    return parentDatedCashWages(employee, review, quarters);
+    return parentDatedCashWages(
+      employee,
+      review,
+      quarters,
+      taxYear,
+      ficaThreshold,
+    );
   }
   const payments = review.wage_payments, paidQuarters = [0, 0, 0, 0];
   if (
@@ -1021,15 +1034,15 @@ function parentTaxableCashWages(
   let total = 0, eligible = 0;
   for (const payment of payments) {
     if (
-      payment.paid_date < "2025-01-01" || payment.paid_date > "2025-12-31" ||
-      payment.service_from < "2025-01-01" ||
-      payment.service_to > "2025-12-31" ||
+      payment.paid_date < year.first || payment.paid_date > year.last ||
+      payment.service_from < year.first ||
+      payment.service_to > year.last ||
       payment.service_from > payment.service_to ||
       payment.paid_date < payment.service_to ||
       quarter(payment.service_from) !== quarter(payment.service_to)
     ) {
       throw new Error(
-        "Schedule H parent cash payments need dated 2025 services within one sourced quarter",
+        "Schedule H parent cash payments need dated tax-year services within one sourced quarter",
       );
     }
     const paymentCents = cashCents(payment.cash_wages);
@@ -1072,7 +1085,7 @@ function parentTaxableCashWages(
       "Schedule H parent payment ledger must reconcile annual and payment-quarter cash wages",
     );
   }
-  return eligible >= TY2025_FICA_CASH_WAGE_THRESHOLD * 100 ? eligible / 100 : 0;
+  return eligible >= ficaThreshold * 100 ? eligible / 100 : 0;
 }
 
 const payrollEmployeeSchema = z.union([
@@ -2084,17 +2097,21 @@ export function computeScheduleHAmounts(
         ];
         const withholding = employee.w2?.box2_federal_income_tax_withheld ?? 0;
         const parentWages = employee.relationship === "parent"
-          ? parentTaxableCashWages(employee, input.family_employer_ssn ?? "")
+          ? parentTaxableCashWages(
+            employee,
+            input.family_employer_ssn ?? "",
+            taxYear,
+            cfg.householdFicaThreshold,
+          )
           : 0;
-        const childTransition = employee.relationship === "child" &&
-            employee.birth_date >= "2004-01-01" &&
-            employee.birth_date <= "2004-12-31"
-          ? childPost21Wages(employee)
+        const turns21 = employee.relationship === "child" &&
+          employee.birth_date.startsWith(`${taxYear - 21}-`);
+        const childTransition = turns21
+          ? childPost21Wages(employee, taxYear)
           : undefined;
         if (
           employee.relationship === "child" &&
-          ((employee.birth_date >= "2004-01-01" &&
-            employee.birth_date <= "2004-12-31") !==
+          (turns21 !==
             (employee.age_21_transition_review !== undefined))
         ) {
           throw new Error(
@@ -2171,13 +2188,13 @@ export function computeScheduleHAmounts(
         }
 
         if (
-          taxYear !== 2025 || !input.family_employer_ssn || family ||
+          !input.family_employer_ssn || family ||
           employee.employee_ssn === input.family_employer_ssn ||
           (employee.relationship === "child" &&
-            (employee.birth_date < "2004-01-01" ||
-              employee.birth_date > "2024-12-31")) ||
+            (employee.birth_date < `${taxYear - 21}-01-01` ||
+              employee.birth_date > `${taxYear - 1}-12-31`)) ||
           (employee.relationship === "spouse" &&
-            employee.marriage_date > "2024-12-31") ||
+            employee.marriage_date > `${taxYear - 1}-12-31`) ||
           new Set(references).size !== references.length ||
           quarterlyCashCents(employee.quarterly_cash_wages) !==
             cashCents(employee.annual_cash_wages) ||
@@ -2205,12 +2222,6 @@ export function computeScheduleHAmounts(
           );
         }
       } else {
-        // The minor attestations and their age window are dated 2025.
-        if (taxYear !== 2025) {
-          throw new Error(
-            `Schedule H minor FICA classifications are not supported for ${taxYear}`,
-          );
-        }
         if ((minor === undefined) === (workingMinor === undefined)) {
           throw new Error(
             "Schedule H minor needs exactly one student or principal-occupation source classification",
@@ -2230,11 +2241,12 @@ export function computeScheduleHAmounts(
             employee.payroll_source_reference,
           ];
         if (
-          birthDate < "2007-01-02" || birthDate > "2024-12-31" ||
+          birthDate < `${taxYear - 18}-01-02` ||
+          birthDate > `${taxYear - 1}-12-31` ||
           new Set(references).size !== references.length
         ) {
           throw new Error(
-            "Schedule H minor needs distinct age, education, occupation, and payroll sources proving under 18 in 2025",
+            "Schedule H minor needs distinct age, education, occupation, and payroll sources proving under 18 throughout the tax year",
           );
         }
       }
@@ -2353,7 +2365,9 @@ export function computeScheduleHAmounts(
             ? cashCents(Math.min(employee.annual_cash_wages, 7_000))
             : employee.relationship === "child" &&
                 employee.age_21_transition_review
-            ? cashCents(Math.min(childPost21Wages(employee).wages, 7_000))
+            ? cashCents(
+                Math.min(childPost21Wages(employee, taxYear).wages, 7_000),
+              )
             : 0),
         0,
       );
