@@ -20,14 +20,16 @@ test("TY2026 accepts every input TY2025 accepts, on the same registry", () => {
   assertStrictEquals(f1040_2026.registry, f1040_2025.registry);
 });
 
-test("TY2026 PDF output is refused rather than printed on 2025 forms", async () => {
+test("TY2026 PDF prints on IRS 2026 forms and says they are drafts", async () => {
   let message = "";
   try {
     await f1040_2026.buildPdfBytes({}, undefined);
   } catch (error) {
     message = String(error);
   }
-  assertEquals(message.includes("TY2026 PDF"), true);
+  assertEquals(message.includes("No PDF forms were generated"), true);
+  assertEquals(f1040_2026.pdfNotice?.includes("IRS draft forms"), true);
+  assertEquals(f1040_2025.pdfNotice, undefined);
 });
 
 const sample = (id: string) => {

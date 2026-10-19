@@ -8,6 +8,8 @@ import type { MefFormsPending } from "../2025/mef/types.ts";
 import { assertF1040FinalHeader } from "../2025/domains/general/return-assembly/filer-source-reconciliation.ts";
 import { executeF1040Return } from "../2025/return-processing/execute_return.ts";
 import { F1040_2026_CONFIG } from "./config.ts";
+import { buildPdfBytes2026 } from "./pdf/builder.ts";
+import { TY2026_DRAFT_NOTICE } from "./pdf/draft-template.ts";
 
 const context = { taxYear: F1040_2026_CONFIG.taxYear, formType: "f1040" };
 
@@ -17,15 +19,12 @@ function executeReturn(inputs: Record<string, unknown>) {
   return executeF1040Return(inputs, context);
 }
 
-function noPdf(): never {
-  throw new Error("TY2026 PDF forms are not available yet; export MeF XML");
-}
-
 export const f1040_2026: FormDefinition = {
   ...F1040_2026_CONFIG,
   inputNodes,
   registry,
   executeReturn,
+  pdfNotice: TY2026_DRAFT_NOTICE,
   prepareReturn: async (
     pendingInput,
     filerInput,
@@ -50,7 +49,11 @@ export const f1040_2026: FormDefinition = {
       year: F1040_2026_CONFIG.taxYear,
       returnType: "1040",
     });
-    return { bundle, renderPdf: () => Promise.resolve(noPdf()) };
+    return {
+      bundle,
+      renderPdf: () =>
+        buildPdfBytes2026(bundle.pending, filer, ".pdf-cache", bundle),
+    };
   },
   buildMefXml: (pending, filer) =>
     buildMefXml(
@@ -60,7 +63,7 @@ export const f1040_2026: FormDefinition = {
       F1040_2026_CONFIG.taxYear,
       "1040",
     ),
-  buildPdfBytes: () => Promise.resolve(noPdf()),
+  buildPdfBytes: (pending, filer) => buildPdfBytes2026(pending, filer),
   buildPending: (pending: Record<string, unknown>) =>
     buildPending(pending) as Record<string, unknown>,
 };

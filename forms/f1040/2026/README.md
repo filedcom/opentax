@@ -4,7 +4,16 @@
 `ctx.taxYear = 2026`, on the 2025 registry, staged return pipeline
 (`2025/return-processing/execute_return.ts`), MeF builder and pending
 normalization with the 2026v1.0 schema. It accepts every input TY2025 accepts;
-there is no allowlist. PDF output is refused.
+there is no allowlist.
+
+PDF output (`pdf/builder.ts`) prints Form 1040 and Schedules 1, 2 and 3 on the
+IRS 2026 early-release drafts, fetched from `irs.gov/pub/irs-dft/` and pinned by
+SHA-256 like the 2025 templates; the IRS cover sheet is dropped and the packet's
+PDF Subject and the CLI say it uses draft forms. Each overlay in `pdf/forms/`
+reuses the 2025 projection and renames only the fields the 2026 form moved.
+Every other form refuses by name when the return needs it, as do refundable
+credits that need Schedule 3-A (Form 1040 lines 27a-30). A redrafted IRS PDF
+fails its digest until the mapping is reviewed.
 
 Year differences live in two places, never in a 2026 copy of a node:
 

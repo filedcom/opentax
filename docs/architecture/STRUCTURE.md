@@ -27,7 +27,8 @@ Public entrypoints are `mod.ts`, `catalog.ts`, `cli/main.ts`, and `forms/f1040/2
 │   │       ├── forms/             # Printed form projections by tax domain
 │   │       └── reviews/           # Retained review fixtures and contracts
 │   ├── 2026/
-│   │   └── index.ts / config.ts    # TY2026 entrypoint: 2025 graph, inputs and builders, 2026 context and schema version
+│   │   ├── index.ts / config.ts    # TY2026 entrypoint: 2025 graph, inputs and builders, 2026 context and schema version
+│   │   └── pdf/                   # 2025 PDF projections retargeted to the IRS 2026 draft forms
 │   ├── nodes/
 │   │   ├── config/                # Tax-year routing
 │   │   ├── inputs/<section>/<group>/<form>/         # Validated source nodes
