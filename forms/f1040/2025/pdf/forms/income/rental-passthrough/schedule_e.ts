@@ -1,4 +1,3 @@
-import { mefTaxYear } from "../../../../mef/support/year-config.ts";
 import { StandardFonts } from "pdf-lib";
 import { currentPropertyPassiveAmounts } from "../../../../../nodes/inputs/income/rental-passthrough/schedule_e/current-property-source.ts";
 import type {
@@ -236,7 +235,8 @@ function retainedScheduleEPages(projected: Record<string, unknown>): number[] {
   return partI && partII ? [0, 1] : partII ? [1] : [0];
 }
 
-export const scheduleEPdf: PdfFormDescriptor = {
+export function scheduleEPdfFor(taxYear: number): PdfFormDescriptor {
+  return {
   pendingKey: "schedule_e",
   pdfUrl: "https://www.irs.gov/pub/irs-prior/f1040se--2025.pdf",
   pageIndices: retainedScheduleEPages,
@@ -261,7 +261,7 @@ export const scheduleEPdf: PdfFormDescriptor = {
   ],
   projectFields(raw, allPending) {
     const k1Rows = scheduleEK1Part2Rows(allPending, {
-      taxYear: mefTaxYear(),
+      taxYear,
       formType: "f1040",
     });
     if (Object.keys(raw).length === 0 && k1Rows.length === 0) return {};
@@ -692,4 +692,7 @@ export const scheduleEPdf: PdfFormDescriptor = {
       filer,
     );
   },
-};
+  };
+}
+
+export const scheduleEPdf: PdfFormDescriptor = scheduleEPdfFor(2025);

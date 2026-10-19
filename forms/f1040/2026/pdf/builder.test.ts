@@ -10,6 +10,7 @@ import { Box12Code } from "../../nodes/inputs/income/wages/w2/index.ts";
 import { f1040_2026 } from "../index.ts";
 import { TY2026_DRAFT_NOTICE } from "./draft-template.ts";
 import { TY2026_PDF_MAPPED_FORMS, ty2026PdfForms } from "./builder.ts";
+import { scheduleEPdf2026 } from "./forms/income/rental-passthrough/schedule_e.ts";
 import { loadPdfTemplate } from "../../2025/pdf/support/template-cache.ts";
 
 const fixture = (id: string) => {
@@ -219,6 +220,52 @@ test("TY2026 PDF prints Form 2441 Part I providers as columns", async () => {
   assertMatch(printed, /line 11a 7 50000/);
   assertMatch(printed, /9a Multiply line 6[^\n]* 9a 1050/);
   assertMatch(printed, /on Schedule 3 \(Form 1040\), line 2[^\n]* 11 500/);
+});
+
+test("TY2026 PDF prints Schedule E on the 2026 draft pages", async () => {
+  const rental = fixture("single-nonparticipating-rental-loss");
+  const [property] = rental.schedule_e as Array<Record<string, unknown>>;
+  const trust = fixture("single-trust-k1-box5-schedule-e");
+  const doc = await render({
+    ...rental,
+    k1_trust: trust.k1_trust,
+    schedule_e: [{
+      ...property,
+      activity_type: "A",
+      rent_income: 12000,
+      expense_repairs: 1000,
+      expense_mortgage_interest: 2000,
+      expense_other_interest: 300,
+    }],
+  });
+  const printed = await text(doc);
+  assertMatch(printed, /SCHEDULE E[\s\S]*2026/);
+  assertMatch(printed, /A 12 Example Street Austin TX 78701/);
+  assertMatch(printed, /3 Rents received[^\n]* 3 12000/);
+  assertMatch(printed, /12 Mortgage interest[^\n]* 12 2000/);
+  assertMatch(printed, /13 Interest \(see instructions\)[^\n]* 13\n/);
+  assertMatch(printed, /13b Other[^\n]* 13b 300/);
+  assertMatch(printed, /14 Repairs[^\n]* 14 1000/);
+  assertMatch(printed, /20 Total expenses[^\n]* 20 3300/);
+  assertMatch(printed, /23a Total of all amounts reported on line 3[^\n]* 23a 12000/);
+  assertMatch(printed, /23e Total of all amounts reported on line 20[^\n]* 23e 3300/);
+  assertMatch(printed, /24 Income\. Add positive amounts[^\n]* 24 8700/);
+  assertMatch(printed, /26 Total rental real estate[\s\S]*? 26 8700/);
+  assertMatch(printed, /A Family Trust[^\n]* 123456789/);
+  assertMatch(printed, /37 Total estate and trust income[^\n]* 37 750/);
+  assertMatch(printed, /41 Total income or \(loss\)\. Combine[\s\S]*? 41 9450/);
+  const k1Columns = scheduleEPdf2026.fields
+    .filter((entry) => entry.domainKey.startsWith("k1_0_"))
+    .map((entry) => [entry.domainKey, entry.pdfField.split(".").pop()]);
+  assertEquals(Object.fromEntries(k1Columns), {
+    k1_0_name: "f2_6[0]",
+    k1_0_code: "f2_7[0]",
+    k1_0_ein: "f2_8[0]",
+    k1_0_passive_loss: "f2_18[0]",
+    k1_0_passive_income: "f2_19[0]",
+    k1_0_basis_required: "c2_3[0]",
+    k1_0_nonpassive_income: "f2_22[0]",
+  });
 });
 
 test("TY2026 PDF refuses, by name, a form with no TY2026 mapping", async () => {
