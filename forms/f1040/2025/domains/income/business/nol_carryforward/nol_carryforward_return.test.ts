@@ -52,3 +52,25 @@ test("NOL limit rejects a return whose deduction is not the assumed standard ded
     "enter nol_carryforward current_year_taxable_income",
   );
 });
+
+// Synthetic single filer aged 66 (17,750 standard deduction: 15,750 + 2,000
+// additional; 2025 Form 1040 instructions) with a 2017 NOL of 20,000. A
+// pre-2018 loss has no 80% limit (IRC §172(a)(1); Pub. 536), and taxable
+// income of 102,250 absorbs it, so the deduction is 20,000 whatever the
+// standard deduction is: no taxable-income override is needed.
+test("a fully used pre-2018 NOL does not need the base standard deduction", () => {
+  const { r, p } = run({
+    general: {
+      filing_status: "single",
+      taxpayer_first_name: "Alex",
+      taxpayer_last_name: "Example",
+      taxpayer_dob: "1959-01-01",
+    },
+    nol_carryforward: {
+      nol_carryforwards: [{ year: 2017, nol_amount: 20_000, nol_type: "PRE2018" }],
+    },
+  });
+  assertEquals(r.diagnostics, []);
+  assertEquals(p.schedule1.line8a_nol_deduction, 20_000);
+  assertEquals(p.f1040.line11_agi, 100_000);
+});

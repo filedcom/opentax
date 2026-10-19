@@ -87,6 +87,10 @@ export const inputSchema = z.object({
   nol_deduction: z.number().nonnegative().optional(),
   // The standard deduction the AGI aggregator assumed for the NOL 80% limit.
   nol_limit_standard_deduction: z.number().nonnegative().optional(),
+  // A fully used NOL carryforward: the taxable income (before the NOL and
+  // QBI deductions) it needs, and AGI before the NOL.
+  nol_limit_required_taxable_income: z.number().nonnegative().optional(),
+  nol_limit_agi_before_nol: z.number().optional(),
 
   // Finalized by this node for TY2026; never supplied by another node.
   standard_amount: z.number().nonnegative().optional(),
@@ -280,6 +284,16 @@ class StandardDeductionNode extends TaxNode<typeof inputSchema> {
     ) {
       throw new Error(
         "NOL 80% limit assumed the base standard deduction; enter nol_carryforward current_year_taxable_income for this return",
+      );
+    }
+    if (
+      input.nol_limit_required_taxable_income !== undefined &&
+      (input.nol_limit_agi_before_nol ?? 0) - deduction - nonitemizerCharitable -
+            (input.additional_deductions ?? 0) <
+        input.nol_limit_required_taxable_income
+    ) {
+      throw new Error(
+        "NOL carryforward is limited by this return's deductions; enter nol_carryforward current_year_taxable_income for this return",
       );
     }
     if (
