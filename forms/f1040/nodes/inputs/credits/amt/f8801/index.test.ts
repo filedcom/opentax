@@ -3,6 +3,8 @@ import { assertEquals, assertThrows } from "@std/assert";
 import { f8801 } from "./index.ts";
 import { fieldsOf } from "../../../../../../../core/test-utils/output.ts";
 import { schedule3 } from "../../../../intermediate/aggregation/general/return-assembly/schedule3/index.ts";
+import { form6251 } from "../../../../intermediate/forms/taxes/amt/form6251/index.ts";
+import { f1040 } from "../../../../outputs/general/return-assembly/f1040/index.ts";
 
 function reviewedSources(input: Record<string, unknown>) {
   const amt = Number(input.prior_year_amt_paid ?? 0);
@@ -367,4 +369,32 @@ test("f8801.compute: smoke test — partial credit scenario", () => {
   });
   const fields = fieldsOf(result.outputs, schedule3)!;
   assertEquals(fields.line6b_prior_year_min_tax_credit, 2000);
+});
+
+test("f8801.compute: a 2024 line 26 carryforward alone needs no prior evidence", () => {
+  // 2025 Form 8801 line 19 is the 2024 Form 8801 line 26 amount; Form 1040
+  // finishes Part II from its own tax and Form 6251 line 9.
+  const input = { prior_year_carryforward: 86_216 };
+  assertEquals(f8801.inputSchema.safeParse(input).success, true);
+  const result = f8801.compute({ taxYear: 2025, formType: "f1040" }, input);
+  assertEquals(fieldsOf(result.outputs, f1040), {
+    form8801_line21_credit_available: 86_216,
+  });
+  assertEquals(fieldsOf(result.outputs, form6251), {
+    must_file_for_credit: true,
+  });
+  assertEquals(
+    fieldsOf(result.outputs, schedule3)?.line6b_prior_year_min_tax_credit,
+    0,
+  );
+});
+
+test("f8801.inputSchema: entered 2024 Form 8801 evidence must match the carryforward", () => {
+  assertEquals(
+    f8801.inputSchema.safeParse({
+      prior_year_carryforward: 86_216,
+      prior_year_evidence: reviewedSources({ prior_year_carryforward: 86_215 }),
+    }).success,
+    false,
+  );
 });

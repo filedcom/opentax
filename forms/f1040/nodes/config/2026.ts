@@ -403,4 +403,6 @@ export const config2026: F1040Config = {
   // Draft 2026 Form 2210-F (created 4/1/26) prints line 16's rate as "x.xx";
   // the January 15-April 15, 2027 rate is not yet published.
   form2210fPenaltyRate: null,
+  // The 2026 Form 2210 instructions and their rate periods are not published.
+  form2210RegularMethod: null,
 };
