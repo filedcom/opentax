@@ -846,3 +846,52 @@ test("f1099g.compute: smoke test — all major boxes populated produces correct 
     },
   ]);
 });
+
+// Pub. 525 (2025), Worksheets 2a and 2. Example 30: 2024 joint return,
+// itemized deductions 30,700 against a 29,200 standard deduction; the 400
+// state income tax refund is within the 1,500 excess, so all 400 is taxable.
+// Example 32: itemized 29,450, so only the 250 excess of a larger refund is
+// taxable. Taxes paid were within the SALT limit in both.
+const facts = (line17: number) => ({
+  schedule_a_line5d_taxes_paid: 8_000,
+  schedule_a_line5e_taxes_deducted: 8_000,
+  schedule_a_line17_itemized_deductions: line17,
+  standard_deduction: 29_200,
+  taxable_income: 60_000,
+});
+
+function refundLine1(item: Record<string, unknown>) {
+  const result = f1099g.compute(
+    { taxYear: 2025, formType: "f1040" },
+    { f1099gs: [{ box_2_state_refund: 400, ...item }] },
+  );
+  return fieldsOf(result.outputs, schedule1)?.line1_state_refund;
+}
+
+test("1099-G state refund is taxable from the prior-year worksheet facts", () => {
+  assertEquals(refundLine1({ box_2_prior_year_facts: facts(30_700) }), 400);
+  assertEquals(
+    refundLine1({ box_2_state_refund: 2_100, box_2_prior_year_facts: facts(29_450) }),
+    250,
+  );
+});
+
+// Worksheet 2a lines 3-5: taxes paid 15,000 over the 10,000 deducted; a
+// 4,000 refund is not more than the 5,000 excess, so none is taxable.
+test("1099-G state refund within the SALT-limited excess is not taxable", () => {
+  assertEquals(
+    refundLine1({
+      box_2_state_refund: 4_000,
+      box_2_prior_year_facts: {
+        ...facts(40_000),
+        schedule_a_line5d_taxes_paid: 15_000,
+        schedule_a_line5e_taxes_deducted: 10_000,
+      },
+    }),
+    undefined,
+  );
+});
+
+test("1099-G state refund after a standard-deduction year needs no review", () => {
+  assertEquals(refundLine1({ box_2_prior_year_itemized: false }), undefined);
+});

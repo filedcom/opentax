@@ -25,6 +25,19 @@ import {
 // Form 1099-G issuer reporting thresholds do not create recipient-side
 // taxable-income exclusions. Route any positive amount designated taxable.
 
+// Prior-year return facts for the state and local income tax refund
+// worksheet (Pub. 525, Worksheets 2a and 2): 2024 Schedule A lines 5d, 5e
+// and 17, the 2024 standard deduction, and 2024 Form 1040 line 15.
+export const priorYearRefundFactsSchema = z.object({
+  schedule_a_line5d_taxes_paid: z.number().nonnegative(),
+  schedule_a_line5e_taxes_deducted: z.number().nonnegative(),
+  schedule_a_line17_itemized_deductions: z.number().nonnegative(),
+  standard_deduction: z.number().nonnegative(),
+  taxable_income: z.number(),
+}).strict();
+
+export type PriorYearRefundFacts = z.infer<typeof priorYearRefundFactsSchema>;
+
 export const itemSchema = z.object({
   box_1_unemployment: z.number().nonnegative().optional(),
   box_1_repaid: z.number().nonnegative().optional(),
@@ -33,6 +46,7 @@ export const itemSchema = z.object({
   box_2_prior_year_itemized: z.boolean().optional(),
   box_2_taxable_recovery_verified_amount: z.number().nonnegative().optional(),
   box_2_recovery_workpaper_reference: z.string().trim().min(1).optional(),
+  box_2_prior_year_facts: priorYearRefundFactsSchema.optional(),
   box_3_tax_year: z.number().int().optional(),
   box_4_federal_withheld: z.number().nonnegative().optional(),
   box_5_rtaa: z.number().nonnegative().optional(),
@@ -147,6 +161,22 @@ export const itemSchema = z.object({
         message: "Form 1099-G taxable recovery cannot exceed zero box 2 refund",
       });
     }
+    return;
+  }
+  // The worksheet figures the taxable part from the prior-year facts; a
+  // standard-deduction prior year has none (Pub. 525).
+  if (item.box_2_prior_year_facts !== undefined) {
+    if (taxable !== undefined || item.box_2_prior_year_itemized === false) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["box_2_prior_year_facts"],
+        message:
+          "Form 1099-G box 2 prior-year facts replace an entered taxable recovery and need an itemized prior year",
+      });
+    }
+    return;
+  }
+  if (item.box_2_prior_year_itemized === false && (taxable ?? 0) === 0) {
     return;
   }
   if (
@@ -291,11 +321,57 @@ function netUnemployment(g99s: G99Items): number {
   return totalReceived - totalRepaid;
 }
 
+/**
+ * Pub. 525 Worksheet 2a (lines 1-7, income tax refunds only) and Worksheet
+ * 2 (lines 1a, 4-11): the taxable part of the year's state and local income
+ * tax refunds.
+ */
+export function stateRefundWorksheet(
+  refunds: number,
+  facts: PriorYearRefundFacts,
+): number {
+  const line3 = Math.min(refunds, facts.schedule_a_line5d_taxes_paid);
+  const overCap = facts.schedule_a_line5d_taxes_paid >
+    facts.schedule_a_line5e_taxes_deducted;
+  const line4 = overCap
+    ? facts.schedule_a_line5d_taxes_paid -
+      facts.schedule_a_line5e_taxes_deducted
+    : line3;
+  if (overCap && line3 <= line4) return 0;
+  const line1a = overCap ? line3 - line4 : refunds;
+  const line8 = facts.schedule_a_line17_itemized_deductions -
+    facts.standard_deduction;
+  if (line8 <= 0) return 0;
+  const line9 = Math.min(line1a, line8);
+  return facts.taxable_income >= 0
+    ? line9
+    : Math.max(0, line9 + facts.taxable_income);
+}
+
 function totalStateRefundTaxable(g99s: G99Items): number {
-  return g99s.reduce(
+  const entered = g99s.reduce(
     (sum, item) => sum + (item.box_2_taxable_recovery_verified_amount ?? 0),
     0,
   );
+  const worksheetItems = g99s.filter((item) =>
+    item.box_2_prior_year_facts !== undefined
+  );
+  if (worksheetItems.length === 0) return entered;
+  const facts = worksheetItems[0].box_2_prior_year_facts!;
+  if (
+    worksheetItems.some((item) =>
+      JSON.stringify(item.box_2_prior_year_facts) !== JSON.stringify(facts)
+    )
+  ) {
+    throw new Error(
+      "Form 1099-G state refunds need one set of prior-year return facts",
+    );
+  }
+  const refunds = worksheetItems.reduce(
+    (sum, item) => sum + (item.box_2_state_refund ?? 0),
+    0,
+  );
+  return entered + Math.round(stateRefundWorksheet(refunds, facts));
 }
 
 function totalFederalWithheld(g99s: G99Items): number {
