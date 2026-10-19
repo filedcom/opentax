@@ -16,6 +16,7 @@ import { scheduleDPdf2026 } from "./forms/income/investments/schedule_d.ts";
 import { form8962Pdf2026 } from "./forms/credits/health/f8962.ts";
 import { form5329Pdf2026 } from "./forms/taxes/retirement/f5329.ts";
 import { form8582Pdf2026 } from "./forms/income/business/f8582.ts";
+import { form4562Pdf2026 } from "./forms/deductions/business/f4562.ts";
 import { form8880Pdf2026 } from "./forms/credits/individual/f8880.ts";
 import { form8889Pdf2026 } from "./forms/adjustments/health/f8889.ts";
 import { scheduleEPdf2026 } from "./forms/income/rental-passthrough/schedule_e.ts";
@@ -43,6 +44,7 @@ const MAPPED: ReadonlyMap<string, PdfFormDescriptor> = new Map(
     scheduleEPdf2026,
     scheduleSePdf2026,
     form2441Pdf2026,
+    form4562Pdf2026,
     form5329Pdf2026,
     form6251Pdf2026,
     form8863Pdf2026,

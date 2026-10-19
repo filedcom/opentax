@@ -72,7 +72,8 @@ const fields: readonly PdfFieldEntry[] = [
   text("line22_total_depreciation", `${p2}.f2_2[0]`),
 ];
 
-export const form4562Pdf: PdfFormDescriptor = {
+export function form4562PdfFor(taxYear: number): PdfFormDescriptor {
+  return {
   pendingKey: "form4562",
   pdfUrl: "https://www.irs.gov/pub/irs-prior/f4562--2025.pdf",
   projectFields(raw, allPending) {
@@ -84,7 +85,7 @@ export const form4562Pdf: PdfFormDescriptor = {
       : "bonus_asset" in raw
       ? filedBonus4562Schema.parse(raw)
       : filedForm4562Schema.parse(raw);
-    form4562Mef.build(filed, { pending: allPending });
+    form4562Mef.build(filed, { pending: allPending, taxYear });
     return filed;
   },
   instances(projected, filer, allPending) {
@@ -183,4 +184,7 @@ export const form4562Pdf: PdfFormDescriptor = {
     }
   },
   fields,
-};
+  };
+}
+
+export const form4562Pdf: PdfFormDescriptor = form4562PdfFor(2025);

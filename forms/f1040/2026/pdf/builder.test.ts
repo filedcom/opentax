@@ -563,3 +563,19 @@ test("TY2026 PDF prints Form 8582 on the 2026 draft", async () => {
   assertMatch(printed, /Total\. Enter on Part I, lines 2a, 2b, and 2c 5000 5000/);
   assertMatch(printed, /Example rental Sch E, line 22 5000 5000 0/);
 });
+
+test("TY2026 PDF prints Form 4562 Part I on the 2026 draft", async () => {
+  const inputs = JSON.parse(
+    JSON.stringify(fixture("single-form4562-section179-w2-income-limit"))
+      .replace(/202[4-6]/g, (year) => String(Number(year) + 1)),
+  );
+  const printed = await text(await render(inputs));
+  assertMatch(printed, /Form 4562 \(2026\)/);
+  assertMatch(printed, /1 Maximum amount \(see instructions\)[^\n]* 1 30000/);
+  assertMatch(printed, /before reduction in limitation \(see instructions\)[^\n]* 3 4090000/);
+  assertMatch(printed, /Computer server 30000 30000/);
+  assertMatch(printed, /from line 13 of your 2025 Form 4562 [. ]* 10 0/);
+  assertMatch(printed, /don’t enter more than line 11 [. ]* 12 30000/);
+  assertMatch(printed, /Carryover of disallowed deduction to 2027[^\n]* 13 0/);
+  assertMatch(printed, /corporations—see instructions [. ]* 22 30000/);
+});
