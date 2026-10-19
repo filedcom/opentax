@@ -740,18 +740,8 @@
     "count": 3
   },
   {
-    "path": "forms/f1040/2025/pdf/forms/deductions/additional/schedule1a/schedule1a.ts",
-    "pattern": "year-value",
-    "count": 5
-  },
-  {
     "path": "forms/f1040/2025/pdf/forms/deductions/business/f8995a_aggregation_statement.ts",
     "pattern": "year-identifier",
-    "count": 1
-  },
-  {
-    "path": "forms/f1040/2025/pdf/forms/deductions/itemized/schedule_a.ts",
-    "pattern": "year-value",
     "count": 1
   },
   {
