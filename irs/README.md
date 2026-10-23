@@ -15,8 +15,12 @@ case in CI.
 | --- | --- | --- |
 | `mef/2025v5.4/` | TY2025 Form 1040 schemas (ATS-valid since 2025-10-13) | `IMF_Series_2025v5.4.zip` › `1040x_Schema_2025v5.4.zip` › `2025v5.4/` |
 | `mef/2026v1.0/` | TY2026 Form 1040 schemas (not ATS-valid; ATS uses 2026v3.0, then 2026v4.0 from 2026-11-01) | `IMF_Series_2026v1.0.zip` › `1040x_2026v1.0.zip` › `1040x_Schema_2026v1.0.zip` › `2026v1.0/` |
+| `mef/2026v3.0/` | TY2026 Form 1040 schemas, ATS-valid from 2026-08-13 | `IMF_Series_2026v3.0.zip` › `1040x_Schema_2026v3.0.zip` |
+| `mef/2026v4.0/` | TY2026 Form 1040 schemas, ATS-valid from 2026-11-01 | `IMF_Series_2026v4.0.zip` › `1040x_Schema_2026v4.0.zip` |
 | `rules/1040_Business_Rules_2025v3.0.csv` | TY2025 rules that `forms/f1040/validation/rules` was generated from | `IMF_Series_2025v3.0.zip` › `1040x_2025v3.0.zip` › `1040x_Business_Rules_2025v3.0.zip` |
 | `rules/1040_Business_Rules_2026v1.0.csv` | TY2026 rules | `IMF_Series_2026v1.0.zip` › `1040x_2026v1.0.zip` › `1040x_Business_Rules_2026v1.0.zip` |
+| `rules/1040_Business_Rules_2026v3.0.xlsm` (+ `.pdf`) | TY2026 rules for 2026v3.0; the IRS ships xlsm/pdf, not CSV | `IMF_Series_2026v3.0.zip` › `1040x_Business_Rules_2026v3.0.zip` |
+| `rules/1040_Business_Rules_2026v4.0.xlsm` (+ `.pdf`) | TY2026 rules for 2026v4.0 | `IMF_Series_2026v4.0.zip` › `1040x_Business_Rules_2026v4.0.zip` |
 | `4868/2026v1.0/` | TY2026 Form 4868 extension schemas (`Extensions/4868/Return4868.xsd`); the 2025v5.4 package has no 4868 schema | `IMF_Series_2026v1.0.zip` › `4868_2026v1.0.zip` › `4868_Schema_2026v1.0.zip` › `2026v1.0/` |
 | `4868/rules/4868_Business_Rules_2026v1.0.pdf` | TY2026 Form 4868 rules that `forms/f4868/validation/rules` implements | `IMF_Series_2026v1.0.zip` › `4868_2026v1.0.zip` › `4868_Business_Rules_2026v1.0.zip` |
 | `wsdl/10.9/` | MeF A2A WSDL 10.9: `MeFMSIServices` (Login, Logout, ETIN services), `MeFTransmitterServicesMTOM` (SendSubmissions, acks, status), `MeFHeader.xsd` and the release notes; `cli/mef` builds against them and its mock IRS server validates with them | `WSDLs_10.9/`, all files as released |

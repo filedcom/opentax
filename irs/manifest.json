@@ -23,6 +23,28 @@
       }
     },
     {
+      "id": "mef-2026v3.0",
+      "use": "TY2026 Form 1040 MeF schemas, ATS-valid from 2026-08-13 until 2026v4.0",
+      "source": "IRS e-Services Secure Object Repository: IMF_Series_2026v3.0.zip > 1040x_Schema_2026v3.0.zip > 2026v3.0/",
+      "path": "mef/2026v3.0",
+      "files": {
+        "IndividualIncomeTax/Ind1040/Return1040.xsd": "c269d30752383b5d64661bb3e548e19f80915930fb53abca6ff1778ed80be788",
+        "IndividualIncomeTax/Common/ReturnHeader1040x.xsd": "d8fdf98aa7187962a20c049b9ea94463cdf722ad82bc9e6c35715359dfbb4bab",
+        "Common/efileTypes.xsd": "fe8a6b84e09367ff98cd64819b559b726365e91a70884f2229dbec94ab81c4df"
+      }
+    },
+    {
+      "id": "mef-2026v4.0",
+      "use": "TY2026 Form 1040 MeF schemas, ATS-valid from 2026-11-01",
+      "source": "IRS e-Services Secure Object Repository: IMF_Series_2026v4.0.zip > 1040x_Schema_2026v4.0.zip > 2026v4.0/",
+      "path": "mef/2026v4.0",
+      "files": {
+        "IndividualIncomeTax/Ind1040/Return1040.xsd": "61cb103bb9ea7994f4b272ffe51611a96cd17ae88193d010ed4e1a6e1938a694",
+        "IndividualIncomeTax/Common/ReturnHeader1040x.xsd": "86f9b217151b53bd8034d3ce177d2d8975c6723d93b63ed7c1d39d12ddf649ed",
+        "Common/efileTypes.xsd": "d7d267b81a72fe2c8b5a1065d8e3fa87375b578a084f0fb1a489cab56cd13f26"
+      }
+    },
+    {
       "id": "rules-2025v3.0",
       "use": "TY2025 Form 1040 business rules that forms/f1040/validation/rules was generated from",
       "source": "IRS e-Services Secure Object Repository: IMF_Series_2025v3.0.zip > 1040x_2025v3.0.zip > 1040x_Business_Rules_2025v3.0.zip",
@@ -38,6 +60,24 @@
       "path": "rules",
       "files": {
         "1040_Business_Rules_2026v1.0.csv": "ec54240b1800073b25e59ef725772ff761e12a569abcde700822d126edc39433"
+      }
+    },
+    {
+      "id": "rules-2026v3.0",
+      "use": "TY2026 Form 1040 business rules 2026v3.0 (xlsm; the IRS no longer ships CSV)",
+      "source": "IRS e-Services Secure Object Repository: IMF_Series_2026v3.0.zip > 1040x_Business_Rules_2026v3.0.zip",
+      "path": "rules",
+      "files": {
+        "1040_Business_Rules_2026v3.0.xlsm": "5ef64a9bf267bdd6836de09d65e11025f49e2e9fc78e2e6223528f23b6c08fa9"
+      }
+    },
+    {
+      "id": "rules-2026v4.0",
+      "use": "TY2026 Form 1040 business rules 2026v4.0 (xlsm; the IRS no longer ships CSV)",
+      "source": "IRS e-Services Secure Object Repository: IMF_Series_2026v4.0.zip > 1040x_Business_Rules_2026v4.0.zip",
+      "path": "rules",
+      "files": {
+        "1040_Business_Rules_2026v4.0.xlsm": "373733db8661eab815253de329ce8d7db1ad5326d60a683043580a7a41564674"
       }
     },
     {
