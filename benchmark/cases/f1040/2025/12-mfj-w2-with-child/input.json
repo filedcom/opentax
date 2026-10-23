@@ -1,6 +1,6 @@
 {
   "year": 2025,
-  "scenario": "Married filing jointly with one qualifying child under 17 \u2014 tests Child Tax Credit ($2,000)",
+  "scenario": "Married filing jointly with one qualifying child under 17 — tests Child Tax Credit ($2,000)",
   "forms": [
     {
       "node_type": "start",
@@ -23,9 +23,27 @@
               "dob": "2015-04-20",
               "relationship": "daughter",
               "months_in_home": 12,
-              "qualifying_child_for_ctc": true
+              "qualifying_child_for_ctc": true,
+              "ssn": "222-33-4400",
+              "ssn_valid_for_employment": true,
+              "ssn_issued_before_due_date": true,
+              "tin_issued_by_due_date": true,
+              "us_citizen_national_or_resident": true,
+              "provided_over_half_own_support": false,
+              "filed_joint_return_except_refund_only": false,
+              "dependent_on_another_return": false,
+              "lived_in_us_over_half_year": true,
+              "months_lived_with_you_in_us": 12
             }
-          ]
+          ],
+          "taxpayer_ssn": "111-22-3333",
+          "taxpayer_ssn_valid_for_employment": true,
+          "taxpayer_ssn_issued_before_due_date": true,
+          "taxpayer_tin_issued_by_due_date": true,
+          "spouse_ssn": "444-55-6666",
+          "spouse_ssn_valid_for_employment": true,
+          "spouse_ssn_issued_before_due_date": true,
+          "spouse_tin_issued_by_due_date": true
         }
       }
     },
