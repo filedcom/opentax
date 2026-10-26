@@ -155,3 +155,42 @@ test("regular method: a year without published terms is refused", () => {
     computeRegularMethodPenalty({ current_year_tax: 10_000 }, null)
   );
 });
+
+// A high-income filer can otherwise be told that 100% of prior tax suffices
+// although IRC6654(d)(1)(C) requires 110%. Missing material AGI is not zero.
+test("regular method: missing prior AGI is rejected when the prior-year rate matters", () => {
+  assertThrows(() => penalty2025({
+    current_year_tax: 100_000,
+    prior_year_tax: 50_000,
+    withholding: 50_000,
+  }), Error, "prior-year AGI");
+});
+
+test("regular method: current-year target does not need an immaterial prior AGI", () => {
+  assertEquals(penalty2025({
+    current_year_tax: 10_000,
+    prior_year_tax: 20_000,
+    withholding: 9_000,
+  }), 0);
+});
+
+test("regular method: equal current-year and 100% prior-year targets do not need prior AGI", () => {
+  assertEquals(penalty2025({
+    current_year_tax: 10_000,
+    prior_year_tax: 9_000,
+    withholding: 9_000,
+  }), 0);
+});
+
+test("regular method: an explicit required annual payment does not need prior AGI", () => {
+  assertEquals(penalty2025({
+    current_year_tax: 100_000,
+    prior_year_tax: 50_000,
+    withholding: 50_000,
+    required_annual_payment: 50_000,
+  }), 0);
+});
+
+test("regular method: zero prior-year tax does not require an immaterial AGI", () => {
+  assertEquals(penalty2025({ current_year_tax: 100000, prior_year_tax: 0 }), 0);
+});

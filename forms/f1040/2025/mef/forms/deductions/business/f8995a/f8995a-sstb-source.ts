@@ -1,4 +1,11 @@
 import { assertSstbServiceClassification } from "../../../../../../nodes/inputs/income/business/schedule_c/sstb-classification.ts";
+import { reviewedSstbRetirementDeduction } from "../../../../../../nodes/inputs/income/business/schedule_c/sstb-retirement.ts";
+import { filedOwnedScheduleC } from "../../../../../../nodes/owned-business-filing.ts";
+import {
+  inputSchema as retirementSchema,
+  PlanType,
+  validatedRetirementDeduction,
+} from "../../../../../../nodes/inputs/adjustments/retirement/sep_retirement/index.ts";
 import {
   assertMultiBusinessInvestmentSources,
   assertMultiBusinessInvestmentTax,
@@ -9,6 +16,8 @@ import { FilingStatus } from "../../../../../../nodes/types.ts";
 import {
   computeNetProfit,
   inputSchema as scheduleCSchema,
+  itemSchema as scheduleCItemSchema,
+  projectScheduleCItems,
 } from "../../../../../../nodes/inputs/income/business/schedule_c/model.ts";
 import { inputSchema as w2Schema } from "../../../../../../nodes/inputs/income/wages/w2/index.ts";
 import { scheduleSELines } from "../../../../../../nodes/intermediate/forms/taxes/self-employment/schedule_se/calculation.ts";
@@ -32,7 +41,10 @@ export function assertSstbScheduleCSource(
     throw new Error("SSTB source needs the complete retained return");
   }
   const c = scheduleCSchema.parse(pending.schedule_c);
-  const item = c.schedule_cs[0];
+  const businesses = projectScheduleCItems(c).map((row) =>
+    scheduleCItemSchema.parse(row)
+  );
+  const item = businesses[0];
   const review = item?.qbi_sstb_filing_review;
   const source = retained.business.source_schedule_c;
   const s1 = pending.schedule1 as Record<string, unknown> | undefined;
@@ -66,11 +78,30 @@ export function assertSstbScheduleCSource(
     ? "spouse_ssn"
     : "taxpayer_ssn";
   assertSstbServiceClassification(source);
-  const profit = computeNetProfit(source);
+  const profit = filedOwnedScheduleC(source)?.profit ?? computeNetProfit(source);
   const seLines = se && scheduleSELines(se, qbiYearConfig(taxYear).ssWageBase);
   const payroll = review?.employee_w2_records ?? [];
+  const retirementDeduction = reviewedSstbRetirementDeduction(
+    source,
+    retained.retirement_plan_deduction ?? 0,
+  );
+  if (retirementDeduction > 0) {
+    const plans = retirementSchema.parse(pending.sep_retirement).sep_retirements;
+    const plan = plans?.[0];
+    if (!plans || plans.length !== 1 || !plan ||
+      plan.plan_type !== PlanType.SOLO_401K ||
+      plan.net_self_employment_compensation === undefined ||
+      Math.round(plan.net_self_employment_compensation) !==
+        Math.round(profit) - retained.se_tax_deduction ||
+      validatedRetirementDeduction(plans, qbiYearConfig(taxYear)) !==
+        retirementDeduction) {
+      throw new Error(
+        "SSTB retirement deduction must reconcile its sole proprietor earnings and retained validated solo401k plan",
+      );
+    }
+  }
   if (
-    !review || !f || !g || !s1 || !seLines || c.schedule_cs.length !== 1 ||
+    !review || !f || !g || !s1 || !seLines || businesses.length !== 1 ||
     JSON.stringify(item) !== JSON.stringify(source) ||
     g[ownerKey]?.toString().replaceAll("-", "") !== ssn ||
     f[ownerKey]?.toString().replaceAll("-", "") !== ssn ||
@@ -84,7 +115,8 @@ export function assertSstbScheduleCSource(
       !(joint && source.proprietor_recipient === "S")) ||
     source.qbi_specified_service !== true ||
     review.business_activity_description !== source.line_a_principal_business ||
-    source.qbi_no_other_adjustments_confirmed !== true ||
+    (retirementDeduction === 0 &&
+      source.qbi_no_other_adjustments_confirmed !== true) ||
     retained.business.qbi !== profit ||
     retained.business.wotc_wage_reduction !== undefined ||
     (source.qbi_unadjusted_basis ?? 0) !== 0 ||
@@ -110,9 +142,9 @@ export function assertSstbScheduleCSource(
     seLines.line13 !== retained.se_tax_deduction ||
     s1.line15_se_deduction !== retained.se_tax_deduction ||
     s1.line3_schedule_c !== profit ||
-    (s1.line16_sep_simple ?? 0) !== 0 ||
+    (s1.line16_sep_simple ?? 0) !== retirementDeduction ||
     (s1.line17_se_health_insurance ?? 0) !== 0 ||
-    input.sstb_qbi !== profit - retained.se_tax_deduction ||
+    input.sstb_qbi !== profit - retained.se_tax_deduction - retirementDeduction ||
     input.sstb_filing_details?.business_name !== source.line_c_business_name ||
     input.sstb_filing_details?.ein !== source.line_d_ein ||
     input.sstb_filing_details?.qbi_wages_ubia_source_reference !==
@@ -170,8 +202,9 @@ export function assertSstbScheduleCSource(
     if (
       input.net_capital_gain !== totals.filedQbiCapitalLimit ||
       f.line9_total_income !== income ||
-      f.line11_agi !== income - retained.se_tax_deduction ||
-      (f.line10_adjustments ?? 0) !== retained.se_tax_deduction ||
+      f.line11_agi !== income - retained.se_tax_deduction - retirementDeduction ||
+      (f.line10_adjustments ?? 0) !==
+        retained.se_tax_deduction + retirementDeduction ||
       (f.line1a_wages ?? 0) !== wages || (f.line1z_total_wages ?? 0) !== wages
     ) {
       throw Error(

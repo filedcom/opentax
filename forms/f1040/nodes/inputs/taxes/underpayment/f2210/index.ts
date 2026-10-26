@@ -5,6 +5,7 @@ import { OutputNodes } from "../../../../../../../core/types/output-nodes.ts";
 import { f1040 } from "../../../../outputs/general/return-assembly/f1040/index.ts";
 import type { NodeContext } from "../../../../../../../core/types/node-context.ts";
 import { computeRegularMethodPenalty } from "./calculation.ts";
+import { FilingStatus } from "../../../../types.ts";
 import { configForYear } from "../../../../config/index.ts";
 import {
   calculateForm2210BoxEPage1,
@@ -21,7 +22,8 @@ export const inputSchema = z.object({
   q2_estimated_payment: z.number().nonnegative().optional(),
   q3_estimated_payment: z.number().nonnegative().optional(),
   q4_estimated_payment: z.number().nonnegative().optional(),
-  // Current year total tax (before credits) — for 90% safe harbor
+  filing_status: z.nativeEnum(FilingStatus).optional(),
+  // Form2210 line4: current-year tax after relevant credits, before withholding
   current_year_tax: z.number().nonnegative().optional(),
   // Prior year total tax — for 100%/110% safe harbor
   prior_year_tax: z.number().nonnegative().optional(),

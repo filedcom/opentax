@@ -1,4 +1,5 @@
 import { assertSstbServiceClassification } from "../../../../../inputs/income/business/schedule_c/sstb-classification.ts";
+import { reviewedSstbRetirementDeduction } from "../../../../../inputs/income/business/schedule_c/sstb-retirement.ts";
 import { passiveSCorpLossBundleSchema } from "../../../../../inputs/income/rental-passthrough/k1_s_corp_passive_loss_source.ts";
 import { passiveSCorpLossQbiLines } from "./passive-s-corp-loss.ts";
 import { ownedSepSourceSchema } from "../../../../../inputs/adjustments/retirement/sep_retirement/owned-source.ts";
@@ -867,7 +868,6 @@ function advancedFormOutput(
       business.wotc_wage_reduction !== undefined ||
       sumField(input.qbi_from_schedule_f) !== 0 || sumField(input.qbi) !== 0 ||
       sumField(input.se_health_insurance_deduction) !== 0 ||
-      sumField(input.retirement_plan_deduction) !== 0 ||
       input.qbi_no_prior_loss_or_suspended_loss_confirmed !== true ||
       input.qbi_not_patron_of_specified_cooperative_confirmed !== true ||
       !Number.isSafeInteger(qbiCapitalTotal(input, true)) ||
@@ -878,13 +878,18 @@ function advancedFormOutput(
       (input.reit_loss_carryforward ?? 0) !== 0
     ) {
       throw new Error(
-        "SSTB Schedule C needs one identified taxpayer service business with only its filed half-SE adjustment",
+        "SSTB Schedule C needs one identified taxpayer service business with reviewed attributable adjustments",
       );
     }
     if (review.service_classification_review) {
       assertSstbServiceClassification(business.source_schedule_c);
     }
-    const qbi = business.qbi - sumField(input.se_tax_deduction);
+    const retirementDeduction = reviewedSstbRetirementDeduction(
+      business.source_schedule_c,
+      sumField(input.retirement_plan_deduction),
+    );
+    const qbi = business.qbi - sumField(input.se_tax_deduction) -
+      retirementDeduction;
     sourcedBusiness = {
       sstb_qbi: qbi,
       sstb_filing_details: {
@@ -913,6 +918,9 @@ function advancedFormOutput(
         business,
         owner_ssn: owner,
         se_tax_deduction: sumField(input.se_tax_deduction),
+        ...(retirementDeduction > 0
+          ? { retirement_plan_deduction: retirementDeduction }
+          : {}),
       },
       qbi_no_prior_loss_or_suspended_loss_confirmed: true,
     };
@@ -1282,6 +1290,17 @@ function multipleScheduleCLines(
     ) ||
       (businesses.length === 1 &&
         input.investment_dividend_totals !== undefined))
+  ) return undefined;
+  // A single reviewed SSTB below the threshold uses the ordinary simplified
+  // QBI calculation, including its attributable retirement deduction. Complete
+  // dividend metadata does not turn it into a multiple-business source route;
+  // that route is limited to taxpayer-owned, unadjusted Single-filer sources.
+  if (
+    businesses.length === 1 &&
+    businesses[0].source_schedule_c.qbi_specified_service === true &&
+    businesses[0].source_schedule_c.qbi_sstb_filing_review
+      ?.retirement_plan_deduction_review !== undefined &&
+    businesses[0].source_schedule_c.qbi_se_tax_allocation_review === undefined
   ) return undefined;
   if (
     input.se_tax_deduction === undefined &&
@@ -1839,6 +1858,30 @@ class Form8995Node extends TaxNode<typeof inputSchema> {
       input.agi === undefined
     ) {
       return { outputs: [] };
+    }
+    const retirementBusinesses = input.schedule_c_qbi_businesses?.filter((row) =>
+      row.source_schedule_c.qbi_sstb_filing_review
+        ?.retirement_plan_deduction_review !== undefined
+    ) ?? [];
+    if (retirementBusinesses.length > 0) {
+      const business = retirementBusinesses[0].source_schedule_c;
+      const owner = (business.proprietor_recipient === "S"
+        ? input.spouse_ssn
+        : input.taxpayer_ssn)?.replaceAll("-", "");
+      if (retirementBusinesses.length !== 1 ||
+        input.schedule_c_qbi_businesses?.length !== 1 || !owner ||
+        business.qbi_sstb_filing_review?.owner_ssn !== owner ||
+        business.qbi_specified_service !== true ||
+        sumField(input.qbi_from_schedule_f) !== 0 ||
+        sumField(input.se_health_insurance_deduction) !== 0) {
+        throw new Error(
+          "SSTB retirement attribution needs one identified proprietor business without other attributable adjustments",
+        );
+      }
+      // Validate explicit ownership even below the Form 8995-A threshold.
+      reviewedSstbRetirementDeduction(
+        business, sumField(input.retirement_plan_deduction),
+      );
     }
     const taxableIncome = taxableIncomeBeforeQbi(input, cfg);
     if (

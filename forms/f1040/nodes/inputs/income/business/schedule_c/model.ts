@@ -186,7 +186,17 @@ export const itemSchema = z.object({
     // Reconciled to the retained investment portfolio, including positive dividends.
     qualified_dividends_zero_confirmed: z.boolean(),
     no_qualified_property_confirmed: z.literal(true),
-    no_adjustments_beyond_filed_half_se_tax_confirmed: z.literal(true),
+    no_adjustments_beyond_filed_half_se_tax_confirmed: z.literal(true).optional(),
+    // A qualified owner retirement deduction also reduces QBI (i8995,
+    // Determining Your Qualified Business Income). Attribute the computed
+    // deduction to this sole business rather than waiving the source review.
+    retirement_plan_deduction_review: z.object({
+      owner_ssn: z.string().regex(/^\d{9}$/),
+      business_reference: z.string().trim().min(1),
+      deduction_amount: z.number().int().positive(),
+      source_document_reference: z.string().trim().min(1),
+      no_other_qbi_adjustments_confirmed: z.literal(true),
+    }).strict().optional(),
     review_reference: z.string().trim().min(1),
     reviewed_by: z.string().trim().min(1),
     reviewed_on: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).refine((date) => {
@@ -195,6 +205,16 @@ export const itemSchema = z.object({
         parsed.toISOString().slice(0, 10) === date && date >= "2025-12-31";
     }, "Expected a real post-year-end review date"),
   }).strict().superRefine((review, ctx) => {
+    if (
+      (review.no_adjustments_beyond_filed_half_se_tax_confirmed === true) ===
+        (review.retirement_plan_deduction_review !== undefined)
+    ) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message:
+          "Provide exactly one half-SE-only or attributable retirement deduction review",
+      });
+    }
     if (
       (review.accounting_sstb_confirmed === true) ===
         (review.service_classification_review !== undefined)

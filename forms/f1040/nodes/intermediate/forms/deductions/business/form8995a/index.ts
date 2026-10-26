@@ -325,6 +325,7 @@ export const inputSchema = z.object({
     business: scheduleCQbiBusinessSchema,
     owner_ssn: z.string().regex(/^\d{9}$/),
     se_tax_deduction: z.number().int().nonnegative(),
+    retirement_plan_deduction: z.number().int().positive().optional(),
   }).strict().optional(),
   producing_mining_zero_qbi_source: z.object({
     business: scheduleCQbiBusinessSchema,
@@ -1222,9 +1223,8 @@ export function calculateOneSstb8995ALines(
       input.filing_status !== FilingStatus.QSS && !joint && !separate) ||
     !Number.isInteger(input.taxable_income) ||
     input.taxable_income <= threshold ||
-    (input.taxable_income > threshold + phaseInRange ||
-      (input.taxable_income === threshold + phaseInRange &&
-        !input.single_sstb_schedule_c_source))
+    (input.taxable_income >= threshold + phaseInRange &&
+      !input.single_sstb_schedule_c_source)
   ) {
     throw new Error(
       "Form 8995-A Schedule A needs one identified single, head-of-household, surviving-spouse, separate, or joint-filer SSTB within the phase-in range",
@@ -1258,7 +1258,7 @@ export function calculateOneSstb8995ALines(
       "Form 8995-A Schedule A source must be the only business, with no aggregation, patron, unsourced gain, REIT/PTP, or loss path",
     );
   }
-  const phaseIn = (input.taxable_income - threshold) / phaseInRange;
+  const phaseIn = Math.min(1, (input.taxable_income - threshold) / phaseInRange);
   const applicable = 1 - phaseIn;
   const filed = (value: number) =>
     input.single_sstb_schedule_c_source ? Math.round(value) : value;

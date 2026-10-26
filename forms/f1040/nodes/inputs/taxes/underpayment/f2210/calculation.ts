@@ -72,6 +72,16 @@ function requiredAnnualPayment(input: RegularMethodPenaltyInput): number {
   }
   const currentYearThreshold = input.current_year_tax * 0.9;
   if (input.prior_year_tax === undefined) return currentYearThreshold;
+  if (currentYearThreshold <= input.prior_year_tax) {
+    // The current-year amount is smaller under either prior-year rate, so
+    // prior-year AGI cannot change line 9.
+    return currentYearThreshold;
+  }
+  if (input.prior_year_tax > 0 && input.prior_year_agi === undefined) {
+    throw new Error(
+      "Form 2210 needs prior-year AGI when the 100% or 110% prior-year rate can change the required annual payment",
+    );
+  }
   const priorYearRate =
     (input.prior_year_agi ?? 0) > highIncomeThreshold(input.filing_status)
       ? 1.1

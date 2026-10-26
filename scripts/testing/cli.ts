@@ -1,6 +1,7 @@
 /** CLI readiness: complete sample returns go through the product CLI end to end. */
 import * as fs from "node:fs/promises";
 import { join } from "node:path";
+import { fileURLToPath } from "node:url";
 import * as sys from "../support/sys.ts";
 import {
   type PdfReviewFixture,
@@ -34,12 +35,12 @@ export const CLI_RETURNS = [
   "single-1098-purchase-points",
 ] as const;
 
-const MAIN = new URL("../../cli/main.ts", import.meta.url).pathname;
+const MAIN = fileURLToPath(new URL("../../cli/main.ts", import.meta.url));
 // The private IRS schema cache; CI has none, so the XSD check runs locally only.
-const RETURN_XSD = new URL(
+const RETURN_XSD = fileURLToPath(new URL(
   "../../irs/mef/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd",
   import.meta.url,
-).pathname;
+));
 
 /** xmllint's first complaints, or null when the XML validates against `xsd`. */
 async function schemaProblem(

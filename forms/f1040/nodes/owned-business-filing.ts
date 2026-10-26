@@ -36,17 +36,20 @@ export function filedOwnedScheduleC(
   specialFiling = false,
   reduction = 0,
 ) {
+  const reviewedRetirement = item.qbi_sstb_filing_review
+    ?.retirement_plan_deduction_review !== undefined &&
+    item.qbi_no_other_adjustments_confirmed === false;
   if (
     specialFiling ||
     (reduction !== 0 && !(reduction > 0 && item.qbi_wotc_filing_review)) ||
     !item.proprietor_recipient ||
-    item.qbi_no_other_adjustments_confirmed !== true ||
+    (item.qbi_no_other_adjustments_confirmed !== true && !reviewedRetirement) ||
     item.statutory_employee === true || item.professional_gambler === true ||
     item.line_f_accounting_method !== "cash" ||
     item.line_g_material_participation !== true ||
     item.line_32_at_risk !== "a" || item.at_risk_simplified ||
     (item.qbi_wotc_filing_review && reduction <= 0) ||
-    (item.line_27b_other_expenses ?? 0) !== 0 ||
+    ((item.line_27b_other_expenses ?? 0) !== 0 && !item.qbi_sstb_filing_review) ||
     (item.line_26_other_employment_credits ?? 0) !== 0 ||
     item.home_office_method || (item.line_30_home_office ?? 0) !== 0
   ) return undefined;

@@ -209,3 +209,10 @@ test("f2210.compute: smoke — explicit penalty with full context routes to f104
   assertEquals(penaltyOutput(result)?.line38_underpayment_penalty, 175);
   assertEquals(result.outputs.length, 1);
 });
+
+// i2210 uses the75,000 AGI boundary for MFS; the public node must not
+// discard an explicitly supplied filing status before calling the calculator.
+test("f2210 public input retains filing status for the high-income threshold", () => {
+  const p = penaltyOutput(compute({ filing_status: "mfs", current_year_tax: 20000, prior_year_tax: 10000, prior_year_agi: 80000 }));
+  assertEquals(p?.line38_underpayment_penalty, Math.round(2750*.07*(365+304+212+90)/365));
+});

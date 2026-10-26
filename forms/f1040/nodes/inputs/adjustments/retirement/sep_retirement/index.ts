@@ -33,7 +33,9 @@ export enum PlanType {
 export const itemSchema = z.object({
   plan_type: z.nativeEnum(PlanType),
   // SEP-IRA fields
-  net_self_employment_compensation: z.number().nonnegative().optional(),
+  net_self_employment_compensation: z.number().nonnegative().optional().describe(
+    "For SOLO_401K: this proprietor's Schedule C/F profit less the deductible part of ordinary SE tax, before owner retirement contributions; required for a positive contribution",
+  ),
   sep_contribution: z.number().nonnegative().optional(),
   // SIMPLE IRA fields
   simple_employee_contribution: z.number().nonnegative().optional(),
@@ -44,6 +46,9 @@ export const itemSchema = z.object({
   // Solo 401(k) fields
   solo401k_employee_deferral: z.number().nonnegative().optional(),
   solo401k_employer_contribution: z.number().nonnegative().optional(),
+  other_plan_employee_deferrals: z.number().nonnegative().optional().describe(
+    "This proprietor's elective deferrals to other employers' plans sharing the annual 402(g) limit; omitted means none, and excludes the spouse's deferrals",
+  ),
 });
 
 export const inputSchema = z.object({
@@ -97,12 +102,58 @@ function solo401kDeduction(
   sepMax: number,
   limits: F1040Config["retirementLimits"],
 ): number {
-  const employee = Math.min(
-    item.solo401k_employee_deferral ?? 0,
-    limits["401k"][49],
-  );
+  const employee = item.solo401k_employee_deferral ?? 0;
   const employer = item.solo401k_employer_contribution ?? 0;
-  return Math.min(employee + employer, sepMax);
+  if (employee + employer === 0) return 0;
+  const earnings = item.net_self_employment_compensation;
+  if (earnings === undefined) {
+    throw new Error(
+      "Solo 401(k) deduction needs this proprietor's net_self_employment_compensation (business profit less deductible ordinary half-SE tax, before retirement contributions)",
+    );
+  }
+  const otherDeferrals = item.other_plan_employee_deferrals ?? 0;
+  const annualDeferralLimit = limits["401k"][49];
+  // Pub. 560, Limit on Elective Deferrals: age makes a participant eligible
+  // for catch-ups; it does not make ordinary base-limit contributions catch-ups.
+  // Additional deferrals still need separate plan/age coordination that this
+  // legacy input does not provide.
+  if ((item.age_50_or_over === true || item.age_60_to_63 === true) &&
+    employee + otherDeferrals > annualDeferralLimit + 0.005) {
+    throw new Error(
+      "Solo 401(k) catch-up elective deferrals need a separate reviewed worksheet; this calculation supports ordinary base-limit contributions at any age",
+    );
+  }
+  if (otherDeferrals > annualDeferralLimit) {
+    throw new Error(
+      "Other-plan employee deferrals already exceed this proprietor's annual limit; resolve that excess before deducting solo 401(k) contributions",
+    );
+  }
+  const employeeLimit = Math.min(
+    Math.max(0, annualDeferralLimit - otherDeferrals),
+    earnings,
+  );
+  if (employee > employeeLimit + 0.005) {
+    throw new Error(
+      `Solo 401(k) employee deferral exceeds the proprietor's remaining annual/earned-income limit of $${employeeLimit.toFixed(2)}`,
+    );
+  }
+
+  // Pub. 560, chapter 5, Deduction Worksheet steps 3-15. This bounded
+  // ordinary-contribution path assumes the maximum 25% employer plan rate (20% reduced
+  // self-employed rate). Steps 10 and 12 also limit employer contributions
+  // after allowable elective deferrals. Only actual, allowable contributions
+  // are deductible: an excess is rejected, not silently treated as corrected.
+  const employerLimit = Math.max(0, Math.min(
+    earnings * 0.20,
+    sepMax - employee,
+    (earnings - employee) / 2,
+  ));
+  if (employer > employerLimit + 0.005) {
+    throw new Error(
+      `Solo 401(k) employer contribution exceeds the self-employed earnings/annual-additions limit of $${employerLimit.toFixed(2)}; review the plan's contribution rate and correct the excess`,
+    );
+  }
+  return employee + employer;
 }
 
 function planDeduction(item: SepRetirementItem, cfg: F1040Config): number {
@@ -115,7 +166,21 @@ function planDeduction(item: SepRetirementItem, cfg: F1040Config): number {
   return solo401kDeduction(item, cfg.sepMaxContribution, cfg.retirementLimits);
 }
 
-function totalDeduction(items: SepRetirementItems, cfg: F1040Config): number {
+export function validatedRetirementDeduction(
+  items: SepRetirementItems,
+  cfg: F1040Config,
+): number {
+  if (
+    items.length > 1 && items.some((item) =>
+      item.plan_type === PlanType.SOLO_401K &&
+      (item.solo401k_employee_deferral ?? 0) +
+          (item.solo401k_employer_contribution ?? 0) > 0
+    )
+  ) {
+    throw new Error(
+      "Legacy solo 401(k) deduction needs one proprietor plan; multiple plan records need reviewed owner and annual-additions coordination",
+    );
+  }
   return items.reduce((sum, item) => sum + planDeduction(item, cfg), 0);
 }
 
@@ -123,7 +188,7 @@ function schedule1Output(
   items: SepRetirementItems,
   cfg: F1040Config,
 ): NodeOutput[] {
-  const deduction = totalDeduction(items, cfg);
+  const deduction = validatedRetirementDeduction(items, cfg);
   if (deduction === 0) return [];
   return [output(schedule1, { line16_sep_simple: deduction })];
 }
@@ -132,7 +197,7 @@ function agiOutput(
   items: SepRetirementItems,
   cfg: F1040Config,
 ): NodeOutput[] {
-  const deduction = totalDeduction(items, cfg);
+  const deduction = validatedRetirementDeduction(items, cfg);
   if (deduction === 0) return [];
   return [output(agi_aggregator, { line16_sep_simple: deduction })];
 }
@@ -144,7 +209,7 @@ function form8995Output(
   items: SepRetirementItems,
   cfg: F1040Config,
 ): NodeOutput[] {
-  const deduction = totalDeduction(items, cfg);
+  const deduction = validatedRetirementDeduction(items, cfg);
   if (deduction === 0) return [];
   return [output(form8995, { retirement_plan_deduction: deduction })];
 }
@@ -178,7 +243,7 @@ class SepRetirementNode extends TaxNode<typeof inputSchema> {
     const items = parsed.sep_retirements!;
     const outputs: NodeOutput[] = [
       output(form7206, {
-        schedule1_line16_source: totalDeduction(items, cfg),
+        schedule1_line16_source: validatedRetirementDeduction(items, cfg),
       }),
       ...schedule1Output(items, cfg),
       ...agiOutput(items, cfg),
