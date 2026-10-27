@@ -59,7 +59,11 @@ import { output, TaxNode } from "../../../../../../../../core/types/tax-node.ts"
 import { OutputNodes } from "../../../../../../../../core/types/output-nodes.ts";
 import { f1040 } from "../../../../../outputs/general/return-assembly/f1040/index.ts";
 import { standard_deduction } from "../../../../worksheets/deductions/standard/standard_deduction/index.ts";
-import { form8995a, type Form8995AInput } from "../form8995a/index.ts";
+import {
+  form8995a,
+  type Form8995AInput,
+  reitDividendSourceSchema,
+} from "../form8995a/index.ts";
 import { scheduleCQbiBusinessSchema } from "../form8995a/index.ts";
 import {
   allocateSharedSeDeduction,
@@ -280,6 +284,11 @@ function qbiComponent(input: Form8995Input): number {
   const net = netQbi(input);
   if (net <= 0) return 0;
   return net * QBI_RATE;
+}
+
+function reviewedReitSources(sources: unknown) {
+  const reviewed = z.array(reitDividendSourceSchema).min(1).safeParse(sources);
+  return reviewed.success ? { reit_dividend_sources: reviewed.data } : {};
 }
 
 function netReit(input: Form8995Input): number {
@@ -1167,6 +1176,8 @@ function advancedFormOutput(
     sstb_w2_wages: sumField(input.sstb_w2_wages),
     sstb_unadjusted_basis: sumField(input.sstb_unadjusted_basis),
     line6_sec199a_dividends: sumField(input.line6_sec199a_dividends),
+    // Only reviewed sources reach 8995-A; without them its line 28 check fails.
+    ...reviewedReitSources(input.reit_dividend_sources),
     qbi_loss_carryforward: input.qbi_loss_carryforward ?? 0,
     reit_loss_carryforward: input.reit_loss_carryforward ?? 0,
     ...(input.schedule_c_qbi_businesses?.some((business) => business.qbi < 0) &&

@@ -635,15 +635,17 @@ class F1099divNode extends TaxNode<typeof inputSchema> {
     }
 
     // §199A dividends — only items meeting holding period qualify
-    const totalBox5 = div1099s
-      .filter((item) =>
-        item.holdingPeriodDays === undefined ||
-        item.holdingPeriodDays >= HOLDING_PERIOD_199A_DAYS
-      )
-      .reduce((sum, item) => sum + (item.box5 ?? 0), 0);
+    const qualifying199a = div1099s.filter((item) =>
+      (item.box5 ?? 0) > 0 &&
+      (item.holdingPeriodDays === undefined ||
+        item.holdingPeriodDays >= HOLDING_PERIOD_199A_DAYS)
+    );
+    const totalBox5 = qualifying199a.reduce(
+      (sum, item) => sum + (item.box5 ?? 0),
+      0,
+    );
     if (totalBox5 > 0) {
-      const reitSources = div1099s
-        .filter((item) => (item.box5 ?? 0) > 0)
+      const reitSources = qualifying199a
         .map((item) => ({
           payer_name: item.payerName ?? "",
           source_document_reference: item.source_document_reference ?? "",

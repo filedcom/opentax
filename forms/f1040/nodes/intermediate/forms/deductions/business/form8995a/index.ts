@@ -247,6 +247,20 @@ export const scheduleCQbiBusinessSchema = z.object({
   source_schedule_c: scheduleCItemSchema,
 }).strict();
 
+// A reviewed 1099-DIV box 5 source for line 28 (i8995-A, Part IV).
+export const reitDividendSourceSchema = z.object({
+  payer_name: z.string().trim().min(1),
+  source_document_reference: z.string().trim().min(1),
+  box1a: z.number().positive().int(),
+  box5: z.number().positive().int(),
+  ex_dividend_date: z.string().regex(ISO_DATE),
+  qualified_held_days_in_91_day_window: z.number().int().min(46).max(91),
+  diminished_risk_days_excluded: z.number().int().nonnegative(),
+  no_related_payment_obligation_confirmed: z.literal(true),
+  review_reference: z.string().trim().min(1),
+  reviewed_on: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+}).strict();
+
 export const inputSchema = z.object({
   mixed_fishing_qbi_source: mixedFishingQbiSourceSchema.optional(),
   single_schedule_f_source: singleFarmSourceSchema.optional(),
@@ -285,20 +299,7 @@ export const inputSchema = z.object({
 
   // Section 199A dividends from REITs (Form 1099-DIV box 5)
   line6_sec199a_dividends: z.number().nonnegative().optional(),
-  reit_dividend_sources: z.array(
-    z.object({
-      payer_name: z.string().trim().min(1),
-      source_document_reference: z.string().trim().min(1),
-      box1a: z.number().positive().int(),
-      box5: z.number().positive().int(),
-      ex_dividend_date: z.string().regex(ISO_DATE),
-      qualified_held_days_in_91_day_window: z.number().int().min(46).max(91),
-      diminished_risk_days_excluded: z.number().int().nonnegative(),
-      no_related_payment_obligation_confirmed: z.literal(true),
-      review_reference: z.string().trim().min(1),
-      reviewed_on: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
-    }).strict(),
-  ).length(1).optional(),
+  reit_dividend_sources: z.array(reitDividendSourceSchema).min(1).optional(),
 
   // Prior-year QBI net loss carryforward (zero or negative)
   qbi_loss_carryforward: z.number().nonpositive().optional(),
@@ -1993,18 +1994,20 @@ function assertSupportedSchedulePath(
     (input.reit_dividend_sources ?? []).map((row) => row.ex_dividend_date),
     "Form 8995-A REIT 1099-DIV ex-dividend date must fall in the tax year",
   );
+  // Line 28 is the sum of qualified REIT dividends (i8995-A, Part IV). It
+  // needs no trade or business and no W-2 wage or UBIA limit, so any number of
+  // reviewed 1099-DIV sources qualify; each box 5 is part of its box 1a.
+  const reitSources = input.reit_dividend_sources ?? [];
   if (
     reit > 0 &&
-      (!input.business_filing_details ||
-        input.patron_of_specified_cooperative === true ||
-        reit > 1_500 ||
-        input.reit_dividend_sources?.length !== 1 ||
-        input.reit_dividend_sources[0].box5 !== reit ||
-        input.reit_dividend_sources[0].box1a !== reit) ||
+      (input.patron_of_specified_cooperative === true ||
+        reitSources.length === 0 ||
+        reitSources.some((row) => row.box5 > row.box1a) ||
+        reitSources.reduce((total, row) => total + row.box5, 0) !== reit) ||
     reit === 0 && input.reit_dividend_sources !== undefined
   ) {
     throw new Error(
-      "Form 8995-A REIT line 28 needs one identified business and one matching reviewed 1099-DIV source",
+      "Form 8995-A REIT line 28 needs a matching reviewed 1099-DIV source for each box 5 amount",
     );
   }
   if (
