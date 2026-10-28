@@ -56,3 +56,16 @@ test("E2E: Form 8995-A takes one 1099-DIV REIT amount above 1,500", () => {
   assertEquals(result.diagnostics, []);
   assertEquals(result.pending.f1040?.line13_qbi_deduction, 1_000);
 });
+
+test("E2E: Form 8995-A takes 1099-DIV REIT amounts with cents", () => {
+  const result = filing([
+    reitDividend("Example Broker A", 10_000.55, 1_000.25),
+    reitDividend("Example Broker B", 10_000.45, 1_000.35),
+  ]);
+  assertEquals(result.diagnostics, []);
+  // 20% of 2,000.60 before the engine's whole-dollar filing rounding.
+  assertEquals(
+    Math.round(Number(result.pending.f1040?.line13_qbi_deduction) * 100),
+    40_012,
+  );
+});

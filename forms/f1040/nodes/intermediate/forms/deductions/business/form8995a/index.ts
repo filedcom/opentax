@@ -251,8 +251,9 @@ export const scheduleCQbiBusinessSchema = z.object({
 export const reitDividendSourceSchema = z.object({
   payer_name: z.string().trim().min(1),
   source_document_reference: z.string().trim().min(1),
-  box1a: z.number().positive().int(),
-  box5: z.number().positive().int(),
+  // Issued 1099-DIV amounts carry cents; line 28 is rounded when it is filed.
+  box1a: z.number().positive(),
+  box5: z.number().positive(),
   ex_dividend_date: z.string().regex(ISO_DATE),
   qualified_held_days_in_91_day_window: z.number().int().min(46).max(91),
   diminished_risk_days_excluded: z.number().int().nonnegative(),
@@ -2003,7 +2004,9 @@ function assertSupportedSchedulePath(
       (input.patron_of_specified_cooperative === true ||
         reitSources.length === 0 ||
         reitSources.some((row) => row.box5 > row.box1a) ||
-        reitSources.reduce((total, row) => total + row.box5, 0) !== reit) ||
+        Math.round(
+            reitSources.reduce((total, row) => total + row.box5, 0) * 100,
+          ) !== Math.round(reit * 100)) ||
     reit === 0 && input.reit_dividend_sources !== undefined
   ) {
     throw new Error(
