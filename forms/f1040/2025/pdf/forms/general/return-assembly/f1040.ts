@@ -24,8 +24,10 @@ import { retainedActcOptOut } from "../../../../domains/credits/earned-income/ac
 import { retainedEicOptOut } from "../../../../domains/credits/earned-income/earned-income/eic-opt-out-source.ts";
 import {
   assertLine1hSupportedSource,
+  retainedClergyExcessAllowance,
   retainedDisabilityPension,
 } from "../../../../domains/income/other/line1h-source.ts";
+import { assertFileableClergyReturn } from "../../../../domains/income/wages/clergy/clergy_source.ts";
 import { assertIdentified1099IntOwner } from "../../../../domains/income/investments/f1099int/f1099int-owner-reconciliation.ts";
 import { assertPositive1099OidOwner } from "../../../../domains/income/investments/f1099oid/f1099oid-owner-reconciliation.ts";
 import { assertPositive1099DivOwner } from "../../../../domains/income/investments/f1099div/f1099div-owner-reconciliation.ts";
@@ -625,6 +627,12 @@ const fields: ReadonlyArray<PdfFieldEntry> = [
     pdfField: "topmostSubform[0].Page2[0].f2_23[0]",
   },
   {
+    // Line 27b, "Clergy filing Schedule SE" (2025 AcroForm c2_12).
+    kind: "checkbox",
+    domainKey: "print_line27b_clergy",
+    pdfField: "topmostSubform[0].Page2[0].c2_12[0]",
+  },
+  {
     kind: "checkbox",
     domainKey: "print_do_not_claim_eic",
     pdfField: "topmostSubform[0].Page2[0].c2_13[0]",
@@ -709,6 +717,7 @@ function line1hType(
   | "EXCESS DEFERRALS"
   | "CORRECTIVE DISTRIBUTION"
   | "DISABILITY PENSION"
+  | "EXCESS ALLOWANCE"
   | "FEC + EXCESS DEFERRALS"
   | undefined {
   const fecSource = allPending.fec;
@@ -718,7 +727,8 @@ function line1hType(
       | "FEC"
       | "EXCESS DEFERRALS"
       | "CORRECTIVE DISTRIBUTION"
-      | "DISABILITY PENSION";
+      | "DISABILITY PENSION"
+      | "EXCESS ALLOWANCE";
     amount: number;
   }> = [];
   if (fecSource !== undefined) {
@@ -779,6 +789,11 @@ function line1hType(
   const disability = retainedDisabilityPension(allPending, taxYear);
   if (disability > 0) {
     sources.push({ type: "DISABILITY PENSION", amount: disability });
+  }
+  // Pub 517: "On the dotted line next to line 1h, enter 'Excess allowance'."
+  const clergyExcess = retainedClergyExcessAllowance(allPending);
+  if (clergyExcess > 0) {
+    sources.push({ type: "EXCESS ALLOWANCE", amount: clergyExcess });
   }
   if (sources.length === 0) return undefined;
   const mixedFecExcess = sources.length === 2 &&
@@ -843,6 +858,7 @@ export function form1040PdfFor(taxYear: number): PdfFormDescriptor {
     assertLine36EstimatedTaxSource(fields, allPending);
     assertPresidentialCampaignSource(fields, allPending);
     assertReturnWideArithmetic(fields);
+    const clergy = assertFileableClergyReturn(allPending, taxYear);
     const printLine1hType = line1hType(fields, allPending, taxYear);
     assertLine1hSupportedSource(fields, taxYear, allPending);
     assertDirectCapitalGainDistributionSource(fields, allPending);
@@ -1055,6 +1071,9 @@ export function form1040PdfFor(taxYear: number): PdfFormDescriptor {
         ? ty2025IrsCountryName(fields.address_foreign_country)
         : undefined,
       print_line1h_type: printLine1hType,
+      print_line27b_clergy: clergy?.form1040Line27bClergy === true
+        ? true
+        : undefined,
       print_do_not_claim_actc: retainedActcOptOut(
         allPending.f8812,
         fields.line28_actc,

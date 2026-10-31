@@ -14,6 +14,7 @@ import {
   assertNoUnsupportedSchedule2Line14,
 } from "../../../../../nodes/intermediate/aggregation/taxes/other/schedule2/index.ts";
 import { assertSection453aSchedule2Line } from "../../../../domains/taxes/other/section453a-reconciliation.ts";
+import { assertFileableClergyReturn } from "../../../../domains/income/wages/clergy/clergy_source.ts";
 
 // IRS Schedule 2 (2025) AcroForm field names.
 // Verified layout from https://www.irs.gov/pub/irs-prior/f1040s2--2025.pdf
@@ -233,7 +234,7 @@ const fields: ReadonlyArray<PdfFieldEntry> = [
   },
 ];
 
-export const schedule2Pdf: PdfFormDescriptor = {
+const baseSchedule2Pdf: PdfFormDescriptor = {
   pendingKey: "schedule2",
   pdfUrl: "https://www.irs.gov/pub/irs-prior/f1040s2--2025.pdf",
   filerFields: [
@@ -507,3 +508,31 @@ export const schedule2Pdf: PdfFormDescriptor = {
     };
   },
 };
+
+/**
+ * Schedule 2 for the return year. Line 4 box 1 marks an approved Form 4361
+ * minister with no other income subject to SE tax (i1040sse 2025, Ministers);
+ * the 2025 AcroForm names it Line4_ReadOrder c1_3.
+ */
+export function schedule2PdfFor(taxYear: number): PdfFormDescriptor {
+  return {
+    ...baseSchedule2Pdf,
+    fields: [
+      ...baseSchedule2Pdf.fields,
+      {
+        kind: "checkbox",
+        domainKey: "line4_exempt_form4361",
+        pdfField: "form1[0].Page1[0].Line4_ReadOrder[0].c1_3[0]",
+      },
+    ],
+    projectFields(fields, allPending) {
+      const projected = baseSchedule2Pdf.projectFields?.(fields, allPending) ??
+        fields;
+      return assertFileableClergyReturn(allPending, taxYear)?.schedule2Form4361
+        ? { ...projected, line4_exempt_form4361: true }
+        : projected;
+    },
+  };
+}
+
+export const schedule2Pdf: PdfFormDescriptor = schedule2PdfFor(2025);

@@ -16,6 +16,7 @@ import { schedule1a } from "../../../deductions/additional/schedule1a/index.ts";
 import type { NodeContext } from "../../../../../../../../core/types/node-context.ts";
 import { CONFIG_BY_YEAR } from "../../../../../config/index.ts";
 import { scheduleSELines } from "./calculation.ts";
+import { ministerialSourceSchema, withMinisterialEarnings } from "./ministerial.ts";
 import {
   ownedScheduleSE,
   ownerBusinessSchema,
@@ -33,6 +34,9 @@ export const inputSchema = z.object({
   // Schedule SE line 2: Schedule C line 31 plus K-1 (Form 1065) box 14 code
   // A (i1040sse, Line 2). The node retains the combined amount.
   net_profit_schedule_c: z.number().optional(),
+  // Line 2 also carries a minister's net earnings (i1040sse, Ministers), one
+  // owned row per W-2 the clergy node reconciled. A bare amount is not taken.
+  ministerial_sources: z.array(ministerialSourceSchema).optional(),
   // Net farm profit from Schedule F, line 34 (Sch SE Line 1a)
   net_profit_schedule_f: z.number().optional(),
   // An affirmative Part II farm optional method election. The farm profit is
@@ -102,7 +106,16 @@ class ScheduleSENode extends TaxNode<typeof nodeInputSchema> {
       })]
       : [];
 
-    if (input.owner_identity && input.owner_business_sources?.length) {
+    const ministerialRows = (input.ministerial_sources ?? []).map((row) => ({
+      recipient: row.recipient,
+      source_reference: row.source_reference,
+      kind: "ministerial" as const,
+      net_profit: row.net_earnings,
+    }));
+    if (
+      input.owner_identity &&
+      (input.owner_business_sources?.length || ministerialRows.length)
+    ) {
       if (
         (input.unreported_tips_4137 ?? 0) !== 0 || (input.wages_8919 ?? 0) !== 0
       ) {
@@ -110,7 +123,8 @@ class ScheduleSENode extends TaxNode<typeof nodeInputSchema> {
           "Owned Schedule SE needs separate owner sources for Forms 4137/8919",
         );
       }
-      const ownedLine2 = input.owner_business_sources.reduce(
+      const businesses = input.owner_business_sources ?? [];
+      const ownedLine2 = businesses.reduce(
         (sum, row) => row.kind === "schedule_f" ? sum : sum + row.net_profit,
         0,
       );
@@ -126,9 +140,24 @@ class ScheduleSENode extends TaxNode<typeof nodeInputSchema> {
       }
       const owned = ownedScheduleSE({
         identity: input.owner_identity,
-        businesses: input.owner_business_sources,
+        businesses: [...businesses, ...ministerialRows],
         wages: input.owner_wage_sources ?? [],
       }, cfg.ssWageBase, cfg);
+      // Ministerial earnings are pay for services, not a trade or business,
+      // so the business consumers of line 13 (QBI, Form 7206, Schedule 1-A)
+      // see the businesses alone. Without ministerial rows this is `owned`;
+      // with ministerial rows only, nothing reaches them. The business-alone
+      // figure beside ministerial rows is provisional: export refuses any
+      // return with both (clergy_source.ts).
+      const business = ministerialRows.length === 0
+        ? owned
+        : businesses.length === 0
+        ? undefined
+        : ownedScheduleSE({
+          identity: input.owner_identity,
+          businesses,
+          wages: input.owner_wage_sources ?? [],
+        }, cfg.ssWageBase, cfg);
       const sole = owned.instances.length === 1
         ? owned.instances[0]
         : undefined;
@@ -152,37 +181,52 @@ class ScheduleSENode extends TaxNode<typeof nodeInputSchema> {
           this.outputNodes.output(form8959, {
             se_income: owned.medicareEarnings,
           }),
-          this.outputNodes.output(form8995, {
-            se_tax_deduction: owned.deduction,
-            joint_se_source: owned.source,
-          }),
-          this.outputNodes.output(schedule1a, {
-            qualified_tips_se_deduction: owned.deduction,
-            qualified_tips_owner_se_source: owned.source,
-            qualified_tips_ss_wage_base: cfg.ssWageBase,
-            qualified_tips_schedule_f_profit: input.net_profit_schedule_f ?? 0,
-            qualified_tips_farm_optional_method:
-              input.farm_optional_method_elected === true,
-          }),
-          this.outputNodes.output(form7206, {
-            schedule_se_source: {
-              // Preserve loss businesses omitted from legacy positive-only SE inputs.
-              net_profit_schedule_c: owned.source.businesses.filter((b) =>
-                b.kind === "schedule_c"
-              ).reduce((sum, b) => sum + b.net_profit, 0),
-              net_profit_schedule_f: owned.source.businesses.filter((b) =>
-                b.kind === "schedule_f"
-              ).reduce((sum, b) => sum + b.net_profit, 0),
-              farm_optional_method_elected:
-                input.farm_optional_method_elected === true,
-              line13_deduction: owned.deduction,
-              owner_source: owned.source,
-            },
-          }),
+          ...(business
+            ? [
+              this.outputNodes.output(form8995, {
+                se_tax_deduction: business.deduction,
+                joint_se_source: business.source,
+              }),
+              this.outputNodes.output(schedule1a, {
+                qualified_tips_se_deduction: business.deduction,
+                qualified_tips_owner_se_source: business.source,
+                qualified_tips_ss_wage_base: cfg.ssWageBase,
+                qualified_tips_schedule_f_profit: input.net_profit_schedule_f ??
+                  0,
+                qualified_tips_farm_optional_method:
+                  input.farm_optional_method_elected === true,
+              }),
+              this.outputNodes.output(form7206, {
+                schedule_se_source: {
+                  // Preserve loss businesses omitted from legacy positive-only SE inputs.
+                  net_profit_schedule_c: business.source.businesses.filter((
+                    b,
+                  ) => b.kind === "schedule_c").reduce(
+                    (sum, b) => sum + b.net_profit,
+                    0,
+                  ),
+                  net_profit_schedule_f: business.source.businesses.filter((
+                    b,
+                  ) => b.kind === "schedule_f").reduce(
+                    (sum, b) => sum + b.net_profit,
+                    0,
+                  ),
+                  farm_optional_method_elected:
+                    input.farm_optional_method_elected === true,
+                  line13_deduction: business.deduction,
+                  owner_source: business.source,
+                },
+              }),
+            ]
+            : []),
         ],
       };
     }
-    const lines = scheduleSELines(input, cfg.ssWageBase, cfg);
+    const lines = scheduleSELines(
+      withMinisterialEarnings(input),
+      cfg.ssWageBase,
+      cfg,
+    );
     const source = (line13Deduction: number) =>
       this.outputNodes.output(form7206, {
         schedule_se_source: {
@@ -197,16 +241,35 @@ class ScheduleSENode extends TaxNode<typeof nodeInputSchema> {
       return { outputs: [...combinedLine2, source(0)] };
     }
     const { line6, line12, line13 } = lines;
+    // Line 13 attributable to Schedule C/F and partnership earnings alone;
+    // ministerial earnings are pay for services (see the owned branch). With
+    // ministerial earnings only, that is zero and nothing reaches QBI or
+    // Schedule 1-A. Beside business earnings (export refuses the mix) the
+    // business-alone figure is provisional.
+    const businessLine13 = input.ministerial_sources?.length
+      ? scheduleSELines(input, cfg.ssWageBase, cfg)?.line13 ?? 0
+      : line13;
+
+    const businessOutputs = businessLine13 === 0 &&
+        input.ministerial_sources?.length
+      ? []
+      : [
+        this.outputNodes.output(schedule1a, {
+          qualified_tips_se_deduction: businessLine13,
+          qualified_tips_schedule_f_profit: input.net_profit_schedule_f ?? 0,
+          qualified_tips_farm_optional_method:
+            input.farm_optional_method_elected === true,
+        }),
+        // Line 13 is a deduction attributable to the trade or business, so it
+        // reduces QBI. i8995, Determining Your Qualified Business Income: the
+        // items to consider include the "deductible part of self-employment tax".
+        this.outputNodes.output(form8995, { se_tax_deduction: businessLine13 }),
+      ];
 
     const outputs: NodeOutput[] = [
       ...combinedLine2,
-      source(line13),
-      this.outputNodes.output(schedule1a, {
-        qualified_tips_se_deduction: line13,
-        qualified_tips_schedule_f_profit: input.net_profit_schedule_f ?? 0,
-        qualified_tips_farm_optional_method:
-          input.farm_optional_method_elected === true,
-      }),
+      source(businessLine13),
+      ...businessOutputs,
       this.outputNodes.output(schedule2, { line4_se_tax: line12 }),
       this.outputNodes.output(schedule1, { line15_se_deduction: line13 }),
       this.outputNodes.output(agi_aggregator, { line15_se_deduction: line13 }),
@@ -216,10 +279,6 @@ class ScheduleSENode extends TaxNode<typeof nodeInputSchema> {
       // Part I, line 6." That is after the 92.35% multiplier. IRC §3101(b)(2).
       // Each spouse's Schedule SE is filed in whole dollars before they add.
       this.outputNodes.output(form8959, { se_income: Math.round(line6) }),
-      // Line 13 is a deduction attributable to the trade or business, so it reduces QBI.
-      // i8995, Determining Your Qualified Business Income: the items to consider include
-      // the "deductible part of self-employment tax".
-      this.outputNodes.output(form8995, { se_tax_deduction: line13 }),
     ];
 
     return { outputs };

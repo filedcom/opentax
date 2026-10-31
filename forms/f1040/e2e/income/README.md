@@ -5,6 +5,7 @@ Income sources, exclusions, and net-income reconciliation.
 | Area | Contents |
 | --- | --- |
 | [business](business) | 5 files |
+| [clergy](clergy) | 1 files |
 | [foreign](foreign) | 3 files |
 | [investments](investments) | 3 files |
 | [other](other) | 4 files |

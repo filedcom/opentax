@@ -10,8 +10,9 @@ export const ownerBusinessSchema = z.object({
   source_reference: z.string().trim().min(1),
   net_profit: z.number().finite(),
   // "partnership" is K-1 (Form 1065) box 14 code A, which joins Schedule C on
-  // Schedule SE line 2 (i1040sse, Line 2).
-  kind: z.enum(["schedule_c", "schedule_f", "partnership"]),
+  // Schedule SE line 2 (i1040sse, Line 2). "ministerial" is a minister's net
+  // earnings reconciled to a W-2, also on line 2 (i1040sse, Ministers).
+  kind: z.enum(["schedule_c", "schedule_f", "partnership", "ministerial"]),
   business_name: z.string().trim().min(1).optional(),
   ein: z.string().regex(/^\d{9}$/).optional(),
   qbi_no_other_adjustments_confirmed: z.boolean().optional(),

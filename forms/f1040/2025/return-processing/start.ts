@@ -6,6 +6,7 @@ import { OutputNodes } from "../../../../core/types/output-nodes.ts";
 import type { NodeContext } from "../../../../core/types/node-context.ts";
 import { inputNodes } from "../inputs.ts";
 import { hasPartnershipSeEarnings } from "../../nodes/inputs/income/rental-passthrough/k1_partnership/index.ts";
+import { hasMinisterialSeClaim } from "../../nodes/inputs/income/wages/clergy/index.ts";
 
 export { inputNodes };
 
@@ -52,6 +53,53 @@ function getArrayNodeKey(
   return keys[0];
 }
 
+const CLERGY_FILER_KEYS = [
+  "filing_status",
+  "taxpayer_ssn",
+  "taxpayer_first_name",
+  "taxpayer_middle_initial",
+  "taxpayer_last_name",
+  "spouse_ssn",
+  "spouse_first_name",
+  "spouse_middle_initial",
+  "spouse_last_name",
+] as const;
+const CLERGY_W2_KEYS = [
+  "employee_ssn",
+  "employer_ein",
+  "employer_name",
+  "source_document_reference",
+  "box1_wages",
+  "box3_ss_wages",
+  "box5_medicare_wages",
+  "box13_statutory_employee",
+] as const;
+
+const pick = (
+  value: unknown,
+  keys: readonly string[],
+): Record<string, unknown> =>
+  value !== null && typeof value === "object"
+    ? Object.fromEntries(
+      keys.flatMap((key) => {
+        const field = (value as Record<string, unknown>)[key];
+        return field === undefined ? [] : [[key, field]];
+      }),
+    )
+    : {};
+
+/** The filer and entered W-2s each clergy entry must reconcile to. */
+function clergyReturnContext(
+  publicInput: Record<string, unknown>,
+): Record<string, unknown> {
+  return {
+    return_filer: pick(publicInput.general, CLERGY_FILER_KEYS),
+    return_w2s: (Array.isArray(publicInput.w2) ? publicInput.w2 : []).map((
+      row,
+    ) => pick(row, CLERGY_W2_KEYS)),
+  };
+}
+
 /**
  * Factory that creates a StartNode class from an inputNodes list and returns a singleton.
  * The generated start node uses the public input key and routes each present
@@ -78,7 +126,8 @@ export function buildStartNode(entries: readonly InputNodeEntry[]): TaxNode {
         (publicInput.schedule_c !== undefined ||
           publicInput.schedule_f !== undefined ||
           (Array.isArray(publicInput.k1_partnership) &&
-            hasPartnershipSeEarnings(publicInput.k1_partnership)));
+            hasPartnershipSeEarnings(publicInput.k1_partnership)) ||
+          hasMinisterialSeClaim(publicInput.clergy));
       const ownerIdentity = jointSE
         ? {
           primary_ssn: String(general?.taxpayer_ssn ?? "").replaceAll("-", ""),
@@ -108,6 +157,7 @@ export function buildStartNode(entries: readonly InputNodeEntry[]): TaxNode {
             ...(ownerIdentity ? { owner_identity: ownerIdentity } : {}),
           };
         }
+        if (nodeType === "clergy") return clergyReturnContext(publicInput);
         if (!ownerIdentity) return {};
         if (
           nodeType === "w2" || nodeType === "f4852" ||

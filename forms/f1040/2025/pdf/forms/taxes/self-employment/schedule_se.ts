@@ -4,6 +4,9 @@ import { scheduleSELines } from "../../../../../nodes/intermediate/forms/taxes/s
 import { CONFIG_BY_YEAR } from "../../../../../nodes/config/index.ts";
 import { FilingStatus } from "../../../../../nodes/types.ts";
 import { scheduleSeSpouseProprietor } from "../../../../domains/taxes/self-employment/schedule-se/schedule-se-proprietor.ts";
+import { withMinisterialEarnings } from "../../../../../nodes/intermediate/forms/taxes/self-employment/schedule_se/ministerial.ts";
+import { assertFileableClergyReturn } from "../../../../domains/income/wages/clergy/clergy_source.ts";
+import { StandardFonts } from "pdf-lib";
 
 // IRS Schedule SE (2025) AcroForm field names.
 // Verified layout from https://www.irs.gov/pub/irs-prior/f1040sse--2025.pdf
@@ -17,6 +20,8 @@ const page2 = "topmostSubform[0].Page2[0].";
 const fields: ReadonlyArray<PdfFieldEntry> = [
   { kind: "text", domainKey: "owner_name", pdfField: `${page1}f1_1[0]` },
   { kind: "text", domainKey: "owner_ssn", pdfField: `${page1}f1_2[0]` },
+  // Line A: Form 4361 minister with $400 or more of other SE earnings.
+  { kind: "checkbox", domainKey: "line_a_form4361", pdfField: `${page1}c1_1[0]` },
   {
     kind: "text",
     domainKey: "net_profit_schedule_f",
@@ -62,17 +67,38 @@ const fields: ReadonlyArray<PdfFieldEntry> = [
   { kind: "text", domainKey: "line15", pdfField: `${page2}f2_2[0]` },
 ];
 
+/** Words wrapped to the explanation page's line width. */
+function wrapped(text: string, width = 96): string[] {
+  const lines: string[] = [];
+  let line = "";
+  for (const word of text.split(/\s+/)) {
+    if (line.length > 0 && line.length + word.length + 1 > width) {
+      lines.push(line);
+      line = word;
+    } else {
+      line = line.length === 0 ? word : `${line} ${word}`;
+    }
+  }
+  if (line.length > 0) lines.push(line);
+  return lines;
+}
+
 export function scheduleSePdfFor(taxYear: number): PdfFormDescriptor {
+  const clergyFor = (
+    allPending: Record<string, Record<string, unknown>> | undefined,
+  ) => allPending ? assertFileableClergyReturn(allPending, taxYear) : undefined;
   return {
   pendingKey: "schedule_se",
   pdfUrl: "https://www.irs.gov/pub/irs-prior/f1040sse--2025.pdf",
   fields,
-  projectFields(fields, allPending) {
-    if (Object.keys(fields).length === 0) return fields;
-    if (fields.owner_identity) {
+  projectFields(rawFields, allPending) {
+    if (Object.keys(rawFields).length === 0) return rawFields;
+    if (rawFields.owner_identity) {
       assertOwnedScheduleSE(allPending, taxYear);
-      return fields;
+      return rawFields;
     }
+    // Line 2 adds ministerial earnings to Schedule C and K-1 profit.
+    const fields = withMinisterialEarnings(rawFields);
     const lines = scheduleSELines(fields, CONFIG_BY_YEAR[taxYear].ssWageBase);
     const spouseOwned = scheduleSeSpouseProprietor(allPending, fields);
     const general = allPending?.general;
@@ -98,8 +124,14 @@ export function scheduleSePdfFor(taxYear: number): PdfFormDescriptor {
     ) {
       throw new Error("Schedule SE PDF proprietor must match the return");
     }
+    const recipient = spouseOwned ? "S" : "T";
     return {
       ...fields,
+      owner_recipient: recipient,
+      line_a_form4361:
+        clergyFor(allPending)?.scheduleSeLineA.has(recipient) === true
+          ? true
+          : undefined,
       owner_name: [first, typeof middle === "string" ? middle : "", last]
         .filter(Boolean).join(" "),
       owner_ssn: sourceSsn.replaceAll("-", ""),
@@ -114,11 +146,16 @@ export function scheduleSePdfFor(taxYear: number): PdfFormDescriptor {
       ? assertOwnedScheduleSE(allPending, taxYear, filer)
       : undefined;
     if (!owned) return [fields];
+    const clergy = clergyFor(allPending);
     return owned.instances.map((row) => {
       const general = allPending!.general;
       const prefix = row.recipient === "S" ? "spouse" : "taxpayer";
       return {
         ...row,
+        owner_recipient: row.recipient,
+        line_a_form4361: clergy?.scheduleSeLineA.has(row.recipient) === true
+          ? true
+          : undefined,
         owner_ssn: row.owner_ssn,
         owner_name: [
           general[`${prefix}_first_name`],
@@ -129,6 +166,36 @@ export function scheduleSePdfFor(taxYear: number): PdfFormDescriptor {
           ? { net_profit_schedule_f: undefined }
           : {}),
       };
+    });
+  },
+  // Expenses subtracted from ministerial earnings on line 2 need an attached
+  // explanation (i1040sse 2025, Ministers; Pub 517, "Allowable deductions").
+  async appendSupplementalPages(document, instance, _filer, allPending) {
+    const owner = instance.owner_recipient === "S" ? "S" : "T";
+    const text = clergyFor(allPending)?.scheduleSeExplanations.get(owner);
+    if (text === undefined) return;
+    const name = instance.owner_name;
+    const ssn = instance.owner_ssn;
+    if (typeof name !== "string" || typeof ssn !== "string") {
+      throw new Error("Schedule SE ministerial explanation needs its owner");
+    }
+    const page = document.addPage([612, 792]);
+    const font = await document.embedFont(StandardFonts.Helvetica);
+    const bold = await document.embedFont(StandardFonts.HelveticaBold);
+    page.drawText("Schedule SE (Form 1040) line 2 - ministerial earnings explanation", {
+      x: 42,
+      y: 748,
+      font: bold,
+      size: 12,
+    });
+    page.drawText(`${name} | SSN ${ssn} | Tax year ${taxYear}`, {
+      x: 42,
+      y: 724,
+      font,
+      size: 9,
+    });
+    wrapped(text).forEach((line, index) => {
+      page.drawText(line, { x: 42, y: 696 - index * 14, font, size: 10 });
     });
   },
   // Schedule SE is filed only when self-employment tax was actually computed

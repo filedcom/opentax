@@ -26,7 +26,7 @@ active-participation answer is Yes. See [Form 4835](./FORM4835-GRAPH.md).
 | Schedule C line 31, nonfarm K-1 box 14 code A, and other includible SE income | Regular line 2, except when the nonfarm optional method is elected. | Shared node has Schedule C profit only; classify K-1 and special-income cases by owner. |
 | Schedule C line 7 and nonfarm K-1 box 14 code C | Gross nonfarm income for optional line 17 and its eligibility test. | No gross-nonfarm field or election-history input. |
 | W-2 Social Security wages/tips, Form 4137 line 10, Form 8919 line 10, railroad tier 1 compensation | Lines 8a–8d and remaining Social Security wage base. | Shared node covers the first three numeric fields; verify railroad and per-owner aggregation. |
-| Church employee income, minister/Form 4361 facts | Line A and lines 5a–5b, plus exemptions and the $100 church-income test. | Not represented by the shared calculation. |
+| Church employee income, minister/Form 4361 facts | Line A and lines 5a–5b, plus exemptions and the $100 church-income test. | Ministerial earnings reach line 2 and line A from the shared [clergy route](../../mef/ty2025/domains/income/wages/ty2025-clergy-source-route.md) (`Page1.c1_1[0]` on the draft); church employee income (5a–5b) is not represented. |
 
 Use separate explicit farm and nonfarm optional-method elections. The farm
 method is available if gross farm income is **at most $11,340** *or* net farm

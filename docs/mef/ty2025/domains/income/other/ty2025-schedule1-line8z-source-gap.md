@@ -256,19 +256,16 @@ are for 2024 repayments that can require amendment of 2021–2023 returns.
 Neither source establishes a positive TY2025 Schedule 1 line 8z claim. Do not
 mark either path excluded before the named scope decision is approved.
 
-The clergy producer no longer emits a negative line 8z amount. The [2025 IRS
+The clergy producer never emits a line 8z amount. The [2025 IRS
 Publication 517](https://www.irs.gov/publications/p517) treats qualifying
 housing as an exclusion from gross income, while including parsonage value and
 housing allowance in ministerial self-employment earnings when applicable.
-Subtracting those amounts again on Schedule 1 could understate AGI; omitting
-parsonage from Schedule SE could understate SE tax. The old public input lacks
-the matched W-2, minister/recipient, employer, advance designation, excess
-allowance review, and Form 4361 approval needed for a complete return. Every
-populated clergy input now fails explicitly at calculation and MeF/PDF export. A source-backed
-clergy route must reconcile the W-2 box 1 amount, report any taxable excess on
-Form 1040 line 1h, include the proper housing amounts on Schedule SE, preserve
-owner and payer identity, and handle the Form 4361 exemption. This is an open
-filing path, not an approved exclusion.
+Subtracting those amounts again on Schedule 1 would understate AGI. The
+[source-backed clergy route](../wages/ty2025-clergy-source-route.md) reports
+only the excess allowance, on Form 1040 line 1h, from rows matched to the
+minister, the church W-2 and the advance designation; an allowance the church
+put inside W-2 box 1 fails closed and needs a corrected W-2 rather than a
+negative line 8z.
 
 Partnership K-1 box 11 is now code-specific. An uncoded amount rejects at the
 producer and MeF/PDF export. The supported code J tax-benefit recovery requires

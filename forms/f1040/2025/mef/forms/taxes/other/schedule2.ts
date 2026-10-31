@@ -15,6 +15,8 @@ import {
 } from "../../../../../nodes/intermediate/aggregation/taxes/other/schedule2/index.ts";
 import { assertSection453aSchedule2Line } from "../../../../domains/taxes/other/section453a-reconciliation.ts";
 import type { MefBuildContext, MefFormDescriptor } from "../../../form-descriptor.ts";
+import { assertFileableClergyReturn } from "../../../../domains/income/wages/clergy/clergy_source.ts";
+import { mefTaxYear } from "../../../support/year-config.ts";
 
 export interface Fields {
   line1a_excess_advance_premium?: number | null;
@@ -105,6 +107,7 @@ const ELEMENT_ORDER = [
   "TotalTaxAdditionsAmt",
   "AlternativeMinimumTaxAmt",
   "AdditionalTaxAmt",
+  "ExemptForm4361Ind",
   "SelfEmploymentTaxAmt",
   "SocSecMedicareTaxUnrptdTipAmt",
   "UncollectedSocSecMedTaxAmt",
@@ -223,6 +226,19 @@ function buildIRS1040Schedule2(
       lines.line1f_2a,
       "TotEx20PrvlWgAprntcshpPnltyAmt",
     );
+  }
+
+  // Line 4 box 1: an approved Form 4361 and no other income subject to SE
+  // tax (i1040sse 2025, Ministers; IRS1040Schedule2 ExemptForm4361Ind).
+  const clergy = context?.pending
+    ? assertFileableClergyReturn(
+      context.pending as Readonly<Record<string, Record<string, unknown>>>,
+      mefTaxYear(context),
+      context.filer,
+    )
+    : undefined;
+  if (clergy?.schedule2Form4361) {
+    childrenByTag.set("ExemptForm4361Ind", element("ExemptForm4361Ind", "X"));
   }
 
   // Direct mappings
@@ -496,9 +512,13 @@ function buildIRS1040Schedule2(
 
 export const schedule2: MefFormDescriptor<"schedule2", Input> = {
   pendingKey: "schedule2",
+  // A Form 4361 minister's line 4 box can be the schedule's only entry.
+  sourcePendingKeys: ["schedule2", "clergy"],
   FIELD_MAP,
   pdfUrl: "https://www.irs.gov/pub/irs-pdf/f1040s2.pdf",
   build(fields, context) {
-    return buildIRS1040Schedule2(fields, context);
+    // With no computed Schedule 2 but a clergy source (a Form 4361 box only),
+    // the MeF builder passes its empty-source placeholder, an empty array.
+    return buildIRS1040Schedule2(Array.isArray(fields) ? {} : fields, context);
   },
 };

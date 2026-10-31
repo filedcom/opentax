@@ -25,6 +25,10 @@ import { buildExecutionPlan } from "../../../../core/runtime/planner.ts";
 import { execute, type ExecuteResult } from "../../../../core/runtime/executor.ts";
 import { registry } from "../../2025/registry.ts";
 import { FilingStatus } from "../../nodes/types.ts";
+import {
+  clergyItem,
+  form4361Approved,
+} from "../../2025/domains/income/wages/clergy/clergy.fixture.ts";
 
 // ── Shared context ────────────────────────────────────────────────────────────
 
@@ -344,17 +348,25 @@ test("E2E Scenario 3a: foreign employer compensation with no W-2 — reaches AGI
   );
 });
 
+// A complete clergy row for the singleGeneral() filer whose church W-2 is
+// not among the entered W-2s: the clergy node fails closed.
+function unmatchedClergy(overrides: Record<string, unknown> = {}) {
+  return {
+    ...clergyItem(2025, {
+      minister: {
+        ...clergyItem(2025).minister,
+        name: "Jane Doe",
+        ssn: "123-45-6789",
+      },
+    }),
+    ...overrides,
+  };
+}
+
 test("E2E: clergy allowance without matched evidence stops the return", () => {
   const result = runReturn({
     general: singleGeneral(),
-    clergy: [{
-      is_ordained_minister: true,
-      has_4361_exemption: true,
-      housing_allowance_designated: 30_000,
-      housing_allowance_paid: 30_000,
-      actual_housing_expenses: 25_000,
-      fair_market_rental_value: 40_000,
-    }],
+    clergy: [unmatchedClergy({ form4361: form4361Approved })],
     fec: [fecItem(1_000)],
   });
 
@@ -370,11 +382,15 @@ test("E2E: clergy allowance without matched evidence stops the return", () => {
 test("E2E: ministerial loss without matched evidence stops the return", () => {
   const result = runReturn({
     general: singleGeneral(),
-    clergy: [{
-      is_ordained_minister: true,
+    clergy: [unmatchedClergy({
       ministerial_wages: 1_000,
-      unreimbursed_ministerial_expenses: 2_000,
-    }],
+      housing_allowance: undefined,
+      unreimbursed_ministerial_expenses: {
+        amount: 2_000,
+        not_reimbursed_confirmed: true,
+        expense_records_reference: "Ministry expense log",
+      },
+    })],
     schedule_c: [{
       line_a_principal_business: "Consulting",
       line_b_business_code: "541600",

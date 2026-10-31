@@ -1,4 +1,4 @@
-import { schedule2Pdf } from "../../../../../2025/pdf/forms/taxes/other/schedule2.ts";
+import { schedule2PdfFor } from "../../../../../2025/pdf/forms/taxes/other/schedule2.ts";
 import type {
   PdfFieldEntry,
   PdfFormDescriptor,
@@ -10,6 +10,7 @@ import { section1294DueFromCalculatedForm } from "../../../../../nodes/inputs/in
 // Section B employment and other taxes (16a-20) and line 21. The 2025 values
 // are reassigned to the 2026 lines below; the Form 8959 and Form 5329 amounts
 // split by their source lines. Line 12 (section 965) is not in the total.
+const schedule2Pdf = schedule2PdfFor(2026);
 const P1 = "form1[0].Page1[0]";
 const P2 = "form1[0].Page2[0]";
 
@@ -82,6 +83,7 @@ const sum = (values: readonly number[]) =>
 
 function refuseUnplaced(
   amount: (key: string) => number,
+  projected: Record<string, unknown>,
   allPending: Record<string, Record<string, unknown>>,
 ): void {
   const reduction = allPending.form8978_reporting_year
@@ -93,6 +95,11 @@ function refuseUnplaced(
   ) {
     throw new Error(
       "TY2026 PDF Schedule 2 line 13z is not mapped; export MeF XML",
+    );
+  }
+  if (projected.line4_exempt_form4361 === true) {
+    throw new Error(
+      "TY2026 PDF Schedule 2 Form 4361 exemption box is not mapped on the 2026 draft; export MeF XML",
     );
   }
 }
@@ -133,7 +140,7 @@ function ty2026Lines(
 ): Record<string, unknown> {
   const amount = (key: string): number =>
     typeof projected[key] === "number" ? projected[key] as number : 0;
-  refuseUnplaced(amount, allPending);
+  refuseUnplaced(amount, projected, allPending);
   const { line5, line18 } = form5329Split(amount, projected);
   const { line11, line17b } = form8959Split(amount, allPending);
   const line13 = [

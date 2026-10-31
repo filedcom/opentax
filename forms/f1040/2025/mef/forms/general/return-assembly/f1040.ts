@@ -4,6 +4,7 @@ import { assertEducationIncomeSource } from "../../../../../nodes/inputs/income/
 import { element, elements } from "../../../../../mef/xml.ts";
 import { retainedActcOptOut } from "../../../../domains/credits/earned-income/actc-opt-out-source.ts";
 import { retainedEicOptOut } from "../../../../domains/credits/earned-income/earned-income/eic-opt-out-source.ts";
+import { assertFileableClergyReturn } from "../../../../domains/income/wages/clergy/clergy_source.ts";
 import {
   assertLine1hSupportedSource,
   retainedDisabilityPension,
@@ -549,6 +550,14 @@ function buildIRS1040(fields: Input, context?: MefBuildContext): string {
   assertOtherFormsWithholding(fields, context?.pending);
   assertReturnScheduleJoins(fields, context?.pending);
   assertSchedule2Line23(fields, context?.pending);
+  // Clergy rows reconcile to the filer, W-2s and Schedule SE before line 1h.
+  const clergy = context?.pending
+    ? assertFileableClergyReturn(
+      context.pending as Readonly<Record<string, Record<string, unknown>>>,
+      mefTaxYear(context),
+      context.filer,
+    )
+    : undefined;
   if (context?.pending?.w2 !== undefined) {
     const source = w2InputSchema.safeParse(context.pending.w2);
     if (!source.success) {
@@ -949,6 +958,11 @@ function buildIRS1040(fields: Input, context?: MefBuildContext): string {
       0,
       element("DoNotClaimEICInd", "X"),
     );
+  }
+  if (clergy?.form1040Line27bClergy) {
+    // Line 27b precedes the line 27c opt-out (IRS1040.xsd ClergyMemberInd).
+    const eicIndex = FIELD_MAP.findIndex(([key]) => key === "line27_eitc");
+    incomeChildren.splice(eicIndex + 1, 0, element("ClergyMemberInd", "X"));
   }
   if (rollover) {
     const pensionIndex = FIELD_MAP.findIndex(([key]) =>

@@ -1445,11 +1445,6 @@
     "count": 2
   },
   {
-    "path": "forms/f1040/nodes/inputs/income/wages/clergy/index.ts",
-    "pattern": "year-identifier",
-    "count": 1
-  },
-  {
     "path": "forms/f1040/nodes/inputs/income/wages/w2/index.ts",
     "pattern": "z-literal",
     "count": 3

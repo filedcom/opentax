@@ -10,6 +10,7 @@ import { buildMefXml } from "../../2025/mef/builder.ts";
 import { buildPending } from "../../2025/mef/execution/pending.ts";
 import { type FilerIdentity, FilingStatus } from "../../2025/mef/types.ts";
 import { assertAttachmentCoverage } from "../../2025/return-processing/attachment-coverage.ts";
+import { clergyItem } from "../../2025/domains/income/wages/clergy/clergy.fixture.ts";
 
 const filer: FilerIdentity = {
   primarySSN: "111223333",
@@ -30,13 +31,21 @@ test("clergy housing cannot reach a prepared return without matched source facts
     buildExecutionPlan(registry),
     registry,
     {
-      clergy: [{
-        ministerial_wages: 50_000,
-        housing_allowance_designated: 12_000,
-        actual_housing_expenses: 10_000,
-        fair_market_rental_value: 15_000,
-        is_ordained_minister: true,
-      }],
+      // A complete clergy row whose church W-2 was never entered.
+      general: {
+        filing_status: "single",
+        taxpayer_first_name: "Test",
+        taxpayer_last_name: "Taxpayer",
+        taxpayer_ssn: "111223333",
+        digital_assets: false,
+      },
+      clergy: [clergyItem(2025, {
+        minister: {
+          ...clergyItem(2025).minister,
+          name: "Test Taxpayer",
+          ssn: "111223333",
+        },
+      })],
     },
     { taxYear: 2025, formType: "f1040" },
   );

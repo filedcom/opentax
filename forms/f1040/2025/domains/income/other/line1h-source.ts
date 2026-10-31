@@ -12,6 +12,24 @@ import {
 } from "../../../../nodes/inputs/income/wages/w2/index.ts";
 import { physicalPresenceFilingSchema } from "../../../../nodes/intermediate/forms/income/foreign/form2555/calculation.ts";
 import { type FilerIdentity, FilingStatus } from "../../../../mef/header.ts";
+import {
+  clergyAmounts,
+  inputSchema as clergyInputSchema,
+} from "../../../../nodes/inputs/income/wages/clergy/index.ts";
+
+/**
+ * Retained clergy excess housing allowance, which Pub 517 puts on Form 1040
+ * line 1h as "Excess allowance". Zero when no clergy row is retained.
+ */
+export function retainedClergyExcessAllowance(
+  pending: Readonly<Record<string, unknown>> | undefined,
+): number {
+  if (pending?.clergy === undefined) return 0;
+  return clergyInputSchema.parse(pending.clergy).clergys.reduce(
+    (sum, item) => sum + clergyAmounts(item).excess_allowance,
+    0,
+  );
+}
 
 /**
  * Retained Form 1099-R disability pensions received before minimum retirement
@@ -103,6 +121,8 @@ export function assertLine1hSupportedSource(
   }
   const disability = retainedDisabilityPension(pending, taxYear);
   if (disability > 0) sources.push(disability);
+  const clergyExcess = retainedClergyExcessAllowance(pending);
+  if (clergyExcess > 0) sources.push(clergyExcess);
   const filed = fields.line1h_other_earned;
   if (
     sources.length === 0 &&
@@ -131,7 +151,7 @@ export function assertLine1hSupportedSource(
   const supportedMix = sources.length === 1 ||
     (sources.length === 2 && pending?.fec !== undefined &&
       pending?.w2 !== undefined && filing === undefined &&
-      correctiveAmount === 0 && disability === 0);
+      correctiveAmount === 0 && disability === 0 && clergyExcess === 0);
   const total = sources.reduce((sum, amount) => sum + amount, 0);
   if (
     !supportedMix ||

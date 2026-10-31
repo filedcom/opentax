@@ -288,3 +288,25 @@ test("Schedule SE filled PDF keeps spouse owner across multiple spouse businesse
     await sys.remove(file);
   }
 });
+
+test("2025 Schedule SE PDF line A is the Form 4361 checkbox", () => {
+  const box = scheduleSePdf.fields.find((entry) =>
+    entry.domainKey === "line_a_form4361"
+  );
+  assertEquals(box?.kind, "checkbox");
+  assertEquals(box?.pdfField, "topmostSubform[0].Page1[0].c1_1[0]");
+});
+
+test("2025 Schedule SE PDF prints sourced ministerial earnings on line 2", () => {
+  const projected = scheduleSePdf.projectFields?.({
+    ministerial_sources: [{
+      recipient: "T",
+      source_reference: "ministerial W-2 church",
+      net_earnings: 74_000,
+    }],
+  }, taxpayerIdentity);
+  assertEquals(projected?.net_profit_schedule_c, 74_000);
+  assertEquals(projected?.line4a, 68_339);
+  assertEquals(projected?.line12, 10_456);
+  assertEquals(projected?.owner_recipient, "T");
+});

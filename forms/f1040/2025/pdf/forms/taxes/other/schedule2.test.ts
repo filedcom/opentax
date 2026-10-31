@@ -243,3 +243,20 @@ test("Schedule 2 PDF rejects unsourced or changed 1099-NEC box 3 excise", () => 
     "differs from 1099-NEC box 3 sources",
   );
 });
+
+test("2025 Schedule 2 PDF line 4 box 1 is the Form 4361 exemption checkbox", () => {
+  const box = schedule2Pdf.fields.find((entry) =>
+    entry.domainKey === "line4_exempt_form4361"
+  );
+  assertEquals(box?.kind, "checkbox");
+  assertEquals(
+    box?.pdfField,
+    "form1[0].Page1[0].Line4_ReadOrder[0].c1_3[0]",
+  );
+  // Without a clergy source the box is never projected.
+  assertEquals(
+    schedule2Pdf.projectFields?.({ line4_se_tax: 1_000 }, {})
+      ?.line4_exempt_form4361,
+    undefined,
+  );
+});

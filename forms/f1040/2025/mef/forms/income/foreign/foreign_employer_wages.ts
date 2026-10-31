@@ -20,6 +20,7 @@ import {
 import type { MefBuildContext, MefFormDescriptor } from "../../../form-descriptor.ts";
 import type { z } from "zod";
 import { mefTaxYear } from "../../../support/year-config.ts";
+import { retainedClergyExcessAllowance } from "../../../../domains/income/other/line1h-source.ts";
 
 function filingDetails(
   context?: MefBuildContext,
@@ -260,10 +261,23 @@ export const wagesNotShownSchedule: MefFormDescriptor<
   unknown
 > = {
   pendingKey: "wages_not_shown_schedule",
-  sourcePendingKeys: ["form2555", "fec", "f1099r"],
+  sourcePendingKeys: ["form2555", "fec", "f1099r", "clergy"],
   FIELD_MAP: [],
   pdfUrl: "https://www.irs.gov/pub/irs-pdf/p4164.pdf",
   build(_fields, context) {
+    // Pub 517: the clergy excess allowance is line 1h income with "Excess
+    // allowance" beside it. Form 1040 export holds it as the sole source.
+    // TY2018 listed "EXCESS ALLOWANCE" in WagesLiteralCd; the TY2025 code
+    // list was not available to check, so the free-text choice is used.
+    const clergyExcess = retainedClergyExcessAllowance(context?.pending);
+    if (clergyExcess > 0) {
+      return elements("WagesNotShownSchedule", [
+        elements("WagesNotShownSch", [
+          element("OtherWagesNotShownTxt", "EXCESS ALLOWANCE"),
+          element("WagesNotShownAmt", clergyExcess),
+        ]),
+      ]);
+    }
     const filing = filingDetails(context);
     const fecItems = standaloneFec(context);
     const correctiveAmount = correctivePlanAmount(context);

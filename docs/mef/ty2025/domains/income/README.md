@@ -9,6 +9,6 @@ Income sources, exclusions, and net-income reconciliation.
 | [investments](investments) | 6 files |
 | [other](other) | 2 files |
 | [retirement](retirement) | 8 files |
-| [wages](wages) | 1 files |
+| [wages](wages) | 2 files |
 
 Canonical [Form 8621](../../../../../forms/f1040/2025/mef/forms/income/foreign/f8621.ts) also carries section 1291 tax and interest; follow [Taxes](../taxes/README.md) for related effects.

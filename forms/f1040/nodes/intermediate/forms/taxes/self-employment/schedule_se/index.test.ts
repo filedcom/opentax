@@ -169,6 +169,96 @@ test("unsourced ministerial loss cannot offset Schedule C SE profit", () => {
   assertEquals(s2?.fields.line4_se_tax, computeExpectedSeTax(10_000).seTax);
 });
 
+// ── Ministerial earnings (i1040sse 2025, Ministers; Pub 517) ─────────────────
+
+const ministerial = (net_earnings: number, recipient: "T" | "S" = "T") => ({
+  recipient,
+  source_reference: `ministerial W-2 ${recipient}`,
+  net_earnings,
+});
+
+test("sourced ministerial earnings alone are Schedule SE line 2", () => {
+  const result = compute({ ministerial_sources: [ministerial(74_000)] });
+  const expected = computeExpectedSeTax(74_000);
+  assertEquals(findOutput(result, "schedule2")?.fields.line4_se_tax, expected.seTax);
+  assertEquals(
+    findOutput(result, "schedule1")?.fields.line15_se_deduction,
+    expected.seDeduction,
+  );
+  // Pay for ministerial services is not a trade or business: no QBI
+  // reduction and no Form 7206 business earnings.
+  assertEquals(findOutput(result, "form8995"), undefined);
+  assertEquals(findOutput(result, "schedule1a"), undefined);
+  const healthSource = findOutput(result, "form7206")!.fields
+    .schedule_se_source as { line13_deduction: number };
+  assertEquals(healthSource.line13_deduction, 0);
+});
+
+test("a sourced ministerial loss reduces Schedule C earnings on line 2", () => {
+  const result = compute({
+    net_profit_schedule_c: 20_000,
+    ministerial_sources: [ministerial(-5_000)],
+  });
+  assertEquals(
+    findOutput(result, "schedule2")?.fields.line4_se_tax,
+    computeExpectedSeTax(15_000).seTax,
+  );
+  // QBI is reduced only by the deduction the business alone would carry.
+  assertEquals(
+    findOutput(result, "form8995")?.fields.se_tax_deduction,
+    computeExpectedSeTax(20_000).seDeduction,
+  );
+});
+
+test("a ministerial loss below $400 combined leaves no SE tax", () => {
+  const result = compute({ ministerial_sources: [ministerial(-16_000)] });
+  assertEquals(findOutput(result, "schedule2"), undefined);
+});
+
+test("ministerial source references cannot repeat", () => {
+  assertThrows(
+    () =>
+      compute({
+        ministerial_sources: [ministerial(10_000), ministerial(10_000)],
+      }),
+    Error,
+    "reused",
+  );
+});
+
+test("joint Schedule SE keeps a spouse minister's earnings on the spouse's schedule", () => {
+  const result = compute({
+    owner_identity: { primary_ssn: "400011234", spouse_ssn: "400015678" },
+    owner_business_sources: [{
+      recipient: "T",
+      source_reference: "consulting",
+      kind: "schedule_c",
+      net_profit: 30_000,
+    }],
+    net_profit_schedule_c: 30_000,
+    ministerial_sources: [ministerial(74_000, "S")],
+  });
+  const se = findOutput(result, "schedule_se")?.fields.owner_instances as Array<
+    { recipient: string; net_profit_schedule_c: number; line12: number }
+  >;
+  assertEquals(se.map((row) => [row.recipient, row.net_profit_schedule_c]), [
+    ["T", 30_000],
+    ["S", 74_000],
+  ]);
+  assertEquals(
+    findOutput(result, "schedule2")?.fields.line4_se_tax,
+    computeExpectedSeTax(30_000).seTax + computeExpectedSeTax(74_000).seTax,
+  );
+  const qbi = findOutput(result, "form8995")?.fields as {
+    se_tax_deduction: number;
+    joint_se_source: { businesses: Array<{ kind: string }> };
+  };
+  assertEquals(qbi.se_tax_deduction, computeExpectedSeTax(30_000).seDeduction);
+  assertEquals(qbi.joint_se_source.businesses.map((b) => b.kind), [
+    "schedule_c",
+  ]);
+});
+
 test("calc_combined_c_below_f_above: c=200 + f=300 = 500 ≥ $400 → SE tax computed", () => {
   const result = compute({
     net_profit_schedule_c: 200,

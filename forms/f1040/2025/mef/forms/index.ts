@@ -158,6 +158,7 @@ import { scheduleJ } from "./taxes/income-averaging/schedule_j.ts";
 import { scheduleLep } from "./general/filing/schedule_lep.ts";
 import { scheduleR } from "./credits/elderly-disabled/schedule_r.ts";
 import { scheduleSE } from "./taxes/self-employment/schedule_se.ts";
+import { allowableSeExpenseExplanationStatement } from "./taxes/self-employment/allowable_se_expense_explanation_statement.ts";
 import { w2 } from "./income/wages/w2.ts";
 import { w2g } from "./income/gambling/w2g.ts";
 import {
@@ -389,6 +390,9 @@ export const ALL_MEF_FORMS = [
   cccLoanAccrualStatement,
   cccLoanStatement,
   cropInsuranceDeferralStatement,
+  // Schedule SE ministerial explanation follows the crop insurance statement
+  // (ReturnData1040.xsd sequence as published for TY2018; see clergy docs).
+  allowableSeExpenseExplanationStatement,
   // Form 965-A native statements follow the farm statements in ReturnData.
   form965aNetAdjustmentTransferStatement,
   form965aMultipleTransfereeStatement,

@@ -16,6 +16,7 @@ import {
   inputSchema as form4684InputSchema,
 } from "../../nodes/intermediate/forms/deductions/casualty/form4684/index.ts";
 import { isSupportedForm2106Route } from "../domains/adjustments/employment/form2106/form2106_staged.ts";
+import { isSupportedClergyRoute } from "../domains/income/wages/clergy/clergy_source.ts";
 import { isSupportedForm8844DirectEmployerInput } from "../mef/forms/credits/business/f8844_source.ts";
 import { reconcileForm8941DocumentSource } from "../mef/forms/credits/health/f8941_source.ts";
 import {
@@ -55,7 +56,10 @@ const MISSING_ATTACHMENTS: readonly MissingAttachment[] = [
     exportKinds: ["mef", "pdf"],
     reason:
       "Clergy income needs matched W-2, housing designation, taxable excess, parsonage/SE, and Form 4361 evidence",
-    isActive: (fields) => nonempty(fields.clergys),
+    // Sourced rows file through Form 1040 line 1h, Schedule SE and Schedule
+    // 2, reconciled again at export; an allowance inside W-2 box 1 does not.
+    isActive: (fields) =>
+      nonempty(fields.clergys) && !isSupportedClergyRoute(fields),
   },
   {
     pendingKey: "f8862",
