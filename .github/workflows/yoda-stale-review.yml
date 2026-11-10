@@ -1,0 +1,11 @@
+name: Dismiss stale Yoda review
+
+on:
+  pull_request:
+    types: [synchronize]
+
+jobs:
+  dismiss:
+    permissions:
+      pull-requests: write
+    uses: filedcom/.github/.github/workflows/dismiss-stale-yoda-review.yaml@main
