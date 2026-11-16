@@ -1,5 +1,5 @@
 import { expect, test } from "bun:test";
-import { mkdirSync, mkdtempSync, writeFileSync } from "node:fs";
+import { mkdirSync, mkdtempSync, symlinkSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import {
@@ -52,6 +52,14 @@ test("a change selects the tests whose imports reach it", () => {
 test("a data file selects the tests reaching the modules that name it", () => {
   const seeds = changedModules(root, graph, ["core/rates.json"], exists);
   expect(affectedTests(graph, tests, seeds)).toEqual(["core/table.test.ts"]);
+});
+
+test("a checkout reached through a symlink keeps its imports", () => {
+  const link = join(mkdtempSync(join(tmpdir(), "affected-link-")), "repo");
+  symlinkSync(root, link);
+  expect(importGraph(link, Object.keys(files)).get("core/b.ts")).toEqual(
+    new Set(["core/a.ts"]),
+  );
 });
 
 test("untraceable, deleted or shared inputs select every test", () => {
