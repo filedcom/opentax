@@ -154,8 +154,14 @@ const inputSchema = z.object({
   line16_sep_simple: z.number().nonnegative().optional(),
   // Line 17 — Self-employed health insurance deduction (Form 7206)
   line17_se_health_insurance: z.number().nonnegative().optional(),
-  // Line 18 — Penalty on early withdrawal of savings
-  line18_early_withdrawal: z.number().nonnegative().optional(),
+  // Line 18 — Penalty on early withdrawal of savings (Form 1099-INT box 2,
+  // Form 1099-OID box 3); both forms may deposit it.
+  line18_early_withdrawal: z.union([
+    z.number().nonnegative(),
+    z.array(z.number().nonnegative()),
+  ]).transform((value) =>
+    Array.isArray(value) ? value.reduce((sum, n) => sum + n, 0) : value
+  ).optional(),
   // Line 21 — Student loan interest deduction
   line21_student_loan_interest: z.number().nonnegative().optional(),
   // Line 20 — IRA deduction (IRA Deduction Worksheet)

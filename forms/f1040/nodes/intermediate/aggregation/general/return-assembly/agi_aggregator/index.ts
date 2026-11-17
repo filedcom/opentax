@@ -266,8 +266,11 @@ export const inputSchema = z.object({
   line15_se_deduction: z.number().nonnegative().optional(),
   // Line 17 — Self-employed health insurance deduction (Form 7206)
   line17_se_health_insurance: z.number().nonnegative().optional(),
-  // Line 18 — Penalty on early withdrawal of savings (Form 1099-INT Box 2)
-  line18_early_withdrawal: z.number().optional(),
+  // Line 18 — Penalty on early withdrawal of savings (Form 1099-INT box 2,
+  // Form 1099-OID box 3); both forms may deposit it.
+  line18_early_withdrawal: accumulable(z.number().nonnegative()).transform(
+    sumField,
+  ).optional(),
   // Line 20 — IRA deduction (IRA Deduction Worksheet)
   line20_ira_deduction: z.number().nonnegative().optional(),
   // Line 23 — Archer MSA deduction (Form 8853)

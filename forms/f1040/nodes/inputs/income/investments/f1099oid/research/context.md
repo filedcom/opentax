@@ -90,7 +90,7 @@ Source: IRC §57(a)(5); IRS Instructions for Form 6251 (2025), Line 2g — https
 | line25b_withheld_1099 | f1040 | Only if sum of box4_federal_withheld > 0 | Form 1040 Line 25b — federal tax withheld from 1099s | https://www.irs.gov/pub/irs-pdf/i1040gi.pdf |
 | line2g_pab_interest | form6251 | Only if sum of box11_tax_exempt_oid > 0 | Form 6251 Line 2g — tax-exempt PAB interest as AMT preference | https://www.irs.gov/pub/irs-pdf/i6251.pdf |
 
-**Note on box3_early_withdrawal_penalty:** The schema captures this field but the current implementation does NOT route it to `schedule1 line18_early_withdrawal`. This is a known gap — the early withdrawal penalty is a deduction on Schedule 1 line 18 (same as 1099-INT box 2) and should be routed. See Edge Cases section.
+**Note on box3_early_withdrawal_penalty:** The total is routed to `schedule1 line18_early_withdrawal` (printed line) and to `agi_aggregator line18_early_withdrawal` (Form 1040 line 10 and AGI), the same as 1099-INT box 2. Both receivers sum deposits from both forms.
 
 ---
 
@@ -111,7 +111,7 @@ flowchart LR
   subgraph inputs["Data Entry (per payer)"]
     B1["box1_oid"]
     B2["box2_other_interest"]
-    B3["box3_early_withdrawal_penalty (unrouted gap)"]
+    B3["box3_early_withdrawal_penalty"]
     B4["box4_federal_withheld"]
     B6["box6_acquisition_premium"]
     B11["box11_tax_exempt_oid"]
@@ -152,7 +152,7 @@ flowchart LR
 
 4. **Zero OID item still emits schedule_b output**: A payer entry with box1_oid = 0 still produces a schedule_b output with taxable_interest_net = 0 (plus any box2). This preserves the payer listing on Schedule B. The downstream schedule_b node aggregates all entries.
 
-5. **box3_early_withdrawal_penalty — unrouted gap**: Box 3 represents a penalty on early withdrawal of a time deposit (same concept as 1099-INT box 2). It is deductible on Schedule 1 line 18 (Penalty on Early Withdrawal of Savings). The schema captures it but the current `compute()` does not route it to `schedule1 { line18_early_withdrawal }`. This is a known gap in the implementation.
+5. **box3_early_withdrawal_penalty**: Box 3 represents a penalty on early withdrawal of a time deposit (same concept as 1099-INT box 2). It is deductible on Schedule 1 line 18 (Penalty on Early Withdrawal of Savings) and is routed to both `schedule1` and `agi_aggregator`, so it reduces AGI.
 
 6. **box8_oid_treasury (US Treasury OID)**: Treasury OID accrues as federal interest income but is exempt from state and local tax. For federal purposes it is ordinary income included in box 1 (or box 8 separately). The current node captures box8 in the schema but does not separately route it. State-level treatment is outside the scope of this federal 1040 engine.
 

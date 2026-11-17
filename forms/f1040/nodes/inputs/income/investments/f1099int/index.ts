@@ -363,6 +363,9 @@ class F1099intNode extends TaxNode<typeof inputSchema> {
         this.outputNodes.output(schedule1, {
           line18_early_withdrawal: totalBox2,
         }),
+        this.outputNodes.output(agi_aggregator, {
+          line18_early_withdrawal: totalBox2,
+        }),
       );
     }
 
