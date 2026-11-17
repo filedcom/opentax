@@ -346,7 +346,10 @@ function earlyWithdrawalOutput(items: OIDItems): NodeOutput[] {
     0,
   );
   return total > 0
-    ? [output(schedule1, { line18_early_withdrawal: total })]
+    ? [
+      output(schedule1, { line18_early_withdrawal: total }),
+      output(agi_aggregator, { line18_early_withdrawal: total }),
+    ]
     : [];
 }
 
